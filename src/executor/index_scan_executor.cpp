@@ -712,7 +712,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    if (lhs.CompareEquals(rhs) == CmpBool::TRUE) {
+    if (lhs.CompareEquals(rhs) == CmpBool::CmpTrue) {
       switch (expr_type) {
         case ExpressionType::COMPARE_EQUAL:
         case ExpressionType::COMPARE_LESSTHANOREQUALTO:
@@ -730,7 +730,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
                                ExpressionTypeToString(expr_type));
       }
     } else {
-      if (lhs.CompareLessThan(rhs) == CmpBool::TRUE) {
+      if (lhs.CompareLessThan(rhs) == CmpBool::CmpTrue) {
         switch (expr_type) {
           case ExpressionType::COMPARE_NOTEQUAL:
           case ExpressionType::COMPARE_LESSTHAN:
@@ -748,7 +748,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
                                  ExpressionTypeToString(expr_type));
         }
       } else {
-        if (lhs.CompareGreaterThan(rhs) == CmpBool::TRUE) {
+        if (lhs.CompareGreaterThan(rhs) == CmpBool::CmpTrue) {
           switch (expr_type) {
             case ExpressionType::COMPARE_NOTEQUAL:
             case ExpressionType::COMPARE_GREATERTHAN:

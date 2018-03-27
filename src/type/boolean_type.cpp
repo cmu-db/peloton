@@ -76,14 +76,14 @@ CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
 Value BooleanType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
+  if (left.CompareLessThan(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();
 }
 
 Value BooleanType::Max(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE) return left.Copy();
+  if (left.CompareGreaterThanEquals(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();
 }
 

@@ -216,15 +216,15 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   EXPECT_EQ(2, results.size());
 
   // First tuple should be (0, 1)
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(1)));
 
   // Second tuple should be (10, 11)
-  EXPECT_EQ(CmpBool::TRUE, results[1].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[1].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_EQ(CmpBool::TRUE, results[1].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[1].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(11)));
 }
 
@@ -291,9 +291,9 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(21)));
 }
 
@@ -579,9 +579,9 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(1)));
 }
 
