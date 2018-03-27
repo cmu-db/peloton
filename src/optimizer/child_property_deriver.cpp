@@ -144,6 +144,12 @@ void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
 void ChildPropertyDeriver::Visit(const PhysicalOrderBy *) {}
+void ChildPropertyDeriver::Visit(const PhysicalNLJoin *) {
+  DeriveForJoin();
+}
+void ChildPropertyDeriver::Visit(const PhysicalHashJoin *) {
+  DeriveForJoin();
+}
 void ChildPropertyDeriver::Visit(const PhysicalInnerNLJoin *) {
   DeriveForJoin();
 }

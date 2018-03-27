@@ -642,7 +642,7 @@ void JoinToNLJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
   // first build an expression representing hash join
-  const LogicalJoin *inner_join = input->Op().As<LogicalJoin>();
+  const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();
   PL_ASSERT(children.size() == 2);
@@ -655,13 +655,14 @@ void JoinToNLJoin::Transform(
   std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
   std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
-  util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
+  util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
   PL_ASSERT(right_keys.size() == left_keys.size());
-  std::shared_ptr<OperatorExpression> result_plan =
-      std::make_shared<OperatorExpression>(PhysicalInnerNLJoin::make(
-          inner_join->join_predicates, left_keys, right_keys));
+  std::shared_ptr<OperatorExpression> result_plan;
+
+  result_plan = std::make_shared<OperatorExpression>(PhysicalNLJoin::make(
+      join->type, join->join_predicates, left_keys, right_keys));
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
@@ -670,6 +671,67 @@ void JoinToNLJoin::Transform(
   transformed.push_back(result_plan);
 
   return;
+}
+
+  ///////////////////////////////////////////////////////////////////////////////
+/// InnerJoinToInnerHashJoin
+JoinToHashJoin::JoinToHashJoin() {
+  type_ = RuleType::INNER_JOIN_TO_HASH_JOIN;
+
+  // Make three node types for pattern matching
+  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
+
+  // Initialize a pattern for optimizer to match
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
+
+  // Add node - we match join relation R and S as well as the predicate exp
+  match_pattern->AddChild(left_child);
+  match_pattern->AddChild(right_child);
+
+  return;
+}
+
+bool JoinToHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                     OptimizeContext *context) const {
+  (void)context;
+  (void)plan;
+  return true;
+}
+
+void JoinToHashJoin::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  // first build an expression representing hash join
+  const LogicalJoin *join = input->Op().As<LogicalJoin>();
+
+  auto children = input->Children();
+  PL_ASSERT(children.size() == 2);
+  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  auto &left_group_alias =
+      context->metadata->memo.GetGroupByID(left_group_id)->GetTableAliases();
+  auto &right_group_alias =
+      context->metadata->memo.GetGroupByID(right_group_id)->GetTableAliases();
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
+
+  util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
+                            left_group_alias, right_group_alias);
+
+  PL_ASSERT(right_keys.size() == left_keys.size());
+  if (!left_keys.empty()) {
+    auto result_plan =
+        std::make_shared<OperatorExpression>(PhysicalHashJoin::make(
+            join->type, join->join_predicates, left_keys, right_keys));
+
+    // Then push all children into the child list of the new operator
+    result_plan->PushChild(children[0]);
+    result_plan->PushChild(children[1]);
+
+    transformed.push_back(result_plan);
+  }
 }
   
 ///////////////////////////////////////////////////////////////////////////////

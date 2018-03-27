@@ -225,6 +225,21 @@ class JoinToNLJoin : public Rule {
 };
 
 /**
+ * @brief (Logical Join -> Hash Join)
+ */
+class JoinToHashJoin : public Rule {
+ public:
+  JoinToHashJoin();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+/**
  * @brief (Logical Inner Join -> Inner Nested-Loop Join)
  */
 class InnerJoinToInnerNLJoin : public Rule {

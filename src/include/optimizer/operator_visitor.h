@@ -32,6 +32,8 @@ class OperatorVisitor {
   virtual void Visit(const QueryDerivedScan *) {}
   virtual void Visit(const PhysicalOrderBy *) {}
   virtual void Visit(const PhysicalLimit *) {}
+  virtual void Visit(const PhysicalNLJoin *) {}
+  virtual void Visit(const PhysicalHashJoin *) {}
   virtual void Visit(const PhysicalInnerNLJoin *) {}
   virtual void Visit(const PhysicalLeftNLJoin *) {}
   virtual void Visit(const PhysicalRightNLJoin *) {}

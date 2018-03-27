@@ -56,6 +56,8 @@ enum class OpType {
   OrderBy,
   PhysicalLimit,
   Distinct,
+  NLJoin,
+  HashJoin,
   InnerNLJoin,
   LeftNLJoin,
   RightNLJoin,

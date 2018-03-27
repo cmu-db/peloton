@@ -134,12 +134,13 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
     case JoinType::INNER: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr =
-	std::make_shared<OperatorExpression>(LogicalJoin::make(LogicalJoin::JoinType::Inner));
+	std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
       break;
     }
     case JoinType::OUTER: {
-      join_expr = std::make_shared<OperatorExpression>(
-          LogicalOuterJoin::make(node->condition->Copy()));
+      predicates_ = CollectPredicates(node->condition.get(), predicates_);
+      join_expr =
+	std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::OUTER));
       break;
     }
     case JoinType::LEFT: {

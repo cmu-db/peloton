@@ -60,6 +60,10 @@ class PlanGenerator : public OperatorVisitor {
 
   void Visit(const PhysicalLimit *) override;
 
+  void Visit(const PhysicalNLJoin *) override;
+
+  void Visit(const PhysicalHashJoin *) override;
+
   void Visit(const PhysicalInnerNLJoin *) override;
 
   void Visit(const PhysicalLeftNLJoin *) override;

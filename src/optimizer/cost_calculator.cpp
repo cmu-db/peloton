@@ -72,6 +72,22 @@ void CostCalculator::Visit(const PhysicalLimit *op) {
   output_cost_ =
       std::min((size_t)child_num_rows, (size_t)op->limit) * DEFAULT_TUPLE_COST;
 }
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalNLJoin *op) {
+  auto left_child_rows =
+      memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
+  auto right_child_rows =
+      memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
+
+  output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
+}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashJoin *op) {
+  auto left_child_rows =
+      memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
+  auto right_child_rows =
+      memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
+
+  output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
+}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {
   auto left_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();

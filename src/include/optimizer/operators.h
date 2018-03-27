@@ -167,8 +167,6 @@ class LogicalSingleJoin : public OperatorNode<LogicalSingleJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalJoin : public OperatorNode<LogicalJoin> {
  public:
-  enum class JoinType { Inner, FullOuter, LeftOuter, RightOuter };  
-  
   static Operator make(JoinType _type);
 
   static Operator make(JoinType _type, std::vector<AnnotatedExpression> &conditions);
@@ -424,6 +422,50 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
   static Operator make(int64_t offset, int64_t limit);
   int64_t offset;
   int64_t limit;
+};
+
+//===--------------------------------------------------------------------===//
+// NLJoin (Inner + Outer Joins)
+//===--------------------------------------------------------------------===//
+class PhysicalNLJoin : public OperatorNode<PhysicalNLJoin> {
+ public:
+  static Operator make(
+      JoinType _type,
+      std::vector<AnnotatedExpression> conditions,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
+
+  std::vector<AnnotatedExpression> join_predicates;
+  JoinType type;
+};
+
+//===--------------------------------------------------------------------===//
+// HashJoin (Inner + Outer Joins)
+//===--------------------------------------------------------------------===//
+class PhysicalHashJoin : public OperatorNode<PhysicalHashJoin> {
+ public:
+  static Operator make(
+      JoinType _type,
+      std::vector<AnnotatedExpression> conditions,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
+
+  std::vector<AnnotatedExpression> join_predicates;
+  JoinType type;
 };
 
 //===--------------------------------------------------------------------===//

@@ -41,6 +41,7 @@ RuleSet::RuleSet() {
   AddImplementationRule(new GetToIndexScan());
   AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
   AddImplementationRule(new JoinToNLJoin());
+  AddImplementationRule(new JoinToHashJoin());
   AddImplementationRule(new InnerJoinToInnerNLJoin());
   AddImplementationRule(new InnerJoinToInnerHashJoin());
   AddImplementationRule(new ImplementDistinct());
