@@ -471,14 +471,14 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
   const int root_group_id = 0;
   const auto root_group =
       new Group(root_group_id, std::unordered_set<std::string>());
-  optimizer.metadata_.memo.groups_.emplace_back(root_group);
+  optimizer.GetMetadata().memo.Groups().emplace_back(root_group);
 
   auto required_prop = std::make_shared<PropertySet>(PropertySet());
   auto root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.metadata_), required_prop);
+      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), required_prop);
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
-  auto &timer = optimizer.metadata_.timer;
+  auto &timer = optimizer.GetMetadata().timer;
 
   // Insert tasks into task stack
   for (unsigned int i = 0; i < num_tasks; i++) {
@@ -486,10 +486,10 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
     EXPECT_CALL(*task, execute()).Times(1);
     task_stack->Push(task);
   }
-  optimizer.metadata_.SetTaskPool(task_stack.get());
+  optimizer.GetMetadata().SetTaskPool(task_stack.get());
 
   const auto start_time = timer.GetDuration();
-  optimizer.ExecuteTaskStack(*task_stack, root_group_id, root_context);
+  optimizer.TestExecuteTaskStack(*task_stack, root_group_id, root_context);
   ASSERT_EQ(timer.GetInvocations(), num_tasks);
   ASSERT_GT(timer.GetDuration(), start_time);
 }
