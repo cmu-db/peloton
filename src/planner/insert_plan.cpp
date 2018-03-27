@@ -36,6 +36,9 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   LOG_TRACE("Creating an Insert Plan with multiple expressions");
   PL_ASSERT(target_table_);
 
+  // We assume we are not processing a prepared statement insert.
+  // Only after we have finished processing, do we know if it is a
+  // PS or not a PS. 
   bool is_prepared_stmt = false;  
   auto *schema = target_table_->GetSchema();
   auto schema_col_count = schema->GetColumnCount();
@@ -89,7 +92,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 	  // get index into values
 	  auto val_idx = stov_[idx].val_idx;
 	  auto &exp = values[val_idx];
-	  auto exp_ptr = exp.get();	  
+	  auto exp_ptr = exp.get();
 	  bool ret_bool = ProcessValueExpr(exp_ptr, idx);
 	  if (ret_bool) {
 	    is_prepared_stmt = true;
@@ -124,12 +127,20 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     }
   }
   if (is_prepared_stmt) {
+    // We've been assuming it is not a PS and saving into the values_
+    // vector. Now that we know it is a PS, we must clear those values
+    // so SetParameterValues will operate correctly.
     ClearParameterValues();
   }
 }
   
 /**
- * Process column specification supplied in the insert statement
+ * Process column specification supplied in the insert statement.
+ * Construct a map from insert columns to schema columns. Once
+ * we know which columns will receive constant inserts, further
+ * adjustment of the map will be needed.
+ *
+ * @param[in] columns        Column specification
  */
 void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
   auto *schema = target_table_->GetSchema();  
@@ -159,6 +170,16 @@ void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
   }
 }
 
+/**
+ * Process a single expression to be inserted.
+ *
+ * @param[in] expr       insert expression
+ * @param[in] schema_idx index into schema columns, where the expr
+ *                       will be inserted.
+ * @return  true if values imply a prepared statement
+ *          false if all values are constants. This does not rule
+ *             out the insert being a prepared statement.
+ */
 bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
 				  uint32_t schema_idx) {
   auto type = stov_[schema_idx].type;
@@ -173,6 +194,7 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
     
     stov_[schema_idx].set_value = true;
     stov_[schema_idx].value = value;
+    // save it, in case this is not a PS
     values_.push_back(value);
     
     return false;
@@ -182,10 +204,12 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
   }
   return false;
 }
-				  
-				  
-				    
 
+/** 
+ * Set default value into a schema column
+ * 
+ * @param[in] idx  schema column index
+ */
 void InsertPlan::SetDefaultValue(uint32_t idx) {
   auto *schema = target_table_->GetSchema();  
   type::Value *v = schema->GetDefaultValue(idx);
@@ -199,6 +223,15 @@ void InsertPlan::SetDefaultValue(uint32_t idx) {
     values_.push_back(*v);
 }
 
+/** 
+ * Lookup a column name in the schema columns
+ * 
+ * @param[in]  col_name    column name, from insert statement
+ * @param[in]  tbl_columns table columns from the schema
+ * @param[out] index       index into schema columns, only if found
+ *
+ * @return      true if column was found, false otherwise
+ */
 bool InsertPlan::FindSchemaColIndex(std::string col_name,
 				    const std::vector<catalog::Column> &tbl_columns,
 				    uint32_t &index) {
@@ -217,14 +250,12 @@ type::AbstractPool *InsertPlan::GetPlanPool() {
   return pool_.get();
 }
 
-
 /**
  * @brief Save values for jdbc prepared statement insert.
  *    Only a single tuple is presented to this function.
  *
  * @param[in] values  Values for insertion
  */
-  
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   auto *schema = target_table_->GetSchema();
