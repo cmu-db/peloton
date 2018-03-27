@@ -21,6 +21,11 @@ include("cmake/External/gflags.cmake")
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${GFLAGS_LIBRARIES})
 
+# ---[ intel tbb
+find_package(TBB REQUIRED)
+include_directories(SYSTEM ${TBB_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${TBB_LIBRARIES})
+
 # ---[ Cap'nProto
 include("cmake/External/capnproto.cmake")
 include_directories(SYSTEM ${CAPNP_INCLUDE_DIRS})

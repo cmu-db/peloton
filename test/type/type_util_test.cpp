@@ -129,8 +129,8 @@ TEST_F(TypeUtilTests, CompareEqualsRawTest) {
   const int num_cols = (int)schema->GetColumnCount();
   for (int tuple_idx = 1; tuple_idx < 3; tuple_idx++) {
     CmpBool expected = (tuple_idx == 2 ?
-                                CmpBool::TRUE :
-                                CmpBool::FALSE);
+                                CmpBool::CmpTrue :
+                                CmpBool::CmpFalse);
 
     for (int i = 0; i < num_cols; i++) {
       const char* val0 = tuples[0]->GetDataPtr(i);
@@ -229,10 +229,10 @@ TEST_F(TypeUtilTests, CompareStringsTest) {
           CmpBool result = type::GetCmpBool(
               type::TypeUtil::CompareStrings(str1.c_str(), i,
                                              str2.c_str(), j) < 0);
-          if (result != CmpBool::TRUE) {
+          if (result != CmpBool::CmpTrue) {
             LOG_ERROR("INVALID '%s' < '%s'", str1.c_str(), str2.c_str());
           }
-          EXPECT_EQ(CmpBool::TRUE, result);
+          EXPECT_EQ(CmpBool::CmpTrue, result);
         } // FOR (upper2)
       } // FOR (str2)
     } // FOR (upper1)

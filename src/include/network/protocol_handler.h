@@ -29,17 +29,12 @@ class ProtocolHandler {
 
   virtual ~ProtocolHandler();
 
-  /* Main switch case wrapper to process every packet apart from the startup
-   * packet. Avoid flushing the response for extended protocols. */
-
-  /* Manage the startup packet */
-  //  bool ManageStartupPacket();
-  virtual void SendInitialResponse();
-
-  virtual bool ProcessInitialPackets(InputPacket *pkt, Client client,
-                                     bool ssl_able, bool &ssl_sent,
-                                     bool &finish_startup_packet) = 0;
-
+  // TODO(Tianyi) Move thread_id to traffic_cop
+  // TODO(Tianyi) Make wbuf as an parameter here
+  /**
+   * Main switch case wrapper to process every packet apart from the startup
+   * packet. Avoid flushing the response for extended protocols.
+   */
   virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 
   virtual void Reset();
@@ -54,9 +49,9 @@ class ProtocolHandler {
 
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
-  ResponseBuffer responses;
+  ResponseBuffer responses_;
 
-  InputPacket request;  // Used for reading a single request
+  InputPacket request_;  // Used for reading a single request
 
   // The traffic cop used for this connection
   tcop::TrafficCop *traffic_cop_;

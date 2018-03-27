@@ -17,6 +17,7 @@
 ##  * OSX
 ## =================================================================
 
+set -o errexit
 
 # Determine OS platform
 UNAME=$(uname | tr "[:upper:]" "[:lower:]")
@@ -37,7 +38,6 @@ fi
 unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
-TF_VERSION="1.4.0"
 TF_TYPE="cpu"
 
 
@@ -104,37 +104,39 @@ if [ "$DISTRO" = "UBUNTU" ]; then
             echo -e "\n# Added by Peloton 'packages.sh' script on $(date)\ndeb $LLVM_PKG_URL $LLVM_PKG_TARGET" | sudo tee -a /etc/apt/sources.list > /dev/null
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
-        sudo apt-get update -qq
         CMAKE_NAME="cmake3"
-        FORCE_Y="--force-yes"
     else
         CMAKE_NAME="cmake"
-        FORCE_Y=""
     fi
 
+    sudo apt-get update
     FORCE_Y=""
     PKG_CMAKE="cmake"
     PKG_LLVM="llvm-3.7"
     PKG_CLANG="clang-3.7"
+    TF_VERSION="1.4.0"
 
     # Fix for cmake name change on Ubuntu 14.x and 16.x plus --force-yes deprecation
     if [ "$MAJOR_VER" == "14" ]; then
         PKG_CMAKE="cmake3"
         FORCE_Y="--force-yes"
+	TF_VERSION="1.4.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp34-cp34m-linux_x86_64.whl"
     fi
     if [ "$MAJOR_VER" == "16" ]; then
+	TF_VERSION="1.5.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
     # Fix for llvm on Ubuntu 17.x
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
+	TF_VERSION="1.5.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo ldconfig"
-    sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
+    sudo apt-get -q $FORCE_Y --ignore-missing -y install \
         $PKG_CMAKE \
         $PKG_LLVM \
         $PKG_CLANG \
@@ -154,6 +156,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libedit-dev \
         libssl-dev \
         postgresql-client \
+        libtbb-dev \
         python3-pip \
         curl \
         autoconf \
@@ -171,7 +174,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## DEBIAN
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DEBIAN OS" ]; then
-    sudo apt-get -qq --ignore-missing -y install \
+    sudo apt-get -q --ignore-missing -y install \
         git \
         g++ \
         clang \
@@ -192,7 +195,8 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
         libpqxx-dev \
         llvm-dev \
         libedit-dev \
-        postgresql-client
+        postgresql-client \
+        libtbb-dev
 
 ## ------------------------------------------------
 ## FEDORA
@@ -202,6 +206,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         26) LLVM="llvm";;
         *)  LLVM="llvm4.0";;
     esac
+    TF_VERSION="1.5.0"
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
     LinkerConfigCmd="sudo ldconfig"
@@ -230,6 +235,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         libtsan \
         libubsan \
         libatomic \
+        tbb-devel \
         python3-pip \
         curl \
         autoconf \
@@ -300,7 +306,8 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         llvm3.9 \
         llvm3.9-static \
         llvm3.9-devel \
-        postgresql
+        postgresql \
+        libtbb-dev
 
     # Manually download some packages to guarantee
     # version compatibility
@@ -312,10 +319,12 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
 ## DARWIN (OSX)
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DARWIN" ]; then
+    set +o errexit
     if test ! $(which brew); then
       echo "Installing homebrew..."
       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     fi
+    TF_VERSION="1.4.0"
     TFBinaryURL="https://storage.googleapis.com/tensorflow/mac/${TF_TYPE}/tensorflow-${TF_VERSION}-py3-none-any.whl"
     TFCApiFile="libtensorflow-${TF_TYPE}-darwin-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo update_dyld_shared_cache"
@@ -333,6 +342,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install tbb
     brew install curl
     brew install wget
     brew install python
