@@ -201,16 +201,16 @@ bool OrderByExecutor::DoSort() {
         type::Value va = (ta->GetValue(id));
         type::Value vb = (tb->GetValue(id));
         if (!descend_flags[id]) {
-          if (va.CompareLessThan(vb) == CmpBool::TRUE)
+          if (va.CompareLessThan(vb) == CmpBool::CmpTrue)
             return true;
           else {
-            if (va.CompareGreaterThan(vb) == CmpBool::TRUE) return false;
+            if (va.CompareGreaterThan(vb) == CmpBool::CmpTrue) return false;
           }
         } else {
-          if (vb.CompareLessThan(va) == CmpBool::TRUE)
+          if (vb.CompareLessThan(va) == CmpBool::CmpTrue)
             return true;
           else {
-            if (vb.CompareGreaterThan(va) == CmpBool::TRUE) return false;
+            if (vb.CompareGreaterThan(va) == CmpBool::CmpTrue) return false;
           }
         }
       }

@@ -100,7 +100,7 @@ class ContainerTuple : public AbstractTuple {
       for (size_t idx = 0; idx < column_ids_->size(); idx++) {
         type::Value lhs = (GetValue(column_ids_->at(idx)));
         type::Value rhs = (other.GetValue(other.column_ids_->at(idx)));
-        if (lhs.CompareNotEquals(rhs) == CmpBool::TRUE) {
+        if (lhs.CompareNotEquals(rhs) == CmpBool::CmpTrue) {
           return false;
         }
       }
@@ -109,7 +109,7 @@ class ContainerTuple : public AbstractTuple {
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
         type::Value lhs = (GetValue(column_itr));
         type::Value rhs = (other.GetValue(column_itr));
-        if (lhs.CompareNotEquals(rhs) == CmpBool::TRUE) return false;
+        if (lhs.CompareNotEquals(rhs) == CmpBool::CmpTrue) return false;
       }
     }
     return true;
@@ -219,7 +219,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       type::Value lhs = GetValue(column_itr);
       type::Value rhs = other.GetValue(column_itr);
-      if (lhs.CompareNotEquals(rhs) == CmpBool::TRUE) return false;
+      if (lhs.CompareNotEquals(rhs) == CmpBool::CmpTrue) return false;
     }
     return true;
   }
