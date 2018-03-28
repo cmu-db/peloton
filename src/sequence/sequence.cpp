@@ -10,18 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
 #include "common/logger.h"
 #include "planner/create_plan.h"
 #include "storage/tuple.h"
 #include "common/internal_types.h"
+#include "sequence/sequence.h"
 
 namespace peloton {
 namespace sequence {
-
-class Sequence {
-  Sequence(const planner::CreatePlan &plan){
+  Sequence::Sequence(const planner::CreatePlan &plan) {
     seq_name = plan.GetSequenceName();
     seqstart = plan.GetSequenceStart();	// Start value of the sequence
     seqincrement = plan.GetSequenceIncrement();	// Increment value of the sequence
@@ -30,14 +27,12 @@ class Sequence {
     seqcache = plan.GetSequenceCacheSize();	// Cache size of the sequence
     seqcycle = plan.GetSequenceCycle();	// Whether the sequence cycles
 
-    curr_val = seq_start;
+    curr_val = seqstart;
   }
 
-  int64 GetNextVal(){
+  int64_t GetNextVal(){
     return 0;
   }
-};
-
 
 }  // namespace sequence
 }  // namespace peloton

@@ -1068,6 +1068,46 @@ TEST_F(PostgresParserTests, DropTriggerTest) {
   EXPECT_EQ("films", drop_trigger_stmt->GetTriggerTableName());
 }
 
+TEST_F(PostgresParserTests, CreateSequenceTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+
+  // missing AS, CACHE and OWNED BY.
+  std::string query =
+      "CREATE SEQUENCE seq "
+      "INCREMENT BY 2 "
+      "MINVALUE 10 "
+      "MAXVALUE 50 "
+      "CYCLE "
+      "START 10;";
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (!stmt_list->is_valid) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
+  auto create_sequence_stmt =
+      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+
+  // The following code checks the arguments in the create statement
+  // are identical to what is specified in the query.
+
+  // create type
+  EXPECT_EQ(parser::CreateStatement::CreateType::kSequence,
+            create_sequence_stmt->type);
+  EXPECT_EQ(10,
+            create_sequence_stmt->seq_start);
+  EXPECT_EQ(2,
+            create_sequence_stmt->seq_increment);
+  EXPECT_EQ(50,
+            create_sequence_stmt->seq_max_value);
+  EXPECT_EQ(10,
+            create_sequence_stmt->seq_min_value);
+  EXPECT_EQ(true,
+            create_sequence_stmt->seq_cycle);
+}
+
 TEST_F(PostgresParserTests, FuncCallTest) {
   std::string query = "SELECT add(1,a), chr(99) FROM TEST WHERE FUN(b) > 2";
 

@@ -24,24 +24,14 @@ class TransactionContext;
 }
 
 namespace sequence {
-
-class Sequence;
-
-class SequenceData {
- public:
-  int64 last_value;
-  int64 log_cnt;
-  bool is_called;
-};
-
 class Sequence {
  public:
   Sequence(const planner::CreatePlan &plan);
 
   Sequence(const std::string &name,
-          const int64 seqstart, const int64 seqincrement,
-          const int64 seqmax, const int64 seqmin,
-          const int64 seqcache, const bool seqcycle):
+          const int64_t seqstart, const int64_t seqincrement,
+          const int64_t seqmax, const int64_t seqmin,
+          const int64_t seqcache, const bool seqcycle):
           seq_name(name),
           seqstart(seqstart),
           seqincrement(seqincrement),
@@ -54,17 +44,17 @@ class Sequence {
           }
 
   std::string seq_name;
-  int64 seqstart;	// Start value of the sequence
-  int64 seqincrement;	// Increment value of the sequence
-  int64 seqmax;		// Maximum value of the sequence
-  int64 seqmin;		// Minimum value of the sequence
-  int64 seqcache;	// Cache size of the sequence
+  int64_t seqstart;	// Start value of the sequence
+  int64_t seqincrement;	// Increment value of the sequence
+  int64_t seqmax;		// Maximum value of the sequence
+  int64_t seqmin;		// Minimum value of the sequence
+  int64_t seqcache;	// Cache size of the sequence
   bool seqcycle;	// Whether the sequence cycles
 
-  int64 GetNextVal();
+  int64_t GetNextVal();
 
  private:
-  int64 curr_val;
+  int64_t curr_val;
 };
 
 
