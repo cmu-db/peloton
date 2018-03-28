@@ -26,6 +26,21 @@ namespace optimizer {
 /**
  * @brief (A join B) -> (B join A)
  */
+class JoinCommutativity : public Rule {
+ public:
+  JoinCommutativity();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+/**
+ * @brief (A join B) -> (B join A)
+ */
 class InnerJoinCommutativity : public Rule {
  public:
   InnerJoinCommutativity();
