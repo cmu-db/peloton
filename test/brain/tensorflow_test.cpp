@@ -16,6 +16,7 @@
 #include "common/harness.h"
 #include "util/file_util.h"
 #include "brain/util/eigen_util.h"
+#include <numeric>
 
 namespace peloton {
 namespace test {
@@ -50,6 +51,21 @@ TEST_F(TensorflowTests, BasicEigenTest) {
   EXPECT_EQ(m.rows(), 2);
   EXPECT_EQ(m.cols(), 2);
   EXPECT_TRUE(m.IsRowMajor);
+}
+
+TEST_F(TensorflowTests, WavePredictionTest) {
+  // Sine Wave prediction test works here
+  int NUM_SAMPLES = 10;
+  int NUM_WAVES = 3;
+  std::vector<std::vector<float>> waves(NUM_WAVES);
+  for(int i = 0; i < NUM_WAVES; i++) {
+    std::vector<float> wave(NUM_SAMPLES);
+    std::iota(wave.begin(), wave.end(), 0);
+    waves.push_back(wave);
+  }
+  matrix_eig eig_waves = peloton::brain::EigenUtil::MatrixTToEigenMat(waves);
+  matrix_eig sine_waves = eig_waves.array().sin();
+  std::cout << sine_waves << std::endl;
 }
 
 }  // namespace test

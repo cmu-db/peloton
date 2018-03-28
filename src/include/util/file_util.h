@@ -19,6 +19,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/tokenizer.hpp>
 
 namespace peloton {
 
@@ -58,6 +63,20 @@ class FileUtil {
   }
 
   /**
+   * Load JSON file(using boost)
+   * @param file_path: path to json file
+   * @return: boost ptree object
+   * The returned object can be read using json_tree.get<type>(attrib-key-string)
+   * eg. json_tree.get<int>("key1")
+   */
+  boost::property_tree::ptree LoadJSON(
+      const std::string &file_path) {
+    boost::property_tree::ptree json_tree;
+    boost::property_tree::read_json(file_path, json_tree);
+    return json_tree;
+  }
+
+  /**
    * Write the contents of the provided string to a new temp file and return
    * the path to that file.
    * @param the string to write to the file
@@ -90,6 +109,8 @@ class FileUtil {
     struct stat buffer;
     return (stat(path.c_str(), &buffer) == 0);
   }
+
+
 };
 
 }  // namespace peloton

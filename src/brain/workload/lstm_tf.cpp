@@ -60,7 +60,7 @@ float Seq2SeqLSTM::TrainEpoch(matrix_eig &data) {
       Eigen::Map<matrix_eig>(data.data(), samples_per_input * bsz, data.cols());
 
   // Run through each batch and compute loss/apply backprop
-  for (size_t batch_offset = 0; batch_offset < samples_per_input - horizon_;
+  for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<float> data_batch, target_batch;
     GetBatch(data, batch_offset, bsz, data_batch, target_batch);
@@ -112,7 +112,7 @@ float Seq2SeqLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
 
   // Apply Validation
   // Run through each batch and compute loss/apply backprop
-  for (size_t batch_offset = 0; batch_offset < samples_per_input - horizon_;
+  for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<float> data_batch, target_batch;
     GetBatch(data, batch_offset, bsz, data_batch, target_batch);
@@ -127,7 +127,7 @@ float Seq2SeqLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
     auto out = this->tf_session_entity_->Eval(inputs_predict, outputs);
 
     // Flattened predicted/true values
-    for (int i = 0; i < data_batch.size(); i++) {
+    for (size_t i = 0; i < data_batch.size(); i++) {
       y_hat.push_back(out[i]);
     }
     y.insert(y.end(), target_batch.begin(), target_batch.end());

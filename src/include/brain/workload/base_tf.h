@@ -3,6 +3,8 @@
 #include <memory>
 #include "brain/util/eigen_util.h"
 #include "brain/util/tf_session_entity/tf_session_entity.h"
+#include "brain/util/tf_session_entity/tf_session_entity_input.h"
+#include "brain/util/tf_session_entity/tf_session_entity_output.h"
 
 namespace peloton {
 namespace brain {
