@@ -108,6 +108,12 @@ class PlanSelectionTest : public PelotonTest {
     return ss.str();
   }
 
+  void AnalyzeTable(const std::string &table_name) {
+    std::stringstream ss;
+    ss << "ANALYZE " << table_name << ";";
+    TestingSQLUtil::ExecuteSQLQuery(ss.str());
+  }
+
  private:
   void CreateTestTable(const std::string &table_name) {
     std::stringstream ss;
@@ -145,6 +151,9 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
 
   txn_manager.CommitTransaction(txn);
 
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
   auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
       table_1_name, table_2_name, column_1_name, column_1_name));
 
@@ -155,16 +164,15 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
 
   EXPECT_EQ(2, plan->GetChildren().size());
   EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
-  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[1]->GetPlanNodeType());
 
-  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
-  EXPECT_EQ(PlanNodeType::SEQSCAN,
-            plan->GetChildren()[1]->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(0, plan->GetChildren()[1]->GetChildren().size());
 
   auto left_scan =
       dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
-  auto right_scan = dynamic_cast<planner::AbstractScan *>(
-      plan->GetChildren()[1]->GetChildren()[0].get());
+  auto right_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
 
   ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
@@ -197,6 +205,9 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
 
   txn_manager.CommitTransaction(txn);
 
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
   auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
       table_1_name, table_2_name, column_1_name, column_1_name));
 
@@ -207,16 +218,15 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
 
   EXPECT_EQ(2, plan->GetChildren().size());
   EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
-  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[1]->GetPlanNodeType());
 
-  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
-  EXPECT_EQ(PlanNodeType::SEQSCAN,
-            plan->GetChildren()[1]->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(0, plan->GetChildren()[1]->GetChildren().size());
 
   auto left_scan =
       dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
-  auto right_scan = dynamic_cast<planner::AbstractScan *>(
-      plan->GetChildren()[1]->GetChildren()[0].get());
+  auto right_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
 
   // TODO: This should actually be reversed, setting it to this now so that the
   // tests pass
@@ -250,6 +260,9 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderSortedTest) {
   }
 
   txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
 
   auto plan = PerformTransactionAndGetPlan(
       CreateTwoWayJoinQuery(table_1_name, table_2_name, column_1_name,
