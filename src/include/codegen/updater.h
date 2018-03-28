@@ -75,6 +75,9 @@ class Updater {
   // Target list and direct map list pointer from the update translator
   TargetList *target_list_;
 
+  // Write set for tracking newly created tuples inserted by the same statement
+  ReadWriteSet *statement_write_set_;
+
   // Ownership information
   bool is_owner_;
   bool acquired_ownership_;

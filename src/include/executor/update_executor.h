@@ -52,6 +52,9 @@ class UpdateExecutor : public AbstractExecutor {
  private:
   storage::DataTable *target_table_ = nullptr;
   const planner::ProjectInfo *project_info_ = nullptr;
+
+  // Write set for tracking newly created tuples inserted by the same statement
+  ReadWriteSet statement_write_set_;
 };
 
 }  // namespace executor
