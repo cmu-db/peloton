@@ -1370,21 +1370,15 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 
 		if (strcmp(defel->defname, "increment") == 0)
 		{
-			// if (increment_by)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (increment_by)
+        throw ParserException("Redundant definition of increment in defining sequence");
 			increment_by = defel;
       result->seq_increment = get_long_in_defel(increment_by);
 		}
 		else if (strcmp(defel->defname, "start") == 0)
 		{
-			// if (start_value)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (start_value)
+        throw ParserException("Redundant definition of start in defining sequence");
 			start_value = defel;
       result->seq_start = get_long_in_defel(start_value);
 		}
@@ -1399,41 +1393,29 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 		// }
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
-			// if (max_value)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (max_value)
+        throw ParserException("Redundant definition of max in defining sequence");
 			max_value = defel;
       result->seq_max_value = get_long_in_defel(max_value);
 		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
 		{
-			// if (min_value)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (min_value)
+        throw ParserException("Redundant definition of min in defining sequence");
 			min_value = defel;
       result->seq_min_value = get_long_in_defel(min_value);
 		}
 		else if (strcmp(defel->defname, "cache") == 0)
 		{
-			// if (cache_value)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (cache_value)
+        throw ParserException("Redundant definition of cache in defining sequence");
 			cache_value = defel;
       result->seq_cache = get_long_in_defel(cache_value);
 		}
 		else if (strcmp(defel->defname, "cycle") == 0)
 		{
-			// if (is_cycled)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_SYNTAX_ERROR),
-			// 			 errmsg("conflicting or redundant options"),
-			// 			 parser_errposition(pstate, defel->location)));
+			if (is_cycled)
+        throw ParserException("Redundant definition of cycle in defining sequence");
 			is_cycled = defel;
       result->seq_cycle = (bool) get_long_in_defel(is_cycled);
 		}
@@ -1460,8 +1442,6 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 			// 		 parser_errposition(pstate, defel->location)));
 		// }
 		else
-			// elog(ERROR, "option \"%s\" not recognized",
-			// 	 defel->defname);
       throw ParserException(StringUtil::Format(
           "option \"%s\" not recognized\n", defel->defname));
 	}
