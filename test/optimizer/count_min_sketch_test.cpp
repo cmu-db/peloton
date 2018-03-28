@@ -6,13 +6,11 @@
 //
 // Identification: test/optimizer/count_min_sketch_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
-
-#define private public
 
 #include "optimizer/stats/count_min_sketch.h"
 #include "common/logger.h"
