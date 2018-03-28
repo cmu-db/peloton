@@ -87,6 +87,10 @@ class ConnectionHandle {
   Transition ProcessWrite();
   Transition GetResult();
   Transition CloseSocket();
+  /**
+   * Flush out all the responses and do real SSL handshake
+   */
+  Transition ProcessWrite_SSLHandshake();
 
  private:
   /**
@@ -144,16 +148,7 @@ class ConnectionHandle {
   friend class ConnectionHandleFactory;
 
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf,
-                   bool ssl_able);
-
-  ProcessResult ProcessInitial();
-
-  /**
-   * Extracts the header of a Postgres start up packet from the read socket
-   * buffer
-   */
-  static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
 
   /**
    * Writes a packet's header (type, size) into the write buffer
@@ -170,6 +165,16 @@ class ConnectionHandle {
    * ready for write
    */
   WriteState FlushWriteBuffer();
+
+  /**
+   * @brief: process SSL handshake to generate valid SSL
+   * connection context for further communications
+   * @return FINISH when the SSL handshake failed
+   *         PROCEED when the SSL handshake success
+   *         NEED_DATA when the SSL handshake is partially done due to network
+   *         latency
+   */
+  Transition SSLHandshake();
 
   /**
    * Set the socket to non-blocking mode
@@ -190,6 +195,16 @@ class ConnectionHandle {
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
 
+  /**
+   * @brief: Determine if there is still responses in the buffer
+   * @return true if there is still responses to flush out in either wbuf or
+   * responses
+   */
+  inline bool HasResponse() {
+    return (protocol_handler_->responses_.size() != 0) ||
+           (wbuf_->buf_size != 0);
+  }
+
   int sock_fd_;                            // socket file descriptor
   struct event *network_event = nullptr;   // something to read from network
   struct event *workpool_event = nullptr;  // worker thread done the job
@@ -204,16 +219,8 @@ class ConnectionHandle {
   std::shared_ptr<Buffer> rbuf_;    // Socket's read buffer
   std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
-  Client client_;
+
   StateMachine state_machine_;
-
-  // TODO(Tianyi) Can we encapsulate these flags?
-  bool ssl_handshake_ = false;
-  bool finish_startup_packet_ = false;
-  bool ssl_able_;
-
-  // TODO(Tianyi) hide this in protocol handler
-  InputPacket initial_packet_;
 
   short curr_event_flag_;  // current libevent event flag
 };
