@@ -47,10 +47,6 @@ class Index;
 
 namespace logging {
 class LogManager;
-}  // namespace logging
-
-namespace logging {
-class LogManager;
 class TimestampCheckpointManager;
 }  // namespace logging
 
@@ -77,8 +73,8 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
-  friend class logging::LogManager;
-  friend class logging::TimestampCheckpointManager;
+  friend class LogManager;
+  friend class TimestampCheckpointManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;

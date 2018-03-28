@@ -31,6 +31,10 @@ namespace expression {
 class AbstractExpression;
 }
 
+namespace logging {
+class TimestampCheckpointManager;
+}
+
 namespace storage {
 class Database;
 class DataTable;
@@ -40,6 +44,8 @@ class Tuple;
 namespace catalog {
 
 class AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   virtual ~AbstractCatalog() {}
 
@@ -75,6 +81,8 @@ class AbstractCatalog {
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
                 IndexConstraintType index_constraint);
+
+  storage::DataTable *GetCatalogTable() const { return catalog_table_; }
 
   //===--------------------------------------------------------------------===//
   // Members
