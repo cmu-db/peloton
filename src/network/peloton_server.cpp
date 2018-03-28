@@ -118,7 +118,7 @@ void PelotonServer::SSLInit() {
   }
   // TODO(Yuchen): change this.
   // load trusted CA certificates (peer authentication)
-  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(),
+  if (SSL_CTX_load_verify_locations(ssl_context, root_cert_file_.c_str(),
                                     nullptr) != 1) {
     LOG_WARN("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);

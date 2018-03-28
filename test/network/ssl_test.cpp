@@ -34,7 +34,6 @@ class SSLTests : public PelotonTest {};
 
 // The following keys and certificates are generated using
 // https://www.postgresql.org/docs/9.5/static/libpq-ssl.html
-// and then concate root.crt right after server.crt
 std::string client_crt = std::string(
     StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/root.crt"));
 std::string client_key = std::string(
