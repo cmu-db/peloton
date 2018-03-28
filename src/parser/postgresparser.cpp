@@ -1352,7 +1352,6 @@ parser::SQLStatement *PostgresParser::CreateSequenceTransform(CreateSeqStmt *roo
 }
 
 void PostgresParser::parse_sequence_params(List* options, parser::CreateStatement* result){
-  // DefElem    *as_type = NULL;
 	DefElem    *start_value = NULL;
 	// DefElem    *restart_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -1369,16 +1368,6 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		// if (strcmp(defel->defname, "as") == 0)
-		// {
-		// 	// if (as_type)
-		// 	// 	ereport(ERROR,
-		// 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
-		// 	// 			 errmsg("conflicting or redundant options"),
-		// 	// 			 parser_errposition(pstate, defel->location)));
-		// 	as_type = defel;
-		// }
-		// else if (strcmp(defel->defname, "increment") == 0)
 		if (strcmp(defel->defname, "increment") == 0)
 		{
 			// if (increment_by)
