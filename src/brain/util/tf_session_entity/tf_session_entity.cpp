@@ -29,6 +29,8 @@ TFSE_TYPE::TfSessionEntity() {
   session_ = TF_NewSession(graph_, session_options_, status_);
 }
 
+// TODO(saatvik): Valgrind will show errors due to a standing issue within Tensorflow
+// https://github.com/tensorflow/tensorflow/issues/17739
 TFSE_TEMPLATE_ARGUMENTS
 TFSE_TYPE::~TfSessionEntity() {
   TF_CloseSession(session_, status_);
