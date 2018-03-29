@@ -90,28 +90,29 @@ class ZoneMapManager {
                          ColumnStatistics *stats) {
     const type::Value &min = stats->min;
     const type::Value &max = stats->max;
-    return (min.CompareLessThanEquals(predicate_val)) == CmpBool::TRUE &&
-           (max.CompareGreaterThanEquals(predicate_val) == CmpBool::TRUE);
+    return (min.CompareLessThanEquals(predicate_val)) == CmpBool::CmpTrue &&
+           (max.CompareGreaterThanEquals(predicate_val) == CmpBool::CmpTrue);
   }
 
   static bool CheckLessThan(const type::Value &predicate_val,
                             ColumnStatistics *stats) {
-    return predicate_val.CompareGreaterThan(stats->min) == CmpBool::TRUE;
+    return predicate_val.CompareGreaterThan(stats->min) == CmpBool::CmpTrue;
   }
 
   static bool CheckLessThanEquals(const type::Value &predicate_val,
                                   ColumnStatistics *stats) {
-    return predicate_val.CompareGreaterThanEquals(stats->min) == CmpBool::TRUE;
+    return predicate_val.CompareGreaterThanEquals(stats->min) ==
+           CmpBool::CmpTrue;
   }
 
   static bool CheckGreaterThan(const type::Value &predicate_val,
                                ColumnStatistics *stats) {
-    return predicate_val.CompareLessThan(stats->max) == CmpBool::TRUE;
+    return predicate_val.CompareLessThan(stats->max) == CmpBool::CmpTrue;
   }
 
   static bool CheckGreaterThanEquals(const type::Value &predicate_val,
                                      ColumnStatistics *stats) {
-    return predicate_val.CompareLessThanEquals(stats->max) == CmpBool::TRUE;
+    return predicate_val.CompareLessThanEquals(stats->max) == CmpBool::CmpTrue;
   }
 
   //===--------------------------------------------------------------------===//
