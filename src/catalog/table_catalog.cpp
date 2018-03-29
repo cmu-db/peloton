@@ -463,12 +463,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+//  oid_t index_offset =
+//      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
+//  std::vector<type::Value> values;
+//  values.push_back(
+//      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+//  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   // need the predicate for the seq scan (conjunction)
   // table_name == table_name and database_oid need to be same
