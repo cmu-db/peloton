@@ -400,8 +400,6 @@ const std::string TileGroup::GetInfo() const {
     }
   }
 
-  // auto header = GetHeader();
-  // if (header != nullptr) os << (*header);
   return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
                                      GETINFO_SPACER);
 }
