@@ -15,8 +15,8 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
+#include "optimizer/property_set.h"
 
 namespace peloton {
 
@@ -53,6 +53,12 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
+struct OptimizerPlanInfo {
+  OptimizerPlanInfo(){};
+  std::unique_ptr<planner::AbstractPlan> plan;
+  double cost;
+};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -76,6 +82,11 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
       concurrency::TransactionContext *txn) override;
+
+  // Used by What-if API
+  std::unique_ptr<OptimizerPlanInfo> GetOptimizedPlanInfo(
+      std::shared_ptr<parser::SQLStatement> parsed_statement,
+      concurrency::TransactionContext *txn);
 
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);

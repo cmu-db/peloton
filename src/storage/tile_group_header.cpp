@@ -6,6 +6,18 @@
 //
 // Identification: src/storage/tile_group_header.cpp
 //
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tile_group_header.cpp
+//
+// Identification: src/storage/tile_group_header.cpp
+//
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
@@ -239,7 +251,8 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
        tuple_slot_id++) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     if (tuple_txn_id != INVALID_TXN_ID) {
-      PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+      // TODO Copying what Tiyanu did
+      // PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
       active_tuple_slots++;
     }
   }

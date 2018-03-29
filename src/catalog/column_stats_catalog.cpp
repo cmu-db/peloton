@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/column_stats_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,16 +27,18 @@ ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
   return &column_stats_catalog;
 }
 
+// TODO [VAMSHI]: Removing the NOT NULL contraints for benchmark results.
+// Enable it later
 ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." CATALOG_SCHEMA_NAME "." COLUMN_STATS_CATALOG_NAME
                       " ("
-                      "database_id    INT NOT NULL, "
-                      "table_id       INT NOT NULL, "
-                      "column_id      INT NOT NULL, "
-                      "num_rows        INT NOT NULL, "
-                      "cardinality    DECIMAL NOT NULL, "
-                      "frac_null      DECIMAL NOT NULL, "
+                      "database_id    INT, "
+                      "table_id       INT, "
+                      "column_id      INT, "
+                      "num_rows        INT, "
+                      "cardinality    DECIMAL, "
+                      "frac_null      DECIMAL, "
                       "most_common_vals  VARCHAR, "
                       "most_common_freqs VARCHAR, "
                       "histogram_bounds  VARCHAR, "
@@ -198,7 +200,7 @@ size_t ColumnStatsCatalog::GetTableStats(
   }
   auto tile = (*result_tiles)[0].get();
   size_t tuple_count = tile->GetTupleCount();
-  LOG_DEBUG("Tuple count: %lu", tuple_count);
+  LOG_TRACE("Tuple count: %lu", tuple_count);
   if (tuple_count == 0) {
     return 0;
   }

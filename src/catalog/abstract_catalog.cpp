@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/abstract_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -120,8 +120,8 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 
   executor::ExecutionResult this_p_status;
   auto on_complete = [&this_p_status](
-                         executor::ExecutionResult p_status,
-                         std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
+      executor::ExecutionResult p_status,
+      std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
     this_p_status = p_status;
   };
 
@@ -192,6 +192,26 @@ AbstractCatalog::GetResultWithIndexScan(
     std::vector<oid_t> column_offsets, oid_t index_offset,
     std::vector<type::Value> values,
     concurrency::TransactionContext *txn) const {
+  std::vector<ExpressionType> expr_types(values.size(),
+                                         ExpressionType::COMPARE_EQUAL);
+  return GetResultWithIndexScan(column_offsets, index_offset, values,
+                                expr_types, txn);
+}
+
+/*@brief   Index scan helper function
+ * @param   column_offsets    Column ids for search (projection)
+ * @param   index_offset      Offset of index for scan
+ * @param   values            Values for search
+ * @param   expr_types        comparision expressions for the values
+ * @param   txn               TransactionContext
+ * @return  Unique pointer of vector of logical tiles
+ */
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+AbstractCatalog::GetResultWithIndexScan(
+    const std::vector<oid_t> &column_offsets, const oid_t &index_offset,
+    const std::vector<type::Value> &values,
+    const std::vector<ExpressionType> &expr_types,
+    concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan
@@ -202,8 +222,7 @@ AbstractCatalog::GetResultWithIndexScan(
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
   PELOTON_ASSERT(values.size() == key_column_offsets.size());
-  std::vector<ExpressionType> expr_types(values.size(),
-                                         ExpressionType::COMPARE_EQUAL);
+  PELOTON_ASSERT(values.size() == expr_types.size());
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
