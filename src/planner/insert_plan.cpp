@@ -159,7 +159,7 @@ void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
       throw Exception{
 	StringUtil::Format("column %s not in table %s columns",
 			   col_name,
-			   target_table_->GetName())};
+			   target_table_->GetName().c_str())};
     }
     // we have values for this column
     stov_[idx].in_insert_cols = true;
