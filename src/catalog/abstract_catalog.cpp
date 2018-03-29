@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/plan_executor.h"
 #include "codegen/buffering_consumer.h"
 #include "common/internal_types.h"
-#include "codegen/testing_codegen_util.h"
 #include "catalog/abstract_catalog.h"
 
 #include "common/statement.h"
@@ -242,7 +242,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   // Execute the query in a synchronize fashion
   // peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);
   // what about this
-  query->Execute(std::move(executor_context), buffer, nullptr);
+  query->Execute(std::move(executor_context), buffer, [](executor::ExecutionResult result){return result;});
 
 
 //  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
