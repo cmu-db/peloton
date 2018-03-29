@@ -42,7 +42,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   bool is_prepared_stmt = false;  
   auto *schema = target_table_->GetSchema();
   auto schema_col_count = schema->GetColumnCount();
-  vtos_.resize(insert_values->size());  
+  vtos_.resize(columns->size());
   // initialize mapping from schema cols to insert values vector.
   // will be updated later based on insert columns and values
   stov_.resize(schema_col_count);
@@ -154,7 +154,6 @@ void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
     
     // determine index of column in schema
     bool found_col = FindSchemaColIndex(col_name, table_columns, idx);
-    // PL_ASSERT(found_col == true);
     if (not found_col) {
       throw Exception("column " + col_name + " not in table " +
 		      target_table_->GetName() + " columns");
