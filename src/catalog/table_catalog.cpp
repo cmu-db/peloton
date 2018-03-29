@@ -520,7 +520,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   if (result_tuples.size() == 1) {
     auto table_object =
-            std::make_shared<TableCatalogObject>(result_tuples[0].GetValue(0), txn);
+            std::make_shared<TableCatalogObject>(result_tuples[0], txn);
 
     // insert into cache
 //    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
