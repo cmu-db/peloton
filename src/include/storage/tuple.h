@@ -252,7 +252,7 @@ inline Tuple::Tuple(char *data, catalog::Schema *schema) {
 
   tuple_data_ = data;
   tuple_schema_ = schema;
-  allocated_ = false;  // ???
+  allocated_ = false;  // The data comes from argument, do not free it when this tuple is destroyed
 }
 
 inline Tuple &Tuple::operator=(const Tuple &rhs) {
