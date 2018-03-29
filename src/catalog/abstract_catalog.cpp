@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <codegen/buffering_consumer.h>
-#include <include/common/internal_types.h>
+#include "codegen/buffering_consumer.h"
+#include "common/internal_types.h"
 #include "codegen/testing_codegen_util.h"
 #include "catalog/abstract_catalog.h"
 
@@ -239,10 +239,10 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   auto compiled_query = compiler.Compile(*seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
   query = compiled_query.get();
 
-  //Execute the query in a synchronize fashion
-  peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);
+  // Execute the query in a synchronize fashion
+  // peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);
   // what about this
-  //query->Execute(std::move(executor_context), buffer, func);
+  query->Execute(std::move(executor_context), buffer, nullptr);
 
 
 //  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
