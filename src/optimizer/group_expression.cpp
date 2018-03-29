@@ -95,7 +95,7 @@ bool GroupExpression::operator==(const GroupExpression &r) {
 }
 
 void GroupExpression::SetRuleExplored(Rule *rule) {
-  rule_mask_.set(rule->GetRuleIdx()) = true;
+  rule_mask_.set(rule->GetRuleIdx(), true);
 }
 
 bool GroupExpression::HasRuleExplored(Rule *rule) {
