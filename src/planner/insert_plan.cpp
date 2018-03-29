@@ -156,10 +156,8 @@ void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
     bool found_col = FindSchemaColIndex(col_name, table_columns, idx);
     // PL_ASSERT(found_col == true);
     if (not found_col) {
-      throw Exception{
-	StringUtil::Format("column %s not in table %s columns",
-			   col_name,
-			   target_table_->GetName().c_str())};
+      throw Exception("column " + col_name + " not in table " +
+		      target_table_->GetName() + " columns");
     }
     // we have values for this column
     stov_[idx].in_insert_cols = true;
