@@ -68,7 +68,7 @@ void JoinCommutativity::Transform(
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
   LOG_TRACE(
-      "Reorder left child with op %s and right child with op %s for inner join",
+      "Reorder left child with op %s and right child with op %s for join",
       children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
@@ -720,10 +720,10 @@ void JoinToNLJoin::Transform(
   return;
 }
 
-  ///////////////////////////////////////////////////////////////////////////////
-/// InnerJoinToInnerHashJoin
+///////////////////////////////////////////////////////////////////////////////
+/// JoinToInnerHashJoin
 JoinToHashJoin::JoinToHashJoin() {
-  type_ = RuleType::INNER_JOIN_TO_HASH_JOIN;
+  type_ = RuleType::JOIN_TO_HASH_JOIN;
 
   // Make three node types for pattern matching
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
@@ -1257,7 +1257,7 @@ void MarkJoinToInnerJoin::Transform(
   PELOTON_ASSERT(mark_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
 
   output->PushChild(join_children[0]);
   output->PushChild(join_children[1]);
@@ -1308,7 +1308,7 @@ void SingleJoinToInnerJoin::Transform(
   PELOTON_ASSERT(single_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
 
   output->PushChild(join_children[0]);
   output->PushChild(join_children[1]);
