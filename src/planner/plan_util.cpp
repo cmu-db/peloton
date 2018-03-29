@@ -96,5 +96,59 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
   return (index_oids);
 }
 
+const std::set<oid_t> PlanUtil::GetAffectedColumns(
+    catalog::CatalogCache &catalog_cache,
+    const parser::SQLStatement &sql_stmt) {
+  std::set<oid_t> column_oids;
+  std::string db_name, table_name;
+  switch (sql_stmt.GetType()) {
+    // For INSERT, DELETE, all indexes are affected
+    case StatementType::INSERT: {
+      auto &insert_stmt =
+          static_cast<const parser::InsertStatement &>(sql_stmt);
+      db_name = insert_stmt.GetDatabaseName();
+      table_name = insert_stmt.GetTableName();
+    }
+      PELOTON_FALLTHROUGH;
+    case StatementType::DELETE: {
+      if (table_name.empty() || db_name.empty()) {
+        auto &delete_stmt =
+            static_cast<const parser::DeleteStatement &>(sql_stmt);
+        db_name = delete_stmt.GetDatabaseName();
+        table_name = delete_stmt.GetTableName();
+      }
+      auto column_map = catalog_cache.GetDatabaseObject(db_name)
+                            ->GetTableObject(table_name)
+                            ->GetColumnObjects();
+      for (auto &column : column_map) {
+        column_oids.insert(column.first);
+      }
+    } break;
+    case StatementType::UPDATE: {
+      auto &update_stmt =
+          static_cast<const parser::UpdateStatement &>(sql_stmt);
+      db_name = update_stmt.table->GetDatabaseName();
+      table_name = update_stmt.table->GetTableName();
+      auto db_object = catalog_cache.GetDatabaseObject(db_name);
+      auto table_object = db_object->GetTableObject(table_name);
+
+      auto &update_clauses = update_stmt.updates;
+      std::set<oid_t> update_oids;
+      for (const auto &update_clause : update_clauses) {
+        LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
+                  table_name.c_str(), update_clause->column.c_str());
+        auto col_object = table_object->GetColumnObject(update_clause->column);
+        column_oids.insert(col_object->GetColumnId());
+      }
+    } break;
+    case StatementType::SELECT:
+      break;
+    default:
+      LOG_TRACE("Does not support finding affected indexes for query type: %d",
+                static_cast<int>(sql_stmt.GetType()));
+  }
+  return (column_oids);
+}
+
 }  // namespace planner
 }  // namespace peloton
