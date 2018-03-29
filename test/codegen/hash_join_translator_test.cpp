@@ -122,7 +122,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
               tuple.GetInfo().c_str());
 
     // Check that the joins keys are actually equal
-    EXPECT_EQ(CmpBool::TRUE,
+    EXPECT_EQ(CmpBool::CmpTrue,
               tuple.GetValue(0).CompareEquals(tuple.GetValue(1)));
   }
 }

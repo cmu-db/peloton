@@ -63,7 +63,7 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   }
 }
 
-const std::vector<std::unique_ptr<Group>> &Memo::Groups() const {
+std::vector<std::unique_ptr<Group>> &Memo::Groups() {
   return groups_;
 }
 

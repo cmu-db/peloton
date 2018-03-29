@@ -95,8 +95,13 @@ foreach(test_src ${test_srcs} )
 	
 	# add test
   add_test(${test_name} ${CMAKE_BINARY_DIR}/test/${test_name} --gtest_color=yes
-           --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
-	
+    --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
+  
+  # leak suppression / whitelist
+  set_property(TEST ${test_name}
+	PROPERTY ENVIRONMENT
+	"LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/test/leak_suppr.txt")
+	 
 endforeach(test_src ${test_srcs})
 
 ##################################################################################
