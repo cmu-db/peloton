@@ -44,7 +44,7 @@ class Tuple;
 namespace catalog {
 
 class AbstractCatalog {
-  friend class logging::TimestampCheckpointManager;
+  friend class TimestampCheckpointManager;
 
  public:
   virtual ~AbstractCatalog() {}
