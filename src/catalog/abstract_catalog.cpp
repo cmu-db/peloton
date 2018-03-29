@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <codegen/buffering_consumer.h>
+#include <include/common/internal_types.h>
+#include "codegen/testing_codegen_util.h"
 #include "catalog/abstract_catalog.h"
 
 #include "common/statement.h"
@@ -209,7 +212,7 @@ AbstractCatalog::GetResultWithIndexScan(
 *
 * @return  Unique pointer of vector of logical tiles
 */
-std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+const std::vector<codegen::WrappedTuple>&
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
                                       concurrency::TransactionContext *txn) {
@@ -219,20 +222,43 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
-  LOG_TRACE("Excecute seq scan");
-  // Execute
-  seq_scan_executor.Init();
-  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
+  auto seq_scan_plan = std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
+          catalog_table_, predicate, column_offsets));
+  planner::BindingContext scan_context;
+  seq_scan_plan->PerformBinding(scan_context);
 
-  while (seq_scan_executor.Execute()) {
-    result_tiles->push_back(
-        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
-  }
+  codegen::BufferingConsumer buffer{column_offsets, scan_context};
+//  bool cached;
 
-  return result_tiles;
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn, codegen::QueryParameters(*seq_scan_plan, {})));
+
+  // compile
+  codegen::Query *query = nullptr;
+  codegen::QueryCompiler compiler;
+  auto compiled_query = compiler.Compile(*seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
+  query = compiled_query.get();
+
+  //Execute the query in a synchronize fashion
+  peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);
+  // what about this
+  //query->Execute(std::move(executor_context), buffer, func);
+
+
+//  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
+//  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+//  LOG_TRACE("Excecute seq scan");
+//  // Execute
+//  seq_scan_executor.Init();
+//  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+//      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
+//
+//  while (seq_scan_executor.Execute()) {
+//    result_tiles->push_back(
+//        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
+//  }
+
+  return buffer.GetOutputTuples();
 }
 
 /*@brief   Add index on catalog table

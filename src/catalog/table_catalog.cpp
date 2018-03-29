@@ -19,6 +19,7 @@
 #include "catalog/column_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
+#include "codegen/buffering_consumer.h"
 #include "type/value_factory.h"
 
 #include "common/internal_types.h"
@@ -454,11 +455,11 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
-  if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, true);
-    if (table_object) return table_object;
-  }
+//  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+//  if (database_object) {
+//    auto table_object = database_object->GetTableObject(table_name, true);
+//    if (table_object) return table_object;
+//  }
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
@@ -498,19 +499,21 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
       LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
 //   change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
-  auto result_tiles =
+  const std::vector<codegen::WrappedTuple> &result_tuples =
       GetResultWithSeqScan(column_ids, predicate, txn);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+  if (result_tuples.size() == 1) {
     auto table_object =
-            std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+            std::make_shared<TableCatalogObject>(result_tuples[0].GetValue(0), txn);
+
     // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-            table_object->GetDatabaseOid(), txn);
-    PL_ASSERT(database_object);
-    bool success = database_object->InsertTableObject(table_object);
-    PL_ASSERT(success == true);
-    (void) success;
+//    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+//            table_object->GetDatabaseOid(), txn);
+//    PL_ASSERT(database_object);
+//    bool success = database_object->InsertTableObject(table_object);
+//    PL_ASSERT(success == true);
+//    (void) success;
+
     return table_object;
   }
   // return empty object if not found

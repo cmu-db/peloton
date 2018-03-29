@@ -31,6 +31,10 @@ namespace expression {
 class AbstractExpression;
 }
 
+namespace codegen {
+class WrappedTuple;
+}
+
 namespace storage {
 class Database;
 class DataTable;
@@ -67,7 +71,7 @@ class AbstractCatalog {
                          std::vector<type::Value> values,
                          concurrency::TransactionContext *txn) const;
 
-  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  const std::vector<codegen::WrappedTuple>&
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);
