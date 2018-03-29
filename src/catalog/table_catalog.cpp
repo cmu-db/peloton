@@ -46,6 +46,22 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       valid_column_objects(false),
       txn(txn) {}
 
+TableCatalogObject::TableCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                       concurrency::TransactionContext *txn)
+    : table_oid(wrapped_tuple.GetValue(TableCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      table_name(wrapped_tuple.GetValue(TableCatalog::ColumnId::TABLE_NAME)
+                     .ToString()),
+      database_oid(wrapped_tuple.GetValue(TableCatalog::ColumnId::DATABASE_OID)
+                       .GetAs<oid_t>()),
+      index_objects(),
+      index_names(),
+      valid_index_objects(false),
+      column_objects(),
+      column_names(),
+      valid_column_objects(false),
+      txn(txn) {}
+
 /* @brief   insert index catalog object into cache
  * @param   index_object
  * @return  false if index_name already exists in cache

@@ -47,6 +47,7 @@ class TableCatalogObject {
  public:
   TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
                      int tupleId = 0);
+  TableCatalogObject(codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn);
 
  public:
   // Get indexes
