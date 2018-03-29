@@ -242,7 +242,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         automake \
         libtool
     # Install version of protobuf needed by C-API
-    install_protobuf3.4.0 "fedora"        
+    install_protobuf3.4.0 "fedora"
     # Install tensorflow
     install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
