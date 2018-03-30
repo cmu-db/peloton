@@ -1,7 +1,16 @@
-#include "common/harness.h"
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// old_optimizer_test.cpp
+//
+// Identification: test/optimizer/old_optimizer_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
-#define private public
-
+#include <common/harness.h>
 #include "catalog/catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"

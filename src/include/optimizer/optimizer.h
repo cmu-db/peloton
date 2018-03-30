@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/optimizer.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -80,6 +80,19 @@ class Optimizer : public AbstractOptimizer {
                     std::shared_ptr<PropertySet> required_props);
 
   void Reset() override;
+
+  OptimizerMetadata &GetMetadata() { return metadata_; }
+
+  /* For test purposes only */
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
+  concurrency::TransactionContext *txn) {
+    return InsertQueryTree(tree, txn);
+  }
+  /* For test purposes only */
+  void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
+                        std::shared_ptr<OptimizeContext> root_context) {
+    return ExecuteTaskStack(task_stack, root_group_id, root_context);
+  }
 
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
