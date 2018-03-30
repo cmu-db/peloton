@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// base_tf.cpp
+//
+// Identification: src/brain/workload/base_tf.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "brain/workload/base_tf.h"
 
 namespace peloton {

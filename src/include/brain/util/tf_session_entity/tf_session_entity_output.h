@@ -4,8 +4,7 @@
 //
 // tf_session_entity_output.h
 //
-// Identification:
-// src/include/brain/util/tf_session_entity/tf_session_entity_output.h
+// Identification: src/include/brain/util/tf_session_entity/tf_session_entity_output.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -46,7 +45,7 @@ class TfSessionEntityOutput : public TfSessionEntityIOBase<OutputType> {
   // const output
   explicit TfSessionEntityOutput(const std::string &op);
   // n-d output
-  explicit TfSessionEntityOutput(const std::vector<int64_t>& dims,
+  explicit TfSessionEntityOutput(const std::vector<int64_t> &dims,
                                  const std::string &op);
 };
 }  // namespace brain

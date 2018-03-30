@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// lstm_tf.cpp
+//
+// Identification: src/brain/workload/lstm_tf.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "brain/workload/lstm_tf.h"
 
 namespace peloton {

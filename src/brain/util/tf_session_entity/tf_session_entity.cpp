@@ -29,8 +29,8 @@ TFSE_TYPE::TfSessionEntity() {
   session_ = TF_NewSession(graph_, session_options_, status_);
 }
 
-// TODO(saatvik): Valgrind will show errors due to a standing issue within Tensorflow
-// https://github.com/tensorflow/tensorflow/issues/17739
+// TODO(saatvik): Valgrind will show errors due to a standing issue within
+// Tensorflow https://github.com/tensorflow/tensorflow/issues/17739
 TFSE_TEMPLATE_ARGUMENTS
 TFSE_TYPE::~TfSessionEntity() {
   TF_CloseSession(session_, status_);
@@ -99,8 +99,8 @@ void TFSE_TYPE::Eval(const std::string &opName) {
 // Evaluate op with inputs and outputs
 TFSE_TEMPLATE_ARGUMENTS
 OutputType *TFSE_TYPE::Eval(
-    const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
-    const std::vector<TfSessionEntityOutput<OutputType>>& helper_outputs) {
+    const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
+    const std::vector<TfSessionEntityOutput<OutputType>> &helper_outputs) {
   std::vector<TF_Tensor *> in_vals, out_vals;
   std::vector<TF_Output> ins, outs;
   for (auto helperIn : helper_inputs) {
@@ -126,8 +126,9 @@ OutputType *TFSE_TYPE::Eval(
 
 // Evaluate op with only inputs(where nothing is output eg. Backprop)
 TFSE_TEMPLATE_ARGUMENTS
-void TFSE_TYPE::Eval(const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
-                     const std::string &op_name) {
+void TFSE_TYPE::Eval(
+    const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
+    const std::string &op_name) {
   std::vector<TF_Tensor *> in_vals;
   std::vector<TF_Output> ins;
   for (auto helperIn : helper_inputs) {

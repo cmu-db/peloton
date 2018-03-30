@@ -59,11 +59,11 @@ class TfSessionEntity {
    * 3. Inputs and Outputs eg. Loss calculation, Predictions.
    */
   void Eval(const std::string &opName);
-  void Eval(const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
+  void Eval(const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
             const std::string &op_name);
   OutputType *Eval(
-      const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
-      const std::vector<TfSessionEntityOutput<OutputType>>& helper_outputs);
+      const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
+      const std::vector<TfSessionEntityOutput<OutputType>> &helper_outputs);
 
   /** Helpers **/
   // Print the name of all operations(`ops`) in this graph

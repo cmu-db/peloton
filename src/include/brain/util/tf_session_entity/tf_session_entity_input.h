@@ -36,9 +36,10 @@ TFSEIN_TEMPLATE_ARGUMENTS
 class TfSessionEntityInput : public TfSessionEntityIOBase<InputType> {
  public:
   // Const Input
-  TfSessionEntityInput(const InputType& input, const std::string& op);
+  TfSessionEntityInput(const InputType &input, const std::string &op);
   // 1d vector
-  TfSessionEntityInput(const std::vector<InputType>& input, const std::string& op);
+  TfSessionEntityInput(const std::vector<InputType> &input,
+                       const std::string &op);
   // 2d vector
   TfSessionEntityInput(const std::vector<std::vector<InputType>> &input,
                        const std::string &op);
