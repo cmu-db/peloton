@@ -217,7 +217,9 @@ SETTING_int(task_execution_timeout,
             "Maximum allowed length of time (in ms) for task "
                 "execution step of optimizer, "
                 "assuming one plan has been found (default 5000)",
-            5000, true, true)
+            5000,
+	    1000, 60000,
+	    true, true)
 
 //===----------------------------------------------------------------------===//
 // GENERAL
