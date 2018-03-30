@@ -141,6 +141,17 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 }
 
+Group *Optimizer::GetOptimizedQueryTree(
+  const std::unique_ptr<parser::SQLStatementList> &parse_tree,
+  const std::string default_database_name,
+  concurrency::TransactionContext *txn) {
+  // TODO[vamshi]: Implement this.
+  (void) parse_tree;
+  (void) default_database_name;
+  (void) txn;
+  return nullptr;
+}
+
 void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(

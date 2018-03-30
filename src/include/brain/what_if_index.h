@@ -33,14 +33,14 @@ namespace brain {
 #define COST_INVALID -1
   class WhatIfIndex {
   public:
-    WhatIfIndex(std::shared_ptr<parser::SQLStatementList> parse_tree_list,
+    WhatIfIndex(std::unique_ptr<parser::SQLStatementList> parse_tree_list,
                 std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &index_set,
                 std::string database_name);
 
     double GetCost();
 
   private:
-    std::shared_ptr<parser::SQLStatementList> parse_tree_list_;
+    std::unique_ptr<parser::SQLStatementList> parse_tree_list_;
     std::vector<std::shared_ptr<catalog::IndexCatalogObject>> index_set_;
     std::string database_name_;
   };
