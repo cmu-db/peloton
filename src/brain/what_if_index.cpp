@@ -17,6 +17,7 @@
 #include "parser/delete_statement.h"
 #include "parser/insert_statement.h"
 #include "parser/update_statement.h"
+#include "optimizer/optimizer.h"
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
@@ -27,10 +28,10 @@ namespace brain {
   // @indexes: set of indexes (can be real/hypothetical)
   // Real indexes are the indexes which are already present.
   WhatIfIndex::WhatIfIndex(
-    std::shared_ptr<parser::SQLStatementList> parse_tree_list,
+    std::unique_ptr<parser::SQLStatementList> parse_tree_list,
     std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
     std::string database_name) {
-    parse_tree_list_ = parse_tree_list;
+    parse_tree_list_ = std::move(parse_tree_list);
     index_set_ = indexes;
     database_name_ = database_name;
   }
@@ -95,7 +96,9 @@ namespace brain {
       }
     }
 
-    // TODO[vamshi]: Get the query cost.
+    optimizer::Optimizer optimizer;
+    // Get the query cost.
+    optimizer.GetOptimizedQueryTree(parse_tree_list_, database_name_, txn);
 
     txn_manager.CommitTransaction(txn);
     return query_cost;

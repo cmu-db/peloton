@@ -40,7 +40,7 @@ class TransactionContext;
 namespace test {
   class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
   class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-} 
+}
 
 namespace optimizer {
 
@@ -61,7 +61,7 @@ class Optimizer : public AbstractOptimizer {
   friend class GroupBindingIterator;
 
   friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
+  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
  public:
   Optimizer(const Optimizer &) = delete;
@@ -74,6 +74,11 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
       concurrency::TransactionContext *txn) override;
+
+  Group *GetOptimizedQueryTree(
+    const std::unique_ptr<parser::SQLStatementList> &parse_tree,
+    const std::string default_database_name,
+    concurrency::TransactionContext *txn);
 
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);
