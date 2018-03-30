@@ -86,6 +86,8 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       log_buffer_.WriteLong(tuple_pos.block);
       log_buffer_.WriteLong(tuple_pos.offset);
 
+      log_buffer_.WriteLong(record.GetNumValues());
+
       peloton::type::Value *values_array = reinterpret_cast<peloton::type::Value *>(record.GetValuesArray());
       TargetList *offsets = record.GetOffsets();
       for (uint32_t i = 0; i < record.GetNumValues(); i++) {
