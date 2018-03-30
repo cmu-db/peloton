@@ -371,7 +371,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   column_names.push_back(tile_column_names);
 
   const int tuple_count = 4;
-  storage::column_map_type column_map;
+  column_map_type column_map;
 
   // default column map
   auto col_count = schema->GetColumnCount();

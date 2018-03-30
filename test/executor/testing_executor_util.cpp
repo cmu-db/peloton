@@ -255,13 +255,13 @@ void TestingExecutorUtil::PopulateTiles(
     std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
   size_t  tile_count = tile_group->GetTileCount();
   // Create tuple schema from tile schemas.
-  std::vector<catalog::Schema> tile_schemas;
+  std::vector<const catalog::Schema *> tile_schemas;
   for (oid_t tile_id = 0; tile_id < tile_count; tile_id++) {
-    tile_schemas.push_back(*(tile_group->GetTile(tile_id)->GetSchema()));
+    tile_schemas.push_back(tile_group->GetTile(tile_id)->GetSchema());
   }
 
   std::unique_ptr<catalog::Schema> schema(
-      catalog::Schema::AppendSchemaList(tile_schemas));
+      catalog::Schema::AppendSchemaPtrList(tile_schemas));
 
   // Ensure that the tile group is as expected.
   PELOTON_ASSERT(schema->GetColumnCount() == 4);
