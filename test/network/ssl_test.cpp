@@ -32,27 +32,29 @@ namespace test {
 
 class SSLTests : public PelotonTest {};
 
-std::string client_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.crt"));
-std::string client_key = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.key"));
-std::string server_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.crt"));
-std::string server_key = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.key"));
-std::string root_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root_test.crt"));
+// The following keys and certificates are generated using
+// https://www.postgresql.org/docs/9.5/static/libpq-ssl.html
+std::string client_crt = std::string(
+    StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/root.crt"));
+std::string client_key = std::string(
+    StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/root.key"));
+std::string server_crt = std::string(
+    StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/server.crt"));
+std::string server_key = std::string(
+    StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/server.key"));
+std::string root_crt = std::string(
+    StringUtil::Format("%s%s", SOURCE_FOLDER, "/test/network/ssl/root.crt"));
 
 /**
  * Basic SSL connection test:  Tested with valid certificats and key files
  */
-void *BasicTest(int port) {
+void *TestRoutine(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=default_database application_name=psql "
-        "sslmode=require sslkey=%s ",
-        port, client_key.c_str()));
+        "sslmode=require sslkey=%s sslcert=%s sslrootcert=%s",
+        port, client_key.c_str(), client_crt.c_str(), root_crt.c_str()));
 
     pqxx::work txn1(C);
 
@@ -115,6 +117,7 @@ void *BasicTest(int port) {
  * Callback method to close server after client finishes
  */
 TEST_F(SSLTests, BasicTest) {
+  EXPECT_EQ(0, chmod(client_key.c_str(), S_IRUSR));
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer peloton_server;
@@ -134,7 +137,7 @@ TEST_F(SSLTests, BasicTest) {
   std::thread serverThread([&] { peloton_server.ServerLoop(); });
 
   // server & client running correctly
-  BasicTest(port);
+  TestRoutine(port);
 
   peloton_server.Close();
   serverThread.join();
