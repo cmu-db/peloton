@@ -130,8 +130,8 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, o);
   }
   inline bool CompareBetweenInclusive(const Value &a, const Value &b) const {
-    return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, a) == CmpBool::TRUE && 
-           Type::GetInstance(type_id_)->CompareLessThanEquals(*this, b) == CmpBool::TRUE;
+    return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, a) == CmpBool::CmpTrue &&
+           Type::GetInstance(type_id_)->CompareLessThanEquals(*this, b) == CmpBool::CmpTrue;
   }
 
   // Other mathematical functions
