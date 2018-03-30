@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 //===----------------------------------------------------------------------===//
 // FILE LOCATIONS
 //===----------------------------------------------------------------------===//
@@ -156,6 +155,11 @@ SETTING_bool(brain,
             false,
             true, true)
 
+SETTING_string(peloton_address,
+               "ip and port of the peloton rpc service, address:port",
+               "127.0.0.1:15445",
+               false, false)
+
 // Size of the brain task queue
 SETTING_int(brain_task_queue_size,
             "Brain Task Queue Size (default: 32)",
@@ -191,9 +195,12 @@ SETTING_bool(hash_join_bloom_filter,
              true,
              true, true)
 
+SETTING_int(task_execution_timeout,
+            "Maximum allowed length of time (in ms) for task "
+                "execution step of optimizer, "
+                "assuming one plan has been found (default 5000)",
+            5000, true, true)
+
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
-
-
-

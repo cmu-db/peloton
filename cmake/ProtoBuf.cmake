@@ -1,7 +1,6 @@
 # Finds Google Protocol Buffers library and compilers and extends
 # the standard cmake script with version and python generation support
-
-find_package( Protobuf REQUIRED )
+find_package( Protobuf REQUIRED)
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${PROTOBUF_LIBRARIES})
 

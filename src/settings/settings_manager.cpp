@@ -92,17 +92,30 @@ const std::string SettingsManager::GetInfo() const {
   const std::string title = "PELOTON SETTINGS";
 
   std::string info;
-  info.append(StringUtil::Format("%*s\n", box_width/2 + title.length()/2, title.c_str()));
+  info.append(StringUtil::Format("%*s\n", box_width / 2 + title.length() / 2,
+                                 title.c_str()));
   info.append(StringUtil::Repeat("=", box_width)).append("\n");
 
-  info.append(StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family", GetString(SettingId::socket_family).c_str()));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Statistics", GetInt(SettingId::stats_mode) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections", GetInt(SettingId::max_connections)));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Index Tuner", GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Layout Tuner", GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Code-generation", GetBool(SettingId::codegen) ? "enabled" : "disabled"));
-
+  info.append(
+      StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family",
+                                 GetString(SettingId::socket_family).c_str()));
+  info.append(StringUtil::Format(
+      "%28s:   %-28s\n", "Statistics",
+      GetInt(SettingId::stats_mode) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections",
+                                 GetInt(SettingId::max_connections)));
+  info.append(StringUtil::Format(
+      "%28s:   %-28s\n", "Index Tuner",
+      GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format(
+      "%28s:   %-28s\n", "Layout Tuner",
+      GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
+  info.append(
+      StringUtil::Format("%28s:   %-28s\n", "Code-generation",
+                         GetBool(SettingId::codegen) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Optimization Timeout",
+                                 GetInt(SettingId::task_execution_timeout)));
   return StringBoxUtil::Box(info);
 }
 
@@ -164,12 +177,12 @@ SettingsManager::SettingsManager() {
   catalog_initialized_ = false;
   pool_.reset(new type::EphemeralPool());
 
-  // This will expand to invoke SettingsManager::DefineSetting on
-  // all of the settings defined in settings.h. See settings_macro.h.
-  #define __SETTING_DEFINE__
-  #include "settings/settings_macro.h"
-  #include "settings/settings.h"
-  #undef __SETTING_DEFINE__
+// This will expand to invoke SettingsManager::DefineSetting on
+// all of the settings defined in settings.h. See settings_macro.h.
+#define __SETTING_DEFINE__
+#include "settings/settings_macro.h"
+#include "settings/settings.h"
+#undef __SETTING_DEFINE__
 }
 
 }  // namespace settings

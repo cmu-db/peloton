@@ -274,49 +274,49 @@ TEST_F(ArrayValueTests, InListTest) {
 void CheckEqual(type::Value v1, type::Value v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE(result[0] == CmpBool::TRUE);
+  EXPECT_TRUE(result[0] == CmpBool::CmpTrue);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE(result[1] == CmpBool::FALSE);
+  EXPECT_TRUE(result[1] == CmpBool::CmpFalse);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE(result[2] == CmpBool::FALSE);
+  EXPECT_TRUE(result[2] == CmpBool::CmpFalse);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE(result[3] == CmpBool::TRUE);
+  EXPECT_TRUE(result[3] == CmpBool::CmpTrue);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE(result[4] == CmpBool::FALSE);
+  EXPECT_TRUE(result[4] == CmpBool::CmpFalse);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE(result[5] == CmpBool::TRUE);
+  EXPECT_TRUE(result[5] == CmpBool::CmpTrue);
 }
 
 void CheckLessThan(type::Value v1, type::Value v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE(result[0] == CmpBool::FALSE);
+  EXPECT_TRUE(result[0] == CmpBool::CmpFalse);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE(result[1] == CmpBool::TRUE);
+  EXPECT_TRUE(result[1] == CmpBool::CmpTrue);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE(result[2] == CmpBool::TRUE);
+  EXPECT_TRUE(result[2] == CmpBool::CmpTrue);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE(result[3] == CmpBool::TRUE);
+  EXPECT_TRUE(result[3] == CmpBool::CmpTrue);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE(result[4] == CmpBool::FALSE);
+  EXPECT_TRUE(result[4] == CmpBool::CmpFalse);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE(result[5] == CmpBool::FALSE);
+  EXPECT_TRUE(result[5] == CmpBool::CmpFalse);
 }
 
 void CheckGreaterThan(type::Value v1, type::Value v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE(result[0] == CmpBool::FALSE);
+  EXPECT_TRUE(result[0] == CmpBool::CmpFalse);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE(result[1] == CmpBool::TRUE);
+  EXPECT_TRUE(result[1] == CmpBool::CmpTrue);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE(result[2] == CmpBool::FALSE);
+  EXPECT_TRUE(result[2] == CmpBool::CmpFalse);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE(result[3] == CmpBool::FALSE);
+  EXPECT_TRUE(result[3] == CmpBool::CmpFalse);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE(result[4] == CmpBool::TRUE);
+  EXPECT_TRUE(result[4] == CmpBool::CmpTrue);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE(result[5] == CmpBool::TRUE);
+  EXPECT_TRUE(result[5] == CmpBool::CmpTrue);
 }
 
 TEST_F(ArrayValueTests, CompareTest) {

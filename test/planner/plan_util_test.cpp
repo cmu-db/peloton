@@ -163,6 +163,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // no indexes are affected
   EXPECT_EQ(0, static_cast<int>(affected_indexes.size()));
+  txn_manager.CommitTransaction(txn);  
 }
 
 }  // namespace test
