@@ -173,7 +173,6 @@ bool GroupExprBindingIterator::HasNext() {
 }
 
 std::shared_ptr<OperatorExpression> GroupExprBindingIterator::Next() {
-  LOG_DEBUG("Current_binding size :%lu", current_binding_->Children().size());
   return current_binding_;
 }
 
