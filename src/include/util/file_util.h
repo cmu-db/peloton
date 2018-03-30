@@ -69,7 +69,7 @@ class FileUtil {
    * The returned object can be read using json_tree.get<type>(attrib-key-string)
    * eg. json_tree.get<int>("key1")
    */
-  boost::property_tree::ptree LoadJSON(
+  static boost::property_tree::ptree LoadJSON(
       const std::string &file_path) {
     boost::property_tree::ptree json_tree;
     boost::property_tree::read_json(file_path, json_tree);
