@@ -120,7 +120,13 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
       // Set the value for the update
       const auto &derived_attribute = target_list[target_id].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
-      peloton::codegen::BufferingConsumer::AddToTupleBuffer(val, codegen, diff, i);
+      size_t offset = 0;
+      if (is_primary_key) {
+        offset = i;
+      } else {
+        offset = target_id;
+      }
+      peloton::codegen::BufferingConsumer::AddToTupleBuffer(val, codegen, diff, offset);
       target_id++;
     } else {
       val = row.DeriveValue(codegen, ais[i]);
