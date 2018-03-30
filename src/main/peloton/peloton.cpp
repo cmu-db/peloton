@@ -22,7 +22,7 @@
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
 
-void RunPelotonEngine() {
+void RunPelotonServer() {
   try {
     // Setup
     peloton::PelotonInit::Initialize();
@@ -86,6 +86,6 @@ int main(int argc, char *argv[]) {
       peloton::settings::SettingId::brain))
     RunPelotonBrain();
   else
-    RunPelotonEngine();
+    RunPelotonServer();
   return 0;
 }
