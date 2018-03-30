@@ -132,7 +132,7 @@ void Updater::Update(char *diff_array, uint32_t diff_size) {
 
   // Either update in-place
   if (is_owner_ == true) {
-    txn_manager.PerformUpdate(txn, old_location_);
+    txn_manager.PerformUpdate(txn, old_location_, diff_array, diff_size, target_list_);
     executor_context_->num_processed++;
     return;
   }
@@ -149,28 +149,7 @@ void Updater::Update(char *diff_array, uint32_t diff_size) {
                                        old_location_.offset);
     return;
   }
-  txn_manager.PerformUpdate(txn, old_location_, new_location_);
-
-  logging::LogRecord record =
-      logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
-          txn->GetTransactionId(), txn->GetCommitId());
-  record.SetOldItemPointer(old_location_);
-  record.SetValuesArray(diff_array, diff_size);
-  record.SetOffsetsArray(target_list_);
-
-  txn->GetLogBuffer()->WriteRecord(record);
-
-  if(txn->GetLogBuffer()->HasThresholdExceeded()) {
-
-    LOG_DEBUG("Submitting log buffer %p", txn->GetLogBuffer());
-
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(txn->GetLogBuffer());
-
-    /* allocate a new buffer for the current transaction */
-    txn->ResetLogBuffer();
-  }
+  txn_manager.PerformUpdate(txn, old_location_, new_location_, diff_array, diff_size, target_list_);
 
   executor_context_->num_processed++;
 }
@@ -194,26 +173,8 @@ void Updater::UpdatePK(char *diff_array, uint32_t diff_size) {
     txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
+  txn_manager.PerformInsert(txn, new_location_, index_entry_ptr, diff_array, diff_size);
 
-  logging::LogRecord record =
-      logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_INSERT, new_location_, txn->GetEpochId(),
-          txn->GetTransactionId(), txn->GetCommitId());
-  record.SetValuesArray(diff_array, diff_size);
-
-  txn->GetLogBuffer()->WriteRecord(record);
-
-  if(txn->GetLogBuffer()->HasThresholdExceeded()) {
-
-    LOG_DEBUG("Submitting log buffer %p", txn->GetLogBuffer());
-
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(txn->GetLogBuffer());
-
-    /* allocate a new buffer for the current transaction */
-    txn->ResetLogBuffer();
-  }
   executor_context_->num_processed++;
 }
 

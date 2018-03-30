@@ -80,7 +80,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   // which is directly pointed by the primary index.
   virtual void PerformInsert(TransactionContext *const current_txn,
                              const ItemPointer &location,
-                             ItemPointer *index_entry_ptr = nullptr);
+                             ItemPointer *index_entry_ptr = nullptr,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0);
 
   virtual bool PerformRead(TransactionContext *const current_txn,
                            const ItemPointer &location,
@@ -88,14 +90,20 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
-                             const ItemPointer &new_location);
+                             const ItemPointer &new_location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr);
 
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
-                             const ItemPointer &location);
+                             const ItemPointer &location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr);
 
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &location);

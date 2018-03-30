@@ -467,7 +467,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
 void TimestampOrderingTransactionManager::PerformInsert(
     TransactionContext *const current_txn, const ItemPointer &location,
-    ItemPointer *index_entry_ptr) {
+    ItemPointer *index_entry_ptr, char *values_buf, uint32_t values_size) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
@@ -495,6 +495,27 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
 
+  LOG_INFO("perfom insert");
+  if (values_buf != nullptr) {
+    logging::LogRecord record =
+        logging::LogRecordFactory::CreateTupleRecord(
+            LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
+            current_txn->GetTransactionId(), current_txn->GetCommitId());
+    record.SetValuesArray(values_buf, values_size);
+
+    current_txn->GetLogBuffer()->WriteRecord(record);
+
+    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+      /* allocate a new buffer for the current transaction */
+      current_txn->ResetLogBuffer();
+    }
+  }
   // Increment table insert op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -505,7 +526,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn, const ItemPointer &location,
-    const ItemPointer &new_location) {
+    const ItemPointer &new_location, char *values_buf,
+    uint32_t values_size, TargetList *offsets) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   ItemPointer old_location = location;
@@ -578,6 +600,30 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
 
+  LOG_INFO("Perform Update");
+
+  if (values_buf != nullptr) {
+    logging::LogRecord record =
+        logging::LogRecordFactory::CreateTupleRecord(
+            LogRecordType::TUPLE_UPDATE, new_location, current_txn->GetEpochId(),
+            current_txn->GetTransactionId(), current_txn->GetCommitId());
+    record.SetOldItemPointer(location);
+    record.SetValuesArray(values_buf, values_size);
+    record.SetOffsetsArray(offsets);
+
+    current_txn->GetLogBuffer()->WriteRecord(record);
+
+    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+      /* allocate a new buffer for the current transaction */
+      current_txn->ResetLogBuffer();
+    }
+  }
   // Increment table update op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -589,7 +635,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 // NOTE: this function is deprecated.
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn UNUSED_ATTRIBUTE,
-    const ItemPointer &location) {
+    const ItemPointer &location, char *values_buf,
+    uint32_t values_size, TargetList *offsets) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
@@ -611,7 +658,29 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // transaction
   // is updating a version that is installed by itself.
   // in this case, nothing needs to be performed.
+  if (values_buf != nullptr) {
+    logging::LogRecord record =
+        logging::LogRecordFactory::CreateTupleRecord(
+            LogRecordType::TUPLE_UPDATE, location, current_txn->GetEpochId(),
+            current_txn->GetTransactionId(), current_txn->GetCommitId());
+    record.SetOldItemPointer(location);
+    record.SetValuesArray(values_buf, values_size);
+    record.SetOffsetsArray(offsets);
 
+    current_txn->GetLogBuffer()->WriteRecord(record);
+
+    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+      /* allocate a new buffer for the current transaction */
+      current_txn->ResetLogBuffer();
+    }
+  }
+  LOG_INFO("Perform Update");
   // Increment table update op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -698,16 +767,25 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   current_txn->RecordDelete(old_location);
 
-//  logging::LogRecord record =
-//          logging::LogRecordFactory::CreateTupleRecord(
-//                  LogRecordType::TUPLE_DELETE,
-//                  old_location, current_txn->GetEpochId(),
-//                  current_txn->GetTransactionId(),
-//                  current_txn->GetCommitId());
-//
-//  logging::WalLogger::WriteRecordToBuffer(record, current_txn->GetLogBuffer());
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_DELETE, old_location, current_txn->GetEpochId(),
+          current_txn->GetTransactionId(), current_txn->GetCommitId());
 
+  current_txn->GetLogBuffer()->WriteRecord(record);
 
+  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    current_txn->ResetLogBuffer();
+  }
+
+  LOG_INFO("Perform Delete");
   // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -744,20 +822,24 @@ void TimestampOrderingTransactionManager::PerformDelete(
     current_txn->RecordDelete(location);
   }
 
-//  logging::LogRecord record =
-//          logging::LogRecordFactory::CreateTupleRecord(
-//                  LogRecordType::TUPLE_DELETE,
-//                  location, current_txn->GetEpochId(),
-//                  current_txn->GetTransactionId(),
-//                  current_txn->GetCommitId());
-//
-//
-//
-//  logging::WalLogger::WriteRecordToBuffer(record, current_txn->GetLogBuffer());
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_DELETE, location, current_txn->GetEpochId(),
+          current_txn->GetTransactionId(), current_txn->GetCommitId());
 
+  current_txn->GetLogBuffer()->WriteRecord(record);
 
+  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
+    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    current_txn->ResetLogBuffer();
+  }
+  LOG_INFO("Perform Delete");
       // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
