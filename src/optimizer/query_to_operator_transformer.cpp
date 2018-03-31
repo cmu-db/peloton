@@ -258,8 +258,12 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
         for (oid_t i = values.size(); i != column_objects.size(); ++i) {
           // check whether null values are allowed in the rest of the columns
           if (column_objects[i]->IsNotNull()) {
-            // TODO: Add check for default value's existence for the current column
-            throw CatalogException(StringUtil::Format("ERROR:  null value in column \"%s\" violates not-null constraint", column_objects[i]->GetColumnName().c_str()));
+            // TODO: Add check for default value's existence for the current
+            // column
+            throw CatalogException(
+                StringUtil::Format("ERROR:  null value in column \"%s\" "
+                                   "violates not-null constraint",
+                                   column_objects[i]->GetColumnName().c_str()));
           }
         }
       }
@@ -277,13 +281,17 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       }
     }
 
-    // map below contains column names of the columns mapped to column objects, as mentioned in the insert statement
-    std::unordered_map<std::string, std::shared_ptr<catalog::ColumnCatalogObject> > specified;
+    // map below contains column names of the columns mapped to column objects,
+    // as mentioned in the insert statement
+    std::unordered_map<std::string,
+                       std::shared_ptr<catalog::ColumnCatalogObject>> specified;
     auto column_names = target_table->GetColumnNames();
 
     for (const auto col : op->columns) {
       if (column_names.find(col) == column_names.end()) {
-        throw CatalogException(StringUtil::Format("ERROR:  column \"%s\" of relation \"%s\" does not exist", col.c_str(), target_table->GetTableName().c_str()));
+        throw CatalogException(StringUtil::Format(
+            "ERROR:  column \"%s\" of relation \"%s\" does not exist",
+            col.c_str(), target_table->GetTableName().c_str()));
       } else {
         specified[col] = column_names[col];
       }
@@ -291,9 +299,12 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 
     for (auto column : column_names) {
       // this loop checks not null constraint for unspecified columns
-      if (specified.find(column.first) == specified.end() && column.second->IsNotNull()) {
+      if (specified.find(column.first) == specified.end() &&
+          column.second->IsNotNull()) {
         // TODO: Add check for default value's existence for the current column
-        throw CatalogException(StringUtil::Format("ERROR:  null value in column \"%s\" violates not-null constraint", column.first.c_str()));
+        throw CatalogException(StringUtil::Format(
+            "ERROR:  null value in column \"%s\" violates not-null constraint",
+            column.first.c_str()));
       }
     }
   }
