@@ -107,7 +107,7 @@ void CreateAndLoadTable7() {
 void CreateAndLoadTable8() {
   // Create a table with some defaults
   TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test8(num1 int, num2 int, num3 int);");
+      "CREATE TABLE test8(num1 int, num2 int, num3 int not null);");
 }
 
 TEST_F(InsertSQLTests, InsertOneValue) {
@@ -653,7 +653,7 @@ TEST_F(InsertSQLTests, BadInserts) {
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
 
-  // Insert a tuple with more target columns (implicit) than values
+  // Insert a tuple with more target columns (implicit) than values, violating not null constraint for num3
   query = "INSERT INTO test VALUES(3, 4);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
@@ -671,7 +671,7 @@ TEST_F(InsertSQLTests, BadInserts) {
                peloton::CatalogException);
 
   // Insert a tuple with more target columns than values (multiple tuples)
-  query = "INSERT INTO test8(num1, num3) VALUES (6, 7), (3, 4, 5);";
+  query = "INSERT INTO test8(num1, num3) VALUES (6, 7), (5);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
