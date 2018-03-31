@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
+#include "catalog/sequence_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
@@ -73,8 +74,7 @@ bool CreateExecutor::DExecute() {
 
     // if query was for creating sequence
     case CreateType::SEQUENCE: {
-      LOG_DEBUG("in create executor: CreateType::SEQUENCE");
-      throw NotImplementedException(StringUtil::Format("Sequence not implemented!"));
+      result = CreateSequence(node);
       break;
     }
 
@@ -94,7 +94,6 @@ bool CreateExecutor::DExecute() {
 }
 
 bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
-
   auto txn = context_->GetTransaction();
   auto database_name = node.GetDatabaseName();
   ResultType result = catalog::Catalog::GetInstance()->CreateDatabase(
@@ -273,6 +272,33 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // FIXME: We are missing failure logic here!
   // We seem to be assuming that we will always succeed
   // in installing the trigger.
+
+  return (true);
+}
+
+bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
+  auto txn = context_->GetTransaction();
+  std::string database_name = node.GetDatabaseName();
+  std::string table_name = node.GetTableName();
+  std::string sequence_name = node.GetSequenceName();
+
+  auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
+      database_name, txn);
+
+  catalog::SequenceCatalog::GetInstance().InsertSequence(
+      database_object->GetDatabaseOid(), sequence_name,
+      node.GetSequenceIncrement(), node.GetSequenceMaxValue(),
+      node.GetSequenceMinValue(), node.GetSequenceStart(),
+      node.GetSequenceCycle(), pool_.get(), txn);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Creating sequence succeeded!");
+  } else if (txn->GetResult() == ResultType::FAILURE) {
+    LOG_TRACE("Creating sequence failed!");
+  } else {
+    LOG_TRACE("Result is: %s",
+              ResultTypeToString(txn->GetResult()).c_str());
+  }
 
   return (true);
 }

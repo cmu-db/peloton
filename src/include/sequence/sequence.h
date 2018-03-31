@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "common/logger.h"
 #include "planner/create_plan.h"
 #include "storage/tuple.h"
@@ -31,30 +33,29 @@ class Sequence {
   Sequence(const std::string &name,
           const int64_t seqstart, const int64_t seqincrement,
           const int64_t seqmax, const int64_t seqmin,
-          const int64_t seqcache, const bool seqcycle):
+          const bool seqcycle, const int64_t seqval):
           seq_name(name),
-          seqstart(seqstart),
-          seqincrement(seqincrement),
-          seqmax(seqmax),
-          seqmin(seqmin),
-          seqcache(seqcache),
-          seqcycle(seqcycle)
-          {
-            curr_val = seqstart;
-          }
+          seq_start(seqstart),
+          seq_increment(seqincrement),
+          seq_max(seqmax),
+          seq_min(seqmin),
+          seq_cycle(seqcycle),
+          seq_curr_val(seqval){};
 
   std::string seq_name;
-  int64_t seqstart;	// Start value of the sequence
-  int64_t seqincrement;	// Increment value of the sequence
-  int64_t seqmax;		// Maximum value of the sequence
-  int64_t seqmin;		// Minimum value of the sequence
-  int64_t seqcache;	// Cache size of the sequence
-  bool seqcycle;	// Whether the sequence cycles
+  int64_t seq_start;	// Start value of the sequence
+  int64_t seq_increment;	// Increment value of the sequence
+  int64_t seq_max;		// Maximum value of the sequence
+  int64_t seq_min;		// Minimum value of the sequence
+  int64_t seq_cache;	// Cache size of the sequence
+  bool seq_cycle;	// Whether the sequence cycles
 
+  std::mutex sequence_mutex; // mutex for all operations
   int64_t GetNextVal();
 
  private:
-  int64_t curr_val;
+  int64_t seq_curr_val;
+  int64_t get_next_val();
 };
 
 

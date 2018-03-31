@@ -59,7 +59,8 @@ enum class ExceptionType {
   SETTINGS = 23,          // settings related
   BINDER = 24,            // binder related
   NETWORK = 25,           // network related
-  OPTIMIZER = 26          // optimizer related
+  OPTIMIZER = 26,          // optimizer related
+  SEQUENCE = 27          // sequence related
 };
 
 class Exception : public std::runtime_error {
@@ -128,6 +129,8 @@ class Exception : public std::runtime_error {
         return "Settings";
       case ExceptionType::OPTIMIZER:
         return "Optimizer";
+      case ExceptionType::SEQUENCE:
+        return "Sequence";
       default:
         return "Unknown";
     }
@@ -461,6 +464,14 @@ class OptimizerException : public Exception {
  public:
   OptimizerException(std::string msg)
       : Exception(ExceptionType::OPTIMIZER, msg) {}
+};
+
+class SequenceException : public Exception {
+  SequenceException() = delete;
+
+ public:
+  SequenceException(std::string msg)
+      : Exception(ExceptionType::SEQUENCE, msg) {}
 };
 
 }  // namespace peloton
