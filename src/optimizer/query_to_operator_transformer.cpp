@@ -277,32 +277,23 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       }
     }
 
-    // vector below contains column ids of the columns mentioned in the insert statement
-    std::vector<oid_t> specified;
-    
+    // map below contains column names of the columns mapped to column objects, as mentioned in the insert statement
+    std::unordered_map<std::string, std::shared_ptr<catalog::ColumnCatalogObject> > specified;
+    auto column_names = target_table->GetColumnNames();
+
     for (const auto col : op->columns) {
-      auto found =
-          std::find_if(column_objects.begin(), column_objects.end(),
-                        [&col](const decltype(column_objects)::value_type &x) {
-                          return col == x.second->GetColumnName();
-                        });
-      if (found == column_objects.end()) {
+      if (column_names.find(col) == column_names.end()) {
         throw CatalogException(StringUtil::Format("ERROR:  column \"%s\" of relation \"%s\" does not exist", col.c_str(), target_table->GetTableName().c_str()));
       } else {
-        specified.push_back(found->first);
+        specified[col] = column_names[col];
       }
     }
 
-    int32_t index = 0;  // index for 'specified' vector
-    for (oid_t id = 0; id != column_objects.size(); ++id) {
+    for (auto column : column_names) {
       // this loop checks not null constraint for unspecified columns
-      if (id == specified[index]) {
-        index++;
-        continue;
-      }
-      if (column_objects[id]->IsNotNull()) {
+      if (specified.find(column.first) == specified.end() && column.second->IsNotNull()) {
         // TODO: Add check for default value's existence for the current column
-        throw CatalogException(StringUtil::Format("ERROR:  null value in column \"%s\" violates not-null constraint", column_objects[id]->GetColumnName().c_str()));
+        throw CatalogException(StringUtil::Format("ERROR:  null value in column \"%s\" violates not-null constraint", column.first.c_str()));
       }
     }
   }
