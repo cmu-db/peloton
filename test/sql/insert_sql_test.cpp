@@ -653,10 +653,12 @@ TEST_F(InsertSQLTests, BadInserts) {
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
 
-  // Insert a tuple with more target columns (implicit) than values, violating not null constraint for num3
+  // Insert a tuple with more target columns (implicit) than values, violating
+  // not null constraint for num3
   query = "INSERT INTO test VALUES(3, 4);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num3) VALUES(3);";
