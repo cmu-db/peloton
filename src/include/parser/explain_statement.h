@@ -15,7 +15,6 @@
 #include "parser/sql_statement.h"
 
 namespace peloton {
-
 namespace parser {
 
 /**
