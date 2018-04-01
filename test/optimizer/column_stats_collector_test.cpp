@@ -6,7 +6,7 @@
 //
 // Identification: test/optimizer/column_stats_collector_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,6 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 
-#define private public
 #define TEST_OID 0
 
 namespace peloton {

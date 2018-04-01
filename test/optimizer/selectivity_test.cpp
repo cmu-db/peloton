@@ -6,7 +6,7 @@
 //
 // Identification: test/optimizer/selectivity_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,8 +27,6 @@
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-
-#define private public
 
 namespace peloton {
 namespace test {

@@ -1,7 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// top_k_elements_test.cpp
+//
+// Identification: test/optimizer/top_k_elements_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "common/harness.h"
-
-#define private public
-
 #include "optimizer/stats/count_min_sketch.h"
 #include "optimizer/stats/top_k_elements.h"
 #include "common/logger.h"
@@ -28,8 +37,8 @@ TEST_F(TopKElementsTests, SimpleArrivalOnlyTest) {
   // test TopKElements
   const int k = 5;
   TopKElements top_k_elements(sketch, k);
-  EXPECT_EQ(top_k_elements.tkq.k, k);
-  EXPECT_EQ(top_k_elements.tkq.size, 0);
+  EXPECT_EQ(top_k_elements.tkq.get_k(), k);
+  EXPECT_EQ(top_k_elements.tkq.get_size(), 0);
 
   top_k_elements.Add(1, 10);
   top_k_elements.Add(2, 5);
@@ -43,14 +52,14 @@ TEST_F(TopKElementsTests, SimpleArrivalOnlyTest) {
   EXPECT_EQ(top_k_elements.cmsketch.EstimateItemCount(4), 1000000);
 
   // EXPECT_EQ(top_k_elements.cmsketch.size, 4);
-  EXPECT_EQ(top_k_elements.tkq.size, 4);
+  EXPECT_EQ(top_k_elements.tkq.get_size(), 4);
 
   top_k_elements.Add(5, 15);
   top_k_elements.Add("6", 20);
   top_k_elements.Add("7", 100);
   top_k_elements.Add("8", 1);
 
-  EXPECT_EQ(top_k_elements.tkq.size, 5);
+  EXPECT_EQ(top_k_elements.tkq.get_size(), 5);
   top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
 }
 
@@ -76,7 +85,7 @@ TEST_F(TopKElementsTests, SimpleArrivalAndDepartureTest) {
   top_k_elements.Add("7", 2);
   top_k_elements.Add("8", 1);
 
-  EXPECT_EQ(top_k_elements.tkq.size, k);
+  EXPECT_EQ(top_k_elements.tkq.get_size(), k);
   top_k_elements.PrintTopKQueueOrderedMaxFirst(10);
 
   top_k_elements.Remove(5, 14);
@@ -105,7 +114,7 @@ TEST_F(TopKElementsTests, LargeArrivalOnlyTest) {
   }
 
   top_k_elements.PrintOrderedMaxFirst(num0);
-  EXPECT_EQ(top_k_elements.tkq.size, k);
+  EXPECT_EQ(top_k_elements.tkq.get_size(), k);
   EXPECT_EQ(top_k_elements.GetOrderedMaxFirst(num0).size(), num0);
   EXPECT_EQ(top_k_elements.GetAllOrderedMaxFirst().size(), k);
 
