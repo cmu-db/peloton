@@ -14,7 +14,10 @@
 
 #include <cmath>
 
+#include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
+#include "expression/tuple_value_expression.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
 #include "optimizer/stats/cost.h"
@@ -50,14 +53,68 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
       StatsStorage::GetInstance()->GetTableStats(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid(), txn_));
-  if (table_stats->GetColumnCount() == 0 || table_stats->num_rows == 0) {
+  auto index_scan_rows = table_stats->num_rows;
+  if (table_stats->GetColumnCount() == 0 || index_scan_rows == 0) {
     output_cost_ = 0.f;
     return;
   }
+  auto index_object = op->table_->GetIndexObject(op->index_id);
+  const auto &key_attr_list = index_object->GetKeyAttrs();
+  // Loop over index to retrieve helpful index columns
+  // Right now only consider conjunctive equality predicates
+  // example : index cols (a, b, c) predicates(a=1 AND b=2 AND c=3)
+  // TODO(boweic): Add support for non equality predicate
+  // example1 : index cols (a, b, c) predicates(a<1 AND b<=2 and c<3)
+  // example2 : index cols (a, b, c) predicates(a=1 AND b>2 AND c>3)
+  for (size_t idx = 0; idx < key_attr_list.size(); ++idx) {
+    // If index cannot further reduce scan range, break
+    if (idx == op->key_column_id_list.size() ||
+        key_attr_list[idx] != op->key_column_id_list[idx]) {
+      break;
+    }
+    auto index_col_id = key_attr_list[idx];
+    // Find the predicate and update scan rows accordingly
+    for (auto &predicate : op->predicates) {
+      auto &expr = predicate.expr;
+      // TODO(boweic): support non equality predicates
+      if (expr->GetExpressionType() != ExpressionType::COMPARE_EQUAL) {
+        continue;
+      }
+      expression::AbstractExpression *tv_expr = nullptr;
+      if (expr->GetChild(0)->GetExpressionType() ==
+          ExpressionType::VALUE_TUPLE) {
+        auto r_type = expr->GetChild(1)->GetExpressionType();
+        if (r_type == ExpressionType::VALUE_CONSTANT ||
+            r_type == ExpressionType::VALUE_PARAMETER) {
+          tv_expr = expr->GetModifiableChild(0);
+        }
+      }
+      if (expr->GetChild(1)->GetExpressionType() ==
+          ExpressionType::VALUE_TUPLE) {
+        auto r_type = expr->GetChild(0)->GetExpressionType();
+        if (r_type == ExpressionType::VALUE_CONSTANT ||
+            r_type == ExpressionType::VALUE_PARAMETER) {
+          tv_expr = expr->GetModifiableChild(1);
+        }
+      }
+      if (tv_expr == nullptr) {
+        continue;
+      }
+      auto column_ref =
+          reinterpret_cast<expression::TupleValueExpression *>(tv_expr);
+      auto column_id = op->table_->GetColumnObject(column_ref->GetColumnName())
+                           ->GetColumnId();
+      if (column_id != index_col_id) {
+        continue;
+      }
+      // update selectivity here
+      index_scan_rows *=
+          util::CalculateSelectivityForPredicate(table_stats, expr.get());
+    }
+  }
   // Index search cost + scan cost
   output_cost_ = std::log2(table_stats->num_rows) * DEFAULT_INDEX_TUPLE_COST +
-                 memo_->GetGroupByID(gexpr_->GetGroupID())->GetNumRows() *
-                     DEFAULT_TUPLE_COST;
+                 index_scan_rows * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {
   output_cost_ = 0.f;
@@ -88,7 +145,8 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
   auto right_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-  // TODO(boweic): Build (left) table should have different cost to probe table
+  // TODO(boweic): Build (left) table should have different cost to probe
+  // table
   output_cost_ = (left_child_rows + right_child_rows) * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}
