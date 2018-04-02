@@ -88,7 +88,7 @@ function install_tf() {
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
     MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
-
+    MINOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 2)
     # Fix for LLVM-3.7 on Ubuntu 14 + 17
     if [ "$MAJOR_VER" == "14" -o "$MAJOR_VER" == "17" ]; then
         if [ "$MAJOR_VER" == "14" ]; then
@@ -132,7 +132,11 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
 	TF_VERSION="1.5.0"
-        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
+	    if [ "$MINOR_VER" == "10"]; then
+            TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
+        elif [ "$MINOR_VER" == "04"]; then
+            TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
+        fi
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo ldconfig"
