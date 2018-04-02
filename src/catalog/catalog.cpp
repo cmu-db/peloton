@@ -25,6 +25,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/sequence_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
@@ -148,12 +149,13 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);  
+  QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
-  
+  SequenceCatalog::GetInstance(txn);
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
@@ -1106,28 +1108,28 @@ void Catalog::InitializeFunctions() {
        * integer functions
        */
       AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},

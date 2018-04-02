@@ -277,6 +277,7 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
 }
 
 bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
+  LOG_DEBUG("In create executor: sequence");
   auto txn = context_->GetTransaction();
   std::string database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
@@ -292,11 +293,11 @@ bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
       node.GetSequenceCycle(), pool_.get(), txn);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Creating sequence succeeded!");
+    LOG_DEBUG("Creating sequence succeeded!");
   } else if (txn->GetResult() == ResultType::FAILURE) {
-    LOG_TRACE("Creating sequence failed!");
+    LOG_DEBUG("Creating sequence failed!");
   } else {
-    LOG_TRACE("Result is: %s",
+    LOG_DEBUG("Result is: %s",
               ResultTypeToString(txn->GetResult()).c_str());
   }
 

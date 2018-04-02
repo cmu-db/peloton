@@ -44,7 +44,7 @@ SequenceCatalog::SequenceCatalog(concurrency::TransactionContext *txn)
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, SEQUENCE_CATALOG_NAME,
       {ColumnId::DATABSE_OID, ColumnId::SEQUENCE_NAME},
-      SEQUENCE_CATALOG_NAME "_skey0", true, IndexType::BWTREE, txn);
+      SEQUENCE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 SequenceCatalog::~SequenceCatalog() {}
@@ -54,6 +54,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
                     int64_t seq_start, bool seq_cycle,
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn){
+  LOG_DEBUG("In Insert Sequence Mode");
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -76,7 +77,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
   tuple->SetValue(ColumnId::SEQUENCE_MIN, val5, pool);
   tuple->SetValue(ColumnId::SEQUENCE_START, val6, pool);
   tuple->SetValue(ColumnId::SEQUENCE_CYCLE, val7, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_VALUE, val7, pool);
+  tuple->SetValue(ColumnId::SEQUENCE_VALUE, val8, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -87,7 +88,7 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
                         concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to drop sequence: %s",
-              table_name.c_str());
+              database_name.c_str());
     return ResultType::FAILURE;
   }
 
@@ -141,7 +142,7 @@ std::unique_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on sequence %d and %s", database_oid, sequence_name.c_str());
+    LOG_INFO("no sequence on database %d and %s", database_oid, sequence_name.c_str());
     return std::unique_ptr<sequence::Sequence>(nullptr);
   } else {
     LOG_INFO("size of the result tiles = %lu", result_tiles->size());
@@ -151,7 +152,7 @@ std::unique_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
   for (unsigned int i = 0; i < result_tiles->size(); i++) {
     size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
     for (size_t j = 0; j < tuple_count; j++) {
-      // create a new trigger instance
+      // create a new sequence instance
       std::unique_ptr<sequence::Sequence> new_sequence =
        std::make_unique<sequence::Sequence>(
           (*result_tiles)[i]->GetValue(j, 0).ToString(),

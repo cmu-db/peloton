@@ -53,6 +53,9 @@ class Sequence {
   std::mutex sequence_mutex; // mutex for all operations
   int64_t GetNextVal();
 
+  // should only be used in test.
+  int64_t GetCurrVal() {return seq_curr_val;};
+
  private:
   int64_t seq_curr_val;
   int64_t get_next_val();
