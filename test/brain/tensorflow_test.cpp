@@ -105,7 +105,6 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
 
   Eigen::VectorXf train_loss_avg = Eigen::VectorXf::Zero(LOG_INTERVAL);
   float prev_train_loss = 10.0;
-  float prev_valid_loss = 10.0;
   for (int epoch = 1; epoch <= epochs; epoch++) {
     auto train_loss = model.TrainEpoch(train_data);
     int idx = (epoch - 1) % LOG_INTERVAL;
@@ -119,7 +118,6 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
       EXPECT_LE(train_loss, prev_train_loss);
       LOG_DEBUG("Train Loss: %.5f, Valid Loss: %.5f",
                 train_loss, val_loss);
-      prev_valid_loss = val_loss;
       prev_train_loss = train_loss;
     }
   }

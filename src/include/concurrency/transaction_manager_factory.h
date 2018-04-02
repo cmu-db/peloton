@@ -38,10 +38,25 @@ class TransactionManagerFactory {
     conflict_avoidance_ = conflict;
   }
 
+  /**
+   * @brief      Gets the protocol.
+   *
+   * @return     The protocol.
+   */
   static ProtocolType GetProtocol() { return protocol_; }
 
+  /**
+   * @brief      Gets the isolation level.
+   *
+   * @return     The isolation level.
+   */
   static IsolationLevelType GetIsolationLevel() { return isolation_level_; }
 
+  /**
+   * @brief      Gets the conflict avoidance type.
+   *
+   * @return     The conflict avoidance type.
+   */
   static ConflictAvoidanceType GetConflictAvoidanceType() { return conflict_avoidance_; }
 
  private:
