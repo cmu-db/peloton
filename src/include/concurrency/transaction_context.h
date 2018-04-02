@@ -25,6 +25,7 @@
 #include "common/internal_types.h"
 #include "logging/log_buffer.h"
 #include "logging/wal_log_manager.h"
+#include "threadpool/logger_queue_pool.h"
 
 namespace peloton {
 
@@ -77,6 +78,8 @@ class TransactionContext : public Printable {
 
   inline uint64_t GetTimestamp() const { return timestamp_; }
 
+  inline int GetLogToken() const { return log_token_; }
+
   inline logging::LogBuffer* GetLogBuffer() const { return log_buffer_; }
 
   inline const std::vector<std::string>& GetQueryStrings() const {
@@ -85,6 +88,7 @@ class TransactionContext : public Printable {
   inline void ResetLogBuffer() {
     log_buffer_ = new logging::LogBuffer(logging::LogManager::GetInstance().GetTransactionBufferSize());
   }
+
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
@@ -217,6 +221,7 @@ class TransactionContext : public Printable {
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
+  int log_token_;
   logging::LogBuffer *log_buffer_;
 };
 

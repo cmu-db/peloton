@@ -6,6 +6,7 @@
 
 #include <deque>
 
+#include "common/container/lock_free_queue.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
 #include "logging/wal_log_manager.h"
@@ -13,22 +14,13 @@
 
 
 namespace peloton {
-
-namespace storage {
-    class TileGroupHeader;
-}
-
 namespace logging {
 
-
+using LogToken = peloton::ProducerToken;
 
 class WalLogger {
-private:
-    struct logger_callback{
-
-    };
-
 public:
+
 
   WalLogger() {
       disk_buffer_ = new LogBuffer(LogManager::GetLoggerBufferSize());
@@ -38,14 +30,11 @@ public:
 
   bool IsFlushNeeded(bool pending_buffers);
   void FlushToDisk();
-  void AppendLogBuffer(LogBuffer *buffer);
+  void PerformCompaction(LogBuffer *buffer);
 
 private:
   LogBuffer *disk_buffer_;
   std::deque<std::pair<CallbackFunction, void *>> callbacks_;
-
 };
 }
 }
-
-

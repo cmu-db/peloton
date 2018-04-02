@@ -89,6 +89,7 @@ void TransactionContext::Init(const size_t thread_id,
 
   on_commit_triggers_.reset();
 
+  log_token_ =  threadpool::LoggerQueuePool::GetInstance().GetLogToken();
   ResetLogBuffer();
 }
 
