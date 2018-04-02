@@ -16,8 +16,6 @@ namespace logging{
 
 bool WalLogger::IsFlushNeeded(bool pending_buffers){
 
-
-
   /* if the disk buffer is full then we flush to the disk
    * irrespective of whether there are pending callbacks
    */
@@ -59,7 +57,7 @@ void WalLogger::FlushToDisk(){
 }
 
 
-void WalLogger::AppendLogBuffer(LogBuffer *log_buffer){
+void WalLogger::PerformCompaction(LogBuffer *log_buffer){
 
   if(nullptr==log_buffer)
     PL_ASSERT(false);
@@ -77,11 +75,5 @@ void WalLogger::AppendLogBuffer(LogBuffer *log_buffer){
 
 
 }
-
-
-
-
-
-
 }
 }

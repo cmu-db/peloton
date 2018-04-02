@@ -508,9 +508,9 @@ void TimestampOrderingTransactionManager::PerformInsert(
     if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
       LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
-
       /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+          current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
       /* allocate a new buffer for the current transaction */
       current_txn->ResetLogBuffer();
@@ -618,7 +618,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
       LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
       /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+          current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
       /* allocate a new buffer for the current transaction */
       current_txn->ResetLogBuffer();
@@ -674,7 +675,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
       LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
       /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+          current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
       /* allocate a new buffer for the current transaction */
       current_txn->ResetLogBuffer();
@@ -779,7 +781,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
     LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
     /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+        current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
     /* allocate a new buffer for the current transaction */
     current_txn->ResetLogBuffer();
@@ -834,7 +837,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
     LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
     /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+        current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
     /* allocate a new buffer for the current transaction */
     current_txn->ResetLogBuffer();
@@ -865,9 +869,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  //auto &log_manager = logging::LogManager::GetInstance();
-
-  //log_manager.StartLogging();
 
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
@@ -944,8 +945,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_UPDATE;
 
-        //log_manager.LogUpdate(new_version);
-
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -977,8 +976,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_DELETE;
 
-        //log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
-
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
@@ -992,8 +989,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // nothing to be added to gc set.
-
-        //log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -1019,9 +1014,26 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   ResultType result = current_txn->GetResult();
 
-  //log_manager.LogEnd();
-
   EndTransaction(current_txn);
+
+  ItemPointer placeholder;
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TRANSACTION_COMMIT, placeholder, current_txn->GetEpochId(),
+          current_txn->GetTransactionId(), current_txn->GetCommitId());
+
+  current_txn->GetLogBuffer()->WriteRecord(record);
+
+  if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+        current_txn->GetLogToken(), current_txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    current_txn->ResetLogBuffer();
+  }
 
   // Increment # txns committed metric
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=

@@ -25,7 +25,7 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
       pause_time = std::min(pause_time * 2, kMaxPauseTime);
     } else {
 
-      logger.AppendLogBuffer(log_buffer);
+      logger.PerformCompaction(log_buffer);
 
       if(logger.IsFlushNeeded(logger_queue->IsEmpty())){
         logger.FlushToDisk();
