@@ -96,6 +96,7 @@ class Manager {
 
   tbb::concurrent_unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
       tile_group_locator_;
+  static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 
   //===--------------------------------------------------------------------===//
   // Data members for indirection array allocation
@@ -105,6 +106,7 @@ class Manager {
   tbb::concurrent_unordered_map<oid_t,
                                 std::shared_ptr<storage::IndirectionArray>>
       indirection_array_locator_;
+  static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 
 }  // namespace catalog

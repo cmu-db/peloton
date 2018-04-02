@@ -21,6 +21,10 @@
 namespace peloton {
 namespace catalog {
 
+std::shared_ptr<storage::TileGroup> Manager::empty_tile_group_;
+
+std::shared_ptr<storage::IndirectionArray> Manager::empty_indirection_array_;
+
 Manager &Manager::GetInstance() {
   static Manager manager;
   return manager;
@@ -33,22 +37,20 @@ Manager &Manager::GetInstance() {
 void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
   // add/update the catalog reference to the tile group
-  auto value = tbb::concurrent_unordered_map<
-      oid_t, std::shared_ptr<storage::TileGroup>>::value_type(oid, location);
-  auto ret = tile_group_locator_.insert(value);
-  if (!ret.second) {
-    tile_group_locator_.find(oid)->second = location;
-  }
+  tile_group_locator_[oid] = location;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   // drop the catalog reference to the tile group
-  tile_group_locator_.unsafe_erase(oid);
+  tile_group_locator_[oid] = empty_tile_group_;
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  auto location = tile_group_locator_.find(oid)->second;
-  return location;
+  auto iter = tile_group_locator_.find(oid);
+  if (iter == tile_group_locator_.end()) {
+    return empty_tile_group_;
+  }
+  return iter->second;
 }
 
 // used for logging test
@@ -57,18 +59,12 @@ void Manager::ClearTileGroup() { tile_group_locator_.clear(); }
 void Manager::AddIndirectionArray(
     const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
   // add/update the catalog reference to the indirection array
-  auto value = tbb::concurrent_unordered_map<
-      oid_t, std::shared_ptr<storage::IndirectionArray>>::value_type(oid,
-                                                                     location);
-  auto ret = indirection_array_locator_.insert(value);
-  if (!ret.second) {
-    indirection_array_locator_.find(oid)->second = location;
-  }
+  auto ret = indirection_array_locator_[oid] = location;
 }
 
 void Manager::DropIndirectionArray(const oid_t oid) {
   // drop the catalog reference to the tile group
-  indirection_array_locator_.unsafe_erase(oid);
+  indirection_array_locator_[oid] = empty_indirection_array_;
 }
 
 // used for logging test

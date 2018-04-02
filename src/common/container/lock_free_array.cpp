@@ -100,7 +100,6 @@ bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 void LOCK_FREE_ARRAY_TYPE::Clear() {
-  // Set invalid value for all elements
   lock_free_array.clear();
 }
 
