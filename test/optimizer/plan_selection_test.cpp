@@ -74,6 +74,7 @@ class PlanSelectionTest : public PelotonTest {
     std::unique_ptr<parser::SQLStatementList> &stmt(raw_stmt);
 
     optimizer::Optimizer optimizer;
+    optimizer.SetWorstCase(false);
 
     // Create and populate tables
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -112,6 +113,29 @@ class PlanSelectionTest : public PelotonTest {
     std::stringstream ss;
     ss << "ANALYZE " << table_name << ";";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
+  }
+
+
+  void PrintPlan(std::shared_ptr<planner::AbstractPlan> plan, int level = 0) {
+    PrintPlan(plan.get(), level);
+  }
+
+  void PrintPlan(planner::AbstractPlan* plan, int level = 0) {
+    auto spacing = std::string(level, '\t');
+
+    if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
+      auto scan = dynamic_cast<planner::AbstractScan *>(plan);
+      LOG_DEBUG("%s%s(%s)", spacing.c_str(),
+                scan->GetInfo().c_str(), scan->GetTable()->GetName().c_str());
+    } else {
+      LOG_DEBUG("%s%s", spacing.c_str(), plan->GetInfo().c_str());
+    }
+
+    for (size_t i = 0; i < plan->GetChildren().size(); i++) {
+      PrintPlan(plan->GetChildren()[0].get(), level + 1);
+    }
+
+    return;
   }
 
  private:
@@ -156,6 +180,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
 
   auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
       table_1_name, table_2_name, column_1_name, column_1_name));
+
+  PrintPlan(plan);
 
   EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP ||
               plan->GetPlanNodeType() == PlanNodeType::NESTLOOPINDEX ||

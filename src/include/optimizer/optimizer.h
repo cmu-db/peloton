@@ -83,6 +83,10 @@ class Optimizer : public AbstractOptimizer {
 
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
+  void SetWorstCase(bool flag) {worst_case_ = flag; }
+
+  bool DoWorstCase() { return worst_case_; }
+
   /* For test purposes only */
   std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
   concurrency::TransactionContext *txn) {
@@ -93,7 +97,6 @@ class Optimizer : public AbstractOptimizer {
                         std::shared_ptr<OptimizeContext> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
-
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
    *CREATE), set
@@ -153,6 +156,7 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
+  bool worst_case_ = false;
 };
 
 }  // namespace optimizer

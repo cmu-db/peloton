@@ -86,9 +86,14 @@ class OptimizerTask {
 
   virtual ~OptimizerTask(){};
 
+  void SetWorstCase(bool flag) { worst_case_ = flag; }
+
+  bool DoWorstCase() { return worst_case_; }
+
  protected:
   OptimizerTaskType type_;
   std::shared_ptr<OptimizeContext> context_;
+  bool worst_case_ = false;
 };
 
 /**

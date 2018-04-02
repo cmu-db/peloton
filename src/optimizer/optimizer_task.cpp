@@ -291,7 +291,7 @@ void OptimizeInputs::execute() {
       // Compute the cost of the root operator
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
-      CostCalculator cost_calculator;
+      CostCalculator cost_calculator(DoWorstCase());
       cur_total_cost_ += cost_calculator.CalculateCost(
           group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
@@ -366,7 +366,7 @@ void OptimizeInputs::execute() {
           // Cost the enforced expression
           auto extended_prop_set =
               std::make_shared<PropertySet>(extended_output_properties);
-          CostCalculator cost_calculator;
+          CostCalculator cost_calculator(DoWorstCase());
           cur_total_cost_ += cost_calculator.CalculateCost(
               memo_enforced_expr, &context_->metadata->memo,
               context_->metadata->txn);
