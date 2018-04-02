@@ -67,11 +67,10 @@ function install_protobuf3.4.0() {
 # Utility function for installing tensorflow components of python/C++
 function install_tf() {
  TFCApiFile=$1
- TFBinaryURL=$2
- LinkerConfigCmd=$3
+ LinkerConfigCmd=$2
  TARGET_DIRECTORY="/usr/local"
  # Install Tensorflow Python Binary
- sudo -E pip3 install --upgrade ${TFBinaryURL}
+ sudo -E pip3 install tensorflow==${TF_VERSION}
 
  # Install C-API
  TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
@@ -172,7 +171,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## DEBIAN
@@ -248,7 +247,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "fedora"        
     # Install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## REDHAT
@@ -353,7 +352,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew upgrade python
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## UNKNOWN
