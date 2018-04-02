@@ -176,5 +176,25 @@ void Database::setDBName(const std::string &database_name) {
   Database::database_name = database_name;
 }
 
+storage::DataTable *Database::ReplaceTableWithOid(
+    const oid_t table_oid, storage::DataTable *new_table) {
+  {
+    std::lock_guard<std::mutex> lock(database_mutex);
+
+    oid_t table_offset = 0;
+    for (auto table : tables) {
+      if (table->GetOid() == table_oid) {
+        break;
+      }
+      table_offset++;
+    }
+    PL_ASSERT(table_offset < tables.size());
+
+    auto old_table = tables.at(table_offset);
+    tables[table_offset] = new_table;
+    return old_table;
+  }
+}
+
 }  // namespace storage
 }  // namespace peloton
