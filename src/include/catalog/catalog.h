@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
+#include "catalog/column_catalog.h"
 #include "function/functions.h"
 
 namespace peloton {
@@ -189,6 +190,29 @@ class Catalog {
    * Using database oid to get system catalog object
    */
   std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
+  //===--------------------------------------------------------------------===//
+  // ALTER TABLE
+  //===--------------------------------------------------------------------===//
+  ResultType AlterTable(oid_t database_oid, oid_t table_oid,
+                        std::unique_ptr<catalog::Schema> new_schema,
+                        concurrency::TransactionContext *txn);
+
+  ResultType AddColumn(const std::string &database_name,
+                       const std::string &table_name,
+                       const std::vector<Column> &columns,
+                       concurrency::TransactionContext *txn);
+
+  ResultType DropColumn(const std::string &database_name,
+                        const std::string &table_name,
+                        const std::vector<Column> &columns,
+                        concurrency::TransactionContext *txn);
+
+  ResultType ChangeColumnName(const std::string &database_name,
+                              const std::string &table_name,
+                              const std::vector<Column> &old_columns,
+                              const std::vector<std::string> &names,
+                              concurrency::TransactionContext *txn);
+
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
