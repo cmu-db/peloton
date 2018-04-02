@@ -109,7 +109,7 @@ void InnerJoinAssociativity::Transform(
   auto middle = children[0]->Children()[1];
   auto right = children[1];
 
-  LOG_TRACE("Reordered join structured: (%s JOIN %s) JOIN %s",
+  LOG_DEBUG("Reordered join structured: (%s JOIN %s) JOIN %s",
             left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
             right->Op().GetName().c_str());
 
