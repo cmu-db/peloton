@@ -25,8 +25,6 @@
 namespace peloton {
 namespace concurrency {
 
-// timestamp ordering requires a spinlock field for protecting the atomic access
-// to txn_id field and last_reader_cid field.
 common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -34,9 +32,6 @@ common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpin
             (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
-// in timestamp ordering, the last_reader_cid records the timestamp of the last
-// transaction
-// that reads the tuple.
 cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -73,7 +68,6 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   }
 }
 
-// Initiate reserved area of a tuple
 void TimestampOrderingTransactionManager::InitTupleReserved(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t tuple_id) {
@@ -94,7 +88,6 @@ TimestampOrderingTransactionManager::GetInstance(
   return txn_manager;
 }
 
-// check whether the current transaction owns the tuple version.
 bool TimestampOrderingTransactionManager::IsOwner(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -104,7 +97,6 @@ bool TimestampOrderingTransactionManager::IsOwner(
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// check whether any other transaction owns the tuple version.
 bool TimestampOrderingTransactionManager::IsOwned(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -115,19 +107,6 @@ bool TimestampOrderingTransactionManager::IsOwned(
          tuple_txn_id != INITIAL_TXN_ID;
 }
 
-// This method tests whether the current transaction has
-// created this version of the tuple
-//
-// this method is designed for select_for_update.
-//
-// The DBMS can acquire write locks for a transaction in two cases:
-// (1) Every time a transaction updates a tuple, the DBMS creates
-//     a new version of the tuple and acquire the locks on both
-//     the older and the newer version;
-// (2) Every time a transaction executes a select_for_update statement,
-//     the DBMS needs to acquire the lock on the corresponding version
-//     without creating a new version.
-// IsWritten() method is designed for distinguishing these two cases.
 bool TimestampOrderingTransactionManager::IsWritten(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -137,9 +116,6 @@ bool TimestampOrderingTransactionManager::IsWritten(
   return tuple_begin_cid == MAX_CID;
 }
 
-// if the tuple is not owned by any transaction and is visible to current
-// transaction.
-// the version must be the latest version in the version chain.
 bool TimestampOrderingTransactionManager::IsOwnable(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -183,12 +159,6 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   }
 }
 
-// release write lock on a tuple.
-// one example usage of this method is when a tuple is acquired, but operation
-// (insert,update,delete) can't proceed, the executor needs to yield the
-// ownership before return false to upper layer.
-// It should not be called if the tuple is in the write set as commit and abort
-// will release the write lock anyway.
 void TimestampOrderingTransactionManager::YieldOwnership(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -582,7 +552,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   }
 }
 
-// NOTE: this function is deprecated.
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn UNUSED_ATTRIBUTE,
     const ItemPointer &location) {
