@@ -31,7 +31,7 @@ class InsertStatement;
 namespace planner {
 
 // mapping from schema columns to insert columns
-struct schema_cols_to_insert_cols {
+struct SchemaColsToInsertCols {
   // this schema column is present in the insert columns
   bool in_insert_cols;
   
@@ -77,10 +77,16 @@ class InsertPlan : public AbstractPlan {
     tuples_.push_back(std::move(tuple));
   }
 
-  // Construct with specific values
-  InsertPlan(storage::DataTable *table, const std::vector<std::string> *columns,
-             const std::vector<std::vector<std::unique_ptr<
-                 expression::AbstractExpression>>> *insert_values);
+  /**
+   * @brief Create an insert plan with specific values
+   *
+   * @param[in] table          Table to insert into
+   * @param[in] columns        Columns to insert into
+   * @param[in] insert_values  Values
+   */
+  InsertPlan(storage::DataTable *table,
+	     const std::vector<std::string> *columns,
+             const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *insert_values);
 
   // Get a varlen pool - will construct the pool only if needed
   type::AbstractPool *GetPlanPool();
@@ -88,14 +94,54 @@ class InsertPlan : public AbstractPlan {
   PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::INSERT; };
 
+  /** 
+   * Lookup a column name in the schema columns
+   * 
+   * @param[in]  col_name    column name, from insert statement
+   * @param[in]  tbl_columns table columns from the schema
+   * @param[out] index       index into schema columns, only if found
+   *
+   * @return      true if column was found, false otherwise
+   */
   bool FindSchemaColIndex(std::string col_name,
 			  const std::vector<catalog::Column> &tbl_columns,
 			  uint32_t &index);
 
+  /**
+   * Process column specification supplied in the insert statement.
+   * Construct a map from insert columns to schema columns. Once
+   * we know which columns will receive constant inserts, further
+   * adjustment of the map will be needed.
+   *
+   * @param[in] columns        Column specification
+   */
   void ProcessColumnSpec(const std::vector<std::string> *columns);
+
+  /** 
+   * Set default value into a schema column
+   * 
+   * @param[in] idx  schema column index
+   */
   void SetDefaultValue(uint32_t idx);
+
+  /**
+   * @brief Save values for jdbc prepared statement insert.
+   *    Only a single tuple is presented to this function.
+   *
+   * @param[in] values  Values for insertion
+   */
   void SetParameterValues(std::vector<type::Value> *values) override;
 
+  /**
+   * Process a single expression to be inserted.
+   *
+   * @param[in] expr       insert expression
+   * @param[in] schema_idx index into schema columns, where the expr
+   *                       will be inserted.
+   * @return  true if values imply a prepared statement
+   *          false if all values are constants. This does not rule
+   *             out the insert being a prepared statement.
+   */
   bool ProcessValueExpr(expression::AbstractExpression *expr,
 			uint32_t schema_idx);
   /* 
@@ -156,9 +202,9 @@ class InsertPlan : public AbstractPlan {
   std::vector<type::Value> values_;
 
   // mapping from schema columns to vector of insert columns
-  std::vector<struct schema_cols_to_insert_cols> stov_;
+  std::vector<struct SchemaColsToInsertCols> schema_to_insert_;
   // mapping from insert columns to schema columns
-  std::vector<uint32_t> vtos_;  
+  std::vector<uint32_t> insert_to_schema_;  
 
   // Projection Info
   std::unique_ptr<const planner::ProjectInfo> project_info_;
