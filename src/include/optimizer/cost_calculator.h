@@ -21,6 +21,9 @@ class Memo;
 // Derive cost for a physical group expressionh
 class CostCalculator : public OperatorVisitor {
  public:
+
+  CostCalculator(bool worst_case = false) : worst_case_(worst_case) {}
+
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
                        concurrency::TransactionContext *txn);
 
@@ -47,6 +50,8 @@ class CostCalculator : public OperatorVisitor {
   void Visit(const PhysicalDistinct *) override;
   void Visit(const PhysicalAggregate *) override;
 
+  bool DoWorstCase() { return worst_case_; }
+
  private:
   double HashCost();
   double SortCost();
@@ -56,6 +61,7 @@ class CostCalculator : public OperatorVisitor {
   Memo *memo_;
   concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
+  bool worst_case_ = false;
 };
 
 }  // namespace optimizer

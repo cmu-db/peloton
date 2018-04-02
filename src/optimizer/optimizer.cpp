@@ -363,6 +363,7 @@ void Optimizer::ExecuteTaskStack(
     }
     timer.Reset();
     auto task = task_stack.Pop();
+    task->SetWorstCase(DoWorstCase());
     task->execute();
     timer.Stop();
   }
