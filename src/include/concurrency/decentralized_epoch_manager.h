@@ -66,7 +66,7 @@ public:
    */
   virtual void Reset(const uint64_t current_epoch_id) override {
     // epoch should be always larger than 0
-    PL_ASSERT(current_epoch_id != 0);
+    PELOTON_ASSERT(current_epoch_id != 0);
     current_global_epoch_id_ = current_epoch_id;
     next_txn_id_ = 0;
     snapshot_global_epoch_id_ = 1;
@@ -198,7 +198,7 @@ private:
 
   void Running() {
 
-    PL_ASSERT(is_running_ == true);
+    PELOTON_ASSERT(is_running_ == true);
 
     while (is_running_ == true) {
       // the epoch advances every EPOCH_LENGTH milliseconds.

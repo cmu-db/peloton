@@ -43,7 +43,7 @@ TEST_F(StorageManagerTests, BasicTest) {
       auto location = backend_manager.Allocate(backend_type, length);
 
       // Fill it up
-      PL_MEMSET(location, '-', length);
+      PELOTON_MEMSET(location, '-', length);
 
       // Sync
       backend_manager.Sync(backend_type, location, length);

@@ -23,10 +23,10 @@ type::Value TupleValueExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
   if (tuple_idx_ == 0) {
-    PL_ASSERT(tuple1 != nullptr);
+    PELOTON_ASSERT(tuple1 != nullptr);
     return (tuple1->GetValue(value_idx_));
   } else {
-    PL_ASSERT(tuple2 != nullptr);
+    PELOTON_ASSERT(tuple2 != nullptr);
     return (tuple2->GetValue(value_idx_));
   }
 }
@@ -35,7 +35,7 @@ void TupleValueExpression::PerformBinding(
     const std::vector<const planner::BindingContext *> &binding_contexts) {
   const auto &context = binding_contexts[GetTupleId()];
   ai_ = context->Find(GetColumnId());
-  PL_ASSERT(ai_ != nullptr);
+  PELOTON_ASSERT(ai_ != nullptr);
   LOG_TRACE("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
             GetColumnId(), ai_, ai_->name.c_str());
 }
