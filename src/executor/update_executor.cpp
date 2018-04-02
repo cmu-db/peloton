@@ -41,17 +41,17 @@ UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(target_table_ == nullptr);
-  PL_ASSERT(project_info_ == nullptr);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(target_table_ == nullptr);
+  PELOTON_ASSERT(project_info_ == nullptr);
 
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   project_info_ = node.GetProjectInfo();
 
-  PL_ASSERT(target_table_);
-  PL_ASSERT(project_info_);
+  PELOTON_ASSERT(target_table_);
+  PELOTON_ASSERT(project_info_);
 
   return true;
 }
@@ -145,8 +145,8 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DExecute() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(executor_context_);
 
   // We are scanning over a logical tile.
   LOG_TRACE("Update executor :: 1 child ");

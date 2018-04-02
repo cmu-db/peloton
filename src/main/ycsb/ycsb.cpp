@@ -76,12 +76,12 @@ void RunBenchmark() {
 
   // join all gc threads
   for (auto &gc_thread : gc_threads) {
-    PL_ASSERT(gc_thread != nullptr);
+    PELOTON_ASSERT(gc_thread != nullptr);
     gc_thread->join();
   }
 
   // join epoch thread
-  PL_ASSERT(epoch_thread != nullptr);
+  PELOTON_ASSERT(epoch_thread != nullptr);
   epoch_thread->join();
 
   // Emit throughput

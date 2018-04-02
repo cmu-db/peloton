@@ -507,13 +507,13 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     stats::QueryMetric::QueryParamBuf param_format_buf;
     param_format_buf.len = format_buf_len;
     param_format_buf.buf = PacketCopyBytes(format_buf_begin, format_buf_len);
-    PL_ASSERT(format_buf_len > 0);
+    PELOTON_ASSERT(format_buf_len > 0);
 
     // Make a copy of value for stat collection
     stats::QueryMetric::QueryParamBuf param_val_buf;
     param_val_buf.len = val_buf_len;
     param_val_buf.buf = PacketCopyBytes(val_buf_begin, val_buf_len);
-    PL_ASSERT(val_buf_len > 0);
+    PELOTON_ASSERT(val_buf_len > 0);
 
     param_stat.reset(new stats::QueryMetric::QueryParams(
         param_format_buf, param_type_buf, param_val_buf, num_params));
@@ -602,7 +602,7 @@ size_t PostgresProtocolHandler::ReadParamValue(
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       } else {
         // BINARY mode
         PostgresValueType pg_value_type =
@@ -659,7 +659,7 @@ size_t PostgresProtocolHandler::ReadParamValue(
             for (size_t i = 0; i < sizeof(double); ++i) {
               buf = (buf << 8) | param[i];
             }
-            PL_MEMCPY(&float_val, &buf, sizeof(double));
+            PELOTON_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters[param_idx] = std::make_pair(
                 type::TypeId::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
@@ -682,7 +682,7 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       }
     }
   }
@@ -882,7 +882,7 @@ bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
     }
   }
 
-  PL_ASSERT(rpkt.header_parsed == true);
+  PELOTON_ASSERT(rpkt.header_parsed == true);
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents

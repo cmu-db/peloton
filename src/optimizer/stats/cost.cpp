@@ -28,8 +28,8 @@ namespace optimizer {
 //     const std::shared_ptr<TableStats> &input_stats,
 //     const ValueCondition &condition,
 //     std::shared_ptr<TableStats> &output_stats) {
-//   // PL_ASSERT(input_stats != nullptr);
-//   // PL_ASSERT(condition != nullptr);
+//   // PELOTON_ASSERT(input_stats != nullptr);
+//   // PELOTON_ASSERT(condition != nullptr);
 //
 //   UpdateConditionStats(input_stats, condition, output_stats);
 //
@@ -56,9 +56,9 @@ namespace optimizer {
 //                                    const size_t num_rows,
 //                                    const ExpressionType type,
 //                                    std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(lhs != nullptr);
-//   PL_ASSERT(rhs != nullptr);
-//   PL_ASSERT(num_rows > 0);
+//   PELOTON_ASSERT(lhs != nullptr);
+//   PELOTON_ASSERT(rhs != nullptr);
+//   PELOTON_ASSERT(num_rows > 0);
 //
 //   size_t num_tuples = 1;
 //   double sel1 = lhs->num_rows / static_cast<double>(num_rows);
@@ -89,8 +89,8 @@ namespace optimizer {
 // double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 //                              std::vector<std::string> columns,
 //                              std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats);
-//   PL_ASSERT(columns.size() > 0);
+//   PELOTON_ASSERT(input_stats);
+//   PELOTON_ASSERT(columns.size() > 0);
 //
 //   //    if (output_stats != nullptr) {
 //   if (false) {
@@ -114,7 +114,7 @@ namespace optimizer {
 // double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 //                              std::vector<std::string> columns,
 //                              std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats);
+//   PELOTON_ASSERT(input_stats);
 //
 //   if (output_stats != nullptr) {
 //     output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
@@ -132,7 +132,7 @@ namespace optimizer {
 // double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
 //                           std::string column_name,
 //                           std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats);
+//   PELOTON_ASSERT(input_stats);
 //
 //   if (output_stats != nullptr) {
 //     // update number of rows to be number of unique element of column
@@ -147,7 +147,7 @@ namespace optimizer {
 // double Cost::ProjectCost(const std::shared_ptr<TableStats> &input_stats,
 //                          UNUSED_ATTRIBUTE std::vector<oid_t> columns,
 //                          std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats);
+//   PELOTON_ASSERT(input_stats);
 //
 //   if (output_stats != nullptr) {
 //     // update column information for output_stats table
@@ -162,7 +162,7 @@ namespace optimizer {
 // double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
 //                        size_t limit,
 //                        std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats != nullptr);
+//   PELOTON_ASSERT(input_stats != nullptr);
 //   if (output_stats != nullptr) {
 //     output_stats->num_rows = std::max(input_stats->num_rows, limit);
 //   }
@@ -176,7 +176,7 @@ namespace optimizer {
 //                          const std::vector<std::string> &columns,
 //                          const std::vector<bool> &orders,
 //                          std::shared_ptr<TableStats> &output_stats) {
-//   PL_ASSERT(input_stats);
+//   PELOTON_ASSERT(input_stats);
 //   // Invalid case.
 //   if (columns.size() == 0 || columns.size() != orders.size()) {
 //     return DEFAULT_COST;
@@ -285,7 +285,7 @@ namespace optimizer {
 //     return column_ids;
 //   }
 //   // index_stats should be base table and have non-null sampler
-//   PL_ASSERT(index_stats->GetSampler() != nullptr);
+//   PELOTON_ASSERT(index_stats->GetSampler() != nullptr);
 //
 //   // Already have tuple sampled, copy the sampled tuples
 //   if (!index_stats->GetSampler()->GetSampledTuples().empty()) {

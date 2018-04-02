@@ -232,7 +232,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  PL_ASSERT(schema->GetColumnCount() == 4);
+  PELOTON_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -260,8 +260,8 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
         table->InsertTuple(&tuple, current_txn, &index_entry_ptr);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     txn_manager.PerformInsert(current_txn, tuple_slot_id, index_entry_ptr);
@@ -911,7 +911,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
 }
 
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
-  PL_ASSERT(logical_tile);
+  PELOTON_ASSERT(logical_tile);
 
   // Get column count
   auto column_count = logical_tile->GetColumnCount();
@@ -936,7 +936,7 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 }
 
 void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
-  PL_ASSERT(logical_tile);
+  PELOTON_ASSERT(logical_tile);
 
   // Get column count
   auto column_count = logical_tile->GetColumnCount();
@@ -961,7 +961,7 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
 }
 
 void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
-  PL_ASSERT(logical_tile);
+  PELOTON_ASSERT(logical_tile);
 
   // Get column count
   auto column_count = logical_tile->GetColumnCount();
