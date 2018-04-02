@@ -34,7 +34,7 @@ void KDTree::Update(UNUSED_ATTRIBUTE Cluster *cluster) {
   // to the structure. Will need to change AnnoyIndex to optimize this
   // The update to the centroid is reflected in the cluster. There is no change
   // to the clusters_, so just rebuild the entire index
-  index_.reinitialize();
+  index_.unload();
   Build();
 }
 
@@ -64,7 +64,7 @@ void KDTree::Build() {
 }
 
 void KDTree::Build(std::set<Cluster *> &clusters) {
-  index_.reinitialize();
+  index_.unload();
   clusters_.clear();
   for (auto &cluster : clusters) {
     clusters_.push_back(cluster);
