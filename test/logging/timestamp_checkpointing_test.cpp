@@ -25,8 +25,6 @@ namespace test {
 
 class TimestampCheckpointingTests : public PelotonTest {};
 
-std::string DB_NAME = "default_database";
-
 TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 	settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
 	PelotonInit::Initialize();
@@ -73,8 +71,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (9, 10, 11, 12, 9, 11, 12);");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
-  sleep(3);
-
   // insert test
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (3, 0.0, 'xxxx');");
@@ -93,7 +89,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 
   EXPECT_TRUE(checkpoint_manager.GetStatus());
 
-  sleep(3);
+  std::this_thread::sleep_for(std::chrono::seconds(3));
   checkpoint_manager.StopCheckpointing();
 
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");

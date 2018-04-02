@@ -73,8 +73,8 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
-  friend class LogManager;
-  friend class TimestampCheckpointManager;
+  friend class logging::LogManager;
+  friend class logging::TimestampCheckpointManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;

@@ -27,17 +27,18 @@ namespace test {
 
 class TimestampCheckpointingTests : public PelotonTest {};
 
-std::string DB_NAME = "default_database";
-
 TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
+	settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
+	PelotonInit::Initialize();
 
-  // Do checkpoint recovery
+  // do checkpoint recovery
   checkpoint_manager.DoCheckpointRecovery();
 
-  // Schema check
+  // check schemas
   //LOG_DEBUG("%s", storage::StorageManager::GetInstance()->GetDatabaseWithOffset(1)->GetInfo().c_str());
 
+  // check the data of 3 user tables as high level test
   std::string sql1 = "SELECT * FROM checkpoint_table_test";
   std::vector<std::string> expected1 = {"0|1.2|aaa", "1|12.34|bbbbbb", "2|12345.7|ccccccccc", "3|0|xxxx"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql1, expected1, false);
@@ -50,16 +51,99 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   std::vector<std::string> expected3 = {"1|2|3|4|1|3|4", "5|6|7|8|5|7|8", "9|10|11|12|9|11|12"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql3, expected3, false);
 
-  /*
-  std::string sql3 = "SELECT * FROM out_of_checkpoint_test";
-  ResultType res = TestingSQLUtil::ExecuteSQLQuery(sql3);
-  EXPECT_TRUE(res == ResultType::FAILURE);
-  */
-
+  // prepare for the low level check
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_FALSE(catalog::Catalog::GetInstance()->ExistsTableByName(DEFAULT_DB_NAME, "out_of_checkpoint", txn));
+  auto catalog = catalog::Catalog::GetInstance();
+
+  // check the uncommitted table does not exist
+  EXPECT_FALSE(catalog->ExistTableByName(DEFAULT_DB_NAME, "out_of_checkpoint", txn));
+/*
+  auto db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
+  	auto table_catalog = table_catalog_pair.second;
+
+  	if(table_catalog->GetTableName() == 'checkpoint_table_test') {
+  	}
+
+  	// check the index recovery
+  	else if (table_catalog->GetTableName() == 'checkpoint_index_test') {
+  		for (auto index_pair : table_catalog->GetIndexObjects()) {
+  			auto index_catalog = index_pair.second;
+  			// unique primary key for attribute 'pid' (primary key)
+  			if (index_catalog->GetIndexName() == 'checkpoint_index_test_pkey') {
+  				EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+  				EXPECT_EQ(IndexConstraintType::PRIMARY_KEY, index_catalog->GetIndexConstraint());
+  				EXPECT_TRUE(index_catalog->HasUniqueKeys());
+  				auto key_attrs = index_catalog->GetKeyAttrs();
+  				EXPECT_EQ(1, key_attrs);
+  				EXPECT_EQ('pid', table_catalog->GetColumnObject(key_attrs[0])->GetColumnName().c_str());
+  			}
+  			// unique primary key for attribute 'pid' (unique)
+  			else if (index_catalog->GetIndexName() == 'checkpoint_index_test_pid_UNIQ') {
+  				EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+  				EXPECT_EQ(IndexConstraintType::UNIQUE, index_catalog->GetIndexConstraint());
+  				EXPECT_TRUE(index_catalog->HasUniqueKeys());
+  				auto key_attrs = index_catalog->GetKeyAttrs();
+  				EXPECT_EQ(1, key_attrs);
+  				EXPECT_EQ('pid', table_catalog->GetColumnObject(key_attrs[0])->GetColumnName().c_str());
+  			}
+  			// ART index for attribute 'value1'
+  			else if (index_catalog->GetIndexName() == 'index_test1') {
+  				EXPECT_EQ(IndexType::ART, index_catalog->GetIndexType());
+  				EXPECT_EQ(IndexConstraintType::DEFAULT, index_catalog->GetIndexConstraint());
+  				EXPECT_FALSE(index_catalog->HasUniqueKeys());
+  				auto key_attrs = index_catalog->GetKeyAttrs();
+  				EXPECT_EQ(1, key_attrs);
+  				EXPECT_EQ('value1', table_catalog->GetColumnObject(key_attrs[0])->GetColumnName().c_str());
+  			}
+  			// SKIPLIST index for attributes 'value2' and 'value3'
+  			else if (index_catalog->GetIndexName() == 'index_test2') {
+  				EXPECT_EQ(IndexType::SKIPLIST, index_catalog->GetIndexType());
+  				EXPECT_EQ(IndexConstraintType::DEFAULT, index_catalog->GetIndexConstraint());
+  				EXPECT_FALSE(index_catalog->HasUniqueKeys());
+  				auto key_attrs = index_catalog->GetKeyAttrs();
+  				EXPECT_EQ(2, key_attrs);
+  				EXPECT_EQ('value2', table_catalog->GetColumnObject(key_attrs[0])->GetColumnName().c_str());
+  				EXPECT_EQ('value3', table_catalog->GetColumnObject(key_attrs[1])->GetColumnName().c_str());
+  			}
+  			// unique index for attribute 'value2'
+  			else if (index_catalog->GetIndexName() == 'unique_index_test') {
+  				EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+  				EXPECT_EQ(IndexConstraintType::UNIQUE, index_catalog->GetIndexConstraint());
+  				EXPECT_TRUE(index_catalog->HasUniqueKeys());
+  				auto key_attrs = index_catalog->GetKeyAttrs();
+  				EXPECT_EQ(1, key_attrs);
+  				EXPECT_EQ('value2', table_catalog->GetColumnObject(key_attrs[0])->GetColumnName().c_str());
+  			}	else {
+  				LOG_ERROR("Unexpected index found: %s", index_catalog->GetIndexName());
+  			}
+  		}
+  	}
+
+  	// check the column constraint recovery
+  	else if (table_catalog->GetTableName() == 'checkpoint_constraint_test') {
+  		for (auto column_pair : table_catalog->GetColumnObjects()) {
+  			auto column_catalog = column_pair.second;
+  			if (column_catalog->GetColumnName() == 'pid1') {
+
+  			}
+
+  			else if (column_catalog->GetColumnName() == 'pid2') {
+
+  		}
+
+  	}
+  	else {
+  		LOG_ERROR("Unexpected table found: %s", table_catalog->GetTableName().c_str());
+  	}
+  }
+*/
+  // check the catalog data
+
+  // finish the low level check
   txn_manager.CommitTransaction(txn);
+
 
   /*
   auto sm = storage::StorageManager::GetInstance();
@@ -72,6 +156,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   }
   */
 
+  PelotonInit::Shutdown();
 }
 
 

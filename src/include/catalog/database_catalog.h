@@ -60,7 +60,7 @@ class DatabaseCatalogObject {
   GetTableObjects(bool cached_only = false);
 
   inline oid_t GetDatabaseOid() const { return database_oid; }
-  inline std::string &GetDatabaseName() const { return database_name; }
+  inline const std::string &GetDatabaseName() { return database_name; }
 
  private:
   // member variables
