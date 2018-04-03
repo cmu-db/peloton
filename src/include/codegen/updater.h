@@ -82,7 +82,7 @@ class Updater {
   // the same operation.
   // By maintaining the statement-level write set, an update operation will check 
   // whether the to-be-updated tuple is created by the same operation.
-  ReadWriteSet *statement_write_set_;
+  WriteSet *statement_write_set_;
 
   // Ownership information
   bool is_owner_;

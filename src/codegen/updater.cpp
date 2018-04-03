@@ -38,7 +38,7 @@ void Updater::Init(storage::DataTable *table,
   target_list_ =
       new TargetList(target_vector, target_vector + target_vector_size);
 
-  statement_write_set_ = new ReadWriteSet();
+  statement_write_set_ = new WriteSet();
 }
 
 char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
@@ -78,7 +78,8 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
 
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
-  if (statement_write_set_->Contains(ItemPointer(tile_group_id, tuple_offset))) {
+
+  if (statement_write_set_->find(ItemPointer(tile_group_id, tuple_offset)) != statement_write_set_->end()) {
     return nullptr;
   }
 
@@ -173,7 +174,7 @@ void Updater::UpdatePK() {
     return;
   }
   txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
-  statement_write_set_->Insert(new_location_, RWType::INSERT);
+  statement_write_set_->insert(new_location_);
   executor_context_->num_processed++;
 }
 

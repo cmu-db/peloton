@@ -53,7 +53,7 @@ bool UpdateExecutor::DInit() {
   PELOTON_ASSERT(target_table_);
   PELOTON_ASSERT(project_info_);
 
-  statement_write_set_.Clear();
+  statement_write_set_.clear();
 
   return true;
 }
@@ -63,7 +63,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
   
-  if (statement_write_set_.Contains(old_location)) {
+  if (statement_write_set_.find(old_location) != statement_write_set_.end()) {
     return true;
   }
 
@@ -143,8 +143,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
-  statement_write_set_.Insert(location, RWType::INSERT);
-
+  statement_write_set_.insert(location);
   return true;
 }
 

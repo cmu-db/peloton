@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "tbb/concurrent_vector.h"
+#include "tbb/concurrent_unordered_set.h"
 
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
@@ -1208,6 +1209,8 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 // ItemPointer -> type
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
+
+typedef tbb::concurrent_unordered_multiset<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
