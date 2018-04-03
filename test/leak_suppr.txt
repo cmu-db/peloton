@@ -3,3 +3,5 @@
 # see #1194
 # 
 leak:src_backend_utils_mmgr_mcxt.c
+# suppress the tensorflow background thread problem(#1232)
+leak:tf_session_entity.cpp
