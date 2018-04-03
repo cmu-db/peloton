@@ -120,16 +120,16 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     if [ "$MAJOR_VER" == "14" ]; then
         PKG_CMAKE="cmake3"
         FORCE_Y="--force-yes"
-	    TF_VERSION="1.4.0"
+        TF_VERSION="1.4.0"
     fi
     if [ "$MAJOR_VER" == "16" ]; then
-	    TF_VERSION="1.5.0"
+        TF_VERSION="1.5.0"
     fi
     # Fix for llvm on Ubuntu 17.x
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
-	    TF_VERSION="1.5.0"
+        TF_VERSION="1.5.0"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo ldconfig"
