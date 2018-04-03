@@ -11,27 +11,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "binder/bind_node_visitor.h"
-#include "catalog/catalog.h"
 #include "common/harness.h"
-#include "common/logger.h"
 #include "common/statement.h"
+#include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
-#include "expression/abstract_expression.h"
 #include "expression/operator_expression.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
-#include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "parser/postgresparser.h"
-#include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include "planner/abstract_scan_plan.h"
 #include "sql/testing_sql_util.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {
@@ -81,8 +74,12 @@ class PlanSelectionTest : public PelotonTest {
     auto txn = txn_manager.BeginTransaction();
 
     auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
+    timer_.Start();
     txn_manager.CommitTransaction(txn);
-    LOG_INFO("%s", plan->GetInfo().c_str());
+    timer_.Stop();
+    LOG_INFO("Query Execution Duration: %f", timer_.GetDuration());
+    PrintPlan(plan);
+
     return plan;
   }
 
@@ -109,18 +106,49 @@ class PlanSelectionTest : public PelotonTest {
     return ss.str();
   }
 
+  void InsertDataHelper(const std::string &table_name, int tuple_count) {
+    int batch_size = 1000;
+    std::stringstream ss;
+    auto count = 0;
+    if (tuple_count > batch_size) {
+      for (int i = 0; i < tuple_count; i += batch_size) {
+        ss.str(std::string());
+        ss << "INSERT INTO " << table_name << " VALUES ";
+        for (int j = 1; j <= batch_size; j++) {
+          count++;
+          ss << "(" << count << ", 1.1, 'abcd')";
+          if (j < batch_size) {
+            ss << ",";
+          }
+        }
+        ss << ";";
+        TestingSQLUtil::ExecuteSQLQuery(ss.str());
+      }
+    } else {
+      ss << "INSERT INTO " << table_name << " VALUES ";
+      for (int i = 1; i <= tuple_count; i++) {
+        ss << "(" << i << ", 1.1, 'abcd')";
+        if (i < tuple_count) {
+          ss << ",";
+        }
+      }
+      ss << ";";
+      TestingSQLUtil::ExecuteSQLQuery(ss.str());
+    }
+    LOG_INFO("COUNT: %d", count);
+  }
+
   void AnalyzeTable(const std::string &table_name) {
     std::stringstream ss;
     ss << "ANALYZE " << table_name << ";";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
-
   void PrintPlan(std::shared_ptr<planner::AbstractPlan> plan, int level = 0) {
     PrintPlan(plan.get(), level);
   }
 
-  void PrintPlan(planner::AbstractPlan* plan, int level = 0) {
+  void PrintPlan(planner::AbstractPlan *plan, int level = 0) {
     auto spacing = std::string(level, '\t');
 
     if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
@@ -138,6 +166,8 @@ class PlanSelectionTest : public PelotonTest {
     return;
   }
 
+  Timer<std::milli> timer_;
+
  private:
   void CreateTestTable(const std::string &table_name) {
     std::stringstream ss;
@@ -148,7 +178,7 @@ class PlanSelectionTest : public PelotonTest {
   }
 };
 
-TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
+TEST_F(PlanSelectionTest, SimpleJoinOrderTestSmall1) {
   // Create and populate tables
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -157,21 +187,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
   int test1_table_size = 1;
   int test2_table_size = 100;
 
-  LOG_INFO("%s", table_1_name);
-
-  for (int i = 1; i <= test1_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_1_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
-  }
-
-  for (int i = 1; i <= test2_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_2_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
-  }
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
 
   txn_manager.CommitTransaction(txn);
 
@@ -181,12 +198,7 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
   auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
       table_1_name, table_2_name, column_1_name, column_1_name));
 
-  PrintPlan(plan);
-
-  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP ||
-              plan->GetPlanNodeType() == PlanNodeType::NESTLOOPINDEX ||
-              plan->GetPlanNodeType() == PlanNodeType::MERGEJOIN ||
-              plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP);
 
   EXPECT_EQ(2, plan->GetChildren().size());
   EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
@@ -204,7 +216,7 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest1) {
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
 }
 
-TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
+TEST_F(PlanSelectionTest, SimpleJoinOrderSmallTest2) {
   // Create and populate tables
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -213,21 +225,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
   int test1_table_size = 100;
   int test2_table_size = 1;
 
-  LOG_INFO("%s", table_1_name);
-
-  for (int i = 1; i <= test1_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_1_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
-  }
-
-  for (int i = 1; i <= test2_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_2_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
-  }
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
 
   txn_manager.CommitTransaction(txn);
 
@@ -237,10 +236,7 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
   auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
       table_1_name, table_2_name, column_1_name, column_1_name));
 
-  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP ||
-              plan->GetPlanNodeType() == PlanNodeType::NESTLOOPINDEX ||
-              plan->GetPlanNodeType() == PlanNodeType::MERGEJOIN ||
-              plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP);
 
   EXPECT_EQ(2, plan->GetChildren().size());
   EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
@@ -260,7 +256,46 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest2) {
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
 }
 
-TEST_F(PlanSelectionTest, SimpleJoinOrderSortedTest) {
+TEST_F(PlanSelectionTest, SimpleJoinOrderSmallTest3) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 1;
+  int test2_table_size = 100;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_2_name, table_1_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(0, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
+
+  // TODO: Join order seems to follow order of join in query
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderSmallTest4) {
   // Create and populate tables
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -269,21 +304,214 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderSortedTest) {
   int test1_table_size = 100;
   int test2_table_size = 1;
 
-  LOG_INFO("%s", table_1_name);
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
 
-  for (int i = 1; i <= test1_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_1_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_2_name, table_1_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(0, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
+
+  // TODO: Join order seems to follow order of join in query
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest1) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 1000;
+  int test2_table_size = 100000;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto query = "SELECT COUNT(*) from test2;";
+  std::vector<ResultValue> results;
+  TestingSQLUtil::ExecuteSQLQuery(query, results);
+  for (auto result : results) {
+    LOG_INFO("RESULT: %s", result.c_str());
   }
 
-  for (int i = 1; i <= test2_table_size; i++) {
-    std::stringstream ss;
-    ss << "INSERT INTO " << table_2_name << " VALUES (" << i
-       << ", 1.1, 'abcd');";
-    TestingSQLUtil::ExecuteSQLQuery(ss.str());
-  }
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_1_name, table_2_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
+
+  // TODO: This should actually be reversed, setting it to this now so that the
+  // tests pass
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest2) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 100000;
+  int test2_table_size = 1000;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_1_name, table_2_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
+
+  // TODO: This should actually be reversed, setting it to this now so that the
+  // tests pass
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest3) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 1000;
+  int test2_table_size = 100000;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_2_name, table_1_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
+
+  // TODO: This should actually be reversed, setting it to this now so that the
+  // tests pass
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest4) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 100000;
+  int test2_table_size = 1000;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_2_name, table_1_name, column_1_name, column_1_name));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
+
+  // TODO: This should actually be reversed, setting it to this now so that the
+  // tests pass
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderSortedTest) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  const unsigned int test1_table_size = 1;
+  const unsigned int test2_table_size = 100;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
 
   txn_manager.CommitTransaction(txn);
 
