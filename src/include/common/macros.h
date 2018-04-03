@@ -76,7 +76,7 @@ namespace peloton {
 // we'll never return
 #define PELOTON_UNIMPLEMENTED(what)        \
   do {                                \
-    PL_ASSERT(false);                 \
+    PELOTON_ASSERT(false);                 \
     throw ::std::runtime_error(what); \
   } while (0)
 
