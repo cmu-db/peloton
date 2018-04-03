@@ -494,6 +494,7 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
 }
 
 TEST_F(OptimizerSQLTests, JoinTest) {
+  // The original table
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
@@ -518,6 +519,16 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, 333);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 22, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
+
+  // Create the fourth table
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test3(a INT PRIMARY KEY, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (1, 22, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (2, 11, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (3, 22, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (4, 00, 000);");
 
   /************************* Basic Queries (only joins)
    * *******************************/
@@ -637,6 +648,14 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       "GROUP BY test.a "
       "ORDER BY test.a",
       {"22", "1", "11", "2", "22", "3", "0", "4"}, true);
+
+  // Basic 4 table join
+  TestUtil(
+      "SELECT test.a, test1.a, test2.a, test3.c FROM test, test1, test2, test3 "
+      "WHERE test.a = test2.a AND test2.a = test1.a and test.b = test3.b",
+      {"1", "1", "1", "0", "1", "1", "1", "555", "2", "2", "2", "333", "4",
+       "4", "4", "0"},
+      false);
 }
 
 TEST_F(OptimizerSQLTests, IndexTest) {
