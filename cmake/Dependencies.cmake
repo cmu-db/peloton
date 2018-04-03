@@ -42,6 +42,10 @@ find_library(TFlowC
         PATHS "/usr/local/lib")
 list(APPEND Peloton_LINKER_LIBS ${TFlowC})
 
+# --[ Eigen3
+find_package(Eigen3 REQUIRED)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+
 # ---[ Libevent
 find_package(Libevent REQUIRED)
 include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})

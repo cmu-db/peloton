@@ -16,7 +16,7 @@
 #include <vector>
 // Impose Row-major to avoid confusion
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
-#include "Eigen/Dense"
+#include "eigen3/Eigen/Dense"
 
 // TODO(saatvik): Generalize Eigen utilities across all types
 typedef std::vector<std::vector<float>> matrix_t;

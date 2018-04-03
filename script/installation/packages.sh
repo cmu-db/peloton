@@ -164,7 +164,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libtool \
         make \
         g++ \
-        unzip
+        unzip \
+        libeigen3-dev
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
@@ -196,7 +197,8 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
         llvm-dev \
         libedit-dev \
         postgresql-client \
-        libtbb-dev
+        libtbb-dev \
+        libeigen3-dev
 
 ## ------------------------------------------------
 ## FEDORA
@@ -347,6 +349,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install wget
     brew install python
     brew upgrade python
+    brew install eigen
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
     install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
