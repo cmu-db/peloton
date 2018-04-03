@@ -110,7 +110,7 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
     int idx = (epoch - 1) % LOG_INTERVAL;
     train_loss_avg(idx) = train_loss;
     if(epoch % LOG_INTERVAL == 0) {
-      auto val_loss = model.ValidateEpoch(test_data, y, y_hat, false);
+      UNUSED_ATTRIBUTE auto val_loss = model.ValidateEpoch(test_data, y, y_hat, false);
       train_loss = train_loss_avg.mean();
       // Below check is not advisable - one off failure chance
       // EXPECT_LE(val_loss, prev_valid_loss);
