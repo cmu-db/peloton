@@ -76,6 +76,12 @@ class Updater {
   TargetList *target_list_;
 
   // Write set for tracking newly created tuples inserted by the same statement
+  // This statement-level write set is essential for avoiding the Halloween Problem,
+  // which refers to the phenomenon that an update operation causes a change to
+  // a tuple, potentially allowing this tuple to be visited more than once during
+  // the same operation.
+  // By maintaining the statement-level write set, an update operation will check 
+  // whether the to-be-updated tuple is created by the same operation.
   ReadWriteSet *statement_write_set_;
 
   // Ownership information
