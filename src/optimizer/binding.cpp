@@ -19,11 +19,10 @@
 namespace peloton {
 namespace optimizer {
 
-
 //===--------------------------------------------------------------------===//
 // Group Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupBindingIterator::GroupBindingIterator(Memo& memo, GroupID id,
+GroupBindingIterator::GroupBindingIterator(Memo &memo, GroupID id,
                                            std::shared_ptr<Pattern> pattern)
     : BindingIterator(memo),
       group_id_(id),
@@ -52,7 +51,8 @@ bool GroupBindingIterator::HasNext() {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
       current_iterator_.reset(new GroupExprBindingIterator(
-          memo_, target_group_->GetLogicalExpressions()[current_item_index_].get(),
+          memo_,
+          target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
       if (current_iterator_->HasNext()) {
@@ -78,24 +78,29 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 //===--------------------------------------------------------------------===//
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupExprBindingIterator::GroupExprBindingIterator(Memo& memo,
-                                         GroupExpression *gexpr,
-                                         std::shared_ptr<Pattern> pattern)
+GroupExprBindingIterator::GroupExprBindingIterator(
+    Memo &memo, GroupExpression *gexpr, std::shared_ptr<Pattern> pattern)
     : BindingIterator(memo),
       gexpr_(gexpr),
       pattern_(pattern),
       first_(true),
       has_next_(false),
       current_binding_(std::make_shared<OperatorExpression>(gexpr->Op())) {
-  LOG_TRACE("Attempting to bind on group %d with expression of type %s",
-            gexpr->GetGroupID(), gexpr->Op().GetName().c_str());
-  if (gexpr->Op().GetType() != pattern->Type()) return;
+  if (gexpr->Op().GetType() != pattern->Type()) {
+    return;
+  }
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
   const std::vector<std::shared_ptr<Pattern>> &child_patterns =
       pattern->Children();
 
-  if (child_groups.size() != child_patterns.size()) return;
+  if (child_groups.size() != child_patterns.size()) {
+    return;
+  }
+  LOG_TRACE(
+      "Attempting to bind on group %d with expression of type %s, children "
+      "size %lu",
+      gexpr->GetGroupID(), gexpr->Op().GetName().c_str(), child_groups.size());
 
   // Find all bindings for children
   children_bindings_.resize(child_groups.size(), {});
@@ -104,15 +109,16 @@ GroupExprBindingIterator::GroupExprBindingIterator(Memo& memo,
     // Try to find a match in the given group
     std::vector<std::shared_ptr<OperatorExpression>> &child_bindings =
         children_bindings_[i];
-    GroupBindingIterator iterator(memo_, child_groups[i],
-                                  child_patterns[i]);
+    GroupBindingIterator iterator(memo_, child_groups[i], child_patterns[i]);
 
     // Get all bindings
     while (iterator.HasNext()) {
       child_bindings.push_back(iterator.Next());
     }
 
-    if (child_bindings.size() == 0) return;
+    if (child_bindings.size() == 0) {
+      return;
+    }
 
     current_binding_->PushChild(child_bindings[0]);
   }
@@ -128,33 +134,37 @@ bool GroupExprBindingIterator::HasNext() {
   }
 
   if (has_next_) {
-    size_t size = children_bindings_pos_.size();
-    size_t i;
-    for (i = 0; i < size; ++i) {
+    // The first child to be modified
+    int first_modified_idx = children_bindings_pos_.size() - 1;
+    for (; first_modified_idx >= 0; --first_modified_idx) {
       const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
-          children_bindings_[size - 1 - i];
+          children_bindings_[first_modified_idx];
 
-      size_t new_pos = ++children_bindings_pos_[size - 1 - i];
+      // Try to increment idx from the back
+      size_t new_pos = ++children_bindings_pos_[first_modified_idx];
       if (new_pos < child_binding.size()) {
         break;
       } else {
-        children_bindings_pos_[size - 1 - i] = 0;
+        children_bindings_pos_[first_modified_idx] = 0;
       }
     }
 
-    if (i == size) {
+    if (first_modified_idx < 0) {
       // We have explored all combinations of the child bindings
       has_next_ = false;
     } else {
-      for (size_t j = 0; j<i; j++)
+      // Pop all updated childrens
+      for (size_t idx = first_modified_idx; idx < children_bindings_pos_.size();
+           idx++) {
         current_binding_->PopChild();
-      // Replay to end
-      size_t offset = size - 1 - i;
-      for (size_t j = 0; j < i + 1; ++j) {
+      }
+      // Add new children to end
+      for (size_t offset = first_modified_idx;
+           offset < children_bindings_pos_.size(); ++offset) {
         const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
-            children_bindings_[offset + j];
+            children_bindings_[offset];
         std::shared_ptr<OperatorExpression> binding =
-            child_binding[children_bindings_pos_[offset + j]];
+            child_binding[children_bindings_pos_[offset]];
         current_binding_->PushChild(binding);
       }
     }

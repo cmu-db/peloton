@@ -31,8 +31,11 @@ TFSE_TYPE::TfSessionEntity() {
 
 TFSE_TEMPLATE_ARGUMENTS
 TFSE_TYPE::~TfSessionEntity() {
-  TF_DeleteStatus(status_);
+  TF_CloseSession(session_, status_);
+  TF_DeleteSession(session_, status_);
   TF_DeleteGraph(graph_);
+  TF_DeleteStatus(status_);
+  TF_DeleteSessionOptions(session_options_);
 }
 
 /*
