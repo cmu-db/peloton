@@ -114,7 +114,7 @@ const std::string SettingsManager::GetInfo() const {
   info.append(
       StringUtil::Format("%28s:   %-28s\n", "Code-generation",
                          GetBool(SettingId::codegen) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Optimization Timeout",
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Optimization Timeout",
                                  GetInt(SettingId::task_execution_timeout)));
   return StringBoxUtil::Box(info);
 }
