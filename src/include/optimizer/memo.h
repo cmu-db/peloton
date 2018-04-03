@@ -54,7 +54,7 @@ class Memo {
   GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
                                     GroupID target_group, bool enforced);
 
-  const std::vector<std::unique_ptr<Group>>& Groups() const;
+  std::vector<std::unique_ptr<Group>>& Groups();
 
   Group* GetGroupByID(GroupID id);
 

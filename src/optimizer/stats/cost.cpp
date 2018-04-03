@@ -182,7 +182,7 @@ namespace optimizer {
 //     return DEFAULT_COST;
 //   }
 //   std::string column = columns[0];
-//   bool order = orders[0];  // TRUE is ASC, FALSE is DESC
+//   bool order = orders[0];  // CmpTrue is ASC, CmpFalse is DESC
 //   double cost = DEFAULT_COST;
 //   // Special case when first column has index.
 //   if (input_stats->HasPrimaryIndex(column)) {

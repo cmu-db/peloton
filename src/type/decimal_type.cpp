@@ -163,7 +163,7 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  if (left.CompareLessThanEquals(right) == CmpBool::TRUE)
+  if (left.CompareLessThanEquals(right) == CmpBool::CmpTrue)
     return left.Copy();
   return right.Copy();
 }
@@ -174,7 +174,7 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE)
+  if (left.CompareGreaterThanEquals(right) == CmpBool::CmpTrue)
     return left.Copy();
   return right.Copy();
 }
