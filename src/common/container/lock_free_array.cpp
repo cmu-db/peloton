@@ -29,15 +29,15 @@ class Database;
 class IndirectionArray;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 LOCK_FREE_ARRAY_TYPE::LockFreeArray() {
   lock_free_array.reserve(kLockfreeArrayInitSize);
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value) {
   LOG_TRACE("Update at %lu", offset);
   PL_ASSERT(lock_free_array.size() >= offset + 1);
@@ -45,14 +45,14 @@ bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value) {
   return true;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value) {
   LOG_TRACE("Appended value.");
   lock_free_array.push_back(value);
   return true;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
                                  const ValueType &invalid_value) {
   LOG_TRACE("Erase at %lu", offset);
@@ -60,7 +60,7 @@ bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
   return true;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const {
   LOG_TRACE("Find at %lu", offset);
   PL_ASSERT(lock_free_array.size() > offset);
@@ -68,7 +68,7 @@ ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const {
   return value;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
     const std::size_t &offset, const ValueType &invalid_value) const {
   LOG_TRACE("Find Valid at %lu", offset);
@@ -92,16 +92,16 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
   return invalid_value;
 }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 size_t LOCK_FREE_ARRAY_TYPE::GetSize() const { return lock_free_array.size(); }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 void LOCK_FREE_ARRAY_TYPE::Clear() { lock_free_array.clear(); }
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
   bool exists = false;
 
