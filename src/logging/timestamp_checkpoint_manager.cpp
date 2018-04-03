@@ -212,7 +212,7 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(const cid_t begin_cid
 							target_table_catalogs.push_back(table_catalog);
 
 						} else {
-							LOG_DEBUG("Table %d in database %s (%d) is invisible.",
+							LOG_TRACE("Table %d in database %s (%d) is invisible.",
 									table->GetOid(), db_catalog->GetDatabaseName().c_str(), db_catalog->GetDatabaseOid());
 						}
 					} catch (CatalogException& e) {
@@ -222,7 +222,7 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(const cid_t begin_cid
 				} // end table loop
 
 			} else {
-				LOG_DEBUG("Database %d is invisible or catalog database.",	database->GetOid());
+				LOG_TRACE("Database %d is invisible or catalog database.",	database->GetOid());
 			}
 		} catch (CatalogException& e) {
 			LOG_DEBUG("%s", e.what());
@@ -308,7 +308,7 @@ void TimestampCheckpointManager::CheckpointingTableData(const storage::DataTable
 	// load all table data
 	size_t tile_group_count = table->GetTileGroupCount();
 	output_buffer.WriteLong(tile_group_count);
-	LOG_DEBUG("Tile group count: %lu", tile_group_count);
+	LOG_TRACE("Tile group count: %lu", tile_group_count);
 	for (oid_t tile_group_offset = START_OID; tile_group_offset < tile_group_count; tile_group_offset++) {
 		auto tile_group = table->GetTileGroup(tile_group_offset);
 		auto tile_group_header = tile_group->GetHeader();
@@ -328,7 +328,7 @@ void TimestampCheckpointManager::CheckpointingTableData(const storage::DataTable
 			}
 		}
 		output_buffer.WriteLong(visible_tuples.size());
-		LOG_DEBUG("Tuple count in tile group %d: %lu", tile_group->GetTileGroupId(), visible_tuples.size());
+		LOG_TRACE("Tuple count in tile group %d: %lu", tile_group->GetTileGroupId(), visible_tuples.size());
 
 		// load visible tuples data in the table
 		for (auto tuple_id : visible_tuples) {
@@ -419,6 +419,8 @@ void TimestampCheckpointManager::CheckpointingCatalogObject(
 	CopySerializeOutput catalog_buffer;
 	auto storage_manager = storage::StorageManager::GetInstance();
 
+	LOG_DEBUG("Do checkpointing to catalog object");
+
 	// insert # of databases into catalog file
 	size_t db_count = target_db_catalogs.size();
 	catalog_buffer.WriteLong(db_count);
@@ -432,7 +434,7 @@ void TimestampCheckpointManager::CheckpointingCatalogObject(
 		catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
 		catalog_buffer.WriteLong(target_table_catalogs.size());
 
-		LOG_DEBUG("Write database catalog %d '%s' : %lu tables",
+		LOG_TRACE("Write database catalog %d '%s' : %lu tables",
 				db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str(), target_table_catalogs.size());
 
 		// insert each table information into catalog file
@@ -447,7 +449,7 @@ void TimestampCheckpointManager::CheckpointingCatalogObject(
 			auto schema = table->GetSchema();
 
 			schema->SerializeTo(catalog_buffer);
-			LOG_DEBUG("Write table catalog %d '%s': %lu columns",
+			LOG_TRACE("Write table catalog %d '%s': %lu columns",
 					table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(), schema->GetColumnCount());
 
 			// Write index information (index name, type, constraint, key attributes, and # of index)
@@ -460,7 +462,7 @@ void TimestampCheckpointManager::CheckpointingCatalogObject(
 				catalog_buffer.WriteInt((int)index_catalog->GetIndexType());
 				catalog_buffer.WriteInt((int)index_catalog->GetIndexConstraint());
 				catalog_buffer.WriteBool(index_catalog->HasUniqueKeys());
-				LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
+				LOG_TRACE("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
 						index_catalog->GetIndexName().c_str(), IndexTypeToString(index_catalog->GetIndexType()).c_str(),
 						IndexConstraintTypeToString(index_catalog->GetIndexConstraint()).c_str(), index_catalog->HasUniqueKeys());
 
@@ -469,7 +471,7 @@ void TimestampCheckpointManager::CheckpointingCatalogObject(
 				catalog_buffer.WriteLong(key_attrs.size());
 				for (auto attr_oid : key_attrs) {
 					catalog_buffer.WriteInt(attr_oid);
-					LOG_DEBUG("|  |- Key attribute %d '%s'", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
+					LOG_TRACE("|  |- Key attribute %d '%s'", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
 				}
 			} // end index loop
 
@@ -518,7 +520,7 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id, 
 			}
 
 		} else {
-			LOG_DEBUG("Database %d is the catalog database.",  database->GetOid());
+			LOG_TRACE("Database %d is the catalog database.",  database->GetOid());
 		}
 
 	}
@@ -533,7 +535,7 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
 	char catalog_data[catalog_size];
 
-	LOG_DEBUG("Recover catalog data (%lu byte)", catalog_size);
+	LOG_DEBUG("Recover catalog object (%lu byte)", catalog_size);
 
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
 		LOG_ERROR("checkpoint catalog file read error");
@@ -547,30 +549,30 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 	size_t db_count = catalog_buffer.ReadLong();
 	for(oid_t db_idx = 0; db_idx < db_count; db_idx++) {
 		// read basic database information
-		oid_t db_oid = catalog_buffer.ReadInt();
+		UNUSED_ATTRIBUTE oid_t db_oid = catalog_buffer.ReadInt();
 		std::string db_name = catalog_buffer.ReadTextString();
 		size_t table_count = catalog_buffer.ReadLong();
 
 		// create database catalog
 		// if already exists, use existed database
 		if (catalog->ExistDatabaseByName(db_name, txn) == false) {
-			LOG_DEBUG("Create database %d '%s' (including %lu tables)", db_oid, db_name.c_str(), table_count);
+			LOG_TRACE("Create database %d '%s' (including %lu tables)", db_oid, db_name.c_str(), table_count);
 			auto result = catalog->CreateDatabase(db_name, txn);
 			if (result != ResultType::SUCCESS) {
 				LOG_ERROR("Create database error");
 				return false;
 			}
 		} else {
-			LOG_DEBUG("Use existing database %d '%s'", db_oid, db_name.c_str());
+			LOG_TRACE("Use existing database %d '%s'", db_oid, db_name.c_str());
 		}
 		oid_t new_db_oid = catalog->GetDatabaseObject(db_name, txn)->GetDatabaseOid();
 
 		// Recover table catalog
 		for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
 			// read basic table information
-			oid_t table_oid = catalog_buffer.ReadInt();
+			UNUSED_ATTRIBUTE oid_t table_oid = catalog_buffer.ReadInt();
 			std::string table_name = catalog_buffer.ReadTextString();
-			LOG_DEBUG("Create table %d '%s'", table_oid, table_name.c_str());
+			LOG_TRACE("Create table %d '%s'", table_oid, table_name.c_str());
 
 			// recover table schema
 			std::unique_ptr<catalog::Schema> schema = catalog::Schema::DeserializeFrom(catalog_buffer);
@@ -580,7 +582,7 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 			if (catalog->ExistTableByName(db_name, table_name, txn) == false) {
 				catalog->CreateTable(db_name, table_name, std::move(schema), txn);
 			} else {
-				LOG_DEBUG("%s table already exists", table_name.c_str());
+				LOG_TRACE("%s table already exists", table_name.c_str());
 			}
 			oid_t new_table_oid = catalog->GetTableObject(db_name, table_name, txn)->GetTableOid();
 
@@ -592,7 +594,7 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 				IndexType index_type = (IndexType)catalog_buffer.ReadInt();
 				IndexConstraintType index_constraint_type = (IndexConstraintType)catalog_buffer.ReadInt();
 				bool index_unique_keys = catalog_buffer.ReadBool();
-				LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
+				LOG_TRACE("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
 						index_name.c_str(), IndexTypeToString(index_type).c_str(),
 						IndexConstraintTypeToString(index_constraint_type).c_str(), index_unique_keys);
 
@@ -602,14 +604,14 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 				for (oid_t index_attr_idx = 0; index_attr_idx < index_attr_count; index_attr_idx++) {
 					oid_t index_attr = catalog_buffer.ReadInt();
 					key_attrs.push_back(index_attr);
-					LOG_DEBUG("|  |- Key attribute %d",	index_attr);
+					LOG_TRACE("|  |- Key attribute %d",	index_attr);
 				}
 
 				// create index if not primary key
 				if (catalog->ExistIndexByName(db_name, table_name, index_name, txn) == false) {
 					catalog->CreateIndex(new_db_oid, new_table_oid, key_attrs, index_name, index_type, index_constraint_type, index_unique_keys, txn);
 				} else {
-					LOG_DEBUG("|  %s index already exists", index_name.c_str());
+					LOG_TRACE("|  %s index already exists", index_name.c_str());
 				}
 
 			} // end index loop
