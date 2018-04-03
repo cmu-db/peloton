@@ -25,12 +25,11 @@ namespace peloton {
 static const size_t kLockfreeArrayInitSize = 256;
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
-#define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>
 
 // LOCK_FREE_ARRAY_TYPE
 #define LOCK_FREE_ARRAY_TYPE LockFreeArray<ValueType>
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 class LockFreeArray {
  public:
   LockFreeArray();

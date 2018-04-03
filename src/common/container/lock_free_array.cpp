@@ -99,9 +99,7 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
-void LOCK_FREE_ARRAY_TYPE::Clear() {
-  lock_free_array.clear();
-}
+void LOCK_FREE_ARRAY_TYPE::Clear() { lock_free_array.clear(); }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
@@ -124,12 +122,6 @@ bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
 template class LockFreeArray<std::shared_ptr<oid_t>>;
 
 template class LockFreeArray<std::shared_ptr<index::Index>>;
-
-template class LockFreeArray<std::shared_ptr<storage::TileGroup>>;
-
-template class LockFreeArray<std::shared_ptr<storage::Database>>;
-
-template class LockFreeArray<std::shared_ptr<storage::IndirectionArray>>;
 
 template class LockFreeArray<oid_t>;
 
