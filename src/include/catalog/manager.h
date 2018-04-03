@@ -18,7 +18,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include "include/common/internal_types.h"
+#include "common/internal_types.h"
 
 #include "common/macros.h"
 #include "common/internal_types.h"
