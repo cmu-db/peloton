@@ -162,6 +162,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(2, parent_join_op->join_predicates.size());
   EXPECT_EQ(0, child_join_op->join_predicates.size());
+  delete root_context;
 }
 
 TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
@@ -256,6 +257,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(1, parent_join_op->join_predicates.size());
   EXPECT_EQ(1, child_join_op->join_predicates.size());
+  delete root_context;
 }
 
 }  // namespace test

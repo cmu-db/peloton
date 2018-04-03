@@ -51,7 +51,7 @@ class KDTree {
    *
    * @param feature - the vector whose nearest neigbor is being searched for
    * @param cluster - return the cluster of the nearest neighbor in this
-   * @param feature - return the similarity to the nearest neighbor in this
+   * @param similarity - return the similarity to the nearest neighbor in this
    */
   void GetNN(std::vector<double> &feature, Cluster *&cluster,
              double &similarity);
