@@ -1210,7 +1210,7 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
-typedef tbb::concurrent_unordered_multiset<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
+typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
