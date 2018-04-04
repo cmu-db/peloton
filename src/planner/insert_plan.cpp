@@ -126,6 +126,82 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   }
 }
 
+bool InsertPlan::FindSchemaColIndex(std::string col_name,
+			const std::vector<catalog::Column> &tbl_columns,
+			uint32_t &index) {
+  for (auto tcol = tbl_columns.begin(); tcol != tbl_columns.end(); tcol++) {
+    if (tcol->GetName() == col_name) {
+      index = std::distance(tbl_columns.begin(), tcol);
+      return true;
+    }
+  }
+  return false;
+}
+
+void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
+  auto *schema = target_table_->GetSchema();
+  auto &table_columns = schema->GetColumns();
+  auto usr_col_count = columns->size();  
+  
+  // iterate over supplied columns
+  for (size_t usr_col_id = 0; usr_col_id < usr_col_count; usr_col_id++) {
+    uint32_t idx;    
+    auto col_name = columns->at(usr_col_id);
+    
+    // determine index of column in schema
+    bool found_col = FindSchemaColIndex(col_name, table_columns, idx);
+    if (not found_col) {
+      throw Exception("column " + col_name + " not in table " +
+		      target_table_->GetName() + " columns");
+    }
+    // we have values for this column
+    schema_to_insert_[idx].in_insert_cols = true;
+    // remember how to map schema col -> value for col in tuple
+    schema_to_insert_[idx].val_idx = usr_col_id;
+    // and the reverse
+    insert_to_schema_[usr_col_id] = idx;
+  }
+}
+
+bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
+		      uint32_t schema_idx) {
+  auto type = schema_to_insert_[schema_idx].type;
+  
+  if (expr == nullptr) {
+    SetDefaultValue(schema_idx);
+  } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+
+    auto *const_expr =
+      dynamic_cast<expression::ConstantValueExpression *>(expr);
+    type::Value value = const_expr->GetValue().CastAs(type);
+    
+    schema_to_insert_[schema_idx].set_value = true;
+    schema_to_insert_[schema_idx].value = value;
+    // save it, in case this is not a PS
+    values_.push_back(value);
+    
+    return false;
+  } else {
+    PELOTON_ASSERT(expr->GetExpressionType() ==
+		   ExpressionType::VALUE_PARAMETER);
+    return true;
+  }
+  return false;
+}
+
+void InsertPlan::SetDefaultValue(uint32_t idx) {
+  auto *schema = target_table_->GetSchema();  
+  type::Value *v = schema->GetDefaultValue(idx);
+  type::TypeId type = schema_to_insert_[idx].type;
+  
+  if (v == nullptr)
+    // null default value
+    values_.push_back(type::ValueFactory::GetNullValueByType(type));
+  else
+    // non-null default value
+    values_.push_back(*v);
+}  
+
 type::AbstractPool *InsertPlan::GetPlanPool() {
   if (pool_.get() == nullptr)
     pool_.reset(new type::EphemeralPool());
