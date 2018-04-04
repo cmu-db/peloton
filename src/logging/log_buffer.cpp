@@ -100,9 +100,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       break;
     }
     default: {
-      LOG_ERROR("Unsupported log record type");
-      PL_ASSERT(false);
-
     }
   }
 

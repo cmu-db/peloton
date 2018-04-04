@@ -105,7 +105,8 @@ public:
                                      txn_id_t txn_id, cid_t current_cid) {
     PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
               log_type == LogRecordType::TUPLE_DELETE ||
-              log_type == LogRecordType::TUPLE_UPDATE);
+              log_type == LogRecordType::TUPLE_UPDATE ||
+              log_type == LogRecordType::TRANSACTION_COMMIT);
     return LogRecord(log_type, pos, current_eid, txn_id, current_cid);
   }
 //  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos) {
