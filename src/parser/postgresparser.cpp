@@ -666,6 +666,10 @@ expression::AbstractExpression *PostgresParser::ExprTransform(Node *node) {
       expr = NullTestTransform(reinterpret_cast<NullTest *>(node));
       break;
     }
+    case T_TypeCast: {
+      expr = TypeCastTransform(reinterpret_cast<TypeCast *>(node));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
