@@ -25,8 +25,8 @@ namespace test {
 class AggregateSQLTests : public PelotonTest {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
-  PL_ASSERT(&TestingSQLUtil::counter_);
-  PL_ASSERT(&TestingSQLUtil::traffic_cop_);
+  PELOTON_ASSERT(&TestingSQLUtil::counter_);
+  PELOTON_ASSERT(&TestingSQLUtil::traffic_cop_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

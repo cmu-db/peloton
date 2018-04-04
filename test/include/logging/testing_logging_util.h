@@ -228,15 +228,15 @@ class LoggingScheduler {
 
   LoggingScheduler &BackendLogger(unsigned int frontend_idx,
                                   unsigned int backend_idx) {
-    PL_ASSERT(frontend_idx < frontend_schedules.size());
-    PL_ASSERT(backend_idx < num_backend_logger_per_frontend);
+    PELOTON_ASSERT(frontend_idx < frontend_schedules.size());
+    PELOTON_ASSERT(backend_idx < num_backend_logger_per_frontend);
     cur_id.front = frontend_idx;
     cur_id.back = GetBackendLoggerId(frontend_idx, backend_idx);
     return *this;
   }
 
   LoggingScheduler &FrontendLogger(unsigned int frontend_idx) {
-    PL_ASSERT(frontend_idx < frontend_schedules.size());
+    PELOTON_ASSERT(frontend_idx < frontend_schedules.size());
     cur_id.front = frontend_idx;
     cur_id.back = INVALID_LOGGER_IDX;
     return *this;

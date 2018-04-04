@@ -220,7 +220,7 @@ Transition ConnectionHandle::FillReadBuffer() {
   if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
 
   // buf_ptr shouldn't overflow
-  PL_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
+  PELOTON_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
 
   /* Do we have leftover data and are we at the end of the buffer?
    * Move the data to the head of the buffer and clear out all the old data
@@ -697,7 +697,7 @@ Transition ConnectionHandle::GetResult() {
   // TODO(tianyu) We probably can collapse this state with some other state.
   if (event_add(network_event, nullptr) < 0) {
     LOG_ERROR("Failed to add event");
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
   protocol_handler_->GetResult();
   traffic_cop_.SetQueuing(false);

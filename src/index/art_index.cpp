@@ -280,7 +280,7 @@ void ArtIndex::KeyConstructor::WriteValue(uint8_t *data, NativeType val) {
 void ArtIndex::KeyConstructor::WriteAsciiString(uint8_t *data, const char *val,
                                                 uint32_t len) {
   // Write out the main payload, then tack on the NULL byte terminator
-  PL_MEMCPY(data, val, len);
+  PELOTON_MEMCPY(data, val, len);
   data[len] = '\0';
 }
 

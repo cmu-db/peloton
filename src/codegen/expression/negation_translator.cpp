@@ -23,7 +23,7 @@ NegationTranslator::NegationTranslator(
     const expression::OperatorUnaryMinusExpression &unary_minus_expression,
     CompilationContext &ctx)
     : ExpressionTranslator(unary_minus_expression, ctx) {
-  PL_ASSERT(unary_minus_expression.GetChildrenSize() == 1);
+  PELOTON_ASSERT(unary_minus_expression.GetChildrenSize() == 1);
 }
 
 Value NegationTranslator::DeriveValue(CodeGen &codegen,

@@ -39,7 +39,7 @@ void Cluster::UpdateCentroid(
     std::map<std::string, std::vector<double>> &features) {
   int num_features = centroid_.size();
   std::fill(centroid_.begin(), centroid_.end(), 0);
-  PL_ASSERT(templates_.size() != 0);
+  PELOTON_ASSERT(templates_.size() != 0);
 
   for (auto fingerprint : templates_) {
     auto feature = features[fingerprint];
