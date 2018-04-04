@@ -63,10 +63,6 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
 
-  /* if (statement_write_set_.find(old_location) != statement_write_set_.end()) {
-    return true;
-  } */
-
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
