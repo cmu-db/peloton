@@ -278,5 +278,141 @@ TEST_F(UpdateSQLTests, UpdateSQLCastTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(UpdateSQLTests, HalloweenTest) {
+  LOG_DEBUG("Bootstrapping...");
+
+  auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Bootstrapping completed!");
+
+  size_t active_tilegroup_count = 3;
+  storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
+
+  LOG_DEBUG("Active tile group count = %zu",
+            storage::DataTable::GetActiveTileGroupCount());
+  // Create a table first
+  LOG_DEBUG("Creating a table...");
+  LOG_DEBUG("Query: CREATE TABLE test(a INT, b INT)");
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT, b INT);");
+
+  LOG_DEBUG("Table created!");
+
+  txn = txn_manager.BeginTransaction();
+  // Insert a tuple into table
+  LOG_DEBUG("Inserting a tuple...");
+
+  LOG_DEBUG("Query: INSERT INTO test VALUES (10, 100)");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (10, 1000);");
+  LOG_DEBUG("Tuple inserted!");
+
+  txn_manager.CommitTransaction(txn);
+
+  // Update a tuple into table
+  LOG_DEBUG("Updating a tuple...");
+  LOG_DEBUG("Query: UPDATE test SET a = a/2");
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  txn = txn_manager.BeginTransaction();
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a = a/2;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+
+  // Check the return value
+  EXPECT_EQ(1, rows_affected);
+  LOG_DEBUG("Tuple Updated!");
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Selecting updated value.");
+  txn = txn_manager.BeginTransaction();
+  // Check value of column salary after updating
+  TestingSQLUtil::ExecuteSQLQuery("SELECT a from test", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  // Check the return value
+  txn_manager.CommitTransaction(txn);
+
+  EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "5");
+  LOG_DEBUG("Successfully updated tuple.");
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(UpdateSQLTests, MultiTileGroupUpdateSQLTest) {
+  LOG_DEBUG("Bootstrapping...");
+
+  auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Bootstrapping completed!");
+
+  size_t active_tilegroup_count = 3;
+  storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
+
+  LOG_DEBUG("Active tile group count = %zu",
+            storage::DataTable::GetActiveTileGroupCount());
+  // Create a table first
+  LOG_DEBUG("Creating a table...");
+  LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+
+  LOG_DEBUG("Table created!");
+
+  // Insert a tuple into table
+  LOG_DEBUG("Inserting a tuple...");
+
+  LOG_DEBUG("Query: INSERT INTO test VALUES (1, 100)");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 100);");
+
+  LOG_DEBUG("Tuple inserted!");
+
+  // Update a tuple into table
+  LOG_DEBUG("Updating a tuple...");
+  LOG_DEBUG("Query: UPDATE test SET a = 10 WHERE b = 100");
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a = 10 WHERE b = 100;",
+                                  result, tuple_descriptor, rows_affected,
+                                  error_message);
+
+  LOG_DEBUG("Query: UPDATE test SET a = 1 WHERE b = 100");
+  // Check the return value
+  EXPECT_EQ(1, rows_affected);
+  LOG_DEBUG("Tuple Updated!");
+
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a = 1 WHERE b = 100;",
+                                  result, tuple_descriptor, rows_affected,
+                                  error_message);
+
+  // Check the return value
+  EXPECT_EQ(1, rows_affected);
+  LOG_DEBUG("Tuple Updated!");
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton
