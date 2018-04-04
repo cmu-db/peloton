@@ -53,7 +53,7 @@ void PelotonInit::Initialize() {
   // require user to set parallel tilegroup count
   PARALLEL_TILEGROUP_COUNT = settings::SettingsManager::GetInt(
           settings::SettingId::parallel_tilegroup_count);
-
+  
   storage::DataTable::SetActiveTileGroupCount(PARALLEL_TILEGROUP_COUNT);
   storage::DataTable::SetActiveIndirectionArrayCount(PARALLEL_TILEGROUP_COUNT);
 

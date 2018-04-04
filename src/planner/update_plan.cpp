@@ -31,6 +31,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       auto col_id = target.first;
       update_primary_key_ =
           target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+      std::cout << "col_id = " << col_id << " " << update_primary_key_ << std::endl;
       if (update_primary_key_)
         break;
     }
