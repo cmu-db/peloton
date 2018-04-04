@@ -21,8 +21,8 @@
 namespace peloton {
 namespace planner {
 
-InsertPlan::InsertPlan(storage::DataTable *table,
-    const std::vector<std::string> *columns,
+InsertPlan::InsertPlan(
+    storage::DataTable *table, const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
@@ -31,8 +31,8 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 
   // We assume we are not processing a prepared statement insert.
   // Only after we have finished processing, do we know if it is a
-  // PS or not a PS. 
-  bool is_prepared_stmt = false;  
+  // PS or not a PS.
+  bool is_prepared_stmt = false;
   auto *schema = target_table_->GetSchema();
   auto schema_col_count = schema->GetColumnCount();
   insert_to_schema_.resize(columns->size());
@@ -46,7 +46,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     // remember the column types
     schema_to_insert_[idx].type = schema->GetType(idx);
   }
-  
+
   if (columns->empty()) {
     // INSERT INTO table_name VALUES (val1, val2, ...), (val1, val2, ...)
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
@@ -55,7 +55,6 @@ InsertPlan::InsertPlan(storage::DataTable *table,
       PELOTON_ASSERT(values.size() <= schema_col_count);
       // uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
-        
         auto &exp = values[column_id];
         auto exp_ptr = exp.get();
         auto ret_bool = ProcessValueExpr(exp_ptr, column_id);
@@ -78,7 +77,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
       PELOTON_ASSERT(values.size() <= schema_col_count);
-      
+
       for (uint32_t idx = 0; idx < schema_col_count; idx++) {
         if (schema_to_insert_[idx].in_insert_cols) {
           // this schema column is present in the insert columns spec.
@@ -105,7 +104,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
         // Adjust the mapping from schema cols -> values vector to exclude
         // the constant columns. If there are no constants, this is a no-op.
         uint32_t adjust = 0;
-        for (uint32_t idx=0; idx < columns->size(); idx++) {
+        for (uint32_t idx = 0; idx < columns->size(); idx++) {
           uint32_t stov_idx = insert_to_schema_[idx];
           if (schema_to_insert_[stov_idx].set_value) {
             // constant, not present in PS values
@@ -126,9 +125,9 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   }
 }
 
-bool InsertPlan::FindSchemaColIndex(std::string col_name,
-                        const std::vector<catalog::Column> &tbl_columns,
-                        uint32_t &index) {
+bool InsertPlan::FindSchemaColIndex(
+    std::string col_name, const std::vector<catalog::Column> &tbl_columns,
+    uint32_t &index) {
   for (auto tcol = tbl_columns.begin(); tcol != tbl_columns.end(); tcol++) {
     if (tcol->GetName() == col_name) {
       index = std::distance(tbl_columns.begin(), tcol);
@@ -141,13 +140,13 @@ bool InsertPlan::FindSchemaColIndex(std::string col_name,
 void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
   auto *schema = target_table_->GetSchema();
   auto &table_columns = schema->GetColumns();
-  auto usr_col_count = columns->size();  
-  
+  auto usr_col_count = columns->size();
+
   // iterate over supplied columns
   for (size_t usr_col_id = 0; usr_col_id < usr_col_count; usr_col_id++) {
-    uint32_t idx;    
+    uint32_t idx;
     auto col_name = columns->at(usr_col_id);
-    
+
     // determine index of column in schema
     bool found_col = FindSchemaColIndex(col_name, table_columns, idx);
     if (not found_col) {
@@ -164,22 +163,21 @@ void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
 }
 
 bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
-                      uint32_t schema_idx) {
+                                  uint32_t schema_idx) {
   auto type = schema_to_insert_[schema_idx].type;
-  
+
   if (expr == nullptr) {
     SetDefaultValue(schema_idx);
   } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-
     auto *const_expr =
-      dynamic_cast<expression::ConstantValueExpression *>(expr);
+        dynamic_cast<expression::ConstantValueExpression *>(expr);
     type::Value value = const_expr->GetValue().CastAs(type);
-    
+
     schema_to_insert_[schema_idx].set_value = true;
     schema_to_insert_[schema_idx].value = value;
     // save it, in case this is not a PS
     values_.push_back(value);
-    
+
     return false;
   } else {
     PELOTON_ASSERT(expr->GetExpressionType() ==
@@ -190,21 +188,20 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
 }
 
 void InsertPlan::SetDefaultValue(uint32_t idx) {
-  auto *schema = target_table_->GetSchema();  
+  auto *schema = target_table_->GetSchema();
   type::Value *v = schema->GetDefaultValue(idx);
   type::TypeId type = schema_to_insert_[idx].type;
-  
+
   if (v == nullptr)
     // null default value
     values_.push_back(type::ValueFactory::GetNullValueByType(type));
   else
     // non-null default value
     values_.push_back(*v);
-}  
+}
 
 type::AbstractPool *InsertPlan::GetPlanPool() {
-  if (pool_.get() == nullptr)
-    pool_.reset(new type::EphemeralPool());
+  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
   return pool_.get();
 }
 
@@ -221,7 +218,7 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
       // get index into values
       auto val_idx = schema_to_insert_[idx].val_idx;
       auto type = schema_to_insert_[idx].type;
-      type::Value value = values->at(val_idx).CastAs(type);      
+      type::Value value = values->at(val_idx).CastAs(type);
       values_.push_back(value);
     } else {
       // not in insert cols, set default value
@@ -259,23 +256,19 @@ hash_t InsertPlan::Hash() const {
 }
 
 bool InsertPlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
-    return false;
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) return false;
 
   auto &other = static_cast<const planner::InsertPlan &>(rhs);
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PELOTON_ASSERT(table && other_table);
-  if (*table != *other_table)
-    return false;
+  if (*table != *other_table) return false;
 
   if (GetChildren().size() == 0) {
-    if (other.GetChildren().size() != 0)
-      return false;
+    if (other.GetChildren().size() != 0) return false;
 
-    if (GetBulkInsertCount() != other.GetBulkInsertCount())
-      return false;
+    if (GetBulkInsertCount() != other.GetBulkInsertCount()) return false;
   }
 
   return AbstractPlan::operator==(rhs);
@@ -291,8 +284,9 @@ void InsertPlan::VisitParameters(
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
       auto column_id = i % columns_num;
-      map.Insert(expression::Parameter::CreateConstParameter(value.GetTypeId(),
-          schema->AllowNull(column_id)), nullptr);
+      map.Insert(expression::Parameter::CreateConstParameter(
+                     value.GetTypeId(), schema->AllowNull(column_id)),
+                 nullptr);
       values.push_back(value);
     }
   } else {

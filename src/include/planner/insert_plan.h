@@ -29,13 +29,12 @@ class InsertStatement;
 }
 
 namespace planner {
-  
-class InsertPlan : public AbstractPlan {
 
+class InsertPlan : public AbstractPlan {
  public:
   // Construct when SELECT comes in with it
   InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
-    : target_table_(table), bulk_insert_count_(bulk_insert_count) {
+      : target_table_(table), bulk_insert_count_(bulk_insert_count) {
     LOG_TRACE("Creating an Insert Plan with SELECT as a child");
   }
 
@@ -44,17 +43,17 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<const planner::ProjectInfo> &&project_info,
              oid_t bulk_insert_count = 1)
-    : target_table_(table), project_info_(std::move(project_info)),
-      bulk_insert_count_(bulk_insert_count) {
+      : target_table_(table),
+        project_info_(std::move(project_info)),
+        bulk_insert_count_(bulk_insert_count) {
     LOG_TRACE("Creating an Insert Plan with a projection");
   }
 
   // Construct with a tuple
   // This can only be handled by the interpreted exeuctor
-  InsertPlan(storage::DataTable *table,
-             std::unique_ptr<storage::Tuple> &&tuple,
+  InsertPlan(storage::DataTable *table, std::unique_ptr<storage::Tuple> &&tuple,
              oid_t bulk_insert_count = 1)
-    : target_table_(table), bulk_insert_count_(bulk_insert_count) {
+      : target_table_(table), bulk_insert_count_(bulk_insert_count) {
     LOG_TRACE("Creating an Insert Plan for one tuple");
     tuples_.push_back(std::move(tuple));
   }
@@ -66,14 +65,17 @@ class InsertPlan : public AbstractPlan {
    * @param[in] columns        Columns to insert into
    * @param[in] insert_values  Values
    */
-  InsertPlan(storage::DataTable *table,
-             const std::vector<std::string> *columns,
-             const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *insert_values);
+  InsertPlan(storage::DataTable *table, const std::vector<std::string> *columns,
+             const std::vector<
+                 std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+                 insert_values);
 
   // Get a varlen pool - will construct the pool only if needed
   type::AbstractPool *GetPlanPool();
 
-  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::INSERT; };
+  PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::INSERT;
+  };
 
   /**
    * @brief Save values for jdbc prepared statement insert.
@@ -83,8 +85,8 @@ class InsertPlan : public AbstractPlan {
    */
   void SetParameterValues(std::vector<type::Value> *values) override;
 
-  /* 
-   * Clear the parameter values of the current insert. The plan may be 
+  /*
+   * Clear the parameter values of the current insert. The plan may be
    * cached in the statement / plan cache and may be reused.
    */
   void ClearParameterValues() override { values_.clear(); }
@@ -129,14 +131,15 @@ class InsertPlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
-  /** 
+  /**
    * Lookup a column name in the schema columns
-   * 
+   *
    * @param[in]  col_name    column name, from insert statement
    * @param[in]  tbl_columns table columns from the schema
    * @param[out] index       index into schema columns, only if found
@@ -146,7 +149,7 @@ class InsertPlan : public AbstractPlan {
   bool FindSchemaColIndex(std::string col_name,
                           const std::vector<catalog::Column> &tbl_columns,
                           uint32_t &index);
-  
+
   /**
    * Process column specification supplied in the insert statement.
    * Construct a map from insert columns to schema columns. Once
@@ -170,33 +173,33 @@ class InsertPlan : public AbstractPlan {
   bool ProcessValueExpr(expression::AbstractExpression *expr,
                         uint32_t schema_idx);
 
-  /** 
+  /**
    * Set default value into a schema column
-   * 
+   *
    * @param[in] idx  schema column index
    */
   void SetDefaultValue(uint32_t idx);
 
- private:  
+ private:
   // mapping from schema columns to insert columns
   struct SchemaColsToInsertCols {
     // this schema column is present in the insert columns
     bool in_insert_cols;
-  
+
     // For a PS, insert saved value (from constant in insert values list), no
     // param value.
     bool set_value;
-  
+
     // index of this column in insert columns values
-    int  val_idx;
-  
+    int val_idx;
+
     // schema column type
     type::TypeId type;
-  
+
     // set_value refers to this saved value
     type::Value value;
   };
-  
+
   // Target table
   storage::DataTable *target_table_ = nullptr;
 
@@ -206,7 +209,7 @@ class InsertPlan : public AbstractPlan {
   // mapping from schema columns to vector of insert columns
   std::vector<SchemaColsToInsertCols> schema_to_insert_;
   // mapping from insert columns to schema columns
-  std::vector<uint32_t> insert_to_schema_;  
+  std::vector<uint32_t> insert_to_schema_;
 
   // Projection Info
   std::unique_ptr<const planner::ProjectInfo> project_info_;
