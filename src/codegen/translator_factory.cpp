@@ -128,7 +128,7 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
                       PlanNodeTypeToString(plan_node.GetPlanNodeType())};
     }
   }
-  PL_ASSERT(translator != nullptr);
+  PELOTON_ASSERT(translator != nullptr);
   return std::unique_ptr<OperatorTranslator>{translator};
 }
 
@@ -215,7 +215,7 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
                       ExpressionTypeToString(exp.GetExpressionType())};
     }
   }
-  PL_ASSERT(translator != nullptr);
+  PELOTON_ASSERT(translator != nullptr);
   return std::unique_ptr<ExpressionTranslator>{translator};
 }
 

@@ -26,8 +26,8 @@ FunctionTranslator::FunctionTranslator(
     CompilationContext &context)
     : ExpressionTranslator(func_expr, context) {
   if (!func_expr.IsUDF()) {
-    PL_ASSERT(func_expr.GetFunc().op_id != OperatorId::Invalid);
-    PL_ASSERT(func_expr.GetFunc().impl != nullptr);
+    PELOTON_ASSERT(func_expr.GetFunc().op_id != OperatorId::Invalid);
+    PELOTON_ASSERT(func_expr.GetFunc().impl != nullptr);
 
     // Prepare each of the child expressions
     for (uint32_t i = 0; i < func_expr.GetChildrenSize(); i++) {
@@ -60,7 +60,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
       // Lookup unary operation
       auto *unary_op =
           type::TypeSystem::GetUnaryOperator(operator_id, args[0].GetType());
-      PL_ASSERT(unary_op != nullptr);
+      PELOTON_ASSERT(unary_op != nullptr);
 
       // Invoke
       return unary_op->Eval(codegen, args[0], ctx);
@@ -69,7 +69,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
       type::Type left_type = args[0].GetType(), right_type = args[1].GetType();
       auto *binary_op = type::TypeSystem::GetBinaryOperator(
           operator_id, left_type, left_type, right_type, right_type);
-      PL_ASSERT(binary_op);
+      PELOTON_ASSERT(binary_op);
 
       // Invoke
       return binary_op->Eval(codegen, args[0].CastTo(codegen, left_type),
@@ -84,7 +84,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
 
       // Lookup the function
       auto *nary_op = type::TypeSystem::GetNaryOperator(operator_id, arg_types);
-      PL_ASSERT(nary_op != nullptr);
+      PELOTON_ASSERT(nary_op != nullptr);
 
       // Invoke
       return nary_op->Eval(codegen, args, ctx);

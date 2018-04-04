@@ -79,7 +79,7 @@ index::Index *StorageManager::GetIndexWithOid(oid_t database_oid,
 // This is used as an iterator
 Database *StorageManager::GetDatabaseWithOffset(
     oid_t database_offset) const {
-  PL_ASSERT(database_offset < databases_.size());
+  PELOTON_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
 }

@@ -114,7 +114,7 @@ void BackendStatsContext::IncrementTableReads(oid_t tile_group_id) {
                           .GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
-  PL_ASSERT(table_metric != nullptr);
+  PELOTON_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementReads();
   if (ongoing_query_metric_ != nullptr) {
     ongoing_query_metric_->GetQueryAccess().IncrementReads();
@@ -128,7 +128,7 @@ void BackendStatsContext::IncrementTableInserts(oid_t tile_group_id) {
                           .GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
-  PL_ASSERT(table_metric != nullptr);
+  PELOTON_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementInserts();
   if (ongoing_query_metric_ != nullptr) {
     ongoing_query_metric_->GetQueryAccess().IncrementInserts();
@@ -142,7 +142,7 @@ void BackendStatsContext::IncrementTableUpdates(oid_t tile_group_id) {
                           .GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
-  PL_ASSERT(table_metric != nullptr);
+  PELOTON_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementUpdates();
   if (ongoing_query_metric_ != nullptr) {
     ongoing_query_metric_->GetQueryAccess().IncrementUpdates();
@@ -156,7 +156,7 @@ void BackendStatsContext::IncrementTableDeletes(oid_t tile_group_id) {
                           .GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
-  PL_ASSERT(table_metric != nullptr);
+  PELOTON_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementDeletes();
   if (ongoing_query_metric_ != nullptr) {
     ongoing_query_metric_->GetQueryAccess().IncrementDeletes();
@@ -169,7 +169,7 @@ void BackendStatsContext::IncrementIndexReads(size_t read_count,
   oid_t table_id = metadata->GetTableOid();
   oid_t database_id = metadata->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
-  PL_ASSERT(index_metric != nullptr);
+  PELOTON_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementReads(read_count);
 }
 
@@ -179,7 +179,7 @@ void BackendStatsContext::IncrementIndexInserts(
   oid_t table_id = metadata->GetTableOid();
   oid_t database_id = metadata->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
-  PL_ASSERT(index_metric != nullptr);
+  PELOTON_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementInserts();
 }
 
@@ -189,7 +189,7 @@ void BackendStatsContext::IncrementIndexUpdates(
   oid_t table_id = metadata->GetTableOid();
   oid_t database_id = metadata->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
-  PL_ASSERT(index_metric != nullptr);
+  PELOTON_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementUpdates();
 }
 
@@ -199,20 +199,20 @@ void BackendStatsContext::IncrementIndexDeletes(
   oid_t table_id = metadata->GetTableOid();
   oid_t database_id = metadata->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
-  PL_ASSERT(index_metric != nullptr);
+  PELOTON_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementDeletes(delete_count);
 }
 
 void BackendStatsContext::IncrementTxnCommitted(oid_t database_id) {
   auto database_metric = GetDatabaseMetric(database_id);
-  PL_ASSERT(database_metric != nullptr);
+  PELOTON_ASSERT(database_metric != nullptr);
   database_metric->IncrementTxnCommitted();
   CompleteQueryMetric();
 }
 
 void BackendStatsContext::IncrementTxnAborted(oid_t database_id) {
   auto database_metric = GetDatabaseMetric(database_id);
-  PL_ASSERT(database_metric != nullptr);
+  PELOTON_ASSERT(database_metric != nullptr);
   database_metric->IncrementTxnAborted();
   CompleteQueryMetric();
 }

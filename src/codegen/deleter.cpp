@@ -20,13 +20,13 @@ namespace codegen {
 
 void Deleter::Init(storage::DataTable *table,
                    executor::ExecutorContext *executor_context) {
-  PL_ASSERT(table != nullptr && executor_context != nullptr);
+  PELOTON_ASSERT(table != nullptr && executor_context != nullptr);
   table_ = table;
   executor_context_ = executor_context;
 }
 
 void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
-  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Deleting tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             tile_group_id, tuple_offset, table_->GetName().c_str(),
             table_->GetDatabaseOid(), table_->GetOid());

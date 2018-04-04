@@ -96,7 +96,7 @@ class AbstractExecutor {
   template <class T>
   inline const T &GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
-    PL_ASSERT(node);
+    PELOTON_ASSERT(node);
     return *node;
   }
 

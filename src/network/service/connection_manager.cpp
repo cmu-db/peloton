@@ -34,7 +34,7 @@ ConnectionManager::~ConnectionManager() {
   std::map<NetworkAddress, Connection *>::iterator iter;
 
   for (iter = conn_pool_.begin(); iter != conn_pool_.end(); iter++) {
-    PL_ASSERT(iter->second != NULL);
+    PELOTON_ASSERT(iter->second != NULL);
     delete iter->second;
   }
 }
@@ -47,7 +47,7 @@ void ConnectionManager::ResterRpcServer(RpcServer *server) {
 }
 
 RpcServer *ConnectionManager::GetRpcServer() {
-  PL_ASSERT(rpc_server_ != NULL);
+  PELOTON_ASSERT(rpc_server_ != NULL);
   return rpc_server_;
 }
 
@@ -97,7 +97,7 @@ Connection *ConnectionManager::GetConn(NetworkAddress &addr) {
 
     /* A connection should know rpc server, which is used to find RPC method */
     RpcServer *server = GetRpcServer();
-    PL_ASSERT(server != NULL);
+    PELOTON_ASSERT(server != NULL);
 
     /* For a client connection, the socket fd is -1 (required by libevent)
      * After new a connection, a bufferevent is created and callback is set
@@ -159,7 +159,7 @@ Connection *ConnectionManager::CreateConn(NetworkAddress &addr) {
 
     /* A connection should know rpc server, which is used to find RPC method */
     RpcServer *server = GetRpcServer();
-    PL_ASSERT(server != NULL);
+    PELOTON_ASSERT(server != NULL);
 
     /* For a client connection, the socket fd is -1 (required by libevent)
      * After new a connection, a bufferevent is created and callback is set
@@ -248,7 +248,7 @@ bool ConnectionManager::DeleteConn(NetworkAddress &addr) {
     mutex_.UnLock();
     return false;
   }
-  PL_ASSERT(iter->second != NULL);
+  PELOTON_ASSERT(iter->second != NULL);
   delete iter->second;
   conn_pool_.erase(iter);
   mutex_.UnLock();

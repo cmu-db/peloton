@@ -40,7 +40,7 @@ struct CastBooleanToInteger : public TypeSystem::CastHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &value,
              const Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Any integral value requires a zero-extension
     auto *raw_val = codegen->CreateZExt(value.GetValue(), codegen.Int32Type());
@@ -62,7 +62,7 @@ struct CastBooleanToDecimal : public TypeSystem::CastHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &value,
              const Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Converts True to 1.0 and False to 0.0
     auto *raw_val =
@@ -80,7 +80,7 @@ struct CastBooleanToVarchar : public TypeSystem::CastHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &value,
              const Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Convert this boolean (unsigned int) into a string
     llvm::Value *str_val = codegen->CreateSelect(
@@ -109,7 +109,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareLtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -121,7 +121,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareLteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -133,7 +133,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareEqImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -145,7 +145,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareNeImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -157,7 +157,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareGtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -169,7 +169,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareGteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
     llvm::Value *result =
@@ -181,7 +181,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 
   Value CompareForSortImpl(CodeGen &codegen, const Value &left,
                            const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // For boolean sorting, we convert 1-bit boolean values into a 32-bit number
     const auto int_type = type::Type{Integer::Instance()};
