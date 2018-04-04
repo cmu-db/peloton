@@ -55,7 +55,7 @@ class PlanSelectionTest : public PelotonTest {
   }
 
   std::shared_ptr<planner::AbstractPlan> PerformTransactionAndGetPlan(
-      const std::string &query) {
+      const std::string &query, bool worst_case = false) {
     /*
      * Generates the optimizer plan for the given query and runs the transaction
      */
@@ -67,7 +67,7 @@ class PlanSelectionTest : public PelotonTest {
     std::unique_ptr<parser::SQLStatementList> &stmt(raw_stmt);
 
     optimizer::Optimizer optimizer;
-    optimizer.SetWorstCase(false);
+    optimizer.SetWorstCase(worst_case);
 
     // Create and populate tables
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -211,6 +211,41 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTestSmall1) {
       dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
   auto right_scan =
       dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
+
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderTestWorstCaseSmall1) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 1;
+  int test2_table_size = 100;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(CreateTwoWayJoinQuery(
+      table_1_name, table_2_name, column_1_name, column_1_name), true);
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
 
   ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
