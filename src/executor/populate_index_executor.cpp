@@ -35,8 +35,8 @@ PopulateIndexExecutor::PopulateIndexExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool PopulateIndexExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(executor_context_);
 
   // Initialize executor state
   const planner::PopulateIndexPlan &node =
@@ -50,7 +50,7 @@ bool PopulateIndexExecutor::DInit() {
 
 bool PopulateIndexExecutor::DExecute() {
   LOG_TRACE("Populate Index Executor");
-  PL_ASSERT(executor_context_ != nullptr);
+  PELOTON_ASSERT(executor_context_ != nullptr);
   auto current_txn = executor_context_->GetTransaction();
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {

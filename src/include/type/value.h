@@ -176,12 +176,12 @@ class Value : public Printable {
   bool CheckComparable(const Value &o) const;
 
   inline bool IsTrue() const {
-    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+    PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 1);
   }
 
   inline bool IsFalse() const {
-    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+    PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 0);
   }
 

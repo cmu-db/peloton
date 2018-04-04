@@ -40,11 +40,11 @@ namespace peloton {
 #define USE_BUILTIN_MEMFUNCS
 
 #ifdef USE_BUILTIN_MEMFUNCS
-#define PL_MEMCPY __builtin_memcpy
-#define PL_MEMSET __builtin_memset
+#define PELOTON_MEMCPY __builtin_memcpy
+#define PELOTON_MEMSET __builtin_memset
 #else
-#define PL_MEMCPY memcpy
-#define PL_MEMSET memset
+#define PELOTON_MEMCPY memcpy
+#define PELOTON_MEMSET memset
 #endif
 
 //===--------------------------------------------------------------------===//
@@ -63,7 +63,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #ifdef CHECK_INVARIANTS
-#define INVARIANT(expr) PL_ASSERT(expr)
+#define INVARIANT(expr) PELOTON_ASSERT(expr)
 #else
 #define INVARIANT(expr) ((void)0)
 #endif /* CHECK_INVARIANTS */
@@ -74,9 +74,9 @@ namespace peloton {
 
 // throw exception after the assert(), so that GCC knows
 // we'll never return
-#define PL_UNIMPLEMENTED(what)        \
+#define PELOTON_UNIMPLEMENTED(what)        \
   do {                                \
-    PL_ASSERT(false);                 \
+    PELOTON_ASSERT(false);                 \
     throw ::std::runtime_error(what); \
   } while (0)
 
@@ -85,13 +85,13 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #ifdef NDEBUG
-#define PL_ASSERT(expr) ((void)0)
+#define PELOTON_ASSERT(expr) ((void)0)
 #else
-#define PL_ASSERT(expr) assert((expr))
+#define PELOTON_ASSERT(expr) assert((expr))
 #endif /* NDEBUG */
 
 #ifdef CHECK_INVARIANTS
-#define INVARIANT(expr) PL_ASSERT(expr)
+#define INVARIANT(expr) PELOTON_ASSERT(expr)
 #else
 #define INVARIANT(expr) ((void)0)
 #endif /* CHECK_INVARIANTS */

@@ -114,7 +114,7 @@ void LogicalTile::SetPositionListsAndVisibility(
  * @return Position list index of newly added list.
  */
 int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
-  PL_ASSERT(position_lists_.size() == 0 ||
+  PELOTON_ASSERT(position_lists_.size() == 0 ||
             position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
@@ -134,8 +134,8 @@ int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
  * @param tuple_id Id of the specified tuple.
  */
 void LogicalTile::RemoveVisibility(oid_t tuple_id) {
-  PL_ASSERT(tuple_id < total_tuples_);
-  PL_ASSERT(visible_rows_[tuple_id]);
+  PELOTON_ASSERT(tuple_id < total_tuples_);
+  PELOTON_ASSERT(visible_rows_[tuple_id]);
 
   visible_rows_[tuple_id] = false;
   visible_tuples_--;
@@ -161,8 +161,8 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
  */
 // TODO: Deprecated. Avoid calling this function if possible.
 type::Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
-  PL_ASSERT(column_id < schema_.size());
-  PL_ASSERT(tuple_id < total_tuples_);
+  PELOTON_ASSERT(column_id < schema_.size());
+  PELOTON_ASSERT(tuple_id < total_tuples_);
 
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
@@ -180,7 +180,7 @@ type::Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 void LogicalTile::SetValue(type::Value &value UNUSED_ATTRIBUTE,
                            oid_t tuple_id UNUSED_ATTRIBUTE,
                            oid_t column_id UNUSED_ATTRIBUTE) {
-  PL_ASSERT(false);
+  PELOTON_ASSERT(false);
 }
 
 /**
@@ -324,7 +324,7 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(
     non_empty_pos_list = left_pos_list;
     SetLeftSource(left_pos_list);
   }
-  PL_ASSERT(non_empty_pos_list != nullptr);
+  PELOTON_ASSERT(non_empty_pos_list != nullptr);
   output_lists_.push_back(std::vector<oid_t>());
   // reserve one extra pos list for the empty tile
   for (size_t column_itr = 0; column_itr < non_empty_pos_list->size() + 1;
@@ -347,8 +347,8 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
   size_t output_tile_column_count =
       left_tile_column_count + right_tile_column_count;
 
-  PL_ASSERT(left_tile_column_count > 0);
-  PL_ASSERT(right_tile_column_count > 0);
+  PELOTON_ASSERT(left_tile_column_count > 0);
+  PELOTON_ASSERT(right_tile_column_count > 0);
 
   // Construct position lists for output tile
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
@@ -421,7 +421,7 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   for (auto id : column_ids) {
     auto ret =
         std::find(original_column_ids.begin(), original_column_ids.end(), id);
-    PL_ASSERT(ret != original_column_ids.end());
+    PELOTON_ASSERT(ret != original_column_ids.end());
     new_schema.push_back(schema_[*ret]);
   }
 
@@ -624,7 +624,7 @@ void LogicalTile::MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      PL_ASSERT(it != old_to_new_cols.end());
+      PELOTON_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -638,7 +638,7 @@ void LogicalTile::MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    PL_ASSERT(new_column_offsets.size() == old_column_ids.size());
+    PELOTON_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -710,7 +710,7 @@ void LogicalTile::MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      PL_ASSERT(it != old_to_new_cols.end());
+      PELOTON_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;

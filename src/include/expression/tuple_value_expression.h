@@ -89,7 +89,7 @@ class TupleValueExpression : public AbstractExpression {
   // Return the attributes this expression uses
   void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *> &
                              attributes) const override {
-    PL_ASSERT(GetAttributeRef() != nullptr);
+    PELOTON_ASSERT(GetAttributeRef() != nullptr);
     attributes.insert(GetAttributeRef());
   }
 
@@ -165,7 +165,7 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   std::tuple<oid_t, oid_t, oid_t> GetBoundOid() {
-    PL_ASSERT(is_bound_);
+    PELOTON_ASSERT(is_bound_);
     return bound_obj_id_;
   }
 

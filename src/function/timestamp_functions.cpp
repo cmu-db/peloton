@@ -25,7 +25,7 @@ namespace function {
 
 uint64_t TimestampFunctions::DateTrunc(const char *date_part_type,
                                        uint64_t value) {
-  PL_ASSERT(date_part_type != nullptr);
+  PELOTON_ASSERT(date_part_type != nullptr);
 
   std::string date_part_string(date_part_type);
   DatePartType date_part = StringToDatePartType(date_part_string);
@@ -159,7 +159,7 @@ type::Value TimestampFunctions::_DateTrunc(
 
 double TimestampFunctions::DatePart(const char *date_part_type,
                                     uint64_t value) {
-  PL_ASSERT(date_part_type != nullptr);
+  PELOTON_ASSERT(date_part_type != nullptr);
 
   std::string date_part_string(date_part_type);
   DatePartType date_part = StringToDatePartType(date_part_string);

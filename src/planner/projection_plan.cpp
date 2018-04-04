@@ -26,7 +26,7 @@ void ProjectionPlan::PerformBinding(BindingContext &context) {
   const auto& children = GetChildren();
   if (children.empty())
     return;
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
 
   // Let the child do its binding first
   BindingContext child_context;

@@ -27,7 +27,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
         std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
   LOG_TRACE("Creating an Insert Plan with multiple expressions");
-  PL_ASSERT(target_table_);
+  PELOTON_ASSERT(target_table_);
 
   // We assume we are not processing a prepared statement insert.
   // Only after we have finished processing, do we know if it is a
@@ -52,7 +52,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      PL_ASSERT(values.size() <= schema_col_count);
+      PELOTON_ASSERT(values.size() <= schema_col_count);
       // uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
 	
@@ -71,13 +71,13 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   } else {
     // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
     // Columns may be in any order. Values may include constants.
-    PL_ASSERT(columns->size() <= schema_col_count);
+    PELOTON_ASSERT(columns->size() <= schema_col_count);
     // construct the mapping between schema cols and insert cols
     ProcessColumnSpec(columns);
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      PL_ASSERT(values.size() <= schema_col_count);
+      PELOTON_ASSERT(values.size() <= schema_col_count);
       
       for (uint32_t idx = 0; idx < schema_col_count; idx++) {
 	if (schema_to_insert_[idx].in_insert_cols) {
@@ -171,7 +171,8 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
     
     return false;
   } else {
-    PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_PARAMETER);
+    PELOTON_ASSERT(expr->GetExpressionType() ==
+		   ExpressionType::VALUE_PARAMETER);
     return true;
   }
   return false;
@@ -213,7 +214,7 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   auto *schema = target_table_->GetSchema();
   auto schema_col_count = schema->GetColumnCount();
 
-  PL_ASSERT(values->size() <= schema_col_count);
+  PELOTON_ASSERT(values->size() <= schema_col_count);
   for (uint32_t idx = 0; idx < schema_col_count; idx++) {
     if (schema_to_insert_[idx].set_value) {
       values_.push_back(schema_to_insert_[idx].value);
@@ -266,7 +267,7 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
-  PL_ASSERT(table && other_table);
+  PELOTON_ASSERT(table && other_table);
   if (*table != *other_table)
     return false;
 
@@ -296,7 +297,7 @@ void InsertPlan::VisitParameters(
       values.push_back(value);
     }
   } else {
-    PL_ASSERT(GetChildren().size() == 1);
+    PELOTON_ASSERT(GetChildren().size() == 1);
     auto *plan = const_cast<planner::AbstractPlan *>(GetChild(0));
     plan->VisitParameters(map, values, values_from_user);
   }

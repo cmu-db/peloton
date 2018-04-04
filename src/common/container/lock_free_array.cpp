@@ -40,7 +40,7 @@ LOCK_FREE_ARRAY_TYPE::~LockFreeArray(){
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value){
-  PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
+  PELOTON_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Update at %lu", lock_free_array_offset.load());
   lock_free_array->at(offset) =  value;
   return true;
@@ -55,7 +55,7 @@ bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value){
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, const ValueType& invalid_value){
-  PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
+  PELOTON_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Erase at %lu", offset);
   lock_free_array->at(offset) =  invalid_value;
   return true;
@@ -63,7 +63,7 @@ bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, const ValueType& inv
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const{
-  PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
+  PELOTON_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Find at %lu", offset);
   auto value = lock_free_array->at(offset);
   return value;
@@ -72,7 +72,7 @@ ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const{
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 ValueType LOCK_FREE_ARRAY_TYPE::FindValid(const std::size_t &offset,
                                           const ValueType& invalid_value) const {
-  PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
+  PELOTON_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Find Valid at %lu", offset);
 
   std::size_t valid_array_itr = 0;

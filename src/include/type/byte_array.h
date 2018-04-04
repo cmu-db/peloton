@@ -88,21 +88,21 @@ class GenericArray {
 
   // corresponds to "bar = new byte[len];" in Java
   void resetAndExpand(int newLength) {
-    PL_ASSERT(newLength >= 0);
+    PELOTON_ASSERT(newLength >= 0);
     //data_ = boost::shared_array<T>(new T[newLength]);
     data_ = std::shared_ptr<T>(new T[newLength], std::default_delete<T[]>{});
-    PL_MEMSET(data_.get(), 0, newLength * sizeof(T));
+    PELOTON_MEMSET(data_.get(), 0, newLength * sizeof(T));
     length_ = newLength;
   };
 
   // corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar = tmp;" in Java
   void copyAndExpand(int newLength) {
-    PL_ASSERT(newLength >= 0);
-    PL_ASSERT(newLength > length_);
+    PELOTON_ASSERT(newLength >= 0);
+    PELOTON_ASSERT(newLength > length_);
     //boost::shared_array<T> newData(new T[newLength]);
     std::shared_ptr<T> newData(new T[newLength], std::default_delete<T[]>{});
-    PL_MEMSET(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
-    PL_MEMCPY(newData.get(), data_.get(), length_ * sizeof(T));
+    PELOTON_MEMSET(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
+    PELOTON_MEMCPY(newData.get(), data_.get(), length_ * sizeof(T));
     data_ = newData;
     length_ = newLength;
   };
@@ -114,15 +114,15 @@ class GenericArray {
 
   // helper functions for convenience.
   void assign(const T* assignedData, int offset, int assignedLength) {
-    PL_ASSERT(!isNull());
-    PL_ASSERT(length_ >= offset + assignedLength);
-    PL_ASSERT(offset >= 0);
-    PL_MEMCPY(data_.get() + offset, assignedData, assignedLength * sizeof(T));
+    PELOTON_ASSERT(!isNull());
+    PELOTON_ASSERT(length_ >= offset + assignedLength);
+    PELOTON_ASSERT(offset >= 0);
+    PELOTON_MEMCPY(data_.get() + offset, assignedData, assignedLength * sizeof(T));
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {
-    PL_ASSERT(!isNull());
-    PL_ASSERT(!tail.isNull());
+    PELOTON_ASSERT(!isNull());
+    PELOTON_ASSERT(!tail.isNull());
     GenericArray<T> concated(this->length_ + tail.length_);
     concated.assign(this->data_.get(), 0, this->length_);
     concated.assign(tail.data_.get(), this->length_, tail.length_);
@@ -130,14 +130,14 @@ class GenericArray {
   };
 
   const T& operator[](int index) const {
-    PL_ASSERT(!isNull());
-    PL_ASSERT(length_ > index);
+    PELOTON_ASSERT(!isNull());
+    PELOTON_ASSERT(length_ > index);
     return data_.get()[index];
   };
 
   T& operator[](int index) {
-    PL_ASSERT(!isNull());
-    PL_ASSERT(length_ > index);
+    PELOTON_ASSERT(!isNull());
+    PELOTON_ASSERT(length_ > index);
     return data_.get()[index];
   };
 

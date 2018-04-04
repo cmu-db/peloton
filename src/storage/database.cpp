@@ -81,7 +81,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 
     // Deregister table from GC manager.
     auto *gc_manager = &gc::GCManagerFactory::GetInstance();
-    PL_ASSERT(gc_manager != nullptr);
+    PELOTON_ASSERT(gc_manager != nullptr);
     gc_manager->DeregisterTable(table_oid);
 
     // Deregister table from Query Cache manager
@@ -95,7 +95,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
       }
       table_offset++;
     }
-    PL_ASSERT(table_offset < tables.size());
+    PELOTON_ASSERT(table_offset < tables.size());
 
     // Drop the table
     tables.erase(tables.begin() + table_offset);
@@ -103,7 +103,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 }
 
 storage::DataTable *Database::GetTable(const oid_t table_offset) const {
-  PL_ASSERT(table_offset < tables.size());
+  PELOTON_ASSERT(table_offset < tables.size());
   auto table = tables.at(table_offset);
   return table;
 }
