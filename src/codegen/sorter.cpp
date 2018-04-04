@@ -35,9 +35,11 @@ Sorter::Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc) {
 }
 
 void Sorter::Init(CodeGen &codegen, llvm::Value *sorter_ptr,
+                  llvm::Value *executor_ctx,
                   llvm::Value *comparison_func) const {
   auto *tuple_size = codegen.Const32(storage_format_.GetStorageSize());
-  codegen.Call(SorterProxy::Init, {sorter_ptr, comparison_func, tuple_size});
+  codegen.Call(SorterProxy::Init,
+               {sorter_ptr, executor_ctx, comparison_func, tuple_size});
 }
 
 void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,

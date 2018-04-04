@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/util/sorter.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,9 +32,7 @@ namespace util {
  * This class only supports forward iteration since this is all that's required.
  * Additionally, Sorter does not serialize elements into its memory space.
  * Instead, it allocates space for incoming tuples on demand and returns a
- * pointer to the call, relying on her to serialize into the space. This assumes
- * well-behaved callers. We **could** accept a Serializer type as part of
- * Init(..), but we don't need it at this moment.
+ * pointer to the call, relying on her to serialize into the space.
  */
 class Sorter {
  private:
@@ -42,48 +40,75 @@ class Sorter {
   static constexpr uint64_t kInitialBufferSize = 4 * 1024;
 
  public:
-  typedef int (*ComparisonFunction)(const char *left_tuple,
-                                    const char *right_tuple);
+  using ComparisonFunction = int (*)(const char *left_tuple,
+                                     const char *right_tuple);
 
-  /// Constructor
-  Sorter(ComparisonFunction func, uint32_t tuple_size);
+  /**
+   * Constructor to create and setup this sorter instance.
+   *
+   * TODO(pmenon): Right now, Sorters assume that all tuples that are inserted
+   * have the same size. If we choose to perform null-suppression or any
+   * compression, this is no longer true.
+   *
+   * @param memory A memory pool that is used for all allocations during the
+   * lifetime of the sorter.
+   * @param func The comparison function used to compare two tuples stored in
+   * this sorter
+   * @param tuple_size The size of the tuples stored in this sorter
+   */
+  Sorter(::peloton::type::AbstractPool &memory, ComparisonFunction func,
+         uint32_t tuple_size);
 
-  /// Destructor
+  /**
+   * Destructor. This destructor cleans up returns all memory it has allocated
+   * back to the memory pool that injected at construction.
+   */
   ~Sorter();
 
   /**
-   * @brief This static function initializes the given sorter instance with the
-   * given comparison function and assumes all input tuples have the given size.
+   * This static function initializes the given sorter instance with the given
+   * comparison function and assumes all input tuples have the given size. This
+   * method is used from codegen to invoke the constructor of the sorter
+   * sorter instance.
    *
    * @param sorter The sorter instance we are initializing
    * @param func The comparison function used during sort
    * @param tuple_size The size of the tuple in bytes
    */
-  static void Init(Sorter &sorter, ComparisonFunction func,
-                   uint32_t tuple_size);
+  static void Init(Sorter &sorter, executor::ExecutorContext &ctx,
+                   ComparisonFunction func, uint32_t tuple_size);
 
   /**
-   * @brief Cleans up all resources maintained by the given sorter instance
+   * Cleans up all resources maintained by the given sorter instance. This
+   * method is used from codegen to invoke the destructor of a sorter instance.
+   *
+   * @param sorter The sorter instance we're destroying the resources from
    */
   static void Destroy(Sorter &sorter);
 
   /**
-   * @brief Allocate space for a new input tuple in this sorter. It is assumed
-   * that the size of the tuple is equivalent to the tuple size provided when
-   * this sorter was initialized.
+   * Allocate space for a new input tuple in this sorter. It is assumed that the
+   * size of the tuple is equivalent to the tuple size provided when this sorter
+   * was initialized.
    *
    * @return A pointer to a memory space large enough to store one tuple
    */
   char *StoreInputTuple();
 
   /**
-   * @brief Sort all tuples stored in this sorter.
+   * Sort all tuples stored in this sorter instance. This is a single-threaded
+   * synchronous call.
    */
   void Sort();
 
   /**
-   * @brief Perform a parallel sort of all sorter instances stored in the thread
-   * states object.
+   * Perform a parallel sort of all sorter instances stored in the thread states
+   * object.
+   *
+   * @param thread_states The states object where all the sorter instances are
+   * stored.
+   * @param sorter_offset The offset in each thread state where the sorters are
+   * stored.
    */
   void SortParallel(
       const executor::ExecutorContext::ThreadStates &thread_states,
@@ -95,17 +120,25 @@ class Sorter {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
-  /// Return the number of tuples
+  /** Return the number tuples stored in this sorter instance */
   uint64_t NumTuples() const { return tuples_.size(); }
 
-  /// Iterators
+  /** Iterators */
   std::vector<char *>::iterator begin() { return tuples_.begin(); }
   std::vector<char *>::iterator end() { return tuples_.end(); }
 
  private:
+  /**
+   * Allocate room for a new tuple. If room is already available, return
+   * immediately. If room has to be made, allocate a block of memory from the
+   * memory pool.
+   */
   void MakeRoomForNewTuple();
 
  private:
+  // The memory pool where this sorter sources memory from
+  ::peloton::type::AbstractPool &memory_;
+
   // The comparison function
   ComparisonFunction cmp_func_;
 

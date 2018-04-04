@@ -21,7 +21,8 @@ namespace codegen {
 PROXY(Sorter) {
   // clang-format off
   DECLARE_MEMBER(0,
-                 char[sizeof(void *) +              // comparison function
+                 char[sizeof(void *) +              // abstract pool reference
+                      sizeof(void *) +              // comparison function
                       sizeof(uint32_t) +            // tuple size
                       sizeof(char *) +              // buffer start
                       sizeof(char *) +              // buffer end

@@ -6,7 +6,7 @@
 //
 // Identification: test/codegen/sorter_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,11 +37,6 @@ static int CompareTuplesForAscending(const char *a, const char *b) {
 
 class SorterTest : public PelotonTest {
  public:
-  // The sorter instance
-  codegen::util::Sorter sorter_;
-
-  SorterTest() : sorter_(CompareTuplesForAscending, sizeof(TestTuple)) {}
-
   static void LoadSorter(codegen::util::Sorter &sorter, uint64_t num_inserts) {
     std::random_device r;
     std::default_random_engine e(r());
@@ -72,30 +67,37 @@ class SorterTest : public PelotonTest {
   }
 
   void TestSort(uint64_t num_tuples_to_insert = 100) {
-    // Time this stuff
-    Timer<std::ratio<1, 1000>> timer;
-    timer.Start();
+    ::peloton::type::EphemeralPool pool;
 
-    // Load the sorter
-    LoadSorter(sorter_, num_tuples_to_insert);
+    {
+      codegen::util::Sorter sorter{pool, CompareTuplesForAscending,
+                                   sizeof(TestTuple)};
 
-    timer.Stop();
-    LOG_INFO("Loading %" PRId64 " tuples into sort took %.2f ms",
-             num_tuples_to_insert, timer.GetDuration());
-    timer.Reset();
-    timer.Start();
+      // Time this stuff
+      Timer<std::ratio<1, 1000>> timer;
+      timer.Start();
 
-    // Sort
-    sorter_.Sort();
+      // Load the sorter
+      LoadSorter(sorter, num_tuples_to_insert);
 
-    timer.Stop();
-    LOG_INFO("Sorting %" PRId64 " tuples took %.2f ms", num_tuples_to_insert,
-             timer.GetDuration());
+      timer.Stop();
+      LOG_INFO("Loading %" PRId64 " tuples into sort took %.2f ms",
+               num_tuples_to_insert, timer.GetDuration());
+      timer.Reset();
+      timer.Start();
 
-    // Check sorted results
-    CheckSorted(sorter_, true);
+      // Sort
+      sorter.Sort();
 
-    EXPECT_EQ(num_tuples_to_insert, sorter_.NumTuples());
+      timer.Stop();
+      LOG_INFO("Sorting %" PRId64 " tuples took %.2f ms", num_tuples_to_insert,
+               timer.GetDuration());
+
+      // Check sorted results
+      CheckSorted(sorter, true);
+
+      EXPECT_EQ(num_tuples_to_insert, sorter.NumTuples());
+    }
   }
 };
 
@@ -110,6 +112,7 @@ TEST_F(SorterTest, BenchmarkSorter) {
 }
 
 TEST_F(SorterTest, ParallelSortTest) {
+  // A fake executor context associated to no transaction
   executor::ExecutorContext ctx(nullptr);
 
   uint32_t num_threads = 4;
@@ -127,31 +130,35 @@ TEST_F(SorterTest, ParallelSortTest) {
   for (uint32_t i = 0; i < num_threads; i++) {
     auto *sorter = reinterpret_cast<codegen::util::Sorter *>(
         thread_states.AccessThreadState(i));
-    codegen::util::Sorter::Init(*sorter, CompareTuplesForAscending,
+    codegen::util::Sorter::Init(*sorter, ctx, CompareTuplesForAscending,
                                 sizeof(TestTuple));
     LoadSorter(*sorter, ntuples_per_sorter);
   }
 
-  Timer<std::milli> timer;
-  timer.Start();
+  {
+    codegen::util::Sorter main_sorter{*ctx.GetPool(), CompareTuplesForAscending,
+                                      sizeof(TestTuple)};
+    Timer<std::milli> timer;
+    timer.Start();
 
-  // Sort parallel
-  sorter_.SortParallel(thread_states, 0);
+    // Sort parallel
+    main_sorter.SortParallel(thread_states, 0);
 
-  timer.Stop();
-  LOG_INFO("Parallel sort took: %.2lf ms", timer.GetDuration());
+    timer.Stop();
+    LOG_INFO("Parallel sort took: %.2lf ms", timer.GetDuration());
 
-  // Check main sorter is sorted
-  CheckSorted(sorter_, true);
+    // Check main sorter is sorted
+    CheckSorted(main_sorter, true);
 
-  // Check result size
-  EXPECT_EQ(num_tuples, sorter_.NumTuples());
+    // Check result size
+    EXPECT_EQ(num_tuples, main_sorter.NumTuples());
 
-  // Clean up
-  for (uint32_t i = 0; i < num_threads; i++) {
-    auto *sorter = reinterpret_cast<codegen::util::Sorter *>(
-        thread_states.AccessThreadState(i));
-    codegen::util::Sorter::Destroy(*sorter);
+    // Clean up
+    for (uint32_t i = 0; i < num_threads; i++) {
+      auto *sorter = reinterpret_cast<codegen::util::Sorter *>(
+          thread_states.AccessThreadState(i));
+      codegen::util::Sorter::Destroy(*sorter);
+    }
   }
 }
 

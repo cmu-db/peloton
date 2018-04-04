@@ -191,7 +191,9 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 }
 
 void OrderByTranslator::InitializeQueryState() {
-  sorter_.Init(GetCodeGen(), LoadStatePtr(sorter_id_), compare_func_);
+  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+  auto *exec_ctx_ptr = GetExecutorContextPtr();
+  sorter_.Init(GetCodeGen(), sorter_ptr, exec_ctx_ptr, compare_func_);
 }
 
 void OrderByTranslator::TearDownQueryState() {
@@ -364,7 +366,8 @@ void OrderByTranslator::InitializePipelineState(PipelineContext &pipeline_ctx) {
       pipeline_ctx.IsParallel()) {
     CodeGen &codegen = GetCodeGen();
     auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
-    sorter_.Init(codegen, sorter_ptr, compare_func_);
+    auto *exec_ctx_ptr = GetExecutorContextPtr();
+    sorter_.Init(codegen, sorter_ptr, exec_ctx_ptr, compare_func_);
   }
 }
 

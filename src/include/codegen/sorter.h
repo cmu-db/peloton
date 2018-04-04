@@ -35,7 +35,7 @@ class Sorter {
    * @brief Initialize the given sorter instance with the comparison function
    */
   void Init(CodeGen &codegen, llvm::Value *sorter_ptr,
-            llvm::Value *comparison_func) const;
+            llvm::Value *executor_ctx, llvm::Value *comparison_func) const;
 
   /**
    * @brief Append the given tuple into the sorter instance

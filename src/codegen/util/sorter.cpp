@@ -18,15 +18,16 @@
 
 #include "common/synchronization/count_down_latch.h"
 #include "common/timer.h"
-#include "storage/backend_manager.h"
 #include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
 namespace codegen {
 namespace util {
 
-Sorter::Sorter(ComparisonFunction func, uint32_t tuple_size)
-    : cmp_func_(func),
+Sorter::Sorter(::peloton::type::AbstractPool &memory, ComparisonFunction func,
+               uint32_t tuple_size)
+    : memory_(memory),
+      cmp_func_(func),
       tuple_size_(tuple_size),
       buffer_pos_(nullptr),
       buffer_end_(nullptr),
@@ -39,12 +40,11 @@ Sorter::Sorter(ComparisonFunction func, uint32_t tuple_size)
 
 Sorter::~Sorter() {
   uint64_t total_alloc = 0;
-  auto &backend_manager = storage::BackendManager::GetInstance();
   for (const auto &iter : blocks_) {
     void *block = iter.first;
     total_alloc += iter.second;
     PELOTON_ASSERT(block != nullptr);
-    backend_manager.Release(BackendType::MM, block);
+    memory_.Free(block);
   }
   buffer_pos_ = buffer_end_ = nullptr;
   tuples_start_ = tuples_end_ = nullptr;
@@ -54,9 +54,9 @@ Sorter::~Sorter() {
             tuples_.size(), blocks_.size(), total_alloc / 1024.0);
 }
 
-void Sorter::Init(Sorter &sorter, ComparisonFunction func,
-                  uint32_t tuple_size) {
-  new (&sorter) Sorter(func, tuple_size);
+void Sorter::Init(Sorter &sorter, executor::ExecutorContext &exec_ctx,
+                  ComparisonFunction func, uint32_t tuple_size) {
+  new (&sorter) Sorter(*exec_ctx.GetPool(), func, tuple_size);
 }
 
 void Sorter::Destroy(Sorter &sorter) { sorter.~Sorter(); }
@@ -254,9 +254,7 @@ void Sorter::MakeRoomForNewTuple() {
   LOG_TRACE("Allocating block of size %.2lf KB ...", next_alloc_size_ / 1024.0);
 
   // We need to allocate another block
-  void *block = storage::BackendManager::GetInstance().Allocate(
-      BackendType::MM, next_alloc_size_);
-  PELOTON_ASSERT(block != nullptr);
+  void *block = memory_.Allocate(next_alloc_size_);
   blocks_.emplace_back(block, next_alloc_size_);
 
   // Setup new buffer boundaries
