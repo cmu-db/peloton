@@ -82,7 +82,7 @@ void TableStatsCollector::InitColumnStatsCollectors() {
 }
 
 ColumnStatsCollector *TableStatsCollector::GetColumnStats(oid_t column_id) {
-  PL_ASSERT(column_id < column_stats_collectors_.size());
+  PELOTON_ASSERT(column_id < column_stats_collectors_.size());
   return column_stats_collectors_[column_id].get();
 }
 

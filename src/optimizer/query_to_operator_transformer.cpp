@@ -208,7 +208,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
           std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       join_expr->PushChild(prev_expr);
       join_expr->PushChild(output_expr_);
-      PL_ASSERT(join_expr->Children().size() == 2);
+      PELOTON_ASSERT(join_expr->Children().size() == 2);
       prev_expr = join_expr;
     }
     output_expr_ = prev_expr;

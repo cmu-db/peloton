@@ -24,7 +24,7 @@ namespace network {
 inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
                           UNUSED_ATTRIBUTE size_t size) {
   LOG_TRACE("request->len: %lu", rpkt->len);
-  PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
+  PELOTON_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
 size_t Buffer::GetUInt32BigEndian() {
@@ -126,7 +126,7 @@ void GetStringToken(InputPacket *rpkt, std::string &result) {
 
 uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len) {
   uchar *result = new uchar[len];
-  PL_MEMCPY(result, &(*begin), len);
+  PELOTON_MEMCPY(result, &(*begin), len);
   return result;
 }
 

@@ -199,7 +199,7 @@ bool TriggerList::ExecTriggers(TriggerType exec_type,
     TriggerData trigger_data(trigger_type, &obj, old_tuple, new_tuple);
 
     if (IsOnCommit(exec_type)) {
-      PL_ASSERT(txn != nullptr);
+      PELOTON_ASSERT(txn != nullptr);
       txn->AddOnCommitTrigger(trigger_data);
     } else {
       // apply all triggers on the tuple

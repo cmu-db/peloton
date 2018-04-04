@@ -33,7 +33,7 @@ VectorizedLoop::VectorizedLoop(CodeGen &codegen, llvm::Value *num_elements,
 }
 
 VectorizedLoop::~VectorizedLoop() {
-  PL_ASSERT(ended_ && "You didn't call lang::VectorizedLoop::LoopEnd()!");
+  PELOTON_ASSERT(ended_ && "You didn't call lang::VectorizedLoop::LoopEnd()!");
 }
 
 VectorizedLoop::Range VectorizedLoop::GetCurrentRange() const {
