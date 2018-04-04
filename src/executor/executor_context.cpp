@@ -72,19 +72,19 @@ void ExecutorContext::ThreadStates::Reset(const uint32_t state_size) {
 }
 
 void ExecutorContext::ThreadStates::Allocate(const uint32_t num_threads) {
-  PL_ASSERT(state_size_ > 0);
-  PL_ASSERT(states_ == nullptr);
+  PELOTON_ASSERT(state_size_ > 0);
+  PELOTON_ASSERT(states_ == nullptr);
   num_threads_ = num_threads;
   uint32_t alloc_size = num_threads_ * state_size_;
   states_ = reinterpret_cast<char *>(pool_.Allocate(alloc_size));
-  PL_MEMSET(states_, 0, alloc_size);
+  PELOTON_MEMSET(states_, 0, alloc_size);
 }
 
 char *ExecutorContext::ThreadStates::AccessThreadState(
     const uint32_t thread_id) const {
-  PL_ASSERT(state_size_ > 0);
-  PL_ASSERT(states_ != nullptr);
-  PL_ASSERT(thread_id < num_threads_);
+  PELOTON_ASSERT(state_size_ > 0);
+  PELOTON_ASSERT(states_ != nullptr);
+  PELOTON_ASSERT(thread_id < num_threads_);
   return states_ + (thread_id * state_size_);
 }
 

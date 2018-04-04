@@ -284,7 +284,7 @@ uint64_t CodeGen::SizeOf(llvm::Type *type) const {
 }
 
 uint64_t CodeGen::ElementOffset(llvm::Type *type, uint32_t element_idx) const {
-  PL_ASSERT(llvm::isa<llvm::StructType>(type));
+  PELOTON_ASSERT(llvm::isa<llvm::StructType>(type));
   auto &data_layout = code_context_.GetDataLayout();
 
   auto *struct_layout =

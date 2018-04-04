@@ -68,7 +68,7 @@ void Buffer::MakeRoomForBytes(uint64_t num_bytes) {
   uint64_t curr_used_size = UsedSpace();
 
   // Ensure the current size is a power of two
-  PL_ASSERT(curr_alloc_size % 2 == 0);
+  PELOTON_ASSERT(curr_alloc_size % 2 == 0);
 
   // Allocate double the buffer room
   uint64_t next_alloc_size = curr_alloc_size;
@@ -83,7 +83,7 @@ void Buffer::MakeRoomForBytes(uint64_t num_bytes) {
       backend_manager.Allocate(BackendType::MM, next_alloc_size));
 
   // Now copy the previous buffer into the new area
-  PL_MEMCPY(new_buffer, buffer_start_, curr_used_size);
+  PELOTON_MEMCPY(new_buffer, buffer_start_, curr_used_size);
 
   // Set pointers
   char *old_buffer_start = buffer_start_;

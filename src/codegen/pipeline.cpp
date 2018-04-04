@@ -78,12 +78,13 @@ PipelineContext::PipelineContext(Pipeline &pipeline)
 
 PipelineContext::Id PipelineContext::RegisterState(std::string name,
                                                    llvm::Type *type) {
-  PL_ASSERT(thread_state_type_ == nullptr);
+  PELOTON_ASSERT(thread_state_type_ == nullptr);
   if (thread_state_type_ != nullptr) {
     throw Exception{"Cannot register thread state after finalization"};
   }
 
-  PL_ASSERT(state_components_.size() < std::numeric_limits<uint8_t>::max());
+  PELOTON_ASSERT(state_components_.size() <
+                 std::numeric_limits<uint8_t>::max());
   auto slot = static_cast<uint8_t>(state_components_.size());
   state_components_.emplace_back(name, type);
   return slot;
@@ -111,7 +112,7 @@ void PipelineContext::FinalizeState(CodeGen &codegen) {
 
 llvm::Value *PipelineContext::AccessThreadState(
     UNUSED_ATTRIBUTE CodeGen &codegen) const {
-  PL_ASSERT(thread_state_ != nullptr);
+  PELOTON_ASSERT(thread_state_ != nullptr);
   return thread_state_;
 }
 
@@ -120,8 +121,8 @@ llvm::Value *PipelineContext::LoadFlag(CodeGen &codegen) const {
 }
 
 void PipelineContext::StoreFlag(CodeGen &codegen, llvm::Value *flag) const {
-  PL_ASSERT(flag->getType()->isIntegerTy(1) &&
-            flag->getType() == codegen.BoolType());
+  PELOTON_ASSERT(flag->getType()->isIntegerTy(1) &&
+                 flag->getType() == codegen.BoolType());
   auto *flag_ptr = LoadStatePtr(codegen, init_flag_id_);
   codegen->CreateStore(flag, flag_ptr);
 }
@@ -183,7 +184,7 @@ void Pipeline::Add(OperatorTranslator *translator, Parallelism parallelism) {
 
 void Pipeline::MarkSource(OperatorTranslator *translator,
                           Pipeline::Parallelism parallelism) {
-  PL_ASSERT(translator == pipeline_.back());
+  PELOTON_ASSERT(translator == pipeline_.back());
 
   // Check parallel execution settings
   bool parallel_exec_disabled = !settings::SettingsManager::GetBool(
@@ -240,7 +241,7 @@ const OperatorTranslator *Pipeline::NextStep() {
 void Pipeline::InstallStageBoundary(
     UNUSED_ATTRIBUTE const OperatorTranslator *translator) {
   // Validate the assumption
-  PL_ASSERT(pipeline_[pipeline_index_] == translator);
+  PELOTON_ASSERT(pipeline_[pipeline_index_] == translator);
   stage_boundaries_.push_back(pipeline_index_ + 1);
 }
 
@@ -409,7 +410,7 @@ void Pipeline::RunParallel(
     const std::vector<llvm::Type *> &pipeline_args_types,
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
-  PL_ASSERT(IsParallel());
+  PELOTON_ASSERT(IsParallel());
   Run(dispatch_func, dispatch_args, pipeline_args_types, body);
 }
 

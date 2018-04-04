@@ -90,8 +90,8 @@ inline MonoQueuePool &MonoQueuePool::GetInstance() {
   int32_t worker_pool_size = settings::SettingsManager::GetInt(
       settings::SettingId::monoqueue_worker_pool_size);
 
-  PL_ASSERT(task_queue_size > 0);
-  PL_ASSERT(worker_pool_size > 0);
+  PELOTON_ASSERT(task_queue_size > 0);
+  PELOTON_ASSERT(worker_pool_size > 0);
 
   std::string name = "main-pool";
 
@@ -107,8 +107,8 @@ inline MonoQueuePool &MonoQueuePool::GetBrainInstance() {
   int32_t worker_pool_size = settings::SettingsManager::GetInt(
       settings::SettingId::brain_worker_pool_size);
 
-  PL_ASSERT(task_queue_size > 0);
-  PL_ASSERT(worker_pool_size > 0);
+  PELOTON_ASSERT(task_queue_size > 0);
+  PELOTON_ASSERT(worker_pool_size > 0);
 
   std::string name = "brain-pool";
 
@@ -124,8 +124,8 @@ inline MonoQueuePool &MonoQueuePool::GetExecutionInstance(){
   int32_t worker_pool_size = settings::SettingsManager::GetInt(
       settings::SettingId::monoqueue_worker_pool_size);
 
-  PL_ASSERT(task_queue_size > 0);
-  PL_ASSERT(worker_pool_size > 0);
+  PELOTON_ASSERT(task_queue_size > 0);
+  PELOTON_ASSERT(worker_pool_size > 0);
 
   std::string name = "executor-pool";
 
