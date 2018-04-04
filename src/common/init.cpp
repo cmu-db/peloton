@@ -38,7 +38,9 @@ void PelotonInit::Initialize() {
   EPOCH_THREAD_COUNT = 1;
 
   // set max thread number.
-  thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
+  thread_pool.Initialize(0, 
+    CONNECTION_THREAD_COUNT + LOGGING_THREAD_COUNT + 
+    GC_THREAD_COUNT + EPOCH_THREAD_COUNT);
 
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
@@ -48,9 +50,12 @@ void PelotonInit::Initialize() {
     threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
 
-  int parallelism = (CONNECTION_THREAD_COUNT + 3) / 4;
-  storage::DataTable::SetActiveTileGroupCount(parallelism);
-  storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
+  // require user to set parallel tilegroup count
+  PARALLEL_TILEGROUP_COUNT = settings::SettingsManager::GetInt(
+          settings::SettingId::parallel_tilegroup_count);
+
+  storage::DataTable::SetActiveTileGroupCount(PARALLEL_TILEGROUP_COUNT);
+  storage::DataTable::SetActiveIndirectionArrayCount(PARALLEL_TILEGROUP_COUNT);
 
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();

@@ -99,7 +99,15 @@ SETTING_int(monoqueue_worker_pool_size,
 // Number of connection threads used by peloton
 SETTING_int(connection_thread_count,
             "Number of connection threads (default: std::hardware_concurrency())",
-            std::thread::hardware_concurrency(), false, false)
+            std::thread::hardware_concurrency(), 
+            false, false)
+
+// Number of parallel tile groups used by peloton
+SETTING_int(parallel_tilegroup_count,
+            "Number of parallel tile groups (default: 1)",
+            1, 
+            false, false)
+
 
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG

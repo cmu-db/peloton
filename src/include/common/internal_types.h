@@ -1164,6 +1164,9 @@ static const cid_t MAX_EID = std::numeric_limits<eid_t>::max();
 // For epoch
 static const size_t EPOCH_LENGTH = 40;
 
+// For tile group
+extern size_t PARALLEL_TILEGROUP_COUNT;
+
 // For threads
 extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;

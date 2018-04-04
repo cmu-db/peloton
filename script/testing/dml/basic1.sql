@@ -10,6 +10,9 @@ CREATE TABLE foo(id integer PRIMARY KEY, year integer);
 
 -- load in the data
 
+INSERT INTO foo VALUES(10, 800);
+UPDATE foo SET id = 3 WHERE year = 800; -- test Halloween problem
+
 INSERT INTO foo VALUES(1, 100);
 INSERT INTO foo VALUES(1, 200); -- should fail
 INSERT INTO foo VALUES(2, 200);

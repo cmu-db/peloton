@@ -55,7 +55,7 @@ cd $PELOTON_DIR/build
 if [ "$OS_NAME" == "DARWIN" ]; then
     ASAN_OPTIONS=detect_container_overflow=0 bin/peloton -port $PELOTON_PORT > /dev/null &
 else
-    bin/peloton -port $PELOTON_PORT > /dev/null &
+    bin/peloton -parallel_tilegroup_count=3 -port $PELOTON_PORT > /dev/null &
 fi
 PELOTON_PID=$!
 sleep 3
