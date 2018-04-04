@@ -134,6 +134,50 @@ class InsertPlan : public AbstractPlan {
       const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
+  /** 
+   * Lookup a column name in the schema columns
+   * 
+   * @param[in]  col_name    column name, from insert statement
+   * @param[in]  tbl_columns table columns from the schema
+   * @param[out] index       index into schema columns, only if found
+   *
+   * @return      true if column was found, false otherwise
+   */
+  bool FindSchemaColIndex(std::string col_name,
+                          const std::vector<catalog::Column> &tbl_columns,
+                          uint32_t &index);
+  
+  /**
+   * Process column specification supplied in the insert statement.
+   * Construct a map from insert columns to schema columns. Once
+   * we know which columns will receive constant inserts, further
+   * adjustment of the map will be needed.
+   *
+   * @param[in] columns        Column specification
+   */
+  void ProcessColumnSpec(const std::vector<std::string> *columns);
+
+  /**
+   * Process a single expression to be inserted.
+   *
+   * @param[in] expr       insert expression
+   * @param[in] schema_idx index into schema columns, where the expr
+   *                       will be inserted.
+   * @return  true if values imply a prepared statement
+   *          false if all values are constants. This does not rule
+   *             out the insert being a prepared statement.
+   */
+  bool ProcessValueExpr(expression::AbstractExpression *expr,
+                        uint32_t schema_idx);
+
+  /** 
+   * Set default value into a schema column
+   * 
+   * @param[in] idx  schema column index
+   */
+  void SetDefaultValue(uint32_t idx);
+
+ private:  
   // mapping from schema columns to insert columns
   struct SchemaColsToInsertCols {
     // this schema column is present in the insert columns
@@ -186,52 +230,7 @@ class InsertPlan : public AbstractPlan {
   // Pool for variable length types
   std::unique_ptr<type::AbstractPool> pool_;
 
- private:
   DISALLOW_COPY_AND_MOVE(InsertPlan);
-  
-  /** 
-   * Lookup a column name in the schema columns
-   * 
-   * @param[in]  col_name    column name, from insert statement
-   * @param[in]  tbl_columns table columns from the schema
-   * @param[out] index       index into schema columns, only if found
-   *
-   * @return      true if column was found, false otherwise
-   */
-  bool FindSchemaColIndex(std::string col_name,
-                          const std::vector<catalog::Column> &tbl_columns,
-                          uint32_t &index);
-  
-  /**
-   * Process column specification supplied in the insert statement.
-   * Construct a map from insert columns to schema columns. Once
-   * we know which columns will receive constant inserts, further
-   * adjustment of the map will be needed.
-   *
-   * @param[in] columns        Column specification
-   */
-  void ProcessColumnSpec(const std::vector<std::string> *columns);
-
-  /**
-   * Process a single expression to be inserted.
-   *
-   * @param[in] expr       insert expression
-   * @param[in] schema_idx index into schema columns, where the expr
-   *                       will be inserted.
-   * @return  true if values imply a prepared statement
-   *          false if all values are constants. This does not rule
-   *             out the insert being a prepared statement.
-   */
-  bool ProcessValueExpr(expression::AbstractExpression *expr,
-                        uint32_t schema_idx);
-
-  /** 
-   * Set default value into a schema column
-   * 
-   * @param[in] idx  schema column index
-   */
-  void SetDefaultValue(uint32_t idx);
-
 };
 }  // namespace planner
 }  // namespace peloton
