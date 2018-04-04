@@ -25,7 +25,7 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
                           "." TABLE_METRICS_CATALOG_NAME
                           " ("
                           "database_oid   INT NOT NULL, "
-                          "table_oid      INT NOT NULL PRIMARY KEY, "
+                          "table_oid      INT NOT NULL, "
                           "reads          INT NOT NULL, "
                           "updates        INT NOT NULL, "
                           "deletes        INT NOT NULL, "

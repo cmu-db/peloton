@@ -14,11 +14,8 @@
 #include <cinttypes>
 
 #include "catalog/catalog.h"
-#include "catalog/system_catalogs.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/index_metrics_catalog.h"
-#include "catalog/query_metrics_catalog.h"
-#include "catalog/table_metrics_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index.h"
 #include "storage/storage_manager.h"
@@ -205,7 +202,7 @@ void StatsAggregator::UpdateMetrics() {
     auto database = storage_manager->GetDatabaseWithOffset(database_offset);
 
     // Update database metrics table
-    auto database_oid = database->GetOid();
+    oid_t database_oid = database->GetOid();
     try {
       catalog::Catalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     } catch (CatalogException &e) {
@@ -326,7 +323,7 @@ void StatsAggregator::RegisterContext(std::thread::id id_,
     thread_number_++;
     backend_stats_[id_] = context_;
   }
-  LOG_DEBUG("Stats aggregator hash map size: %ld", backend_stats_.size());
+  // LOG_DEBUG("Stats aggregator hash map size: %ld", backend_stats_.size());
 }
 
 // Unregister a BackendStatsContext. Currently we directly reuse the thread id

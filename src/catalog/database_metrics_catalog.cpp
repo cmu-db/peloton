@@ -30,7 +30,7 @@ DatabaseMetricsCatalog::DatabaseMetricsCatalog(
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." DATABASE_METRICS_CATALOG_NAME
                       " ("
-                      "database_oid  INT NOT NULL PRIMARY KEY, "
+                      "database_oid  INT NOT NULL, "
                       "txn_committed INT NOT NULL, "
                       "txn_aborted   INT NOT NULL, "
                       "time_stamp    INT NOT NULL);",

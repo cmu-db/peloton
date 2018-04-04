@@ -157,10 +157,10 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   ASSERT_EQ(aggregated_stats.GetQueryCount(), num_threads * NUM_ITERATION);
 
   // Check database metrics
-  auto db_oid = database->GetOid();
+  oid_t db_oid = database->GetOid();
   LOG_TRACE("db_oid is %u", db_oid);
   auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
-  ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(),
+  ASSERT_GT(db_metric->GetTxnCommitted().GetCounter(),
             num_threads * NUM_ITERATION * NUM_DB_COMMIT);
   ASSERT_EQ(db_metric->GetTxnAborted().GetCounter(),
             num_threads * NUM_ITERATION * NUM_DB_ABORT);

@@ -25,8 +25,8 @@ QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
     : AbstractCatalog("CREATE TABLE " + database_name +
                           "." QUERY_METRICS_CATALOG_NAME
                           " ("
-                          "query_name   VARCHAR NOT NULL PRIMARY KEY, "
-                          "database_oid INT NOT NULL , "
+                          "query_name   VARCHAR NOT NULL, "
+                          "database_oid INT NOT NULL, "
                           "num_params   INT NOT NULL, "
                           "param_types    VARBINARY, "
                           "param_formats  VARBINARY, "
