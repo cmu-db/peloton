@@ -1012,7 +1012,7 @@ NURandConstant::NURandConstant() {
 
 // A non-uniform random number, as defined by TPC-C 2.1.6. (page 20).
 int GetNURand(int a, int x, int y) {
-  PL_ASSERT(x <= y);
+  PELOTON_ASSERT(x <= y);
   int c = nu_rand_const.c_last;
 
   if (a == 255) {
@@ -1022,7 +1022,7 @@ int GetNURand(int a, int x, int y) {
   } else if (a == 8191) {
     c = nu_rand_const.order_line_itme_id;
   } else {
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   return (((GetRandomInteger(0, a) | GetRandomInteger(x, y)) + c) %
@@ -1032,7 +1032,7 @@ int GetNURand(int a, int x, int y) {
 
 // A last name as defined by TPC-C 4.3.2.3. Not actually random.
 std::string GetLastName(int number) {
-  PL_ASSERT(number >= 0 && number <= 999);
+  PELOTON_ASSERT(number >= 0 && number <= 999);
 
   int idx1 = number / 100;
   int idx2 = (number / 10 % 10);
@@ -1102,8 +1102,8 @@ double GetRandomDouble(const double lower_bound, const double upper_bound) {
 }
 
 double GetRandomFixedPoint(int decimal_places, double minimum, double maximum) {
-  PL_ASSERT(decimal_places > 0);
-  PL_ASSERT(minimum < maximum);
+  PELOTON_ASSERT(decimal_places > 0);
+  PELOTON_ASSERT(minimum < maximum);
 
   int multiplier = 1;
   for (int i = 0; i < decimal_places; ++i) {
@@ -1271,7 +1271,7 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(
     const int customer_id, const int district_id, const int warehouse_id,
     const std::unique_ptr<type::AbstractPool> &pool) {
   // Customer id begins from 0
-  PL_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
+  PELOTON_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
 
   auto customer_table_schema = customer_table->GetSchema();
   std::unique_ptr<storage::Tuple> customer_tuple(

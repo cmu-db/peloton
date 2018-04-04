@@ -34,7 +34,7 @@ const std::vector<std::unique_ptr<AbstractPlan>> &AbstractPlan::GetChildren()
 }
 
 const AbstractPlan *AbstractPlan::GetChild(uint32_t child_index) const {
-  PL_ASSERT(child_index < children_.size());
+  PELOTON_ASSERT(child_index < children_.size());
   return children_[child_index].get();
 }
 

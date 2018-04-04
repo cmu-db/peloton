@@ -20,7 +20,7 @@ namespace peloton {
 ItemPointer INVALID_ITEMPOINTER;
 
 bool AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
-  PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
+  PELOTON_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
   int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
   return __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr,

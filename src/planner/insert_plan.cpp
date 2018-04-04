@@ -27,7 +27,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
         std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
   LOG_TRACE("Creating an Insert Plan with multiple expressions");
-  PL_ASSERT(target_table_);
+  PELOTON_ASSERT(target_table_);
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
   params_value_type_.reset(new std::vector<type::TypeId>);
 
@@ -37,7 +37,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      PL_ASSERT(values.size() <= schema->GetColumnCount());
+      PELOTON_ASSERT(values.size() <= schema->GetColumnCount());
       uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
         auto &exp = values[column_id];
@@ -55,7 +55,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
           parameter_vector_->push_back(pair);
           params_value_type_->push_back(type);
         } else {
-          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+          PELOTON_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =
               dynamic_cast<expression::ConstantValueExpression *>(exp.get());
           type::Value value = const_exp->GetValue().CastAs(type);
@@ -66,7 +66,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   }
   // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
   else {
-    PL_ASSERT(columns->size() <= schema->GetColumnCount());
+    PELOTON_ASSERT(columns->size() <= schema->GetColumnCount());
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
@@ -95,7 +95,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
           parameter_vector_->push_back(pair);
           params_value_type_->push_back(type);
         } else {
-          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+          PELOTON_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =
               dynamic_cast<expression::ConstantValueExpression *>(exp.get());
           type::Value value = const_exp->GetValue().CastAs(type);
@@ -114,8 +114,8 @@ type::AbstractPool *InsertPlan::GetPlanPool() {
 
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
-  PL_ASSERT(values->size() == parameter_vector_->size());
-  PL_ASSERT(values->size() == params_value_type_->size());
+  PELOTON_ASSERT(values->size() == parameter_vector_->size());
+  PELOTON_ASSERT(values->size() == params_value_type_->size());
   for (unsigned int i = 0; i < values->size(); i++) {
     auto type = params_value_type_->at(i);
     auto &param_info = parameter_vector_->at(i);
@@ -164,7 +164,7 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
-  PL_ASSERT(table && other_table);
+  PELOTON_ASSERT(table && other_table);
   if (*table != *other_table)
     return false;
 
@@ -194,7 +194,7 @@ void InsertPlan::VisitParameters(
       values.push_back(value);
     }
   } else {
-    PL_ASSERT(GetChildren().size() == 1);
+    PELOTON_ASSERT(GetChildren().size() == 1);
     auto *plan = const_cast<planner::AbstractPlan *>(GetChild(0));
     plan->VisitParameters(map, values, values_from_user);
   }

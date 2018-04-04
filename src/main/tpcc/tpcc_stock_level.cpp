@@ -135,7 +135,7 @@ bool RunStockLevel(const size_t &thread_id) {
   }
   if (districts.size() != 1) {
     LOG_ERROR("incorrect districts size : %lu", districts.size());
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   type::Value  o_id = districts[0][0];
@@ -246,7 +246,7 @@ bool RunStockLevel(const size_t &thread_id) {
   }
   LOG_TRACE("number of distinct items=%lu", distinct_items.size());
 
-  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 

@@ -218,7 +218,7 @@ void DeriveStats::execute() {
   bool derive_children = false;
   // If we haven't got enough stats to compute the current stats, derive them
   // from the child first
-  PL_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
+  PELOTON_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
   for (size_t idx = 0; idx < children_required_stats.size(); ++idx) {
     auto &child_required_stats = children_required_stats[idx];
     auto child_group_id = gexpr_->GetChildGroupId(idx);
@@ -423,12 +423,12 @@ void TopDownRewrite::execute() {
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
-      PL_ASSERT(!iterator.HasNext());
+      PELOTON_ASSERT(!iterator.HasNext());
       std::vector<std::shared_ptr<OperatorExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
-      PL_ASSERT(after.size() <= 1);
+      PELOTON_ASSERT(after.size() <= 1);
       // If a rule is applied, we replace the old expression and optimize this
       // group again, this will ensure that we apply rule for this level until
       // saturated
@@ -484,12 +484,12 @@ void BottomUpRewrite::execute() {
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
-      PL_ASSERT(!iterator.HasNext());
+      PELOTON_ASSERT(!iterator.HasNext());
       std::vector<std::shared_ptr<OperatorExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
-      PL_ASSERT(after.size() <= 1);
+      PELOTON_ASSERT(after.size() <= 1);
       // If a rule is applied, we replace the old expression and optimize this
       // group again, this will ensure that we apply rule for this level until
       // saturated, also childs are already been rewritten
