@@ -67,7 +67,7 @@ class InsertPlan : public AbstractPlan {
    * @param[in] insert_values  Values
    */
   InsertPlan(storage::DataTable *table,
-	     const std::vector<std::string> *columns,
+             const std::vector<std::string> *columns,
              const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *insert_values);
 
   // Get a varlen pool - will construct the pool only if needed
@@ -199,8 +199,8 @@ class InsertPlan : public AbstractPlan {
    * @return      true if column was found, false otherwise
    */
   bool FindSchemaColIndex(std::string col_name,
-			  const std::vector<catalog::Column> &tbl_columns,
-			  uint32_t &index);
+                          const std::vector<catalog::Column> &tbl_columns,
+                          uint32_t &index);
   
   /**
    * Process column specification supplied in the insert statement.
@@ -223,7 +223,7 @@ class InsertPlan : public AbstractPlan {
    *             out the insert being a prepared statement.
    */
   bool ProcessValueExpr(expression::AbstractExpression *expr,
-			uint32_t schema_idx);
+                        uint32_t schema_idx);
 
   /** 
    * Set default value into a schema column
