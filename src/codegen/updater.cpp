@@ -52,6 +52,11 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
+
+  if (statement_write_set_->find(ItemPointer(tile_group_id, tuple_offset)) != statement_write_set_->end()) {
+    return nullptr;
+  }
+  
   PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
@@ -107,6 +112,7 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
   }
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.PerformDelete(txn, old_location, empty_location);
+  statement_write_set_->find(empty_location);
 
   // Get the tuple data pointer for a new version
   new_location_ = table_->GetEmptyTupleSlot(nullptr);
@@ -133,6 +139,8 @@ void Updater::Update() {
   // Either update in-place
   if (is_owner_ == true) {
     txn_manager.PerformUpdate(txn, old_location_);
+    // we do not need to add any item pointer to statement-level write set
+    // here, because we do not generate any new version
     executor_context_->num_processed++;
     return;
   }
@@ -150,6 +158,7 @@ void Updater::Update() {
     return;
   }
   txn_manager.PerformUpdate(txn, old_location_, new_location_);
+  statement_write_set_->insert(new_location_);
   executor_context_->num_processed++;
 }
 

@@ -62,10 +62,6 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     bool is_owner, storage::TileGroup *tile_group,
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
-  
-  if (statement_write_set_.find(old_location) != statement_write_set_.end()) {
-    return true;
-  }
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -96,6 +92,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     return false;
   }
   transaction_manager.PerformDelete(current_txn, old_location, new_location);
+  statement_write_set_.insert(new_location);
 
   ////////////////////////////////////////////
   // Insert tuple rather than install version
@@ -222,6 +219,11 @@ bool UpdateExecutor::DExecute() {
     }
     ///////////////////////////////////////////////////////////
 
+    
+    if (statement_write_set_.find(old_location) != statement_write_set_.end()) {
+      return true;
+    }
+
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d",
                 trigger_list->GetTriggerListSize());
@@ -269,6 +271,8 @@ bool UpdateExecutor::DExecute() {
                                 executor_context_);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
+        // we do not need to add any item pointer to statement-level write set
+        // here, because we do not generate any new version
       }
     }
     // if we have already obtained the ownership
@@ -366,6 +370,7 @@ bool UpdateExecutor::DExecute() {
                     new_location.offset);
           transaction_manager.PerformUpdate(current_txn, old_location,
                                             new_location);
+          statement_write_set_.insert(new_location);
 
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
