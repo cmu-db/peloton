@@ -41,7 +41,7 @@ AbstractJoinExecutor::AbstractJoinExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool AbstractJoinExecutor::DInit() {
-  PL_ASSERT(children_.size() == 2);
+  PELOTON_ASSERT(children_.size() == 2);
 
   // Grab data from plan node.
   const planner::AbstractJoinPlan &node =
@@ -68,7 +68,7 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
     schema.assign(left.begin(), left.end());
     schema.insert(schema.end(), right.begin(), right.end());
   } else {
-    PL_ASSERT(!proj_info_->IsNonTrivial());
+    PELOTON_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 
@@ -76,10 +76,10 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
     LOG_TRACE("Projection: %s", proj_info_->Debug().c_str());
     for (auto &entry : direct_map_list) {
       if (entry.second.first == 0) {
-        PL_ASSERT(entry.second.second < left.size());
+        PELOTON_ASSERT(entry.second.second < left.size());
         schema[entry.first] = left[entry.second.second];
       } else {
-        PL_ASSERT(entry.second.second < right.size());
+        PELOTON_ASSERT(entry.second.second < right.size());
         schema[entry.first] = right[entry.second.second];
       }
     }
@@ -90,7 +90,7 @@ std::vector<LogicalTile::ColumnInfo>
 AbstractJoinExecutor::BuildSchemaFromLeftTile(
     const std::vector<LogicalTile::ColumnInfo> *left_schema,
     const catalog::Schema *output_schema, oid_t left_pos_list_count) {
-  PL_ASSERT(left_schema != nullptr);
+  PELOTON_ASSERT(left_schema != nullptr);
 
   // dummy physical tile for the empty child
   std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
@@ -113,7 +113,7 @@ AbstractJoinExecutor::BuildSchemaFromLeftTile(
     }
   } else {
     // non trivial projection. construct from direct map list
-    PL_ASSERT(!proj_info_->IsNonTrivial());
+    PELOTON_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 
@@ -128,12 +128,12 @@ AbstractJoinExecutor::BuildSchemaFromLeftTile(
         schema[schema_col_idx] = col;
       } else {
         // map left column to output tile column
-        PL_ASSERT(entry.second.second < left_schema->size());
+        PELOTON_ASSERT(entry.second.second < left_schema->size());
         schema[schema_col_idx] = (*left_schema)[entry.second.second];
       }
     }
   }
-  PL_ASSERT(schema.size() == total_size);
+  PELOTON_ASSERT(schema.size() == total_size);
   return schema;
 }
 
@@ -141,7 +141,7 @@ std::vector<LogicalTile::ColumnInfo>
 AbstractJoinExecutor::BuildSchemaFromRightTile(
     const std::vector<LogicalTile::ColumnInfo> *right_schema,
     const catalog::Schema *output_schema) {
-  PL_ASSERT(right_schema != nullptr);
+  PELOTON_ASSERT(right_schema != nullptr);
   // dummy physical tile for the empty child tile
   std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
       BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
@@ -163,7 +163,7 @@ AbstractJoinExecutor::BuildSchemaFromRightTile(
     schema.insert(schema.end(), right_schema->begin(), right_schema->end());
   } else {
     // non trivial projection. construct from direct map list
-    PL_ASSERT(!proj_info_->IsNonTrivial());
+    PELOTON_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 
@@ -178,14 +178,14 @@ AbstractJoinExecutor::BuildSchemaFromRightTile(
         schema[schema_col_idx] = col;
       } else {
         // map right column to output tile column
-        PL_ASSERT(entry.second.second < right_schema->size());
+        PELOTON_ASSERT(entry.second.second < right_schema->size());
         schema[schema_col_idx] = (*right_schema)[entry.second.second];
         // reserve the left-most position list for left tile
         schema[schema_col_idx].position_list_idx += 1;
       }
     }
   }
-  PL_ASSERT(schema.size() == total_size);
+  PELOTON_ASSERT(schema.size() == total_size);
   return schema;
 }
 
@@ -195,8 +195,8 @@ AbstractJoinExecutor::BuildSchemaFromRightTile(
 std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
     LogicalTile *left_tile, LogicalTile *right_tile) {
   // Check the input logical tiles.
-  PL_ASSERT(left_tile != nullptr);
-  PL_ASSERT(right_tile != nullptr);
+  PELOTON_ASSERT(left_tile != nullptr);
+  PELOTON_ASSERT(right_tile != nullptr);
 
   // Construct output logical tile.
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
@@ -221,7 +221,7 @@ std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
 std::unique_ptr<LogicalTile> AbstractJoinExecutor::BuildOutputLogicalTile(
     LogicalTile *left_tile, LogicalTile *right_tile,
     const catalog::Schema *output_schema) {
-  PL_ASSERT(output_schema != nullptr);
+  PELOTON_ASSERT(output_schema != nullptr);
 
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
 
@@ -256,8 +256,8 @@ std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
   size_t output_tile_column_count =
       left_tile_column_count + right_tile_column_count;
 
-  PL_ASSERT(left_tile_column_count > 0);
-  PL_ASSERT(right_tile_column_count > 0);
+  PELOTON_ASSERT(left_tile_column_count > 0);
+  PELOTON_ASSERT(right_tile_column_count > 0);
 
   // Construct position lists for output tile
   std::vector<std::vector<oid_t>> position_lists;
@@ -274,7 +274,7 @@ std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
-  PL_ASSERT(join_type_ != JoinType::INVALID);
+  PELOTON_ASSERT(join_type_ != JoinType::INVALID);
   left_result_tiles_.emplace_back(left_tile);
   switch (join_type_) {
     case JoinType::LEFT:
@@ -292,7 +292,7 @@ void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
-  PL_ASSERT(join_type_ != JoinType::INVALID);
+  PELOTON_ASSERT(join_type_ != JoinType::INVALID);
   right_result_tiles_.emplace_back(right_tile);
   switch (join_type_) {
     case JoinType::RIGHT:
@@ -312,7 +312,7 @@ void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
  * should be updated when new result tile is buffered
  */
 void AbstractJoinExecutor::UpdateJoinRowSets() {
-  PL_ASSERT(join_type_ != JoinType::INVALID);
+  PELOTON_ASSERT(join_type_ != JoinType::INVALID);
   switch (join_type_) {
     case JoinType::LEFT:
       UpdateLeftJoinRowSets();
@@ -332,7 +332,7 @@ void AbstractJoinExecutor::UpdateJoinRowSets() {
   * Update the row set with all rows from the last tile from left child
   */
 void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
-  PL_ASSERT(left_result_tiles_.size() - no_matching_left_row_sets_.size() == 1);
+  PELOTON_ASSERT(left_result_tiles_.size() - no_matching_left_row_sets_.size() == 1);
   no_matching_left_row_sets_.emplace_back(left_result_tiles_.back()->begin(),
                                           left_result_tiles_.back()->end());
 }
@@ -341,7 +341,7 @@ void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
   * Update the row set with all rows from the last tile from right child
   */
 void AbstractJoinExecutor::UpdateRightJoinRowSets() {
-  PL_ASSERT(right_result_tiles_.size() - no_matching_right_row_sets_.size() ==
+  PELOTON_ASSERT(right_result_tiles_.size() - no_matching_right_row_sets_.size() ==
             1);
   no_matching_right_row_sets_.emplace_back(right_result_tiles_.back()->begin(),
                                            right_result_tiles_.back()->end());
@@ -363,7 +363,7 @@ void AbstractJoinExecutor::UpdateFullJoinRowSets() {
  * there will be a match later.
  */
 bool AbstractJoinExecutor::BuildOuterJoinOutput() {
-  PL_ASSERT(join_type_ != JoinType::INVALID);
+  PELOTON_ASSERT(join_type_ != JoinType::INVALID);
 
   switch (join_type_) {
     case JoinType::LEFT: { return BuildLeftJoinOutput(); }
@@ -413,7 +413,7 @@ bool AbstractJoinExecutor::BuildLeftJoinOutput() {
       pos_lists_builder = LogicalTile::PositionListsBuilder(
           &(left_tile->GetPositionLists()), nullptr);
     } else {
-      PL_ASSERT(right_result_tiles_.size() > 0);
+      PELOTON_ASSERT(right_result_tiles_.size() > 0);
       // construct the output tile from both children tiles
       auto right_tile = right_result_tiles_.front().get();
       output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -425,7 +425,7 @@ bool AbstractJoinExecutor::BuildLeftJoinOutput() {
       pos_lists_builder.AddRightNullRow(left_row_itr);
     }
 
-    PL_ASSERT(pos_lists_builder.Size() > 0);
+    PELOTON_ASSERT(pos_lists_builder.Size() > 0);
     output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
     SetOutput(output_tile.release());
     left_matching_idx++;
@@ -455,7 +455,7 @@ bool AbstractJoinExecutor::BuildRightJoinOutput() {
       pos_lists_builder = LogicalTile::PositionListsBuilder(
           nullptr, &(right_tile->GetPositionLists()));
     } else {
-      PL_ASSERT(left_result_tiles_.size() > 0);
+      PELOTON_ASSERT(left_result_tiles_.size() > 0);
       // construct the output tile from both children tiles
       auto left_tile = left_result_tiles_.front().get();
       output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -466,7 +466,7 @@ bool AbstractJoinExecutor::BuildRightJoinOutput() {
     for (auto right_row_itr : no_matching_right_row_sets_[right_matching_idx]) {
       pos_lists_builder.AddLeftNullRow(right_row_itr);
     }
-    PL_ASSERT(pos_lists_builder.Size() > 0);
+    PELOTON_ASSERT(pos_lists_builder.Size() > 0);
     output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
 
     SetOutput(output_tile.release());

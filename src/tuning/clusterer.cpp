@@ -66,8 +66,8 @@ double Clusterer::GetFraction(oid_t cluster_offset) const {
 }
 
 column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
-  PL_ASSERT(tile_count >= 1);
-  PL_ASSERT(tile_count <= sample_column_count_);
+  PELOTON_ASSERT(tile_count >= 1);
+  PELOTON_ASSERT(tile_count <= sample_column_count_);
 
   std::map<double, oid_t> frequencies;
   oid_t cluster_itr = START_OID;
@@ -116,7 +116,7 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   }
 
   // check if all columns are present in partitioning
-  PL_ASSERT(column_to_tile_map.size() == sample_column_count_);
+  PELOTON_ASSERT(column_to_tile_map.size() == sample_column_count_);
 
   // build partitioning
   column_map_type partitioning;

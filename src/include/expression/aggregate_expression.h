@@ -74,7 +74,7 @@ class AggregateExpression : public AbstractExpression {
       const AbstractTuple *tuple1, UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     // for now support only one child
-    PL_ASSERT(tuple1 != nullptr);
+    PELOTON_ASSERT(tuple1 != nullptr);
     return tuple1->GetValue(value_idx_);
   }
 
@@ -83,7 +83,7 @@ class AggregateExpression : public AbstractExpression {
                           &binding_contexts) override {
     const auto &context = binding_contexts[0];
     ai_ = context->Find(value_idx_);
-    PL_ASSERT(ai_ != nullptr);
+    PELOTON_ASSERT(ai_ != nullptr);
     LOG_TRACE("AggregateOutput Column ID %u.%u binds to AI %p (%s)", 0,
               value_idx_, ai_, ai_->name.c_str());
   }
@@ -107,7 +107,7 @@ class AggregateExpression : public AbstractExpression {
       case ExpressionType::AGGREGATE_MAX:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_SUM:
-        PL_ASSERT(children_.size() >= 1);
+        PELOTON_ASSERT(children_.size() >= 1);
         return_value_type_ = children_[0]->GetValueType();
         break;
       case ExpressionType::AGGREGATE_AVG:

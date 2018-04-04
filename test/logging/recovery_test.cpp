@@ -58,7 +58,7 @@
 //   std::srand(std::time(nullptr));
 //   const catalog::Schema *schema = table->GetSchema();
 //   // Ensure that the tile group is as expected.
-//   PL_ASSERT(schema->GetColumnCount() == 4);
+//   PELOTON_ASSERT(schema->GetColumnCount() == 4);
 
 //   // Insert tuples into tile_group.
 //   const bool allocate = true;

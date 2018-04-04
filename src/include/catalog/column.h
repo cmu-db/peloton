@@ -45,7 +45,7 @@ class Column : public Printable {
 
     // We should not have an inline value of length 0
     if (is_inlined && column_length == 0) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
     SetLength(column_length);

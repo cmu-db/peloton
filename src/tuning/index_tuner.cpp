@@ -173,7 +173,7 @@ double IndexTuner::ComputeWorkloadWriteRatio(
 
   // Compute write ratio
   auto total_duration = total_read_duration + total_write_duration;
-  PL_ASSERT(total_duration > 0);
+  PELOTON_ASSERT(total_duration > 0);
   write_ratio = total_write_duration / (total_duration);
 
   // Compute exponential moving average
@@ -218,7 +218,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
     }
   }
 
-  PL_ASSERT(total_weight > 0);
+  PELOTON_ASSERT(total_weight > 0);
 
   // Normalize
   std::unordered_map<tuning::Sample, double>::iterator sample_frequency_map_itr;
@@ -599,7 +599,7 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
     auto txn = txn_manager.BeginTransaction();
     auto table = catalog->GetTableWithName(database_name, table_name, txn);
     txn_manager.CommitTransaction(txn);
-    PL_ASSERT(table != nullptr);
+    PELOTON_ASSERT(table != nullptr);
     for (auto& sample : samples) {
       table->RecordIndexSample(sample);
     }

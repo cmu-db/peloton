@@ -33,12 +33,12 @@ class Condition {
    */
   explicit Condition(DirtyMutexLatch *mutex) : mutex_(mutex) {
     UNUSED_ATTRIBUTE int status = pthread_cond_init(&cond_, NULL);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   ~Condition() {
     UNUSED_ATTRIBUTE int status = pthread_cond_destroy(&cond_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   /**
@@ -50,7 +50,7 @@ class Condition {
   void Wait() {
     UNUSED_ATTRIBUTE int status =
         pthread_cond_wait(&cond_, mutex_->RawDirtyMutexLatch());
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   /**
@@ -59,7 +59,7 @@ class Condition {
    * @return
    */
   bool TimedwaitRelative(const struct timespec &relative_time) {
-    PL_ASSERT(0 <= relative_time.tv_nsec &&
+    PELOTON_ASSERT(0 <= relative_time.tv_nsec &&
               relative_time.tv_nsec < ONE_S_IN_NS);
 
     struct timespec absolute;
@@ -67,14 +67,14 @@ class Condition {
     // int status = clock_gettime(CLOCK_REALTIME, &absolute);
     struct timeval tv;
     UNUSED_ATTRIBUTE int status = gettimeofday(&tv, NULL);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
     absolute.tv_sec = tv.tv_sec + relative_time.tv_sec;
     absolute.tv_nsec = tv.tv_usec * 1000 + relative_time.tv_nsec;
     if (absolute.tv_nsec >= ONE_S_IN_NS) {
       absolute.tv_nsec -= ONE_S_IN_NS;
       absolute.tv_sec += 1;
     }
-    PL_ASSERT(0 <= absolute.tv_nsec && absolute.tv_nsec < ONE_S_IN_NS);
+    PELOTON_ASSERT(0 <= absolute.tv_nsec && absolute.tv_nsec < ONE_S_IN_NS);
 
     return Timedwait(absolute);
   }
@@ -86,7 +86,7 @@ class Condition {
    * @return
    */
   bool Timedwait(const struct timespec &absolute_time) {
-    PL_ASSERT(0 <= absolute_time.tv_nsec &&
+    PELOTON_ASSERT(0 <= absolute_time.tv_nsec &&
               absolute_time.tv_nsec < ONE_S_IN_NS);
 
     UNUSED_ATTRIBUTE int status = pthread_cond_timedwait(
@@ -94,13 +94,13 @@ class Condition {
     if (status == ETIMEDOUT) {
       return false;
     }
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
     return true;
   }
 
   void Signal() {
     UNUSED_ATTRIBUTE int status = pthread_cond_signal(&cond_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   /**
@@ -108,7 +108,7 @@ class Condition {
    */
   void Broadcast() {
     UNUSED_ATTRIBUTE int status = pthread_cond_broadcast(&cond_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
  private:

@@ -26,7 +26,7 @@ void TupleRuntime::CreateVarlen(char *data, uint32_t len, char *buf,
   auto *area =
       reinterpret_cast<varlen_t *>(pool->Allocate(sizeof(uint32_t) + len));
   area->len = len;
-  PL_MEMCPY(area->data, data, len);
+  PELOTON_MEMCPY(area->data, data, len);
 
   *reinterpret_cast<varlen_t **>(buf) = area;
 }

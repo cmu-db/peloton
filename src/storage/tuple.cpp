@@ -34,8 +34,8 @@ Tuple::~Tuple() {
 
 // Get the value of a specified column (const)
 type::Value Tuple::GetValue(oid_t column_id) const {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
   const type::TypeId column_type = tuple_schema_->GetType(column_id);
   const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema_->IsInlined(column_id);
@@ -93,10 +93,10 @@ void Tuple::Copy(const void *source, type::AbstractPool *pool) {
 
   if (is_inlined) {
     // copy the data
-    PL_MEMCPY(tuple_data_, source, tuple_schema_->GetLength());
+    PELOTON_MEMCPY(tuple_data_, source, tuple_schema_->GetLength());
   } else {
     // copy the data
-    PL_MEMCPY(tuple_data_, source, tuple_schema_->GetLength());
+    PELOTON_MEMCPY(tuple_data_, source, tuple_schema_->GetLength());
 
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
@@ -183,8 +183,8 @@ size_t Tuple::GetUninlinedMemorySize() const {
 
 void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
                             UNUSED_ATTRIBUTE type::AbstractPool *dataPool) {
-  /*PL_ASSERT(tuple_schema);
-  PL_ASSERT(tuple_data);
+  /*PELOTON_ASSERT(tuple_schema);
+  PELOTON_ASSERT(tuple_data);
 
   input.ReadInt();
   const int column_count = tuple_schema_->GetColumnCount();
@@ -220,8 +220,8 @@ void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
 }
 
 void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
-  /*PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  /*PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
 
   input.ReadInt();  // Read in the tuple size, discard
 
@@ -241,8 +241,8 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
 
   size_t start = output.Position();
   output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
@@ -262,7 +262,7 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
 }
 
 void Tuple::SerializeTo(SerializeOutput &output) {
-  PL_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_schema_);
   size_t start = output.ReserveBytes(4);
   const int column_count = tuple_schema_->GetColumnCount();
 
@@ -334,8 +334,8 @@ bool Tuple::EqualsNoSchemaCheck(const AbstractTuple &other,
 }
 
 void Tuple::SetAllNulls() {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -346,8 +346,8 @@ void Tuple::SetAllNulls() {
 }
 
 void Tuple::SetAllZeros() {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -402,7 +402,7 @@ size_t Tuple::HashCode(size_t seed) const {
 }
 
 void Tuple::MoveToTuple(const void *address) {
-  PL_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_schema_);
   tuple_data_ = reinterpret_cast<char *>(const_cast<void *>(address));
 }
 
@@ -412,14 +412,14 @@ size_t Tuple::HashCode() const {
 }
 
 char *Tuple::GetDataPtr(const oid_t column_id) {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
   return &tuple_data_[tuple_schema_->GetOffset(column_id)];
 }
 
 const char *Tuple::GetDataPtr(const oid_t column_id) const {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+  PELOTON_ASSERT(tuple_schema_);
+  PELOTON_ASSERT(tuple_data_);
   return &tuple_data_[tuple_schema_->GetOffset(column_id)];
 }
 

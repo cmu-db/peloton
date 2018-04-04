@@ -243,10 +243,10 @@ void RunWorkload() {
   size_t num_threads = state.backend_count;
   
   abort_counts = new PadInt[num_threads];
-  PL_MEMSET(abort_counts, 0, sizeof(PadInt) * num_threads);
+  PELOTON_MEMSET(abort_counts, 0, sizeof(PadInt) * num_threads);
 
   commit_counts = new PadInt[num_threads];
-  PL_MEMSET(commit_counts, 0, sizeof(PadInt) * num_threads);
+  PELOTON_MEMSET(commit_counts, 0, sizeof(PadInt) * num_threads);
 
   size_t profile_round = (size_t)(state.duration / state.profile_duration);
 
@@ -269,9 +269,9 @@ void RunWorkload() {
   for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
-    PL_MEMCPY(abort_counts_profiles[round_id], abort_counts,
+    PELOTON_MEMCPY(abort_counts_profiles[round_id], abort_counts,
            sizeof(PadInt) * num_threads);
-    PL_MEMCPY(commit_counts_profiles[round_id], commit_counts,
+    PELOTON_MEMCPY(commit_counts_profiles[round_id], commit_counts,
            sizeof(PadInt) * num_threads);
     
     auto& manager = catalog::Manager::GetInstance();
