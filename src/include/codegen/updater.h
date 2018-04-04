@@ -67,6 +67,17 @@ class Updater {
 
   char *GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset);
 
+  // Check if the tuple is in the statement write set
+  inline bool IsInStatementWriteSet(ItemPointer location) {
+    return statement_write_set_->find(location) !=
+           statement_write_set_->end();
+  }
+
+  // Add the updated location to the statement write set
+  inline void AddToStatementWriteSet(ItemPointer& location) {
+    statement_write_set_->insert(location);
+  }
+
  private:
   // Table and executor context from the update translator
   storage::DataTable *table_;
