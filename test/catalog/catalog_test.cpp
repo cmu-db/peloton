@@ -252,17 +252,21 @@ TEST_F(CatalogTests, DroppingDatabase) {
 }
 
 TEST_F(CatalogTests, CheckDatabaseExists) {
-  auto exists = catalog::Catalog::GetInstance()->CheckDatabaseExists("EMP_DB");
-  EXPECT_EQ(false, exists);
+   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+   auto txn = txn_manager.BeginTransaction();
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
+   auto exists = catalog::Catalog::GetInstance()->CheckDatabaseExists("EMP_DB", txn);
+   EXPECT_EQ(false, exists);
 
-  exists = catalog::Catalog::GetInstance()->CheckDatabaseExists("EMP_DB");
-  EXPECT_EQ(true, exists);
-  catalog::Catalog::GetInstance()->DropDatabaseWithName("EMP_DB", txn);
-  txn_manager.CommitTransaction(txn);
+   catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
+   txn_manager.CommitTransaction(txn);
+
+   txn = txn_manager.BeginTransaction();
+   exists = catalog::Catalog::GetInstance()->CheckDatabaseExists("EMP_DB", txn);
+   EXPECT_EQ(true, exists);
+ 
+   catalog::Catalog::GetInstance()->DropDatabaseWithName("EMP_DB", txn);
+   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(CatalogTests, DroppingCatalog) {

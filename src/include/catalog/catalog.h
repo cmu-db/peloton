@@ -81,7 +81,8 @@ class Catalog {
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
 
-  bool CheckDatabaseExists(const std::string &database_name);
+  bool CheckDatabaseExists(const std::string &database_name,
+                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // CREATE FUNCTIONS
