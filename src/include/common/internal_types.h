@@ -573,6 +573,8 @@ enum class PlanNodeType {
   CREATE = 34,
   POPULATE_INDEX = 35,
   ANALYZE = 36,
+  RENAME = 37,
+  ALTER = 38,
 
   // Communication Nodes
   SEND = 40,

@@ -488,9 +488,8 @@ expression::AbstractExpression *PostgresParser::TypeCastTransform(
   }
 
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   type::VarlenType temp(StringToTypeId("INVALID"));
   result = new expression::ConstantValueExpression(
       temp.CastAs(source_value, ColumnDefinition::StrToValueType(name)));
@@ -556,8 +555,8 @@ expression::AbstractExpression *PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-std::vector<std::unique_ptr<expression::AbstractExpression>>
-    *PostgresParser::TargetTransform(List *root) {
+std::vector<std::unique_ptr<expression::AbstractExpression>> *
+PostgresParser::TargetTransform(List *root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
@@ -863,9 +862,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 void PostgresParser::ColumnDefTransform(ColumnDef *root,
                                         parser::CreateStatement *stmt) {
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::ColumnDefinition *result = nullptr;
 
   parser::ColumnDefinition::DataType data_type =
@@ -1056,9 +1054,8 @@ parser::FuncParameter *PostgresParser::FunctionParameterTransform(
     FunctionParameter *root) {
   parser::FuncParameter::DataType data_type;
   TypeName *type_name = root->argType;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::FuncParameter *result = nullptr;
 
   // Transform parameter type
@@ -1559,8 +1556,8 @@ std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
 // parsenode and transfers it into Peloton AbstractExpression.
 // This is a vector pointer of vector pointers because one InsertStmt can insert
 // multiple tuples.
-std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-    *PostgresParser::ValueListsTransform(List *root) {
+std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+PostgresParser::ValueListsTransform(List *root) {
   auto result = new std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
@@ -1671,8 +1668,8 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PELOTON_ASSERT(select_stmt->valuesLists != NULL);
-    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-        *insert_values = nullptr;
+    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+        insert_values = nullptr;
     try {
       insert_values = ValueListsTransform(select_stmt->valuesLists);
     } catch (Exception e) {
@@ -1776,6 +1773,82 @@ parser::TransactionStatement *PostgresParser::TransactionTransform(
   }
 }
 
+parser::AlterTableStatement *PostgresParser::AlterTransform(
+    AlterTableStmt *root) {
+  // TODO (shilun) adding alter type check
+  parser::AlterTableStatement *result = new AlterTableStatement(
+      parser::AlterTableStatement::AlterTableType::INVALID);
+
+  // Get database and table name
+  RangeVar *relation = root->relation;
+  result->table_info_ =
+      std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
+  if (relation->relname) {
+    result->table_info_->table_name = strdup(relation->relname);
+  }
+  if (relation->catalogname) {
+    result->table_info_->database_name = strdup(relation->catalogname);
+  }
+
+  for (auto cell = root->cmds->head; cell != NULL; cell = cell->next) {
+    auto cmd = reinterpret_cast<AlterTableCmd *>(cell->data.ptr_value);
+    switch (cmd->subtype) {
+      /*case AT_AddColumn: {
+        auto column =
+            ColumnDefTransform(reinterpret_cast<ColumnDef*>(cmd->def));
+        result->columns->push_back(column);
+        break;
+      }
+      case AT_DropColumn:
+        result->names->push_back(strdup(cmd->name));
+        break;
+      case AT_AlterColumnGenericOptions:*/
+      default: {
+        throw NotImplementedException(StringUtil::Format(
+            "Alter Table type %d not supported yet...\n", cmd->subtype));
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * RenameTransorm - right now we only support
+ * ALTER TABLE [ ONLY ] name [ * ]
+    RENAME [ COLUMN ] column TO new_column
+ * @param root
+ * @return
+ */
+parser::RenameFuncStatement *PostgresParser::RenameTransform(RenameStmt *root) {
+  if (root->renameType != ObjectType::OBJECT_COLUMN) {
+    throw NotImplementedException(StringUtil::Format(
+        "Rename type %d not supported yes...\n", root->relationType));
+  }
+  parser::RenameFuncStatement *result = new parser::RenameFuncStatement(
+      parser::RenameFuncStatement::ObjectType::COLUMN);
+  RangeVar *relation = root->relation;
+  result->table_info_ =
+      std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
+  if (relation->relname) {
+    result->table_info_->table_name = strdup(relation->relname);
+    LOG_TRACE("root->relname: %s", relation->relname);
+  }
+  if (relation->catalogname) {
+    result->table_info_->database_name = strdup(relation->catalogname);
+    LOG_TRACE("root->catalogname: %s", relation->catalogname);
+  }
+  if (root->subname) {
+    result->oldName = strdup(root->subname);
+    LOG_TRACE("root->subname: %s", root->subname);
+  }
+  if (root->newname) {
+    result->newName = strdup(root->newname);
+    LOG_TRACE("root->newname: %s", root->newname);
+  }
+  LOG_TRACE("finished transform");
+  return result;
+}
+
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
 // Postgres parsenode of the input and call the corresponding
@@ -1783,6 +1856,13 @@ parser::TransactionStatement *PostgresParser::TransactionTransform(
 parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
   parser::SQLStatement *result = nullptr;
   switch (stmt->type) {
+    case T_AlterTableStmt:
+      // TODO (Shilun): adding T_ALTER_TABLE_STMT
+      result = AlterTransform(reinterpret_cast<AlterTableStmt *>(stmt));
+      break;
+    case T_RenameStmt:
+      result = RenameTransform(reinterpret_cast<RenameStmt *>(stmt));
+      break;
     case T_SelectStmt:
       result = SelectTransform(reinterpret_cast<SelectStmt *>(stmt));
       break;
@@ -1887,8 +1967,8 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>>
-    *PostgresParser::UpdateTargetTransform(List *root) {
+std::vector<std::unique_ptr<parser::UpdateClause>> *
+PostgresParser::UpdateTargetTransform(List *root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();

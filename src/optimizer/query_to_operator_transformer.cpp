@@ -335,6 +335,10 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::ExecuteStatement *op) {}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
+void QueryToOperatorTransformer::Visit(
+    UNUSED_ATTRIBUTE parser::RenameFuncStatement *op) {}
+void QueryToOperatorTransformer::Visit(
+    UNUSED_ATTRIBUTE parser::AlterTableStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableObject(
       op->table->GetDatabaseName(), op->table->GetSchemaName(),
