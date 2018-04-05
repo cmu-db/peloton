@@ -29,6 +29,8 @@ class CopyStatement;
 class AnalyzeStatement;
 class VariableSetStatement;
 class JoinDefinition;
+class RenameFuncStatement;
+class AlterTableStatement;
 struct TableRef;
 
 class GroupByDescription;
