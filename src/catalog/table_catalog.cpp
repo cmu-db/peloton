@@ -303,15 +303,6 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   return nullptr;
 }
 
-void TableCatalogObject::ChangeColumnName(
-    const std::vector<oid_t> &columns,
-    UNUSED_ATTRIBUTE const std::vector<std::string> &names) {
-  // TODO: Change column_names
-  // TODO: Change column_objects
-  TableCatalogObject::EvictColumnObject(columns[0]);
-  return;
-}
-
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
                                         concurrency::TransactionContext *txn) {
@@ -403,8 +394,7 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid,
-                               concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
