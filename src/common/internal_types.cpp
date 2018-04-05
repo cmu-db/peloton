@@ -575,7 +575,7 @@ std::string QueryTypeToString(QueryType query_type) {
       return "EXECUTE";
     case QueryType::QUERY_SELECT:
       return "SELECT";
-    case QueryType::QUERY_EXPLAIN: 
+    case QueryType::QUERY_EXPLAIN:
       return "EXPLAIN";
     case QueryType::QUERY_OTHER:
     default:
@@ -623,20 +623,18 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
                                    const parser::SQLStatement *sql_stmt) {
   LOG_TRACE("%s", StatementTypeToString(stmt_type).c_str());
   static std::unordered_map<StatementType, QueryType, EnumHash<StatementType>>
-      type_map{
-          {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
-          {StatementType::PREPARE, QueryType::QUERY_PREPARE},
-          {StatementType::INSERT, QueryType::QUERY_INSERT},
-          {StatementType::UPDATE, QueryType::QUERY_UPDATE},
-          {StatementType::DELETE, QueryType::QUERY_DELETE},
-          {StatementType::COPY, QueryType::QUERY_COPY},
-          {StatementType::ANALYZE, QueryType::QUERY_ANALYZE},
-          {StatementType::ALTER, QueryType::QUERY_ALTER},
-          {StatementType::DROP, QueryType::QUERY_DROP},
-          {StatementType::SELECT, QueryType::QUERY_SELECT},
-          {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
-          {StatementType::EXPLAIN, QueryType::QUERY_EXPLAIN}
-      };
+      type_map{{StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
+               {StatementType::PREPARE, QueryType::QUERY_PREPARE},
+               {StatementType::INSERT, QueryType::QUERY_INSERT},
+               {StatementType::UPDATE, QueryType::QUERY_UPDATE},
+               {StatementType::DELETE, QueryType::QUERY_DELETE},
+               {StatementType::COPY, QueryType::QUERY_COPY},
+               {StatementType::ANALYZE, QueryType::QUERY_ANALYZE},
+               {StatementType::ALTER, QueryType::QUERY_ALTER},
+               {StatementType::DROP, QueryType::QUERY_DROP},
+               {StatementType::SELECT, QueryType::QUERY_SELECT},
+               {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
+               {StatementType::EXPLAIN, QueryType::QUERY_EXPLAIN}};
   QueryType query_type = QueryType::QUERY_OTHER;
   std::unordered_map<StatementType, QueryType,
                      EnumHash<StatementType>>::iterator it =
@@ -1383,6 +1381,12 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::ANALYZE: {
       return ("ANALYZE");
     }
+    case PlanNodeType::RENAME: {
+      return ("RENAME");
+    }
+    case PlanNodeType::ALTER: {
+      return ("ALTER");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for PlanNodeType value '%d'",
@@ -1454,6 +1458,10 @@ PlanNodeType StringToPlanNodeType(const std::string &str) {
     return PlanNodeType::MOCK;
   } else if (upper_str == "ANALYZE") {
     return PlanNodeType::ANALYZE;
+  } else if (upper_str == "RENAME") {
+    return PlanNodeType::RENAME;
+  } else if (upper_str == "ALTER") {
+    return PlanNodeType::ALTER;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));

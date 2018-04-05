@@ -67,6 +67,8 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::UpdateStatement *) override;
   void Visit(parser::CopyStatement *) override;
   void Visit(parser::AnalyzeStatement *) override;
+  void Visit(parser::AlterTableStatement *) override;
+  void Visit(parser::RenameFuncStatement *) override;
 
   void Visit(expression::CaseExpression *expr) override;
   void Visit(expression::SubqueryExpression *expr) override;

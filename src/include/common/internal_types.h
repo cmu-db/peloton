@@ -81,7 +81,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class CmpBool {
   CmpFalse = 0,
   CmpTrue = 1,
-  NULL_ = 2 // Note the underscore suffix
+  NULL_ = 2  // Note the underscore suffix
 };
 
 //===--------------------------------------------------------------------===//
@@ -574,6 +574,8 @@ enum class PlanNodeType {
   CREATE = 34,
   POPULATE_INDEX = 35,
   ANALYZE = 36,
+  RENAME = 37,
+  ALTER = 38,
 
   // Communication Nodes
   SEND = 40,
@@ -1240,7 +1242,8 @@ enum class DDLType {
   CREATE,
   DROP,
 };
-typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
+typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>>
+    CreateDropSet;
 typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GCObjectSet;
 
 //===--------------------------------------------------------------------===//
