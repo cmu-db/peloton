@@ -323,6 +323,7 @@ enum class NetworkMessageType : unsigned char {
   ROW_DESCRIPTION = 'T',
   DATA_ROW = 'D',
   // Errors
+  SEVERITY = 'S',
   HUMAN_READABLE_ERROR = 'M',
   SQLSTATE_CODE_ERROR = 'C',
   // Commands

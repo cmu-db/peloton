@@ -1060,7 +1060,9 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
        } else {
            auto error_msg = "Database \"" + value + "\" doesn't exist";
            auto error_code = "3D000"; // invalid_catalog_name
+           auto severity = "FATAL";
            SendErrorResponse({
+                             {NetworkMessageType::SEVERITY, severity},
                              {NetworkMessageType::SQLSTATE_CODE_ERROR, error_code},
                              {NetworkMessageType::HUMAN_READABLE_ERROR, error_msg}
                             });
