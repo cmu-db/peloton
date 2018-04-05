@@ -118,7 +118,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
-  // Get the physical properties the final plan must output
+
+  // Get the physical properties and projected columns the final plan must have
   auto query_info = GetQueryInfo(parse_tree);
 
   try {
@@ -141,15 +142,53 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 }
 
-Group *Optimizer::GetOptimizedQueryTree(
-  const std::unique_ptr<parser::SQLStatementList> &parse_tree,
-  const std::string default_database_name,
+// GetOptimizedQueryTree()
+// Return an optimized physical query tree for the given parse tree along
+// with the cost.
+std::unique_ptr<OptimizerContextInfo> Optimizer::PerformOptimization
+  (parser::SQLStatement *parsed_statement,
   concurrency::TransactionContext *txn) {
-  // TODO[vamshi]: Implement this.
-  (void) parse_tree;
-  (void) default_database_name;
-  (void) txn;
-  return nullptr;
+
+  metadata_.txn = txn;
+
+  // Generate initial operator tree to work with from the parsed
+  // statement object.
+  std::shared_ptr<GroupExpression> g_expr = InsertQueryTree(parsed_statement, txn);
+  GroupID root_id = g_expr->GetGroupID();
+
+  // Get the physical properties of the final plan that must be enforced
+  auto query_info = GetQueryInfo(parsed_statement);
+
+  // Start with the base expression and explore all the possible transformations
+  // and add them to the local context.
+  try {
+    OptimizeLoop(root_id, query_info.physical_props);
+  } catch (OptimizerException &e) {
+    LOG_WARN("Optimize Loop ended prematurely: %s", e.what());
+    PL_ASSERT(false);
+  }
+
+  try {
+    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+                                    query_info.output_exprs);
+    if (best_plan == nullptr) return nullptr;
+
+    auto info_obj = std::unique_ptr<OptimizerContextInfo>(new OptimizerContextInfo());
+
+    // Get the cost.
+    auto group = GetMetadata().memo.GetGroupByID(root_id);
+    auto best_expr = group->GetBestExpression(query_info.physical_props);
+    info_obj->cost = best_expr->GetCost(query_info.physical_props);
+    info_obj->plan = std::move(best_plan);
+
+    // Reset memo after finishing the optimization
+    Reset();
+
+    return info_obj;
+  } catch (Exception &e) {
+    Reset();
+    throw e;
+  }
 }
 
 void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }

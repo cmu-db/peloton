@@ -51,6 +51,19 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
+IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
+                                       oid_t table_oid, IndexType index_type,
+                                       IndexConstraintType index_constraint,
+                                       bool unique_keys, std::vector<oid_t> key_attrs) {
+  this->index_oid = index_oid;
+  this->index_name = index_name;
+  this->table_oid = table_oid;
+  this->index_type = index_type;
+  this->index_constraint = index_constraint;
+  this->unique_keys = unique_keys;
+  this->key_attrs = key_attrs;
+}
+
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
                                         concurrency::TransactionContext *txn) {

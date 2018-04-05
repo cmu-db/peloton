@@ -45,6 +45,12 @@ class IndexCatalogObject {
  public:
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
+  // This constructor should only be used for what-if index API.
+  IndexCatalogObject(oid_t index_oid, std::string index_name,
+                     oid_t table_oid, IndexType index_type,
+                     IndexConstraintType index_constraint,
+                     bool unique_keys, std::vector<oid_t> key_attrs);
+
   inline oid_t GetIndexOid() { return index_oid; }
   inline const std::string &GetIndexName() { return index_name; }
   inline oid_t GetTableOid() { return table_oid; }

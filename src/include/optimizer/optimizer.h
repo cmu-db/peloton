@@ -53,6 +53,12 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
+struct OptimizerContextInfo {
+  OptimizerContextInfo() {};
+  std::unique_ptr<planner::AbstractPlan> plan;
+  double cost;
+};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -76,9 +82,8 @@ class Optimizer : public AbstractOptimizer {
       const std::string default_database_name,
       concurrency::TransactionContext *txn) override;
 
-  Group *GetOptimizedQueryTree(
-    const std::unique_ptr<parser::SQLStatementList> &parse_tree,
-    const std::string default_database_name,
+  std::unique_ptr<OptimizerContextInfo> PerformOptimization(
+    parser::SQLStatement *parsed_statement,
     concurrency::TransactionContext *txn);
 
   void OptimizeLoop(int root_group_id,
