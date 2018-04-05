@@ -168,7 +168,8 @@ void Catalog::Bootstrap() {
 // CREATE FUNCTIONS
 //===----------------------------------------------------------------------===//
 
-bool Catalog::CheckDatabaseExists(const std::string &database_name) {
+bool Catalog::CheckDatabaseExists(const std::string &database_name,
+                                  concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check if database " +
                            database_name + "exists");
