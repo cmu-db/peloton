@@ -45,8 +45,8 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile,
-                     concurrency::TransactionContext *txn, int tupleId = 0);
+  TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
+                     int tupleId = 0);
 
  public:
   // Get indexes
@@ -70,9 +70,6 @@ class TableCatalogObject {
       oid_t column_id, bool cached_only = false);
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
-
-  void ChangeColumnName(const std::vector<oid_t> &columns,
-                        const std::vector<std::string> &names);
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
@@ -122,10 +119,9 @@ class TableCatalog : public AbstractCatalog {
   ~TableCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static TableCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr,
-      concurrency::TransactionContext *txn = nullptr);
+  static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
+                                   type::AbstractPool *pool = nullptr,
+                                   concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 

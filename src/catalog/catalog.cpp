@@ -26,20 +26,14 @@
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executor_context.h"
-#include "executor/insert_executor.h"
-#include "executor/seq_scan_executor.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
-#include "planner/seq_scan_plan.h"
-#include "planner/insert_plan.h"
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
-#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -154,12 +148,12 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
+  QueryMetricsCatalog::GetInstance(txn);  
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
-
+  
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
@@ -620,18 +614,18 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 
 ResultType Catalog::DropIndex(const std::string &index_name,
                               concurrency::TransactionContext *txn) {
-  if (txn == nullptr) {
-    throw CatalogException("Do not have transaction to drop index " +
-                           index_name);
-  }
-  auto index_object =
-      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
-  if (index_object == nullptr) {
-    throw CatalogException("Index name " + index_name + " cannot be found");
-  }
-  ResultType result = DropIndex(index_object->GetIndexOid(), txn);
+    if(txn == nullptr) {
+        throw CatalogException("Do not have transaction to drop index " +
+                               index_name);
+    }
+    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name, txn);
+    if(index_object == nullptr) {
+        throw CatalogException("Index name " + index_name + " cannot be found");
+    }
+    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
 
-  return result;
+    return result;
 }
 
 //===--------------------------------------------------------------------===//
@@ -791,237 +785,6 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   }
 
   return table_object;
-}
-
-//===--------------------------------------------------------------------===//
-// ALTER TABLE
-//===--------------------------------------------------------------------===//
-/* Helper function for alter table, called internally
- */
-ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
-                               std::unique_ptr<catalog::Schema> new_schema,
-                               concurrency::TransactionContext *txn) {
-  if (txn == nullptr)
-    throw CatalogException("Alter table requires transaction");
-  try {
-    auto storage_manager = storage::StorageManager::GetInstance();
-    auto database = storage_manager->GetDatabaseWithOid(database_oid);
-    try {
-      auto old_table = database->GetTableWithOid(table_oid);
-      auto old_schema = old_table->GetSchema();
-      // TODO: Try and grab table read lock
-
-      // Step 1: build empty table with new schema
-      bool own_schema = true;
-      bool adapt_table = false;
-      auto new_table = storage::TableFactory::GetDataTable(
-          database_oid, table_oid,
-          catalog::Schema::CopySchema(new_schema.get()), old_table->GetName(),
-          DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-
-      // Step 2: Copy indexes
-      auto old_index_oids =
-          IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
-      for (auto index_oid_pair : old_index_oids) {
-        oid_t index_oid = index_oid_pair.first;
-        // delete record in pg_index
-        IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
-        // Check if all indexed columns still exists
-        auto old_index = old_table->GetIndexWithOid(index_oid);
-        bool index_exist = true;
-        std::vector<oid_t> new_key_attrs;
-
-        for (oid_t column_id : old_index->GetMetadata()->GetKeyAttrs()) {
-          bool is_found = false;
-          std::string column_name = old_schema->GetColumn(column_id).GetName();
-          oid_t i = 0;
-          for (auto new_column : new_schema->GetColumns()) {
-            if (column_name == new_column.GetName()) {
-              is_found = true;
-              new_key_attrs.push_back(i);
-              break;
-            }
-            i++;
-          }
-          if (!is_found) {
-            index_exist = false;
-            break;
-          }
-        }
-        if (!index_exist) continue;
-
-        // construct index on new table
-        auto index_metadata = new index::IndexMetadata(
-            old_index->GetName(), index_oid, table_oid, database_oid,
-            old_index->GetMetadata()->GetIndexType(),
-            old_index->GetMetadata()->GetIndexConstraintType(),
-            new_schema.get(),
-            // catalog::Schema::CopySchema(old_index->GetKeySchema()),
-            catalog::Schema::CopySchema(new_schema.get(), new_key_attrs),
-            new_key_attrs, old_index->GetMetadata()->HasUniqueKeys());
-
-        std::shared_ptr<index::Index> new_index(
-            index::IndexFactory::GetIndex(index_metadata));
-        new_table->AddIndex(new_index);
-
-        // reinsert record into pg_index
-        IndexCatalog::GetInstance()->InsertIndex(
-            index_oid, old_index->GetName(), table_oid,
-            old_index->GetMetadata()->GetIndexType(),
-            old_index->GetMetadata()->GetIndexConstraintType(),
-            old_index->GetMetadata()->HasUniqueKeys(), new_key_attrs,
-            pool_.get(), txn);
-      }
-
-      std::unique_ptr<executor::ExecutorContext> context(
-          new executor::ExecutorContext(txn, {}));
-      // Step 3: build column mapping between old table and new table
-      // we're using column name as unique identifier
-      std::vector<oid_t> old_column_ids;
-      std::unordered_map<oid_t, oid_t> column_map;
-      for (oid_t old_column_id = 0;
-           old_column_id < old_schema->GetColumnCount(); old_column_id++) {
-        old_column_ids.push_back(old_column_id);
-        for (oid_t new_column_id = 0;
-             new_column_id < new_schema->GetColumnCount(); new_column_id++) {
-          if (old_schema->GetColumn(old_column_id).GetName() ==
-              new_schema->GetColumn(new_column_id).GetName()) {
-            column_map[new_column_id] = old_column_id;
-          }
-        }
-      }
-      // Step 4: Get tuples from old table with sequential scan
-      // TODO: Try to reuse Sequential scan function and insert function in
-      // abstract catalog
-      planner::SeqScanPlan seq_scan_node(old_table, nullptr, old_column_ids);
-      executor::SeqScanExecutor seq_scan_executor(&seq_scan_node,
-                                                  context.get());
-      seq_scan_executor.Init();
-      while (seq_scan_executor.Execute()) {
-        std::unique_ptr<executor::LogicalTile> result_tile(
-            seq_scan_executor.GetOutput());
-        for (size_t i = 0; i < result_tile->GetTupleCount(); i++) {
-          // Transform tuple into new schema
-          std::unique_ptr<storage::Tuple> tuple(
-              new storage::Tuple(new_schema.get(), true));
-
-          for (oid_t new_column_id = 0;
-               new_column_id < new_schema->GetColumnCount(); new_column_id++) {
-            auto it = column_map.find(new_column_id);
-            type::Value val;
-            if (it == column_map.end()) {
-              // new column, set value to null
-              val = type::ValueFactory::GetNullValueByType(
-                  new_schema->GetColumn(new_column_id).GetType());
-            } else {
-              // otherwise, copy value in old table
-              val = result_tile->GetValue(i, it->second);
-            }
-            tuple->SetValue(new_column_id, val, pool_.get());
-          }
-          // insert new tuple into new table
-          planner::InsertPlan node(new_table, std::move(tuple));
-          executor::InsertExecutor executor(&node, context.get());
-          executor.Init();
-          executor.Execute();
-        }
-      }
-      // Step 5: delete all the column(attribute) records in pg_attribute
-      // and reinsert them using new schema(column offset needs to change
-      // accordingly)
-      catalog::ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
-      oid_t column_offset = 0;
-      for (auto new_column : new_schema->GetColumns()) {
-        catalog::ColumnCatalog::GetInstance()->InsertColumn(
-            table_oid, new_column.GetName(), column_offset,
-            new_column.GetOffset(), new_column.GetType(),
-            new_column.IsInlined(), new_column.GetConstraints(), pool_.get(),
-            txn);
-        column_offset++;
-      }
-
-      // Final step of physical change should be moved to commit time
-      database->ReplaceTableWithOid(table_oid, new_table);
-
-      // TODO: Record table drop
-      // txn->RecordDrop(database, old_table);
-
-      // TODO: Release table lock, should be moved to commit time too
-    } catch (CatalogException &e) {
-      return ResultType::FAILURE;
-    }
-  } catch (CatalogException &e) {
-    return ResultType::FAILURE;
-  }
-  return ResultType::SUCCESS;
-}
-
-ResultType AddColumn(UNUSED_ATTRIBUTE const std::string &database_name,
-                     UNUSED_ATTRIBUTE const std::string &table_name,
-                     UNUSED_ATTRIBUTE const std::vector<Column> &columns,
-                     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn);
-
-ResultType DropColumn(UNUSED_ATTRIBUTE const std::string &database_name,
-                      UNUSED_ATTRIBUTE const std::string &table_name,
-                      UNUSED_ATTRIBUTE const std::vector<Column> &columns,
-                      UNUSED_ATTRIBUTE concurrency::TransactionContext *txn);
-
-ResultType ChangeColumnName(const std::string &database_name,
-                            const std::string &table_name,
-                            const std::vector<std::string> &old_names,
-                            const std::vector<std::string> &names,
-                            concurrency::TransactionContext *txn) {
-  if (txn == nullptr) {
-    throw CatalogException("Change Column requires transaction.");
-  }
-
-  if (old_names.size() == 0 || names.size() == 0) {
-    throw CatalogException("No names are given.");
-  }
-
-  LOG_TRACE("Change Column Name %s to %s", old_names[0], names[0]);
-
-  try {
-    // Get table from the name
-    auto table = Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name, txn);
-    auto schema = table->GetSchema();
-
-    // Currently we only support change the first column name!
-
-    // Check the validity of old name and the new name
-    oid_t columnId = schema->GetColumnID(names[0]);
-    if (columnId != INVALID_OID) {
-      throw CatalogException("New column already exists in the table.");
-    }
-    columnId = schema->GetColumnID(old_names[0]);
-    if (columnId == INVALID_OID) {
-      throw CatalogException("Old column already exists in the table.");
-    }
-
-    // Change column name in the global schema
-    schema->ChangeColumnName(columnId, names[0]);
-
-    // Get all the tiles from the Data Table
-    for (oid_t i = 0; i < table->GetTileGroupCount(); i++) {
-      auto tile_group = table->GetTileGroupById(i);
-      for (oid_t j = 0; j < tile_group->GetTileCount(); j++) {
-        // Change schema in the tiles
-        auto tile = tile_group->GetTile(j);
-        tile->ChangeColumnName(columnId, names[0]);
-      }
-    }
-
-    // Change cached column names in the table catalog
-    auto table_catalog =
-        Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
-    std::vector<oid_t> columns(1, columnId);
-    table_catalog->ChangeColumnName(columns, names);
-
-  } catch (CastException &e) {
-    return ResultType::FAILURE;
-  }
-  return ResultType::SUCCESS;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1301,11 +1064,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Abs", function::BuiltInFuncType{OperatorId::Abs,
+                                            function::DecimalFunctions::_Abs},
+          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
@@ -1342,29 +1105,33 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
-                         type::TypeId::SMALLINT, internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
