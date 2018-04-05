@@ -69,9 +69,6 @@ class Database : public Printable {
   std::string GetDBName();
   void setDBName(const std::string &database_name);
 
-  storage::DataTable *ReplaceTableWithOid(const oid_t table_oid,
-                                          storage::DataTable *new_table);
-
  protected:
   //===--------------------------------------------------------------------===//
   // MEMBERS
