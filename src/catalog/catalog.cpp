@@ -814,6 +814,7 @@ ResultType Catalog::AddColumn(
   return ResultType::SUCCESS;
 }
 
+<<<<<<< bc9252fda7aeecaeb325a11f30bc23a27569f932
 ResultType Catalog::DropColumn(
     UNUSED_ATTRIBUTE const std::string &database_name,
     UNUSED_ATTRIBUTE const std::string &table_name,
@@ -827,6 +828,13 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
                                      const std::vector<std::string> &old_names,
                                      const std::vector<std::string> &names,
                                      concurrency::TransactionContext *txn) {
+=======
+ResultType ChangeColumnName(const std::string &database_name,
+                            const std::string &table_name,
+                            const std::vector<std::string> &old_names,
+                            const std::vector<std::string> &names,
+                            concurrency::TransactionContext *txn) {
+>>>>>>> add change column catalog
   if (txn == nullptr) {
     throw CatalogException("Change Column requires transaction.");
   }
@@ -835,8 +843,12 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
     throw CatalogException("No names are given.");
   }
 
+<<<<<<< bc9252fda7aeecaeb325a11f30bc23a27569f932
   LOG_TRACE("Change Column Name %s to %s", old_names[0].c_str(),
             names[0].c_str());
+=======
+  LOG_TRACE("Change Column Name %s to %s", old_names[0], names[0]);
+>>>>>>> add change column catalog
 
   try {
     // Get table from the name
