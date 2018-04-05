@@ -28,8 +28,6 @@
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
-#include "executor/insert_executor.h"
-#include "executor/seq_scan_executor.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
