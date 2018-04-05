@@ -55,7 +55,7 @@ class RenamePlan : public AbstractPlan {
         new RenamePlan(this->obj_type, this->table_name_, this->db_name_,
                        this->old_names_, this->new_names_));
   }
-
+  
   std::string GetOldName() const { return this->old_names_[0]; }
 
   std::string GetNewName() const { return this->new_names_[0]; }
