@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/codegen/type/varchar_type.h>
 #include "codegen/lang/if.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/target_proxy.h"
@@ -41,13 +42,14 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
       UpdaterProxy::GetType(GetCodeGen()));
 }
 
-bool IsTarget(const TargetList &target_list, uint32_t index) {
-  for (const auto &target : target_list) {
-    if (target.first == index) {
-      return true;
-    }
+oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
+  oid_t  target_size = target_list.size();
+  for (oid_t i = 0; i < target_size; i++) {
+      if (target_list[i].first == index) {
+        return i;
+      }
   }
-  return false;
+  return INVALID_OID;
 }
 
 void UpdateTranslator::InitializeState() {
@@ -93,13 +95,12 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Collect all the column values
   std::vector<codegen::Value> values;
-  for (uint32_t i = 0, target_id = 0; i < column_num; i++) {
+  for (uint32_t i = 0; i < column_num; i++) {
     codegen::Value val;
-    if (IsTarget(target_list, i)) {
-      // Set the value for the update
-      const auto &derived_attribute = target_list[target_id].second;
+    uint32_t  target_index = GetTargetIndex(target_list,i);
+    if (target_index != INVALID_OID) {
+      const auto &derived_attribute = target_list[target_index].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
-      target_id++;
     } else {
       val = row.DeriveValue(codegen, ais[i]);
     }
