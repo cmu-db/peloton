@@ -1058,7 +1058,7 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
        if (exists) {
           traffic_cop_->SetDefaultDatabaseName(value);
        } else {
-           auto error_msg = "Database " + value + " doesn't exist";
+           auto error_msg = "Database \"" + value + "\" doesn't exist";
            auto error_code = "3D000"; // invalid_catalog_name
            SendErrorResponse({
                              {NetworkMessageType::SQLSTATE_CODE_ERROR, error_code},
