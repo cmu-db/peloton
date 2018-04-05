@@ -51,7 +51,7 @@ public:
   void CreateTable(std::string table_name) {
     // Create a new table.
     std::ostringstream oss;
-    oss << "CREATE TABLE " << table_name << "(a INT PRIMARY KEY, b INT, c INT);";
+    oss << "CREATE TABLE " << table_name << "(a INT, b INT, c INT);";
     TestingSQLUtil::ExecuteSQLQuery(oss.str());
   }
 
@@ -66,7 +66,7 @@ public:
   }
 
   std::shared_ptr<IndexCatalogObject> CreateHypotheticalIndex(
-    std::string table_name, int col_offset) {
+    std::string table_name, oid_t col_offset) {
 
     // We need transaction to get table object.
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -80,10 +80,12 @@ public:
     auto col_obj_pairs = table_object->GetColumnObjects();
 
     // Find the column oid.
-    auto offset = 0;
-    for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++, offset++) {
-      if (offset == col_offset) {
-        cols.push_back(offset); // we just need the oid.
+    for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
+      LOG_INFO("Table id: %d, Column id: %d, Offset: %d, Name: %s", it->second->GetTableOid(),
+               it->second->GetColumnId(), it->second->GetColumnOffset(),
+               it->second->GetColumnName().c_str());
+      if (it->second->GetColumnId() == col_offset) {
+        cols.push_back(it->second->GetColumnId()); // we just need the oid.
         break;
       }
     }
@@ -96,7 +98,7 @@ public:
     auto index_obj = std::shared_ptr<IndexCatalogObject> (
       new IndexCatalogObject(col_offset, index_name_oss.str(), table_object->GetTableOid(),
                              IndexType::BWTREE, IndexConstraintType::DEFAULT,
-                             true, cols));
+                             false, cols));
 
     txn_manager.CommitTransaction(txn);
     return index_obj;
@@ -108,7 +110,7 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   std::string table_name = "dummy_table";
   CreateDefaultDB();
   CreateTable(table_name);
-  InsertIntoTable(table_name, 100);
+  InsertIntoTable(table_name, 1000);
 
   // Create hypothetical index objects.
   std::vector<std::shared_ptr<IndexCatalogObject>> index_objs;
