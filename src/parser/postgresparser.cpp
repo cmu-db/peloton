@@ -1686,6 +1686,12 @@ parser::SelectStatement *PostgresParser::SelectTransform(SelectStmt *root) {
   return result;
 }
 
+parser::SQLStatement *PostgresParser::ExplainTransform(ExplainStmt *root) {
+  parser::ExplainStatement *result = new parser::ExplainStatement();
+  result->real_sql_stmt.reset(NodeTransform(root->query));
+  return result;
+}
+
 // This function takes in a Postgres DeleteStmt parsenode
 // and transfers into a Peloton DeleteStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
@@ -1786,6 +1792,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_VariableSetStmt:
       result = VariableSetTransform((VariableSetStmt*)stmt);
+      break;
+    case T_ExplainStmt:
+      result = ExplainTransform(reinterpret_cast<ExplainStmt *>(stmt));
       break;
     default: {
       throw NotImplementedException(StringUtil::Format(
