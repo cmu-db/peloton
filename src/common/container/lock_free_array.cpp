@@ -63,7 +63,7 @@ bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
 template <typename ValueType>
 ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const {
   LOG_TRACE("Find at %lu", offset);
-  PL_ASSERT(lock_free_array.size() > offset);
+  PELOTON_ASSERT(lock_free_array.size() > offset);
   auto value = lock_free_array.at(offset);
   return value;
 }
