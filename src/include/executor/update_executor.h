@@ -49,6 +49,10 @@ class UpdateExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+  inline bool IsInStatementWriteSet(ItemPointer &location) {
+    return (statement_write_set_.find(location) != statement_write_set_.end());
+  }
+
  private:
   storage::DataTable *target_table_ = nullptr;
   const planner::ProjectInfo *project_info_ = nullptr;

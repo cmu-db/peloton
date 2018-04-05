@@ -54,7 +54,7 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
 char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
 
-  if (statement_write_set_->find(ItemPointer(tile_group_id, tuple_offset)) != statement_write_set_->end()) {
+  if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
     return nullptr;
   }
   
@@ -81,9 +81,10 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
+
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
 
-  if (statement_write_set_->find(ItemPointer(tile_group_id, tuple_offset)) != statement_write_set_->end()) {
+  if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
     return nullptr;
   }
 
@@ -135,7 +136,6 @@ void Updater::Update() {
   auto tile_group = table_->GetTileGroupById(old_location_.block).get();
   auto *tile_group_header = tile_group->GetHeader();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
   // Either update in-place
   if (is_owner_ == true) {
     txn_manager.PerformUpdate(txn, old_location_);
@@ -158,7 +158,7 @@ void Updater::Update() {
     return;
   }
   txn_manager.PerformUpdate(txn, old_location_, new_location_);
-  statement_write_set_->insert(new_location_);
+  AddToStatementWriteSet(new_location_);
   executor_context_->num_processed++;
 }
 
@@ -182,7 +182,7 @@ void Updater::UpdatePK() {
     return;
   }
   txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
-  statement_write_set_->insert(new_location_);
+  AddToStatementWriteSet(new_location_);
   executor_context_->num_processed++;
 }
 

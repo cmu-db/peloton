@@ -220,7 +220,7 @@ bool UpdateExecutor::DExecute() {
     ///////////////////////////////////////////////////////////
 
     
-    if (statement_write_set_.find(old_location) != statement_write_set_.end()) {
+    if (IsInStatementWriteSet(old_location)) {
       return true;
     }
 
