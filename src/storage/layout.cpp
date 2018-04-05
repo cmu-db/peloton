@@ -52,7 +52,7 @@ void Layout::LocateTileAndColumn(oid_t column_offset,
     oid_t &tile_offset, oid_t &tile_column_offset) const {
 
 	// Ensure that the column_offset is not out of bound
-	PL_ASSERT(num_columns_ > column_offset);
+	PELOTON_ASSERT(num_columns_ > column_offset);
 
 	// For row store layout, tile id is always 0 and the tile
 	// column_id and tile_group column_id is the same.
@@ -76,7 +76,7 @@ double Layout::GetLayoutDifference(const storage::Layout &other) const {
   // Calculate theta only for TileGroups with the same schema.
   // TODO Pooja: Handle the case where two Layouts with same
   // number of columns have a different schema.
-  PL_ASSERT(this->num_columns_ == other.num_columns_);
+  PELOTON_ASSERT(this->num_columns_ == other.num_columns_);
 
   if ((this->layout_id_ != other.layout_id_)) {
 

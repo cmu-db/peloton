@@ -37,7 +37,7 @@ char *Inserter::AllocateTupleStorage() {
   // Get the tile offset assuming that it is a row store
   auto tile_group = table_->GetTileGroupById(location_.block);
   auto layout = tile_group->GetLayout();
-  PL_ASSERT(layout.IsRowStore());
+  PELOTON_ASSERT(layout.IsRowStore());
   // layout is still a row store. Hence tile offset it 0
   tile_ = tile_group->GetTileReference(0);
   return tile_->GetTupleLocation(location_.offset);

@@ -1216,7 +1216,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 
     // Get the column info from original tile
     auto tile = tile_group->GetTile(orig_tile_offset);
-    PL_ASSERT(tile != nullptr);
+    PELOTON_ASSERT(tile != nullptr);
     auto orig_schema = tile->GetSchema();
     auto column_info = orig_schema->GetColumn(orig_tile_column_offset);
     schemas[new_tile_offset][new_tile_column_offset] = column_info;
@@ -1247,7 +1247,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   // TODO Pooja: Handle schena equality for multiple schema versions.
   auto new_column_count = new_layout.GetColumnCount();
   auto orig_column_count = orig_layout.GetColumnCount();
-  PL_ASSERT(new_column_count == orig_column_count);
+  PELOTON_ASSERT(new_column_count == orig_column_count);
 
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;

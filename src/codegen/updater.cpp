@@ -47,7 +47,7 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
   // Get the tile offset assuming that it is still a row store
   // Hence the Tile offset is 0. 
   auto layout = tile_group->GetLayout();
-  PL_ASSERT(layout.IsRowStore());
+  PELOTON_ASSERT(layout.IsRowStore());
   tile_ = tile_group->GetTileReference(0);
   return tile_->GetTupleLocation(tuple_offset);
 }
