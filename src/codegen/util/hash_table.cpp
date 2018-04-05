@@ -21,6 +21,7 @@ namespace util {
 
 static const uint32_t kDefaultNumElements = 256;
 static const uint32_t kNumBlockElems = 1024;
+static const uint32_t kDefaultEstimatePrecision = 5;
 
 static_assert((kDefaultNumElements & (kDefaultNumElements - 1)) == 0,
               "Default number of elements must be a power of two");
@@ -32,7 +33,7 @@ static_assert((kDefaultNumElements & (kDefaultNumElements - 1)) == 0,
 ////////////////////////////////////////////////////////////////////////////////
 
 HashTable::EntryBuffer::EntryBuffer(::peloton::type::AbstractPool &memory,
-                                    uint64_t entry_size)
+                                    uint32_t entry_size)
     : memory_(memory), entry_size_(entry_size) {
   // We also need to allocate some space to store tuples. Tuples are stored
   // externally from the main hash table in a separate values memory space.
@@ -87,15 +88,16 @@ HashTable::Entry *HashTable::EntryBuffer::NextFree() {
  *
  */
 
-HashTable::HashTable(::peloton::type::AbstractPool &memory, uint64_t key_size,
-                     uint64_t value_size)
+HashTable::HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
+                     uint32_t value_size)
     : memory_(memory),
       directory_(nullptr),
       directory_size_(0),
       directory_mask_(0),
       entry_buffer_(memory, Entry::Size(key_size, value_size)),
       num_elems_(0),
-      capacity_(kDefaultNumElements) {
+      capacity_(kDefaultNumElements),
+      unique_key_estimate_(libcount::HLL::Create(kDefaultEstimatePrecision)) {
   // Upon creation, we allocate room for kDefaultNumElements in the hash table.
   // We assume 50% load factor on the directory, thus the directory size is
   // twice the number of elements.
@@ -115,13 +117,13 @@ HashTable::~HashTable() {
 }
 
 void HashTable::Init(HashTable &table, executor::ExecutorContext &exec_ctx,
-                     uint64_t key_size, uint64_t value_size) {
+                     uint32_t key_size, uint32_t value_size) {
   new (&table) HashTable(*exec_ctx.GetPool(), key_size, value_size);
 }
 
 void HashTable::Destroy(HashTable &table) { table.~HashTable(); }
 
-char *HashTable::StoreTupleLazy(uint64_t hash) {
+char *HashTable::InsertLazy(uint64_t hash) {
   // Since this is a lazy insertion, we just need to acquire/allocate an entry
   // from storage. It is assumed that actual construction of the hash table is
   // done by a subsequent call to BuildLazy() only after ALL lazy insertions
@@ -145,7 +147,7 @@ char *HashTable::StoreTupleLazy(uint64_t hash) {
   return entry->data;
 }
 
-char *HashTable::StoreTuple(uint64_t hash) {
+char *HashTable::Insert(uint64_t hash) {
   // Resize the hash table if needed
   if (NeedsResize()) {
     Resize();
@@ -223,9 +225,13 @@ void HashTable::ReserveLazy(
 }
 
 void HashTable::MergeLazyUnfinished(const HashTable &other) {
+  // Begin with the head of the linked list of entries, stored in the first
+  // directory entry
+  PELOTON_ASSERT(other.directory_[0] != nullptr);
   auto *head = other.directory_[0];
+
   while (head != nullptr) {
-    // Find the index and stash the next entry in the linked list
+    // Compute the index and stash the next entry in the linked list
     uint64_t index = head->hash & directory_mask_;
     Entry *next = head->next;
 

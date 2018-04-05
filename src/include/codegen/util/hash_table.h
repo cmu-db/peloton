@@ -14,6 +14,8 @@
 
 #include <cstdint>
 
+#include "libcount/hll.h"
+
 #include "executor/executor_context.h"
 
 namespace peloton {
@@ -28,8 +30,8 @@ namespace util {
 class HashTable {
  public:
   /// Constructor
-  HashTable(::peloton::type::AbstractPool &memory, uint64_t key_size,
-            uint64_t value_size);
+  HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
+            uint32_t value_size);
 
   /// Destructor
   ~HashTable();
@@ -42,7 +44,7 @@ class HashTable {
    * @param value_size The size of the values in bytes
    */
   static void Init(HashTable &table, executor::ExecutorContext &exec_ctx,
-                   uint64_t key_size, uint64_t value_size);
+                   uint32_t key_size, uint32_t value_size);
 
   /**
    * Clean up all resources allocated by the provided table
@@ -58,7 +60,7 @@ class HashTable {
    * @param hash The hash value of the tuple that will be inserted
    * @return A memory region where the key and value can be stored
    */
-  char *StoreTupleLazy(uint64_t hash);
+  char *InsertLazy(uint64_t hash);
 
   /**
    * Make room in the hash-table to store the new key-value pair.
@@ -66,7 +68,7 @@ class HashTable {
    * @param hash
    * @return
    */
-  char *StoreTuple(uint64_t hash);
+  char *Insert(uint64_t hash);
 
   /**
    *
@@ -83,7 +85,7 @@ class HashTable {
 
   /**
    *
-   * @param other
+   * @param
    */
   void MergeLazyUnfinished(const HashTable &other);
 
@@ -110,7 +112,7 @@ class HashTable {
    * @param value The value to store in the value
    */
   template <typename Key, typename Value>
-  void Insert(uint64_t hash, const Key &key, const Value &value);
+  void TypedInsertLazy(uint64_t hash, const Key &key, const Value &value);
 
   /**
    * Probe a key in the hash table. This function is used mostly for testing.
@@ -122,7 +124,7 @@ class HashTable {
    * @return True if a value was found. False otherwise.
    */
   template <typename Key, typename Value>
-  bool Probe(uint64_t hash, const Key &key, Value &value);
+  bool TypedProbe(uint64_t hash, const Key &key, Value &value);
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -138,7 +140,7 @@ class HashTable {
     Entry *next;
     char data[0];
 
-    static uint64_t Size(uint32_t key_size, uint32_t value_size) {
+    static uint32_t Size(uint32_t key_size, uint32_t value_size) {
       return sizeof(Entry) + key_size + value_size;
     }
   };
@@ -148,7 +150,7 @@ class HashTable {
    */
   class EntryBuffer {
    public:
-    EntryBuffer(::peloton::type::AbstractPool &memory, uint64_t entry_size);
+    EntryBuffer(::peloton::type::AbstractPool &memory, uint32_t entry_size);
 
     ~EntryBuffer();
 
@@ -163,7 +165,7 @@ class HashTable {
     // The memory pool where block allocations are sourced
     ::peloton::type::AbstractPool &memory_;
     // The sizes of each entry
-    uint64_t entry_size_;
+    uint32_t entry_size_;
     // The current active block
     MemoryBlock *block_;
     // A pointer into the block where the next position is
@@ -198,6 +200,9 @@ class HashTable {
 
   // Info about partitions
   // ...
+
+  // Stats
+  std::unique_ptr<libcount::HLL> unique_key_estimate_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -207,14 +212,15 @@ class HashTable {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename Key, typename Value>
-void HashTable::Insert(uint64_t hash, const Key &key, const Value &value) {
-  auto *data = StoreTupleLazy(hash);
+void HashTable::TypedInsertLazy(uint64_t hash, const Key &key,
+                                const Value &value) {
+  auto *data = InsertLazy(hash);
   *reinterpret_cast<Key *>(data) = key;
   *reinterpret_cast<Value *>(data + sizeof(Key)) = value;
 }
 
 template <typename Key, typename Value>
-bool HashTable::Probe(uint64_t hash, const Key &key, Value &value) {
+bool HashTable::TypedProbe(uint64_t hash, const Key &key, Value &value) {
   // Initial index in the directory
   uint64_t index = hash & directory_mask_;
 
