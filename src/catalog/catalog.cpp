@@ -40,6 +40,7 @@
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
+#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -1108,13 +1109,61 @@ ResultType DropColumn(UNUSED_ATTRIBUTE const std::string &database_name,
                       UNUSED_ATTRIBUTE const std::vector<Column> &columns,
                       UNUSED_ATTRIBUTE concurrency::TransactionContext *txn);
 
-ResultType ChangeColumnName(
-    UNUSED_ATTRIBUTE const std::string &database_name,
-    UNUSED_ATTRIBUTE const std::string &table_name,
-    UNUSED_ATTRIBUTE const std::vector<Column> &old_columns,
-    UNUSED_ATTRIBUTE const std::vector<std::string> &names,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
-  LOG_TRACE("Change Column Name");
+ResultType ChangeColumnName(const std::string &database_name,
+                            const std::string &table_name,
+                            const std::vector<std::string> &old_names,
+                            const std::vector<std::string> &names,
+                            concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Change Column requires transaction.");
+  }
+
+  if (old_names.size() == 0 || names.size() == 0) {
+    throw CatalogException("No names are given.");
+  }
+
+  LOG_TRACE("Change Column Name %s to %s", old_names[0], names[0]);
+
+  try {
+    // Get table from the name
+    auto table = Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name, txn);
+    auto schema = table->GetSchema();
+
+    // Currently we only support change the first column name!
+
+    // Check the validity of old name and the new name
+    oid_t columnId = schema->GetColumnID(names[0]);
+    if (columnId != INVALID_OID) {
+      throw CatalogException("New column already exists in the table.");
+    }
+    columnId = schema->GetColumnID(old_names[0]);
+    if (columnId == INVALID_OID) {
+      throw CatalogException("Old column already exists in the table.");
+    }
+
+    // Change column name in the global schema
+    schema->ChangeColumnName(columnId, names[0]);
+
+    // Get all the tiles from the Data Table
+    for (oid_t i = 0; i < table->GetTileGroupCount(); i++) {
+      auto tile_group = table->GetTileGroupById(i);
+      for (oid_t j = 0; j < tile_group->GetTileCount(); j++) {
+        // Change schema in the tiles
+        auto tile = tile_group->GetTile(j);
+        tile->ChangeColumnName(columnId, names[0]);
+      }
+    }
+
+    // Change cached column names in the table catalog
+    auto table_catalog =
+        Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
+    std::vector<oid_t> columns(1, columnId);
+    table_catalog->ChangeColumnName(columns, names);
+
+  } catch (CastException &e) {
+    return ResultType::FAILURE;
+  }
   return ResultType::SUCCESS;
 }
 

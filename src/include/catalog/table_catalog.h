@@ -73,6 +73,9 @@ class TableCatalogObject {
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
 
+  void ChangeColumnName(const std::vector<oid_t> &columns,
+                        const std::vector<std::string> &names);
+
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
   inline const std::string &GetSchemaName() { return schema_name; }
