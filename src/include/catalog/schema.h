@@ -196,7 +196,7 @@ class Schema : public Printable {
   }
 
   // Get the default value for the column
-  inline type::Value *GetDefaultValue(const oid_t column_id) const {
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
         return constraint.getDefaultValue();
