@@ -113,5 +113,5 @@ class Brain {
   std::unordered_map<std::string, struct event *> job_handles_;
   BrainEnvironment env_;
 };
-}
-}
+} // namespace brain
+} // namespace peloton
