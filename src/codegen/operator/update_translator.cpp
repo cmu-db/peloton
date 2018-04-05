@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/codegen/type/varchar_type.h>
 #include "codegen/lang/if.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/target_proxy.h"
@@ -43,11 +42,11 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
 }
 
 oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
-  oid_t  target_size = target_list.size();
+  oid_t target_size = target_list.size();
   for (oid_t i = 0; i < target_size; i++) {
-      if (target_list[i].first == index) {
-        return i;
-      }
+    if (target_list[i].first == index) {
+      return i;
+    }
   }
   return INVALID_OID;
 }
@@ -97,8 +96,9 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   std::vector<codegen::Value> values;
   for (uint32_t i = 0; i < column_num; i++) {
     codegen::Value val;
-    uint32_t  target_index = GetTargetIndex(target_list,i);
+    uint32_t target_index = GetTargetIndex(target_list, i);
     if (target_index != INVALID_OID) {
+      // Set the value for the update
       const auto &derived_attribute = target_list[target_index].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
     } else {
