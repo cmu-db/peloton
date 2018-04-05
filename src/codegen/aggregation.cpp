@@ -90,7 +90,7 @@ void Aggregation::Setup(
         // We decompose averages into separate SUM() and COUNT() components
 
         // SUM() - the type must match the type of the expression
-        PL_ASSERT(agg_term.expression != nullptr);
+        PELOTON_ASSERT(agg_term.expression != nullptr);
         auto sum_type = agg_term.expression->ResultType();
         if (IsGlobal()) {
           sum_type = sum_type.AsNullable();
@@ -169,7 +169,7 @@ void Aggregation::Setup(
     CodeGen &codegen,
     const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
     bool is_global) {
-  PL_ASSERT(is_global);
+  PELOTON_ASSERT(is_global);
   // Create empty vector and hand the reference to the actual implementation
   // makes it easier to call this function without providing grouping keys
   std::vector<type::Type> empty;
@@ -198,7 +198,7 @@ void Aggregation::TearDownState(CodeGen &codegen) {
 
 void Aggregation::CreateInitialGlobalValues(CodeGen &codegen,
                                             llvm::Value *space) const {
-  PL_ASSERT(IsGlobal());
+  PELOTON_ASSERT(IsGlobal());
   auto null_bitmap =
       UpdateableStorage::NullBitmap{codegen, GetAggregateStorage(), space};
   null_bitmap.InitAllNull(codegen);
@@ -211,7 +211,7 @@ void Aggregation::CreateInitialValues(
     const std::vector<codegen::Value> &initial,
     const std::vector<codegen::Value> &grouping_keys) const {
   // Global aggregations should be calling CreateInitialGlobalValues(...)
-  PL_ASSERT(!IsGlobal());
+  PELOTON_ASSERT(!IsGlobal());
 
   // The null bitmap tracker
   UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
@@ -378,7 +378,7 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
   }
 
   // Store the updated value in the appropriate slot
-  PL_ASSERT(next.GetType().type_id != peloton::type::TypeId::INVALID);
+  PELOTON_ASSERT(next.GetType().type_id != peloton::type::TypeId::INVALID);
   storage_.SetValueSkipNull(codegen, space, storage_index, next);
 }
 

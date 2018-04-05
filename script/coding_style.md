@@ -21,7 +21,7 @@ Another measure of the function is the number of local variables.  They shouldn'
 
 **PRINTF** Refrain from using `printf` and `std::cout`. Instead use the logging macros, such as LOG_LEVEL_INFO, in `common/logger.h`.
 
-**DON'T REINVENT THE MACROS** Use `PL_ASSERT` in `common/macros.h` instead of regular `assert`. This header file icontains a number of macros that you should use, rather than explicitly coding some variant of them yourself.
+**DON'T REINVENT THE MACROS** Use `PELOTON_ASSERT` in `common/macros.h` instead of regular `assert`. This header file icontains a number of macros that you should use, rather than explicitly coding some variant of them yourself.
 
 **PLAFORM-SPECIFIC CODE** Add platform-specific code only to `common/platform.h`.
 
@@ -53,7 +53,7 @@ The example above illustrates a valid use of the `inline` keyword for the defini
 
 **EDITOR MODELINES** Some editors can interpret configuration information embedded in source files, indicated with special markers.  For example, emacs interprets lines marked like this:	-*- mode: c -*-. Do NOT include any of these in source files. People have their own personal editor configurations, and your source files should not override them.
 
-**ALLOCATING MEMORY** Use `PL_MEMCPY` macro in `common/macros.h`. Always use smart pointers, such as `std::unique_ptr`, to simplify memory management.
+**ALLOCATING MEMORY** Use `PELOTON_MEMCPY` macro in `common/macros.h`. Always use smart pointers, such as `std::unique_ptr`, to simplify memory management.
 
 **PRINTING PELOTON MESSAGES** Peloton developers like to be seen as literate. Do mind the spelling of messages to make a good impression. Do not use crippled words like "dont"; use "do not" or "don't" instead.  Make the messages concise, clear, and unambiguous. Use appropriate log levels, such as LOG_LEVEL_TRACE, in `common/logger.h`. Coming up with good debugging messages can be quite a challenge; and once you have them, they can be a huge help for troubleshooting.
 

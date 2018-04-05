@@ -25,7 +25,7 @@ LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
 }
 
 void LatencyMetric::Aggregate(AbstractMetric& source) {
-  PL_ASSERT(source.GetType() == MetricType::LATENCY);
+  PELOTON_ASSERT(source.GetType() == MetricType::LATENCY);
 
   LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);
   CircularBuffer<double> source_latencies = latency_metric.Copy();

@@ -115,7 +115,7 @@ void Sorter::Resize() {
   uint64_t curr_used_size = GetUsedSpace();
 
   // Ensure the current size is a power of two
-  PL_ASSERT(curr_alloc_size % 2 == 0);
+  PELOTON_ASSERT(curr_alloc_size % 2 == 0);
 
   // Allocate double the buffer room
   uint64_t next_alloc_size = curr_alloc_size << 1;
@@ -130,7 +130,7 @@ void Sorter::Resize() {
 
   // Now copy the previous buffer into the new area. Note that we only need
   // to copy over the USED space into the new space.
-  PL_MEMCPY(new_buffer_start, buffer_start_, buffer_pos_ - buffer_start_);
+  PELOTON_MEMCPY(new_buffer_start, buffer_start_, buffer_pos_ - buffer_start_);
 
   // Set pointers
   char *old_buffer_start = buffer_start_;

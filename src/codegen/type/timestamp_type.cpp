@@ -44,7 +44,7 @@ struct CastTimestampToDate : public TypeSystem::CastHandleNull {
   // Cast the given decimal value into the provided type
   Value Impl(CodeGen &codegen, const Value &value,
              const type::Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // TODO: Fix me
     auto *usecs_per_date =

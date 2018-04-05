@@ -30,12 +30,12 @@ HashJoinExecutor::HashJoinExecutor(const planner::AbstractPlan *node,
     : AbstractJoinExecutor(node, executor_context) {}
 
 bool HashJoinExecutor::DInit() {
-  PL_ASSERT(children_.size() == 2);
+  PELOTON_ASSERT(children_.size() == 2);
 
   auto status = AbstractJoinExecutor::DInit();
   if (status == false) return status;
 
-  PL_ASSERT(children_[1]->GetRawNode()->GetPlanNodeType() ==
+  PELOTON_ASSERT(children_[1]->GetRawNode()->GetPlanNodeType() ==
             PlanNodeType::HASH);
 
   hash_executor_ = reinterpret_cast<HashExecutor *>(children_[1]);
@@ -106,7 +106,7 @@ bool HashJoinExecutor::DExecute() {
 
     std::vector<oid_t> left_hashed_col_ids;
     for (auto &hashkey : left_hashed_cols) {
-      PL_ASSERT(hashkey->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+      PELOTON_ASSERT(hashkey->GetExpressionType() == ExpressionType::VALUE_TUPLE);
       auto tuple_value =
           reinterpret_cast<const expression::TupleValueExpression *>(hashkey);
       left_hashed_col_ids.push_back(tuple_value->GetColumnId());

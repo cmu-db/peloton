@@ -122,7 +122,7 @@ bool RunPayment(const size_t &thread_id){
   // 15%: paying through another warehouse
   else {
     customer_warehouse_id = GetRandomIntegerExcluding(0, state.warehouse_count - 1, warehouse_id);
-    PL_ASSERT(customer_warehouse_id != warehouse_id);
+    PELOTON_ASSERT(customer_warehouse_id != warehouse_id);
     customer_district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   }
 
@@ -194,13 +194,13 @@ bool RunPayment(const size_t &thread_id){
     }
 
     if (customer_list.size() != 1) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
     customer = customer_list[0];
 
   } else {
-    PL_ASSERT(customer_lastname.empty() == false);
+    PELOTON_ASSERT(customer_lastname.empty() == false);
 
     LOG_TRACE("getCustomersByLastName: WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id = %d, d_id = %d, c_last = %s", warehouse_id, district_id, customer_lastname.c_str());
 
@@ -222,7 +222,7 @@ bool RunPayment(const size_t &thread_id){
     customer_key_values.push_back(type::ValueFactory::GetVarcharValue(customer_lastname).Copy());
 
     auto customer_skey_index = customer_table->GetIndexWithOid(customer_table_skey_index_oid);
-    PL_ASSERT(customer_skey_index != nullptr);
+    PELOTON_ASSERT(customer_skey_index != nullptr);
 
     planner::IndexScanPlan::IndexScanDesc customer_index_scan_desc(
       customer_skey_index, customer_key_column_ids, customer_expr_types,
@@ -245,7 +245,7 @@ bool RunPayment(const size_t &thread_id){
 
     if (customer_list.size() < 1) {
       LOG_INFO("C_W_ID=%d, C_D_ID=%d", warehouse_id, district_id);
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
     // Get the midpoint customer's id
@@ -290,7 +290,7 @@ bool RunPayment(const size_t &thread_id){
   }
 
   if (warehouse_list.size() != 1) {
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
 
@@ -335,7 +335,7 @@ bool RunPayment(const size_t &thread_id){
   }
 
   if (district_list.size() != 1) {
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   
@@ -656,14 +656,14 @@ bool RunPayment(const size_t &thread_id){
     return false;
   }
 
-  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
   if (result == ResultType::SUCCESS) {
     return true;
   } else {
-    PL_ASSERT(result == ResultType::ABORTED || 
+    PELOTON_ASSERT(result == ResultType::ABORTED || 
            result == ResultType::FAILURE);
     return false;
   }
