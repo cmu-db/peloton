@@ -1220,5 +1220,25 @@ TEST_F(PostgresParserTests, TypeCastTest) {
   }
 }
 
+TEST_F(PostgresParserTests, TypeCastInExpressionTest) {
+  std::vector<std::string> queries;
+  queries.push_back("SELECT * FROM a WHERE d <= date '2018-04-04';");
+  queries.push_back("SELECT '12345'::INTEGER - 12");
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+}
+
 }  // namespace test
 }  // namespace peloton
