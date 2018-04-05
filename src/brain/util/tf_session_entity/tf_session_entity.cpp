@@ -58,7 +58,7 @@ void TFSE_TYPE::ImportGraph(const std::string &filename) {
   TF_GraphImportGraphDef(graph_, graph_def, opts, status_);
   TF_DeleteImportGraphDefOptions(opts);
   TF_DeleteBuffer(graph_def);
-  PL_ASSERT(IsStatusOk());
+  PELOTON_ASSERT(IsStatusOk());
 }
 
 TFSE_TEMPLATE_ARGUMENTS
@@ -120,7 +120,7 @@ OutputType *TFSE_TYPE::Eval(
                 &(outs.at(0)), &(out_vals.at(0)), outs.size(),  // Outputs
                 nullptr, 0,                                     // Operations
                 nullptr, status_);
-  PL_ASSERT(TF_GetCode(status_) == TF_OK);
+  PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
   return static_cast<OutputType *>(TF_TensorData(out_vals.at(0)));
 }
 
@@ -143,7 +143,7 @@ void TFSE_TYPE::Eval(
                 nullptr, nullptr, 0,  // Outputs
                 &op, 1,               // Operations
                 nullptr, status_);
-  PL_ASSERT(TF_GetCode(status_) == TF_OK);
+  PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
 }
 
 /*

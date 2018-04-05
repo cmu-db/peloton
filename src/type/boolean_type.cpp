@@ -27,61 +27,61 @@ BooleanType::BooleanType() : Type(TypeId::BOOLEAN) {}
 
 CmpBool BooleanType::CompareEquals(const Value& left,
                                    const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(==);
 }
 
 CmpBool BooleanType::CompareNotEquals(const Value& left,
                                       const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(!=);
 }
 
 CmpBool BooleanType::CompareLessThan(const Value& left,
                                      const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(<);
 }
 
 CmpBool BooleanType::CompareLessThanEquals(const Value& left,
                                            const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(<=);
 }
 
 CmpBool BooleanType::CompareGreaterThan(const Value& left,
                                         const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(>);
 }
 
 CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
                                               const Value& right) const {
-  PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return BOOLEAN_COMPARE_FUNC(>=);
 }
 
 Value BooleanType::Min(const Value& left, const Value& right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
   if (left.CompareLessThan(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();
 }
 
 Value BooleanType::Max(const Value& left, const Value& right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
   if (left.CompareGreaterThanEquals(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();

@@ -426,7 +426,7 @@ Operator PhysicalSeqScan::make(
     oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
     std::string alias, std::vector<AnnotatedExpression> predicates,
     bool update) {
-  PL_ASSERT(table != nullptr);
+  PELOTON_ASSERT(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
   scan->table_alias = alias;
@@ -465,7 +465,7 @@ Operator PhysicalIndexScan::make(
     oid_t index_id, std::vector<oid_t> key_column_id_list,
     std::vector<ExpressionType> expr_type_list,
     std::vector<type::Value> value_list) {
-  PL_ASSERT(table != nullptr);
+  PELOTON_ASSERT(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
   scan->is_for_update = update;
