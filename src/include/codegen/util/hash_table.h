@@ -124,16 +124,55 @@ class HashTable {
   template <typename Key, typename Value>
   bool Probe(uint64_t hash, const Key &key, Value &value);
 
-  // An entry in the hash table
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Helper Classes
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * An entry in the hash table that stores a key and value
+   */
   struct Entry {
     uint64_t hash;
     Entry *next;
     char data[0];
+
+    static uint64_t Size(uint32_t key_size, uint32_t value_size) {
+      return sizeof(Entry) + key_size + value_size;
+    }
+  };
+
+  /**
+   * An entry allocator
+   */
+  class EntryBuffer {
+   public:
+    EntryBuffer(::peloton::type::AbstractPool &memory, uint64_t entry_size);
+
+    ~EntryBuffer();
+
+    Entry *NextFree();
+
+   private:
+    struct MemoryBlock {
+      MemoryBlock *next;
+      char data[0];
+    };
+
+    // The memory pool where block allocations are sourced
+    ::peloton::type::AbstractPool &memory_;
+    // The sizes of each entry
+    uint64_t entry_size_;
+    // The current active block
+    MemoryBlock *block_;
+    // A pointer into the block where the next position is
+    char *next_entry_;
+    // The number of available bytes left in the block
+    uint64_t available_bytes_;
   };
 
  private:
-  Entry *AcquireEntrySlot();
-
   // Does the hash table need resizing?
   bool NeedsResize() const { return num_elems_ == capacity_; }
 
@@ -141,29 +180,16 @@ class HashTable {
   void Resize();
 
  private:
-  // A chunk of memory that stores tuple data
-  struct MemoryBlock {
-    MemoryBlock *next;
-    char data[0];
-  };
-
- private:
   // The memory allocator used for all allocations in this hash table
   ::peloton::type::AbstractPool &memory_;
-
-  // The size of an entry in the hash table. Includes space for entry metadata,
-  // key, and value
-  uint64_t entry_size_;
 
   // The directory of the hash table
   Entry **directory_;
   uint64_t directory_size_;
   uint64_t directory_mask_;
 
-  // A linked list of memory blocks where tuples are stored
-  MemoryBlock *block_;
-  char *next_tuple_pos_;
-  uint64_t available_bytes_;
+  // Entry allocator
+  EntryBuffer entry_buffer_;
 
   // The number of elements stored in this hash table, and the max before it
   // needs to be resized

@@ -20,58 +20,32 @@ namespace codegen {
 namespace util {
 
 static const uint32_t kDefaultNumElements = 256;
+static const uint32_t kNumBlockElems = 1024;
 
 static_assert((kDefaultNumElements & (kDefaultNumElements - 1)) == 0,
               "Default number of elements must be a power of two");
-/**
- * This hash-table uses an open-addressing probing scheme
- *
- */
 
-HashTable::HashTable(::peloton::type::AbstractPool &memory, uint64_t key_size,
-                     uint64_t value_size)
-    : memory_(memory),
-      entry_size_(sizeof(Entry) + key_size + value_size),
-      directory_(nullptr),
-      directory_size_(0),
-      directory_mask_(0),
-      block_(nullptr),
-      next_tuple_pos_(nullptr),
-      available_bytes_(0),
-      num_elems_(0),
-      capacity_(0) {
-  // Upon creation, we allocate room for kDefaultNumElements in the hash table.
-  // We assume 50% load factor on the directory, thus the directory size is
-  // twice the number of elements.
-  directory_size_ = kDefaultNumElements * 2;
-  directory_mask_ = directory_size_ - 1;
-  directory_ = static_cast<Entry **>(
-      memory_.Allocate(sizeof(Entry *) * directory_size_));
-  PELOTON_MEMSET(directory_, 0, directory_size_);
+////////////////////////////////////////////////////////////////////////////////
+///
+/// EntryBuffer
+///
+////////////////////////////////////////////////////////////////////////////////
 
+HashTable::EntryBuffer::EntryBuffer(::peloton::type::AbstractPool &memory,
+                                    uint64_t entry_size)
+    : memory_(memory), entry_size_(entry_size) {
   // We also need to allocate some space to store tuples. Tuples are stored
   // externally from the main hash table in a separate values memory space.
-  uint64_t block_size =
-      sizeof(MemoryBlock) + (entry_size_ * kDefaultNumElements);
+  uint64_t block_size = sizeof(MemoryBlock) + (entry_size_ * kNumBlockElems);
   block_ = reinterpret_cast<MemoryBlock *>(memory_.Allocate(block_size));
   block_->next = nullptr;
 
   // Set the next tuple write position and the available bytes
-  next_tuple_pos_ = block_->data;
+  next_entry_ = block_->data;
   available_bytes_ = block_size - sizeof(MemoryBlock);
-
-  // Set table stats
-  num_elems_ = 0;
-  capacity_ = kDefaultNumElements;
 }
 
-HashTable::~HashTable() {
-  // Free the directory
-  if (directory_ != nullptr) {
-    memory_.Free(directory_);
-    directory_ = nullptr;
-  }
-
+HashTable::EntryBuffer::~EntryBuffer() {
   // Free all the blocks we've allocated
   MemoryBlock *block = block_;
   while (block != nullptr) {
@@ -82,6 +56,64 @@ HashTable::~HashTable() {
   block_ = nullptr;
 }
 
+HashTable::Entry *HashTable::EntryBuffer::NextFree() {
+  if (entry_size_ > available_bytes_) {
+    uint64_t block_size = sizeof(MemoryBlock) + (entry_size_ * kNumBlockElems);
+    auto *new_block =
+        reinterpret_cast<MemoryBlock *>(memory_.Allocate(block_size));
+    new_block->next = block_;
+    block_ = new_block;
+    next_entry_ = new_block->data;
+    available_bytes_ = block_size - sizeof(MemoryBlock);
+  }
+
+  auto *entry = reinterpret_cast<Entry *>(next_entry_);
+  entry->next = nullptr;
+
+  next_entry_ += entry_size_;
+  available_bytes_ -= entry_size_;
+
+  return entry;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Hash Table
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This hash-table uses an open-addressing probing scheme
+ *
+ */
+
+HashTable::HashTable(::peloton::type::AbstractPool &memory, uint64_t key_size,
+                     uint64_t value_size)
+    : memory_(memory),
+      directory_(nullptr),
+      directory_size_(0),
+      directory_mask_(0),
+      entry_buffer_(memory, Entry::Size(key_size, value_size)),
+      num_elems_(0),
+      capacity_(kDefaultNumElements) {
+  // Upon creation, we allocate room for kDefaultNumElements in the hash table.
+  // We assume 50% load factor on the directory, thus the directory size is
+  // twice the number of elements.
+  directory_size_ = capacity_ * 2;
+  directory_mask_ = directory_size_ - 1;
+  directory_ = static_cast<Entry **>(
+      memory_.Allocate(sizeof(Entry *) * directory_size_));
+  PELOTON_MEMSET(directory_, 0, directory_size_);
+}
+
+HashTable::~HashTable() {
+  // Free the directory
+  if (directory_ != nullptr) {
+    memory_.Free(directory_);
+    directory_ = nullptr;
+  }
+}
+
 void HashTable::Init(HashTable &table, executor::ExecutorContext &exec_ctx,
                      uint64_t key_size, uint64_t value_size) {
   new (&table) HashTable(*exec_ctx.GetPool(), key_size, value_size);
@@ -89,34 +121,12 @@ void HashTable::Init(HashTable &table, executor::ExecutorContext &exec_ctx,
 
 void HashTable::Destroy(HashTable &table) { table.~HashTable(); }
 
-HashTable::Entry *HashTable::AcquireEntrySlot() {
-  if (entry_size_ > available_bytes_) {
-    capacity_ *= 2;
-    uint64_t block_size = sizeof(MemoryBlock) + (entry_size_ * capacity_);
-    auto *new_block =
-        reinterpret_cast<MemoryBlock *>(memory_.Allocate(block_size));
-    new_block->next = block_;
-    block_ = new_block;
-    next_tuple_pos_ = new_block->data;
-    available_bytes_ = block_size - sizeof(MemoryBlock);
-  }
-
-  auto *entry = reinterpret_cast<Entry *>(next_tuple_pos_);
-  entry->next = nullptr;
-
-  next_tuple_pos_ += entry_size_;
-  available_bytes_ -= entry_size_;
-  num_elems_++;
-
-  return entry;
-}
-
 char *HashTable::StoreTupleLazy(uint64_t hash) {
   // Since this is a lazy insertion, we just need to acquire/allocate an entry
   // from storage. It is assumed that actual construction of the hash table is
   // done by a subsequent call to BuildLazy() only after ALL lazy insertions
   // have completed.
-  auto *entry = AcquireEntrySlot();
+  auto *entry = entry_buffer_.NextFree();
   entry->hash = hash;
 
   // Insert the entry into the linked list in the first directory slot
@@ -129,6 +139,8 @@ char *HashTable::StoreTupleLazy(uint64_t hash) {
     directory_[1] = entry;
   }
 
+  num_elems_++;
+
   // Return data pointer for key/value storage
   return entry->data;
 }
@@ -140,13 +152,15 @@ char *HashTable::StoreTuple(uint64_t hash) {
   }
 
   // Acquire/allocate an entry from storage
-  Entry *entry = AcquireEntrySlot();
+  Entry *entry = entry_buffer_.NextFree();
   entry->hash = hash;
 
   // Insert into hash table
   uint64_t index = hash & directory_mask_;
   entry->next = directory_[index];
   directory_[index] = entry;
+
+  num_elems_++;
 
   // Return data pointer for key/value storage
   return entry->data;
