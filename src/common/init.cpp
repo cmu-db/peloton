@@ -90,9 +90,15 @@ void PelotonInit::Initialize() {
 
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
+
+  // TODO(Tianyi) Make this configurable in settings manager
+  // Start Statistic Aggregator
+  stats::StatsAggregator::GetInstance().LaunchAggregator();
 }
 
 void PelotonInit::Shutdown() {
+  stats::StatsAggregator::GetInstance().ShutdownAggregator();
+
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto &index_tuner = tuning::IndexTuner::GetInstance();
