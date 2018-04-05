@@ -294,6 +294,8 @@ class DataTable : public AbstractTable {
     default_active_tilegroup_count_ = active_tile_group_count;
   }
 
+  inline size_t GetActiveTileGroupCount() const { return active_tilegroup_count_; }
+
   inline static size_t GetActiveIndirectionArrayCount() {
     return default_active_indirection_array_count_;
   }
