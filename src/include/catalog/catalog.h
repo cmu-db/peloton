@@ -15,7 +15,6 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
-#include "catalog/column_catalog.h"
 #include "function/functions.h"
 
 namespace peloton {

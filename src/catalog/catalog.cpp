@@ -27,18 +27,14 @@
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executor_context.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
-#include "planner/seq_scan_plan.h"
-#include "planner/insert_plan.h"
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
-#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -1298,11 +1294,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Abs", function::BuiltInFuncType{OperatorId::Abs,
+                                            function::DecimalFunctions::_Abs},
+          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
