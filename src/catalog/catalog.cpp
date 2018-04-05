@@ -33,12 +33,9 @@
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
-#include "planner/seq_scan_plan.h"
-#include "planner/insert_plan.h"
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
-#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -957,7 +954,6 @@ ResultType Catalog::AddColumn(
   return ResultType::SUCCESS;
 }
 
-<<<<<<< bc9252fda7aeecaeb325a11f30bc23a27569f932
 ResultType Catalog::DropColumn(
     UNUSED_ATTRIBUTE const std::string &database_name,
     UNUSED_ATTRIBUTE const std::string &table_name,
@@ -971,13 +967,6 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
                                      const std::vector<std::string> &old_names,
                                      const std::vector<std::string> &names,
                                      concurrency::TransactionContext *txn) {
-=======
-ResultType ChangeColumnName(const std::string &database_name,
-                            const std::string &table_name,
-                            const std::vector<std::string> &old_names,
-                            const std::vector<std::string> &names,
-                            concurrency::TransactionContext *txn) {
->>>>>>> add change column catalog
   if (txn == nullptr) {
     throw CatalogException("Change Column requires transaction.");
   }
@@ -986,12 +975,8 @@ ResultType ChangeColumnName(const std::string &database_name,
     throw CatalogException("No names are given.");
   }
 
-<<<<<<< bc9252fda7aeecaeb325a11f30bc23a27569f932
   LOG_TRACE("Change Column Name %s to %s", old_names[0].c_str(),
             names[0].c_str());
-=======
-  LOG_TRACE("Change Column Name %s to %s", old_names[0], names[0]);
->>>>>>> add change column catalog
 
   try {
     // Get table from the name
@@ -1310,11 +1295,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Abs", function::BuiltInFuncType{OperatorId::Abs,
+                                            function::DecimalFunctions::_Abs},
+          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
@@ -1355,29 +1340,33 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
-                         type::TypeId::SMALLINT, internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT,
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
-      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
-                         internal_lang, "Abs",
-                         function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
-                         txn);
+      AddBuiltinFunction(
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
