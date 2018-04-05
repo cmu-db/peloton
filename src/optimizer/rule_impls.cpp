@@ -66,7 +66,7 @@ void JoinCommutativity::Transform(
   auto result_plan = std::make_shared<OperatorExpression>(
       LogicalJoin::make(join_type, join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   LOG_TRACE(
       "Reorder left child with op %s and right child with op %s for join",
       children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
@@ -692,7 +692,7 @@ void JoinToNLJoin::Transform(
   const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
   auto &left_group_alias =
@@ -705,7 +705,7 @@ void JoinToNLJoin::Transform(
   util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
-  PL_ASSERT(right_keys.size() == left_keys.size());
+  PELOTON_ASSERT(right_keys.size() == left_keys.size());
   std::shared_ptr<OperatorExpression> result_plan;
 
   result_plan = std::make_shared<OperatorExpression>(PhysicalNLJoin::make(
@@ -754,7 +754,7 @@ void JoinToHashJoin::Transform(
   const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
   auto &left_group_alias =
@@ -767,7 +767,7 @@ void JoinToHashJoin::Transform(
   util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
-  PL_ASSERT(right_keys.size() == left_keys.size());
+  PELOTON_ASSERT(right_keys.size() == left_keys.size());
   if (!left_keys.empty()) {
     auto result_plan =
         std::make_shared<OperatorExpression>(PhysicalHashJoin::make(

@@ -98,7 +98,7 @@ void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
 
 void StatsCalculator::Visit(const LogicalJoin *op) {
     // Check if there's join condition
-  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
+  PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
   auto left_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(0));
   auto right_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
   auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
@@ -135,7 +135,7 @@ void StatsCalculator::Visit(const LogicalJoin *op) {
   }
   size_t num_rows = root_group->GetNumRows();
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
     std::shared_ptr<ColumnStats> column_stats;
     // Make a copy from the child stats
@@ -143,7 +143,7 @@ void StatsCalculator::Visit(const LogicalJoin *op) {
       column_stats = std::make_shared<ColumnStats>(
           *left_child_group->GetStats(tv_expr->GetColFullName()));
     } else {
-      PL_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      PELOTON_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
       column_stats = std::make_shared<ColumnStats>(
           *right_child_group->GetStats(tv_expr->GetColFullName()));
     }

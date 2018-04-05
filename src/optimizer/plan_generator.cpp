@@ -189,12 +189,12 @@ void PlanGenerator::Visit(const PhysicalNLJoin *op) {
   vector<oid_t> left_keys;
   vector<oid_t> right_keys;
   for (auto &expr : op->left_keys) {
-    PL_ASSERT(children_expr_map_[0].find(expr.get()) !=
+    PELOTON_ASSERT(children_expr_map_[0].find(expr.get()) !=
               children_expr_map_[0].end());
     left_keys.push_back(children_expr_map_[0][expr.get()]);
   }
   for (auto &expr : op->right_keys) {
-    PL_ASSERT(children_expr_map_[1].find(expr.get()) !=
+    PELOTON_ASSERT(children_expr_map_[1].find(expr.get()) !=
               children_expr_map_[1].end());
     right_keys.emplace_back(children_expr_map_[1][expr.get()]);
   }
