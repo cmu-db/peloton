@@ -144,6 +144,10 @@ class Schema : public Printable {
     return index;
   }
 
+  inline void ChangeColumnName(const oid_t column_id, std::string new_name) {
+    columns[column_id].column_name = new_name;
+  }
+
   inline oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
@@ -191,7 +195,7 @@ class Schema : public Printable {
   }
 
   // Get the default value for the column
-  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+  inline type::Value *GetDefaultValue(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
         return constraint.getDefaultValue();
