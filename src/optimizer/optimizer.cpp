@@ -164,9 +164,9 @@ std::unique_ptr<OptimizerContextInfo> Optimizer::PerformOptimization
   }
 
   try {
-    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
-                                    query_info.output_exprs);
-    if (best_plan == nullptr) return nullptr;
+    //auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+    //                                query_info.output_exprs);
+    std::unique_ptr<planner::AbstractPlan> best_plan(nullptr);
 
     auto info_obj = std::unique_ptr<OptimizerContextInfo>(new OptimizerContextInfo());
 
