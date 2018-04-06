@@ -111,8 +111,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in different order from schema.
      */
-
-    // Currently fails. See #1197
     @Test
     public void testPS_1Tuple_CS_2() throws SQLException {
 	
@@ -135,8 +133,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in different order from schema, with one constant column.
      */
-
-    // Currently fails. See #1197
     @Test
     public void testPS_1Tuple_CS_3() throws SQLException {
 
@@ -182,8 +178,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in schema order, one constant column
      */
-    // Works, due to use of insert rather than push back
-
     @Test
     public void testPS_1Tuple_CS_5() throws SQLException {
 	
@@ -205,8 +199,6 @@ public class InsertPSTest extends PLTestBase {
     /**
      * Prepared statement, 1 tuple insert, all constants
      */
-    // Works, due to use of insert rather than push back
-
     @Test
     public void testPS_1Tuple_CS_6() throws SQLException {
 	
@@ -295,7 +287,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in different order from schema.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_2() throws SQLException {
 	
@@ -325,7 +316,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in different order from schema, with one constant column.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_3() throws SQLException {
 
@@ -355,7 +345,6 @@ public class InsertPSTest extends PLTestBase {
      * in different order from schema, with one constant column.
      * Variant of above, with constant column last.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_3a() throws SQLException {
 
@@ -384,7 +373,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in schema order, with 2nd column missing.
      */
-    // Currently failing. See comments in #1197
     @Test
     public void testPS_2Tuple_CS_4() throws SQLException {
 
@@ -419,7 +407,7 @@ public class InsertPSTest extends PLTestBase {
     /**
      * 1 tuple insert, with no column specification.
      */
-    //@Test
+    @Test
     public void test_1Tuple_NCS() throws SQLException {
 	
         String sql = "INSERT INTO tbl VALUES (1, 2, 3);";
@@ -440,7 +428,7 @@ public class InsertPSTest extends PLTestBase {
     /**
      * 1 tuple insert, with columns inserted in schema order.
      */
-    //@Test
+    @Test
     public void test_1Tuple_CS_1() throws SQLException {
 	
         String sql = "INSERT INTO tbl (c1, c2, c3) VALUES (1, 2, 3);";
@@ -461,7 +449,7 @@ public class InsertPSTest extends PLTestBase {
     /**
      * 1 tuple insert, with columns inserted in different order from schema.
      */
-    //@Test
+    @Test
     public void test_1Tuple_CS_2() throws SQLException {
 	
         String sql = "INSERT INTO tbl (c3, c1, c2) VALUES (3, 1, 2);";
@@ -484,7 +472,7 @@ public class InsertPSTest extends PLTestBase {
     /**
      * 2 tuple insert, with no column specification.
      */
-    //@Test
+    @Test
     public void test_2Tuple_NCS() throws SQLException {
 	
         String sql = "INSERT INTO tbl VALUES (1, 2, 3), (11, 12, 13);";
