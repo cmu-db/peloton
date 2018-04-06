@@ -190,7 +190,6 @@ bool InsertExecutor::DExecute() {
       // if we are doing a bulk insert from values not project_info
 
       if (!project_info) {
-        LOG_INFO("Not project info");
         tuple = node.GetTuple(insert_itr);
 
         if (tuple == nullptr) {
@@ -256,7 +255,7 @@ bool InsertExecutor::DExecute() {
         values.push_back(new_tuple->GetValue(col_id));
       }
 
-      LOG_INFO("Perform insert is being called");
+//      LOG_INFO("Perform insert is being called");
       transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
 
       LOG_TRACE("Number of tuples in table after insert: %lu",
