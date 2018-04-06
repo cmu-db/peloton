@@ -36,6 +36,7 @@
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
+#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -190,7 +191,6 @@ void Catalog::Bootstrap() {
   catalog_map_[CATALOG_DATABASE_OID]->Bootstrap(CATALOG_DATABASE_NAME, txn);
   // bootstrap other global catalog tables
   DatabaseMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
 
@@ -1309,11 +1309,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Abs", function::BuiltInFuncType{OperatorId::Abs,
-                                            function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
