@@ -139,7 +139,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
         for(auto query_string: query_strings) {
-          pool.SubmitTask([this, query_string, timestamp] {
+          pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
           });        
         }

@@ -53,6 +53,8 @@ bool UpdateExecutor::DInit() {
   PELOTON_ASSERT(target_table_);
   PELOTON_ASSERT(project_info_);
 
+  statement_write_set_.clear();
+
   return true;
 }
 
@@ -60,6 +62,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     bool is_owner, storage::TileGroup *tile_group,
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -136,7 +139,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
-
+  statement_write_set_.insert(location);
   return true;
 }
 
@@ -188,6 +191,9 @@ bool UpdateExecutor::DExecute() {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
+    if (IsInStatementWriteSet(old_location)) {
+      continue;
+    }
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
@@ -262,6 +268,7 @@ bool UpdateExecutor::DExecute() {
                                 executor_context_);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
+        statement_write_set_.insert(old_location);
       }
     }
     // if we have already obtained the ownership
@@ -359,6 +366,7 @@ bool UpdateExecutor::DExecute() {
                     new_location.offset);
           transaction_manager.PerformUpdate(current_txn, old_location,
                                             new_location);
+          statement_write_set_.insert(new_location);
 
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one

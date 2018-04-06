@@ -4587,7 +4587,7 @@ class BwTree : public BwTreeBase {
 
     // This is not used since in this case we do not need to compare
     // for equal relation
-    auto f2 = [this](const LeafDataNode *ldn1, const LeafDataNode *ldn2) {
+    auto f2 = [](const LeafDataNode *ldn1, const LeafDataNode *ldn2) {
       (void)ldn1;
       (void)ldn2;
 
