@@ -130,7 +130,7 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   // Form the query.
   std::ostringstream query_str_oss;
   query_str_oss << "SELECT a from " << table_name << " WHERE " <<
-                "b < 33 AND c < 100 ORDER BY a;";
+                "b < 100 and c < 5;";
 
   std::vector<std::shared_ptr<IndexCatalogObject>> index_objs;
 
