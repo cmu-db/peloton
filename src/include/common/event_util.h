@@ -21,6 +21,7 @@
 #include "common/logger.h"
 
 namespace peloton {
+
 /**
  * Static utility class with wrappers for libevent functions.
  *
