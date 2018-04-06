@@ -26,6 +26,7 @@
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
@@ -34,6 +35,7 @@
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
+#include "storage/tile.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -148,12 +150,12 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);  
+  QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
-  
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
@@ -614,18 +616,18 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 
 ResultType Catalog::DropIndex(const std::string &index_name,
                               concurrency::TransactionContext *txn) {
-    if(txn == nullptr) {
-        throw CatalogException("Do not have transaction to drop index " +
-                               index_name);
-    }
-    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
-                index_name, txn);
-    if(index_object == nullptr) {
-        throw CatalogException("Index name " + index_name + " cannot be found");
-    }
-    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to drop index " +
+                           index_name);
+  }
+  auto index_object =
+      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  if (index_object == nullptr) {
+    throw CatalogException("Index name " + index_name + " cannot be found");
+  }
+  ResultType result = DropIndex(index_object->GetIndexOid(), txn);
 
-    return result;
+  return result;
 }
 
 //===--------------------------------------------------------------------===//
@@ -785,6 +787,105 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   }
 
   return table_object;
+}
+
+//===--------------------------------------------------------------------===//
+// ALTER TABLE
+//===--------------------------------------------------------------------===//
+/* Helper function for alter table, called internally
+ */
+ResultType Catalog::AlterTable(
+    UNUSED_ATTRIBUTE oid_t database_oid, UNUSED_ATTRIBUTE oid_t table_oid,
+    UNUSED_ATTRIBUTE std::unique_ptr<catalog::Schema> new_schema,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+  LOG_TRACE("AlterTable in Catalog");
+
+  // TODO: perform AlterTable Operation
+  return ResultType::SUCCESS;
+}
+
+ResultType Catalog::AddColumn(
+    UNUSED_ATTRIBUTE const std::string &database_name,
+    UNUSED_ATTRIBUTE const std::string &table_name,
+    UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+  return ResultType::SUCCESS;
+}
+
+ResultType Catalog::DropColumn(
+    UNUSED_ATTRIBUTE const std::string &database_name,
+    UNUSED_ATTRIBUTE const std::string &table_name,
+    UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+  return ResultType::SUCCESS;
+}
+
+ResultType Catalog::ChangeColumnName(const std::string &database_name,
+                                     const std::string &table_name,
+                                     const std::vector<std::string> &old_names,
+                                     const std::vector<std::string> &names,
+                                     concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Change Column requires transaction.");
+  }
+
+  if (old_names.size() == 0 || names.size() == 0) {
+    throw CatalogException("No names are given.");
+  }
+
+  LOG_TRACE("Change Column Name %s to %s", old_names[0].c_str(),
+            names[0].c_str());
+
+  try {
+    // Get table from the name
+    auto table = Catalog::GetInstance()->GetTableWithName(database_name,
+                                                          table_name, txn);
+    auto schema = table->GetSchema();
+
+    // Currently we only support change the first column name!
+
+    // Check the validity of old name and the new name
+    oid_t columnId = schema->GetColumnID(names[0]);
+    if (columnId != INVALID_OID) {
+      throw CatalogException("New column already exists in the table.");
+    }
+    columnId = schema->GetColumnID(old_names[0]);
+    if (columnId == INVALID_OID) {
+      throw CatalogException("Old column does not exist in the table.");
+    }
+
+    // Change column name in the global schema
+    schema->ChangeColumnName(columnId, names[0]);
+
+    // TODO: verify do we really need doing so
+    // Modify all the tiles within the Data Table
+    /*
+    for (oid_t i = 0; i < table->GetTileGroupCount(); i++) {
+      auto tile_group = table->GetTileGroup(i);
+      for (oid_t j = 0; j < tile_group->GetNextTupleSlot(); j++) {
+        // Change schema in the tiles
+        auto tile = tile_group->GetTile(j);
+        tile->ChangeColumnName(columnId, names[0]);
+      }
+    }
+    */
+
+    // Change cached ColumnCatalog
+    oid_t table_oid = Catalog::GetInstance()
+                          ->GetTableObject(database_name, table_name, txn)
+                          ->GetTableOid();
+    catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, old_names[0],
+                                                        txn);
+    auto new_column = schema->GetColumn(columnId);
+    catalog::ColumnCatalog::GetInstance()->InsertColumn(
+        table_oid, new_column.GetName(), columnId, new_column.GetOffset(),
+        new_column.GetType(), new_column.IsInlined(),
+        new_column.GetConstraints(), pool_.get(), txn);
+
+  } catch (CastException &e) {
+    return ResultType::FAILURE;
+  }
+  return ResultType::SUCCESS;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1064,11 +1165,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Abs", function::BuiltInFuncType{OperatorId::Abs,
-                                            function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
@@ -1105,33 +1206,29 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
+                         type::TypeId::SMALLINT, internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,

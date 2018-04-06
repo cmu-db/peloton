@@ -176,6 +176,30 @@ class Catalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
+
+  //===--------------------------------------------------------------------===//
+  // ALTER TABLE
+  //===--------------------------------------------------------------------===//
+  ResultType AlterTable(oid_t database_oid, oid_t table_oid,
+                        std::unique_ptr<catalog::Schema> new_schema,
+                        concurrency::TransactionContext *txn);
+
+  ResultType AddColumn(const std::string &database_name,
+                       const std::string &table_name,
+                       const std::vector<std::string> &columns,
+                       concurrency::TransactionContext *txn);
+
+  ResultType DropColumn(const std::string &database_name,
+                        const std::string &table_name,
+                        const std::vector<std::string> &columns,
+                        concurrency::TransactionContext *txn);
+
+  ResultType ChangeColumnName(const std::string &database_name,
+                              const std::string &table_name,
+                              const std::vector<std::string> &old_columns,
+                              const std::vector<std::string> &names,
+                              concurrency::TransactionContext *txn);
+
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
