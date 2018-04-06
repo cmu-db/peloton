@@ -1231,6 +1231,15 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   current_txn->SetResult(ResultType::ABORTED);
 
 
+  ItemPointer placeholder;
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TRANSACTION_ABORT, placeholder, current_txn->GetEpochId(),
+          current_txn->GetTransactionId(), current_txn->GetCommitId());
+
+  current_txn->GetLogBuffer()->WriteRecord(record);
+  threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+      current_txn->GetLogToken(), current_txn->GetLogBuffer());
   // Increment # txns aborted metric
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
