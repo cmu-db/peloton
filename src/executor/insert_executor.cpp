@@ -110,10 +110,13 @@ bool InsertExecutor::DExecute() {
     for (oid_t tuple_id : *logical_tile) {
       ContainerTuple<LogicalTile> cur_tuple(logical_tile.get(), tuple_id);
 
+      std::vector<type::Value> values;
+
       // Materialize the logical tile tuple
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
         type::Value val = (cur_tuple.GetValue(column_itr));
         tuple->SetValue(column_itr, val, executor_pool);
+        values.push_back(val);
       }
 
       // insert tuple into the table.
@@ -130,7 +133,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -187,9 +190,11 @@ bool InsertExecutor::DExecute() {
       // if we are doing a bulk insert from values not project_info
 
       if (!project_info) {
+        LOG_INFO("Not project info");
         tuple = node.GetTuple(insert_itr);
 
         if (tuple == nullptr) {
+          LOG_INFO("tuple is null");
           storage_tuple.reset(new storage::Tuple(schema, true));
 
           // read from values
@@ -245,7 +250,14 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+      std::vector<type::Value> values;
+      uint32_t num_columns = schema->GetColumnCount();
+      for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
+        values.push_back(new_tuple->GetValue(col_id));
+      }
+
+      LOG_INFO("Perform insert is being called");
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
 
       LOG_TRACE("Number of tuples in table after insert: %lu",
                 target_table->GetTupleCount());
