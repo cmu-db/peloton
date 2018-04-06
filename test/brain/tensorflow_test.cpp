@@ -105,12 +105,14 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
 
   Eigen::VectorXf train_loss_avg = Eigen::VectorXf::Zero(LOG_INTERVAL);
   float prev_train_loss = 10.0;
+  const float VAL_LOSS_THRESH = 0.05;
+  float val_loss = VAL_LOSS_THRESH*2;
   for (int epoch = 1; epoch <= epochs; epoch++) {
     auto train_loss = model.TrainEpoch(train_data);
     int idx = (epoch - 1) % LOG_INTERVAL;
     train_loss_avg(idx) = train_loss;
     if(epoch % LOG_INTERVAL == 0) {
-      UNUSED_ATTRIBUTE auto val_loss = model.ValidateEpoch(test_data, y, y_hat, false);
+      val_loss = model.ValidateEpoch(test_data, y, y_hat, false);
       train_loss = train_loss_avg.mean();
       // Below check is not advisable - one off failure chance
       // EXPECT_LE(val_loss, prev_valid_loss);
@@ -121,7 +123,7 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
       prev_train_loss = train_loss;
     }
   }
-
+  EXPECT_LE(val_loss, VAL_LOSS_THRESH);
 
 }
 

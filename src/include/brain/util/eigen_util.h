@@ -14,14 +14,8 @@
 
 #include <algorithm>
 #include <vector>
-// Impose Row-major to avoid confusion
-#define EIGEN_DEFAULT_TO_ROW_MAJOR
-#include "eigen3/Eigen/Dense"
+#include "internal_types.h"
 
-// TODO(saatvik): Generalize Eigen utilities across all types
-typedef std::vector<std::vector<float>> matrix_t;
-typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    matrix_eig;
 
 
 namespace peloton{

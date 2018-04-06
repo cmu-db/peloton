@@ -23,7 +23,7 @@ BaseTFModel::BaseTFModel(const std::string &graph_path) {
   tf_session_entity_ = std::unique_ptr<TfSessionEntity<float, float>>(
       new TfSessionEntity<float, float>());
   tf_session_entity_->ImportGraph(graph_path);
-  assert(tf_session_entity_->IsStatusOk());
+  PELOTON_ASSERT(tf_session_entity_->IsStatusOk());
 }
 
 /**
@@ -33,7 +33,7 @@ BaseTFModel::BaseTFModel(const std::string &graph_path) {
  */
 void BaseTFModel::TFInit() {
   tf_session_entity_->Eval("init");
-  assert(tf_session_entity_->IsStatusOk());
+  PELOTON_ASSERT(tf_session_entity_->IsStatusOk());
 }
 }
 }

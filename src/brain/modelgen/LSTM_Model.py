@@ -1,3 +1,27 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// LSTM_Model.py
+//
+// Identification: src/brain/modelgen/LSTM_Model.py
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#===----------------------------------------------------------------------===#
+#
+#                         Peloton
+#
+# LSTM_Model.py
+#
+# Identification: src/brain/modelgen/LSTM_Model.py
+#
+# Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+#
+#===----------------------------------------------------------------------===#
+
 import tensorflow as tf
 import functools
 import os
