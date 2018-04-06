@@ -270,8 +270,8 @@ void PelotonServer::ServerLoop() {
   if (settings::SettingsManager::GetBool(settings::SettingId::rpc_enabled)) {
     int rpc_port =
         settings::SettingsManager::GetInt(settings::SettingId::rpc_port);
-    auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(("127.0.0.1:"
-        + std::to_string(rpc_port)).c_str());
+    std::string address = "127.0.0.1:" + std::to_string(rpc_port);
+    auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(address.c_str());
     DedicatedThreadRegistry::GetInstance()
         .RegisterDedicatedThread<PelotonRpcHandlerTask>(this, rpc_task);
   }
