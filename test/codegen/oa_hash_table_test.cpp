@@ -18,7 +18,9 @@
 #include "libcuckoo/cuckoohash_map.hh"
 
 #include "codegen/util/oa_hash_table.h"
+#include "codegen/util/hash_table.h"
 #include "common/timer.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace test {
@@ -47,10 +49,10 @@ class OAHashTableTest : public PelotonTest {
 
   OAHashTableTest() : ht_(sizeof(Key), sizeof(Value)) {}
 
-  static uint32_t Hash(const Key &k) {
+  static uint64_t Hash(const Key &k) {
     static constexpr uint32_t seed = 12345;
-    auto h1 = MurmurHash3_x86_32(&k.k1, sizeof(uint32_t), seed);
-    auto h2 = MurmurHash3_x86_32(&k.k2, sizeof(uint32_t), seed);
+    uint64_t h1 = MurmurHash3_x86_32(&k.k1, sizeof(uint32_t), seed);
+    uint64_t h2 = MurmurHash3_x86_32(&k.k2, sizeof(uint32_t), seed);
     return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
   }
 
@@ -147,6 +149,7 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
   }
 
   double avg_oaht_insert = 0.0, avg_oaht_probe = 0.0;
+  double avg_lazyht_insert = 0.0, avg_lazyht_probe = 0.0;
   double avg_map_insert = 0.0, avg_map_probe = 0.0;
   double avg_cuckoo_insert = 0.0, avg_cuckoo_probe = 0.0;
 
@@ -183,6 +186,42 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
 
       timer.Stop();
       avg_oaht_probe += timer.GetDuration();
+    }
+  }
+
+  // First, bench ours ...
+  {
+    for (uint32_t b = 0; b < num_runs; b++) {
+      ::peloton::type::EphemeralPool pool;
+      codegen::util::HashTable ht(pool, sizeof(Key), sizeof(Value));
+
+      Timer<std::ratio<1, 1000>> timer;
+      timer.Start();
+
+      // Start Insert
+      for (uint32_t i = 0; i < num_keys; i++) {
+        ht.TypedInsertLazy(Hash(keys[i]), keys[i], v);
+      }
+      ht.BuildLazy();
+      // End Insert
+
+      timer.Stop();
+      avg_lazyht_insert += timer.GetDuration();
+
+      timer.Reset();
+      timer.Start();
+
+      // Start Probe
+      std::vector<Key> shuffled = keys;
+      std::random_shuffle(shuffled.begin(), shuffled.end());
+      for (uint32_t i = 0; i < num_keys; i++) {
+        Value probe_val;
+        EXPECT_TRUE(ht.TypedProbe(Hash(shuffled[i]), shuffled[i], probe_val));
+      }
+      // End Probe
+
+      timer.Stop();
+      avg_lazyht_probe += timer.GetDuration();
     }
   }
 
@@ -262,6 +301,9 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
   LOG_INFO("OA_HT insert: %.2lf, probe: %.2lf",
            avg_oaht_insert / (double)num_runs,
            avg_oaht_probe / (double)num_runs);
+  LOG_INFO("Lazy HT insert: %.2lf, probe: %.2lf",
+           avg_lazyht_insert / (double)num_runs,
+           avg_lazyht_probe / (double)num_runs);
   LOG_INFO("std::unordered_map insert: %.2lf, probe: %.2lf",
            avg_map_insert / (double)num_runs, avg_map_probe / (double)num_runs);
   LOG_INFO("Cuckoo insert: %.2lf, probe: %.2lf",
