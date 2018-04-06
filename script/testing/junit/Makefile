@@ -28,9 +28,10 @@ clean:
 test:	$(CLASSES)
 	java -jar lib/junit-platform-console-standalone-1.1.0.jar \
 	  --class-path $(CP) \
-          -c InsertPSTest
-#         -c UpdateTest
-#	  -c InsertPSTest -c InsertTPCCTest
+	  -c InsertTPCCTest \
+	  -c InsertPSTest \
+          -c UpdateTest
+
 
 
 
