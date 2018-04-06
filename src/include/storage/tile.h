@@ -139,6 +139,11 @@ class Tile : public Printable {
     return schema.GetColumn(column_index).GetName();
   }
 
+  inline void ChangeColumnName(const oid_t column_index,
+                               const std::string &name) {
+    schema.ChangeColumnName(column_index, name);
+  }
+
   inline oid_t GetColumnCount() const { return column_count; };
 
   inline TileGroupHeader *GetHeader() const { return tile_group_header; }
