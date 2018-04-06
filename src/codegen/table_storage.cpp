@@ -38,7 +38,7 @@ void TableStorage::StoreValues(CodeGen &codegen, llvm::Value *tuple_ptr,
     auto *ptr = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(),
                                                     tuple_ptr, offset);
     if (sql_type.IsVariableLength()) {
-      PL_ASSERT(value.GetLength() != nullptr);
+      PELOTON_ASSERT(value.GetLength() != nullptr);
       auto val_ptr = codegen->CreateBitCast(ptr, val_type);
       lang::If value_is_null{codegen, value.IsNull(codegen)};
       {

@@ -69,12 +69,12 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
   // Use histogram to estimate selectivity
   std::vector<double> histogram = column_stats->histogram_bounds;
   size_t n = histogram.size();
-  PL_ASSERT(n > 0);
+  PELOTON_ASSERT(n > 0);
   // find correspond bin using binary search
   auto it = std::lower_bound(histogram.begin(), histogram.end(), v);
   double res = (it - histogram.begin()) * 1.0 / n;
-  PL_ASSERT(res >= 0);
-  PL_ASSERT(res <= 1);
+  PELOTON_ASSERT(res >= 0);
+  PELOTON_ASSERT(res <= 1);
   return res;
 }
 
@@ -130,8 +130,8 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
     res = (1 - sum_mvf / (double)numrows) /
           (column_stats->cardinality - most_common_vals.size());
   }
-  PL_ASSERT(res >= 0);
-  PL_ASSERT(res <= 1);
+  PELOTON_ASSERT(res >= 0);
+  PELOTON_ASSERT(res <= 1);
   return res;
 }
 
@@ -157,14 +157,14 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
 
   // Sample on the fly
   auto sampler = table_stats->GetSampler();
-  PL_ASSERT(sampler != nullptr);
+  PELOTON_ASSERT(sampler != nullptr);
   if (sampler->GetSampledTuples().empty()) {
     sampler->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
   }
   auto &sample_tuples = sampler->GetSampledTuples();
   for (size_t i = 0; i < sample_tuples.size(); i++) {
     auto value = sample_tuples[i]->GetValue(column_id);
-    PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
+    PELOTON_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
     executor::ExecutorContext dummy_context(nullptr);
     if (function::StringFunctions::Like(dummy_context, value.GetData(),
                                         value.GetLength(), pattern,

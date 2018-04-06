@@ -31,12 +31,12 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
 
   llvm::Type *runtime_state_type = runtime_state_.FinalizeType(codegen);
   size_t parameter_size = codegen.SizeOf(runtime_state_type);
-  PL_ASSERT((parameter_size % 8 == 0) && "parameter size not multiple of 8");
+  PELOTON_ASSERT((parameter_size % 8 == 0) && "parameter size not multiple of 8");
 
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
   char *param = param_data.get();
-  PL_MEMSET(param, 0, parameter_size);
+  PELOTON_MEMSET(param, 0, parameter_size);
 
   // We use this handy class to avoid complex casting and pointer manipulation
   struct FunctionArguments {
@@ -123,15 +123,15 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
   // Get pointers to the JITed functions
   init_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.init_func);
-  PL_ASSERT(init_func_ != nullptr);
+  PELOTON_ASSERT(init_func_ != nullptr);
 
   plan_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.plan_func);
-  PL_ASSERT(plan_func_ != nullptr);
+  PELOTON_ASSERT(plan_func_ != nullptr);
 
   tear_down_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(
       query_funcs.tear_down_func);
-  PL_ASSERT(tear_down_func_ != nullptr);
+  PELOTON_ASSERT(tear_down_func_ != nullptr);
 
   LOG_TRACE("Query has been setup ...");
 

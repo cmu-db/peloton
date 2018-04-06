@@ -1601,7 +1601,7 @@ PostgresParser::ParamListTransform(List *root) {
 parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
   // selectStmt must exist. It would either select from table or directly select
   // some values
-  PL_ASSERT(root->selectStmt != NULL);
+  PELOTON_ASSERT(root->selectStmt != NULL);
 
   auto select_stmt = reinterpret_cast<SelectStmt *>(root->selectStmt);
 
@@ -1617,7 +1617,7 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     // Directly insert some values
     result = new parser::InsertStatement(InsertType::VALUES);
 
-    PL_ASSERT(select_stmt->valuesLists != NULL);
+    PELOTON_ASSERT(select_stmt->valuesLists != NULL);
     std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
         *insert_values = nullptr;
     try {
@@ -1683,6 +1683,12 @@ parser::SelectStatement *PostgresParser::SelectTransform(SelectStmt *root) {
           "Set operation %d not supported yet...\n", root->op));
   }
 
+  return result;
+}
+
+parser::SQLStatement *PostgresParser::ExplainTransform(ExplainStmt *root) {
+  parser::ExplainStatement *result = new parser::ExplainStatement();
+  result->real_sql_stmt.reset(NodeTransform(root->query));
   return result;
 }
 
@@ -1786,6 +1792,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_VariableSetStmt:
       result = VariableSetTransform((VariableSetStmt*)stmt);
+      break;
+    case T_ExplainStmt:
+      result = ExplainTransform(reinterpret_cast<ExplainStmt *>(stmt));
       break;
     default: {
       throw NotImplementedException(StringUtil::Format(

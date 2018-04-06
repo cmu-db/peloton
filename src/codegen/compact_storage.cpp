@@ -33,7 +33,7 @@ class BitmapWriter {
   }
 
   void SetBit(CodeGen &codegen, uint32_t bit_idx, llvm::Value *bit_val) {
-    PL_ASSERT(bit_val->getType() == codegen.BoolType());
+    PELOTON_ASSERT(bit_val->getType() == codegen.BoolType());
     // Cast to byte, left shift into position
     auto *byte_val = codegen->CreateZExt(bit_val, codegen.ByteType());
     byte_val = codegen->CreateShl(byte_val, bit_idx & 7);
@@ -172,8 +172,8 @@ llvm::Type *CompactStorage::Setup(CodeGen &codegen,
 llvm::Value *CompactStorage::StoreValues(
     CodeGen &codegen, llvm::Value *area_start,
     const std::vector<codegen::Value> &to_store) const {
-  PL_ASSERT(storage_type_ != nullptr);
-  PL_ASSERT(to_store.size() == schema_.size());
+  PELOTON_ASSERT(storage_type_ != nullptr);
+  PELOTON_ASSERT(to_store.size() == schema_.size());
 
   // Decompose the values we're storing into their raw value, length and
   // null-bit components

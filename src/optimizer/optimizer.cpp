@@ -300,14 +300,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   auto required_input_props = gexpr->GetInputProperties(required_props);
-  PL_ASSERT(required_input_props.size() == child_groups.size());
+  PELOTON_ASSERT(required_input_props.size() == child_groups.size());
   // Firstly derive input/output columns
   InputColumnDeriver deriver;
   auto output_input_cols_pair = deriver.DeriveInputColumns(
       gexpr, required_props, required_cols, &metadata_.memo);
   auto &output_cols = output_input_cols_pair.first;
   auto &input_cols = output_input_cols_pair.second;
-  PL_ASSERT(input_cols.size() == required_input_props.size());
+  PELOTON_ASSERT(input_cols.size() == required_input_props.size());
 
   // Derive chidren plans first because they are useful in the derivation of
   // root plan. Also keep propagate expression to column offset mapping
@@ -316,13 +316,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
     for (unsigned offset = 0; offset < input_cols[i].size(); ++offset) {
-      PL_ASSERT(input_cols[i][offset] != nullptr);
+      PELOTON_ASSERT(input_cols[i][offset] != nullptr);
       child_expr_map[input_cols[i][offset]] = offset;
     }
     auto child_plan =
         ChooseBestPlan(child_groups[i], required_input_props[i], input_cols[i]);
     children_expr_map.push_back(move(child_expr_map));
-    PL_ASSERT(child_plan != nullptr);
+    PELOTON_ASSERT(child_plan != nullptr);
     children_plans.push_back(move(child_plan));
   }
 

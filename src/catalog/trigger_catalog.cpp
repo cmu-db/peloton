@@ -145,7 +145,7 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
     LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
   } else {
     LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
     }

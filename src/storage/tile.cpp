@@ -48,7 +48,7 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
       column_header(NULL),
       column_header_size(INVALID_OID),
       tile_group_header(tile_header) {
-  PL_ASSERT(tuple_count > 0);
+  PELOTON_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
 
@@ -58,10 +58,10 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   // storage_manager.Allocate(backend_type, tile_size));
 
   data = new char[tile_size];
-  PL_ASSERT(data != NULL);
+  PELOTON_ASSERT(data != NULL);
 
   // zero out the data
-  PL_MEMSET(data, 0, tile_size);
+  PELOTON_MEMSET(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
   // if (schema.IsInlined() == false) {
@@ -97,13 +97,13 @@ Tile::~Tile() {
  * NOTE : No checks, must be at valid slot.
  */
 void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
-  PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
+  PELOTON_ASSERT(tuple_offset < GetAllocatedTupleCount());
 
   // Find slot location
   char *location = tuple_offset * tuple_length + data;
 
   // Copy over the tuple data into the tuple slot in the tile
-  PL_MEMCPY(location, tuple->tuple_data_, tuple_length);
+  PELOTON_MEMCPY(location, tuple->tuple_data_, tuple_length);
 }
 
 /**
@@ -111,8 +111,8 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
  */
 // column id is a 0-based column number
 type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
-  PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
-  PL_ASSERT(column_id < schema.GetColumnCount());
+  PELOTON_ASSERT(tuple_offset < GetAllocatedTupleCount());
+  PELOTON_ASSERT(column_id < schema.GetColumnCount());
 
   const type::TypeId column_type = schema.GetType(column_id);
 
@@ -132,8 +132,8 @@ type::Value Tile::GetValueFast(const oid_t tuple_offset,
                                const size_t column_offset,
                                const type::TypeId column_type,
                                const bool is_inlined) {
-  PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
-  PL_ASSERT(column_offset < schema.GetLength());
+  PELOTON_ASSERT(tuple_offset < GetAllocatedTupleCount());
+  PELOTON_ASSERT(column_offset < schema.GetLength());
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
@@ -147,8 +147,8 @@ type::Value Tile::GetValueFast(const oid_t tuple_offset,
 // column id is a 0-based column number
 void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
                     const oid_t column_id) {
-  PL_ASSERT(tuple_offset < num_tuple_slots);
-  PL_ASSERT(column_id < schema.GetColumnCount());
+  PELOTON_ASSERT(tuple_offset < num_tuple_slots);
+  PELOTON_ASSERT(column_id < schema.GetColumnCount());
 
   char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + schema.GetOffset(column_id);
@@ -156,7 +156,7 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
   // size_t column_length = schema.GetAppropriateLength(column_id);
 
   // const bool is_in_bytes = false;
-  PL_ASSERT(pool != nullptr);
+  PELOTON_ASSERT(pool != nullptr);
   // Cast the value if the type is different from column type
   const type::TypeId col_type = schema.GetType(column_id);
   if (value.GetTypeId() == col_type) {
@@ -175,14 +175,14 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
 void Tile::SetValueFast(const type::Value &value, const oid_t tuple_offset,
                         const size_t column_offset, const bool is_inlined,
                         UNUSED_ATTRIBUTE const size_t column_length) {
-  PL_ASSERT(tuple_offset < num_tuple_slots);
-  PL_ASSERT(column_offset < schema.GetLength());
+  PELOTON_ASSERT(tuple_offset < num_tuple_slots);
+  PELOTON_ASSERT(column_offset < schema.GetLength());
 
   char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + column_offset;
 
   // const bool is_in_bytes = false;
-  PL_ASSERT(pool != nullptr);
+  PELOTON_ASSERT(pool != nullptr);
   value.SerializeTo(field_location, is_inlined, pool);
 }
 
@@ -197,7 +197,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       backend_type, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       new_header, *schema, tile_group, allocated_tuple_count);
 
-  PL_MEMCPY(static_cast<void *>(new_tile->data), static_cast<void *>(data),
+  PELOTON_MEMCPY(static_cast<void *>(new_tile->data), static_cast<void *>(data),
             tile_size);
 
   // Do a deep copy if some column is uninlined, so that
@@ -286,11 +286,11 @@ bool Tile::SerializeTo(SerializeOutput &output, oid_t num_tuples) {
 
   tuple.SetNull();
 
-  PL_ASSERT(written_count == num_tuples);
+  PELOTON_ASSERT(written_count == num_tuples);
 
   // Length prefix is non-inclusive
   int32_t sz = static_cast<int32_t>(output.Position() - pos - sizeof(int32_t));
-  PL_ASSERT(sz > 0);
+  PELOTON_ASSERT(sz > 0);
   output.WriteIntAt(pos, sz);
 
   return true;
@@ -301,12 +301,12 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Use the cache if possible
   if (column_header != NULL) {
-    PL_ASSERT(column_header_size != INVALID_OID);
+    PELOTON_ASSERT(column_header_size != INVALID_OID);
     output.WriteBytes(column_header, column_header_size);
     return true;
   }
 
-  PL_ASSERT(column_header_size == INVALID_OID);
+  PELOTON_ASSERT(column_header_size == INVALID_OID);
 
   // Skip header position
   start = output.Position();
@@ -333,7 +333,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
     // Column names can't be null, so length must be >= 0
     int32_t length = static_cast<int32_t>(name.size());
-    PL_ASSERT(length >= 0);
+    PELOTON_ASSERT(length >= 0);
 
     // this is standard string serialization for voltdb
     output.WriteInt(length);
@@ -350,7 +350,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Cache the column header
   column_header = new char[column_header_size];
-  PL_MEMCPY(column_header, static_cast<const char *>(output.Data()) + start,
+  PELOTON_MEMCPY(column_header, static_cast<const char *>(output.Data()) + start,
             column_header_size);
 
   return true;
@@ -362,7 +362,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
   std::size_t pos = output.Position();
   output.WriteInt(-1);
 
-  PL_ASSERT(!tuples[0].IsNull());
+  PELOTON_ASSERT(!tuples[0].IsNull());
 
   // Serialize the header
   if (!SerializeHeaderTo(output)) return false;
@@ -405,7 +405,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input,
   input.ReadByte();
 
   oid_t column_count = input.ReadShort();
-  PL_ASSERT(column_count > 0);
+  PELOTON_ASSERT(column_count > 0);
 
   // Store the following information so that we can provide them to the user on
   // failure
@@ -452,10 +452,10 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input,
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
                                               type::AbstractPool *pool) {
   oid_t tuple_count = input.ReadInt();
-  PL_ASSERT(tuple_count > 0);
+  PELOTON_ASSERT(tuple_count > 0);
 
   // First, check if we have required space
-  PL_ASSERT(tuple_count <= num_tuple_slots);
+  PELOTON_ASSERT(tuple_count <= num_tuple_slots);
   storage::Tuple *temp_tuple = new storage::Tuple(&schema, true);
 
   for (oid_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {

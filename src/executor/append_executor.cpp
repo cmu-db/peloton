@@ -31,8 +31,8 @@ AppendExecutor::AppendExecutor(const planner::AbstractPlan *node,
  */
 bool AppendExecutor::DInit() {
   // should have >= 2 children, otherwise pointless.
-  PL_ASSERT(children_.size() >= 2);
-  PL_ASSERT(cur_child_id_ == 0);
+  PELOTON_ASSERT(children_.size() >= 2);
+  PELOTON_ASSERT(cur_child_id_ == 0);
 
   return true;
 }

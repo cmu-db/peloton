@@ -62,6 +62,7 @@ class NotifiableTask {
    */
   inline int Id() const { return task_id_; }
 
+
   /**
    * @brief Register an event with the event base associated with this
    * notifiable task.
@@ -145,7 +146,7 @@ class NotifiableTask {
   //  void UpdateEvent(struct event *event, int fd, short flags,
   //                   event_callback_fn callback, void *arg,
   //                   const struct timeval *timeout = nullptr) {
-  //    PL_ASSERT(!(events_.find(event) == events_.end()));
+  //    PELOTON_ASSERT(!(events_.find(event) == events_.end()));
   //    EventUtil::EventDel(event);
   //    EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
   //    EventUtil::EventAdd(event, timeout);

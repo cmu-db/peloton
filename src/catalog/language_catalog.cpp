@@ -82,11 +82,11 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
   }
 
@@ -102,11 +102,11 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
   }
 

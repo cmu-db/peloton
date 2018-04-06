@@ -43,17 +43,17 @@ namespace logging {
 
   // This function is called only by the corresponding logger.
   void LogBufferPool::PutBuffer(std::unique_ptr<LogBuffer> buf) {
-    PL_ASSERT(buf.get() != nullptr);
-    PL_ASSERT(buf->GetThreadId() == thread_id_);
+    PELOTON_ASSERT(buf.get() != nullptr);
+    PELOTON_ASSERT(buf->GetThreadId() == thread_id_);
 
     size_t tail_idx = tail_ % buffer_queue_size_;
     
     // The buffer pool must not be full
-    PL_ASSERT(tail_idx != head_ % buffer_queue_size_);
+    PELOTON_ASSERT(tail_idx != head_ % buffer_queue_size_);
     // The tail pos must be null
-    PL_ASSERT(local_buffer_queue_[tail_idx].get() == nullptr);
+    PELOTON_ASSERT(local_buffer_queue_[tail_idx].get() == nullptr);
     // The returned buffer must be empty
-    PL_ASSERT(buf->Empty() == true);
+    PELOTON_ASSERT(buf->Empty() == true);
     local_buffer_queue_[tail_idx].reset(buf.release());
     
     tail_.fetch_add(1, std::memory_order_relaxed);

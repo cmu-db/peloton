@@ -76,6 +76,10 @@ class Exception : public std::runtime_error {
                          "\nMessage :: " + message;
   }
 
+  std::string GetMessage() {
+    return exception_message_;
+  }
+
   std::string ExceptionTypeToString(ExceptionType type) {
     switch (type) {
       case ExceptionType::INVALID:

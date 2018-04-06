@@ -49,9 +49,22 @@ class UpdateExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+  inline bool IsInStatementWriteSet(ItemPointer &location) {
+    return (statement_write_set_.find(location) != statement_write_set_.end());
+  }
+
  private:
   storage::DataTable *target_table_ = nullptr;
   const planner::ProjectInfo *project_info_ = nullptr;
+
+  // Write set for tracking newly created tuples inserted by the same statement
+  // This statement-level write set is essential for avoiding the Halloween Problem,
+  // which refers to the phenomenon that an update operation causes a change to
+  // a tuple, potentially allowing this tuple to be visited more than once during
+  // the same operation.
+  // By maintaining the statement-level write set, an update operation will check 
+  // whether the to-be-updated tuple is created by the same operation.
+  WriteSet statement_write_set_;
 };
 
 }  // namespace executor
