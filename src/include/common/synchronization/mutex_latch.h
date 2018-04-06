@@ -32,30 +32,30 @@ class DirtyMutexLatch {
  public:
   DirtyMutexLatch() {
     UNUSED_ATTRIBUTE int status = pthread_mutex_init(&mutex_, NULL);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   ~DirtyMutexLatch() {
     UNUSED_ATTRIBUTE int status = pthread_mutex_destroy(&mutex_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   void Lock() {
     UNUSED_ATTRIBUTE int status = pthread_mutex_lock(&mutex_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   // Returns true if the lock is acquired.
   bool TryLock() {
     UNUSED_ATTRIBUTE int status = pthread_mutex_trylock(&mutex_);
     if (status == 0) return true;
-    PL_ASSERT(status == EBUSY);
+    PELOTON_ASSERT(status == EBUSY);
     return false;
   }
 
   void UnLock() {
     UNUSED_ATTRIBUTE int status = pthread_mutex_unlock(&mutex_);
-    PL_ASSERT(status == 0);
+    PELOTON_ASSERT(status == 0);
   }
 
   pthread_mutex_t *RawDirtyMutexLatch() { return &mutex_; }

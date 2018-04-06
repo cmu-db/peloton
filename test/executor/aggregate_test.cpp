@@ -126,16 +126,16 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   type::Value val = (result_tile->GetValue(0, 2));
   CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(5, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(51)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(5, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(52)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 TEST_F(AggregateTests, SortedSumGroupByTest) {
@@ -227,16 +227,16 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   type::Value val = (result_tile->GetValue(0, 0));
   CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(1, 0));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(1, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(355)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
@@ -333,16 +333,16 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   type::Value val = (result_tile->GetValue(0, 0));
   CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(42)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(1, 0));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 TEST_F(AggregateTests, MinMaxTest) {
@@ -454,16 +454,16 @@ TEST_F(AggregateTests, MinMaxTest) {
   type::Value val = (result_tile->GetValue(0, 0));
   CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(91)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(92)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 TEST_F(AggregateTests, HashDistinctTest) {
@@ -741,15 +741,15 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
   CmpBool cmp1 =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE || cmp1 == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue || cmp1 == CmpBool::CmpTrue);
 
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(5)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 TEST_F(AggregateTests, PlainSumCountDistinctTest) {
@@ -854,13 +854,13 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   type::Value val = (result_tile->GetValue(0, 0));
   CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(50)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp == CmpBool::TRUE);
+  EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 }
 
 }  // namespace test

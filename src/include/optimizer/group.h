@@ -73,9 +73,18 @@ class Group {
 
   std::shared_ptr<ColumnStats> GetStats(std::string column_name);
 
-  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats);  
+  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats);
 
-  bool HasColumnStats(std::string column_name);  
+  bool HasColumnStats(std::string column_name);
+
+  /*
+   * HasExpressions - Determines whether or not a lowest cost expression exists
+   * for this group
+   *
+   * properties: the property set used to search the lowest cost expressions
+   * return: true if an expression is found, false otherwise
+   */
+  bool HasExpressions(const std::shared_ptr<PropertySet> &properties) const;
 
   void SetNumRows(size_t num_rows) { num_rows_ = num_rows; }
 
@@ -86,16 +95,16 @@ class Group {
   // This is called in rewrite phase to erase the only logical expression in the
   // group
   inline void EraseLogicalExpression() {
-    PL_ASSERT(logical_expressions_.size() == 1);
-    PL_ASSERT(physical_expressions_.size() == 0);
+    PELOTON_ASSERT(logical_expressions_.size() == 1);
+    PELOTON_ASSERT(physical_expressions_.size() == 0);
     logical_expressions_.clear();
   }
 
   // This should only be called in rewrite phase to retrieve the only logical
   // expr in the group
   inline GroupExpression *GetLogicalExpression() {
-    PL_ASSERT(logical_expressions_.size() == 1);
-    PL_ASSERT(physical_expressions_.size() == 0);
+    PELOTON_ASSERT(logical_expressions_.size() == 1);
+    PELOTON_ASSERT(physical_expressions_.size() == 0);
     return logical_expressions_[0].get();
   }
 

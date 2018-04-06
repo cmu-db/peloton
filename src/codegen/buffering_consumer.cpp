@@ -94,7 +94,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     // Derive the column's final value
     Value val = row.DeriveValue(codegen, output_ais_[i]);
 
-    PL_ASSERT(output_ais_[i]->type == val.GetType());
+    PELOTON_ASSERT(output_ais_[i]->type == val.GetType());
     const auto &sql_type = val.GetType().GetSqlType();
 
     // Check if it's NULL

@@ -43,7 +43,7 @@ class MaskedTuple : public AbstractTuple {
   }
 
   inline void SetMask(const std::vector<oid_t> &mask) {
-    // PL_ASSERT(mask_ == nullptr);
+    // PELOTON_ASSERT(mask_ == nullptr);
     mask_ = mask;
   }
 

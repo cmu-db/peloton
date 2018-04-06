@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// rule_test.cpp
+// optimizer_rule_test.cpp
 //
-// Identification: test/optimizer/rule_test.cpp
+// Identification: test/optimizer/optimizer_rule_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -87,12 +87,12 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   auto right_get = std::make_shared<OperatorExpression>(
       LogicalGet::make(2, {}, nullptr, "test3"));
 
-  auto left_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(left_get), false);
-  auto middle_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(middle_get), false);
-  auto right_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(right_get), false);
+  auto left_get_group = optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(left_get), false);
+  auto middle_get_group = optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(middle_get), false);
+  auto right_get_group = optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(right_get), false);
 
   auto left_leaf = std::make_shared<OperatorExpression>(
       LeafOperator::make(left_get_group->GetGroupID()));
@@ -115,8 +115,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
       LogicalInnerJoin::make(child_join_predicates));
   child_join->PushChild(left_leaf);
   child_join->PushChild(middle_leaf);
-  optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(child_join), true);
+  optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(child_join), true);
 
   // Make Parent join
   std::vector<AnnotatedExpression> parent_join_predicates;
@@ -129,10 +129,10 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   parent_join->PushChild(child_join);
   parent_join->PushChild(right_leaf);
 
-  optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(parent_join), true);
+  optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(parent_join), true);
   OptimizeContext *root_context =
-      new OptimizeContext(&(optimizer.metadata_), nullptr);
+      new OptimizeContext(&(optimizer.GetMetadata()), nullptr);
 
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
@@ -162,6 +162,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(2, parent_join_op->join_predicates.size());
   EXPECT_EQ(0, child_join_op->join_predicates.size());
+  delete root_context;
 }
 
 TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
@@ -173,7 +174,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
 
   // Setup Memo
   Optimizer optimizer;
-  auto &memo = optimizer.metadata_.memo;
+  auto &memo = optimizer.GetMetadata().memo;
 
   auto left_get = std::make_shared<OperatorExpression>(
       LogicalGet::make(0, {}, nullptr, "test1"));
@@ -184,11 +185,11 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
 
   // Create Groups for Get Operators
   auto left_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(left_get), false);
+      optimizer.GetMetadata().MakeGroupExpression(left_get), false);
   auto middle_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(middle_get), false);
+      optimizer.GetMetadata().MakeGroupExpression(middle_get), false);
   auto right_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(right_get), false);
+      optimizer.GetMetadata().MakeGroupExpression(right_get), false);
 
   auto left_leaf = std::make_shared<OperatorExpression>(
       LeafOperator::make(left_get_group->GetGroupID()));
@@ -202,8 +203,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   child_join->PushChild(left_leaf);
   child_join->PushChild(middle_leaf);
-  optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(child_join), true);
+  optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(child_join), true);
 
   // Make Parent join
   std::vector<AnnotatedExpression> parent_join_predicates;
@@ -223,10 +224,10 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   parent_join->PushChild(child_join);
   parent_join->PushChild(right_leaf);
 
-  optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(parent_join), true);
+  optimizer.GetMetadata().memo.InsertExpression(
+      optimizer.GetMetadata().MakeGroupExpression(parent_join), true);
   OptimizeContext *root_context =
-      new OptimizeContext(&(optimizer.metadata_), nullptr);
+      new OptimizeContext(&(optimizer.GetMetadata()), nullptr);
 
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
@@ -256,6 +257,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(1, parent_join_op->join_predicates.size());
   EXPECT_EQ(1, child_join_op->join_predicates.size());
+  delete root_context;
 }
 
 }  // namespace test

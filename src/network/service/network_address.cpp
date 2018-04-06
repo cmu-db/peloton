@@ -150,7 +150,7 @@ void NetworkAddress::FillAddr(struct sockaddr_in *addr) const {
   addr->sin_family = AF_INET;
   addr->sin_port = port_;
   addr->sin_addr.s_addr = ip_address_;
-  PL_MEMSET(addr->sin_zero, 0, sizeof(addr->sin_zero));
+  PELOTON_MEMSET(addr->sin_zero, 0, sizeof(addr->sin_zero));
 }
 
 sockaddr_in NetworkAddress::Sockaddr() const {
@@ -162,7 +162,7 @@ sockaddr_in NetworkAddress::Sockaddr() const {
 uint16_t NetworkAddress::GetPort() const { return ntohs(port_); }
 
 void NetworkAddress::SetPort(uint16_t port) {
-  PL_ASSERT(port != 0);
+  PELOTON_ASSERT(port != 0);
   port_ = htons(port);
 }
 
