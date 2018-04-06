@@ -34,7 +34,7 @@ public:
 
 private:
   LogBuffer *disk_buffer_;
-  std::deque<std::pair<CallbackFunction, void *>> callbacks_;
+  std::deque<LoggerCallback> callbacks_;
 };
 }
 }

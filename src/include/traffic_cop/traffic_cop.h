@@ -98,9 +98,11 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  ResultType CommitQueryHelper();
+  ResultType CommitQueryHelper(std::function<void(ResultType)> callback = nullptr);
 
-  void ExecuteStatementPlanGetResult();
+  ResultType AbortQueryHelper(std::function<void(ResultType)> callback = nullptr);
+
+  ResultType ExecuteStatementPlanGetResult();
 
   ResultType ExecuteStatementGetResult();
 
@@ -189,7 +191,7 @@ class TrafficCop {
 
   ResultType BeginQueryHelper(size_t thread_id);
 
-  ResultType AbortQueryHelper();
+
 
   // Get all data tables from a TableRef.
   // For multi-way join

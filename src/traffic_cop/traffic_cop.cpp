@@ -93,7 +93,7 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-ResultType TrafficCop::CommitQueryHelper() {
+ResultType TrafficCop::CommitQueryHelper(std::function<void(ResultType)> task_callback) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -104,16 +104,17 @@ ResultType TrafficCop::CommitQueryHelper() {
   // If this exception is caused by a query in a transaction,
   // I will block following queries in that transaction until 'COMMIT' or
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
+
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn);
+    return txn_manager.CommitTransaction(txn, task_callback);
   } else {
     // otherwise, rollback
-    return txn_manager.AbortTransaction(txn);
+    return txn_manager.AbortTransaction(txn, task_callback);
   }
 }
 
-ResultType TrafficCop::AbortQueryHelper() {
+ResultType TrafficCop::AbortQueryHelper(std::function<void(ResultType)> task_callback) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -122,8 +123,7 @@ ResultType TrafficCop::AbortQueryHelper() {
   if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto result = txn_manager.AbortTransaction(txn);
-    return result;
+    return txn_manager.AbortTransaction(txn, task_callback);
   } else {
     delete curr_state.first;
     // otherwise, the txn has already been aborted
@@ -189,9 +189,11 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     result = std::move(values);
 
     // COMMIT single statement transaction
-    this->ExecuteStatementPlanGetResult();
+    ResultType result = this->ExecuteStatementPlanGetResult();
 
-    task_callback_(task_callback_arg_);
+    if(result != ResultType::QUEUING) {
+      task_callback_(task_callback_arg_);
+    }
   };
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
@@ -207,19 +209,28 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   return p_status_;
 }
 
-void TrafficCop::ExecuteStatementPlanGetResult() {
-  if (p_status_.m_result == ResultType::FAILURE) return;
+ResultType TrafficCop::ExecuteStatementPlanGetResult() {
 
-  if(tcop_txn_state_.empty()) return;
+
+  if (p_status_.m_result == ResultType::FAILURE) return ResultType::FAILURE;
+
+  if(tcop_txn_state_.empty()) return ResultType::NOOP;
 
   auto txn_result = GetCurrentTxnState().first->GetResult();
+
   if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
     LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
               single_statement_txn_, ResultTypeToString(txn_result).c_str());
+
+    auto on_complete = [this](ResultType result) {
+        this->p_status_.m_result = result;
+        this->task_callback_(this->task_callback_arg_);
+    };
+
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement
-        p_status_.m_result = CommitQueryHelper();
+        return CommitQueryHelper(on_complete);
         break;
 
       case ResultType::FAILURE:
@@ -228,13 +239,15 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
         LOG_TRACE("Abort Transaction");
         if (single_statement_txn_) {
           LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status_.m_result = AbortQueryHelper();
+          return AbortQueryHelper(on_complete);
         } else {
           tcop_txn_state_.top().second = ResultType::ABORTED;
           p_status_.m_result = ResultType::ABORTED;
+          return ResultType::ABORTED;
         }
     }
   }
+  return ResultType::SUCCESS;
 }
 
 /*
@@ -572,6 +585,8 @@ ResultType TrafficCop::ExecuteStatement(
             static_cast<int>(statement->GetQueryType()));
 
   try {
+
+
     switch (statement->GetQueryType()) {
       case QueryType::QUERY_BEGIN: {
         return BeginQueryHelper(thread_id);
@@ -580,20 +595,37 @@ ResultType TrafficCop::ExecuteStatement(
         this->is_queuing_ = true;
         auto &pool = threadpool::MonoQueuePool::GetInstance();
 
-        pool.SubmitTask([this] {
-            this->CommitQueryHelper();
-            task_callback_(task_callback_arg_);
+        auto on_commit = [this](ResultType result UNUSED_ATTRIBUTE) {
+            this->task_callback_(this->task_callback_arg_);
+        };
+
+        pool.SubmitTask([this, on_commit] {
+            ResultType result = this->CommitQueryHelper(on_commit);
+
+            if(result!=ResultType::QUEUING)
+              task_callback_(task_callback_arg_);
         });
 
         return ResultType::QUEUING;
       }
+
       case QueryType::QUERY_ROLLBACK: {
+
         this->is_queuing_ = true;
         auto &pool = threadpool::MonoQueuePool::GetInstance();
 
-        pool.SubmitTask([this] {
-            this->AbortQueryHelper();
-            task_callback_(task_callback_arg_);
+        auto on_abort = [this](ResultType result UNUSED_ATTRIBUTE) {
+            this->task_callback_(this->task_callback_arg_);
+        };
+
+
+        pool.SubmitTask([this, on_abort] {
+            ResultType result = this->AbortQueryHelper(on_abort);
+
+            if(result!=ResultType::QUEUING) {
+              task_callback_(task_callback_arg_);
+            }
+
         });
 
         return ResultType::QUEUING;

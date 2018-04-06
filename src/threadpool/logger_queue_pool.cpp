@@ -27,12 +27,11 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
 
       logger.PerformCompaction(log_buffer);
 
-      if(logger.IsFlushNeeded(logger_queue->IsEmpty())){
+      if(logger.IsFlushNeeded(!logger_queue->IsEmpty())){
         logger.FlushToDisk();
       }
 
       // TODO(gandeevan): free log buffers
-
       pause_time = kMinPauseTime;
     }
   }

@@ -7,8 +7,7 @@
 namespace peloton{
 namespace logging{
 
-
-typedef void (*CallbackFunction)(void *); // function pointer type
+using LoggerCallback = std::function<void()>;
 
 class LogBuffer{
 
@@ -16,8 +15,7 @@ public:
 
   LogBuffer(size_t threshold)
           : log_buffer_threshold_(threshold),
-            task_callback_(nullptr),
-            task_callback_arg_(nullptr) {}
+            on_flush_(nullptr) {}
 
   ~LogBuffer() {}
 
@@ -31,23 +29,21 @@ public:
 
   inline bool HasThresholdExceeded() { return log_buffer_.Size() >= log_buffer_threshold_; }
   inline size_t GetThreshold() { return log_buffer_threshold_; }
-  inline CallbackFunction GetCallback() { return task_callback_; }
-  inline void* GetCallbackArgs() { return task_callback_arg_; }
 
-  void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
-    task_callback_ = task_callback;
-    task_callback_arg_ = task_callback_arg;
+
+  inline void SetLoggerCallback(const LoggerCallback &on_flush) {
+    on_flush_ = std::move(on_flush);
+  }
+
+  inline LoggerCallback &GetLoggerCallback() {
+    return on_flush_;
   }
 
 private:
   CopySerializeOutput log_buffer_;
   size_t log_buffer_threshold_;
-
   // The current callback to be invoked after logging completes.
-  void (*task_callback_)(void *);
-  void *task_callback_arg_;
-
-
+  LoggerCallback on_flush_;
 };
 
 }

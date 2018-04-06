@@ -96,7 +96,6 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
-
   }
 }
 

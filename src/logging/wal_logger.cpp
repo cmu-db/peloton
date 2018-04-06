@@ -48,12 +48,11 @@ void WalLogger::FlushToDisk(){
 
   /* send out the callbacks */
   while(!callbacks_.empty()){
-    auto callback_pair = callbacks_.front();
-    CallbackFunction callback_func = callback_pair.first;
-    void *callback_args = callback_pair.second;
-
-    callback_func(callback_args);
+    auto callback = callbacks_.front();
+    callbacks_.pop_front();
+    callback();
   }
+
 }
 
 
@@ -66,11 +65,10 @@ void WalLogger::PerformCompaction(LogBuffer *log_buffer){
           .WriteBytes(log_buffer->GetData(),
                       log_buffer->GetSize());
 
-  CallbackFunction callback = log_buffer->GetCallback();
-  void *callback_args = log_buffer->GetCallbackArgs();
+  auto callback = log_buffer->GetLoggerCallback();
 
   if(nullptr != callback){
-    callbacks_.emplace_back(callback, callback_args);
+    callbacks_.push_back(std::move(callback));
   }
 
 

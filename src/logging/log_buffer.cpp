@@ -99,7 +99,14 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
       break;
     }
+
+    case LogRecordType::TRANSACTION_COMMIT:
+    case LogRecordType::TRANSACTION_ABORT: {
+      break;
+    }
+
     default: {
+      PL_ASSERT(false);
     }
   }
 

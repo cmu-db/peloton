@@ -108,9 +108,11 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &location);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn);
+  virtual ResultType CommitTransaction(TransactionContext *const current_txn,
+                                       std::function<void(ResultType)> task_callback = nullptr);
 
-  virtual ResultType AbortTransaction(TransactionContext *const current_txn);
+  virtual ResultType AbortTransaction(TransactionContext *const current_txn,
+                                      std::function<void(ResultType)> task_callback = nullptr);
 
 
 private:

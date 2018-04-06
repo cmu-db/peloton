@@ -147,9 +147,16 @@ class TransactionManager {
 
   void EndTransaction(TransactionContext *current_txn);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn) = 0;
 
-  virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
+  virtual ResultType CommitTransaction(
+            TransactionContext *const current_txn,
+            std::function<void(ResultType)> task_callback = nullptr) = 0;
+
+
+  virtual ResultType AbortTransaction(
+          TransactionContext *const current_txn,
+          std::function<void(ResultType)> task_callback = nullptr) = 0;
+
 
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a

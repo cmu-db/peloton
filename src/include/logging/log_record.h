@@ -28,9 +28,10 @@ namespace logging {
 class LogRecord {
   friend class LogRecordFactory;
 private:
-  LogRecord(LogRecordType log_type, const ItemPointer &pos, 
+  LogRecord(LogRecordType log_type, const ItemPointer &old_pos, const ItemPointer &pos,
             const eid_t epoch_id, const txn_id_t txn_id, const cid_t commit_id)
-    : log_record_type_(log_type), 
+    : log_record_type_(log_type),
+      old_tuple_pos_(old_pos),
       tuple_pos_(pos), 
       eid_(epoch_id),
       txn_id_(txn_id),
@@ -79,9 +80,9 @@ public:
 private:
   LogRecordType log_record_type_;
 
-  ItemPointer tuple_pos_;
-
   ItemPointer old_tuple_pos_;
+
+  ItemPointer tuple_pos_;
 
   eid_t eid_;
 
@@ -104,17 +105,30 @@ public:
                                      const ItemPointer &pos, eid_t current_eid,
                                      txn_id_t txn_id, cid_t current_cid) {
     PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
-              log_type == LogRecordType::TUPLE_DELETE ||
-              log_type == LogRecordType::TUPLE_UPDATE ||
-              log_type == LogRecordType::TRANSACTION_COMMIT);
-    return LogRecord(log_type, pos, current_eid, txn_id, current_cid);
+              log_type == LogRecordType::TUPLE_DELETE);
+
+    return LogRecord(log_type, INVALID_ITEMPOINTER, pos, current_eid, txn_id, current_cid);
   }
-//  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &pos) {
-//    PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
-//              log_type == LogRecordType::TUPLE_DELETE ||
-//              log_type == LogRecordType::TUPLE_UPDATE);
-//    return LogRecord(log_type, pos, INVALID_EID, INVALID_CID);
-//  }
+
+  static LogRecord CreateTupleRecord(const LogRecordType log_type, eid_t current_eid,
+                                     txn_id_t txn_id, cid_t current_cid)  {
+
+    PL_ASSERT(log_type == LogRecordType::TRANSACTION_COMMIT ||
+              log_type == LogRecordType::TRANSACTION_ABORT);
+
+    return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_ITEMPOINTER,
+                     current_eid, txn_id, current_cid);
+  }
+
+  static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &old_pos,
+                                     const ItemPointer &pos, eid_t current_eid,
+                                     txn_id_t txn_id, cid_t current_cid) {
+
+    PL_ASSERT(log_type == LogRecordType::TUPLE_UPDATE);
+
+    return LogRecord(log_type, old_pos, pos, current_eid, txn_id, current_cid);
+  }
+
 //
 //  static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
 //    PL_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN ||
