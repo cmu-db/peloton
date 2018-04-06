@@ -10,19 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "planner/plan_util.h"
 #include <set>
 #include <string>
-
 #include "catalog/catalog_cache.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
+#include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "optimizer/abstract_optimizer.h"
+#include "optimizer/optimizer.h"
 #include "parser/delete_statement.h"
 #include "parser/insert_statement.h"
 #include "parser/sql_statement.h"
 #include "parser/update_statement.h"
-#include "planner/plan_util.h"
 #include "util/set_util.h"
 
 namespace peloton {
@@ -98,23 +101,21 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
 
 const std::set<oid_t> PlanUtil::GetAffectedColumns(
     catalog::CatalogCache &catalog_cache,
-    const parser::SQLStatement &sql_stmt) {
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
+    const std::string &db_name) {
   std::set<oid_t> column_oids;
-  std::string db_name, table_name;
-  switch (sql_stmt.GetType()) {
-    // For INSERT, DELETE, all indexes are affected
+  std::string table_name;
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  switch (sql_stmt->GetType()) {
+    // For INSERT, DELETE, all columns are affected
     case StatementType::INSERT: {
-      auto &insert_stmt =
-          static_cast<const parser::InsertStatement &>(sql_stmt);
-      db_name = insert_stmt.GetDatabaseName();
+      auto &insert_stmt = static_cast<parser::InsertStatement &>(*sql_stmt);
       table_name = insert_stmt.GetTableName();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
       if (table_name.empty() || db_name.empty()) {
-        auto &delete_stmt =
-            static_cast<const parser::DeleteStatement &>(sql_stmt);
-        db_name = delete_stmt.GetDatabaseName();
+        auto &delete_stmt = static_cast<parser::DeleteStatement &>(*sql_stmt);
         table_name = delete_stmt.GetTableName();
       }
       auto column_map = catalog_cache.GetDatabaseObject(db_name)
@@ -125,9 +126,7 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
       }
     } break;
     case StatementType::UPDATE: {
-      auto &update_stmt =
-          static_cast<const parser::UpdateStatement &>(sql_stmt);
-      db_name = update_stmt.table->GetDatabaseName();
+      auto &update_stmt = static_cast<parser::UpdateStatement &>(*sql_stmt);
       table_name = update_stmt.table->GetTableName();
       auto db_object = catalog_cache.GetDatabaseObject(db_name);
       auto table_object = db_object->GetTableObject(table_name);
@@ -141,10 +140,26 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
         column_oids.insert(col_object->GetColumnId());
       }
     } break;
-    case StatementType::SELECT:
-      break;
+    case StatementType::SELECT: {
+      std::unique_ptr<optimizer::AbstractOptimizer> optimizer =
+          std::unique_ptr<optimizer::AbstractOptimizer>(
+              new optimizer::Optimizer());
+
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      auto txn = txn_manager.BeginTransaction();
+
+      try {
+        auto plan = optimizer->BuildPelotonPlanTree(std::move(sql_stmt_list),
+                                                    db_name, txn);
+        LOG_DEBUG("%s", plan->GetInfo().c_str());
+      } catch (Exception &e) {
+        LOG_TRACE("Exception: %s", e.what());
+      }
+
+      // TODO: should handle transaction commit?
+    } break;
     default:
-      LOG_TRACE("Does not support finding affected indexes for query type: %d",
+      LOG_TRACE("Does not support finding affected columns for query type: %d",
                 static_cast<int>(sql_stmt.GetType()));
   }
   return (column_oids);

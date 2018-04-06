@@ -66,12 +66,14 @@ class PlanUtil {
   /**
   * @brief Get the columns affected by a given query
   * @param CatalogCache
-  * @param SQLStatement
+  * @param SQLStatementList
+  * @param DBName
   * @return set of affected column ids
   */
   static const std::set<oid_t> GetAffectedColumns(
       catalog::CatalogCache &catalog_cache,
-      const parser::SQLStatement &sql_stmt);
+      std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
+      const std::string &db_name);
 
  private:
   ///

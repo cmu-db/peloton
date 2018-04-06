@@ -214,16 +214,13 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   // Till now, we have a table : id, first_name, last_name
   auto table_object = db_object->GetTableObject("test_table");
 
-  // An update query affecting both indexes
+  // An update query affecting both columns
   std::string query_string = "UPDATE test_table SET id = 0, first_name = '';";
   std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  auto sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
-      TEST_DB_COLUMNS);
-  std::set<oid_t> affected_cols =
-      planner::PlanUtil::GetAffectedColumns(txn->catalog_cache, *sql_stmt);
+  std::set<oid_t> affected_cols = planner::PlanUtil::GetAffectedColumns(
+      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   // id and first_name are affected
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
@@ -234,11 +231,8 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "UPDATE test_table SET first_name = '';";
   stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
-      TEST_DB_COLUMNS);
-  affected_cols =
-      planner::PlanUtil::GetAffectedColumns(txn->catalog_cache, *sql_stmt);
+  affected_cols = planner::PlanUtil::GetAffectedColumns(
+      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   // only first_name is affected
   EXPECT_EQ(1, static_cast<int>(affected_cols.size()));
@@ -249,11 +243,8 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "DELETE FROM test_table;";
   stmt.reset(new Statement("DELETE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::DeleteStatement *>(sql_stmt)->TryBindDatabaseName(
-      TEST_DB_COLUMNS);
-  affected_cols =
-      planner::PlanUtil::GetAffectedColumns(txn->catalog_cache, *sql_stmt);
+  affected_cols = planner::PlanUtil::GetAffectedColumns(
+      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
@@ -264,27 +255,22 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "INSERT INTO test_table VALUES (1, 'pel', 'ton');";
   stmt.reset(new Statement("INSERT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::InsertStatement *>(sql_stmt)->TryBindDatabaseName(
-      TEST_DB_COLUMNS);
-  affected_cols =
-      planner::PlanUtil::GetAffectedColumns(txn->catalog_cache, *sql_stmt);
+  affected_cols = planner::PlanUtil::GetAffectedColumns(
+      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
-  // all indexes are affected
+  // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
   expected_oids = std::set<oid_t>({id_col_oid, fname_col_oid, lname_col_oid});
   EXPECT_EQ(expected_oids, affected_cols);
 
-  //  // ========= SELECT statement check ==
-  //  query_string = "SELECT * FROM test_table;";
-  //  stmt.reset(new Statement("SELECT", query_string));
-  //  sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  //  sql_stmt = sql_stmt_list->GetStatement(0);
-  //  affected_indexes =
-  //      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
-  //
-  //  // no indexes are affected
-  //  EXPECT_EQ(0, static_cast<int>(affected_indexes.size()));
+  // ========= SELECT statement check ==
+  query_string = "SELECT * FROM test_table;";
+  stmt.reset(new Statement("SELECT", query_string));
+  sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  affected_cols = planner::PlanUtil::GetAffectedColumns(
+      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+
+  EXPECT_EQ(0, static_cast<int>(affected_cols.size()));
   txn_manager.CommitTransaction(txn);
 }
 
