@@ -41,11 +41,8 @@ public:
     database_name = DEFAULT_DB_NAME;
   }
 
-  WhatIfIndexTests(std::string database_name) {
-    this->database_name = database_name;
-  }
-
-  void CreateDefaultDB() {
+  // Create a new database
+  void CreateDatabase() {
     // Create a new database.
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -53,13 +50,13 @@ public:
     txn_manager.CommitTransaction(txn);
   }
 
+  // Create a new table with schema (a INT, b INT, c INT).
   void CreateTable(std::string table_name) {
-    // Create a new table.
-    std::ostringstream oss;
-    oss << "CREATE TABLE " << table_name << "(a INT, b INT, c INT);";
-    TestingSQLUtil::ExecuteSQLQuery(oss.str());
+    std::string create_str = "CREATE TABLE " + table_name + "(a INT, b INT, c INT);";
+    TestingSQLUtil::ExecuteSQLQuery(create_str);
   }
 
+  // Inserts a given number of tuples with increasing values into the table.
   void InsertIntoTable(std::string table_name, int no_of_tuples) {
     // Insert tuples into table
     for (int i=0; i<no_of_tuples; i++) {
@@ -70,7 +67,8 @@ public:
     }
   }
 
-  void AnalyzeStats() {
+  // Generates table stats to perform what-if index queries.
+  void GenerateTableStats() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     StatsStorage *stats_storage = StatsStorage::GetInstance();
@@ -79,7 +77,9 @@ public:
     txn_manager.CommitTransaction(txn);
   }
 
-  std::shared_ptr<IndexCatalogObject> CreateHypotheticalIndex(
+  // Create a what-if single column index on a column at the given
+  // offset of the table.
+  std::shared_ptr<IndexCatalogObject> CreateHypotheticalSingleIndex(
     std::string table_name, oid_t col_offset) {
 
     // We need transaction to get table object.
@@ -95,7 +95,7 @@ public:
 
     // Find the column oid.
     for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
-      LOG_INFO("Table id: %d, Column id: %d, Offset: %d, Name: %s", it->second->GetTableOid(),
+      LOG_DEBUG("Table id: %d, Column id: %d, Offset: %d, Name: %s", it->second->GetTableOid(),
                it->second->GetColumnId(), it->second->GetColumnOffset(),
                it->second->GetColumnName().c_str());
       if (it->second->GetColumnId() == col_offset) {
@@ -121,11 +121,15 @@ public:
 
 TEST_F(WhatIfIndexTests, BasicTest) {
 
-  std::string table_name = "dummy_table";
-  CreateDefaultDB();
+  std::string table_name = "dummy_table_whatif";
+
+  CreateDatabase();
+
   CreateTable(table_name);
+
   InsertIntoTable(table_name, 1000);
-  AnalyzeStats();
+
+  GenerateTableStats();
 
   // Form the query.
   std::ostringstream query_str_oss;
@@ -144,14 +148,14 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
-  index_objs.push_back(CreateHypotheticalIndex(table_name, 1));
+  index_objs.push_back(CreateHypotheticalSingleIndex(table_name, 1));
 
   result = wif.GetCostAndPlanTree(stmt_list, index_objs, DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
   LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
-  index_objs.push_back(CreateHypotheticalIndex(table_name, 2));
+  index_objs.push_back(CreateHypotheticalSingleIndex(table_name, 2));
 
   result = wif.GetCostAndPlanTree(stmt_list, index_objs, DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;

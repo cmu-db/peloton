@@ -103,7 +103,7 @@ namespace brain {
       for (auto index: index_set) {
         if (index->GetTableOid() == table_object->GetTableOid()) {
           table_object->InsertIndexObject(index);
-          LOG_INFO("Created a new hypothetical index %d on table: %d",
+          LOG_DEBUG("Created a new hypothetical index %d on table: %d",
                    index->GetIndexOid(),
                    index->GetTableOid());
         }
