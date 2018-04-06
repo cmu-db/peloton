@@ -45,7 +45,7 @@ namespace brain {
   public:
     WhatIfIndex();
     std::unique_ptr<optimizer::OptimizerContextInfo>
-      GetCostAndPlanTree(std::unique_ptr<parser::SQLStatementList> parse_tree_list,
+      GetCostAndPlanTree(std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
                             std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
                             std::string database_name);
 

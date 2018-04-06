@@ -37,14 +37,12 @@ namespace brain {
   // @indexes: set of indexes (can be real/hypothetical)
   // Real indexes are the indexes which are already present.
   std::unique_ptr<optimizer::OptimizerContextInfo>
-    WhatIfIndex::GetCostAndPlanTree(std::unique_ptr<parser::SQLStatementList> parse_tree_list,
+    WhatIfIndex::GetCostAndPlanTree(std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
                                     std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &index_set,
                                     std::string database_name) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-
-    LOG_DEBUG("Total SQL statements here: %ld", parse_tree_list->GetStatements().size());
 
     auto parsed_statement = parse_tree_list->GetStatements().at(0).get();
 
@@ -82,7 +80,7 @@ namespace brain {
         // Select can operate on more than 1 table.
         // TODO: Do for all the reference types.
         if (sql_statement.select_stmt->from_table->type == TableReferenceType::NAME) {
-          LOG_INFO("Table name is %s", sql_statement.select_stmt->from_table.get()->GetTableName().c_str());
+          LOG_DEBUG("Table name is %s", sql_statement.select_stmt->from_table.get()->GetTableName().c_str());
           table_names.push_back(sql_statement.select_stmt->from_table.get()->GetTableName());
         }
         break;
@@ -91,7 +89,7 @@ namespace brain {
         PL_ASSERT(false);
     }
 
-    LOG_INFO("Tables referenced count: %ld", table_names.size());
+    LOG_DEBUG("Tables referenced count: %ld", table_names.size());
 
     // Load the indexes into the cache for each table so that the optimizer uses
     // the indexes that we provide.

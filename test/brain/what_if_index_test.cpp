@@ -15,6 +15,9 @@
 #include "brain/what_if_index.h"
 #include "sql/testing_sql_util.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "optimizer/stats/stats_storage.h"
+#include "optimizer/stats/column_stats.h"
+#include "optimizer/stats/table_stats.h"
 
 namespace peloton {
 
@@ -22,6 +25,8 @@ using namespace brain;
 using namespace catalog;
 
 namespace test {
+
+using namespace optimizer;
 
 //===--------------------------------------------------------------------===//
 // WhatIfIndex Tests
@@ -63,6 +68,15 @@ public:
           << i + 1 << "," << i + 2 << ");";
       TestingSQLUtil::ExecuteSQLQuery(oss.str());
     }
+  }
+
+  void AnalyzeStats() {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    StatsStorage *stats_storage = StatsStorage::GetInstance();
+    ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
+    assert(result == ResultType::SUCCESS);
+    txn_manager.CommitTransaction(txn);
   }
 
   std::shared_ptr<IndexCatalogObject> CreateHypotheticalIndex(
@@ -111,26 +125,40 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   CreateDefaultDB();
   CreateTable(table_name);
   InsertIntoTable(table_name, 1000);
-
-  // Create hypothetical index objects.
-  std::vector<std::shared_ptr<IndexCatalogObject>> index_objs;
-  index_objs.push_back(CreateHypotheticalIndex(table_name, 1));
-  //index_objs.push_back(CreateHypotheticalIndex(table_name, 2));
+  AnalyzeStats();
 
   // Form the query.
   std::ostringstream query_str_oss;
   query_str_oss << "SELECT a from " << table_name << " WHERE " <<
                 "b < 33 AND c < 100 ORDER BY a;";
 
+  std::vector<std::shared_ptr<IndexCatalogObject>> index_objs;
+
   std::unique_ptr<parser::SQLStatementList> stmt_list(
     parser::PostgresParser::ParseSQLString(query_str_oss.str()));
 
-  // Get the optimized plan tree.
-  WhatIfIndex *wif = new WhatIfIndex();
-  auto result = wif->GetCostAndPlanTree(std::move(stmt_list),
-                                        index_objs, DEFAULT_DB_NAME);
-  delete wif;
-  LOG_INFO("Cost is %lf", result->cost);
+  // 1. Get the optimized plan tree without the indexes (sequential scan)
+  WhatIfIndex wif;
+  auto result = wif.GetCostAndPlanTree(stmt_list, index_objs, DEFAULT_DB_NAME);
+  auto cost_without_index = result->cost;
+  LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
+
+  // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
+  index_objs.push_back(CreateHypotheticalIndex(table_name, 1));
+
+  result = wif.GetCostAndPlanTree(stmt_list, index_objs, DEFAULT_DB_NAME);
+  auto cost_with_index_1 = result->cost;
+  LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
+
+  // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
+  index_objs.push_back(CreateHypotheticalIndex(table_name, 2));
+
+  result = wif.GetCostAndPlanTree(stmt_list, index_objs, DEFAULT_DB_NAME);
+  auto cost_with_index_2 = result->cost;
+  LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
+
+  EXPECT_LT(cost_with_index_1, cost_without_index);
+  EXPECT_LT(cost_with_index_2, cost_without_index);
 }
 
 } // namespace test
