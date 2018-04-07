@@ -21,6 +21,12 @@
 
 #include "settings/settings_manager.h"
 
+#if __APPLE__
+extern "C"{
+#include <sys/cdefs.h>
+};
+#endif
+
 namespace peloton {
 namespace network {
 
@@ -559,16 +565,15 @@ Transition ConnectionHandle::CloseSocket() {
 
   int close_ret = -1;
 #if __APPLE__
-  extern int close$NOCANCEL(int);
   close_ret = close$NOCANCEL(sock_fd_);
 #else
   close_ret = close(sock_fd_);
 #endif
 
   if (close_ret != 0) {
-    std::vector<char> error_message(100, '\0');
-    strerror_r(errno, error_message.data(), error_message.size() - 1);
-    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, error_message.data());
+    std::vector<char> buffer(100, '\0');
+    auto error_message = strerror_r(errno, buffer.data(), buffer.size() - 1);
+    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, error_message);
   }
 
   return Transition::NONE;
