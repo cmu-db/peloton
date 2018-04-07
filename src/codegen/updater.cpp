@@ -138,6 +138,8 @@ void Updater::Update() {
   // Either update in-place
   if (is_owner_ == true) {
     txn_manager.PerformUpdate(txn, old_location_);
+    // we do not need to add any item pointer to statement-level write set
+    // here, because we do not generate any new version
     executor_context_->num_processed++;
     return;
   }
