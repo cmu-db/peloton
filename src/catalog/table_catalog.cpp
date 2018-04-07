@@ -518,6 +518,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
       GetResultWithSeqScan(column_ids, predicate, txn);
   LOG_DEBUG("Result size: %lu", result_tuples.size());
   if (result_tuples.size() == 1) {
+    LOG_DEBUG("Result: %s", result_tuples[0].GetInfo().c_str());
     auto table_object =
             std::make_shared<TableCatalogObject>(result_tuples[0], txn);
 
