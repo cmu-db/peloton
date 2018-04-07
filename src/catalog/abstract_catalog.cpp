@@ -219,20 +219,19 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // Sequential scan
 
-  auto seq_scan_plan = std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
-          catalog_table_, predicate, column_offsets));
+  planner::SeqScanPlan seq_scan_plan{catalog_table_, predicate, column_offsets};
   planner::BindingContext scan_context;
-  seq_scan_plan->PerformBinding(scan_context);
+  seq_scan_plan.PerformBinding(scan_context);
 
   codegen::BufferingConsumer buffer{column_offsets, scan_context};
 //  bool cached;
-
+  codegen::QueryParameters parameters(seq_scan_plan, {});
   std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn, codegen::QueryParameters(*seq_scan_plan, {})));
+      new executor::ExecutorContext(txn, std::move(parameters)));
 
   // compile
   codegen::Query *query = nullptr;
-  auto compiled_query = codegen::QueryCompiler().Compile(*seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
+  auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, parameters.GetQueryParametersMap(), buffer);
   query = compiled_query.get();
 
   // Execute the query in a synchronize fashion
