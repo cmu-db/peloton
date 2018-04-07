@@ -24,6 +24,7 @@
 #if __APPLE__
 extern "C"{
 #include <sys/cdefs.h>
+int close$NOCANCEL(int);
 };
 #endif
 
@@ -565,15 +566,17 @@ Transition ConnectionHandle::CloseSocket() {
 
   int close_ret = -1;
 #if __APPLE__
-  close_ret = close$NOCANCEL(sock_fd_);
+  close_ret = ::close$NOCANCEL(sock_fd_);
 #else
   close_ret = close(sock_fd_);
 #endif
 
   if (close_ret != 0) {
     std::vector<char> buffer(100, '\0');
-    auto error_message = strerror_r(errno, buffer.data(), buffer.size() - 1);
-    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, error_message);
+    //Don't use return value. strerror_r returns int on Mac. It returns char* on linux.
+    //Since buffer is filled with NULL first, it's safe to use buffer directly
+    (void)strerror_r(errno, buffer.data(), buffer.size() - 1);
+    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, buffer.data());
   }
 
   return Transition::NONE;
