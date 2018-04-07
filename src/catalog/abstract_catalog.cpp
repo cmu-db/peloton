@@ -219,13 +219,14 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // Sequential scan
 
-    auto plan_ptr = std::shared_ptr<planner::AbstractPlan>(
-        new planner::SeqScanPlan(catalog_table_, predicate, column_offsets));
+  std::shared_ptr<planner::SeqScanPlan> plan_ptr{new planner::SeqScanPlan{
+      catalog_table_, predicate, column_offsets}};
   planner::BindingContext scan_context;
-    plan_ptr->PerformBinding(scan_context);
+  plan_ptr->PerformBinding(scan_context);
 
   codegen::BufferingConsumer buffer{column_offsets, scan_context};
 //  bool cached;
+
   codegen::QueryParameters parameters(*plan_ptr, {});
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, std::move(parameters)));
