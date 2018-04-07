@@ -511,24 +511,23 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
         ExpressionType::CONJUNCTION_AND, table_name_equality_expr, db_oid_equality_expr);
 
 
-  predicate->GetInfo();
-      LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
-//   change this to seq plan
+  LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
+  //   change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
   const std::vector<codegen::WrappedTuple> &result_tuples =
       GetResultWithSeqScan(column_ids, predicate, txn);
-
+  LOG_DEBUG("Result size: %lu", result_tuples.size());
   if (result_tuples.size() == 1) {
     auto table_object =
             std::make_shared<TableCatalogObject>(result_tuples[0], txn);
 
     // insert into cache
-//    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-//            table_object->GetDatabaseOid(), txn);
-//    PL_ASSERT(database_object);
-//    bool success = database_object->InsertTableObject(table_object);
-//    PL_ASSERT(success == true);
-//    (void) success;
+    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+            table_object->GetDatabaseOid(), txn);
+    PL_ASSERT(database_object);
+    bool success = database_object->InsertTableObject(table_object);
+    PL_ASSERT(success == true);
+    (void) success;
 
     return table_object;
   }

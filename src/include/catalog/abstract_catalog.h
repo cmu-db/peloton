@@ -80,6 +80,7 @@ class AbstractCatalog {
                 const std::string &index_name,
                 IndexConstraintType index_constraint);
 
+
   //===--------------------------------------------------------------------===//
   // Members
   //===--------------------------------------------------------------------===//

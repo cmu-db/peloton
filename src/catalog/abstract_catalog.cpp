@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/abstract_catalog.h"
 #include "executor/plan_executor.h"
 #include "codegen/buffering_consumer.h"
 #include "common/internal_types.h"
-#include "catalog/abstract_catalog.h"
-
 #include "common/statement.h"
 
 #include "catalog/catalog.h"
@@ -219,8 +218,6 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Sequential scan
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
 
   auto seq_scan_plan = std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
           catalog_table_, predicate, column_offsets));
@@ -235,8 +232,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // compile
   codegen::Query *query = nullptr;
-  codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(*seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
+  auto compiled_query = codegen::QueryCompiler().Compile(*seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
   query = compiled_query.get();
 
   // Execute the query in a synchronize fashion
