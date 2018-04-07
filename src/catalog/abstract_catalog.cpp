@@ -229,10 +229,16 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, std::move(parameters)));
 
+  auto plan_ptr = std::shared_ptr<planner::AbstractPlan>(&seq_scan_plan);
+
   // compile
-  codegen::Query *query = nullptr;
-  auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
-  query = compiled_query.get();
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
+  if (query == nullptr) {
+    auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
+    query = compiled_query.get();
+    codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
+    //query = codegen::QueryCache::Instance().Find(plan_ptr);
+  }
 
   // Execute the query in a synchronize fashion
   // peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);

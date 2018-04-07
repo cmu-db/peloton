@@ -16,6 +16,7 @@
 
 #include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
+#include "codegen/query_cache.h"
 
 namespace peloton {
 
