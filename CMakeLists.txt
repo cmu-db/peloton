@@ -79,7 +79,6 @@ if(UNIX OR APPLE)
     endif()
 # ---[ close$NOCANCEL for Mac OS
     if(APPLE)
-        add_definitions(-D__DARWIN_NON_CANCELABLE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-dollar-in-identifier-extension")
     endif()
 endif()
