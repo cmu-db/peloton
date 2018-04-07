@@ -65,7 +65,7 @@ class TransactionLevelGCManager : public GCManager {
 
     reclaim_maps_.clear();
     reclaim_maps_.resize(gc_thread_count_);
-    recycle_queue_map_.clear();
+//    recycle_queue_map_.clear();
 
     is_running_ = false;
   }
@@ -109,21 +109,54 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual void RegisterTable(const oid_t &table_id) override {
     // Insert a new entry for the table
-    if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
-      std::shared_ptr<LockFreeQueue<ItemPointer>> recycle_queue(
-          new LockFreeQueue<ItemPointer>(MAX_QUEUE_LENGTH));
-      recycle_queue_map_[table_id] = recycle_queue;
+
+    if (recycle_queues_.Contains(table_id)) {
+      return;
     }
+
+    auto table_recycle_queues = std::make_shared<peloton::CuckooMap<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>>(128);
+
+    recycle_queues_.Insert(table_id, table_recycle_queues);
   }
 
   virtual void DeregisterTable(const oid_t &table_id) override {
-    // Remove dropped tables
-    if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
-      recycle_queue_map_.erase(table_id);
+    recycle_queues_.Erase(table_id);
+  }
+
+  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
+      peloton::LockFreeQueue<ItemPointer>>>> GetTableRecycleQueues(const oid_t &table_id) const {
+    std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
+        peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
+    if (recycle_queues_.Find(table_id, table_recycle_queues)) {
+      return table_recycle_queues;
+    } else {
+      return nullptr;
     }
   }
 
-  virtual size_t GetTableCount() override { return recycle_queue_map_.size(); }
+  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> GetTileGroupRecycleQueue(std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
+      peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues, const oid_t &tile_group_id) const {
+    std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
+    if (table_recycle_queues->Find(tile_group_id, recycle_queue)) {
+      return recycle_queue;
+    } else {
+      return nullptr;
+    }
+  }
+
+  virtual void RegisterTileGroup(const oid_t &table_id, const oid_t &tile_group_id) override {
+    auto table_recycle_queues = GetTableRecycleQueues(table_id);
+    auto recycle_queue = std::make_shared<LockFreeQueue<ItemPointer>>(1000);
+    //TODO: read tile group size from settings
+    table_recycle_queues->Insert(tile_group_id, recycle_queue);
+  }
+
+  virtual void DeregisterTileGroup(const oid_t &table_id, const oid_t &tile_group_id) override {
+    auto table_recycle_queues = GetTableRecycleQueues(table_id);
+    table_recycle_queues->Erase(tile_group_id);
+  }
+
+  virtual size_t GetTableCount() override { return recycle_queues_.GetSize(); }
 
   int Unlink(const int &thread_id, const eid_t &expired_eid);
 
@@ -182,10 +215,11 @@ class TransactionLevelGCManager : public GCManager {
       reclaim_maps_;
 
   // queues for to-be-reused tuples.
-  // # recycle_queue_maps == # tables
-  std::unordered_map<oid_t,
-                     std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>
-      recycle_queue_map_;
+  // outer map == # tables
+  // inner maps == # TileGroups in table
+  peloton::CuckooMap<oid_t, std::shared_ptr<
+      peloton::CuckooMap<oid_t, std::shared_ptr<
+          peloton::LockFreeQueue<ItemPointer>>>>> recycle_queues_{128};
 };
 }
 }  // namespace peloton

@@ -73,6 +73,10 @@ class GCManager {
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
+  virtual void RegisterTileGroup(const oid_t &table_id UNUSED_ATTRIBUTE, const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
+
+  virtual void DeregisterTileGroup(const oid_t &table_id UNUSED_ATTRIBUTE, const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
+
   virtual size_t GetTableCount() { return 0; }
 
   virtual void RecycleTransaction(
