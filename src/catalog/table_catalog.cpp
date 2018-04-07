@@ -556,19 +556,40 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_DATABASE_OID;  // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  //oid_t index_offset = IndexId::SKEY_DATABASE_OID;  // Index of database_oid
+  //std::vector<type::Value> values;
+  //values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+    expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+        type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
+    expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+        type::ValueFactory::GetIntegerValue(database_oid).Copy());
+    expression::AbstractExpression *db_oid_equality_expr =
+        expression::ExpressionUtil::ComparisonFactory(
+            ExpressionType::COMPARE_EQUAL, db_oid_expr,
+            db_oid_const_expr);
 
-  for (auto &tile : (*result_tiles)) {
+  //auto result_tiles =
+  //    GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  expression::AbstractExpression *predicate = db_oid_equality_expr;
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithSeqScan(column_ids, predicate, txn);
+
+  /*for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto table_object =
           std::make_shared<TableCatalogObject>(tile.get(), txn, tuple_id);
       database_object->InsertTableObject(table_object);
     }
+  }*/
+
+  for (auto tuple : result_tuples) {
+
+    auto table_object =
+        std::make_shared<TableCatalogObject>(tuple, txn);
+    database_object->InsertTableObject(table_object);
+
   }
 
   database_object->SetValidTableObjects(true);

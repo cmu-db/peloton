@@ -240,7 +240,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
     compiled_query = codegen::QueryCompiler().Compile(
         *plan_ptr, executor_context->GetParams().GetQueryParametersMap(), buffer);
     query = compiled_query.get();
-     codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
+    codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
     //query = codegen::QueryCache::Instance().Find(plan_ptr);
   }
   query->Execute(std::move(executor_context), buffer, [](executor::ExecutionResult result){return result;});
