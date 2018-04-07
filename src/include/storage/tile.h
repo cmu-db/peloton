@@ -246,13 +246,15 @@ class Tile : public Printable {
   // is dictionary encoded
   bool is_dict_encoded;
 
-  std::vector<std::string> element_array;
+  std::vector<type::Value> element_array;
 
-  std::map<std::string, uint8_t> dict;
+  std::map<type::Value, uint8_t, type::Value::equal_to> dict;
 
   std::set<oid_t> dict_encoded_columns;
 
   std::vector<size_t> encoded_column_offsets;
+
+  size_t dict_encoded_tile_size;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
