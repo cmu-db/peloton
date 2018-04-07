@@ -573,10 +573,15 @@ Transition ConnectionHandle::CloseSocket() {
 
   if (close_ret != 0) {
     std::vector<char> buffer(100, '\0');
-    //Don't use return value. strerror_r returns int on Mac. It returns char* on linux.
-    //Since buffer is filled with NULL first, it's safe to use buffer directly
+    int saved_errno = errno;
+    char* error_message = nullptr;
+#if __APPLE__
     (void)strerror_r(errno, buffer.data(), buffer.size() - 1);
-    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, buffer.data());
+    error_message = buffer.data();
+#else
+    error_message = strerror_r(saved_errno, buffer.data(), buffer.size() - 1);
+#endif;
+    LOG_DEBUG("Close failed on connection %d, errno %d [%s]", sock_fd_, saved_errno, error_message);
   }
 
   return Transition::NONE;
