@@ -217,17 +217,17 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
 void TransactionLevelGCManager::AddToRecycleMap(
     concurrency::TransactionContext* txn_ctx) {
   for (auto &entry : *(txn_ctx->GetGCSetPtr().get())) {
+    oid_t tile_group_id = entry.first;
     auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(entry.first);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
 
     // During the resetting, a table may be deconstructed because of the DROP
     // TABLE request
     if (tile_group == nullptr) {
       delete txn_ctx;
-      return;
+      return; // TODO: Is this wrong? Transaction could span multiple tables
+      // continue instead of returning?
     }
-
-    PELOTON_ASSERT(tile_group != nullptr);
 
     storage::DataTable *table =
         dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
@@ -241,63 +241,75 @@ void TransactionLevelGCManager::AddToRecycleMap(
     for (auto &element : entry.second) {
       // as this transaction has been committed, we should reclaim older
       // versions.
-      ItemPointer location(entry.first, element.first);
+      ItemPointer location(tile_group_id, element.first);
 
       // If the tuple being reset no longer exists, just skip it
       if (ResetTuple(location) == false) {
         continue;
       }
+
+      auto table_recycle_queues = GetTableRecycleQueues(table_id);
+
       // if immutable is false and the entry for table_id exists.
-      if ((!immutable) &&
-          recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
-        recycle_queue_map_[table_id]->Enqueue(location);
+      if ((!immutable) && table_recycle_queues != nullptr) {
+        auto recycle_queue = GetTileGroupRecycleQueue(table_recycle_queues, tile_group_id);
+        recycle_queue->Enqueue(location);
       }
     }
   }
 
-  auto storage_manager = storage::StorageManager::GetInstance();
-  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
-    oid_t database_oid = std::get<0>(entry);
-    oid_t table_oid = std::get<1>(entry);
-    oid_t index_oid = std::get<2>(entry);
-    PELOTON_ASSERT(database_oid != INVALID_OID);
-    auto database = storage_manager->GetDatabaseWithOid(database_oid);
-    PELOTON_ASSERT(database != nullptr);
-    if (table_oid == INVALID_OID) {
-      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-      continue;
-    }
-    auto table = database->GetTableWithOid(table_oid);
-    PELOTON_ASSERT(table != nullptr);
-    if (index_oid == INVALID_OID) {
-      database->DropTableWithOid(table_oid);
-      LOG_DEBUG("GCing table %u", table_oid);
-      continue;
-    }
-    auto index = table->GetIndexWithOid(index_oid);
-    PELOTON_ASSERT(index != nullptr);
-    table->DropIndexWithOid(index_oid);
-  }
+  // TODO: confirm this is unused
+//  auto storage_manager = storage::StorageManager::GetInstance();
+//  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
+//    oid_t database_oid = std::get<0>(entry);
+//    oid_t table_oid = std::get<1>(entry);
+//    oid_t index_oid = std::get<2>(entry);
+//    PELOTON_ASSERT(database_oid != INVALID_OID);
+//    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+//    PELOTON_ASSERT(database != nullptr);
+//    if (table_oid == INVALID_OID) {
+//      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+//      continue;
+//    }
+//    auto table = database->GetTableWithOid(table_oid);
+//    PELOTON_ASSERT(table != nullptr);
+//    if (index_oid == INVALID_OID) {
+//      database->DropTableWithOid(table_oid);
+//      LOG_DEBUG("GCing table %u", table_oid);
+//      continue;
+//    }
+//    auto index = table->GetIndexWithOid(index_oid);
+//    PELOTON_ASSERT(index != nullptr);
+//    table->DropIndexWithOid(index_oid);
+//  }
 
+  // TODO: should this be a shared pointer instead?
   delete txn_ctx;
 }
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
-  // for catalog tables, we directly return invalid item pointer.
-  if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+
+  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
+      peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
+
+  if (!recycle_queues_.Find(table_id, table_recycle_queues)) {
     return INVALID_ITEMPOINTER;
   }
-  ItemPointer location;
-  PELOTON_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
-  auto recycle_queue = recycle_queue_map_[table_id];
 
-  if (recycle_queue->Dequeue(location) == true) {
-    LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
-              location.offset, table_id);
-    return location;
+  ItemPointer location;
+
+  auto locked_recycle_queues = table_recycle_queues->GetIterator();
+
+  for (auto recycle_queue = locked_recycle_queues.begin(); recycle_queue != locked_recycle_queues.end(); recycle_queue++) {
+    if (recycle_queue->second->Dequeue(location) == true) {
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
+                location.offset, table_id);
+      return location;
+    }
   }
+
   return INVALID_ITEMPOINTER;
 }
 

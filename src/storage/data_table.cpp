@@ -921,6 +921,9 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.RegisterTileGroup(GetOid(), tile_group_id);
+
   COMPILER_MEMORY_FENCE;
 
   active_tile_groups_[active_tile_group_id] = tile_group;
@@ -963,6 +966,9 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RegisterTileGroup(GetOid(), tile_group_id);
+
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.
     COMPILER_MEMORY_FENCE;
@@ -985,6 +991,9 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
   // add tile group in catalog
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.RegisterTileGroup(GetOid(), tile_group_id);
 
   // we must guarantee that the compiler always add tile group before adding
   // tile_group_count_.
