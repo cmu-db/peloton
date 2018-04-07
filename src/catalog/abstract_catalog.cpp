@@ -219,22 +219,24 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // Sequential scan
 
-  planner::SeqScanPlan seq_scan_plan{catalog_table_, predicate, column_offsets};
+    auto plan_ptr = std::shared_ptr<planner::AbstractPlan>(
+        new planner::SeqScanPlan(catalog_table_, predicate, column_offsets));
   planner::BindingContext scan_context;
-  seq_scan_plan.PerformBinding(scan_context);
+    plan_ptr->PerformBinding(scan_context);
 
   codegen::BufferingConsumer buffer{column_offsets, scan_context};
 //  bool cached;
-  codegen::QueryParameters parameters(seq_scan_plan, {});
+  codegen::QueryParameters parameters(*plan_ptr, {});
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, std::move(parameters)));
 
-  auto plan_ptr = std::shared_ptr<planner::AbstractPlan>(&seq_scan_plan);
+
 
   // compile
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
   if (query == nullptr) {
-    auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
+    auto compiled_query = codegen::QueryCompiler().Compile(
+        *plan_ptr, executor_context->GetParams().GetQueryParametersMap(), buffer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
     //query = codegen::QueryCache::Instance().Find(plan_ptr);
