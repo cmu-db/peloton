@@ -640,6 +640,18 @@ std::string DropTypeToString(DropType type);
 DropType StringToDropType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const DropType &type);
 
+//===--------------------------------------------------------------------===//
+// Alter Types
+//===--------------------------------------------------------------------===//
+
+enum class AlterType {
+  INVALID = INVALID_TYPE_ID,  // invalid alter type
+  RENAME = 1,                 // rename table, column, database...
+};
+std::string AlterTypeToString(AlterType type);
+AlterType StringToAlterType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const AlterType &type);
+
 template <class E>
 class EnumHash {
  public:

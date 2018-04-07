@@ -38,3 +38,4 @@
 #include "executor/projection_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
+#include "executor/alter_executor.h"
