@@ -221,6 +221,8 @@ class TileGroup : public Printable {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
+
+  bool enable_dic_encoding;
 };
 
 }  // namespace storage

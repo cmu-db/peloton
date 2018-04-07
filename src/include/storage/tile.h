@@ -13,6 +13,10 @@
 #pragma once
 
 #include <mutex>
+#include <vector>
+#include <map>
+#include <string>
+#include <set>
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
@@ -177,6 +181,15 @@ class Tile : public Printable {
   // Sync the contents
   void Sync();
 
+  //===--------------------------------------------------------------------===//
+  // Dictionary Encoding
+  //===--------------------------------------------------------------------===//
+
+	inline bool GetDictEncoded() const { return is_dict_encoded; }
+
+	// only encode varchar, assume this tail is full
+	void DictEncode();
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -228,6 +241,15 @@ class Tile : public Printable {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
+
+  // is dictionary encoded
+  bool is_dict_encoded;
+
+  std::vector<std::string> element_array;
+
+  std::map<std::string, uint8_t> dict;
+
+  std::set<oid_t> dict_encoded_columns;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
