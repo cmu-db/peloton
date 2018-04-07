@@ -122,6 +122,7 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   const bool is_inlined = schema.IsInlined(column_id);
   // add condition to handle encoded data
 	if (is_dict_encoded && dict_encoded_columns.count(column_id) > 0) {
+    field_location = tuple_location + encoded_column_offsets[column_id];
 		auto idx_val = type::Value::DeserializeFrom(field_location, column_type, is_inlined);
 		uint8_t idx = idx_val.GetData()[0];
 		auto true_str = element_array[idx].c_str();
@@ -146,7 +147,16 @@ type::Value Tile::GetValueFast(const oid_t tuple_offset,
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
-  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+  // return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+  if (is_dict_encoded && dict_encoded_columns.count(column_id) > 0) {
+    field_location = tuple_location + encoded_column_offsets[column_id];
+		auto idx_val = type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+		uint8_t idx = idx_val.GetData()[0];
+		auto true_str = element_array[idx].c_str();
+		return type::Value::DeserializeFrom(true_str, column_type, is_inlined);
+	} else {
+		return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+	}
 }
 
 /**
@@ -155,6 +165,10 @@ type::Value Tile::GetValueFast(const oid_t tuple_offset,
 // column id is a 0-based column number
 void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
                     const oid_t column_id) {
+  if (is_dict_encoded) {
+    LOG_INFO("dictionary encoded tile do not support set value");
+    PELOTON_ASSERT(false);
+  }
   PELOTON_ASSERT(tuple_offset < num_tuple_slots);
   PELOTON_ASSERT(column_id < schema.GetColumnCount());
 
@@ -183,6 +197,10 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
 void Tile::SetValueFast(const type::Value &value, const oid_t tuple_offset,
                         const size_t column_offset, const bool is_inlined,
                         UNUSED_ATTRIBUTE const size_t column_length) {
+  if (is_dict_encoded) {
+    LOG_INFO("dictionary encoded tile do not support set value");
+    PELOTON_ASSERT(false);
+  }
   PELOTON_ASSERT(tuple_offset < num_tuple_slots);
   PELOTON_ASSERT(column_offset < schema.GetLength());
 
@@ -543,6 +561,8 @@ void Tile::DictEncode() {
 
 	// need to modify tuple length, data
 	size_t new_tuple_length = 0;
+
+  encoded_column_offsets.push_back(new_tuple_length);
 	for(oid_t i = 0; i < column_count; i++) {
 //		LOG_INFO("encoding column %s", schema.GetColumn(i).column_name.c_str());
 		auto column_type = schema.GetType(i);
@@ -550,16 +570,18 @@ void Tile::DictEncode() {
 		if (column_type == type::TypeId::VARCHAR ||
 				column_type == type::TypeId::VARBINARY) {
 			// compress to ... what size? Let's assume a tinyint (1 byte)
-			new_tuple_length += type::Type::GetTypeSize(type::TypeId::TINYINT);
-		} else {
-			new_tuple_length += column_length;
+      column_length = type::Type::GetTypeSize(type::TypeId::TINYINT);
 		}
+		new_tuple_length += column_length;
+		encoded_column_offsets.push_back(new_tuple_length);
 	}
 
 	if (new_tuple_length == tuple_length) {
 		// no compression, return
+    encoded_column_offsets.clear();
 		return;
 	}
+  
 	size_t new_tile_size = num_tuple_slots * new_tuple_length;
 //	auto old_data = data;
 //	data = new char[new_tile_size];
@@ -568,6 +590,7 @@ void Tile::DictEncode() {
 	std::vector<std::vector<type::Value>> new_data_vector(column_count);
 	std::vector<type::TypeId> column_types(column_count);
 	std::vector<bool> column_inline(column_count);
+  // std::vector<size_t> column_offsets(column_count);
 	for (oid_t i = 0; i < column_count; i++) {
 		auto column_type = schema.GetType(i);
 		column_types[i] = column_type;
@@ -581,8 +604,8 @@ void Tile::DictEncode() {
 			dict_encoded_columns.insert(i);
 			// to for tuple offset
 			for (oid_t to = 0; to < num_tuple_slots; to++) {
-				auto curr_val = GetValueFast(to, i, column_type, column_is_inlined);
-				std::string curr_val_str(curr_val.GetData());
+				auto curr_val = GetValue(to, i);
+				std::string curr_val_str(curr_val.GetData(), curr_val.GetLength());
 				// assume the idx take 1 byte
 				char idx[1];
 				if (dict.count(curr_val_str) == 0) {
@@ -594,27 +617,36 @@ void Tile::DictEncode() {
 				}
 				// many constructor of Value is private, so use
 				// DeserializeFrom to construct the idx Value
-				type::Value idx_val(type::Value::DeserializeFrom(idx, type::TypeId::TINYINT, true));
+				type::Value idx_val(type::TinyintType::DeserializeFrom(idx, type::TypeId::TINYINT, true));
 				new_data_vector[i].push_back(idx_val);
 			}
 		} else {
 			for (oid_t to = 0; to < num_tuple_slots; to++) {
-				new_data_vector[i].push_back(GetValueFast(to, i, column_type, column_is_inlined));
+				new_data_vector[i].push_back(GetValue(to, i));
 			}
 		}
 	}
 
 	// now we have all data in new_data_vector
 	// put new data into storage space
+  // rewrite the field
+  tuple_length = new_tuple_length;
+  // tuple_size = new_tuple_size;
+
 	delete[] data;
 	data = new char[new_tile_size];
 	for (oid_t i = 0; i < column_count; i++) {
 		for (oid_t to = 0; to < num_tuple_slots; to++) {
-			SetValueFast(new_data_vector[i][to], to, i, column_inline[i],
+			SetValueFast(new_data_vector[i][to], to, encoded_column_offsets[i], column_inline[i],
 					type::Type::GetTypeSize(column_types[i]));
 		}
 	}
 	is_dict_encoded = true;
+}
+
+void Tile::DictDecode() {
+  if (!is_dict_encoded) return;
+
 }
 
 

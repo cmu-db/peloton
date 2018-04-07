@@ -190,6 +190,7 @@ class Tile : public Printable {
 	// only encode varchar, assume this tail is full
 	void DictEncode();
 
+  void DictDecode();
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -250,6 +251,8 @@ class Tile : public Printable {
   std::map<std::string, uint8_t> dict;
 
   std::set<oid_t> dict_encoded_columns;
+
+  std::vector<size_t> encoded_column_offsets;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
