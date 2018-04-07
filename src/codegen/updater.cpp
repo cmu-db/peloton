@@ -37,6 +37,8 @@ void Updater::Init(storage::DataTable *table,
   // Target list is kept since it is required at a new version update
   target_list_ =
       new TargetList(target_vector, target_vector + target_vector_size);
+
+  statement_write_set_ = new WriteSet();
 }
 
 char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
@@ -51,6 +53,11 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
 
 char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+
+  if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
+    return nullptr;
+  }
+  
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
@@ -74,7 +81,13 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
+
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+
+  if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
+    return nullptr;
+  }
+
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
@@ -122,7 +135,6 @@ void Updater::Update() {
   auto tile_group = table_->GetTileGroupById(old_location_.block).get();
   auto *tile_group_header = tile_group->GetHeader();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
   // Either update in-place
   if (is_owner_ == true) {
     txn_manager.PerformUpdate(txn, old_location_);
@@ -143,6 +155,7 @@ void Updater::Update() {
     return;
   }
   txn_manager.PerformUpdate(txn, old_location_, new_location_);
+  AddToStatementWriteSet(new_location_);
   executor_context_->num_processed++;
 }
 
@@ -166,6 +179,7 @@ void Updater::UpdatePK() {
     return;
   }
   txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
+  AddToStatementWriteSet(new_location_);
   executor_context_->num_processed++;
 }
 
@@ -173,6 +187,7 @@ void Updater::TearDown() {
   // Updater object does not destruct its own data structures
   tile_.reset();
   delete target_list_;
+  delete statement_write_set_;
 }
 
 }  // namespace codegen

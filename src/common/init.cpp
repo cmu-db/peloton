@@ -56,6 +56,7 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
   // start GC.
+  gc::GCManagerFactory::Configure(settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
