@@ -231,7 +231,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // compile
   codegen::Query *query = nullptr;
-  auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, parameters.GetQueryParametersMap(), buffer);
+  auto compiled_query = codegen::QueryCompiler().Compile(seq_scan_plan, executor_context->GetParams().GetQueryParametersMap(), buffer);
   query = compiled_query.get();
 
   // Execute the query in a synchronize fashion
