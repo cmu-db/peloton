@@ -89,7 +89,7 @@ DEF_TRANSITION_GRAPH
     ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
     ON(NEED_DATA) SET_STATE_TO(READ) AND_WAIT
-    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) 
+    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
   END_DEF
 
   DEFINE_STATE(PROCESS_WRITE_SSL_HANDSHAKE)
@@ -99,23 +99,23 @@ DEF_TRANSITION_GRAPH
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
   END_DEF
-  
-  DEFINE_STATE(PROCESS) 
+
+  DEFINE_STATE(PROCESS)
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
     ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
-    ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHAKE) 
+    ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHAKE)
       AND_INVOKE(ProcessWrite_SSLHandshake)
   END_DEF
 
-  DEFINE_STATE(WRITE) 
+  DEFINE_STATE(WRITE)
     ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
     ON(NEED_DATA) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
   END_DEF
 
-  DEFINE_STATE(GET_RESULT) 
+  DEFINE_STATE(GET_RESULT)
     ON(WAKEUP) SET_STATE_TO(GET_RESULT) AND_INVOKE(GetResult)
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
   END_DEF
@@ -557,13 +557,19 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
+  int close_ret = -1;
 #if __APPLE__
-  close$NOCANCEL(sock_fd_);
+  close_ret = close$NOCANCEL(sock_fd_);
 #else
-  (void)close(sock_fd_);
+  close_ret = close(sock_fd_);
 #endif
 
-  LOG_DEBUG("Already Closed the connection %d", sock_fd_);
+  if (close_ret != 0) {
+    std::vector<char> error_message(100, '\0');
+    strerror_r(errno, error_message.data(), error_message.size() - 1);
+    LOG_DEBUG("Close failed on connection %d, errno %s", sock_fd_, error_message.data());
+  }
+
   return Transition::NONE;
 
 }
