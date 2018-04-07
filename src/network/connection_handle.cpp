@@ -557,18 +557,15 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
-  while (true) {
-    int status = close(sock_fd_);
-    if (status < 0) {
-      // failed close
-      if (errno == EINTR) {
-        // interrupted, try closing again
-        continue;
-      }
-    }
-    LOG_DEBUG("Already Closed the connection %d", sock_fd_);
-    return Transition::NONE;
-  }
+#if __APPLE__
+  close$NOCANCEL(sock_fd_);
+#else
+  (void)close(sock_fd_);
+#endif
+
+  LOG_DEBUG("Already Closed the connection %d", sock_fd_);
+  return Transition::NONE;
+
 }
 
 Transition ConnectionHandle::ProcessWrite_SSLHandshake() {

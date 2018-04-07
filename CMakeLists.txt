@@ -77,6 +77,10 @@ if(UNIX OR APPLE)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-undefined-compare -Wno-unused-private-field -Wno-braced-scalar-init -Wno-constant-conversion -Wno-potentially-evaluated-expression -Wno-infinite-recursion -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -I/usr/local/opt/openssl/include")
     endif()
+# ---[ close$NOCANCEL for Mac OS
+    if(APPLE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-dollar-in-identifier-extension")
+    endif()
 endif()
 
 # There is a problem with building on g++5.4 on Ubuntu 17.10 where
