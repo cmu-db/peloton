@@ -221,7 +221,7 @@ bool UpdateExecutor::DExecute() {
 
     
     if (IsInStatementWriteSet(old_location)) {
-      return true;
+      continue;
     }
 
     if (trigger_list != nullptr) {

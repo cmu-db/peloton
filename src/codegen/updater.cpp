@@ -113,6 +113,7 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
   }
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.PerformDelete(txn, old_location, empty_location);
+  AddToStatementWriteSet(empty_location);
 
   // Get the tuple data pointer for a new version
   new_location_ = table_->GetEmptyTupleSlot(nullptr);
