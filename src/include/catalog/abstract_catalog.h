@@ -17,6 +17,7 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
 #include "codegen/query_cache.h"
+#include "codegen/query.h"
 
 namespace peloton {
 
@@ -72,7 +73,7 @@ class AbstractCatalog {
                          std::vector<type::Value> values,
                          concurrency::TransactionContext *txn) const;
 
-  const std::vector<codegen::WrappedTuple>&
+  std::vector<codegen::WrappedTuple>
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);

@@ -211,7 +211,7 @@ AbstractCatalog::GetResultWithIndexScan(
 *
 * @return  Unique pointer of vector of logical tiles
 */
-const std::vector<codegen::WrappedTuple>&
+std::vector<codegen::WrappedTuple>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
                                       concurrency::TransactionContext *txn) {
@@ -219,35 +219,35 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   // Sequential scan
 
-  std::shared_ptr<planner::SeqScanPlan> plan_ptr{new planner::SeqScanPlan{
-      catalog_table_, predicate, column_offsets}};
+  std::shared_ptr<planner::SeqScanPlan> plan_ptr(new planner::SeqScanPlan(
+      catalog_table_, predicate, column_offsets));
   planner::BindingContext scan_context;
   plan_ptr->PerformBinding(scan_context);
 
   codegen::BufferingConsumer buffer{column_offsets, scan_context};
-//  bool cached;
+  bool cached;
 
   codegen::QueryParameters parameters(*plan_ptr, {});
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, std::move(parameters)));
 
-
-
   // compile
-  codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
-  if (query == nullptr) {
-    auto compiled_query = codegen::QueryCompiler().Compile(
+  // codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
+  codegen::Query *query = nullptr;
+  std::unique_ptr<codegen::Query> compiled_query(nullptr);
+  cached = (query == nullptr);
+  LOG_DEBUG("cache %d", cached);
+  if (cached) {
+    compiled_query = codegen::QueryCompiler().Compile(
         *plan_ptr, executor_context->GetParams().GetQueryParametersMap(), buffer);
     query = compiled_query.get();
-    codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
+    // codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
     //query = codegen::QueryCache::Instance().Find(plan_ptr);
   }
-
   // Execute the query in a synchronize fashion
   // peloton::test::PelotonCodeGenTest::ExecuteSync(*query, std::move(executor_context), buffer);
   // what about this
   query->Execute(std::move(executor_context), buffer, [](executor::ExecutionResult result){return result;});
-
 
 //  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
 //  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
@@ -261,7 +261,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 //    result_tiles->push_back(
 //        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
 //  }
-
+  LOG_DEBUG("inside result size: %lu", buffer.GetOutputTuples().size());
   return buffer.GetOutputTuples();
 }
 
