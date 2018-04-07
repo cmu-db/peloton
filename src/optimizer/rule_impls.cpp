@@ -77,6 +77,113 @@ void JoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// JoinAssociativity
+JoinAssociativity::JoinAssociativity() {
+  type_ = RuleType::JOIN_ASSOCIATE;
+
+  // Create left nested join
+  auto left_child = std::make_shared<Pattern>(OpType::LogicalJoin);
+  left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
+  match_pattern->AddChild(left_child);
+  match_pattern->AddChild(right_child);
+}
+
+bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
+                              OptimizeContext *context) const {
+  (void)context;
+  auto parent_join = expr->Op().As<LogicalJoin>();
+  std::vector<std::shared_ptr<OperatorExpression>> children = expr->Children();
+  auto child_join = children[0]->Op().As<LogicalJoin>();
+  return (parent_join->type == child_join->type);
+}
+
+void JoinAssociativity::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    OptimizeContext *context) const {
+  // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
+  // right) Variables are named accordingly to above transformation
+  auto parent_join = input->Op().As<LogicalJoin>();
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PELOTON_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children[0]->Op().GetType() == OpType::LogicalJoin);
+  PELOTON_ASSERT(children[0]->Children().size() == 2);
+  auto child_join = children[0]->Op().As<LogicalJoin>();
+  auto left = children[0]->Children()[0];
+  auto middle = children[0]->Children()[1];
+  auto right = children[1];
+
+  LOG_DEBUG("Reordered join structured: (%s JOIN %s) JOIN %s",
+            left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
+            right->Op().GetName().c_str());
+
+  // Get Alias sets
+  auto &memo = context->metadata->memo;
+  auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = right->Op().As<LeafOperator>()->origin_group;
+
+  const auto &middle_group_aliases_set =
+      memo.GetGroupByID(middle_group_id)->GetTableAliases();
+  const auto &right_group_aliases_set =
+      memo.GetGroupByID(right_group_id)->GetTableAliases();
+
+  // Union Predicates into single alias set for new child join
+  std::unordered_set<std::string> right_join_aliases_set;
+  right_join_aliases_set.insert(middle_group_aliases_set.begin(),
+                                middle_group_aliases_set.end());
+  right_join_aliases_set.insert(right_group_aliases_set.begin(),
+                                right_group_aliases_set.end());
+
+  // Redistribute predicates
+  auto parent_join_predicates =
+      std::vector<AnnotatedExpression>(parent_join->join_predicates);
+  auto child_join_predicates =
+      std::vector<AnnotatedExpression>(child_join->join_predicates);
+
+  std::vector<AnnotatedExpression> predicates;
+  predicates.insert(predicates.end(), parent_join_predicates.begin(),
+                    parent_join_predicates.end());
+  predicates.insert(predicates.end(), child_join_predicates.begin(),
+                    child_join_predicates.end());
+
+  std::vector<AnnotatedExpression> new_child_join_predicates;
+  std::vector<AnnotatedExpression> new_parent_join_predicates;
+
+  for (auto predicate : predicates) {
+    if (util::IsSubset(right_join_aliases_set, predicate.table_alias_set)) {
+      new_child_join_predicates.emplace_back(predicate);
+    } else {
+      new_parent_join_predicates.emplace_back(predicate);
+    }
+  }
+
+  JoinType new_parent_join_type;
+  JoinType new_child_join_type;
+  new_parent_join_type = parent_join->type;
+  new_child_join_type = child_join->type;
+  // Construct new child join operator
+  std::shared_ptr<OperatorExpression> new_child_join =
+      std::make_shared<OperatorExpression>(
+          LogicalJoin::make(new_child_join_type, new_child_join_predicates));
+  new_child_join->PushChild(middle);
+  new_child_join->PushChild(right);
+
+  // Construct new parent join operator
+  std::shared_ptr<OperatorExpression> new_parent_join =
+      std::make_shared<OperatorExpression>(
+          LogicalJoin::make(new_parent_join_type, new_parent_join_predicates));
+  new_parent_join->PushChild(left);
+  new_parent_join->PushChild(new_child_join);
+
+  transformed.push_back(new_parent_join);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinCommutativity
 InnerJoinCommutativity::InnerJoinCommutativity() {
   type_ = RuleType::INNER_JOIN_COMMUTE;

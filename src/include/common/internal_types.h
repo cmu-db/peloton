@@ -1325,6 +1325,7 @@ std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 enum class RuleType : uint32_t {
   // Transformation rules (logical -> logical)
   JOIN_COMMUTE = 0,
+  JOIN_ASSOCIATE,
   INNER_JOIN_COMMUTE,
   INNER_JOIN_ASSOCIATE,
 

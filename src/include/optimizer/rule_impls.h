@@ -39,6 +39,21 @@ class JoinCommutativity : public Rule {
 };
 
 /**
+ * @brief (A join B) join C -> A join (B join C)
+ */
+class JoinAssociativity : public Rule {
+ public:
+  JoinAssociativity();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+/**
  * @brief (A join B) -> (B join A)
  */
 class InnerJoinCommutativity : public Rule {
