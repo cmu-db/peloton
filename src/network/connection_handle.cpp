@@ -559,6 +559,7 @@ Transition ConnectionHandle::CloseSocket() {
 
   int close_ret = -1;
 #if __APPLE__
+  extern int close$NOCANCEL(int);
   close_ret = close$NOCANCEL(sock_fd_);
 #else
   close_ret = close(sock_fd_);
