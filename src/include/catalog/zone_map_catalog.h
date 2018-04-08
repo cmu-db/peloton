@@ -54,7 +54,7 @@ class ZoneMapCatalog : public AbstractCatalog {
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
       concurrency::TransactionContext *txn);
 
-  enum class ColumnId {
+  enum ColumnId {
     DATABASE_ID = 0,
     TABLE_ID = 1,
     TILE_GROUP_ID = 2,
@@ -64,7 +64,7 @@ class ZoneMapCatalog : public AbstractCatalog {
     TYPE = 6
   };
 
-  enum class ZoneMapOffset { 
+  enum ZoneMapOffset {
     MINIMUM_OFF = 0, 
     MAXIMUM_OFF = 1, 
     TYPE_OFF = 2 
