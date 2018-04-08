@@ -10,12 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/codegen/buffering_consumer.h>
 #include "catalog/column_catalog.h"
 #include "concurrency/transaction_context.h"
 
 #include "catalog/table_catalog.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
@@ -40,6 +42,32 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
                      .GetAs<bool>()),
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
+
+
+    ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                           concurrency::TransactionContext *txn)
+        : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)
+                        .GetAs<oid_t>()),
+          column_name(wrapped_tuple.GetValue( ColumnCatalog::ColumnId::COLUMN_NAME)
+                          .ToString()),
+          column_id(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_ID)
+                        .GetAs<oid_t>()),
+          column_offset(
+              wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_OFFSET)
+                  .GetAs<oid_t>()),
+          column_type(StringToTypeId(
+              wrapped_tuple.GetValue( ColumnCatalog::ColumnId::COLUMN_TYPE)
+                  .ToString())),
+          is_inlined(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_INLINED)
+                         .GetAs<bool>()),
+          is_primary(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_PRIMARY)
+                         .GetAs<bool>()),
+          is_not_null(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_NOT_NULL)
+                          .GetAs<bool>()) {}
+
+
+
+
 
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool,
@@ -232,19 +260,29 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
 
   // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+//  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
+//  std::vector<type::Value> values;
+//  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  expression::AbstractExpression *tb_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);
+  expression::AbstractExpression *tb_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *col_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr,
+          tb_oid_const_expr);
 
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto column_object =
-          std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertColumnObject(column_object);
-    }
+  expression::AbstractExpression *predicate = col_oid_equality_expr;
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  for (auto tuple : result_tuples) {
+
+    auto column_object =
+        std::make_shared<ColumnCatalogObject>(tuple, txn);
+    table_object->InsertColumnObject(column_object);
+
   }
 
   return table_object->GetColumnObjects();
