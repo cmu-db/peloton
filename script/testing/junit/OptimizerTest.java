@@ -10,8 +10,7 @@ import java.sql.*;
 
 import static java.sql.Statement.EXECUTE_FAILED;
 import static java.sql.Statement.SUCCESS_NO_INFO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Guoquan Zhao on 4/7/18.
@@ -21,9 +20,10 @@ public class OptimizerTest extends PLTestBase {
             {"DROP TABLE IF EXISTS t1;",
                     "DROP TABLE IF EXISTS t2;"};
     private Connection conn;
+
     private void initTables1() throws FileNotFoundException, SQLException {
-        try(BufferedReader reader = new BufferedReader(new FileReader("create_tables_1.sql"));
-            Statement stmt = conn.createStatement();){
+        try (BufferedReader reader = new BufferedReader(new FileReader("create_tables_1.sql"));
+             Statement stmt = conn.createStatement();) {
             reader.lines().forEach(s -> {
                 try {
                     stmt.addBatch(s);
@@ -36,10 +36,12 @@ public class OptimizerTest extends PLTestBase {
                 assertTrue("batch failed.", (results[i] >= 0 || results[i] == SUCCESS_NO_INFO) && results[i] != EXECUTE_FAILED);
             }
             ResultSet resultSet = stmt.executeQuery("SELECT COUNT(*) FROM t1;");
-            assertEquals(3, resultSet.getInt(0));
+            resultSet.next();
+            assertEquals(3, resultSet.getInt(1));
             resultSet.close();
             resultSet = stmt.executeQuery("SELECT COUNT(*) FROM t2;");
-            assertEquals(3, resultSet.getInt(0));
+            resultSet.next();
+            assertEquals(3, resultSet.getInt(1));
             resultSet.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -57,7 +59,6 @@ public class OptimizerTest extends PLTestBase {
             initTables1();
         } catch (SQLException ex) {
             DumpSQLException(ex);
-            // throw ex;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -73,9 +74,118 @@ public class OptimizerTest extends PLTestBase {
 
 
     @Test
-    public void testJoin1() throws SQLException {
+    public void testInnerJoin() throws SQLException {
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT t1.a FROM t1 INNER JOIN t2 ON (t1.b = t2.b) ORDER BY t1.a;");) {
+            assertTrue(resultSet.next());
+            assertEquals(1, resultSet.getInt(1));
+            assertTrue(resultSet.next());
+            assertEquals(2, resultSet.getInt(1));
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT x.a FROM t1 AS x INNER JOIN t2 ON(x.b = t2.b AND x.c = t2.c) ORDER BY x.a;");) {
+            assertTrue(resultSet.next());
+            assertEquals(1, resultSet.getInt(1));
+            assertTrue(resultSet.next());
+            assertEquals(2, resultSet.getInt(1));
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
 
 
     }
+
+    @Test
+    public void testLeftOuterJoin() throws SQLException {
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d;");) {
+            assertTrue(resultSet.next());
+            assertEquals(3, resultSet.getInt(4));
+            assertEquals(4, resultSet.getInt(5));
+            assertEquals(5, resultSet.getInt(6));
+            assertEquals(1, resultSet.getInt(1));
+            assertEquals(2, resultSet.getInt(2));
+            assertEquals(3, resultSet.getInt(3));
+            assertTrue(resultSet.next());
+            assertEquals(null, resultSet.getObject(1));
+            assertEquals(null, resultSet.getObject(2));
+            assertEquals(null, resultSet.getObject(3));
+            assertTrue(resultSet.next());
+            assertEquals(null, resultSet.getObject(1));
+            assertEquals(null, resultSet.getObject(2));
+            assertEquals(null, resultSet.getObject(3));
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
+            assertTrue(resultSet.next());
+            assertEquals(3, resultSet.getInt(4));
+            assertEquals(4, resultSet.getInt(5));
+            assertEquals(5, resultSet.getInt(6));
+            assertEquals(1, resultSet.getInt(1));
+            assertEquals(2, resultSet.getInt(2));
+            assertEquals(3, resultSet.getInt(3));
+            assertTrue(resultSet.next());
+            assertEquals(null, resultSet.getObject(1));
+            assertEquals(null, resultSet.getObject(2));
+            assertEquals(null, resultSet.getObject(3));
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
+            assertTrue(resultSet.next());
+            assertEquals(3, resultSet.getInt(4));
+            assertEquals(4, resultSet.getInt(5));
+            assertEquals(5, resultSet.getInt(6));
+            assertEquals(1, resultSet.getInt(1));
+            assertEquals(2, resultSet.getInt(2));
+            assertEquals(3, resultSet.getInt(3));
+            assertTrue(resultSet.next());
+            assertEquals(null, resultSet.getObject(1));
+            assertEquals(null, resultSet.getObject(2));
+            assertEquals(null, resultSet.getObject(3));
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+    }
+
+    @Test
+    public void testLeftOuterJoinWhere() {
+        try (
+                Statement stmt = conn.createStatement();
+                ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d WHERE t2.b IS NULL OR t2.b>1")) {
+            // expected result is
+            // t1     t2
+            // 1 2 3 {} {} {}
+            // 2 3 4 {} {} {}
+            assertTrue(resultSet.next());
+            assertTrue(resultSet.next());
+            assertFalse(resultSet.next());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
 
 }
