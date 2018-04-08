@@ -19,6 +19,8 @@
 #include "storage/tuple.h"
 #include "common/internal_types.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 
 namespace peloton {
 namespace catalog {
@@ -100,34 +102,63 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
        static_cast<int>(ColumnId::MAXIMUM), 
        static_cast<int>(ColumnId::TYPE)});
 
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
+  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr,
+          db_oid_const_expr);
 
-  std::vector<type::Value> values({
-    type::ValueFactory::GetIntegerValue(database_id),
-    type::ValueFactory::GetIntegerValue(table_id),
-    type::ValueFactory::GetIntegerValue(tile_group_id),
-    type::ValueFactory::GetIntegerValue(column_id)
-  });
+  expression::AbstractExpression *tb_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr,
+          tb_oid_const_expr);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  expression::AbstractExpression *tile_gid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::TILE_GROUP_ID);
+  expression::AbstractExpression *tile_gid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(tile_group_id).Copy());
+  expression::AbstractExpression *tile_gid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tile_gid_expr,
+          tile_gid_const_expr);
 
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() == 0) {
+  expression::AbstractExpression *col_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::COLUMN_ID);
+  expression::AbstractExpression *col_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *col_id_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_oid_expr,
+          col_oid_const_expr);
+
+  expression::AbstractExpression *db_and_tb = expression::ExpressionUtil::ConjunctionFactory(
+      ExpressionType::CONJUNCTION_AND, db_oid_equality_expr, tb_oid_equality_expr);
+  expression::AbstractExpression *pred_and_tile = expression::ExpressionUtil::ConjunctionFactory(
+      ExpressionType::CONJUNCTION_AND, db_and_tb, tile_gid_equality_expr);
+  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
+      ExpressionType::CONJUNCTION_AND, pred_and_tile, col_id_equality_expr);
+
+
+  auto result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  PL_ASSERT(result_tuples.size() <= 1);  // unique
+  if (result_tuples.size() == 0) {
     LOG_DEBUG("Result Tiles = 0");
     return nullptr;
   }
-
-  auto tile = (*result_tiles)[0].get();
-  PL_ASSERT(tile->GetTupleCount() <= 1);
-  if (tile->GetTupleCount() == 0) {
-    return nullptr;
-  }
-
+  auto tuple = result_tuples[0];
   type::Value min, max, actual_type;
-  min = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MINIMUM_OFF));
-  max = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MAXIMUM_OFF));
-  actual_type = tile->GetValue(0, static_cast<int>(ZoneMapOffset::TYPE_OFF));
+  min = tuple.GetValue(ZoneMapOffset::MINIMUM_OFF);
+  max = tuple.GetValue(ZoneMapOffset::MAXIMUM_OFF);
+  actual_type = tuple.GetValue(ZoneMapOffset::TYPE_OFF);
 
   // min and max are stored as VARCHARs and should be convertd to their
   // original types.
