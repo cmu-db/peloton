@@ -357,6 +357,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
   if (database_object) return database_object;
 
+    /*
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SKEY_DATABASE_NAME;  // Index of database_name
@@ -377,9 +378,33 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
       (void)success;
     }
     return database_object;
+  }*/
+
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  expression::AbstractExpression *db_name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::DATABASE_NAME);
+  expression::AbstractExpression *db_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
+  expression::AbstractExpression *table_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_name_expr,
+          db_name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, table_name_equality_expr, txn);
+
+  if (result_tuples.size() == 1) {
+    auto database_object =
+        std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
+    // insert into cache
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
+    (void) success;
+    return database_object;
   }
 
-  // return empty object if not found
+    // return empty object if not found
   return nullptr;
 }
 
