@@ -211,18 +211,53 @@ AbstractCatalog::GetResultWithIndexScan(
 *
 * @return  Unique pointer of vector of logical tiles
 */
-std::vector<codegen::WrappedTuple>
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
                                       concurrency::TransactionContext *txn) {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Sequential scan
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
+  planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  // Execute
+  seq_scan_executor.Init();
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
+
+  while (seq_scan_executor.Execute()) {
+    result_tiles->push_back(
+        std::unique_ptr<executor::LogicalTile>(seq_scan_executor.GetOutput()));
+  }
+
+  return result_tiles;
+}
+
+/*@brief   Complied Sequential scan helper function
+* NOTE: try to use efficient index scan instead of sequential scan, but you
+* shouldn't build too many indexes on one catalog table
+* @param   column_offsets    Column ids for search (projection)
+* @param   predicate         predicate for this sequential scan query
+* @param   txn               TransactionContext
+*
+* @return  Unique pointer of vector of logical tiles
+*/
+std::vector<codegen::WrappedTuple>
+AbstractCatalog::GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
+                                      expression::AbstractExpression *predicate,
+                                      concurrency::TransactionContext *txn) {
+  if (txn == nullptr) throw CatalogException("Scan table requires transaction");
+
+  // Create sequential scan
   auto plan_ptr = std::make_shared<planner::SeqScanPlan>(catalog_table_, predicate, column_offsets);
   planner::BindingContext scan_context;
   plan_ptr->PerformBinding(scan_context);
 
+  // Create consumer
   codegen::BufferingConsumer buffer{column_offsets, scan_context};
   bool cached;
 
@@ -230,19 +265,19 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, std::move(parameters)));
 
-  // compile
-  // codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
+  // search for query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
   std::unique_ptr<codegen::Query> compiled_query(nullptr);
   cached = (query != nullptr);
   LOG_DEBUG("cache %d", cached);
+  // if not cached, compile the query and save it into cache
   if (!cached) {
     compiled_query = codegen::QueryCompiler().Compile(
         *plan_ptr, executor_context->GetParams().GetQueryParametersMap(), buffer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
-    //query = codegen::QueryCache::Instance().Find(plan_ptr);
   }
+
   query->Execute(std::move(executor_context), buffer, [](executor::ExecutionResult result){return result;});
 
   return buffer.GetOutputTuples();

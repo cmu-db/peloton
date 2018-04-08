@@ -73,8 +73,13 @@ class AbstractCatalog {
                          std::vector<type::Value> values,
                          concurrency::TransactionContext *txn) const;
 
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
+                                        expression::AbstractExpression *predicate,
+                                        concurrency::TransactionContext *txn);
+
   std::vector<codegen::WrappedTuple>
-  GetResultWithSeqScan(std::vector<oid_t> column_offsets,
+  GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);
 

@@ -22,6 +22,7 @@
 #include "common/logger.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
+#include "common/timer.h"
 
 namespace peloton {
 namespace test {
@@ -152,37 +153,47 @@ TEST_F(CatalogTests, CreatingTable) {
 }
 
 TEST_F(CatalogTests, TableObject) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  double avg_time = 0.0;
+  int num_iterations = 1000;
+  Timer<std::ratio<1, 1000>> timer;
+  for(int i=0;i<num_iterations;i++) {
 
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      "EMP_DB", "department_table", txn);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
 
-  auto index_objects = table_object->GetIndexObjects();
-  auto column_objects = table_object->GetColumnObjects();
+    timer.Start();
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+        "EMP_DB", "department_table", txn);
+    timer.Stop();
+    avg_time += timer.GetDuration();
 
-  EXPECT_EQ(1, index_objects.size());
-  EXPECT_EQ(2, column_objects.size());
+    auto index_objects = table_object->GetIndexObjects();
+    auto column_objects = table_object->GetColumnObjects();
 
-  EXPECT_EQ(table_object->GetTableOid(), column_objects[0]->GetTableOid());
-  EXPECT_EQ("id", column_objects[0]->GetColumnName());
-  EXPECT_EQ(0, column_objects[0]->GetColumnId());
-  EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
-  EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
-  EXPECT_TRUE(column_objects[0]->IsInlined());
-  EXPECT_TRUE(column_objects[0]->IsPrimary());
-  EXPECT_FALSE(column_objects[0]->IsNotNull());
+    EXPECT_EQ(1, index_objects.size());
+    EXPECT_EQ(2, column_objects.size());
 
-  EXPECT_EQ(table_object->GetTableOid(), column_objects[1]->GetTableOid());
-  EXPECT_EQ("name", column_objects[1]->GetColumnName());
-  EXPECT_EQ(1, column_objects[1]->GetColumnId());
-  EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
-  EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
-  EXPECT_TRUE(column_objects[1]->IsInlined());
-  EXPECT_FALSE(column_objects[1]->IsPrimary());
-  EXPECT_FALSE(column_objects[1]->IsNotNull());
+    EXPECT_EQ(table_object->GetTableOid(), column_objects[0]->GetTableOid());
+    EXPECT_EQ("id", column_objects[0]->GetColumnName());
+    EXPECT_EQ(0, column_objects[0]->GetColumnId());
+    EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
+    EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
+    EXPECT_TRUE(column_objects[0]->IsInlined());
+    EXPECT_TRUE(column_objects[0]->IsPrimary());
+    EXPECT_FALSE(column_objects[0]->IsNotNull());
 
-  txn_manager.CommitTransaction(txn);
+    EXPECT_EQ(table_object->GetTableOid(), column_objects[1]->GetTableOid());
+    EXPECT_EQ("name", column_objects[1]->GetColumnName());
+    EXPECT_EQ(1, column_objects[1]->GetColumnId());
+    EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
+    EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
+    EXPECT_TRUE(column_objects[1]->IsInlined());
+    EXPECT_FALSE(column_objects[1]->IsPrimary());
+    EXPECT_FALSE(column_objects[1]->IsNotNull());
+
+    txn_manager.CommitTransaction(txn);
+  }
+  LOG_TRACE("Avg time: %.4lf", avg_time / num_iterations);
 }
 
 TEST_F(CatalogTests, DroppingTable) {
