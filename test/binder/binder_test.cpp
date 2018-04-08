@@ -17,16 +17,16 @@
 #include "common/harness.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/subquery_expression.h"
 #include "expression/function_expression.h"
+#include "expression/subquery_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "traffic_cop/traffic_cop.h"
 
+#include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
-#include "executor/testing_executor_util.h"
 
 using std::string;
 using std::unique_ptr;
@@ -40,8 +40,9 @@ namespace test {
 class BinderCorrectnessTest : public PelotonTest {
   virtual void SetUp() override {
     PelotonTest::SetUp();
-    auto catalog = catalog::Catalog::GetInstance();
-    catalog->Bootstrap();
+    catalog::Catalog::GetInstance();
+    // NOTE: Catalog::GetInstance()->Bootstrap(), you can only call it once!
+    // catalog->Bootstrap();
     TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   }
 
@@ -106,6 +107,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
+  catalog_ptr->Bootstrap();
 
   // Test regular table name
   LOG_INFO("Parsing sql query");
@@ -344,7 +346,8 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
       in_sub_expr_select_where_right->GetChild(1);
   auto in_sub_expr_select_where_right_sub_select =
       dynamic_cast<const expression::SubqueryExpression *>(
-          in_sub_expr_select_where_right_sub)->GetSubSelect();
+          in_sub_expr_select_where_right_sub)
+          ->GetSubSelect();
   auto in_sub_expr_select_where_right_sub_select_where =
       in_sub_expr_select_where_right_sub_select->where_clause.get();
   auto in_sub_expr_select_where_right_sub_select_ele =

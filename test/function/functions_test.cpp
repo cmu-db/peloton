@@ -31,16 +31,19 @@ class FunctionsTests : public PelotonTest {
 
   virtual void SetUp() {
     PelotonTest::SetUp();
-    auto catalog = catalog::Catalog::GetInstance();
-    catalog->Bootstrap();
+    // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous
+    // unit tests you can only call it once!
+    // auto catalog =
+    // catalog::Catalog::GetInstance(); catalog->Bootstrap();
   }
 };
 
 TEST_F(FunctionsTests, CatalogTest) {
   auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
-
   // Test "internal" language
   auto txn = txn_manager.BeginTransaction();
   auto internal_lang = pg_language.GetLanguageByName("internal", txn);
@@ -110,7 +113,6 @@ TEST_F(FunctionsTests, FuncCallTest) {
   result = {"32"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT ASCII(s) FROM test;",
                                                 result, false);
-  
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE OR REPLACE FUNCTION"
@@ -118,8 +120,8 @@ TEST_F(FunctionsTests, FuncCallTest) {
       " BEGIN RETURN e + 1; END; $$ LANGUAGE plpgsql;");
 
   result = {"26"};
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT increment(e) FROM test;",
-                                                result, false);
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "SELECT increment(e) FROM test;", result, false);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

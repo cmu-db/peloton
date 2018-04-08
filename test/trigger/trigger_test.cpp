@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
-#include "storage/abstract_table.h"
-#include "common/harness.h"
 #include "trigger/trigger.h"
+#include "catalog/catalog.h"
+#include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/insert_plan.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "storage/abstract_table.h"
 
 namespace peloton {
 namespace test {
@@ -92,7 +92,7 @@ class TriggerTests : public PelotonTest {
 
     insert_node->insert_values.push_back(
         std::vector<std::unique_ptr<expression::AbstractExpression>>());
-    auto& values = insert_node->insert_values.at(0);
+    auto &values = insert_node->insert_values.at(0);
 
     values.push_back(std::unique_ptr<expression::AbstractExpression>(
         new expression::ConstantValueExpression(
@@ -120,7 +120,9 @@ class TriggerTests : public PelotonTest {
     // Bootstrap
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto parser = parser::PostgresParser::GetInstance();
-    catalog::Catalog::GetInstance()->Bootstrap();
+    // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous
+    // tests you can only call it once!
+    // catalog::Catalog::GetInstance()->Bootstrap();
 
     std::unique_ptr<parser::SQLStatementList> stmt_list(
         parser.BuildParseTree(query).release());
@@ -225,13 +227,14 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();
 
   // Create statement (before row insert)
-
   std::string query =
       "CREATE TRIGGER b_r_insert_trigger "
       "BEFORE INSERT ON accounts "
@@ -310,7 +313,9 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();
@@ -390,7 +395,9 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();
@@ -501,5 +508,5 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}
-}
+}  // namespace test
+}  // namespace peloton

@@ -115,11 +115,6 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            4);
-
   // Inserting a tuple end-to-end
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");

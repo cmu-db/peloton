@@ -214,7 +214,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
     oid_t table_oid, concurrency::TransactionContext *txn) {
-  LOG_DEBUG("Get triggers for table %d", table_oid);
+  // LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,

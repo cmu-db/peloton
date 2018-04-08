@@ -118,11 +118,6 @@ TEST_F(OptimizerTests, HashJoinTest) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            4);
-
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
@@ -153,11 +148,6 @@ TEST_F(OptimizerTests, HashJoinTest) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            5);
-
   // Inserting a tuple to table_a
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");

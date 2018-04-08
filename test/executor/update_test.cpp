@@ -181,8 +181,6 @@ TEST_F(UpdateTests, UpdatingOld) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
-            4);
 
   LOG_INFO("Table created!");
 

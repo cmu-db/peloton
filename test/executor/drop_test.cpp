@@ -75,7 +75,9 @@ TEST_F(DropTests, DroppingDatabase) {
 
 TEST_F(DropTests, DroppingTable) {
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -105,17 +107,18 @@ TEST_F(DropTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
+  // NOTE: everytime we create a database, there will be 7 catalog tables inside
   EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
                 ->GetTableObjects()
                 .size(),
-            5);
+            9);
 
   // Now dropping the table using the executor
   catalog->DropTable(TEST_DB_NAME, "department_table", txn);
   EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
                 ->GetTableObjects()
                 .size(),
-            4);
+            8);
 
   // free the database just created
   catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
@@ -124,7 +127,9 @@ TEST_F(DropTests, DroppingTable) {
 
 TEST_F(DropTests, DroppingTrigger) {
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -208,7 +213,7 @@ TEST_F(DropTests, DroppingTrigger) {
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
   catalog->DropTable(TEST_DB_NAME, "department_table", txn);
-  EXPECT_EQ(3, (int)catalog::Catalog::GetInstance()
+  EXPECT_EQ(7, (int)catalog::Catalog::GetInstance()
                    ->GetDatabaseObject(TEST_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());
@@ -222,7 +227,9 @@ TEST_F(DropTests, DroppingTrigger) {
 
 TEST_F(DropTests, DroppingIndexByName) {
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

@@ -93,8 +93,6 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
       2, 3, 4, 5, pool.get(), txn);
-  //   oid_t time_stamp =
-  //       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
   // inset meaningless tuple into QUERY_METRICS_CATALOG and check
   stats::QueryMetric::QueryParamBuf param;
@@ -210,9 +208,9 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  // everytime we create a database, there will be 3 catalog tables inside
+  // NOTE: everytime we create a database, there will be 7 catalog tables inside
   EXPECT_EQ(
-      6,
+      10,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
@@ -225,7 +223,7 @@ TEST_F(CatalogTests, DroppingTable) {
   auto department_table_object =
       database_object->GetTableObject("department_table");
   EXPECT_EQ(
-      5,
+      9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -236,9 +234,9 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
                    "emp_db", "department_table", txn),
                CatalogException);
-
+  //
   EXPECT_EQ(
-      5,
+      9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -248,7 +246,7 @@ TEST_F(CatalogTests, DroppingTable) {
       catalog::Catalog::GetInstance()->DropTable("emp_db", "void_table", txn),
       CatalogException);
   EXPECT_EQ(
-      5,
+      9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -256,7 +254,7 @@ TEST_F(CatalogTests, DroppingTable) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("emp_db", "emp_table", txn);
   EXPECT_EQ(
-      4,
+      8,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }

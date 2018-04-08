@@ -108,10 +108,6 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(4, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
-                   ->GetTableObjects()
-                   .size());
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
@@ -152,11 +148,6 @@ TEST_F(CreateTests, CreatingUDFs) {
 
   executor.Init();
   executor.Execute();
-
-  EXPECT_EQ(4, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
-                   ->GetTableObjects()
-                   .size());
   txn_manager.CommitTransaction(txn);
 
   // Create statement
@@ -234,10 +225,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  // catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -263,10 +251,6 @@ TEST_F(CreateTests, CreatingTrigger) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
-                   ->GetTableObjects()
-                   .size());
   txn_manager.CommitTransaction(txn);
 
   // Create statement
@@ -314,13 +298,15 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           left)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(left)
+                ->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           right)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(right)
+                ->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level
@@ -395,10 +381,6 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
-                   ->GetTableObjects()
-                   .size());
   txn_manager.CommitTransaction(txn);
 
   // Create statement
@@ -459,7 +441,9 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
+  // catalog->Bootstrap();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   // Insert a table first
@@ -486,10 +470,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
-                   ->GetTableObjects()
-                   .size());
   txn_manager.CommitTransaction(txn);
 
   // Create statement

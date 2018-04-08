@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// pg_query
+// pg_query(per database, name become primary key)
 //
 // Schema: (column offset: column_name)
 // 0: name (pkey)
-// 1: database_oid (pkey)
+// 1: database_oid
 // 2: num_params
 // 3: param_types
 // 4: param_formats
@@ -28,8 +28,6 @@
 // 11: cpu_time
 // 12: time_stamp
 //
-// Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
 //
 //===----------------------------------------------------------------------===//
 
