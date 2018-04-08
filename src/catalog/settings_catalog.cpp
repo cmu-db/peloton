@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/expression/expression_util.h"
+#include "expression/expression_util.h"
 #include "codegen/buffering_consumer.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/catalog.h"
