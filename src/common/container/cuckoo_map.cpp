@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/container/lock_free_queue.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
@@ -130,5 +131,7 @@ template class CuckooMap<oid_t, std::shared_ptr<
 template class CuckooMap<oid_t, std::shared_ptr<
     CuckooMap<oid_t, std::shared_ptr<
         LockFreeQueue<ItemPointer>>>>>;
+
+template class CuckooMap<oid_t, storage::DataTable *>;
 
 }  // namespace peloton

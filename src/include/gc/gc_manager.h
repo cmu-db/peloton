@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
@@ -69,7 +70,7 @@ class GCManager {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE, oid_t tuples_per_tile_group UNUSED_ATTRIBUTE) {}
+  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE, storage::DataTable *table UNUSED_ATTRIBUTE) {}
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 

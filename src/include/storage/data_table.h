@@ -298,7 +298,7 @@ class DataTable : public AbstractTable {
 
   inline size_t GetActiveTileGroupCount() const { return active_tilegroup_count_; }
 
-  inline size_t GetNumTuplesPerTileGroup() const { return tuples_per_tilegroup_; }
+  inline size_t GetTuplesPerTileGroup() const { return tuples_per_tilegroup_; }
 
   bool IsActiveTileGroup(const oid_t &tile_group_id) const;
 
