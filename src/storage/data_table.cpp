@@ -1029,7 +1029,7 @@ void DataTable::DropTileGroups() {
   }
 
   // Clear array
-  tile_groups_.Clear(invalid_tile_group_id);
+  tile_groups_.Clear();
 
   tile_group_count_ = 0;
 }
@@ -1100,7 +1100,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 void DataTable::DropIndexes() {
   // TODO: iterate over all indexes, and actually drop them
 
-  indexes_.Clear(nullptr);
+  indexes_.Clear();
 
   indexes_columns_.clear();
 }
