@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// alter_executor.h
+//
+// Identification: src/include/executor/alter_executor.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "concurrency/transaction_context.h"
@@ -32,9 +44,6 @@ class AlterExecutor : public AbstractExecutor {
 
   bool RenameColumn(const planner::RenamePlan &node,
                     concurrency::TransactionContext *txn);
-
- private:
-  ExecutorContext *context_;
 };
 
 }  // executor
