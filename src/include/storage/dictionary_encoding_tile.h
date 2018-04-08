@@ -77,7 +77,8 @@ class DictEncodedTile : public Tile {
    * NOTE : No checks, must be at valid slot.
    */
 //  void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
-
+	// this function is used before GetValueFast which use
+	// original schema, so return original schema
   const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
 
   /**
@@ -89,6 +90,9 @@ class DictEncodedTile : public Tile {
    * Faster way to get value
    * By amortizing schema lookups
    */
+   // since we know that to use this function, we first get schema and extract
+   // info from schema then use this function, so we assume the column offset
+   // is the original column offset, therefore transform needed
   type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
                            const type::TypeId column_type,
                            const bool is_inlined) override ;
@@ -109,8 +113,7 @@ class DictEncodedTile : public Tile {
 //                    const size_t column_offset, const bool is_inlined,
 //                    const size_t column_length);
 
-  // Copy current tile in given backend and return new tile
-  Tile *CopyTile(BackendType backend_type);
+
 
   //===--------------------------------------------------------------------===//
   // Dictionary Encoding
@@ -118,23 +121,26 @@ class DictEncodedTile : public Tile {
 
 	inline bool GetDictEncoded() const { return is_dict_encoded; }
 
-	// only encode varchar, assume this tail is full
+	// given a tile, encode this tile in current tile
+	// when initializing this encoded tile, use original tile's schema
 	void DictEncode(Tile *tile);
 
+	// decode tile and return a new tile that contain the decoded data
   Tile* DictDecode();
 
  protected:
   // is dictionary encoded
   bool is_dict_encoded;
 
+	// the idx-string mapping
   std::vector<type::Value> element_array;
-
+	// the string-idx mapping
   std::map<type::Value, uint8_t, type::Value::equal_to> dict;
-
+	// columns being encoded
   std::set<oid_t> dict_encoded_columns;
-
+	// original schema
   catalog::Schema original_schema;
-
+	// original column offset
   std::map<size_t, oid_t> original_schema_offsets;
 };
 

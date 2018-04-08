@@ -42,6 +42,8 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 		offset += schema.GetLength(i);
 	}
 
+	if (dict_encoded_columns.empty()) return;
+
 	delete[] data;
 	schema = catalog::Schema(columns);
 	tuple_length = schema.GetLength();
