@@ -581,6 +581,7 @@ Transition ConnectionHandle::CloseSocket() {
 #else
     error_message = strerror_r(saved_errno, buffer.data(), buffer.size() - 1);
 #endif
+    (void)error_message;
     LOG_DEBUG("Close failed on connection %d, errno %d [%s]", sock_fd_, saved_errno, error_message);
   }
 
