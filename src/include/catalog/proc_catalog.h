@@ -42,7 +42,7 @@ class LanguageCatalogObject;
 class ProcCatalogObject {
  public:
   ProcCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn);
-
+  ProcCatalogObject(codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn);
   // Accessors
 
   oid_t GetOid() const { return oid_; }

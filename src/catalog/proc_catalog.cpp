@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/codegen/buffering_consumer.h>
 #include "catalog/proc_catalog.h"
 
 #include "catalog/catalog.h"
@@ -17,6 +18,7 @@
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
@@ -31,6 +33,17 @@ ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
       arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char *>())),
       lang_oid_(tile->GetValue(0, 4).GetAs<oid_t>()),
       src_(tile->GetValue(0, 5).GetAs<const char *>()),
+      txn_(txn) {}
+
+
+ProcCatalogObject::ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                     concurrency::TransactionContext *txn)
+    : oid_(wrapped_tuple.GetValue(0).GetAs<oid_t>()),
+      name_(wrapped_tuple.GetValue(1).GetAs<const char *>()),
+      ret_type_(wrapped_tuple.GetValue(2).GetAs<type::TypeId>()),
+      arg_types_(StringToTypeArray(wrapped_tuple.GetValue(3).GetAs<const char *>())),
+      lang_oid_(wrapped_tuple.GetValue(4).GetAs<oid_t>()),
+      src_(wrapped_tuple.GetValue(5).GetAs<const char *>()),
       txn_(txn) {}
 
 std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
@@ -114,20 +127,42 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
     const std::vector<type::TypeId> &proc_arg_types,
     concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(
-      TypeIdArrayToString(proc_arg_types)).Copy());
+//  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+//  std::vector<type::Value> values;
+//  values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
+//  values.push_back(type::ValueFactory::GetVarcharValue(
+//      TypeIdArrayToString(proc_arg_types)).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  expression::AbstractExpression *proc_name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::PRONAME);
+  expression::AbstractExpression *proc_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(proc_name, nullptr).Copy());
+  expression::AbstractExpression *proc_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, proc_name_expr,
+          proc_name_const_expr);
+
+  expression::AbstractExpression *proc_args_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::PROARGTYPES);
+  expression::AbstractExpression *proc_args_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(TypeIdArrayToString(proc_arg_types)).Copy());
+  expression::AbstractExpression *proc_args_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, proc_args_expr,
+          proc_args_const_expr);
+
+  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
+      ExpressionType::CONJUNCTION_AND, proc_name_equality_expr, proc_args_equality_expr);
+
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  PL_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
+  if (result_tuples.size() == 1) {
+    ret.reset(new ProcCatalogObject(result_tuples[0], txn));
   }
 
   return ret;
