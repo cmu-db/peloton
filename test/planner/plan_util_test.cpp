@@ -264,13 +264,15 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   EXPECT_EQ(expected_oids, affected_cols);
 
   // ========= SELECT statement check ==
-  query_string = "SELECT * FROM test_table;";
+  query_string = "SELECT id FROM test_table WHERE first_name = last_name;";
   stmt.reset(new Statement("SELECT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   affected_cols = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
+  expected_oids = std::set<oid_t>({id_col_oid, fname_col_oid, lname_col_oid});
+  EXPECT_EQ(expected_oids, affected_cols);
   txn_manager.CommitTransaction(txn);
 }
 

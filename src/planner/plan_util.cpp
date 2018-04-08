@@ -20,6 +20,7 @@
 #include "catalog/table_catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "expression/expression_util.h"
 #include "optimizer/abstract_optimizer.h"
 #include "optimizer/optimizer.h"
 #include "parser/delete_statement.h"
@@ -161,15 +162,35 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
           temp_ptr = scan_queue.front();
           scan_queue.pop();
 
-          auto children_size = temp_ptr->GetChildrenSize();
-          if (0 == children_size) {
+          // Leaf scanning node
+          if (PlanNodeType::SEQSCAN == temp_ptr->GetPlanNodeType() ||
+              PlanNodeType::INDEXSCAN == temp_ptr->GetPlanNodeType()) {
+            auto temp_scan_ptr = static_cast<const AbstractScan *>(temp_ptr);
+
             std::vector<oid_t> output_col_ids;
-            temp_ptr->GetOutputColumns(output_col_ids);
+            temp_scan_ptr->GetOutputColumns(output_col_ids);
             for (const auto col_id : output_col_ids) {
               column_oids.insert(col_id);
             }
+
+            ExprSet expr_set;
+            expression::ExpressionUtil::GetTupleValueExprs(
+                expr_set, temp_scan_ptr->GetPredicateUnsafe());
+
+            for (const auto expr : expr_set) {
+              auto tuple_value_expr =
+                  static_cast<const expression::TupleValueExpression *>(expr);
+
+              //                LOG_DEBUG("table_name: %s",
+              //                          tuple_value_expr->GetTableName().c_str());
+              //                LOG_DEBUG("column_name: %s column_id: %d",
+              //                          tuple_value_expr->GetColumnName().c_str(),
+              //                          tuple_value_expr->GetColumnId());
+              column_oids.insert((oid_t)tuple_value_expr->GetColumnId());
+            }
+
           } else {
-            for (uint32_t idx = 0; idx < children_size; ++idx) {
+            for (uint32_t idx = 0; idx < temp_ptr->GetChildrenSize(); ++idx) {
               scan_queue.emplace(temp_ptr->GetChild(idx));
             }
           }
