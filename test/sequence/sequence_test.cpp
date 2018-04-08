@@ -34,7 +34,7 @@ class SequenceTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  std::unique_ptr<sequence::Sequence> CreateSequenceHelper(std::string query, std::string sequence_name) {
+  std::shared_ptr<sequence::Sequence> CreateSequenceHelper(std::string query, std::string sequence_name) {
     // Bootstrap
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto parser = parser::PostgresParser::GetInstance();
@@ -63,10 +63,9 @@ class SequenceTests : public PelotonTest {
     createSequenceExecutor.Execute();
 
     // Check the effect of creation
-    txn_manager.CommitTransaction(txn);
-    txn = txn_manager.BeginTransaction();
-    std::unique_ptr<sequence::Sequence> new_sequence =
-        catalog::SequenceCatalog::GetInstance().GetSequence(DEFAULT_DB_ID, sequence_name, txn);
+    oid_t database_oid = catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
+    std::shared_ptr<sequence::Sequence> new_sequence =
+        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid, sequence_name, txn);
     txn_manager.CommitTransaction(txn);
 
     return new_sequence;
@@ -85,7 +84,10 @@ TEST_F(SequenceTests, BasicTest) {
       "START 10 CYCLE;";
   std::string name = "seq";
 
-  std::unique_ptr<sequence::Sequence> new_sequence = CreateSequenceHelper(query, name);
+  std::shared_ptr<sequence::Sequence> new_sequence = CreateSequenceHelper(query, name);
+  if(!new_sequence) {
+      std::cout << "get nullptr" << std::endl;
+  }
   EXPECT_EQ(name, new_sequence->seq_name);
   EXPECT_EQ(2, new_sequence->seq_increment);
   EXPECT_EQ(10, new_sequence->seq_min);

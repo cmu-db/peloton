@@ -31,6 +31,10 @@
 
 #pragma once
 
+#include <memory>
+#include <unordered_map>
+#include <utility>
+
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog_defaults.h"
 #include "sequence/sequence.h"
@@ -63,8 +67,11 @@ class SequenceCatalog : public AbstractCatalog {
   bool DeleteSequenceByName(const std::string &sequence_name, oid_t database_oid,
                            concurrency::TransactionContext *txn);
 
-  std::unique_ptr<sequence::Sequence> GetSequence(
+  std::shared_ptr<sequence::Sequence> GetSequence(
       oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn);
+
+  std::shared_ptr<sequence::Sequence> GetSequenceFromPGTable(
+    oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn);
 
   oid_t GetSequenceOid(std::string sequence_name, oid_t database_oid,
                       concurrency::TransactionContext *txn);
@@ -90,6 +97,8 @@ class SequenceCatalog : public AbstractCatalog {
     PRIMARY_KEY = 0,
     DBOID_SEQNAME_KEY = 1
   };
+
+  std::unordered_map<std::size_t, std::shared_ptr<sequence::Sequence>> sequence_pool;
 };
 
 }  // namespace catalog

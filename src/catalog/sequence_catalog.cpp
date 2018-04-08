@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+#include <boost/functional/hash.hpp>
+
 #include "catalog/sequence_catalog.h"
 
 #include "catalog/catalog.h"
@@ -54,7 +57,8 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
                     int64_t seq_start, bool seq_cycle,
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn){
-  LOG_DEBUG("In Insert Sequence Mode");
+  LOG_DEBUG("Insert Sequence Database Oid: %u", database_oid);
+  LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -80,7 +84,18 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
   tuple->SetValue(ColumnId::SEQUENCE_VALUE, val8, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  bool result = InsertTuple(std::move(tuple), txn);
+
+  // If tuple successfully inserted, put the sequence into the sequence pool.
+  if(result) {
+    LOG_DEBUG("put sequence in the pool!");
+    auto new_sequence =
+      std::make_shared<sequence::Sequence>(sequence_name, seq_start, seq_increment, seq_max, seq_min, seq_cycle, seq_start);
+
+    sequence_pool.emplace(std::make_pair(boost::hash_value(std::make_pair(database_oid, sequence_name)), new_sequence));
+  }
+
+  return result;
 }
 
 ResultType SequenceCatalog::DropSequence(const std::string &database_name,
@@ -102,12 +117,16 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  LOG_INFO("trigger %d will be deleted!", sequence_oid);
+  LOG_INFO("sequence %d will be deleted!", sequence_oid);
 
+  oid_t database_oid = database_object->GetDatabaseOid();
   bool delete_success =
-      DeleteSequenceByName(sequence_name, database_object->GetDatabaseOid(), txn);
+      DeleteSequenceByName(sequence_name, database_oid, txn);
   if (delete_success) {
     // might need to do sth. else after implementing insert
+    if(sequence_pool.erase(boost::hash_value(std::make_pair(database_oid, sequence_name))) != 1){
+      LOG_INFO("the sequence %s to be deleted already not in the pool!", sequence_name.c_str());
+    }
     return ResultType::SUCCESS;
   }
 
@@ -125,7 +144,20 @@ bool SequenceCatalog::DeleteSequenceByName(const std::string &sequence_name, oid
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::unique_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
+std::shared_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
+    oid_t database_oid, const std::string &sequence_name, UNUSED_ATTRIBUTE concurrency::TransactionContext *txn){
+  LOG_DEBUG("Get Sequence Database Oid: %u", database_oid);
+  LOG_DEBUG("Get Sequence Sequence Name: %s", sequence_name.c_str());
+  std::size_t key = boost::hash_value(std::make_pair(database_oid, sequence_name));
+  auto it = sequence_pool.find(key);
+  if (it != sequence_pool.end()) {
+    return it->second;
+  }
+
+  return nullptr;
+}
+
+std::shared_ptr<sequence::Sequence> SequenceCatalog::GetSequenceFromPGTable(
     oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn){
   std::vector<oid_t> column_ids(
       {ColumnId::SEQUENCE_NAME,ColumnId::SEQUENCE_START,
@@ -136,6 +168,8 @@ std::unique_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
+  LOG_DEBUG("The database_oid is %u", database_oid);
+  LOG_DEBUG("The sequence_name is %s", sequence_name.c_str());
 
   // the result is a vector of executor::LogicalTile
   auto result_tiles =
@@ -148,13 +182,12 @@ std::unique_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
     LOG_INFO("size of the result tiles = %lu", result_tiles->size());
   }
 
-  PL_ASSERT(result_tiles->size() == 1);
   for (unsigned int i = 0; i < result_tiles->size(); i++) {
     size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
     for (size_t j = 0; j < tuple_count; j++) {
       // create a new sequence instance
-      std::unique_ptr<sequence::Sequence> new_sequence =
-       std::make_unique<sequence::Sequence>(
+      auto new_sequence =
+       std::make_shared<sequence::Sequence>(
           (*result_tiles)[i]->GetValue(j, 0).ToString(),
           (*result_tiles)[i]->GetValue(j, 1).GetAs<int64_t>(),
           (*result_tiles)[i]->GetValue(j, 2).GetAs<int64_t>(),
@@ -184,7 +217,7 @@ oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name, oid_t database_
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on sequence %d and %s", database_oid, sequence_name.c_str());
+    LOG_INFO("no sequence on database %d and %s", database_oid, sequence_name.c_str());
     return INVALID_OID;
   }
 
