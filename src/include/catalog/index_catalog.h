@@ -44,6 +44,7 @@ class IndexCatalogObject {
 
  public:
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+  IndexCatalogObject(codegen::WrappedTuple wrapped_tuple);
 
   inline oid_t GetIndexOid() { return index_oid; }
   inline const std::string &GetIndexName() { return index_name; }
