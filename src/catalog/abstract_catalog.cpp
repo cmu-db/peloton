@@ -249,7 +249,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 std::vector<codegen::WrappedTuple>
 AbstractCatalog::GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
-                                      concurrency::TransactionContext *txn) {
+                                      concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Create sequential scan
