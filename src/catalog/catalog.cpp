@@ -1025,7 +1025,7 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
         new_column.GetType(), new_column.IsInlined(),
         new_column.GetConstraints(), pool_.get(), txn);
 
-  } catch (CastException &e) {
+  } catch (CatalogException &e) {
     return ResultType::FAILURE;
   }
   return ResultType::SUCCESS;
