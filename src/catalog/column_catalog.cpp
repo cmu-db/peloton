@@ -44,8 +44,7 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
                       .GetAs<bool>()) {}
 
 
-    ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple,
-                                           concurrency::TransactionContext *txn)
+    ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple)
         : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)
                         .GetAs<oid_t>()),
           column_name(wrapped_tuple.GetValue( ColumnCatalog::ColumnId::COLUMN_NAME)
@@ -63,7 +62,7 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
           is_primary(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_PRIMARY)
                          .GetAs<bool>()),
           is_not_null(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_NOT_NULL)
-                          .GetAs<bool>()) {}
+                          .GetAs<bool>()){}
 
 
 
@@ -280,7 +279,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   for (auto tuple : result_tuples) {
 
     auto column_object =
-        std::make_shared<ColumnCatalogObject>(tuple, txn);
+        std::make_shared<ColumnCatalogObject>(tuple);
     table_object->InsertColumnObject(column_object);
 
   }
