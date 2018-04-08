@@ -85,6 +85,11 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   active_tile_groups_.resize(active_tilegroup_count_);
 
   active_indirection_arrays_.resize(active_indirection_array_count_);
+
+
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.RegisterTable(table_oid);
+
   // Create tile groups.
   for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
