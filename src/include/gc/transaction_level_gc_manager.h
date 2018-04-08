@@ -128,7 +128,8 @@ class TransactionLevelGCManager : public GCManager {
   }
 
   std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-      peloton::LockFreeQueue<ItemPointer>>>> GetTableRecycleQueues(const oid_t &table_id) const {
+      peloton::LockFreeQueue<ItemPointer>>>>
+  GetTableRecycleQueues(const oid_t &table_id) const {
     std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
         peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
     if (recycle_queues_->Find(table_id, table_recycle_queues)) {
@@ -138,7 +139,8 @@ class TransactionLevelGCManager : public GCManager {
     }
   }
 
-  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> GetTileGroupRecycleQueue(std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
+  std::shared_ptr<peloton::LockFreeQueue<ItemPoigcnter>>
+  GetTileGroupRecycleQueue(std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
       peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues, const oid_t &tile_group_id) const {
     std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
     if (table_recycle_queues != nullptr && table_recycle_queues->Find(tile_group_id, recycle_queue)) {
