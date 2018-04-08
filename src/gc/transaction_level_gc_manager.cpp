@@ -29,6 +29,7 @@
 namespace peloton {
 namespace gc {
 
+// Assumes that location is valid
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block).get();
@@ -216,16 +217,18 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(
     concurrency::TransactionContext* txn_ctx) {
+
+  // for each tile group that has garbage tuples in the transaction
   for (auto &entry : *(txn_ctx->GetGCSetPtr().get())) {
     auto tile_group_id = entry.first;
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
 
     // During the resetting, a table may be deconstructed because of the DROP
     // TABLE request
     if (tile_group == nullptr) {
-      delete txn_ctx;
-      return; // TODO: Is this wrong? Transaction could span multiple tables
+      continue;
+//      delete txn_ctx;
+//      return; // TODO: Is this wrong? Transaction could span multiple Tile Groups
       // continue instead of returning?
     }
 
@@ -238,9 +241,8 @@ void TransactionLevelGCManager::AddToRecycleMap(
     PELOTON_ASSERT(tile_group_header != nullptr);
     bool immutable = tile_group_header->GetImmutability();
 
+    // for each garbage tuple in the Tile Group
     for (auto &element : entry.second) {
-      // as this transaction has been committed, we should reclaim older
-      // versions.
 
       auto offset = element.first;
 
