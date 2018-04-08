@@ -253,6 +253,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
       // if immutable is false and the entry for table_id exists.
       if ((!immutable) && table_recycle_queues != nullptr) {
         auto recycle_queue = GetTileGroupRecycleQueue(table_recycle_queues, tile_group_id);
+        PELOTON_ASSERT(recycle_queue != nullptr);
         recycle_queue->Enqueue(location);
       }
     }
@@ -294,7 +295,7 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
       peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
 
-  if (!recycle_queues_.Find(table_id, table_recycle_queues)) {
+  if (!recycle_queues_->Find(table_id, table_recycle_queues)) {
     return INVALID_ITEMPOINTER;
   }
 
