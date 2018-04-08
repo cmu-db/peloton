@@ -90,27 +90,28 @@ class Tile : public Printable {
   /**
    * Returns value present at slot
    */
-  type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
+
+  virtual type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+  virtual type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
                            const type::TypeId column_type,
                            const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(const type::Value &value, const oid_t tuple_offset,
+  virtual void SetValue(const type::Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(const type::Value &value, const oid_t tuple_offset,
+  virtual void SetValueFast(const type::Value &value, const oid_t tuple_offset,
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
@@ -137,7 +138,7 @@ class Tile : public Printable {
   // Columns
   //===--------------------------------------------------------------------===//
 
-  const catalog::Schema *GetSchema() const { return &schema; };
+  virtual const catalog::Schema *GetSchema() const { return &schema; };
 
   const std::string GetColumnName(const oid_t column_index) const {
     return schema.GetColumn(column_index).GetName();
@@ -185,12 +186,12 @@ class Tile : public Printable {
   // Dictionary Encoding
   //===--------------------------------------------------------------------===//
 
-	inline bool GetDictEncoded() const { return is_dict_encoded; }
-
-	// only encode varchar, assume this tail is full
-	void DictEncode();
-
-  void DictDecode();
+//	inline bool GetDictEncoded() const { return is_dict_encoded; }
+//
+//	// only encode varchar, assume this tail is full
+//	void DictEncode();
+//
+//  void DictDecode();
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -244,17 +245,17 @@ class Tile : public Printable {
   TileGroupHeader *tile_group_header;
 
   // is dictionary encoded
-  bool is_dict_encoded;
-
-  std::vector<type::Value> element_array;
-
-  std::map<type::Value, uint8_t, type::Value::equal_to> dict;
-
-  std::set<oid_t> dict_encoded_columns;
-
-  std::vector<size_t> encoded_column_offsets;
-
-  size_t dict_encoded_tile_size;
+//  bool is_dict_encoded;
+//
+//  std::vector<type::Value> element_array;
+//
+//  std::map<type::Value, uint8_t, type::Value::equal_to> dict;
+//
+//  std::set<oid_t> dict_encoded_columns;
+//
+//  std::vector<size_t> encoded_column_offsets;
+//
+//  size_t dict_encoded_tile_size;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index
