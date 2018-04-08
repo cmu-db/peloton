@@ -35,14 +35,37 @@ namespace brain {
  */
 class BaseTFModel {
  public:
+  // Constructor - sets up session object
+  BaseTFModel();
+  // Destructor - cleans up any generated model files
+  ~BaseTFModel();
+
+  /**
+   * Global variable initialization
+   * Should be called (1) before training for the first time OR (2) when there is
+   * a need for re-training the model.
+   */
   void TFInit();
+
   virtual float TrainEpoch(matrix_eig &data) = 0;
   virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                               matrix_eig &test_pred, bool return_preds) = 0;
-  explicit BaseTFModel(const std::string &graph_path);
+
 
  protected:
   std::unique_ptr<TfSessionEntity<float, float>> tf_session_entity_;
+  // Path to the working directory to use to write graph - Must be set in child constructors
+  std::string modelgen_path_;
+  // Path to the Python TF model to use - Must be set in child constructors
+  std::string pymodel_path_;
+  // Path to the written graph - Must be set in child constructors
+  std::string graph_path_;
+  // Function to Generate the tensorflow model graph.
+  void GenerateModel(const std::string &args_str);
+  // Child classes should set the name of the python model and
+  // corresponding protobuf graph path in this function
+  virtual void SetModelInfo() = 0;
+
 };
 }  // namespace brain
 }  // namespace peloton

@@ -1,22 +1,10 @@
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// LSTM_Model.py
-//
-// Identification: src/brain/modelgen/LSTM_Model.py
-//
-// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
 #===----------------------------------------------------------------------===#
 #
 #                         Peloton
 #
-# LSTM_Model.py
+# LSTM.py
 #
-# Identification: src/brain/modelgen/LSTM_Model.py
+# Identification: src/brain/modelgen/LSTM.py
 #
 # Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 #
@@ -39,7 +27,7 @@ def lazy_property(function):
 
     return decorator
 
-class LSTM_Model:
+class LSTM:
 
     def __init__(self, ntoken, ninp, nhid, nlayers, lr=0.001,
                  dropout_ratio=0.5, clip_norm = 0.5, **kwargs):
@@ -134,3 +122,25 @@ class LSTM_Model:
 
     def __repr__(self):
         return "LSTM"
+
+def main():
+    parser = argparse.ArgumentParser(description='LSTM Model Generator')
+
+
+    parser.add_argument('--nfeats', type=int, default=3, help='Input feature length(input to encoder/linear layer)')
+    parser.add_argument('--nencoded', type=int, default=20, help='Encoded feature length(input to LSTM)')
+    parser.add_argument('--nhid', type=int, default=20, help='Number of LSTM Hidden units')
+    parser.add_argument('--nlayers', type=int, default=2, help='Number of LSTM layers')
+    parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
+    parser.add_argument('--dropout_ratio', type=float, default=0.5, help='Dropout ratio')
+    parser.add_argument('--clip_norm', type=float, default=0.5, help='Clip Norm')
+    parser.add_argument('graph_out_path', type=str, help='Path to write graph output', nargs='+')
+    args = parser.parse_args()
+    model = LSTM(args.nfeats, args.nencoded, args.nhid,
+                       args.nlayers, args.lr, args.dropout_ratio,
+                       args.clip_norm)
+    model.tf_init()
+    model.write_graph(' '.join(args.graph_out_path))
+
+if __name__ == '__main__':
+    main()

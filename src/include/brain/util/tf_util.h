@@ -14,6 +14,10 @@
 
 #include <tensorflow/c/c_api.h>
 
+/**
+ * Simple utility functions associated with Tensorflow
+ */
+
 namespace peloton {
 namespace brain {
 class TFUtil {

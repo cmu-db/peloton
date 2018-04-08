@@ -15,25 +15,25 @@
 namespace peloton {
 namespace brain {
 
-/**
- * Constructor for any Tensorflow model
- * @param graph_path: path to the Tensorflow model graph
- */
-BaseTFModel::BaseTFModel(const std::string &graph_path) {
-  tf_session_entity_ = std::unique_ptr<TfSessionEntity<float, float>>(
-      new TfSessionEntity<float, float>());
-  tf_session_entity_->ImportGraph(graph_path);
-  PELOTON_ASSERT(tf_session_entity_->IsStatusOk());
+
+BaseTFModel::BaseTFModel() {
+  tf_session_entity_ = std::make_unique<TfSessionEntity<float, float>>();
 }
 
-/**
- * Global variable initialization
- * Should be called (1) before training for the first time OR (2) when there is
- * a need for re-training the model.
- */
+BaseTFModel::~BaseTFModel() {
+  remove(graph_path_.c_str());
+}
+
 void BaseTFModel::TFInit() {
   tf_session_entity_->Eval("init");
   PELOTON_ASSERT(tf_session_entity_->IsStatusOk());
+}
+
+void BaseTFModel::GenerateModel(const std::string &args_str) {
+  std::string cmd = "python3 \"" + pymodel_path_ + "\" " + args_str;
+  LOG_DEBUG("Executing command: %s", cmd.c_str());
+  bool succ = system(cmd.c_str());
+  PELOTON_ASSERT(succ == 0);
 }
 }
 }

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// define needed to tell Eigen to use Row-major only
 #include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/util/tf_util.h"
 #include "common/harness.h"
@@ -18,6 +17,7 @@
 #include "brain/util/eigen_util.h"
 #include <numeric>
 #include "brain/workload/lstm_tf.h"
+#include "brain/workload/workload_defaults.h"
 
 namespace peloton {
 namespace test {
@@ -31,20 +31,6 @@ class TensorflowTests : public PelotonTest {};
 TEST_F(TensorflowTests, BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly
   EXPECT_TRUE(brain::TFUtil::GetTFVersion());
-  // Check that the model is indeed generated
-  auto lstm_model_file =
-      FileUtil::GetRelativeToRootPath("/src/brain/modelgen/LSTM.pb");
-  EXPECT_TRUE(FileUtil::Exists(lstm_model_file));
-}
-
-TEST_F(TensorflowTests, TFSessionEntityTest) {
-  auto tf = brain::TfSessionEntity<float, float>();
-  EXPECT_TRUE(tf.IsStatusOk());
-  auto lstm_model_file =
-      FileUtil::GetRelativeToRootPath("/src/brain/modelgen/LSTM.pb");
-  // Import a graph and check that everything worked correctly
-  tf.ImportGraph(lstm_model_file);
-  EXPECT_TRUE(tf.IsStatusOk());
 }
 
 TEST_F(TensorflowTests, BasicEigenTest) {
@@ -58,15 +44,11 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
   // Sine Wave prediction test works here
   int NUM_SAMPLES = 1000;
   int NUM_WAVES = 3;
-  std::string path_to_settings = FileUtil::GetRelativeToRootPath("/src/brain/modelgen/settings.json");
   matrix_eig data = matrix_eig::Zero(NUM_SAMPLES, NUM_WAVES);
   for(int i = 0; i < NUM_WAVES; i++) {
     data.col(i).setLinSpaced(NUM_SAMPLES, NUM_SAMPLES*i, NUM_SAMPLES*(i + 1) - 1);
     data.col(i) = data.col(i).array().sin();
   }
-
-  // Load model/problem specific settings
-  auto settings = FileUtil::LoadJSON(FileUtil::GetRelativeToRootPath("/src/brain/modelgen/settings.json"));
 
   // Offsets for Splitting into Train/Test
   int split_point = NUM_SAMPLES/2;
@@ -81,22 +63,27 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
       data.data() + (data.rows() - split_point) * data.cols(), split_point,
       data.cols());
 
-  // // Seq2Seq LSTM
-  float clip_norm = settings.get<float>("models.LSTM.clip_norm");
-  float dropout_rate = settings.get<float>("models.LSTM.dropout_ratio");
-  int batch_size = settings.get<int>("models.LSTM.batch_size");
-  float lr = settings.get<float>("models.LSTM.lr");
-  std::string path_to_model = FileUtil::GetRelativeToRootPath("/src/brain/modelgen/LSTM.pb");
+  // TimeSeriesLSTM
   int LOG_INTERVAL = 20;
-  // 800 epochs is too much for a test
   int epochs = 100;
-  auto model = peloton::brain::Seq2SeqLSTM(
-      path_to_model, lr, dropout_rate, clip_norm, batch_size,
-      settings.get<int>("horizon"), settings.get<int>("models.LSTM.bptt"),
-      settings.get<int>("segment"));
+  auto model = \
+    std::make_unique<peloton::brain::TimeSeriesLSTM>(brain::WorkloadDefaults::NFEATS,
+                                                     brain::WorkloadDefaults::NENCODED,
+                                                     brain::WorkloadDefaults::NHID,
+                                                     brain::WorkloadDefaults::NLAYERS,
+                                                     brain::WorkloadDefaults::LR,
+                                                     brain::WorkloadDefaults::DROPOUT_RATE,
+                                                     brain::WorkloadDefaults::CLIP_NORM,
+                                                     brain::WorkloadDefaults::BATCH_SIZE,
+                                                     brain::WorkloadDefaults::HORIZON,
+                                                     brain::WorkloadDefaults::BPTT,
+                                                     brain::WorkloadDefaults::SEGMENT);
+
+  // Check that model file has indeed generated
+  EXPECT_TRUE(FileUtil::Exists(FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.pb")));
 
   // Initialize model
-  model.TFInit();
+  model->TFInit();
 
   // Not applying Normalization, since sine waves are [-1, 1]
 
@@ -108,11 +95,11 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
   const float VAL_LOSS_THRESH = 0.05;
   float val_loss = VAL_LOSS_THRESH*2;
   for (int epoch = 1; epoch <= epochs; epoch++) {
-    auto train_loss = model.TrainEpoch(train_data);
+    auto train_loss = model->TrainEpoch(train_data);
     int idx = (epoch - 1) % LOG_INTERVAL;
     train_loss_avg(idx) = train_loss;
     if(epoch % LOG_INTERVAL == 0) {
-      val_loss = model.ValidateEpoch(test_data, y, y_hat, false);
+      val_loss = model->ValidateEpoch(test_data, y, y_hat, false);
       train_loss = train_loss_avg.mean();
       // Below check is not advisable - one off failure chance
       // EXPECT_LE(val_loss, prev_valid_loss);
@@ -124,7 +111,6 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
     }
   }
   EXPECT_LE(val_loss, VAL_LOSS_THRESH);
-
 }
 
 }  // namespace test

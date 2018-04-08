@@ -10,24 +10,58 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "util/file_util.h"
 #include "brain/workload/lstm_tf.h"
 
 namespace peloton {
 namespace brain {
 
-Seq2SeqLSTM::Seq2SeqLSTM(const std::string &graph_path, float learn_rate,
+TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid,
+                         int nlayers, float learn_rate,
                          float dropout_ratio, float clip_norm, int batch_size,
                          int horizon, int bptt, int segment)
-    : BaseTFModel(graph_path),
+    : BaseTFModel(),
       learn_rate_(learn_rate),
       dropout_ratio_(dropout_ratio),
       clip_norm_(clip_norm),
       batch_size_(batch_size),
       horizon_(horizon),
       segment_(segment),
-      bptt_(bptt) {}
+      bptt_(bptt) {
+  // First set the model information to use for generation and imports
+  SetModelInfo();
 
-void Seq2SeqLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset, size_t bsz,
+  // Generate the Model
+  std::string args_str = ConstructModelArgsString(nfeats, nencoded, nhid, nlayers,
+                                                  learn_rate, dropout_ratio, clip_norm);
+  GenerateModel(args_str);
+  // Import the Model
+  tf_session_entity_->ImportGraph(graph_path_);
+}
+
+void TimeSeriesLSTM::SetModelInfo() {
+  modelgen_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen");
+  pymodel_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.py");
+  graph_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.pb");
+}
+
+std::string TimeSeriesLSTM::ConstructModelArgsString(int nfeats, int nencoded,
+                                                  int nhid, int nlayers,
+                                                  float learn_rate, float dropout_ratio,
+                                                  float clip_norm) {
+  std::stringstream args_str_builder;
+  args_str_builder << " --nfeats " << nfeats;
+  args_str_builder << " --nencoded " << nencoded;
+  args_str_builder << " --nhid " << nhid;
+  args_str_builder << " --nlayers " << nlayers;
+  args_str_builder << " --lr " << learn_rate;
+  args_str_builder << " --dropout_ratio " << dropout_ratio;
+  args_str_builder << " --clip_norm " << clip_norm;
+  args_str_builder << " " << this->modelgen_path_;
+  return args_str_builder.str();
+}
+
+void TimeSeriesLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset, size_t bsz,
                            std::vector<float> &data,
                            std::vector<float> &target) {
   size_t samples_per_input = mat.rows() / bsz;
@@ -46,19 +80,7 @@ void Seq2SeqLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset, size_t bs
   }
 }
 
-/**
- * Train the Tensorflow model
- * @param data: Contiguous time-series data
- * @return: Average Training loss
- * Given a continuous sequence of data,
- * this function:
- * 1. breaks the data into batches('Batchify')
- * 2. prepares tensorflow-entity inputs/outputs
- * 3. computes loss and applies backprop
- * Finally the average training loss over all the
- * batches is returned.
- */
-float Seq2SeqLSTM::TrainEpoch(matrix_eig &data) {
+float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
   std::vector<float> losses;
   // Obtain relevant metadata
   int max_allowed_bsz = data.rows() / (horizon_ + bptt_);
@@ -96,18 +118,7 @@ float Seq2SeqLSTM::TrainEpoch(matrix_eig &data) {
   return std::accumulate(losses.begin(), losses.end(), 0.0) / losses.size();
 }
 
-/**
- * @param data: Contiguous time-series data
- * @param test_true: reference variable to which true values are returned
- * @param test_pred: reference variable to which predicted values are returned
- * @param return_preds: Whether to return predicted/true values
- * @return: Average Validation Loss
- * This applies the same set of steps as TrainEpoch.
- * However instead of applying backprop it obtains predicted values.
- * Then the validation loss is calculated for the relevant sequence
- * - this is a function of segment and horizon.
- */
-float Seq2SeqLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
+float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                                  matrix_eig &test_pred, bool return_preds) {
   std::vector<float> y_hat, y;
 

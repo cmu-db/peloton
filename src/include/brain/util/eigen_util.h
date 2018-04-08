@@ -14,7 +14,7 @@
 
 #include <algorithm>
 #include <vector>
-#include "internal_types.h"
+#include "common/internal_types.h"
 
 
 
