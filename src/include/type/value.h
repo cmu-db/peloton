@@ -282,6 +282,8 @@ class Value : public Printable {
   // For unordered_map
   struct equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
+      if (x.GetTypeId() != y.GetTypeId())
+        return false;
       return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::CmpTrue;
     }
   };
