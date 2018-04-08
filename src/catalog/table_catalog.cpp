@@ -574,7 +574,7 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   expression::AbstractExpression *predicate = db_oid_equality_expr;
   std::vector<codegen::WrappedTuple> result_tuples =
-      GetResultWithSeqScan(column_ids, predicate, txn);
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   /*for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {

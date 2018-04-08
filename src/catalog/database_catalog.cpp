@@ -325,7 +325,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
   expression::AbstractExpression *predicate = db_oid_equality_expr;
   std::vector<codegen::WrappedTuple> result_tuples =
-      GetResultWithSeqScan(column_ids, predicate, txn);
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   if (result_tuples.size() == 1) {
     auto database_object =
