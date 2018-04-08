@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// alter_executor.cpp
+//
+// Identification: src/executor/alter_executor.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "executor/alter_executor.h"
 
 #include "catalog/catalog.h"
@@ -10,9 +22,7 @@ namespace executor {
 // Constructor for alter table executor
 AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {
-  context_ = executor_context;
-}
+    : AbstractExecutor(node, executor_context) {}
 
 // Initialize executor
 // Nothing to initialize for now
@@ -27,7 +37,7 @@ bool AlterExecutor::DExecute() {
   LOG_TRACE("Executing Drop...");
   bool result = false;
   const planner::RenamePlan &node = GetPlanNode<planner::RenamePlan>();
-  auto current_txn = context_->GetTransaction();
+  auto current_txn = executor_context_->GetTransaction();
   PlanNodeType plan_node_type = node.GetPlanNodeType();
   if (plan_node_type == PlanNodeType::RENAME) {
     result = RenameColumn(node, current_txn);
