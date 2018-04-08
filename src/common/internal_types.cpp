@@ -428,6 +428,7 @@ std::ostream &operator<<(std::ostream &os, const DropType &type) {
 }
 
 std::string AlterTypeToString(AlterType type) {
+  // TODO: add other AlterType
   switch (type) {
     case AlterType::INVALID: {
       return "INVALID";
