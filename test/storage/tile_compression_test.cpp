@@ -100,7 +100,8 @@ TEST_F(TileCompressionTests, BasicTest) {
 //	auto ut = std::make_unique<storage::Tile>(encodedTile->DictDecode());
 	std::unique_ptr<storage::Tile> ut(encodedTile->DictDecode());
 	tile.swap(ut);
- 
+
+
   // Check whether the decoded tile is same as the original tile.
   
   // check tuple 1
@@ -109,6 +110,7 @@ TEST_F(TileCompressionTests, BasicTest) {
   type::Value val2 = (tile->GetValue(0, 2));
   type::Value val3 = (tile->GetValue(0, 3));
   type::Value val4 = (tile->GetValue(0, 4));
+
 
   type::Value cmp = type::ValueFactory::GetBooleanValue(
       (val0.CompareEquals(type::ValueFactory::GetIntegerValue(11))));

@@ -30,7 +30,7 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 		auto column_type = schema.GetType(i);
 		original_schema_offsets.emplace(offset, i);
 		if ((column_type == type::TypeId::VARCHAR ||
-				column_type == type::TypeId::VARBINARY) && schema.IsInlined(i)) {
+				column_type == type::TypeId::VARBINARY) && !schema.IsInlined(i)) {
 			catalog::Column encoded_column(type::TypeId::TINYINT,
 				type::Type::GetTypeSize(type::TypeId::TINYINT),
 				schema.GetColumn(i).GetName(), true);
@@ -100,14 +100,17 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 			LOG_INFO("encoding column %s", schema.GetColumn(i).column_name.c_str());
 			// to for tuple offset
 			for (oid_t to = 0; to < num_tuple_slots; to++) {
-				auto curr_val = tile->GetValue(to, i);
+				type::Value curr_val = tile->GetValue(to, i);
+				LOG_INFO("%s", curr_val.GetInfo().c_str());
 				// assume the idx take 1 byte
 				char idx_data[1];
 				if (dict.count(curr_val) == 0) {
+					LOG_INFO("Encoding!!!!!");
 					element_array.push_back(curr_val);
 					idx_data[0] = element_array.size() - 1;
 					dict.emplace(curr_val, idx_data[0]);
 				} else {
+					LOG_INFO("Already encoded!!!");
 					idx_data[0] = dict[curr_val];
 				}
 				// many constructor of Value is private, so use
@@ -144,7 +147,7 @@ Tile* DictEncodedTile::DictDecode() {
     if (dict_encoded_columns.count(i) > 0) {
       LOG_INFO("decoding column %s", schema.GetColumn(i).column_name.c_str());
       for (oid_t to = 0; to < num_tuple_slots; to++) {
-        auto curr_val = GetValue(to, i);
+        type::Value curr_val = Tile::GetValue(to, i);
         auto idx = curr_val.GetAs<uint8_t>();
         type::Value actual_val = element_array[idx];
         new_data_vector[i].push_back(actual_val);
@@ -159,10 +162,12 @@ Tile* DictEncodedTile::DictDecode() {
   auto *new_tile = new Tile(backend_type, tile_group_header, original_schema, tile_group, num_tuple_slots);
   for (oid_t i = 0; i < column_count; i++) {
 		for (oid_t to = 0; to < num_tuple_slots; to++) {
-			new_tile->SetValueFast(new_data_vector[i][to], to, schema.GetOffset(i), schema.IsInlined(i),
-					type::Type::GetTypeSize(schema.GetType(i)));
+			new_tile->SetValueFast(new_data_vector[i][to], to, original_schema.GetOffset(i), original_schema.IsInlined(i),
+					type::Type::GetTypeSize(original_schema.GetType(i)));
 		}
 	}
+	LOG_INFO("END of decoding");
+	is_dict_encoded = false;
 	return new_tile;
 }
 

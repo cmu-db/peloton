@@ -57,6 +57,7 @@ char *VarlenType::GetData(char *storage) {
 
 CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
   PELOTON_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() && right.IsNull()) return CmpBool::CmpTrue;
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
