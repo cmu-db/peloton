@@ -69,7 +69,7 @@ class GCManager {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE, const oid_t &tuples_per_tile_group UNUSED_ATTRIBUTE) {}
+  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE, oid_t tuples_per_tile_group UNUSED_ATTRIBUTE) {}
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
