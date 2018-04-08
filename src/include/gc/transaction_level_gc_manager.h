@@ -150,7 +150,10 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual void RegisterTileGroup(const oid_t &table_id, const oid_t &tile_group_id) override {
     auto table_recycle_queues = GetTableRecycleQueues(table_id);
-    PELOTON_ASSERT(table_recycle_queues != nullptr);
+    if (table_recycle_queues == nullptr) {
+      // Expect this condition to be true if registering catalog TileGroups
+      return;
+    }
     auto recycle_queue = std::make_shared<LockFreeQueue<ItemPointer>>(1000);
     //TODO: read tile group size from settings
     table_recycle_queues->Insert(tile_group_id, recycle_queue);
