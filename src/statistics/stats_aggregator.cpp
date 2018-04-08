@@ -192,9 +192,8 @@ void StatsAggregator::UpdateMetrics() {
   auto storage_manager = storage::StorageManager::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp =
-      std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch)
-          .count();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
 
   auto database_count = storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
@@ -202,12 +201,18 @@ void StatsAggregator::UpdateMetrics() {
     auto database = storage_manager->GetDatabaseWithOffset(database_offset);
 
     // Update database metrics table
+    if (!database) continue;
     oid_t database_oid = database->GetOid();
+    std::string database_name;
     try {
-      catalog::Catalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+      auto database_object =
+          catalog::Catalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+      database_name = database_object->GetDatabaseName();
     } catch (CatalogException &e) {
       continue;
     }
+
+    LOG_TRACE("Updating metrics for database: %s", database_name.c_str());
 
     auto database_metric = aggregated_stats_.GetDatabaseMetric(database_oid);
     auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
@@ -322,8 +327,8 @@ void StatsAggregator::RegisterContext(std::thread::id id_,
 
     thread_number_++;
     backend_stats_[id_] = context_;
+    LOG_DEBUG("Stats aggregator hash map size: %ld", backend_stats_.size());
   }
-  // LOG_DEBUG("Stats aggregator hash map size: %ld", backend_stats_.size());
 }
 
 // Unregister a BackendStatsContext. Currently we directly reuse the thread id

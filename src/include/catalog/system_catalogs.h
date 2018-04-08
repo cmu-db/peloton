@@ -46,13 +46,48 @@ class SystemCatalogs {
   void Bootstrap(const std::string &database_name,
                  concurrency::TransactionContext *txn);
 
-  ColumnCatalog *GetColumnCatalog() { return pg_attribute; }
-  TableCatalog *GetTableCatalog() { return pg_table; }
-  IndexCatalog *GetIndexCatalog() { return pg_index; }
-  TriggerCatalog *GetTriggerCatalog() { return pg_trigger; }
-  TableMetricsCatalog *GetTableMetricsCatalog() { return pg_table_metrics; }
-  IndexMetricsCatalog *GetIndexMetricsCatalog() { return pg_index_metrics; }
-  QueryMetricsCatalog *GetQueryMetricsCatalog() { return pg_query_metrics; }
+  ColumnCatalog *GetColumnCatalog() {
+    if (!pg_attribute) {
+      throw CatalogException("Column catalog has not been initialized");
+    }
+    return pg_attribute;
+  }
+  TableCatalog *GetTableCatalog() {
+    if (!pg_table) {
+      throw CatalogException("Table catalog has not been initialized");
+    }
+    return pg_table;
+  }
+  IndexCatalog *GetIndexCatalog() {
+    if (!pg_index) {
+      throw CatalogException("Index catalog has not been initialized");
+    }
+    return pg_index;
+  }
+  TriggerCatalog *GetTriggerCatalog() {
+    if (!pg_trigger) {
+      throw CatalogException("Trigger catalog has not been initialized");
+    }
+    return pg_trigger;
+  }
+  TableMetricsCatalog *GetTableMetricsCatalog() {
+    if (!pg_table_metrics) {
+      throw CatalogException("Table metrics catalog has not been initialized");
+    }
+    return pg_table_metrics;
+  }
+  IndexMetricsCatalog *GetIndexMetricsCatalog() {
+    if (!pg_index_metrics) {
+      throw CatalogException("Index metrics catalog has not been initialized");
+    }
+    return pg_index_metrics;
+  }
+  QueryMetricsCatalog *GetQueryMetricsCatalog() {
+    if (!pg_query_metrics) {
+      throw CatalogException("Query metrics catalog has not been initialized");
+    }
+    return pg_query_metrics;
+  }
 
  private:
   ColumnCatalog *pg_attribute;

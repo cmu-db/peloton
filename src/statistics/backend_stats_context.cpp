@@ -26,8 +26,8 @@
 namespace peloton {
 namespace stats {
 
-CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-    &BackendStatsContext::GetBackendContextMap() {
+CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+BackendStatsContext::GetBackendContextMap() {
   static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
       stats_context_map;
   return stats_context_map;
@@ -225,8 +225,9 @@ void BackendStatsContext::InitQueryMetric(
     const std::shared_ptr<QueryMetric::QueryParams> params) {
   CompleteQueryMetric();
   // TODO currently all queries belong to DEFAULT_DB
-  ongoing_query_metric_.reset(new QueryMetric(
-      MetricType::QUERY, statement->GetQueryString(), params, DEFAULT_DB_ID));
+  ongoing_query_metric_.reset(new QueryMetric(MetricType::QUERY,
+                                              statement->GetQueryString(),
+                                              params, CATALOG_DATABASE_OID));
 }
 
 //===--------------------------------------------------------------------===//
