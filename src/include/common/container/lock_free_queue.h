@@ -38,6 +38,8 @@ class LockFreeQueue {
 
   bool IsEmpty() { return queue_.size_approx() == 0; }
 
+  size_t SizeApprox() const { return queue_.size_approx(); }
+
  private:
   // Underlying moodycamel's concurrent queue
   moodycamel::ConcurrentQueue<T> queue_;

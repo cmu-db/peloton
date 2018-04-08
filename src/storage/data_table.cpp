@@ -89,7 +89,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   // Register non-catalog tables for GC
   if (is_catalog == false) {
     auto &gc_manager = gc::GCManagerFactory::GetInstance();
-    gc_manager.RegisterTable(table_oid);
+    gc_manager.RegisterTable(table_oid, tuples_per_tilegroup);
   }
 
   // Create tile groups.
@@ -1011,6 +1011,15 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
+bool DataTable::IsActiveTileGroup(const oid_t &tile_group_id) const {
+  for (auto tile_group : active_tile_groups_) {
+    if (tile_group_id == tile_group->GetTileGroupId()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
@@ -1027,6 +1036,14 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
     const oid_t &tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
   return manager.GetTileGroup(tile_group_id);
+}
+
+void DataTable::DropTileGroup(const oid_t &tile_group_id) {
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.DeregisterTileGroup(GetOid(), tile_group_id);
+  tile_groups_.Update(tile_group_id, invalid_tile_group_id);
+  auto &manager = catalog::Manager::GetInstance();
+  manager.DropTileGroup(tile_group_id);
 }
 
 void DataTable::DropTileGroups() {

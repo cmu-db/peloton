@@ -150,6 +150,8 @@ class DataTable : public AbstractTable {
   // Get a tile group with given layout
   TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
 
+  void DropTileGroup(const oid_t &tile_group_id);
+
   //===--------------------------------------------------------------------===//
   // TRIGGER
   //===--------------------------------------------------------------------===//
@@ -295,6 +297,10 @@ class DataTable : public AbstractTable {
   }
 
   inline size_t GetActiveTileGroupCount() const { return active_tilegroup_count_; }
+
+  inline size_t GetNumTuplesPerTileGroup() const { return tuples_per_tilegroup_; }
+
+  bool IsActiveTileGroup(const oid_t &tile_group_id) const;
 
   inline static size_t GetActiveIndirectionArrayCount() {
     return default_active_indirection_array_count_;
