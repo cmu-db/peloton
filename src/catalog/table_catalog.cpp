@@ -516,7 +516,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   // ceate predicate refering to seq_scan_test.cpp
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
-  LOG_DEBUG("Result size: %lu", result_tuples.size());
+  //LOG_DEBUG("Result size: %lu", result_tuples.size());
   if (result_tuples.size() == 1) {
     auto table_object =
             std::make_shared<TableCatalogObject>(result_tuples[0], txn);

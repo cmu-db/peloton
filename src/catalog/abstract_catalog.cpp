@@ -269,7 +269,7 @@ AbstractCatalog::GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
   std::unique_ptr<codegen::Query> compiled_query(nullptr);
   cached = (query != nullptr);
-  LOG_DEBUG("cache %d", cached);
+  //LOG_DEBUG("cache %d", cached);
   // if not cached, compile the query and save it into cache
   if (!cached) {
     compiled_query = codegen::QueryCompiler().Compile(

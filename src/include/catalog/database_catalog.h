@@ -44,6 +44,8 @@ class DatabaseCatalogObject {
  public:
   DatabaseCatalogObject(executor::LogicalTile *tile,
                         concurrency::TransactionContext *txn);
+  DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                        concurrency::TransactionContext *txn);
 
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,

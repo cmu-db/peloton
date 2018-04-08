@@ -12,6 +12,7 @@
 
 #include <memory>
 #include <include/expression/expression_util.h>
+#include <include/codegen/buffering_consumer.h>
 
 #include "catalog/database_catalog.h"
 
@@ -31,6 +32,17 @@ DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
+                        .ToString()),
+      table_objects_cache(),
+      table_name_cache(),
+      valid_table_objects(false),
+      txn(txn) {}
+
+DatabaseCatalogObject::DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                             concurrency::TransactionContext *txn)
+    : database_oid(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)
+                       .GetAs<oid_t>()),
+      database_name(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_NAME)
                         .ToString()),
       table_objects_cache(),
       table_name_cache(),
@@ -324,7 +336,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
           db_oid_const_expr);
 
   expression::AbstractExpression *predicate = db_oid_equality_expr;
-  std::vector<codegen::WrappedTuple> result_tuples =
+  auto result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   if (result_tuples.size() == 1) {
