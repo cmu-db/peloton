@@ -123,6 +123,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
+  /*
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
@@ -136,6 +137,27 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
   if (result_tiles->size() == 1) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
+  }*/
+
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::LANNAME);
+  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(lang_name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr,
+          name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
+
+  PL_ASSERT(result_tuples.size() <= 1);
+
+  std::unique_ptr<LanguageCatalogObject> ret;
+  if (result_tuples.size() == 1) {
+    ret.reset(new LanguageCatalogObject(result_tuples[0]));
   }
 
   return ret;
