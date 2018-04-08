@@ -24,6 +24,7 @@ CreatePlan::CreatePlan(std::string database_name, CreateType c_type)
     : database_name(database_name),
       create_type(c_type) {}
 
+//TODO (Yijia): figure out when this is used.
 CreatePlan::CreatePlan(std::string table_name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
                        CreateType c_type)
@@ -32,7 +33,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
       table_schema(schema.release()),
       create_type(c_type) {}
 
-CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
+CreatePlan::CreatePlan(parser::CreateStatement *parse_tree, const std::string tmp_namespace)
 {
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
@@ -43,10 +44,16 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
       database_name = std::string(parse_tree->GetDatabaseName());
+      LOG_INFO("start to create a table with name %s at database %s", table_name.c_str(), database_name.c_str());
       std::vector<catalog::Column> columns;
       std::vector<catalog::Constraint> column_constraints;
 
       create_type = CreateType::TABLE;
+
+      //hack, to be changed later, if temporary then set temp namespace.
+      if(parse_tree->temp) {
+        setNamespace(tmp_namespace);
+      }
 
       // The parser puts the Foreign Key information into an artificial
       // ColumnDefinition.

@@ -81,14 +81,21 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
               DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
               IndexConstraintType::UNIQUE, true, txn, true);
 
+  //added index for name, oid, namespace
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::TABLE_NAME,
-               TableCatalog::ColumnId::DATABASE_OID},
+               TableCatalog::ColumnId::DATABASE_OID,
+               TableCatalog::ColumnId::TABLE_NAMESPACE},
               TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
               IndexConstraintType::UNIQUE, true, txn, true);
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::DATABASE_OID},
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
+              IndexConstraintType::DEFAULT, false, txn, true);
+  //added index for namespace
+  CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
+              {TableCatalog::ColumnId::TABLE_NAMESPACE},
+              TABLE_CATALOG_NAME "_skey2", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
 
   // actual index already added in column_catalog, index_catalog constructor
@@ -109,6 +116,11 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
+  IndexCatalog::GetInstance()->InsertIndex(
+      COLUMN_CATALOG_SKEY2_OID, COLUMN_CATALOG_NAME "_skey2",
+      COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
+
 
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
@@ -122,19 +134,24 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
+  IndexCatalog::GetInstance()->InsertIndex(
+      INDEX_CATALOG_SKEY2_OID, INDEX_CATALOG_NAME "_skey2", INDEX_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
+      {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
                               pool_.get(), txn);
 
   // Insert catalog tables into pg_table
-  pg_table->InsertTable(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
+  //TODO: CHANGE NAMESPACE FOR INTERNAL TABLES - 
+  pg_table->InsertTable(DATABASE_CATALOG_OID, DEFAULT_NAMESPACE, DATABASE_CATALOG_NAME,
                         CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+  pg_table->InsertTable(TABLE_CATALOG_OID, DEFAULT_NAMESPACE, TABLE_CATALOG_NAME,
                         CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
+  pg_table->InsertTable(INDEX_CATALOG_OID, DEFAULT_NAMESPACE, INDEX_CATALOG_NAME,
                         CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
+  pg_table->InsertTable(COLUMN_CATALOG_OID, DEFAULT_NAMESPACE, COLUMN_CATALOG_NAME,
                         CATALOG_DATABASE_OID, pool_.get(), txn);
 
   // Commit transaction
@@ -204,6 +221,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
+
+
 /*@brief   create table
  * @param   database_name    the database which the table belongs to
  * @param   table_name       name of the table to add index on
@@ -220,6 +239,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
 
+  LOG_INFO("create table inside catalog");
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
   // get database oid from pg_database
@@ -229,8 +249,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     throw CatalogException("Can't find Database " + database_name +
                            " to create table");
 
-  // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name);
+  // get table oid from pg_table WITH DEFAULT NAMESPACE
+  auto table_object = database_object->GetTableObject(table_name, DEFAULT_NAMESPACE);
   if (table_object != nullptr)
     throw CatalogException("Table " + table_name + " already exists");
 
@@ -263,7 +283,93 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
 
   // Update pg_table with table info
-  pg_table->InsertTable(table_oid, table_name,
+  pg_table->InsertTable(table_oid, DEFAULT_NAMESPACE, table_name,
+                        database_object->GetDatabaseOid(), pool_.get(), txn);
+  oid_t column_id = 0;
+  for (const auto &column : table->GetSchema()->GetColumns()) {
+    ColumnCatalog::GetInstance()->InsertColumn(
+        table_oid, column.GetName(), column_id, column.GetOffset(),
+        column.GetType(), column.IsInlined(), column.GetConstraints(),
+        pool_.get(), txn);
+
+    // Create index on unique single column
+    if (column.IsUnique()) {
+      std::string col_name = column.GetName();
+      std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
+      CreateIndex(database_name, table_name, {column_id}, index_name, true,
+                  IndexType::BWTREE, txn);
+      LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
+                table_name.c_str());
+    }
+    column_id++;
+  }
+  CreatePrimaryIndex(database_object->GetDatabaseOid(), table_oid, txn);
+  return ResultType::SUCCESS;
+}
+
+/*@brief   create table
+ * @param   database_name    the database which the table belongs to
+ * @param   table_name       name of the table to add index on
+ * @param   table_namespace  namespace of the table to be added
+ * @param   schema           schema, a.k.a metadata of the table
+ * @param   txn              TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::CreateTable(const std::string &database_name,
+                                const std::string &table_name,
+                                const std::string &table_namespace,
+                                std::unique_ptr<catalog::Schema> schema,
+                                concurrency::TransactionContext *txn,
+                                bool is_catalog, oid_t tuples_per_tilegroup) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to create table " +
+                           table_name);
+
+  LOG_INFO("create table inside catalog");
+  LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
+            database_name.c_str());
+  // get database oid from pg_database
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr)
+    throw CatalogException("Can't find Database " + database_name +
+                           " to create table");
+
+  // get table oid from pg_table
+  auto table_object = database_object->GetTableObject(table_name, table_namespace);
+  if (table_object != nullptr)
+    throw CatalogException("Table " + table_name + " already exists");
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database =
+      storage_manager->GetDatabaseWithOid(database_object->GetDatabaseOid());
+
+  // Check duplicate column names
+  std::set<std::string> column_names;
+  auto columns = schema.get()->GetColumns();
+
+  for (auto column : columns) {
+    auto column_name = column.GetName();
+    if (column_names.count(column_name) == 1)
+      throw CatalogException("Can't create table " + table_name +
+                             " with duplicate column name");
+    column_names.insert(column_name);
+  }
+
+  // Create actual table
+  auto pg_table = TableCatalog::GetInstance();
+  oid_t table_oid = pg_table->GetNextOid();
+  bool own_schema = true;
+  bool adapt_table = false;
+  auto table = storage::TableFactory::GetDataTable(
+      database_object->GetDatabaseOid(), table_oid, schema.release(),
+      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog);
+  database->AddTable(table, is_catalog);
+  // put data table object into rw_object_set
+  txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
+
+  // Update pg_table with table info
+  pg_table->InsertTable(table_oid, table_namespace, table_name,
                         database_object->GetDatabaseOid(), pool_.get(), txn);
   oid_t column_id = 0;
   for (const auto &column : table->GetSchema()->GetColumns()) {
@@ -298,7 +404,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                        concurrency::TransactionContext *txn) {
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
-
+  LOG_INFO("START TO CREATE PRIMARY INDEX for %d", table_oid);
   auto storage_manager = storage::StorageManager::GetInstance();
 
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
@@ -371,6 +477,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &index_name, bool unique_keys,
                                 IndexType index_type,
                                 concurrency::TransactionContext *txn) {
+  LOG_INFO("START TO CREATE INDEX %s", index_name.c_str());
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            index_name);

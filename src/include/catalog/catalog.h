@@ -95,6 +95,13 @@ class Catalog {
       bool is_catalog = false,
       oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
+   // Create a table in a database
+  ResultType CreateTable(
+      const std::string &database_name, const std::string &table_name,
+      const std::string &table_namespace, std::unique_ptr<catalog::Schema>, 
+      concurrency::TransactionContext *txn, bool is_catalog = false,
+      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
+
   // Create the primary key index for a table, don't call this function outside
   // catalog.cpp
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,

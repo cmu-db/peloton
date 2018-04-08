@@ -970,6 +970,11 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
 
+  // if the persistance is temporary.
+  if (relation->relpersistence == 't') {
+      result->temp = true;
+  }
+  LOG_INFO("CREATE TABLE WITH %d", result->temp);
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
@@ -1899,7 +1904,7 @@ parser::SQLStatementList *PostgresParser::ParseSQLString(const char *text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  // print_pg_parse_tree(result.tree);
+  print_pg_parse_tree(result.tree);
   parser::SQLStatementList *transform_result;
   try {
     transform_result = ListTransform(result.tree);

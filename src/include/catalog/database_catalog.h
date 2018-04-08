@@ -50,6 +50,9 @@ class DatabaseCatalogObject {
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, bool cached_only = false);
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      const std::string &table_name, const std::string &table_namespace,
+      bool cached_only = false);
 
   bool IsValidTableObjects() {
     // return true if this database object contains all table

@@ -74,6 +74,7 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
+      const std::string table_namespace,
       concurrency::TransactionContext *txn) override;
 
   void OptimizeLoop(int root_group_id,
@@ -104,6 +105,7 @@ class Optimizer : public AbstractOptimizer {
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       parser::SQLStatement *tree, bool &is_ddl_stmt,
+      const std::string &table_namespace,
       concurrency::TransactionContext *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query

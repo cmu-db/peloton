@@ -94,7 +94,9 @@ void Optimizer::OptimizeLoop(int root_group_id,
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
     const std::string default_database_name,
+    const std::string table_namespace,
     concurrency::TransactionContext *txn) {
+  LOG_INFO("build peloton plan tree");
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -109,11 +111,11 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   // Handle ddl statement
   bool is_ddl_stmt;
-  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
+  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, table_namespace, txn);
   if (is_ddl_stmt) {
     return move(ddl_plan);
   }
-
+  LOG_INFO("NOT DDL");
   metadata_.txn = txn;
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
@@ -145,10 +147,12 @@ void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt,
+    const std::string &table_namespace,
     concurrency::TransactionContext *txn) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
+   LOG_INFO("DDL...");
   switch (stmt_type) {
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
@@ -160,14 +164,16 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
+      LOG_INFO("Adding Create plan...");
 
       // This is adapted from the simple optimizer
       auto create_plan =
-          new planner::CreatePlan((parser::CreateStatement *)tree);
+          new planner::CreatePlan((parser::CreateStatement *)tree, table_namespace);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        LOG_INFO("Index");
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
@@ -201,10 +207,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       break;
     }
     case StatementType::TRANSACTION: {
+      LOG_INFO("transaction");
       break;
     }
     case StatementType::CREATE_FUNC: {
       LOG_TRACE("Adding Create function plan...");
+      LOG_INFO("Adding Create function plan...");
       unique_ptr<planner::AbstractPlan> create_func_plan(
           new planner::CreateFunctionPlan(
               (parser::CreateFunctionStatement *)tree));
@@ -212,6 +220,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
+      LOG_INFO("Adding CAnalyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
           static_cast<parser::AnalyzeStatement *>(tree), txn));
       ddl_plan = move(analyze_plan);
@@ -219,12 +228,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     }
     case StatementType::COPY: {
       LOG_TRACE("Adding Copy plan...");
+      LOG_INFO("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
     default:
+      LOG_INFO("DEFAULT FALSE...");
       is_ddl_stmt = false;
   }
   return ddl_plan;

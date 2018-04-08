@@ -17,11 +17,13 @@
 // 0: table_oid (pkey)
 // 1: table_name,
 // 2: database_oid(the database oid that this table belongs to)
+// 3: table_namespace (the namespace of the table)
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid (unique & primary key)
-// 1: table_name & database_oid (unique)
+// 1: table_name & database_oid & table_namespace(unique)
 // 2: database_oid (non-unique)
+// 3: table_namespace (non-unique)
 //
 //===----------------------------------------------------------------------===//
 
@@ -73,6 +75,7 @@ class TableCatalogObject {
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
+  inline const std::string &GetTableNamespace() { return table_namespace; }
   inline oid_t GetDatabaseOid() { return database_oid; }
 
  private:
@@ -80,6 +83,7 @@ class TableCatalogObject {
   oid_t table_oid;
   std::string table_name;
   oid_t database_oid;
+  std::string table_namespace;
 
   // Get index objects
   bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
@@ -128,9 +132,9 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertTable(oid_t table_oid, const std::string &table_name,
-                   oid_t database_oid, type::AbstractPool *pool,
-                   concurrency::TransactionContext *txn);
+  bool InsertTable(oid_t table_oid, const std::string &table_namespace,
+                  const std::string &table_name, oid_t database_oid, 
+                  type::AbstractPool *pool, concurrency::TransactionContext *txn);
   bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
@@ -139,9 +143,14 @@ class TableCatalog : public AbstractCatalog {
  private:
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::TransactionContext *txn);
+  //original one.
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, oid_t database_oid,
+      const std::string &table_name, oid_t database_oid, 
       concurrency::TransactionContext *txn);
+  //added with namespace
+  std::shared_ptr<TableCatalogObject> GetTableObject(
+      const std::string &table_name, const std::string &table_namespace,
+      oid_t database_oid, concurrency::TransactionContext *txn);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
 
@@ -155,14 +164,16 @@ class TableCatalog : public AbstractCatalog {
     TABLE_OID = 0,
     TABLE_NAME = 1,
     DATABASE_OID = 2,
+    TABLE_NAMESPACE = 3,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3};
 
   enum IndexId {
     PRIMARY_KEY = 0,
     SKEY_TABLE_NAME = 1,
     SKEY_DATABASE_OID = 2,
+    SKEY_TABLE_NAMESPACE = 3,
     // Add new indexes here in creation order
   };
 };

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "catalog/schema.h"
+#include "catalog/catalog_defaults.h"
 #include "codegen/query_parameters_map.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
@@ -89,10 +90,19 @@ class AbstractPlan : public Printable {
   // delete this function and pass this information to constructor
   void SetCardinality(int cardinality) { estimated_cardinality_ = cardinality; }
 
+
+  // for temporary namespace
+  void setNamespace(const std::string table_namespace) {
+    table_namespace_ = table_namespace;
+  }
+
+  std::string GetNamespace() const {
+    return table_namespace_;
+  }
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
-
   // Binding allows a plan to track the source of an attribute/column regardless
   // of its position in a tuple.  This binding allows a plan to know the types
   // of all the attributes it uses *before* execution. This is primarily used
@@ -152,6 +162,8 @@ class AbstractPlan : public Printable {
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
+
+  std::string table_namespace_ = DEFAULT_NAMESPACE;
   
   // TODO: This field is harded coded now. This needs to be changed when
   // optimizer has the cost model and cardinality estimation

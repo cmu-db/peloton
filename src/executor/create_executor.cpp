@@ -102,10 +102,10 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   auto current_txn = context_->GetTransaction();
   std::string table_name = node.GetTableName();
   auto database_name = node.GetDatabaseName();
+  std::string table_namespace = node.GetNamespace();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
-
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
-      database_name, table_name, std::move(schema), current_txn);
+      database_name, table_name, table_namespace, std::move(schema), current_txn);
   current_txn->SetResult(result);
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {

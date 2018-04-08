@@ -58,7 +58,7 @@ class CreatePlan : public AbstractPlan {
                       std::unique_ptr<catalog::Schema> schema,
                       CreateType c_type);
 
-  explicit CreatePlan(parser::CreateStatement *parse_tree);
+  explicit CreatePlan(parser::CreateStatement *parse_tree, const std::string tmp_namespace);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::CREATE; }
 
