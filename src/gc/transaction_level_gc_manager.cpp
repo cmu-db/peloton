@@ -263,7 +263,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
 
         // Attempt to free the TileGroup
         if ((!immutable) && recycle_queue->SizeApprox() == table->GetTuplesPerTileGroup() &&
-            table->IsActiveTileGroup(tile_group_id == false)) {
+            table->IsActiveTileGroup(tile_group_id) == false) {
             // TileGroup should be freed
             table->DropTileGroup(tile_group_id);
           }
