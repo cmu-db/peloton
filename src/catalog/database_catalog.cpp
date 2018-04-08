@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <memory>
+#include <include/expression/expression_util.h>
+#include <include/codegen/buffering_consumer.h>
 
 #include "catalog/database_catalog.h"
 
@@ -30,6 +32,17 @@ DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
+                        .ToString()),
+      table_objects_cache(),
+      table_name_cache(),
+      valid_table_objects(false),
+      txn(txn) {}
+
+DatabaseCatalogObject::DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                             concurrency::TransactionContext *txn)
+    : database_oid(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)
+                       .GetAs<oid_t>()),
+      database_name(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_NAME)
                         .ToString()),
       table_objects_cache(),
       table_name_cache(),
@@ -287,6 +300,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) return database_object;
 
+  /*
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
@@ -307,6 +321,35 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   } else {
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
               database_oid);
+  }*/
+
+  // cache miss, get from pg_database
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr,
+          db_oid_const_expr);
+
+  expression::AbstractExpression *predicate = db_oid_equality_expr;
+  auto result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  if (result_tuples.size() == 1) {
+    auto database_object =
+        std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
+    // insert into cache
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
+    (void)success;
+    return database_object;
+  } else {
+    LOG_DEBUG("Found %lu database tiles with oid %u", result_tuples.size(),
+              database_oid);
   }
 
   // return empty object if not found
@@ -326,6 +369,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
   if (database_object) return database_object;
 
+    /*
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SKEY_DATABASE_NAME;  // Index of database_name
@@ -346,9 +390,33 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
       (void)success;
     }
     return database_object;
+  }*/
+
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  expression::AbstractExpression *db_name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::DATABASE_NAME);
+  expression::AbstractExpression *db_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
+  expression::AbstractExpression *db_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_name_expr,
+          db_name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, db_name_equality_expr, txn);
+
+  if (result_tuples.size() == 1) {
+    auto database_object =
+        std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
+    // insert into cache
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
+    (void) success;
+    return database_object;
   }
 
-  // return empty object if not found
+    // return empty object if not found
   return nullptr;
 }
 
