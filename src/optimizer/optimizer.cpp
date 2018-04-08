@@ -145,7 +145,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 // GetOptimizedQueryTree()
 // Return an optimized physical query tree for the given parse tree along
 // with the cost.
-std::unique_ptr<OptimizerContextInfo> Optimizer::PerformOptimization
+std::unique_ptr<OptimizerPlanInfo> Optimizer::PerformOptimization
   (parser::SQLStatement *parsed_statement,
   concurrency::TransactionContext *txn) {
 
@@ -178,7 +178,7 @@ std::unique_ptr<OptimizerContextInfo> Optimizer::PerformOptimization
 
     std::unique_ptr<planner::AbstractPlan> best_plan(nullptr);
 
-    auto info_obj = std::unique_ptr<OptimizerContextInfo>(new OptimizerContextInfo());
+    auto info_obj = std::unique_ptr<OptimizerPlanInfo>(new OptimizerPlanInfo());
 
     // Get the cost.
     auto group = GetMetadata().memo.GetGroupByID(root_id);

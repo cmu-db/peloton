@@ -53,8 +53,8 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
-struct OptimizerContextInfo {
-  OptimizerContextInfo() {};
+struct OptimizerPlanInfo {
+  OptimizerPlanInfo() {};
   std::unique_ptr<planner::AbstractPlan> plan;
   double cost;
 };
@@ -82,7 +82,7 @@ class Optimizer : public AbstractOptimizer {
       const std::string default_database_name,
       concurrency::TransactionContext *txn) override;
 
-  std::unique_ptr<OptimizerContextInfo> PerformOptimization(
+  std::unique_ptr<OptimizerPlanInfo> PerformOptimization(
     parser::SQLStatement *parsed_statement,
     concurrency::TransactionContext *txn);
 
