@@ -100,11 +100,11 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
   return (index_oids);
 }
 
-const std::set<col_triplet> PlanUtil::GetAffectedColumns(
+const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
     catalog::CatalogCache &catalog_cache,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
     const std::string &db_name) {
-  std::set<col_triplet> column_oids;
+  std::vector<col_triplet> column_oids;
   std::string table_name;
   oid_t database_id, table_id;
   auto sql_stmt = sql_stmt_list->GetStatement(0);
@@ -128,7 +128,7 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
                             ->GetTableObject(table_name)
                             ->GetColumnObjects();
       for (auto &column : column_map) {
-        column_oids.emplace(database_id, table_id, column.first);
+        column_oids.emplace_back(database_id, table_id, column.first);
       }
     } break;
     case StatementType::UPDATE: {
@@ -145,7 +145,8 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
         auto col_object = table_object->GetColumnObject(update_clause->column);
-        column_oids.emplace(database_id, table_id, col_object->GetColumnId());
+        column_oids.emplace_back(database_id, table_id,
+                                 col_object->GetColumnId());
       }
     } break;
     case StatementType::SELECT: {
@@ -162,6 +163,9 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
 
         database_id =
             catalog_cache.GetDatabaseObject(db_name)->GetDatabaseOid();
+
+        std::vector<col_triplet> high_col;
+        std::vector<col_triplet> low_col;
 
         std::queue<const AbstractPlan *> scan_queue;
         const AbstractPlan *temp_ptr;
@@ -182,7 +186,7 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
             std::vector<oid_t> output_col_ids;
             temp_scan_ptr->GetOutputColumns(output_col_ids);
             for (const auto col_id : output_col_ids) {
-              column_oids.emplace(database_id, table_id, col_id);
+              low_col.emplace_back(database_id, table_id, col_id);
             }
 
             ExprSet expr_set;
@@ -196,8 +200,8 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
               table_id = catalog_cache.GetDatabaseObject(db_name)
                              ->GetTableObject(tuple_value_expr->GetTableName())
                              ->GetTableOid();
-              column_oids.emplace(database_id, table_id,
-                                  (oid_t)tuple_value_expr->GetColumnId());
+              high_col.emplace_back(database_id, table_id,
+                                    (oid_t)tuple_value_expr->GetColumnId());
             }
 
           } else {
@@ -205,6 +209,14 @@ const std::set<col_triplet> PlanUtil::GetAffectedColumns(
               scan_queue.emplace(temp_ptr->GetChild(idx));
             }
           }
+        }
+
+        for (auto &triplet : high_col) {
+          column_oids.push_back(std::move(triplet));
+        }
+
+        for (auto &triplet : low_col) {
+          column_oids.push_back(std::move(triplet));
         }
 
       } catch (Exception &e) {

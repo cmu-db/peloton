@@ -221,9 +221,11 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  std::set<planner::col_triplet> affected_cols =
+  std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetAffectedColumns(
           txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  std::set<planner::col_triplet> affected_cols(affected_cols_vector.begin(),
+                                               affected_cols_vector.end());
 
   // id and first_name are affected
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
@@ -236,8 +238,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "UPDATE test_table SET first_name = '';";
   stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  affected_cols = planner::PlanUtil::GetAffectedColumns(
+  affected_cols_vector = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
+                                                 affected_cols_vector.end());
 
   // only first_name is affected
   EXPECT_EQ(1, static_cast<int>(affected_cols.size()));
@@ -249,8 +253,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "DELETE FROM test_table;";
   stmt.reset(new Statement("DELETE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  affected_cols = planner::PlanUtil::GetAffectedColumns(
+  affected_cols_vector = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
+                                                 affected_cols_vector.end());
 
   // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
@@ -264,8 +270,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "INSERT INTO test_table VALUES (1, 'pel', 'ton');";
   stmt.reset(new Statement("INSERT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  affected_cols = planner::PlanUtil::GetAffectedColumns(
+  affected_cols_vector = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
+                                                 affected_cols_vector.end());
 
   // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
@@ -279,8 +287,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   query_string = "SELECT id FROM test_table WHERE first_name = last_name;";
   stmt.reset(new Statement("SELECT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  affected_cols = planner::PlanUtil::GetAffectedColumns(
+  affected_cols_vector = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
+                                                 affected_cols_vector.end());
 
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
   expected_oids.clear();
