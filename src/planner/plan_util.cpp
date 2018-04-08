@@ -149,11 +149,34 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
       auto txn = txn_manager.BeginTransaction();
 
       try {
-        auto plan = optimizer->BuildPelotonPlanTree(std::move(sql_stmt_list),
-                                                    db_name, txn);
-        LOG_DEBUG("%s", plan->GetInfo().c_str());
+        auto plan =
+            optimizer->BuildPelotonPlanTree(sql_stmt_list, db_name, txn);
+
+        std::queue<const AbstractPlan *> scan_queue;
+        const AbstractPlan *temp_ptr;
+
+        scan_queue.emplace(plan.get());
+
+        while (!scan_queue.empty()) {
+          temp_ptr = scan_queue.front();
+          scan_queue.pop();
+
+          auto children_size = temp_ptr->GetChildrenSize();
+          if (0 == children_size) {
+            std::vector<oid_t> output_col_ids;
+            temp_ptr->GetOutputColumns(output_col_ids);
+            for (const auto col_id : output_col_ids) {
+              column_oids.insert(col_id);
+            }
+          } else {
+            for (uint32_t idx = 0; idx < children_size; ++idx) {
+              scan_queue.emplace(temp_ptr->GetChild(idx));
+            }
+          }
+        }
+
       } catch (Exception &e) {
-        LOG_TRACE("Exception: %s", e.what());
+        LOG_ERROR("Error in BuildPelotonPlanTree: %s", e.what());
       }
 
       // TODO: should handle transaction commit?

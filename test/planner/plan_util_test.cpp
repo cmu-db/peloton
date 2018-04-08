@@ -270,7 +270,7 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   affected_cols = planner::PlanUtil::GetAffectedColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
-  EXPECT_EQ(0, static_cast<int>(affected_cols.size()));
+  EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
   txn_manager.CommitTransaction(txn);
 }
 
