@@ -89,7 +89,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   // Register non-catalog tables for GC
   if (is_catalog == false) {
     auto &gc_manager = gc::GCManagerFactory::GetInstance();
-    gc_manager.RegisterTable(table_oid, tuples_per_tilegroup);
+    gc_manager.RegisterTable(table_oid, this);
   }
 
   // Create tile groups.

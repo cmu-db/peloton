@@ -253,14 +253,14 @@ void TransactionLevelGCManager::AddToRecycleMap(
 
       auto table_recycle_queues = GetTableRecycleQueues(table_id);
 
-      // if immutable is false and the entry for table_id exists.
-      if ((!immutable) && table_recycle_queues != nullptr) {
+      // Add to a TileGroup's recycle queue to enable freeing eventually
+      if (table_recycle_queues != nullptr) {
         auto recycle_queue = GetTileGroupRecycleQueue(table_recycle_queues, tile_group_id);
         PELOTON_ASSERT(recycle_queue != nullptr);
         recycle_queue->Enqueue(location);
 
         // Attempt to free the TileGroup
-        if (recycle_queue->SizeApprox() == table->GetNumTuplesPerTileGroup() &&
+        if ((!immutable) && recycle_queue->SizeApprox() == table->GetTuplesPerTileGroup() &&
             table->IsActiveTileGroup(tile_group_id == false)) {
             // TileGroup should be freed
             table->DropTileGroup(tile_group_id);
@@ -311,24 +311,33 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
 
   ItemPointer location;
 
-  auto locked_recycle_queues = table_recycle_queues->GetIterator();
-  oid_t tuples_per_tile_group;
-  tuples_per_tile_group_->Find(table_id, tuples_per_tile_group);
+  storage::DataTable *table;
+  tables_->Find(table_id, table);
 
-  for (auto recycle_queue = locked_recycle_queues.begin(); recycle_queue != locked_recycle_queues.end(); recycle_queue++) {
-    if (CanBeUsedForRecycling(recycle_queue->second, tuples_per_tile_group) == true && recycle_queue->second->Dequeue(location) == true) {
-      LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
-                location.offset, table_id);
-      return location;
+  PELOTON_ASSERT(table != nullptr);
+
+  size_t threshold_to_stop_recycling = static_cast<size_t>(table->GetTuplesPerTileGroup() * .9);
+
+  auto locked_recycle_queues = table_recycle_queues->GetIterator();
+  for (auto recycle_queue : locked_recycle_queues) {
+    auto tile_group_id = recycle_queue.first;
+
+    if (table->GetTileGroupById(tile_group_id)->GetHeader()->GetImmutability()) {
+      continue;
+    }
+
+    if (table->IsActiveTileGroup(tile_group_id) ||
+        recycle_queue.second->SizeApprox() < threshold_to_stop_recycling) {
+      // TG is eligible to recycle slots, try to Dequeue next
+      if (recycle_queue.second->Dequeue(location)) {
+        LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
+                  location.offset, table_id);
+        return location;
+      }
     }
   }
 
   return INVALID_ITEMPOINTER;
-}
-
-bool TransactionLevelGCManager::CanBeUsedForRecycling(std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue, const oid_t &tuples_per_tile_group) {
-  oid_t threshold_to_stop_recycling = (tuples_per_tile_group * 9) / 10;
-  return recycle_queue->SizeApprox() < threshold_to_stop_recycling;
 }
 
 void TransactionLevelGCManager::ClearGarbage(int thread_id) {

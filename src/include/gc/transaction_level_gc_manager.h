@@ -50,7 +50,7 @@ class TransactionLevelGCManager : public GCManager {
         peloton::CuckooMap<oid_t, std::shared_ptr<
             peloton::LockFreeQueue<ItemPointer>>>>>>(128);
 
-    tuples_per_tile_group_ = std::make_shared<peloton::CuckooMap<oid_t, oid_t>>(128);
+    tables_ = std::make_shared<peloton::CuckooMap<oid_t, storage::DataTable *>>(128);
   }
 
   virtual ~TransactionLevelGCManager() {}
@@ -113,7 +113,7 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
-  virtual void RegisterTable(oid_t table_id, oid_t tuples_per_tile_group) override {
+  virtual void RegisterTable(oid_t table_id, storage::DataTable *table) override {
     // Insert a new entry for the table
 
     if (recycle_queues_->Contains(table_id)) {
@@ -122,13 +122,13 @@ class TransactionLevelGCManager : public GCManager {
 
     auto table_recycle_queues = std::make_shared<peloton::CuckooMap<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>>(128);
 
-    tuples_per_tile_group_->Insert(table_id, tuples_per_tile_group);
+    tables_->Insert(table_id, table);
     recycle_queues_->Insert(table_id, table_recycle_queues);
 
   }
 
   virtual void DeregisterTable(const oid_t &table_id) override {
-    tuples_per_tile_group_->Erase(table_id);
+    tables_->Erase(table_id);
     recycle_queues_->Erase(table_id);
   }
 
@@ -196,8 +196,6 @@ class TransactionLevelGCManager : public GCManager {
 
   bool ResetTuple(const ItemPointer &);
 
-  bool CanBeUsedForRecycling(std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue, const oid_t &tuples_per_tile_group);
-
   // this function iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
@@ -238,8 +236,8 @@ class TransactionLevelGCManager : public GCManager {
       peloton::CuckooMap<oid_t, std::shared_ptr<
           peloton::LockFreeQueue<ItemPointer>>>>>> recycle_queues_;
 
-  // maps a table id to the number of tuple slots in each TG for that table
-  std::shared_ptr<peloton::CuckooMap<oid_t, oid_t>> tuples_per_tile_group_;
+  // maps a table id to a pointer to that table
+  std::shared_ptr<peloton::CuckooMap<oid_t, storage::DataTable *>> tables_;
 
 };
 }
