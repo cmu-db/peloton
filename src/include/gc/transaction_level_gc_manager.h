@@ -49,6 +49,8 @@ class TransactionLevelGCManager : public GCManager {
     recycle_queues_ = std::make_shared<peloton::CuckooMap<oid_t, std::shared_ptr<
         peloton::CuckooMap<oid_t, std::shared_ptr<
             peloton::LockFreeQueue<ItemPointer>>>>>>(128);
+
+    tuples_per_tile_group_ = std::make_shared<peloton::CuckooMap<oid_t, oid_t>>(128);
   }
 
   virtual ~TransactionLevelGCManager() {}
@@ -111,7 +113,7 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
-  virtual void RegisterTable(const oid_t &table_id) override {
+  virtual void RegisterTable(const oid_t &table_id, const oid_t &tuples_per_tile_group) override {
     // Insert a new entry for the table
 
     if (recycle_queues_->Contains(table_id)) {
@@ -120,10 +122,13 @@ class TransactionLevelGCManager : public GCManager {
 
     auto table_recycle_queues = std::make_shared<peloton::CuckooMap<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>>(128);
 
+    tuples_per_tile_group_->Insert(table_id, tuples_per_tile_group);
     recycle_queues_->Insert(table_id, table_recycle_queues);
+
   }
 
   virtual void DeregisterTable(const oid_t &table_id) override {
+    tuples_per_tile_group_->Erase(table_id);
     recycle_queues_->Erase(table_id);
   }
 
@@ -139,7 +144,7 @@ class TransactionLevelGCManager : public GCManager {
     }
   }
 
-  std::shared_ptr<peloton::LockFreeQueue<ItemPoigcnter>>
+  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>
   GetTileGroupRecycleQueue(std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
       peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues, const oid_t &tile_group_id) const {
     std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
@@ -191,6 +196,8 @@ class TransactionLevelGCManager : public GCManager {
 
   bool ResetTuple(const ItemPointer &);
 
+  bool CanBeUsedForRecycling(std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue, const oid_t &tuples_per_tile_group);
+
   // this function iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
@@ -230,6 +237,10 @@ class TransactionLevelGCManager : public GCManager {
   std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
       peloton::CuckooMap<oid_t, std::shared_ptr<
           peloton::LockFreeQueue<ItemPointer>>>>>> recycle_queues_;
+
+  // maps a table id to the number of tuple slots in each TG for that table
+  std::shared_ptr<peloton::CuckooMap<oid_t, oid_t>> tuples_per_tile_group_;
+
 };
 }
 }  // namespace peloton
