@@ -62,9 +62,13 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   storage_manager->AddDatabaseToStorageManager(pg_catalog);
 
   // Create catalog tables
+  catalogs_.push_back(ColumnCatalog::GetInstance());
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  catalogs_.push_back(pg_database);
   auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  IndexCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  catalogs_.push_back(pg_table);
+  catalogs_.push_back(IndexCatalog::GetInstance(pg_catalog, pool_.get(), txn));
+
   //  ColumnCatalog::GetInstance(); // Called implicitly
 
   // Create indexes on catalog tables, insert them into pg_index
@@ -145,17 +149,18 @@ void Catalog::Bootstrap() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  DatabaseMetricsCatalog::GetInstance(txn);
-  TableMetricsCatalog::GetInstance(txn);
-  IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);  
-  SettingsCatalog::GetInstance(txn);
-  TriggerCatalog::GetInstance(txn);
-  LanguageCatalog::GetInstance(txn);
-  ProcCatalog::GetInstance(txn);
+  catalogs_.push_back(DatabaseMetricsCatalog::GetInstance(txn));
+  catalogs_.push_back(TableMetricsCatalog::GetInstance(txn));
+  catalogs_.push_back(IndexMetricsCatalog::GetInstance(txn));
+  catalogs_.push_back(QueryMetricsCatalog::GetInstance(txn));
+  // TODO(tianyu): WTF?
+  catalogs_.push_back(&SettingsCatalog::GetInstance(txn));
+  catalogs_.push_back(&TriggerCatalog::GetInstance(txn));
+  catalogs_.push_back(&LanguageCatalog::GetInstance(txn));
+  catalogs_.push_back(&ProcCatalog::GetInstance(txn));
   
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    QueryHistoryCatalog::GetInstance(txn);
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
+    catalogs_.push_back(&QueryHistoryCatalog::GetInstance(txn));
   }
 
   txn_manager.CommitTransaction(txn);

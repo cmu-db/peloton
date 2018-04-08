@@ -18,6 +18,7 @@
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
 #include "brain/brain.h"
+#include "catalog/catalog.h"
 
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
@@ -46,6 +47,9 @@ void RunPelotonBrain() {
   // TODO(tianyu): boot up other peloton resources as needed here
   peloton::brain::Brain brain;
   evthread_use_pthreads();
+  auto catalog = peloton::catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+  peloton::settings::SettingsManager::GetInstance().InitializeCatalog();
   // TODO(tianyu): register jobs here
   struct timeval one_second;
   one_second.tv_sec = 1;
