@@ -113,7 +113,7 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
-  virtual void RegisterTable(const oid_t &table_id, const oid_t &tuples_per_tile_group) override {
+  virtual void RegisterTable(oid_t table_id, oid_t tuples_per_tile_group) override {
     // Insert a new entry for the table
 
     if (recycle_queues_->Contains(table_id)) {
