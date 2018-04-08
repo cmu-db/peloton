@@ -17,44 +17,45 @@
 #include <vector>
 
 #include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
-#include "parser/postgresparser.h"
+#include "catalog/database_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
 #include "common/internal_types.h"
 #include "optimizer/optimizer.h"
+#include "parser/postgresparser.h"
 
 namespace parser {
-  class SQLStatementList;
+class SQLStatementList;
 }
 
 namespace catalog {
-  class IndexCatalogObject;
+class IndexCatalogObject;
 }
 
 namespace optimizer {
-  class QueryInfo;
-  class OptimizerContextInfo;
-}
+class QueryInfo;
+class OptimizerContextInfo;
+}  // namespace optimizer
 
 namespace peloton {
 namespace brain {
 
-  // Static class to query what-if cost of an index set.
-  class WhatIfIndex {
-  public:
-    static std::unique_ptr<optimizer::OptimizerPlanInfo>
-      GetCostAndPlanTree(parser::SQLStatement *parsed_query,
-                            std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
-                            std::string database_name);
+// Static class to query what-if cost of an index set.
+class WhatIfIndex {
+ public:
+  static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndPlanTree(
+      parser::SQLStatement *parsed_query,
+      std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
+      std::string database_name);
 
-  private:
+ private:
+  static void FindIndexesUsed(optimizer::GroupID root_id,
+                              optimizer::QueryInfo &query_info,
+                              optimizer::OptimizerMetadata &md);
+  static void GetTablesUsed(parser::SQLStatement *statement,
+                            std::vector<std::string> &table_names);
+};
 
-    static void FindIndexesUsed(optimizer::GroupID root_id,
-                         optimizer::QueryInfo &query_info,
-                         optimizer::OptimizerMetadata &md);
-    static void GetTablesUsed(parser::SQLStatement *statement, std::vector<std::string> &table_names);
-  };
-
-}}
+}  // namespace brain
+}  // namespace peloton
