@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <memory>
+#include <include/expression/expression_util.h>
 
 #include "catalog/database_catalog.h"
 
@@ -287,6 +288,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) return database_object;
 
+  /*
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
@@ -306,6 +308,35 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     return database_object;
   } else {
     LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
+              database_oid);
+  }*/
+
+  // cache miss, get from pg_database
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr,
+          db_oid_const_expr);
+
+  expression::AbstractExpression *predicate = db_oid_equality_expr;
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithSeqScan(column_ids, predicate, txn);
+
+  if (result_tuples.size() == 1) {
+    auto database_object =
+        std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
+    // insert into cache
+    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    PL_ASSERT(success == true);
+    (void)success;
+    return database_object;
+  } else {
+    LOG_DEBUG("Found %lu database tiles with oid %u", result_tuples.size(),
               database_oid);
   }
 

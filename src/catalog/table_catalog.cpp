@@ -560,14 +560,14 @@ TableCatalog::GetTableObjects(oid_t database_oid,
   //std::vector<type::Value> values;
   //values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-    expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-        type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
-    expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-        type::ValueFactory::GetIntegerValue(database_oid).Copy());
-    expression::AbstractExpression *db_oid_equality_expr =
-        expression::ExpressionUtil::ComparisonFactory(
-            ExpressionType::COMPARE_EQUAL, db_oid_expr,
-            db_oid_const_expr);
+  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr,
+          db_oid_const_expr);
 
   //auto result_tiles =
   //    GetResultWithIndexScan(column_ids, index_offset, values, txn);
