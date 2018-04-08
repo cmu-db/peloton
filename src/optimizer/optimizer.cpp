@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,16 +21,16 @@
 #include "common/exception.h"
 
 #include "optimizer/binding.h"
+#include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/optimize_context.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/plan_generator.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_to_operator_transformer.h"
-#include "optimizer/input_column_deriver.h"
-#include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/optimizer_task_pool.h"
-#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -46,13 +46,13 @@
 
 #include "binder/bind_node_visitor.h"
 
-using std::vector;
-using std::unordered_map;
-using std::shared_ptr;
-using std::unique_ptr;
+using std::make_shared;
 using std::move;
 using std::pair;
-using std::make_shared;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::unordered_map;
+using std::vector;
 
 namespace peloton {
 namespace optimizer {
@@ -145,15 +145,15 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 // GetOptimizedQueryTree()
 // Return an optimized physical query tree for the given parse tree along
 // with the cost.
-std::unique_ptr<OptimizerPlanInfo> Optimizer::PerformOptimization
-  (parser::SQLStatement *parsed_statement,
-  concurrency::TransactionContext *txn) {
-
+std::unique_ptr<OptimizerPlanInfo> Optimizer::PerformOptimization(
+    parser::SQLStatement *parsed_statement,
+    concurrency::TransactionContext *txn) {
   metadata_.txn = txn;
 
   // Generate initial operator tree to work with from the parsed
   // statement object.
-  std::shared_ptr<GroupExpression> g_expr = InsertQueryTree(parsed_statement, txn);
+  std::shared_ptr<GroupExpression> g_expr =
+      InsertQueryTree(parsed_statement, txn);
   GroupID root_id = g_expr->GetGroupID();
 
   // Get the physical properties of the final plan that must be enforced
@@ -173,7 +173,7 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::PerformOptimization
     // physical index (BwTree)
     // Commenting this code for now to avoid segfault.
 
-    //auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+    // auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
     //                                query_info.output_exprs);
 
     std::unique_ptr<planner::AbstractPlan> best_plan(nullptr);
@@ -336,8 +336,7 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:
-      ;
+    default:;
   }
 
   return QueryInfo(output_exprs, physical_props);
