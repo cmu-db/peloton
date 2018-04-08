@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/codegen/buffering_consumer.h>
-#include <include/expression/expression_util.h>
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 #include "catalog/language_catalog.h"
 
 #include "catalog/catalog.h"

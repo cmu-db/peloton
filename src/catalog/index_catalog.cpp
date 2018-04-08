@@ -13,8 +13,8 @@
 #include "catalog/index_catalog.h"
 
 #include <sstream>
-#include <include/codegen/buffering_consumer.h>
-#include <include/expression/expression_util.h>
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 
 #include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"

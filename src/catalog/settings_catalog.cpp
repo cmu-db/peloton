@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "include/expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/catalog.h"
 #include "executor/logical_tile.h"
@@ -94,7 +96,7 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 
 std::string SettingsCatalog::GetSettingValue(const std::string &name,
                                              concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  /*std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -109,13 +111,36 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
     }
+  }*/
+
+  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+
+  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::NAME);
+  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr,
+          name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
+
+  std::string config_value = "";
+  PL_ASSERT(result_tuples.size() <= 1);
+  if (result_tuples.size() != 0) {
+
+    config_value = (result_tuples[0]).GetValue(0).ToString();
+
   }
+
   return config_value;
 }
 
 std::string SettingsCatalog::GetDefaultValue(const std::string &name,
                                              concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  /*std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -130,6 +155,25 @@ std::string SettingsCatalog::GetDefaultValue(const std::string &name,
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
     }
+  }*/
+  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+
+  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::VARCHAR, 0, ColumnId::NAME);
+  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr,
+          name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
+
+  std::string config_value = "";
+  PL_ASSERT(result_tuples.size() <= 1);
+  if (result_tuples.size() != 0) {
+      config_value = result_tuples[0].GetValue(0).ToString();
   }
   return config_value;
 }

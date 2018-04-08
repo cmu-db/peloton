@@ -45,7 +45,7 @@ class SettingsCatalog : public AbstractCatalog {
   std::string GetDefaultValue(const std::string &name,
                               concurrency::TransactionContext *txn);
 
-  enum class ColumnId {
+  enum ColumnId {
     NAME = 0,
     VALUE = 1,
     VALUE_TYPE = 2,
