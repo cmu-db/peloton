@@ -13,6 +13,7 @@
 #include "common/harness.h"
 
 #include "storage/tile.h"
+#include "storage/dictionary_encoding_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple_iterator.h"
 #include "type/value_factory.h"
@@ -90,10 +91,15 @@ TEST_F(TileCompressionTests, BasicTest) {
   tile->InsertTuple(2, tuple3.get());
   
   // encode the tile
-  tile->DictEncode();
+	std::unique_ptr<storage::DictEncodedTile> encodedTile(
+		new storage::DictEncodedTile(BackendType::MM, header.get(), *schema, nullptr, tuple_count));
+//  tile->DictEncode();
+	encodedTile->DictEncode(tile.get());
   // decode the tile
-  tile->DictDecode();
-
+//  tile->DictDecode();
+//	auto ut = std::make_unique<storage::Tile>(encodedTile->DictDecode());
+	std::unique_ptr<storage::Tile> ut(encodedTile->DictDecode());
+	tile.swap(ut);
  
   // Check whether the decoded tile is same as the original tile.
   
