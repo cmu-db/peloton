@@ -40,20 +40,21 @@ namespace optimizer {
 
 namespace peloton {
 namespace brain {
-#define COST_INVALID -1
+
+  // Static class to query what-if cost of an index set.
   class WhatIfIndex {
   public:
-    WhatIfIndex();
-    std::unique_ptr<optimizer::OptimizerContextInfo>
-      GetCostAndPlanTree(std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
+    static std::unique_ptr<optimizer::OptimizerPlanInfo>
+      GetCostAndPlanTree(parser::SQLStatement *parsed_query,
                             std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
                             std::string database_name);
 
   private:
 
-    void FindIndexesUsed(optimizer::GroupID root_id,
+    static void FindIndexesUsed(optimizer::GroupID root_id,
                          optimizer::QueryInfo &query_info,
                          optimizer::OptimizerMetadata &md);
+    static void GetTablesUsed(parser::SQLStatement *statement, std::vector<std::string> &table_names);
   };
 
 }}
