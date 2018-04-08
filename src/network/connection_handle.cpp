@@ -569,6 +569,8 @@ Transition ConnectionHandle::CloseSocket() {
         continue;
       }
     }
+    //drop all the temporary table.
+    traffic_cop_.DropTempTables();
     LOG_DEBUG("Already Closed the connection %d", sock_fd_);
     return Transition::NONE;
   }

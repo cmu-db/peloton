@@ -149,6 +149,8 @@ class TrafficCop {
     session_namespace_ = std::move(session_namespace);
   }
 
+  void DropTempTables();
+
   // TODO: this member variable should be in statement_ after parser part
   // finished
   std::string query_;

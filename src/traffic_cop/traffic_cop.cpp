@@ -608,5 +608,16 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
+void TrafficCop::DropTempTables() {
+  // begin a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto pg_catalog = catalog::Catalog::GetInstance();
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  pg_catalog->DropTempTables(session_namespace_, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace tcop
 }  // namespace peloton

@@ -153,7 +153,8 @@ class TableCatalog : public AbstractCatalog {
       oid_t database_oid, concurrency::TransactionContext *txn);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
-
+  std::vector<std::shared_ptr<TableCatalogObject>>
+  GetTableObjects(const std::string &table_namespace, concurrency::TransactionContext *txn);
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::TransactionContext *txn);

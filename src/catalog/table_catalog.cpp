@@ -594,5 +594,38 @@ TableCatalog::GetTableObjects(oid_t database_oid,
   return database_object->GetTableObjects();
 }
 
+/*@brief   read table catalog objects from pg_table using namespace
+ * @param   table_namespace
+ * @param   txn     TransactionContext
+ * @return  table catalog objects
+ */
+std::vector<std::shared_ptr<TableCatalogObject>>
+TableCatalog::GetTableObjects(const std::string &table_namespace,
+                              concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+
+  //can't get from cache.
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SKEY_TABLE_NAMESPACE;  // Index of table namespace.
+  std::vector<type::Value> values;
+   values.push_back(
+      type::ValueFactory::GetVarcharValue(table_namespace, nullptr).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  std::vector<std::shared_ptr<TableCatalogObject>> result_objects;
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      auto table_object =
+          std::make_shared<TableCatalogObject>(tile.get(), txn, tuple_id);
+      result_objects.push_back(table_object);
+    }
+  }
+  return result_objects;
+}
+
 }  // namespace catalog
 }  // namespace peloton

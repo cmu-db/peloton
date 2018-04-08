@@ -911,6 +911,23 @@ void Catalog::AddDatabase(storage::Database *database) {
   txn_manager.CommitTransaction(txn);
 }
 
+
+/**
+ * Drop all the temporary tables associated with the namespace.
+ */
+void Catalog::DropTempTables(const std::string &session_namespace,
+                      concurrency::TransactionContext *txn) {
+    auto pg_table = TableCatalog::GetInstance();
+    //get all the tables to be dropped
+    auto tables_dropped = pg_table->GetTableObjects(session_namespace, txn);
+    //drop all tables.
+    for(auto iter = tables_dropped.begin(); iter != tables_dropped.end(); iter++) {
+       //is this a safeway to use?
+       auto table_ptr = *iter;
+       DropTable(table_ptr->GetDatabaseOid(), table_ptr->GetTableOid(), txn);
+    }
+}
+
 //===--------------------------------------------------------------------===//
 // HELPERS
 //===--------------------------------------------------------------------===//
