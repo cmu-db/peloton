@@ -100,12 +100,13 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
   return (index_oids);
 }
 
-const std::set<oid_t> PlanUtil::GetAffectedColumns(
+const std::set<col_triplet> PlanUtil::GetAffectedColumns(
     catalog::CatalogCache &catalog_cache,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
     const std::string &db_name) {
-  std::set<oid_t> column_oids;
+  std::set<col_triplet> column_oids;
   std::string table_name;
+  oid_t database_id, table_id;
   auto sql_stmt = sql_stmt_list->GetStatement(0);
   switch (sql_stmt->GetType()) {
     // For INSERT, DELETE, all columns are affected
@@ -119,11 +120,15 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
         auto &delete_stmt = static_cast<parser::DeleteStatement &>(*sql_stmt);
         table_name = delete_stmt.GetTableName();
       }
+      database_id = catalog_cache.GetDatabaseObject(db_name)->GetDatabaseOid();
+      table_id = catalog_cache.GetDatabaseObject(db_name)
+                     ->GetTableObject(table_name)
+                     ->GetTableOid();
       auto column_map = catalog_cache.GetDatabaseObject(db_name)
                             ->GetTableObject(table_name)
                             ->GetColumnObjects();
       for (auto &column : column_map) {
-        column_oids.insert(column.first);
+        column_oids.emplace(database_id, table_id, column.first);
       }
     } break;
     case StatementType::UPDATE: {
@@ -131,6 +136,8 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
       table_name = update_stmt.table->GetTableName();
       auto db_object = catalog_cache.GetDatabaseObject(db_name);
       auto table_object = db_object->GetTableObject(table_name);
+      database_id = db_object->GetDatabaseOid();
+      table_id = table_object->GetTableOid();
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -138,7 +145,7 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
         auto col_object = table_object->GetColumnObject(update_clause->column);
-        column_oids.insert(col_object->GetColumnId());
+        column_oids.emplace(database_id, table_id, col_object->GetColumnId());
       }
     } break;
     case StatementType::SELECT: {
@@ -152,6 +159,9 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
       try {
         auto plan =
             optimizer->BuildPelotonPlanTree(sql_stmt_list, db_name, txn);
+
+        database_id =
+            catalog_cache.GetDatabaseObject(db_name)->GetDatabaseOid();
 
         std::queue<const AbstractPlan *> scan_queue;
         const AbstractPlan *temp_ptr;
@@ -167,10 +177,12 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
               PlanNodeType::INDEXSCAN == temp_ptr->GetPlanNodeType()) {
             auto temp_scan_ptr = static_cast<const AbstractScan *>(temp_ptr);
 
+            table_id = temp_scan_ptr->GetTable()->GetOid();
+
             std::vector<oid_t> output_col_ids;
             temp_scan_ptr->GetOutputColumns(output_col_ids);
             for (const auto col_id : output_col_ids) {
-              column_oids.insert(col_id);
+              column_oids.emplace(database_id, table_id, col_id);
             }
 
             ExprSet expr_set;
@@ -181,12 +193,11 @@ const std::set<oid_t> PlanUtil::GetAffectedColumns(
               auto tuple_value_expr =
                   static_cast<const expression::TupleValueExpression *>(expr);
 
-              //                LOG_DEBUG("table_name: %s",
-              //                          tuple_value_expr->GetTableName().c_str());
-              //                LOG_DEBUG("column_name: %s column_id: %d",
-              //                          tuple_value_expr->GetColumnName().c_str(),
-              //                          tuple_value_expr->GetColumnId());
-              column_oids.insert((oid_t)tuple_value_expr->GetColumnId());
+              table_id = catalog_cache.GetDatabaseObject(db_name)
+                             ->GetTableObject(tuple_value_expr->GetTableName())
+                             ->GetTableOid();
+              column_oids.emplace(database_id, table_id,
+                                  (oid_t)tuple_value_expr->GetColumnId());
             }
 
           } else {

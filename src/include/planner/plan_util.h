@@ -14,6 +14,7 @@
 
 #include <set>
 #include <string>
+#include <tuple>
 
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
@@ -35,6 +36,7 @@ class SQLStatement;
 }  // namespace parser
 
 namespace planner {
+typedef std::tuple<oid_t, oid_t, oid_t> col_triplet;
 
 class PlanUtil {
  public:
@@ -70,7 +72,7 @@ class PlanUtil {
   * @param DBName
   * @return set of affected column ids
   */
-  static const std::set<oid_t> GetAffectedColumns(
+  static const std::set<col_triplet> GetAffectedColumns(
       catalog::CatalogCache &catalog_cache,
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
       const std::string &db_name);

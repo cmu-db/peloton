@@ -176,6 +176,7 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
 
   catalog->CreateDatabase(TEST_DB_COLUMNS, txn);
   auto db = catalog->GetDatabaseWithName(TEST_DB_COLUMNS, txn);
+  oid_t database_id = db->GetOid();
   // Insert a table first
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -196,6 +197,7 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
 
   txn = txn_manager.BeginTransaction();
   auto source_table = db->GetTableWithName("test_table");
+  oid_t table_id = source_table->GetOid();
   oid_t id_col_oid =
       source_table->GetSchema()->GetColumnID(id_column.column_name);
   oid_t fname_col_oid =
@@ -219,12 +221,15 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  std::set<oid_t> affected_cols = planner::PlanUtil::GetAffectedColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+  std::set<planner::col_triplet> affected_cols =
+      planner::PlanUtil::GetAffectedColumns(
+          txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   // id and first_name are affected
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
-  std::set<oid_t> expected_oids{id_col_oid, fname_col_oid};
+  std::set<planner::col_triplet> expected_oids;
+  expected_oids.emplace(database_id, table_id, id_col_oid);
+  expected_oids.emplace(database_id, table_id, fname_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);
 
   // first_name is affected
@@ -236,7 +241,8 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
 
   // only first_name is affected
   EXPECT_EQ(1, static_cast<int>(affected_cols.size()));
-  expected_oids = std::set<oid_t>({fname_col_oid});
+  expected_oids.clear();
+  expected_oids.emplace(database_id, table_id, fname_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);
 
   // ====== DELETE statements check ===
@@ -248,7 +254,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
 
   // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
-  expected_oids = std::set<oid_t>({id_col_oid, fname_col_oid, lname_col_oid});
+  expected_oids.clear();
+  expected_oids.emplace(database_id, table_id, lname_col_oid);
+  expected_oids.emplace(database_id, table_id, id_col_oid);
+  expected_oids.emplace(database_id, table_id, fname_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);
 
   // ========= INSERT statements check ==
@@ -260,7 +269,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
 
   // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
-  expected_oids = std::set<oid_t>({id_col_oid, fname_col_oid, lname_col_oid});
+  expected_oids.clear();
+  expected_oids.emplace(database_id, table_id, lname_col_oid);
+  expected_oids.emplace(database_id, table_id, id_col_oid);
+  expected_oids.emplace(database_id, table_id, fname_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);
 
   // ========= SELECT statement check ==
@@ -271,7 +283,10 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
 
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
-  expected_oids = std::set<oid_t>({id_col_oid, fname_col_oid, lname_col_oid});
+  expected_oids.clear();
+  expected_oids.emplace(database_id, table_id, lname_col_oid);
+  expected_oids.emplace(database_id, table_id, id_col_oid);
+  expected_oids.emplace(database_id, table_id, fname_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);
   txn_manager.CommitTransaction(txn);
 }
