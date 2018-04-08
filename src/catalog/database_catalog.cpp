@@ -386,13 +386,13 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
       type::TypeId::VARCHAR, 0, ColumnId::DATABASE_NAME);
   expression::AbstractExpression *db_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
       type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
-  expression::AbstractExpression *table_name_equality_expr =
+  expression::AbstractExpression *db_name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, db_name_expr,
           db_name_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
-      GetResultWithCompiledSeqScan(column_ids, table_name_equality_expr, txn);
+      GetResultWithCompiledSeqScan(column_ids, db_name_equality_expr, txn);
 
   if (result_tuples.size() == 1) {
     auto database_object =
