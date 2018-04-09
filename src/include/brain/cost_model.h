@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration.h
+// cost_model.h
 //
-// Identification: src/include/brain/configuration.h
+// Identification: src/include/brain/cost_model.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -12,27 +12,21 @@
 
 #pragma once
 
-#include <vector>
-
-#include "catalog/index_catalog.h"
-
 namespace peloton {
 namespace brain {
 
 //===--------------------------------------------------------------------===//
-// Configuration
+// CostModel
 //===--------------------------------------------------------------------===//
 
-class Configuration {
+class CostModel {
  public:
   /**
    * @brief Constructor
    */
-  Configuration() {}
+  CostModel() {}
 
  private:
-  // The set of hypothetical indexes in the configuration
-  std::vector<std::shared_ptr<IndexCatalogObject>> indexes_;
 
 };
 
