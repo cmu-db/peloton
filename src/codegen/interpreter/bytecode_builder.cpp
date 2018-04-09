@@ -1627,7 +1627,7 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
       // function call
 
       // lookup function pointer in code context
-      void *raw_pointer = code_context_.LookupBuiltinImpl(function_name);
+      void *raw_pointer = code_context_.LookupBuiltin(function_name).second;
 
       if (raw_pointer == nullptr) {
         throw NotSupportedException("could not find external function: " +

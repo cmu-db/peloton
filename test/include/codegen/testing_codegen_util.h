@@ -109,7 +109,7 @@ class PelotonCodeGenTest : public PelotonTest {
 
   // Compile and execute the given plan
   CodeGenStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
+      planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer);
 
   CodeGenStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,

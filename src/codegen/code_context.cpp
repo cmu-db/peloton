@@ -44,8 +44,9 @@ namespace {
 class PelotonMemoryManager : public llvm::SectionMemoryManager {
  public:
   explicit PelotonMemoryManager(
-      const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols)
-      : symbols_(symbols) {}
+      const std::unordered_map<std::string,
+                               std::pair<llvm::Function *, CodeContext::FuncPtr>> &builtins)
+      : builtins_(builtins) {}
 
 #if LLVM_VERSION_GE(4, 0)
 #define RET_TYPE llvm::JITSymbol
@@ -56,8 +57,6 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
 #define BUILD_RET_TYPE(addr) \
   (RET_TYPE{(uint64_t)addr, llvm::JITSymbolFlags::Exported})
 #endif
-
-  /// Find the address of the function with the given name
   RET_TYPE findSymbol(const std::string &name) override {
     LOG_TRACE("Looking up symbol '%s' ...", name.c_str());
     if (auto *builtin = LookupSymbol(name)) {
@@ -68,7 +67,6 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
     LOG_TRACE("--> Not builtin, use fallback resolution ...");
     return llvm::SectionMemoryManager::findSymbol(name);
   }
-
 #undef RET_TYPE
 #undef BUILD_RET_TYPE
 
@@ -260,7 +258,7 @@ void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
 void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
                                   CodeContext::FuncPtr func_impl) {
   const auto name = func_decl->getName();
-  if (LookupBuiltinType(name) != nullptr) {
+  if (LookupBuiltin(name).first != nullptr) {
     LOG_DEBUG("Builtin '%s' already registered, skipping ...", name.data());
     return;
   }
@@ -274,29 +272,29 @@ void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
   builtins_[name] = std::make_pair(func_decl, func_impl);
 }
 
-llvm::Function *CodeContext::LookupBuiltin(const std::string &name) const {
+std::pair<llvm::Function *, CodeContext::FuncPtr> CodeContext::LookupBuiltin(const std::string &name) const {
   auto iter = builtins_.find(name);
-  return (iter == builtins_.end() ? nullptr : iter->second);
+  return (iter == builtins_.end() ? std::make_pair<llvm::Function *, CodeContext::FuncPtr>(nullptr, nullptr) : iter->second);
 }
 
 /// Verify all the functions that were created in this context
-bool CodeContext::Verify() {
+void CodeContext::Verify() {
   // Verify the module is okay
   llvm::raw_ostream &errors = llvm::errs();
   if (llvm::verifyModule(*module_, &errors)) {
-    // There is an error in the module that failed compilation.
+    // There is an error in the module.
     // Dump the crappy IR to the log ...
     LOG_ERROR("ERROR IN MODULE:\n%s\n", GetIR().c_str());
-    return false;
+
+    throw Exception("The generated LLVM code contains errors. ");
   }
 
   // All is well
   is_verified_ = true;
-  return true;
 }
 
 /// Optimize all the functions that were created in this context
-bool CodeContext::Optimize() {
+void CodeContext::Optimize() {
   // make sure the code is verified
   if (!is_verified_) Verify();
 
@@ -306,13 +304,10 @@ bool CodeContext::Optimize() {
     pass_manager_->run(*func_iter.first);
   }
   pass_manager_->doFinalization();
-
-  // All is well
-  return true;
 }
 
 /// JIT compile all the functions that were created in this context
-bool CodeContext::Compile() {
+void CodeContext::Compile() {
   // make sure the code is verified
   if (!is_verified_) Verify();
 
@@ -333,12 +328,10 @@ bool CodeContext::Compile() {
   }
 
   // Log the module
+  LOG_TRACE("%s\n", GetIR().c_str());
   if (settings::SettingsManager::GetBool(settings::SettingId::dump_ir)) {
     LOG_DEBUG("%s\n", GetIR().c_str());
   }
-
-  // All is well
-  return true;
 }
 
 size_t CodeContext::GetTypeSize(llvm::Type *type) const {
@@ -358,6 +351,7 @@ size_t CodeContext::GetTypeAllocSizeInBits(llvm::Type *type) const {
   return GetDataLayout().getTypeAllocSizeInBits(type);
 }
 
+// TODO(marcel) same as LookupBuiltin?
 CodeContext::FuncPtr CodeContext::GetRawFunctionPointer(
     llvm::Function *fn) const {
   for (const auto &iter : functions_) {

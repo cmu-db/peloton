@@ -157,9 +157,7 @@ class CodeGen {
   // Function lookup and registration
   //===--------------------------------------------------------------------===//
   llvm::Type *LookupType(const std::string &name) const;
-  llvm::Function *LookupBuiltin(const std::string &fn_name) const {
-    return code_context_.LookupBuiltinType(fn_name);
-  }
+  std::pair<llvm::Function *, CodeContext::FuncPtr> LookupBuiltin(const std::string &name) const;
   llvm::Function *RegisterBuiltin(const std::string &fn_name,
                                   llvm::FunctionType *fn_type, void *func_impl);
 

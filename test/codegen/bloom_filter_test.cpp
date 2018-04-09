@@ -165,7 +165,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
     func.ReturnAndFinish();
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
                         int *);

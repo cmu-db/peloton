@@ -311,7 +311,7 @@ llvm::Function *CodeGen::RegisterBuiltin(const std::string &fn_name,
                                          llvm::FunctionType *fn_type,
                                          void *func_impl) {
   // Check if this is already registered as a built in, quit if to
-  auto *builtin = LookupBuiltin(fn_name);
+  auto *builtin = LookupBuiltin(fn_name).first;
   if (builtin != nullptr) {
     return builtin;
   }
@@ -331,6 +331,10 @@ llvm::Function *CodeGen::RegisterBuiltin(const std::string &fn_name,
 llvm::Type *CodeGen::LookupType(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
+
+std::pair<llvm::Function *, CodeContext::FuncPtr> CodeGen::LookupBuiltin(const std::string &name) const {
+  return code_context_.LookupBuiltin(name);
+};
 
 llvm::Value *CodeGen::GetState() const {
   auto *func_builder = code_context_.GetCurrentFunction();

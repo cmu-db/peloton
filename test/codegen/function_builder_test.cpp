@@ -35,7 +35,7 @@ TEST_F(FunctionBuilderTest, ConstructSingleFunction) {
     func.ReturnAndFinish(cg.Const32(magic_num));
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*func_t)(void);
   func_t fn = (func_t) code_context.GetRawFunctionPointer(func.GetFunction());
@@ -80,7 +80,7 @@ TEST_F(FunctionBuilderTest, ConstructNestedFunction) {
   }
 
   // Make sure we can compile everything
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*func_t)(uint32_t);
   func_t fn = (func_t) code_context.GetRawFunctionPointer(main.GetFunction());

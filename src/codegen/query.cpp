@@ -19,6 +19,7 @@
 #include "codegen/execution_consumer.h"
 #include "executor/executor_context.h"
 #include "storage/storage_manager.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -57,18 +58,8 @@ void Query::Execute(executor::ExecutorContext &executor_context,
       ExecuteInterpreter(func_args, stats);
     } catch (interpreter::NotSupportedException e) {
       LOG_ERROR("query not supported by interpreter: %s", e.what());
-
-      executor::ExecutionResult result;
-      result.m_result = ResultType::INVALID;
-      on_complete(result);
-      return;
     }
   }
-
-  executor::ExecutionResult result;
-  result.m_result = ResultType::SUCCESS;
-  result.m_processed = executor_context->num_processed;
-  on_complete(result);
 }
 
 void Query::Prepare(const LLVMFunctions &query_funcs) {
@@ -88,7 +79,7 @@ void Query::Prepare(const LLVMFunctions &query_funcs) {
   is_compiled_ = false;
 }
 
-bool Query::Compile(CompileStats *stats) {
+void Query::Compile(CompileStats *stats) {
   // Timer
   Timer<std::milli> timer;
   if (stats != nullptr) {
@@ -97,12 +88,7 @@ bool Query::Compile(CompileStats *stats) {
 
   // Compile all functions in context
   LOG_TRACE("Starting Query compilation ...");
-
-  // TODO(marcel): for now Compile() will always return true, find a way to
-  // catch compilation errors from LLVM
-  if (!code_context_.Compile()) {
-    return false;
-  }
+  code_context_.Compile();
 
   // Get pointers to the JITed functions
   compiled_functions_.init_func =
@@ -130,8 +116,6 @@ bool Query::Compile(CompileStats *stats) {
     stats->compile_ms = timer.GetDuration();
     timer.Reset();
   }
-
-  return true;
 }
 
 bool Query::ExecuteNative(FunctionArguments *function_arguments,

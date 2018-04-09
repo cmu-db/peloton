@@ -98,7 +98,7 @@ void CompilationContext::GeneratePlan(Query &query,
 
   // Next, we prepare the query statement with the functions we've generated
   Query::LLVMFunctions funcs = {init, plan, tear_down};
-  query_.Prepare(funcs);
+  query.Prepare(funcs);
 
   // We're done
   if (stats != nullptr) {

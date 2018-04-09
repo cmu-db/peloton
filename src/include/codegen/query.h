@@ -57,9 +57,7 @@ class Query {
   // We use this handy class for the parameters to the llvm functions
   // to avoid complex casting and pointer manipulation
   struct FunctionArguments {
-    storage::StorageManager *storage_manager;
     executor::ExecutorContext *executor_context;
-    QueryParameters *query_parameters;
     char *consumer_arg;
     char rest[0];
   } PACKED;
@@ -89,7 +87,7 @@ class Query {
   void Prepare(const LLVMFunctions &funcs);
 
   // Compiles the function in this query to native code
-  bool Compile(CompileStats *stats = nullptr);
+  void Compile(CompileStats *stats = nullptr);
 
   /**
    * @brief Executes the compiled query.
@@ -140,11 +138,14 @@ class Query {
   // The size of the parameter the functions take
   QueryState query_state_;
 
-  // The init(), plan() and tearDown() functions
-  typedef void (*compiled_function_t)(char *);
-  compiled_function_t init_func_;
-  compiled_function_t plan_func_;
-  compiled_function_t tear_down_func_;
+  // LLVM IR of the query functions
+  LLVMFunctions llvm_functions_;
+
+  // Pointers to the compiled query functions
+  CompiledFunctions compiled_functions_;
+
+  // Shows if the query has been compiled to native code
+  bool is_compiled_;
 };
 
 }  // namespace codegen
