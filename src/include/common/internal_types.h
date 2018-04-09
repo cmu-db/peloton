@@ -1055,6 +1055,8 @@ enum class MetricType {
   QUERY = 9,
   // Statistics for CPU
   PROCESSOR = 10,
+  // Statictics for memory usage and allocation
+  MEMORY = 11,
 };
 
 // All builtin operators we currently support

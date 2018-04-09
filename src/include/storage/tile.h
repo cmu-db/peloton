@@ -283,6 +283,7 @@ class TileFactory {
                        TileGroupHeader *tile_header,
                        const catalog::Schema &schema, TileGroup *tile_group,
                        int tuple_count) {
+    // TODO (Tianyi) Add Tile memory count
     Tile *tile =
         new Tile(backend_type, tile_header, schema, tile_group, tuple_count);
 
