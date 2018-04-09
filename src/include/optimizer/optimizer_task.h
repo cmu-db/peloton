@@ -86,14 +86,9 @@ class OptimizerTask {
 
   virtual ~OptimizerTask(){};
 
-  void SetWorstCase(bool flag) { worst_case_ = flag; }
-
-  bool DoWorstCase() { return worst_case_; }
-
  protected:
   OptimizerTaskType type_;
   std::shared_ptr<OptimizeContext> context_;
-  bool worst_case_ = false;
 };
 
 /**
@@ -227,8 +222,7 @@ class OptimizeInputs : public OptimizerTask {
  */
 class DeriveStats : public OptimizerTask {
  public:
-  DeriveStats(GroupExpression *gexpr,
-              ExprSet required_cols,
+  DeriveStats(GroupExpression *gexpr, ExprSet required_cols,
               std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),

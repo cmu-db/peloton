@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
+#include "optimizer/abstract_cost_calculator.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
 
@@ -38,9 +39,9 @@ class TransactionContext;
 }
 
 namespace test {
-  class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-} 
+class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
+}
 
 namespace optimizer {
 
@@ -60,8 +61,10 @@ class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
 
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
  public:
   Optimizer(const Optimizer &) = delete;
@@ -69,7 +72,8 @@ class Optimizer : public AbstractOptimizer {
   Optimizer(Optimizer &&) = delete;
   Optimizer &operator=(Optimizer &&) = delete;
 
-  Optimizer();
+  Optimizer(){};
+  Optimizer(std::unique_ptr<AbstractCostCalculator> cost_calculator);
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
@@ -83,20 +87,23 @@ class Optimizer : public AbstractOptimizer {
 
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
-  void SetWorstCase(bool flag) {worst_case_ = flag; }
+  void SetWorstCase(bool flag) { worst_case_ = flag; }
 
   bool DoWorstCase() { return worst_case_; }
 
+  AbstractCostCalculator *GetCostCalculator() { return cost_calculator_.get(); }
+
   /* For test purposes only */
-  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
-  concurrency::TransactionContext *txn) {
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(
+      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */
   void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                        std::shared_ptr<OptimizeContext> root_context) {
+                            std::shared_ptr<OptimizeContext> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
+
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
    *CREATE), set
@@ -156,6 +163,8 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
+  /// Cost Model
+  std::unique_ptr<AbstractCostCalculator> cost_calculator_;
   bool worst_case_ = false;
 };
 

@@ -20,6 +20,7 @@
 
 #include "common/exception.h"
 
+#include "optimizer/cost_calculator.h"
 #include "optimizer/binding.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/properties.h"
@@ -60,7 +61,10 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer() {}
+
+Optimizer::Optimizer(std::unique_ptr<AbstractCostCalculator> cost_calculator) {
+  metadata_ = OptimizerMetadata(std::move(cost_calculator));
+}
 
 void Optimizer::OptimizeLoop(int root_group_id,
                              std::shared_ptr<PropertySet> required_props) {
@@ -141,7 +145,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 }
 
-void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
+void Optimizer::Reset() {
+  metadata_ = OptimizerMetadata(std::move(metadata_.cost_calculator));
+}
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt,
@@ -363,7 +369,6 @@ void Optimizer::ExecuteTaskStack(
     }
     timer.Reset();
     auto task = task_stack.Pop();
-    task->SetWorstCase(DoWorstCase());
     task->execute();
     timer.Stop();
   }
