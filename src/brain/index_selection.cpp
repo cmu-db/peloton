@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/parser/statements.h>
 #include "brain/index_selection.h"
 #include "common/logger.h"
 
@@ -32,7 +33,7 @@ std::unique_ptr<Configuration> IndexSelection::GetBestIndexes() {
   for (auto query: queries) {
     // Get admissible indexes 'Ai'
     Configuration Ai;
-    GetAdmissableIndexes(query, Ai);
+    GetAdmissibleIndexes(query, Ai);
 
     Workload Wi;
     Wi.AddQuery(query);
@@ -48,7 +49,8 @@ std::unique_ptr<Configuration> IndexSelection::GetBestIndexes() {
 }
 
 // TODO: [Siva]
-// Given a set of given indexes, this function
+// Enumerate()
+// Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
 void IndexSelection::Enumerate(Configuration &indexes,
                                Configuration &chosen_indexes,
@@ -59,13 +61,98 @@ void IndexSelection::Enumerate(Configuration &indexes,
   return;
 }
 
-// TODO: [Vamshi]
-void IndexSelection::GetAdmissableIndexes(SQLStatement *query,
+// GetAdmissibleIndexes()
+// Find out the indexable columns of the given workload.
+// The following rules define what indexable columns are:
+// 1. A column that appears in the WHERE clause with format
+//    ==> Column OP Expr <==
+//    OP such as {=, <, >, <=, >=, LIKE, etc.}
+//    Column is a table column name.
+// 2. GROUP BY (if present)
+// 3. ORDER BY (if present)
+// 4. all updated columns for UPDATE query.
+void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
                                           Configuration &indexes) {
-  (void) query;
-  (void) indexes;
-  return;
+  union {
+    parser::SelectStatement *select_stmt;
+    parser::UpdateStatement *update_stmt;
+    parser::DeleteStatement *delete_stmt;
+    parser::InsertStatement *insert_stmt;
+  } sql_statement;
+
+  switch (query->GetType()) {
+    case StatementType::INSERT:
+      sql_statement.insert_stmt =
+        dynamic_cast<parser::InsertStatement *>(query);
+      // If the insert is along with a select statement, i.e another table's select
+      // output is fed into this table.
+      if (sql_statement.insert_stmt->select != nullptr) {
+        IndexColsParseWhereHelper(sql_statement.insert_stmt->select->where_clause, indexes);
+      }
+      break;
+
+    case StatementType::DELETE:
+      sql_statement.delete_stmt =
+        dynamic_cast<parser::DeleteStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.delete_stmt->expr, indexes);
+      break;
+
+    case StatementType::UPDATE:
+      sql_statement.update_stmt =
+        dynamic_cast<parser::UpdateStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.update_stmt->where, indexes);
+      break;
+
+    case StatementType::SELECT:
+      sql_statement.select_stmt =
+        dynamic_cast<parser::SelectStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause, indexes);
+      IndexColsParseOrderByHelper(sql_statement.select_stmt->order, indexes);
+      IndexColsParseGroupByHelper(sql_statement.select_stmt->group_by, indexes);
+      break;
+
+    default:
+      LOG_WARN("Cannot handle DDL statements");
+      PL_ASSERT(false);
+  }
 }
+
+void IndexSelection::IndexColsParseWhereHelper(std::unique_ptr<expression::AbstractExpression> &where_expr,
+                                               Configuration &config) {
+  auto expr_type = where_expr->GetExpressionType();
+  switch (expr_type) {
+    case ExpressionType::COMPARE_EQUAL:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_GREATERTHAN:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_LESSTHAN:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_LIKE:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_IN:
+      break;
+    default:
+      assert(false);
+  }
+  (void) config;
+}
+
+void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
+                                                 Configuration &config) {
+  (void) where_expr;
+  (void) config;
+}
+
+void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
+                                                 Configuration &config) {
+  (void) order_expr;
+  (void) config;
+}
+
 
 }  // namespace brain
 }  // namespace peloton
