@@ -49,8 +49,14 @@ class IndexSelection {
 private:
   void Enumerate(Configuration &indexes, Configuration &picked_indexes,
                       Workload &workload);
-  void GetAdmissableIndexes(SQLStatement *query,
+  void GetAdmissibleIndexes(SQLStatement *query,
                             Configuration &indexes);
+  void IndexColsParseWhereHelper(std::unique_ptr<expression::AbstractExpression> &where_expr,
+                                 Configuration &config);
+  void IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
+                                   Configuration &config);
+  void IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_by,
+                                   Configuration &config);
   // members
   std::shared_ptr<Workload> query_set_;
 };
