@@ -70,11 +70,25 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
-  pg_trigger = new TriggerCatalog(database_name, txn);
-  // pg_proc = new ProcCatalog(database_name, txn);
-  pg_table_metrics = new TableMetricsCatalog(database_name, txn);
-  pg_index_metrics = new IndexMetricsCatalog(database_name, txn);
-  pg_query_metrics = new QueryMetricsCatalog(database_name, txn);
+  if (!pg_trigger) {
+    pg_trigger = new TriggerCatalog(database_name, txn);
+  }
+
+  // if (!pg_proc) {
+  //     pg_proc = new ProcCatalog(database_name, txn);
+  // }
+
+  if (!pg_table_metrics) {
+    pg_table_metrics = new TableMetricsCatalog(database_name, txn);
+  }
+
+  if (!pg_index_metrics) {
+    pg_index_metrics = new IndexMetricsCatalog(database_name, txn);
+  }
+
+  if (!pg_query_metrics) {
+    pg_query_metrics = new QueryMetricsCatalog(database_name, txn);
+  }
 }
 
 }  // namespace catalog
