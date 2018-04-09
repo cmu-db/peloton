@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/file_util.h"
 #include "brain/workload/lstm_tf.h"
+#include "util/file_util.h"
 
 namespace peloton {
 namespace brain {
 
-TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid,
-                         int nlayers, float learn_rate,
-                         float dropout_ratio, float clip_norm, int batch_size,
-                         int horizon, int bptt, int segment)
+TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
+                               float learn_rate, float dropout_ratio,
+                               float clip_norm, int batch_size, int horizon,
+                               int bptt, int segment)
     : BaseTFModel(),
       learn_rate_(learn_rate),
       dropout_ratio_(dropout_ratio),
@@ -32,23 +32,27 @@ TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid,
   SetModelInfo();
 
   // Generate the Model
-  std::string args_str = ConstructModelArgsString(nfeats, nencoded, nhid, nlayers,
-                                                  learn_rate, dropout_ratio, clip_norm);
+  std::string args_str = ConstructModelArgsString(
+      nfeats, nencoded, nhid, nlayers, learn_rate, dropout_ratio, clip_norm);
   GenerateModel(args_str);
   // Import the Model
   tf_session_entity_->ImportGraph(graph_path_);
 }
 
 void TimeSeriesLSTM::SetModelInfo() {
-  modelgen_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen");
-  pymodel_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.py");
-  graph_path_ = peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.pb");
+  modelgen_path_ =
+      peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen");
+  pymodel_path_ =
+      peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.py");
+  graph_path_ =
+      peloton::FileUtil::GetRelativeToRootPath("src/brain/modelgen/LSTM.pb");
 }
 
 std::string TimeSeriesLSTM::ConstructModelArgsString(int nfeats, int nencoded,
-                                                  int nhid, int nlayers,
-                                                  float learn_rate, float dropout_ratio,
-                                                  float clip_norm) {
+                                                     int nhid, int nlayers,
+                                                     float learn_rate,
+                                                     float dropout_ratio,
+                                                     float clip_norm) {
   std::stringstream args_str_builder;
   args_str_builder << " --nfeats " << nfeats;
   args_str_builder << " --nencoded " << nencoded;
@@ -61,9 +65,9 @@ std::string TimeSeriesLSTM::ConstructModelArgsString(int nfeats, int nencoded,
   return args_str_builder.str();
 }
 
-void TimeSeriesLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset, size_t bsz,
-                           std::vector<float> &data,
-                           std::vector<float> &target) {
+void TimeSeriesLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset,
+                              size_t bsz, std::vector<float> &data,
+                              std::vector<float> &target) {
   size_t samples_per_input = mat.rows() / bsz;
   size_t seq_len =
       std::min<size_t>(bptt_, samples_per_input - horizon_ - batch_offset);
@@ -71,10 +75,12 @@ void TimeSeriesLSTM::GetBatch(const matrix_eig &mat, size_t batch_offset, size_t
 
   for (size_t input_idx = 0; input_idx < bsz; input_idx++) {
     size_t row_idx = input_idx * samples_per_input;
-    auto data_batch = peloton::brain::EigenUtil::FlattenMatrix(
-        Eigen::Map<const matrix_eig>(data_ptr + row_idx * mat.cols(), seq_len, mat.cols()));
-    auto target_batch = peloton::brain::EigenUtil::FlattenMatrix(
-        Eigen::Map<const matrix_eig>(data_ptr + (row_idx + horizon_) * mat.cols(), seq_len, mat.cols()));
+    auto data_batch =
+        peloton::brain::EigenUtil::FlattenMatrix(Eigen::Map<const matrix_eig>(
+            data_ptr + row_idx * mat.cols(), seq_len, mat.cols()));
+    auto target_batch =
+        peloton::brain::EigenUtil::FlattenMatrix(Eigen::Map<const matrix_eig>(
+            data_ptr + (row_idx + horizon_) * mat.cols(), seq_len, mat.cols()));
     data.insert(data.end(), data_batch.begin(), data_batch.end());
     target.insert(target.end(), target_batch.begin(), target_batch.end());
   }
@@ -110,16 +116,20 @@ float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
         TfFloatIn(data_batch.data(), dims, "data_"),
         TfFloatIn(target_batch.data(), dims, "target_"),
         TfFloatIn(1.0, "dropout_ratio_")};
-    std::vector<TfFloatOut> outputs{TfFloatOut("lossOp_")};
+    auto loss_out = TfFloatOut("lossOp_");
+    std::vector<TfFloatOut> outputs{loss_out};
     auto out = this->tf_session_entity_->Eval(inputs_loss, outputs);
     this->tf_session_entity_->Eval(inputs_optimize, "optimizeOp_");
     losses.push_back(out[0]);
+    // TODO(saatvik): Unsure why the tf_session_entity gc isnt able to catch
+    // this
+    TF_DeleteTensor(loss_out.GetTensor());
   }
   return std::accumulate(losses.begin(), losses.end(), 0.0) / losses.size();
 }
 
 float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                                 matrix_eig &test_pred, bool return_preds) {
+                                    matrix_eig &test_pred, bool return_preds) {
   std::vector<float> y_hat, y;
 
   // Obtain relevant metadata
@@ -144,7 +154,8 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
     std::vector<TfFloatIn> inputs_predict{
         TfFloatIn(data_batch.data(), dims, "data_"),
         TfFloatIn(1.0, "dropout_ratio_")};
-    std::vector<TfFloatOut> outputs{TfFloatOut("pred_")};
+    auto pred_out = TfFloatOut("pred_");
+    std::vector<TfFloatOut> outputs{pred_out};
 
     // Obtain predicted values
     auto out = this->tf_session_entity_->Eval(inputs_predict, outputs);
@@ -153,6 +164,8 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
     for (size_t i = 0; i < data_batch.size(); i++) {
       y_hat.push_back(out[i]);
     }
+    // Clean up the tensor
+    TF_DeleteTensor(pred_out.GetTensor());
     y.insert(y.end(), target_batch.begin(), target_batch.end());
   }
 

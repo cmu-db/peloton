@@ -86,6 +86,9 @@ class TfSessionEntity {
   TF_Status *status_;
   TF_SessionOptions *session_options_;
   TF_Session *session_;
+  // GC queue for the content of the output tensors which can be cleaned
+  // during class destruction
+  std::vector<TF_Tensor *> tensor_gc_;
 
   // For Graph IO handling
   TF_Buffer *ReadFile(const std::string &filename);

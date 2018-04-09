@@ -22,9 +22,9 @@ using TfFloatOut = TfSessionEntityOutput<float>;
 
 class TimeSeriesLSTM : public BaseTFModel {
  public:
-  TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers, float learn_rate,
-              float dropout_ratio, float clip_norm, int batch_size, int horizon,
-              int bptt, int segment);
+  TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
+                 float learn_rate, float dropout_ratio, float clip_norm,
+                 int batch_size, int horizon, int bptt, int segment);
   /**
    * Train the Tensorflow model
    * @param data: Contiguous time-series data
@@ -50,8 +50,8 @@ class TimeSeriesLSTM : public BaseTFModel {
    * Then the validation loss is calculated for the relevant sequence
    * - this is a function of segment and horizon.
    */
-  float ValidateEpoch(matrix_eig &data, matrix_eig &test_true, matrix_eig &test_pred,
-                      bool return_preds) override;
+  float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
+                      matrix_eig &test_pred, bool return_preds) override;
 
  private:
   /**
@@ -62,8 +62,8 @@ class TimeSeriesLSTM : public BaseTFModel {
                 std::vector<float> &data, std::vector<float> &target);
   // Function to generate the args string to feed the python model
   std::string ConstructModelArgsString(int nfeats, int nencoded, int nhid,
-                                  int nlayers, float learn_rate,
-                                  float dropout_ratio, float clip_norm);
+                                       int nlayers, float learn_rate,
+                                       float dropout_ratio, float clip_norm);
   // Attributes needed for the Seq2Seq LSTM model(set by the user/settings.json)
   float learn_rate_;
   float dropout_ratio_;

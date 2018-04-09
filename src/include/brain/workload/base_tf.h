@@ -42,7 +42,8 @@ class BaseTFModel {
 
   /**
    * Global variable initialization
-   * Should be called (1) before training for the first time OR (2) when there is
+   * Should be called (1) before training for the first time OR (2) when there
+   * is
    * a need for re-training the model.
    */
   void TFInit();
@@ -51,10 +52,10 @@ class BaseTFModel {
   virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                               matrix_eig &test_pred, bool return_preds) = 0;
 
-
  protected:
   std::unique_ptr<TfSessionEntity<float, float>> tf_session_entity_;
-  // Path to the working directory to use to write graph - Must be set in child constructors
+  // Path to the working directory to use to write graph - Must be set in child
+  // constructors
   std::string modelgen_path_;
   // Path to the Python TF model to use - Must be set in child constructors
   std::string pymodel_path_;
@@ -65,7 +66,6 @@ class BaseTFModel {
   // Child classes should set the name of the python model and
   // corresponding protobuf graph path in this function
   virtual void SetModelInfo() = 0;
-
 };
 }  // namespace brain
 }  // namespace peloton

@@ -4,7 +4,8 @@
 //
 // tf_session_entity_io.h
 //
-// Identification: src/include/brain/util/tf_session_entity/tf_session_entity_io.h
+// Identification:
+// src/include/brain/util/tf_session_entity/tf_session_entity_io.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //

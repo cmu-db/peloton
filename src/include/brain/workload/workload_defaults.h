@@ -17,8 +17,8 @@
  * associated with the workload prediction task
 **/
 
-namespace peloton{
-namespace brain{
+namespace peloton {
+namespace brain {
 
 struct WorkloadDefaults {
   static const int NFEATS;
@@ -35,6 +35,5 @@ struct WorkloadDefaults {
   static const int PADDLING_DAYS;
   static const int BPTT;
 };
-
 }
 }

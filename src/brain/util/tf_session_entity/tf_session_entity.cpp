@@ -33,6 +33,9 @@ TFSE_TYPE::TfSessionEntity() {
 // Tensorflow https://github.com/tensorflow/tensorflow/issues/17739
 TFSE_TEMPLATE_ARGUMENTS
 TFSE_TYPE::~TfSessionEntity() {
+  for (TF_Tensor *tensor : tensor_gc_) {
+    TF_DeleteTensor(tensor);
+  }
   TF_CloseSession(session_, status_);
   TF_DeleteSession(session_, status_);
   TF_DeleteGraph(graph_);
@@ -121,6 +124,12 @@ OutputType *TFSE_TYPE::Eval(
                 nullptr, 0,                                     // Operations
                 nullptr, status_);
   PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
+  for (TF_Tensor *in_val : in_vals) {
+    TF_DeleteTensor(in_val);
+  }
+  for (TF_Tensor *out_val : out_vals) {
+    tensor_gc_.push_back(out_val);
+  }
   return static_cast<OutputType *>(TF_TensorData(out_vals.at(0)));
 }
 
@@ -143,6 +152,9 @@ void TFSE_TYPE::Eval(
                 nullptr, nullptr, 0,  // Outputs
                 &op, 1,               // Operations
                 nullptr, status_);
+  for (TF_Tensor *in_val : in_vals) {
+    TF_DeleteTensor(in_val);
+  }
   PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
 }
 
