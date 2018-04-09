@@ -184,8 +184,8 @@ class CodeGen {
   // DEBUG OUTPUT
   //===--------------------------------------------------------------------===//
 
-  static std::string Print(const llvm::Value *value);
-  static std::string Print(llvm::Type *type);
+  static std::string Dump(const llvm::Value *value);
+  static std::string Dump(llvm::Type *type);
 
  private:
   friend class Hash;

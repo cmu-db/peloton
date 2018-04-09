@@ -11,11 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/interpreter/bytecode_builder.h"
-#include "codegen/codegen.h"
-#include "common/exception.h"
 
 #include <llvm/IR/InstIterator.h>
 #include <fstream>
+
+#include "codegen/codegen.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace codegen {
@@ -68,7 +69,7 @@ Opcode BytecodeBuilder::GetOpcodeForTypeAllTypes(Opcode untyped_op,
     return BytecodeFunction::GetOpcodeFromId(id + 5);
   else
     throw NotSupportedException("llvm type not supported: " +
-                                CodeGen::Print(type));
+                                CodeGen::Dump(type));
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeIntTypes(Opcode untyped_op,
@@ -88,7 +89,7 @@ Opcode BytecodeBuilder::GetOpcodeForTypeIntTypes(Opcode untyped_op,
     return BytecodeFunction::GetOpcodeFromId(id + 3);
   else
     throw NotSupportedException("llvm type not supported: " +
-                                CodeGen::Print(type));
+                                CodeGen::Dump(type));
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeFloatTypes(Opcode untyped_op,
@@ -104,7 +105,7 @@ Opcode BytecodeBuilder::GetOpcodeForTypeFloatTypes(Opcode untyped_op,
     return BytecodeFunction::GetOpcodeFromId(id + 1);
   else
     throw NotSupportedException("llvm type not supported: " +
-                                CodeGen::Print(type));
+                                CodeGen::Dump(type));
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeSizeIntTypes(Opcode untyped_op,
@@ -124,7 +125,7 @@ Opcode BytecodeBuilder::GetOpcodeForTypeSizeIntTypes(Opcode untyped_op,
       return BytecodeFunction::GetOpcodeFromId(id + 3);
     default:
       throw NotSupportedException("llvm type size not supported: " +
-                                  CodeGen::Print(type));
+                                  CodeGen::Dump(type));
   }
 }
 
@@ -312,7 +313,7 @@ value_t BytecodeBuilder::GetConstantValue(
 
       default:
         throw NotSupportedException("unsupported constant type: " +
-                                    CodeGen::Print(constant->getType()));
+                                    CodeGen::Dump(constant->getType()));
     }
   }
 }
@@ -418,7 +419,7 @@ ffi_type *BytecodeBuilder::GetFFIType(llvm::Type *type) const {
     default:
       throw NotSupportedException(
           std::string("can't find a ffi_type for type: ") +
-          CodeGen::Print(type));
+          CodeGen::Dump(type));
   }
 }
 
@@ -656,14 +657,16 @@ void BytecodeBuilder::AnalyseFunction() {
               size_t extract_index = *extract_instruction->idx_begin();
 
               if (extract_index == 0) {
-                PELOTON_ASSERT(overflow_results_mapping_[call_instruction].first ==
-                          nullptr);
+                PELOTON_ASSERT(
+                    overflow_results_mapping_[call_instruction].first ==
+                    nullptr);
                 overflow_results_mapping_[call_instruction].first =
                     extract_instruction;
 
               } else if (extract_index == 1) {
-                PELOTON_ASSERT(overflow_results_mapping_[call_instruction].second ==
-                          nullptr);
+                PELOTON_ASSERT(
+                    overflow_results_mapping_[call_instruction].second ==
+                    nullptr);
                 overflow_results_mapping_[call_instruction].second =
                     extract_instruction;
               }
@@ -947,11 +950,11 @@ void BytecodeBuilder::Finalize() {
 }
 
 void BytecodeBuilder::ProcessPHIsForBasicBlock(const llvm::BasicBlock *bb) {
-  typedef struct {
+  struct AdditionalMove {
     const llvm::Instruction *instruction;
     index_t dest;
     index_t src;
-  } AdditionalMove;
+  };
 
   // Takes track of additional moves (du to PHI swap problem) that have to be
   // applied after all PHI nodes have been processed.
@@ -1575,7 +1578,7 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
 
       // The destination slots have been already prepared from the analysis pass
       PELOTON_ASSERT(overflow_results_mapping_.find(call_instruction) !=
-                overflow_results_mapping_.end());
+                     overflow_results_mapping_.end());
 
       if (overflow_results_mapping_[call_instruction].first != nullptr)
         result =

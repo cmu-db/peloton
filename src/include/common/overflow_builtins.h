@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// query_interpreter.h
+// overflow_builtins.h
 //
-// Identification: src/include/codegen/interpreter/overflow_builtins.h
+// Identification: src/include/common/overflow_builtins.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

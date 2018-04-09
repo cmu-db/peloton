@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include "common/macros.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Type.h"
-
 #include <ffi.h>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#include "common/macros.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Type.h"
 
 namespace peloton {
 namespace codegen {
@@ -64,10 +64,10 @@ enum class Opcode : index_t {
  * (sizeof returns a wrong value) All bytecode instructions are saved in
  * one or more 8 byte instructions slots (instr_slot_t) in the bytecode stream.
  */
-typedef struct {
+struct Instruction {
   Opcode op;
   index_t args[];
-} Instruction;
+};
 
 /**
  * Specialized struct for accessing a InternalCallInstruction. The number of
@@ -75,13 +75,13 @@ typedef struct {
  * GetInteralCallInstructionSlotSize uses this information to calculate the
  * number of occupied instruction slots.
  */
-typedef struct {
+struct InternalCallInstruction {
   Opcode op;
   index_t sub_function;
   index_t dest_slot;
   index_t number_args;
   index_t args[];
-} InternalCallInstruction;
+};
 
 /**
  * Specialized struct for accessing a ExternalCallInstruction. It is the only
@@ -92,22 +92,22 @@ typedef struct {
  * is created for every call context, holding the actual runtime pointers,
  * which can be accessed with the same index.
  */
-typedef struct {
+struct ExternalCallInstruction {
   Opcode op;
   index_t external_call_context;
   void (*function)(void);
-} ExternalCallInstruction;
+};
 
 /**
  * Call context holding information needed to create a runtime call activation
  * for a ExternalCallInstruction in the bytecode stream.
  */
-typedef struct {
+struct ExternalCallContext {
   index_t dest_slot;
   ffi_type *dest_type;
   std::vector<index_t> args;
   std::vector<ffi_type *> arg_types;
-} ExternalCallContext;
+};
 
 /**
  * A BytecodeFunction contains all information necessary to run a LLVM

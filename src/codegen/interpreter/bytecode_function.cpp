@@ -11,12 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/interpreter/bytecode_function.h"
-#include "codegen/codegen.h"
 
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <string>
+
+#include "codegen/codegen.h"
 
 namespace peloton {
 namespace codegen {
@@ -229,7 +230,7 @@ std::string BytecodeFunction::Dump(const Instruction *instruction) const {
 
 #ifndef NDEBUG
   output << "("
-         << CodeGen::Print(GetIRInstructionFromIP(GetIndexFromIP(instruction)))
+         << CodeGen::Dump(GetIRInstructionFromIP(GetIndexFromIP(instruction)))
          << ")";
 #endif
 

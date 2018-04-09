@@ -13,6 +13,7 @@
 #pragma once
 
 #include "codegen/interpreter/bytecode_function.h"
+
 #include "codegen/query.h"
 #include "common/exception.h"
 #include "common/overflow_builtins.h"
@@ -27,11 +28,11 @@ namespace interpreter {
  * for every function activation, and can not be stored in the bytecode
  * function.
  */
-typedef struct {
+struct CallActivation {
   ffi_cif call_interface;
   std::vector<value_t *> value_pointers;
   value_t *return_pointer;
-} CallActivation;
+};
 
 class BytecodeInterpreter {
  public:

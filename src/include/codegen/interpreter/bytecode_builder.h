@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "codegen/interpreter/bytecode_function.h"
-
 #include <ffi.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/IR/CFG.h>
@@ -25,6 +23,8 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+#include "codegen/interpreter/bytecode_function.h"
 
 namespace peloton {
 namespace codegen {
@@ -61,11 +61,11 @@ class BytecodeBuilder {
    * It gets created by TranslateBranch() and is processed after
    * TranslateFunction() processed all instructions.
    */
-  typedef struct {
+  struct BytecodeRelocation {
     index_t instruction_slot;
     index_t argument;
     const llvm::BasicBlock *bb;
-  } BytecodeRelocation;
+  };
 
   /**
    * Describes the liveness of a value by start and end instruction index.

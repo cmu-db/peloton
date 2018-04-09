@@ -53,7 +53,7 @@ void BytecodeInterpreter::ExecuteFunction(
 
 NEVER_INLINE NO_CLONE void BytecodeInterpreter::ExecuteFunction(
     const std::vector<value_t> &arguments) {
-  // Fill the value_pointers_ array with the handler addresses at first
+  // Fill the label_pointers_ array with the handler addresses at first
   // startup. (This can't be done outside of this function, as the labels are
   // not visible there.
   if (label_pointers_[0] == nullptr) {
