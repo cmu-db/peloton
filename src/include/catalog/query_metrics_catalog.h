@@ -51,6 +51,8 @@ class QueryMetricsCatalog : public AbstractCatalog {
   static QueryMetricsCatalog *GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return QUERY_METRICS_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

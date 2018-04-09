@@ -47,6 +47,8 @@ class TableMetricsCatalog : public AbstractCatalog {
   static TableMetricsCatalog *GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return TABLE_METRICS_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // Write Related API
   //===--------------------------------------------------------------------===//

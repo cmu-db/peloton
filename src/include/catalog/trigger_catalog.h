@@ -52,6 +52,8 @@ class TriggerCatalog : public AbstractCatalog {
   // Global Singleton
   static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() { return TRIGGER_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

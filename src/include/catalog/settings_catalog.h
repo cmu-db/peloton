@@ -14,6 +14,8 @@
 
 #include "catalog/abstract_catalog.h"
 
+#define SETTINGS_CATALOG_NAME "pg_settings"
+
 namespace peloton {
 namespace catalog {
 
@@ -23,6 +25,8 @@ class SettingsCatalog : public AbstractCatalog {
 
   // Global Singleton
   static SettingsCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+
+  inline std::string GetName() const override { return SETTINGS_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//
   // write Related API

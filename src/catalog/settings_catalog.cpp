@@ -16,8 +16,6 @@
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
-#define SETTINGS_CATALOG_NAME "pg_settings"
-
 namespace peloton {
 namespace catalog {
 

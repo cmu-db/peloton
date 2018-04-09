@@ -30,13 +30,14 @@ class CatalogSyncBrainJob : public BrainJob {
 
   // TODO(tianyu): Eventually use Log for replication
   void OnJobInvocation(BrainEnvironment *env) override {
+    concurrency::TransactionManager
+        manager = concurrency::TransactionManagerFactory::GetInstance();
     for (auto *catalog : catalog::Catalog::GetInstance()->AvailableCatalogs()) {
       pqxx::result r =
           env->ExecuteQuery("SELECT * FROM pg_catalog." + catalog->GetName());
       for (auto &row : r) {
         concurrency::TransactionContext *txn =
-            concurrency::TransactionManagerFactory::GetInstance()
-                .BeginTransaction(IsolationLevelType::REPEATABLE_READS);
+            manager.BeginTransaction(IsolationLevelType::REPEATABLE_READS);
         catalog::Schema *catalog_schema = catalog->GetDataTable()->GetSchema();
         std::unique_ptr<storage::Tuple> tuple(catalog_schema);
         for (auto &field : row) {
@@ -44,6 +45,8 @@ class CatalogSyncBrainJob : public BrainJob {
           tuple->SetValue(column_id, PqxxFieldToPelotonValue(field));
         }
         catalog->InsertTuple(std::move(tuple), txn);
+        // We know this will always succeed on the brain side
+        manager.CommitTransaction(txn);
       }
     }
   }
@@ -68,8 +71,7 @@ class CatalogSyncBrainJob : public BrainJob {
         return type::ValueFactory::GetTimestampValue(f.as<int64_t>());
       case type::TypeId::DECIMAL:
         return type::ValueFactory::GetDecimalValue(f.as<double>());
-      case type::TypeId::VARCHAR:
-        return type::ValueFactory::GetVarcharValue(f.c_str());
+      case type::TypeId::VARCHAR:return type::ValueFactory::GetVarcharValue(f.c_str());
       default:
         throw ConversionException(StringUtil::Format(
             "No corresponding c++ type for postgres type %d",
