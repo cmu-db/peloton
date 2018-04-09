@@ -1803,6 +1803,8 @@ class BwTree : public BwTreeBase {
       }
 
       char *new_chunk = new char[CHUNK_SIZE()];
+      // Adding to statistics
+      AddToMemAllocStatistics(CHUNK_SIZE());
       AllocationMeta *expected = nullptr;
 
       // Prepare the new chunk's metadata field
@@ -2088,6 +2090,10 @@ class BwTree : public BwTreeBase {
           new char[sizeof(ElasticNode) + size * sizeof(ElementType) +
                    AllocationMeta::CHUNK_SIZE()];
       PELOTON_ASSERT(alloc_base != nullptr);
+
+      // Also add to statistics counter
+      AddToMemAllocStatistics(sizeof(ElasticNode) + size * sizeof(ElementType) +
+                              AllocationMeta::CHUNK_SIZE())
 
       // Initialize the AllocationMeta - tail points to the first byte inside
       // class ElasticNode; limit points to the first byte after class
@@ -6513,6 +6519,8 @@ class BwTree : public BwTreeBase {
     *parent_node_id_p = parent_node_id;
 
     InnerAbortNode *abort_node_p = new InnerAbortNode{parent_node_p};
+    // Adding to statistics counter
+    AddToMemAllocStatistics(sizeof(InnerAbortNode));
 
     bool ret =
         InstallNodeToReplace(parent_node_id, abort_node_p, parent_node_p);
@@ -7388,11 +7396,38 @@ class BwTree : public BwTreeBase {
   std::atomic<uint64_t> update_op_count;
   std::atomic<uint64_t> update_abort_count;
 
+  // This value records the aggregated number of bytes allodated by BwTree node
+  // allocation function
+  std::atomic<size_t> mem_alloc;
+
   // InteractiveDebugger idb;
 
   EpochManager epoch_manager;
 
  public:
+
+  /*
+   * GetTotalMemAlloc() - This function returns the total number of bytes
+   *                      allocated by the BwTree
+   * 
+   * 1. The returned value is aggregated value since the bwtree is instanciated
+   *    If you want to get accurate memory allocation in a time interval, call
+   *    this function before and after the interval, and use the difference
+   * 2. Releasing memory does not change this counter. This counter increases monotonically
+   */
+  inline size_t GetTotalMemAlloc() {
+    return mem_alloc.load();
+  }
+
+  /*
+   * AddToMemAllocStatistics() - This function adds an amount onto the statistics counter
+   *                             that tracks the total bytes we have allocated
+   */
+  inline void AddToMemAllocStatistics(size_t amount) {
+    mem_alloc.fetch_add(amount);
+    return;
+  }
+
   /*
    * class EpochManager - Maintains a linked list of deleted nodes
    *                      for threads to access until all threads
