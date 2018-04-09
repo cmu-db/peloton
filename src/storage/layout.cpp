@@ -20,6 +20,7 @@ namespace peloton {
 namespace storage {
 
 // Constructor for the layout class with column_count
+// The default layout is always a ROW_STORE
 Layout::Layout(const oid_t num_columns)
         : layout_id_(ROW_STORE_OID),
           num_columns_(num_columns) {}
@@ -151,6 +152,25 @@ const std::string Layout::GetInfo() const {
 
   return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
                                      GETINFO_SPACER);
+}
+
+bool operator==(const Layout& lhs, const Layout& rhs) {
+
+  // Check the equality of layout_oid_
+  if (lhs.GetLayoutId() != rhs.GetLayoutId()) {
+    return false;
+  }
+  // Check the equality of column_count_
+  if (lhs.GetColumnCount() != rhs.GetColumnCount()) {
+    return false;
+  }
+
+  // Check for the equality of the column_layout_
+  return (lhs.column_layout_ == rhs.column_layout_);
+}
+
+bool operator!=(const Layout& lhs, const Layout& rhs) {
+  return !(lhs == rhs);
 }
 
 

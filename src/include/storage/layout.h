@@ -54,6 +54,9 @@ class Layout : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  friend bool operator==(const Layout& lhs, const Layout& rhs);
+  friend bool operator!=(const Layout& lhs, const Layout& rhs);
+
  private:
 
   // Layout Id of the tile

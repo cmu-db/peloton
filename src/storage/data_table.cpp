@@ -1388,11 +1388,12 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
 }
 
 void DataTable::SetDefaultLayout(const column_map_type &layout) {
+  default_layout_ = Layout(layout);
   default_partition_ = layout;
 }
 
-column_map_type DataTable::GetDefaultLayout() const {
-  return default_partition_;
+Layout DataTable::GetDefaultLayout() const {
+  return default_layout_;
 }
 
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {

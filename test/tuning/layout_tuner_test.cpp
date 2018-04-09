@@ -23,7 +23,7 @@
 
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
+#include "storage/layout.h"
 
 namespace peloton {
 namespace test {
@@ -60,8 +60,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s",
-  layout_tuner.GetColumnMapInfo(old_default_layout).c_str());
+  LOG_INFO("Layout: %s",old_default_layout.GetColumnMapInfo().c_str());
 
   // Start layout tuner
   layout_tuner.Start();
@@ -107,25 +106,21 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check new default tile group layout
   auto new_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s",
-  layout_tuner.GetColumnMapInfo(new_default_layout).c_str());
+  LOG_INFO("Layout: %s", new_default_layout.GetColumnMapInfo().c_str());
 
   // Ensure that the layout has been changed
   EXPECT_NE(new_default_layout, old_default_layout);
 
   // Check the new default table layout
-  column_count = new_default_layout.size();
+  column_count = new_default_layout.GetColumnCount();
   EXPECT_EQ(column_count, 4);
-  auto first_column_tile = new_default_layout[0].first;
-  auto second_column_tile = new_default_layout[1].first;
-  auto third_column_tile = new_default_layout[2].first;
-  auto fourth_column_tile = new_default_layout[3].first;
-  EXPECT_EQ(first_column_tile, 0);
-  EXPECT_EQ(second_column_tile, 0);
-  EXPECT_EQ(third_column_tile, 0);
-  EXPECT_EQ(fourth_column_tile, 1);
 
 
+  // Check the tile corresponding to each column.
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(0),0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1),0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2),0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3),1);
 }
 
 }  // namespace test
