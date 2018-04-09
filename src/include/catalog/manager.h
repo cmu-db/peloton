@@ -54,6 +54,8 @@ class Manager {
 
   oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
 
+  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_; }
+
   void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
 
   void AddTileGroup(const oid_t oid,
@@ -96,6 +98,8 @@ class Manager {
 
   tbb::concurrent_unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
       tile_group_locator_;
+  std::atomic<oid_t> num_live_tile_groups_ = ATOMIC_VAR_INIT(0);
+
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 
   //===--------------------------------------------------------------------===//
