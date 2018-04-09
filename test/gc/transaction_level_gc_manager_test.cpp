@@ -532,14 +532,14 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
 
   // create a table with only one key
   const int num_key = 1;
-  oid_t table_id = 1;
   size_t tuples_per_tilegroup = 1000;
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "TABLE1", db_id, table_id, tuples_per_tilegroup, true));
+      num_key, "TABLE1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
 
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_count_start = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
+  LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
 
   //===========================
   // insert tuples here.
@@ -549,28 +549,74 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
   EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
   // capture memory usage
-  auto tile_group_count_after_insert = manager.GetNumLiveTileGroups();
-  EXPECT_GT(tile_group_count_after_insert, tile_group_count_start);
+  size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
+  LOG_DEBUG("tile_group_count_after_insert: %zu\n", tile_group_count_after_insert);
 
   epoch_manager.SetCurrentEpochId(2);
 
+  // get expired epoch id.
+  // as the current epoch id is set to 2,
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
   //===========================
-  // delete the tuple.
+  // delete the tuples.
   //===========================
   auto delete_result = BulkDeleteTuples(table.get(), num_inserts);
   EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
-  // increment the epoch, wait for GC
-  epoch_manager.SetCurrentEpochId(3);
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-
   size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
-  EXPECT_EQ(tile_group_count_after_delete, tile_group_count_start);
+  LOG_DEBUG("tile_group_count_after_delete: %zu\n", tile_group_count_after_delete);
+
+//  std::this_thread::sleep_for(std::chrono::seconds(30));
+
+  do {
+    epoch_manager.SetCurrentEpochId(++current_eid);
+
+    expired_eid = epoch_manager.GetExpiredEpochId();
+    current_eid = epoch_manager.GetCurrentEpochId();
+
+    EXPECT_EQ(expired_eid, current_eid - 1);
+
+    reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+    unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  } while (reclaimed_count || unlinked_count);
+
+  size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
+  LOG_DEBUG("tile_group_count_after_gc: %zu\n", tile_group_count_after_gc);
 
   gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
+  EXPECT_LT(tile_group_count_after_gc, tile_group_count_after_delete);
+
+  table.release();
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("FreeTileGroupsDB");
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("FreeTileGroupsDB", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

@@ -42,6 +42,7 @@ void Manager::AddTileGroup(const oid_t oid,
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
+  
   // drop the catalog reference to the tile group
   tile_group_locator_[oid] = empty_tile_group_;
   num_live_tile_groups_.fetch_sub(1);

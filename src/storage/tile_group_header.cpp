@@ -62,6 +62,10 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
 
   // Initially immutabile flag to false initially.
   immutable = false;
+
+  recycling_ = true;
+  num_recycled_ = 0;
+  num_gc_readers_ = 0;
 }
 
 TileGroupHeader::~TileGroupHeader() {

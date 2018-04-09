@@ -54,7 +54,7 @@ class Manager {
 
   oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
 
-  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_; }
+  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_.load(); }
 
   void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
 
