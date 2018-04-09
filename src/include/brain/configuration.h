@@ -24,16 +24,19 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 class Configuration {
- public:
-  /**
-   * @brief Constructor
-   */
-  Configuration() {}
-
- private:
+public:
+  // Add indexes of a given configuration into this configuration.
+  void Add(Configuration &config) {
+    auto c_indexes = config.indexes_;
+    for (auto index: c_indexes) {
+      indexes_.push_back(index);
+    }
+  }
+  void AddIndex(std::shared_ptr<catalog::IndexCatalogObject> index) {
+    indexes_.push_back(index);
+  }
   // The set of hypothetical indexes in the configuration
-  std::vector<std::shared_ptr<IndexCatalogObject>> indexes_;
-
+  std::vector<std::shared_ptr<catalog::IndexCatalogObject>> indexes_;
 };
 
 }  // namespace brain
