@@ -107,6 +107,8 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
   std::vector<col_triplet> column_oids;
   std::string table_name;
   oid_t database_id, table_id;
+
+  // Assume that there is only one SQLStatement in the list
   auto sql_stmt = sql_stmt_list->GetStatement(0);
   switch (sql_stmt->GetType()) {
     // For INSERT, DELETE, all columns are affected
@@ -120,17 +122,16 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
         auto &delete_stmt = static_cast<parser::DeleteStatement &>(*sql_stmt);
         table_name = delete_stmt.GetTableName();
       }
-      database_id = catalog_cache.GetDatabaseObject(db_name)->GetDatabaseOid();
-      table_id = catalog_cache.GetDatabaseObject(db_name)
-                     ->GetTableObject(table_name)
-                     ->GetTableOid();
-      auto column_map = catalog_cache.GetDatabaseObject(db_name)
-                            ->GetTableObject(table_name)
-                            ->GetColumnObjects();
-      for (auto &column : column_map) {
+      auto db_object = catalog_cache.GetDatabaseObject(db_name);
+      auto table_object = db_object->GetTableObject(table_name);
+      database_id = db_object->GetDatabaseOid();
+      table_id = table_object->GetTableOid();
+      for (auto &column : table_object->GetColumnObjects()) {
         column_oids.emplace_back(database_id, table_id, column.first);
       }
     } break;
+
+    // For UPDATE, columns in UpdateClause are affected
     case StatementType::UPDATE: {
       auto &update_stmt = static_cast<parser::UpdateStatement &>(*sql_stmt);
       table_name = update_stmt.table->GetTableName();
@@ -144,11 +145,16 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
       for (const auto &update_clause : update_clauses) {
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
-        auto col_object = table_object->GetColumnObject(update_clause->column);
-        column_oids.emplace_back(database_id, table_id,
-                                 col_object->GetColumnId());
+        column_oids.emplace_back(
+            database_id, table_id,
+            table_object->GetColumnObject(update_clause->column)
+                ->GetColumnId());
       }
     } break;
+
+    // For SELECT, we need to
+    // 1) use optimizer to get the plan tree
+    // 2) aggregate results from all the leaf scan nodes
     case StatementType::SELECT: {
       std::unique_ptr<optimizer::AbstractOptimizer> optimizer =
           std::unique_ptr<optimizer::AbstractOptimizer>(
@@ -161,15 +167,18 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
         auto plan =
             optimizer->BuildPelotonPlanTree(sql_stmt_list, db_name, txn);
 
-        database_id =
-            catalog_cache.GetDatabaseObject(db_name)->GetDatabaseOid();
+        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        database_id = db_object->GetDatabaseOid();
 
+        // columns scanned in predicates have higher priority
         std::vector<col_triplet> high_col;
+
+        // columns as output have lower priority
         std::vector<col_triplet> low_col;
 
+        // Perform a breadth first search on plan tree
         std::queue<const AbstractPlan *> scan_queue;
         const AbstractPlan *temp_ptr;
-
         scan_queue.emplace(plan.get());
 
         while (!scan_queue.empty()) {
@@ -189,6 +198,7 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
               low_col.emplace_back(database_id, table_id, col_id);
             }
 
+            // Aggregate columns scanned in predicates
             ExprSet expr_set;
             expression::ExpressionUtil::GetTupleValueExprs(
                 expr_set, temp_scan_ptr->GetPredicateUnsafe());
@@ -197,9 +207,9 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
               auto tuple_value_expr =
                   static_cast<const expression::TupleValueExpression *>(expr);
 
-              table_id = catalog_cache.GetDatabaseObject(db_name)
-                             ->GetTableObject(tuple_value_expr->GetTableName())
-                             ->GetTableOid();
+              table_id =
+                  db_object->GetTableObject(tuple_value_expr->GetTableName())
+                      ->GetTableOid();
               high_col.emplace_back(database_id, table_id,
                                     (oid_t)tuple_value_expr->GetColumnId());
             }
@@ -223,7 +233,8 @@ const std::vector<col_triplet> PlanUtil::GetAffectedColumns(
         LOG_ERROR("Error in BuildPelotonPlanTree: %s", e.what());
       }
 
-      // TODO: should handle transaction commit?
+      // TODO: should transaction commit or not?
+      txn_manager.CommitTransaction(txn);
     } break;
     default:
       LOG_TRACE("Does not support finding affected columns for query type: %d",

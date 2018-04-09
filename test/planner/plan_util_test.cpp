@@ -172,12 +172,13 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
 
+  auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(TEST_DB_COLUMNS, txn);
   auto db = catalog->GetDatabaseWithName(TEST_DB_COLUMNS, txn);
   oid_t database_id = db->GetOid();
-  // Insert a table first
+
+  // Insert a 'test_table' with 'id', 'first_name' and 'last_name'
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
@@ -195,6 +196,7 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
                        txn);
   txn_manager.CommitTransaction(txn);
 
+  // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
   auto source_table = db->GetTableWithName("test_table");
   oid_t table_id = source_table->GetOid();
@@ -206,17 +208,14 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
       source_table->GetSchema()->GetColumnID(lname_column.column_name);
   txn_manager.CommitTransaction(txn);
 
-  // dummy txn to get the catalog_cache object
   txn = txn_manager.BeginTransaction();
-
-  // This is also required so that database objects are cached
+  // This is required so that database objects are cached
   auto db_object = catalog->GetDatabaseObject(TEST_DB_COLUMNS, txn);
   EXPECT_EQ(1, static_cast<int>(db_object->GetTableObjects().size()));
 
-  // Till now, we have a table : id, first_name, last_name
   auto table_object = db_object->GetTableObject("test_table");
 
-  // An update query affecting both columns
+  // id and first_name are affected
   std::string query_string = "UPDATE test_table SET id = 0, first_name = '';";
   std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -227,7 +226,6 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   std::set<planner::col_triplet> affected_cols(affected_cols_vector.begin(),
                                                affected_cols_vector.end());
 
-  // id and first_name are affected
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
   std::set<planner::col_triplet> expected_oids;
   expected_oids.emplace(database_id, table_id, id_col_oid);
@@ -243,7 +241,6 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
 
-  // only first_name is affected
   EXPECT_EQ(1, static_cast<int>(affected_cols.size()));
   expected_oids.clear();
   expected_oids.emplace(database_id, table_id, fname_col_oid);
@@ -292,6 +289,7 @@ TEST_F(PlanUtilTests, GetAffectedColumnsTest) {
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
 
+  // all columns are affected
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
   expected_oids.clear();
   expected_oids.emplace(database_id, table_id, lname_col_oid);
