@@ -42,6 +42,7 @@ struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
   std::string sink_table_name;
+  std::string sink_table_namespace;
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
@@ -58,7 +59,7 @@ class CreatePlan : public AbstractPlan {
                       std::unique_ptr<catalog::Schema> schema,
                       CreateType c_type);
 
-  explicit CreatePlan(parser::CreateStatement *parse_tree, const std::string tmp_namespace);
+  explicit CreatePlan(parser::CreateStatement *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::CREATE; }
 

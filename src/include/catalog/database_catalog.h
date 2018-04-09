@@ -26,7 +26,7 @@
 #pragma once
 
 #include <mutex>
-
+#include "catalog/catalog_defaults.h"
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
 
@@ -49,10 +49,8 @@ class DatabaseCatalogObject {
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, bool cached_only = false);
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, const std::string &table_namespace,
-      bool cached_only = false);
+      const std::string &table_name, const std::string &session_namespace=std::string(),
+      const std::string &table_namespace=DEFAULT_NAMESPACE, bool cached_only = false);
 
   bool IsValidTableObjects() {
     // return true if this database object contains all table

@@ -899,6 +899,8 @@ void PostgresProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
       // do nothing, simply send close complete
       break;
   }
+  LOG_DEBUG("CLOSE MESSAGE EXECUTED");
+  LOG_INFO("CLOSE MESSAGE EXECUTED");
   // Send close complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::CLOSE_COMPLETE;
@@ -1083,6 +1085,7 @@ ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
 ProcessResult PostgresProtocolHandler::ProcessNormalPacket(
     InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
+  LOG_INFO("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
   // we see a SYNC

@@ -974,13 +974,13 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   if (relation->relpersistence == 't') {
       result->temp = true;
   }
-  LOG_INFO("CREATE TABLE WITH %d", result->temp);
+  
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
   if (relation->catalogname) {
     result->table_info_->database_name = relation->catalogname;
-  };
+  }
 
   std::unordered_set<std::string> primary_keys;
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
@@ -1021,6 +1021,7 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
         }
         // Update Reference Table
         col->fk_sink_table_name = constraint->pktable->relname;
+        col->fk_sink_table_namespace = constraint->pktable->schemaname;
         // Action type
         col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);

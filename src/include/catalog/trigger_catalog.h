@@ -63,6 +63,8 @@ class TriggerCatalog : public AbstractCatalog {
 
   ResultType DropTrigger(const std::string &database_name,
                          const std::string &table_name,
+                         const std::string &session_namespace,
+                         const std::string &table_namespace,
                          const std::string &trigger_name,
                          concurrency::TransactionContext *txn);
 

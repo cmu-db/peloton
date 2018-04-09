@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/internal_types.h"
 #include "storage/data_table.h"
@@ -36,7 +37,8 @@ class TableFactory {
                                  size_t tuples_per_tile_group_count,
                                  bool own_schema, bool adapt_table,
                                  bool is_catalog = false,
-                                 peloton::LayoutType layout_type = peloton::LayoutType::ROW);
+                                 peloton::LayoutType layout_type = peloton::LayoutType::ROW,
+                                 std::string table_namespace=DEFAULT_NAMESPACE);
 
   static TempTable *GetTempTable(catalog::Schema *schema, bool own_schema);
 

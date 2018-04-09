@@ -13,7 +13,7 @@
 #pragma once
 
 #include <mutex>
-
+#include "catalog/catalog_defaults.h"
 #include "common/printable.h"
 #include "storage/data_table.h"
 
@@ -55,7 +55,8 @@ class Database : public Printable {
   storage::DataTable *GetTableWithOid(const oid_t table_oid) const;
 
   // Throw CatalogException if such table is not found
-  storage::DataTable *GetTableWithName(const std::string &table_name) const;
+  storage::DataTable *GetTableWithName(const std::string &table_name, 
+                    const std::string &table_namespace=DEFAULT_NAMESPACE) const;
 
   oid_t GetTableCount() const;
 

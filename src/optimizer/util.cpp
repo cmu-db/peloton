@@ -161,7 +161,10 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       copy_stmt->cpy_table->GetDatabaseName(),
-      copy_stmt->cpy_table->GetTableName(), txn);
+      copy_stmt->cpy_table->GetTableName(),
+      txn,
+      copy_stmt->cpy_table->GetSessionNamespace(),
+      copy_stmt->cpy_table->GetNamespace());
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<planner::SeqScanPlan> select_plan(

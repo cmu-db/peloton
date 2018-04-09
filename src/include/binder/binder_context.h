@@ -58,6 +58,7 @@ class BinderContext {
    * clause)
    */
   void AddRegularTable(const std::string db_name, const std::string table_name,
+                       const std::string session_namespace, const std::string table_namespace,
                        const std::string table_alias,
                        concurrency::TransactionContext *txn);
 

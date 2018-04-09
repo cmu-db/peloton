@@ -16,6 +16,7 @@
 #include "storage/data_table.h"
 #include "common/internal_types.h"
 #include "expression/abstract_expression.h"
+#include "catalog/catalog_defaults.h"
 
 namespace peloton {
 namespace planner {
@@ -33,7 +34,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
       table_schema(schema.release()),
       create_type(c_type) {}
 
-CreatePlan::CreatePlan(parser::CreateStatement *parse_tree, const std::string tmp_namespace)
+CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
 {
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
@@ -52,7 +53,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree, const std::string tm
 
       //hack, to be changed later, if temporary then set temp namespace.
       if(parse_tree->temp) {
-        setNamespace(tmp_namespace);
+        SetNamespace(parse_tree->GetSessionNamespace());
+      } else {
+        SetNamespace(DEFAULT_NAMESPACE);
       }
 
       // The parser puts the Foreign Key information into an artificial
@@ -211,6 +214,9 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
 
   // Extract table names
   fkey_info.sink_table_name = col->fk_sink_table_name;
+
+  //extract table namespace
+  fkey_info.sink_table_namespace = col->fk_sink_table_namespace;
 
   // Extract delete and update actions
   fkey_info.upd_action = col->foreign_key_update_action;

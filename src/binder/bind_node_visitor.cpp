@@ -156,6 +156,7 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>(nullptr);
   node->TryBindDatabaseName(default_database_name_);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetSessionNamespace(), node->GetNamespace(),
                             node->GetTableName(), txn_);
 
   if (node->expr != nullptr) {
@@ -175,6 +176,7 @@ void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
   context_ = std::make_shared<BinderContext>(nullptr);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetSessionNamespace(), node->GetNamespace(),
                             node->GetTableName(), txn_);
   if (node->select != nullptr) {
     node->select->Accept(this);

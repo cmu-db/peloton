@@ -57,6 +57,7 @@ size_t DataTable::default_active_tilegroup_count_ = 1;
 size_t DataTable::default_active_indirection_array_count_ = 1;
 
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
+                     const std::string &table_namespace,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
                      const bool adapt_table, const bool is_catalog,
@@ -64,6 +65,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     : AbstractTable(table_oid, schema, own_schema, layout_type),
       database_oid(database_oid),
       table_name(table_name),
+      table_namespace(table_namespace),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {

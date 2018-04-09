@@ -104,8 +104,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the DDL plan if it is a DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
-      parser::SQLStatement *tree, bool &is_ddl_stmt,
-      const std::string &table_namespace,
+      parser::SQLStatement *tree, bool &is_ddl_stmt, const std::string &table_namespace,
       concurrency::TransactionContext *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query

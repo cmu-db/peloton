@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/table_factory.h"
-
 #include "common/exception.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
@@ -27,8 +26,9 @@ DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
                                       size_t tuples_per_tilegroup_count,
                                       bool own_schema, bool adapt_table,
                                       bool is_catalog,
-                                      peloton::LayoutType layout_type) {
-  DataTable *table = new DataTable(schema, table_name, database_id, relation_id,
+                                      peloton::LayoutType layout_type,
+                                      std::string table_namespace) {
+  DataTable *table = new DataTable(schema, table_name, table_namespace, database_id, relation_id,
                                    tuples_per_tilegroup_count, own_schema,
                                    adapt_table, is_catalog, layout_type);
 

@@ -92,12 +92,20 @@ class AbstractPlan : public Printable {
 
 
   // for temporary namespace
-  void setNamespace(const std::string table_namespace) {
+  void SetNamespace(const std::string table_namespace) {
     table_namespace_ = table_namespace;
   }
 
   std::string GetNamespace() const {
     return table_namespace_;
+  }
+
+  void SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = session_namespace;
+  }
+
+  std::string GetSessionNamespace() const {
+    return session_namespace_;
   }
 
   //===--------------------------------------------------------------------===//
@@ -163,7 +171,11 @@ class AbstractPlan : public Printable {
 
   AbstractPlan *parent_ = nullptr;
 
-  std::string table_namespace_ = DEFAULT_NAMESPACE;
+  // table namespace
+  std::string table_namespace_;
+
+  // session namespace
+  std::string session_namespace_;
   
   // TODO: This field is harded coded now. This needs to be changed when
   // optimizer has the cost model and cardinality estimation

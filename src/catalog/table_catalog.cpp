@@ -17,7 +17,6 @@
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
-#include "catalog/catalog_defaults.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -308,7 +307,6 @@ TableCatalog::TableCatalog(storage::Database *pg_catalog,
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    LOG_INFO("Column name is %s", column.GetName().c_str());
     pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
@@ -449,58 +447,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   return nullptr;
 }
 
-
-/*@brief   read table catalog object from pg_table using table name + database
- * oid
- * @param   table_name
- * @param   database_oid
- * @param   txn     TransactionContext
- * @return  table catalog object
- */
-std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
-  if (txn == nullptr) {
-    throw CatalogException("Transaction is invalid!");
-  }
-  // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
-  if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, DEFAULT_NAMESPACE, true);
-    if (table_object) return table_object;
-  }
-
-  // cache miss, get from pg_table
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(std::string(DEFAULT_NAMESPACE), nullptr).Copy());
-  
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto table_object =
-        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
-    // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
-    PL_ASSERT(database_object);
-    bool success = database_object->InsertTableObject(table_object);
-    PL_ASSERT(success == true);
-    (void)success;
-    return table_object;
-  }
-
-  // return empty object if not found
-  return nullptr;
-}
-
 /*@brief   read table catalog object from pg_table using table name + database
  * oid
  * @param   table_name
@@ -510,19 +456,19 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, const std::string &table_namespace,
-    oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &table_name, oid_t database_oid, 
+    concurrency::TransactionContext *txn, const std::string &table_namespace) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, table_namespace, true);
+    //no session namespace. - getTableObject is used for exact search in table_catalog.
+    auto table_object = database_object->GetTableObject(table_name, std::string(), table_namespace, true);
     if (table_object) return table_object;
   }
-  LOG_INFO("CACHE MISS");
+  //search under namespace first.
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid & namespace.
@@ -536,7 +482,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
@@ -549,7 +494,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     (void)success;
     return table_object;
   }
-
   // return empty object if not found
   return nullptr;
 }

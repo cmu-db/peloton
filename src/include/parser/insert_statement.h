@@ -43,6 +43,16 @@ class InsertStatement : public SQLStatement {
     return table_ref_->GetDatabaseName();
   }
 
+  // Get the name of the session
+  inline std::string GetSessionNamespace() const {
+    return table_ref_->GetSessionNamespace();
+  }
+
+  // Get the name of the namespace of this table
+  inline std::string GetNamespace() const {
+    return table_ref_->GetNamespace();
+  }
+
   const std::string GetInfo(int num_indent) const override;
 
   const std::string GetInfo() const override;

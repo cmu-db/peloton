@@ -105,7 +105,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   std::string table_namespace = node.GetNamespace();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
-      database_name, table_name, table_namespace, std::move(schema), current_txn);
+      database_name, table_name, std::move(schema), current_txn, false, table_namespace);
   current_txn->SetResult(result);
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
@@ -116,11 +116,11 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
       auto catalog = catalog::Catalog::GetInstance();
       auto db = catalog->GetDatabaseWithName(database_name, current_txn);
 
-      auto source_table = db->GetTableWithName(table_name);
+      auto source_table = db->GetTableWithName(table_name, table_namespace);
       int count = 1;
 
       for (auto fk : node.GetForeignKeys()) {
-        auto sink_table = db->GetTableWithName(fk.sink_table_name);
+        auto sink_table = db->GetTableWithName(fk.sink_table_name, fk.sink_table_namespace);
 
         // Source Column Offsets
         std::vector<oid_t> source_col_ids;
@@ -206,14 +206,17 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   auto database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
+  std::string table_namespace = node.GetNamespace();
+  std::string session_namespace = node.GetSessionNamespace();
   bool unique_flag = node.IsUnique();
   IndexType index_type = node.GetIndexType();
 
   auto key_attrs = node.GetKeyAttrs();
 
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, table_name, key_attrs, index_name, unique_flag,
-      index_type, txn);
+      database_name, table_name,
+      key_attrs, index_name, unique_flag,
+      index_type, txn, session_namespace, table_namespace);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -232,11 +235,12 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   std::string database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
-
+  std::string table_namespace = node.GetNamespace();
+  std::string session_namespace = node.GetSessionNamespace();
   trigger::Trigger newTrigger(node);
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, table_name, txn);
+      database_name, table_name, txn, session_namespace, table_namespace);
 
   // durable trigger: insert the information of this trigger in the trigger
   // catalog table
@@ -257,7 +261,7 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // ask target table to update its trigger list variable
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          database_name, table_name, txn);
+          database_name, table_name, txn, session_namespace, table_namespace);
   target_table->UpdateTriggerListFromCatalog(txn);
 
   // hardcode SUCCESS result for txn

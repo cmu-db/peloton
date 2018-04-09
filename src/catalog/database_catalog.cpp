@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "catalog/database_catalog.h"
-#include "catalog/catalog_defaults.h"
 #include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
@@ -132,24 +131,6 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   }
 }
 
-
-std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
-                            const std::string &table_name, bool cached_only) {
-  std::string table_key = DEFAULT_NAMESPACE + std::string("#") + table_name;
-  LOG_INFO("table key is %s", table_key.c_str());
-  auto it = table_name_cache.find(table_key);
-  if (it != table_name_cache.end()) return it->second;
-
-  if (cached_only) {
-    // cache miss return empty object
-    return nullptr;
-  } else {
-    // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObject(table_name, DEFAULT_NAMESPACE, database_oid,
-                                                       txn);
-  }
-}
-
 /* @brief   Get table catalog object from cache (cached_only == true),
             or all the way from storage (cached_only == false)
  * @param   table_oid     table oid of the requested table catalog object
@@ -157,7 +138,40 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  * @return  Shared pointer to the requested table catalog object
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
-    const std::string &table_name, const std::string &table_namespace, bool cached_only) {
+    const std::string &table_name, const std::string &session_namespace,
+    const std::string &table_namespace, bool cached_only) {
+  //no namespace specified.
+  if(table_namespace.empty()) {
+      //search session first.
+      std::string table_key = session_namespace + std::string("#") + table_name;
+      auto it = table_name_cache.find(table_key);
+      if (it != table_name_cache.end()) return it->second;
+
+      //fetch from table_catalog under session_namespace.
+      auto table_object = TableCatalog::GetInstance()->GetTableObject(table_name, database_oid, 
+                                                                      txn, session_namespace);
+      if (table_object == nullptr) {
+          //search under public namespace
+          std::string table_key = DEFAULT_NAMESPACE + std::string("#") + table_name;
+          auto it = table_name_cache.find(table_key);
+          if (it != table_name_cache.end()) return it->second;
+
+          if (cached_only) {
+            // cache miss return empty object
+            return nullptr;
+          } else {
+            // cache miss get from pg_table
+            return TableCatalog::GetInstance()->GetTableObject(table_name, database_oid,
+                                                               txn, DEFAULT_NAMESPACE);
+          }
+      }
+      //cache miss return empty object
+      if (cached_only) {
+        return nullptr;
+      }
+      return table_object;
+  }
+  //not empty. - get exact.
   std::string table_key = table_namespace + std::string("#") + table_name;
   auto it = table_name_cache.find(table_key);
   if (it != table_name_cache.end()) return it->second;
@@ -167,8 +181,9 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     return nullptr;
   } else {
     // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObject(table_name, table_namespace, database_oid,
-                                                       txn);
+    auto table = TableCatalog::GetInstance()->GetTableObject(table_name, database_oid,
+                                                       txn, table_namespace);
+    return table;
   }
 }
 

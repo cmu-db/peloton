@@ -250,7 +250,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
-  LOG_INFO("Prepare Statement query: %s", query_string.c_str());
 
   // Empty statement
   // TODO (Tianyi) Read through the parser code to see if this is appropriate
@@ -291,12 +290,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
       LOG_TRACE("BEGIN");
-      LOG_INFO("BEGIN");
       single_statement_txn_ = false;
     } else {
       // single statement
       LOG_TRACE("SINGLE TXN");
-      LOG_INFO("SINGLE TXN");
       single_statement_txn_ = true;
     }
     auto txn = txn_manager.BeginTransaction(thread_id);
@@ -309,10 +306,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    LOG_INFO("BRAIN?");
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
-
   // TODO(Tianyi) Move Statement Planing into Statement's method
   // to increase coherence
   try {
@@ -422,7 +417,8 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
           static_cast<storage::DataTable *>(
               catalog::Catalog::GetInstance()->GetTableWithName(
                   from_table->GetDatabaseName(), from_table->GetTableName(),
-                  GetCurrentTxnState().first))
+                  GetCurrentTxnState().first, from_table->GetSessionNamespace(),
+                  from_table->GetNamespace()))
               ->GetSchema()
               ->GetColumns();
       target_columns.insert(target_columns.end(), columns.begin(),
@@ -592,7 +588,6 @@ ResultType TrafficCop::ExecuteStatement(
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }
-        LOG_INFO("Execute plan");
         ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
                       thread_id);
         if (GetQueuing()) {

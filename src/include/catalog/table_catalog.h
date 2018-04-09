@@ -31,7 +31,7 @@
 
 #include <mutex>
 #include <unordered_map>
-
+#include "catalog/catalog_defaults.h"
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
 
@@ -143,14 +143,10 @@ class TableCatalog : public AbstractCatalog {
  private:
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::TransactionContext *txn);
-  //original one.
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, oid_t database_oid, 
-      concurrency::TransactionContext *txn);
   //added with namespace
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, const std::string &table_namespace,
-      oid_t database_oid, concurrency::TransactionContext *txn);
+      const std::string &table_name, oid_t database_oid, 
+      concurrency::TransactionContext *txn, const std::string &table_namespace=DEFAULT_NAMESPACE);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
   std::vector<std::shared_ptr<TableCatalogObject>>

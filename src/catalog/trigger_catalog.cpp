@@ -93,6 +93,8 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
 
 ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
                                        const std::string &table_name,
+                                       const std::string &session_namespace,
+                                       const std::string &table_namespace,
                                        const std::string &trigger_name,
                                        concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
@@ -103,7 +105,8 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
   // Checking if statement is valid
   auto table_object =
-      Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
+      Catalog::GetInstance()->GetTableObject(database_name, table_name, 
+                                            txn, session_namespace, table_namespace);
 
   oid_t trigger_oid = TriggerCatalog::GetInstance().GetTriggerOid(
       trigger_name, table_object->GetTableOid(), txn);
@@ -121,7 +124,10 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name, txn);
+                                                          table_name,
+                                                          txn,
+                                                          session_namespace,
+                                                          table_object->GetTableNamespace());
     target_table->UpdateTriggerListFromCatalog(txn);
     return ResultType::SUCCESS;
   }
