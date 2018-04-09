@@ -17,6 +17,7 @@
 #include "concurrency/epoch_manager.h"
 
 #include "catalog/catalog.h"
+#include "catalog/manager.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/database.h"
@@ -55,6 +56,31 @@ ResultType InsertTuple(storage::DataTable *table, const int key) {
 
   return scheduler.schedules[0].txn_result;
 }
+
+ResultType BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i=1; i <= num_tuples; i++) {
+    scheduler.Txn(0).Insert(i, i);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i=1; i <= num_tuples; i++) {
+    scheduler.Txn(0).Delete(i, false);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
 
 ResultType DeleteTuple(storage::DataTable *table, const int key) {
   srand(15721);
@@ -484,6 +510,67 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
       catalog::Catalog::GetInstance()->GetDatabaseObject("ImmutabilityDB", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
+}
+
+// check mem -> insert 100k -> check mem -> delete all -> check mem
+TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
+
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  // create database
+  auto database = TestingExecutorUtil::InitializeDatabase("FreeTileGroupsDB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  // create a table with only one key
+  const int num_key = 1;
+  oid_t table_id = 1;
+  size_t tuples_per_tilegroup = 1000;
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "TABLE1", db_id, table_id, tuples_per_tilegroup, true));
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_count_start = manager.GetNumLiveTileGroups();
+
+  //===========================
+  // insert tuples here.
+  //===========================
+  size_t num_inserts = 5000;
+  auto insert_result = BulkInsertTuples(table.get(), num_inserts);
+  EXPECT_EQ(ResultType::SUCCESS, insert_result);
+
+  // capture memory usage
+  auto tile_group_count_after_insert = manager.GetNumLiveTileGroups();
+  EXPECT_GT(tile_group_count_after_insert, tile_group_count_start);
+
+  epoch_manager.SetCurrentEpochId(2);
+
+  //===========================
+  // delete the tuple.
+  //===========================
+  auto delete_result = BulkDeleteTuples(table.get(), num_inserts);
+  EXPECT_EQ(ResultType::SUCCESS, delete_result);
+
+  // increment the epoch, wait for GC
+  epoch_manager.SetCurrentEpochId(3);
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
+  EXPECT_EQ(tile_group_count_after_delete, tile_group_count_start);
+
+  gc_manager.StopGC();
+
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("FreeTileGroupsDB");
 }
 
 }  // namespace test
