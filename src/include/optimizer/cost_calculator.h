@@ -12,20 +12,19 @@
 
 #pragma once
 
-#include "optimizer/operator_visitor.h"
+#include "optimizer/abstract_cost_calculator.h"
 
 namespace peloton {
 namespace optimizer {
 
 class Memo;
-// Derive cost for a physical group expressionh
-class CostCalculator : public OperatorVisitor {
+// Derive cost for a physical group expression
+class CostCalculator : public AbstractCostCalculator {
  public:
-
-  CostCalculator(bool worst_case = false) : worst_case_(worst_case) {}
+  CostCalculator(){};
 
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
-                       concurrency::TransactionContext *txn);
+                       concurrency::TransactionContext *txn) override;
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -50,8 +49,6 @@ class CostCalculator : public OperatorVisitor {
   void Visit(const PhysicalDistinct *) override;
   void Visit(const PhysicalAggregate *) override;
 
-  bool DoWorstCase() { return worst_case_; }
-
  private:
   double HashCost();
   double SortCost();
@@ -61,7 +58,6 @@ class CostCalculator : public OperatorVisitor {
   Memo *memo_;
   concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
-  bool worst_case_ = false;
 };
 
 }  // namespace optimizer

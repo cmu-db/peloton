@@ -31,7 +31,7 @@ double CostCalculator::CalculateCost(GroupExpression *gexpr, Memo *memo,
   txn_ = txn;
   gexpr_->Op().Accept(this);
 
-  return DoWorstCase() ? output_cost_ * -1 : output_cost_;
+  return output_cost_;
 }
 
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const DummyScan *op) {
