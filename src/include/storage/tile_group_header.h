@@ -245,6 +245,22 @@ class TileGroupHeader : public Printable {
 
   inline bool GetImmutability() const { return immutable; }
 
+  inline void StopRecycling() { recycling_.store(false); }
+
+  inline bool GetRecycling() const { return recycling_.load(); }
+
+  inline size_t IncrementRecycled() { return num_recycled_.fetch_add(1); }
+
+  inline size_t DecrementRecycled() { return num_recycled_.fetch_sub(1); }
+
+  inline size_t GetRecycled() { return num_recycled_.load(); }
+
+  inline size_t IncrementGCReaders() { return num_gc_readers_.fetch_add(1); }
+
+  inline size_t DecrementGCReaders() { return num_gc_readers_.fetch_sub(1); }
+
+  inline size_t GetGCReaders() { return num_gc_readers_.load(); }
+
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Getter for spin lock
@@ -307,6 +323,10 @@ class TileGroupHeader : public Printable {
   // Immmutable Flag. Should be set by the indextuner to be true.
   // By default it will be set to false.
   bool immutable;
+
+  std::atomic<bool> recycling_;
+  std::atomic<size_t> num_recycled_;
+  std::atomic<size_t> num_gc_readers_;
 };
 
 }  // namespace storage

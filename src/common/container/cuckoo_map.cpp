@@ -128,10 +128,6 @@ template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
 template class CuckooMap<oid_t, std::shared_ptr<
     peloton::LockFreeQueue<ItemPointer>>>;
 
-template class CuckooMap<oid_t, std::shared_ptr<
-    CuckooMap<oid_t, std::shared_ptr<
-        LockFreeQueue<ItemPointer>>>>>;
-
 template class CuckooMap<oid_t, storage::DataTable *>;
 
 }  // namespace peloton

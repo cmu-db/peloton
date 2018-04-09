@@ -38,7 +38,9 @@ namespace catalog {
 
 class Manager {
  public:
-  Manager() {}
+  Manager() {
+    tile_group_locator_ = std::make_unique<CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>>(128);
+  }
 
   // Singleton
   static Manager &GetInstance();
@@ -53,7 +55,7 @@ class Manager {
 
   oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
 
-  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_; }
+  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_.load(); }
 
   void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
 
@@ -98,7 +100,8 @@ class Manager {
 
   std::atomic<oid_t> num_live_tile_groups_ = ATOMIC_VAR_INIT(0);
 
-  LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
+//  LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
+  std::unique_ptr<CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>> tile_group_locator_;
 
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 

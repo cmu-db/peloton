@@ -34,6 +34,10 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block).get();
 
+  if (tile_group == nullptr) {
+    return false;
+  }
+
   auto tile_group_header = tile_group->GetHeader();
 
   // Reset the header
@@ -223,26 +227,33 @@ void TransactionLevelGCManager::AddToRecycleMap(
     auto tile_group_id = entry.first;
     auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
 
-    // During the resetting, a table may be deconstructed because of the DROP
-    // TABLE request
     if (tile_group == nullptr) {
+      // Guard against the table being dropped out from under us
       continue;
-//      delete txn_ctx;
-//      return; // TODO: Is this wrong? Transaction could span multiple Tile Groups
-      // continue instead of returning?
     }
 
-    storage::DataTable *table =
-        dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
-    PELOTON_ASSERT(table != nullptr);
+    storage::DataTable *table;
+    tables_->Find(tile_group->GetTableId(), table);
+    if (table == nullptr) {
+      // Guard against the table being dropped out from under us
+      continue;
+    }
+
+    auto tile_group_header = tile_group->GetHeader();
+    if (tile_group_header == nullptr) {
+      // Guard against the TileGroup being dropped out from under us
+      continue;
+    }
 
     oid_t table_id = table->GetOid();
-    auto tile_group_header = tile_group->GetHeader();
-    PELOTON_ASSERT(tile_group_header != nullptr);
-    bool immutable = tile_group_header->GetImmutability();
+
+    tile_group_header->IncrementGCReaders();
 
     // for each garbage tuple in the Tile Group
     for (auto &element : entry.second) {
+
+      bool recycling = tile_group_header->GetRecycling();
+      bool immutable = tile_group_header->GetImmutability();
 
       auto offset = element.first;
 
@@ -253,50 +264,40 @@ void TransactionLevelGCManager::AddToRecycleMap(
         continue;
       }
 
-      auto table_recycle_queues = GetTableRecycleQueues(table_id);
+      auto recycle_queue = GetTableRecycleQueue(table_id);
+      if (recycle_queue == nullptr) {
+        continue;
+      }
 
-      // Add to a TileGroup's recycle queue to enable freeing eventually
-      if (table_recycle_queues != nullptr) {
-        auto recycle_queue = GetTileGroupRecycleQueue(table_recycle_queues, tile_group_id);
-        PELOTON_ASSERT(recycle_queue != nullptr);
+      auto num_recycled = tile_group_header->IncrementRecycled() + 1;
+      auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
+      auto recycling_threshold = tuples_per_tile_group >> 1; // 50%
+      auto compaction_threshold = tuples_per_tile_group - (tuples_per_tile_group >> 3); // 87.5%
+
+      if (recycling && num_recycled < recycling_threshold && immutable == false) {
+        // TODO: revisit queueing immutable ItemPointers, currently test expects this behavior
         recycle_queue->Enqueue(location);
+      }
+      else if (recycling && num_recycled >= recycling_threshold) {
+        tile_group_header->StopRecycling();
+        recycling = tile_group_header->GetRecycling();
+      }
+      else if (!recycling && num_recycled >= compaction_threshold) {
+        // TODO: compact this tile group
+      }
 
-        // Attempt to free the TileGroup
-        if ((!immutable) && recycle_queue->SizeApprox() == table->GetTuplesPerTileGroup() &&
-            table->IsActiveTileGroup(tile_group_id) == false) {
-            // TileGroup should be freed
-            table->DropTileGroup(tile_group_id);
-          }
+      if (num_recycled == table->GetTuplesPerTileGroup() && (table->IsActiveTileGroup(tile_group_id) == false)) {
+        // This GC thread should free the TileGroup
+        while (tile_group_header->GetGCReaders() > 1) {
+          // Spin here until the other GC threads stop operating on this TileGroup
         }
+        table->DropTileGroup(tile_group_id);
+        // TODO: clean the recycle queue of this TileGroup's ItemPointers
       }
     }
 
-  // TODO: confirm this is unused
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
-//    oid_t database_oid = std::get<0>(entry);
-//    oid_t table_oid = std::get<1>(entry);
-//    oid_t index_oid = std::get<2>(entry);
-//    PELOTON_ASSERT(database_oid != INVALID_OID);
-//    auto database = storage_manager->GetDatabaseWithOid(database_oid);
-//    PELOTON_ASSERT(database != nullptr);
-//    if (table_oid == INVALID_OID) {
-//      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-//      continue;
-//    }
-//    auto table = database->GetTableWithOid(table_oid);
-//    PELOTON_ASSERT(table != nullptr);
-//    if (index_oid == INVALID_OID) {
-//      database->DropTableWithOid(table_oid);
-//      LOG_DEBUG("GCing table %u", table_oid);
-//      continue;
-//    }
-//    auto index = table->GetIndexWithOid(index_oid);
-//    PELOTON_ASSERT(index != nullptr);
-//    table->DropIndexWithOid(index_oid);
-//  }
-
-  // TODO: should this be a shared pointer instead?
+    tile_group_header->DecrementGCReaders();
+  }
   delete txn_ctx;
 }
 
@@ -304,38 +305,48 @@ void TransactionLevelGCManager::AddToRecycleMap(
 // called by data_table.
 ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
 
-  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-      peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
+  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
 
-  if (!recycle_queues_->Find(table_id, table_recycle_queues)) {
+  if (recycle_queues_->Find(table_id, recycle_queue) == false) {
+    // Table does have a recycle queue, likely a catalog table
+    return INVALID_ITEMPOINTER;
+  }
+
+  storage::DataTable *table;
+  tables_->Find(table_id, table);
+  if (table == nullptr) {
     return INVALID_ITEMPOINTER;
   }
 
   ItemPointer location;
+  if (recycle_queue->Dequeue(location) == true) {
+    auto tile_group_id = location.block;
+    auto tile_group = table->GetTileGroupById(tile_group_id);
 
-  storage::DataTable *table;
-  tables_->Find(table_id, table);
-
-  PELOTON_ASSERT(table != nullptr);
-
-  size_t threshold_to_stop_recycling = static_cast<size_t>(table->GetTuplesPerTileGroup() * .9);
-
-  auto locked_recycle_queues = table_recycle_queues->GetIterator();
-  for (auto recycle_queue : locked_recycle_queues) {
-    auto tile_group_id = recycle_queue.first;
-
-    if (table->GetTileGroupById(tile_group_id)->GetHeader()->GetImmutability()) {
-      continue;
+    if (tile_group == nullptr) {
+      // TileGroup no longer exists
+      return INVALID_ITEMPOINTER;
     }
 
-    if (table->IsActiveTileGroup(tile_group_id) ||
-        recycle_queue.second->SizeApprox() < threshold_to_stop_recycling) {
-      // TG is eligible to recycle slots, try to Dequeue next
-      if (recycle_queue.second->Dequeue(location)) {
-        LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
-                  location.offset, table_id);
-        return location;
-      }
+    auto tile_group_header = tile_group->GetHeader();
+    bool recycling = tile_group_header->GetRecycling();
+    bool immutable = tile_group_header->GetImmutability();
+
+    if (recycling == false) {
+      // Don't decrement because we want the recycled count to be our indicator to release the TileGroup
+      return INVALID_ITEMPOINTER;
+    }
+
+    if (immutable == true) {
+      // Requeue this location because it might be usable again later
+      recycle_queue->Enqueue(location);
+      return INVALID_ITEMPOINTER;
+    }
+    else {
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tile_group_id,
+                location.offset, table_id);
+      tile_group_header->DecrementRecycled();
+      return location;
     }
   }
 
@@ -386,8 +397,7 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     return;
   }
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
+  auto tile_group_header = tile_group->GetHeader();
 
   ItemPointer *indirection = tile_group_header->GetIndirection(location.offset);
 
