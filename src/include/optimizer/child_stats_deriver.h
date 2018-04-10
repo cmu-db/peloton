@@ -27,22 +27,17 @@ class Memo;
 // expression
 class ChildStatsDeriver : public OperatorVisitor {
  public:
-  std::vector<ExprSet> DeriveInputStats(
-      GroupExpression *gexpr,
-      ExprSet required_cols, Memo *memo);
+  std::vector<ExprSet> DeriveInputStats(GroupExpression *gexpr,
+                                        ExprSet required_cols, Memo *memo);
 
   void Visit(const LogicalQueryDerivedGet *) override;
   void Visit(const LogicalJoin *) override;
-  void Visit(const LogicalInnerJoin *) override;
-  void Visit(const LogicalLeftJoin *) override;
-  void Visit(const LogicalRightJoin *) override;
-  void Visit(const LogicalOuterJoin *) override;
   void Visit(const LogicalSemiJoin *) override;
   void Visit(const LogicalAggregateAndGroupBy *) override;
 
  private:
   void PassDownRequiredCols();
-  void PassDownColumn(expression::AbstractExpression* col);
+  void PassDownColumn(expression::AbstractExpression *col);
   ExprSet required_cols_;
   GroupExpression *gexpr_;
   Memo *memo_;

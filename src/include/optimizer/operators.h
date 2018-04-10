@@ -31,7 +31,7 @@ class UpdateClause;
 }
 
 namespace catalog {
-  class TableCatalogObject;
+class TableCatalogObject;
 }
 
 namespace optimizer {
@@ -51,10 +51,10 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(oid_t get_id = 0,
-                       std::vector<AnnotatedExpression> predicates = {},
-                       std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
-                       std::string alias = "", bool update = false);
+  static Operator make(
+      oid_t get_id = 0, std::vector<AnnotatedExpression> predicates = {},
+      std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
+      std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -169,7 +169,8 @@ class LogicalJoin : public OperatorNode<LogicalJoin> {
  public:
   static Operator make(JoinType _type);
 
-  static Operator make(JoinType _type, std::vector<AnnotatedExpression> &conditions);
+  static Operator make(JoinType _type,
+                       std::vector<AnnotatedExpression> &conditions);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -177,52 +178,6 @@ class LogicalJoin : public OperatorNode<LogicalJoin> {
 
   std::vector<AnnotatedExpression> join_predicates;
   JoinType type;
-};
-
-//===--------------------------------------------------------------------===//
-// InnerJoin
-//===--------------------------------------------------------------------===//
-class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
- public:
-  static Operator make();
-
-  static Operator make(std::vector<AnnotatedExpression> &conditions);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  std::vector<AnnotatedExpression> join_predicates;
-};
-
-//===--------------------------------------------------------------------===//
-// LeftJoin
-//===--------------------------------------------------------------------===//
-class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
- public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
-
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-};
-
-//===--------------------------------------------------------------------===//
-// RightJoin
-//===--------------------------------------------------------------------===//
-class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
- public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
-
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-};
-
-//===--------------------------------------------------------------------===//
-// OuterJoin
-//===--------------------------------------------------------------------===//
-class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
- public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
-
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
 
 //===--------------------------------------------------------------------===//
@@ -263,7 +218,8 @@ class LogicalAggregateAndGroupBy
 class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -275,7 +231,8 @@ class LogicalInsert : public OperatorNode<LogicalInsert> {
 
 class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -303,7 +260,8 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class LogicalDelete : public OperatorNode<LogicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -334,7 +292,8 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates,
                        bool update);
@@ -356,7 +315,8 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates, bool update,
                        oid_t index_id, std::vector<oid_t> key_column_id_list,
@@ -430,8 +390,7 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
 class PhysicalNLJoin : public OperatorNode<PhysicalNLJoin> {
  public:
   static Operator make(
-      JoinType _type,
-      std::vector<AnnotatedExpression> conditions,
+      JoinType _type, std::vector<AnnotatedExpression> conditions,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
@@ -452,8 +411,7 @@ class PhysicalNLJoin : public OperatorNode<PhysicalNLJoin> {
 class PhysicalHashJoin : public OperatorNode<PhysicalHashJoin> {
  public:
   static Operator make(
-      JoinType _type,
-      std::vector<AnnotatedExpression> conditions,
+      JoinType _type, std::vector<AnnotatedExpression> conditions,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
@@ -574,7 +532,8 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -586,7 +545,8 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
 
 class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -596,7 +556,8 @@ class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
 //===--------------------------------------------------------------------===//
 class PhysicalDelete : public OperatorNode<PhysicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 

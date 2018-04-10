@@ -26,16 +26,12 @@ class TableStats;
  */
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
-                      Memo *memo, concurrency::TransactionContext* txn);
+  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols, Memo *memo,
+                      concurrency::TransactionContext *txn);
 
   void Visit(const LogicalGet *) override;
   void Visit(const LogicalQueryDerivedGet *) override;
   void Visit(const LogicalJoin *) override;
-  void Visit(const LogicalInnerJoin *) override;
-  void Visit(const LogicalLeftJoin *) override;
-  void Visit(const LogicalRightJoin *) override;
-  void Visit(const LogicalOuterJoin *) override;
   void Visit(const LogicalSemiJoin *) override;
   void Visit(const LogicalAggregateAndGroupBy *) override;
   void Visit(const LogicalLimit *) override;
@@ -65,8 +61,8 @@ class StatsCalculator : public OperatorVisitor {
    */
   void UpdateStatsForFilter(
       size_t num_rows,
-      std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
-          &predicate_stats,
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &
+          predicate_stats,
       const std::vector<AnnotatedExpression> &predicates);
 
   double CalculateSelectivityForPredicate(
@@ -76,7 +72,7 @@ class StatsCalculator : public OperatorVisitor {
   GroupExpression *gexpr_;
   ExprSet required_cols_;
   Memo *memo_;
-  concurrency::TransactionContext* txn_;
+  concurrency::TransactionContext *txn_;
 };
 
 }  // namespace optimizer

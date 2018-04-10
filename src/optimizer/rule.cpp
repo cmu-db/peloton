@@ -30,8 +30,6 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 RuleSet::RuleSet() {
   AddTransformationRule(new JoinCommutativity());
   AddTransformationRule(new JoinAssociativity());
-  AddTransformationRule(new InnerJoinCommutativity());
-  AddTransformationRule(new InnerJoinAssociativity());
   AddImplementationRule(new LogicalDeleteToPhysical());
   AddImplementationRule(new LogicalUpdateToPhysical());
   AddImplementationRule(new LogicalInsertToPhysical());
@@ -44,8 +42,6 @@ RuleSet::RuleSet() {
   AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
   AddImplementationRule(new JoinToNLJoin());
   AddImplementationRule(new JoinToHashJoin());
-  AddImplementationRule(new InnerJoinToInnerNLJoin());
-  AddImplementationRule(new InnerJoinToInnerHashJoin());
   AddImplementationRule(new ImplementDistinct());
   AddImplementationRule(new ImplementLimit());
 

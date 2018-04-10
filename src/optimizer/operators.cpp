@@ -51,7 +51,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.GetType()!= OpType::Get) return false;
+  if (r.GetType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -240,7 +240,8 @@ Operator LogicalJoin::make(JoinType _type) {
   return Operator(join);
 }
 
-Operator LogicalJoin::make(JoinType _type, std::vector<AnnotatedExpression> &conditions) {
+Operator LogicalJoin::make(JoinType _type,
+                           std::vector<AnnotatedExpression> &conditions) {
   LogicalJoin *join = new LogicalJoin;
   join->join_predicates = std::move(conditions);
   join->type = _type;
@@ -265,70 +266,6 @@ bool LogicalJoin::operator==(const BaseOperatorNode &r) {
       return false;
   }
   return true;
-}
-  
-//===--------------------------------------------------------------------===//
-// InnerJoin
-//===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make() {
-  LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicates = {};
-  return Operator(join);
-}
-
-Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression> &conditions) {
-  LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicates = std::move(conditions);
-  return Operator(join);
-}
-
-hash_t LogicalInnerJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  for (auto &pred : join_predicates)
-    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
-  return hash;
-}
-
-bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerJoin) return false;
-  const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size()) return false;
-  for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(
-            *node.join_predicates[i].expr.get()))
-      return false;
-  }
-  return true;
-}
-
-//===--------------------------------------------------------------------===//
-// LeftJoin
-//===--------------------------------------------------------------------===//
-Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
-  LogicalLeftJoin *join = new LogicalLeftJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// RightJoin
-//===--------------------------------------------------------------------===//
-Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
-  LogicalRightJoin *join = new LogicalRightJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// OuterJoin
-//===--------------------------------------------------------------------===//
-Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
-  LogicalOuterJoin *join = new LogicalOuterJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
@@ -422,8 +359,8 @@ Operator LogicalDelete::make(
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
-        *updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -594,8 +531,7 @@ Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
 // NLJoin (Inner + Outer Joins)
 //===--------------------------------------------------------------------===//
 Operator PhysicalNLJoin::make(
-    JoinType _type,
-    std::vector<AnnotatedExpression> conditions,
+    JoinType _type, std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalNLJoin *join = new PhysicalNLJoin();
@@ -621,8 +557,7 @@ hash_t PhysicalNLJoin::Hash() const {
 bool PhysicalNLJoin::operator==(const BaseOperatorNode &r) {
   if (r.GetType() != OpType::NLJoin) return false;
 
-  const PhysicalNLJoin &node =
-      *static_cast<const PhysicalNLJoin *>(&r);
+  const PhysicalNLJoin &node = *static_cast<const PhysicalNLJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
       left_keys.size() != node.left_keys.size() ||
       right_keys.size() != node.right_keys.size())
@@ -646,8 +581,7 @@ bool PhysicalNLJoin::operator==(const BaseOperatorNode &r) {
 // HashJoin
 //===--------------------------------------------------------------------===//
 Operator PhysicalHashJoin::make(
-    JoinType _type,
-    std::vector<AnnotatedExpression> conditions,
+    JoinType _type, std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalHashJoin *join = new PhysicalHashJoin();
@@ -672,8 +606,7 @@ hash_t PhysicalHashJoin::Hash() const {
 bool PhysicalHashJoin::operator==(const BaseOperatorNode &r) {
   if (r.GetType() != OpType::HashJoin) return false;
 
-  const PhysicalHashJoin &node =
-      *static_cast<const PhysicalHashJoin *>(&r);
+  const PhysicalHashJoin &node = *static_cast<const PhysicalHashJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
       left_keys.size() != node.left_keys.size() ||
       right_keys.size() != node.right_keys.size())
@@ -887,8 +820,8 @@ Operator PhysicalDelete::make(
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
-        *updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
@@ -1000,14 +933,6 @@ std::string OperatorNode<LogicalDependentJoin>::name_ = "LogicalDependentJoin";
 template <>
 std::string OperatorNode<LogicalJoin>::name_ = "LogicalJoin";
 template <>
-std::string OperatorNode<LogicalInnerJoin>::name_ = "LogicalInnerJoin";
-template <>
-std::string OperatorNode<LogicalLeftJoin>::name_ = "LogicalLeftJoin";
-template <>
-std::string OperatorNode<LogicalRightJoin>::name_ = "LogicalRightJoin";
-template <>
-std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
-template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregateAndGroupBy>::name_ =
@@ -1096,14 +1021,6 @@ template <>
 OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
 template <>
 OpType OperatorNode<LogicalJoin>::type_ = OpType::LogicalJoin;
-template <>
-OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
-template <>
-OpType OperatorNode<LogicalLeftJoin>::type_ = OpType::LeftJoin;
-template <>
-OpType OperatorNode<LogicalRightJoin>::type_ = OpType::RightJoin;
-template <>
-OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>

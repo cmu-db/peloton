@@ -53,37 +53,6 @@ class JoinAssociativity : public Rule {
                  OptimizeContext *context) const override;
 };
 
-/**
- * @brief (A join B) -> (B join A)
- */
-class InnerJoinCommutativity : public Rule {
- public:
-  InnerJoinCommutativity();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan,
-             OptimizeContext *context) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                 OptimizeContext *context) const override;
-};
-
-/**
- * @brief (A join B) join C -> A join (B join C)
- */
-
-class InnerJoinAssociativity : public Rule {
- public:
-  InnerJoinAssociativity();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan,
-             OptimizeContext *context) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                 OptimizeContext *context) const override;
-};
-
 //===--------------------------------------------------------------------===//
 // Implementation rules
 //===--------------------------------------------------------------------===//
@@ -270,36 +239,6 @@ class JoinToHashJoin : public Rule {
 };
 
 /**
- * @brief (Logical Inner Join -> Inner Nested-Loop Join)
- */
-class InnerJoinToInnerNLJoin : public Rule {
- public:
-  InnerJoinToInnerNLJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan,
-             OptimizeContext *context) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                 OptimizeContext *context) const override;
-};
-
-/**
- * @brief (Logical Inner Join -> Inner Hash Join)
- */
-class InnerJoinToInnerHashJoin : public Rule {
- public:
-  InnerJoinToInnerHashJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan,
-             OptimizeContext *context) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                 OptimizeContext *context) const override;
-};
-
-/**
  * @brief (Logical Distinct -> Physical Distinct)
  */
 class ImplementDistinct : public Rule {
@@ -401,7 +340,8 @@ class EmbedFilterIntoGet : public Rule {
 ///////////////////////////////////////////////////////////////////////////////
 /// Unnesting rules
 // We use this promise to determine which rules should be applied first if
-// multiple rules are applicable, we need to first pull filters up through mark-join
+// multiple rules are applicable, we need to first pull filters up through
+// mark-join
 // then turn mark-join into a regular join operator
 enum class UnnestPromise { Low = 1, High };
 // TODO(boweic): MarkJoin and SingleJoin should not be transformed into inner

@@ -44,20 +44,7 @@ void ChildStatsDeriver::Visit(const LogicalJoin *op) {
     }
   }
 }
-void ChildStatsDeriver::Visit(const LogicalInnerJoin *op) {
-  PassDownRequiredCols();
-  for (auto &annotated_expr : op->join_predicates) {
-    auto predicate = annotated_expr.expr.get();
-    ExprSet expr_set;
-    expression::ExpressionUtil::GetTupleValueExprs(expr_set, predicate);
-    for (auto &col : expr_set) {
-      PassDownColumn(col);
-    }
-  }
-}
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *) {}
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *) {}
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *) {}
+
 void ChildStatsDeriver::Visit(const LogicalSemiJoin *) {}
 // TODO(boweic): support stats of aggregation
 void ChildStatsDeriver::Visit(const LogicalAggregateAndGroupBy *) {

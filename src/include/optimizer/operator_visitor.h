@@ -61,10 +61,6 @@ class OperatorVisitor {
   virtual void Visit(const LogicalSingleJoin *) {}
   virtual void Visit(const LogicalDependentJoin *) {}
   virtual void Visit(const LogicalJoin *) {}
-  virtual void Visit(const LogicalInnerJoin *) {}
-  virtual void Visit(const LogicalLeftJoin *) {}
-  virtual void Visit(const LogicalRightJoin *) {}
-  virtual void Visit(const LogicalOuterJoin *) {}
   virtual void Visit(const LogicalSemiJoin *) {}
   virtual void Visit(const LogicalAggregateAndGroupBy *) {}
   virtual void Visit(const LogicalInsert *) {}
