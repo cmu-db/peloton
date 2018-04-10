@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Nevermore on 01/04/2018.
+//                         Peloton
 //
+// rename_function_statement.h
+//
+// Identification: src/include/parser/rename_function_statement.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -9,6 +17,10 @@
 
 namespace peloton {
 namespace parser {
+/** @brief Rename statement
+ *  The statement that used for transform from postgress statement
+ *  to Peloton statement
+ */
 class RenameFuncStatement : public TableRefStatement {
  public:
   enum class ObjectType { INVALID = 0, COLUMN = 1 };

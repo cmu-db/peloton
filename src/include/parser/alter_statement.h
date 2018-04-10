@@ -20,6 +20,7 @@ namespace parser {
 /**
  * @struct AlterTableStatement
  * @brief Represents "ALTER TABLE add column COLUMN_NAME COLUMN_TYPE"
+ * TODO: add implementation of AlterTableStatement
  */
 class AlterTableStatement : public TableRefStatement {
  public:
@@ -30,10 +31,6 @@ class AlterTableStatement : public TableRefStatement {
         names(new std::vector<char *>) {}
 
   virtual ~AlterTableStatement() {
-    //      if (columns != nullptr) {
-    //        for (auto col : *columns) delete col;
-    //        delete columns;
-    //      }
     if (names != nullptr) {
       for (auto name : *names) delete name;
       delete names;

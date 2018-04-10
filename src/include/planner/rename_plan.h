@@ -1,12 +1,25 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Nevermore on 03/04/2018.
+//                         Peloton
 //
+// rename_plan.h
+//
+// Identification: src/include/parser/rename_plan.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "planner/abstract_plan.h"
 #include "parser/rename_function_statement.h"
 
+/** @brief: The Plan used for rename
+ *  The plan contains the necessary information for
+ *  renaming, including old names, new names and
+ *  which object and database
+ */
 namespace peloton {
 namespace planner {
 class RenamePlan : public AbstractPlan {

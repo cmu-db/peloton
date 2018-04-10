@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Nevermore on 03/04/2018.
+//                         Peloton
 //
+// alter_plan.h
+//
+// Identification: src/include/parser/alter_plan.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 #include "planner/abstract_plan.h"
@@ -8,6 +16,9 @@
 namespace peloton {
 
 namespace planner {
+/** @brief The plan used for altering
+ *  TODO: adding support for add/drop column
+ */
 class AlterPlan : public AbstractPlan {
  public:
   AlterPlan() = delete;
