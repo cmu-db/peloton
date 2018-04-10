@@ -43,7 +43,8 @@ class DatabaseCatalogObject {
 
  public:
   DatabaseCatalogObject(executor::LogicalTile *tile,
-                        concurrency::TransactionContext *txn);
+                        concurrency::TransactionContext *txn,
+                        int tupleId = 0);
 
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
@@ -119,6 +120,8 @@ class DatabaseCatalog : public AbstractCatalog {
       oid_t database_oid, concurrency::TransactionContext *txn);
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &database_name, concurrency::TransactionContext *txn);
+  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>> GetDatabaseObjects(
+      concurrency::TransactionContext *txn);
 
  private:
   DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

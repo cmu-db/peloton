@@ -231,6 +231,23 @@ class Catalog {
   const FunctionData GetFunction(
       const std::string &name, const std::vector<type::TypeId> &argument_types);
 
+
+  //===--------------------------------------------------------------------===//
+  // SERIALIZATION FUNCTION FOR CHECKPOINTS
+  //===--------------------------------------------------------------------===//
+
+  /* TODO: If all catalog data consisting data schema and constraints is stored in catalog table,
+   * then below functions will be modified for using catalog database and creating only storage objects.
+   * */
+  void SerializeTo(concurrency::TransactionContext *txn, SerializeOutput &out);
+  void SerializeDatabaseTo(oid_t db_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
+  void SerializeTableTo(oid_t table_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
+  void SerializeIndexTo(oid_t index_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
+  bool DeserializeFrom(concurrency::TransactionContext *txn, SerializeInput &in);
+  oid_t DeserializeDatabaseFrom(concurrency::TransactionContext *txn, SerializeInput &in);
+  oid_t DeserializeTableFrom(oid_t db_oid, concurrency::TransactionContext *txn, SerializeInput &in);
+  oid_t DeserializeIndexFrom(oid_t table_oid, concurrency::TransactionContext *txn, SerializeInput &in);
+
  private:
   Catalog();
 

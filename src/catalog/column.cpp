@@ -73,7 +73,10 @@ Column Column::DeserializeFrom(SerializeInput &in) {
 	size_t column_constraint_count = in.ReadLong();
 	for (oid_t constraint_idx = 0; constraint_idx < column_constraint_count; constraint_idx++) {
 		auto column_constraint = Constraint::DeserializeFrom(in, column_type);
-		column.AddConstraint(column_constraint);
+		// Foreign key constraint will be stored by DataTable deserializer
+		if (column_constraint.GetType() != ConstraintType::FOREIGN) {
+			column.AddConstraint(column_constraint);
+		}
 	}
 
 	return column;

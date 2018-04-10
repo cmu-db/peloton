@@ -40,14 +40,11 @@ void MultiConstraint::SerializeTo(SerializeOutput &out) {
 	// multi-column constraint basic information
 	out.WriteTextString(constraint_name);
 	out.WriteInt((int)constraint_type);
-	out.WriteLong(column_ids.size());
-	LOG_DEBUG("Multi-column constraint '%s': type %s, %lu column",
-			constraint_name.c_str(), ConstraintTypeToString(constraint_type).c_str(),	column_ids.size());
 
 	// multi-column constraint columns
+	out.WriteLong(column_ids.size());
 	for (auto column_id : column_ids) {
 		out.WriteInt(column_id);
-		LOG_DEBUG(" |- Column %d", column_id);
 	}
 }
 
@@ -56,17 +53,12 @@ MultiConstraint MultiConstraint::DeserializeFrom(SerializeInput &in){
 	// multi-column constraint basic information
 	std::string constraint_name = in.ReadTextString();
 	ConstraintType constraint_type = (ConstraintType)in.ReadInt();
-	size_t constraint_column_count = in.ReadLong();
-
-	LOG_DEBUG("Multi-column constraint '%s': type %s, %lu columns",
-			constraint_name.c_str(), ConstraintTypeToString(constraint_type).c_str(), constraint_column_count);
 
 	// multi-column constraint columns
+	size_t constraint_column_count = in.ReadLong();
 	std::vector<oid_t> constraint_columns;
-	for (oid_t constraint_column_idx; constraint_column_idx < constraint_column_count; constraint_column_idx++) {
+	for (oid_t col_idx = 0; col_idx < constraint_column_count; col_idx++) {
 		oid_t column_oid = in.ReadInt();
-		LOG_DEBUG(" |- Column %d", column_oid);
-
 		constraint_columns.push_back(column_oid);
 	}
 

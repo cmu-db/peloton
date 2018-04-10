@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "common/internal_types.h"
+#include "type/serializeio.h"
 
 namespace peloton {
 namespace catalog {
@@ -53,6 +54,9 @@ class ForeignKey {
   FKConstrActionType GetUpdateAction() const { return update_action; }
   FKConstrActionType GetDeleteAction() const { return delete_action; }
   std::string &GetConstraintName() { return fk_name; }
+
+  void SerializeTo(SerializeOutput &out);
+  static ForeignKey *DeserializeFrom(SerializeInput &in);
 
  private:
   oid_t source_table_id = INVALID_OID;

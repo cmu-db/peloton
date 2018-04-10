@@ -26,10 +26,11 @@ namespace peloton {
 namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
-    : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
+                                             concurrency::TransactionContext *txn,
+                                             int tupleId)
+    : database_oid(tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
-      database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
+      database_name(tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_NAME)
                         .ToString()),
       table_objects_cache(),
       table_name_cache(),
@@ -350,6 +351,38 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
 
   // return empty object if not found
   return nullptr;
+}
+
+std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
+DatabaseCatalog::GetDatabaseObjects(concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+
+  // TODO: try get from cache
+  if (txn->catalog_cache.IsValidDatabaseObjects()) {
+    return txn->catalog_cache.GetDatabaseObjects();
+  }
+
+  // get from pg_database
+  std::vector<oid_t> column_ids(all_column_ids);
+  auto result_tiles = this->GetResultWithSeqScan(column_ids, nullptr, txn);
+
+  for (auto &tile : (*result_tiles)) {
+  	for (auto tuple_id : *tile) {
+  		auto database_object =
+  				std::make_shared<DatabaseCatalogObject>(tile.get(), txn, tuple_id);
+  		if (database_object) {
+  			// insert into cache
+  			bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+  			PL_ASSERT(success == true);
+  			(void)success;
+  		}
+    }
+  }
+
+  txn->catalog_cache.SetValidDatabaseObjects(true);
+  return txn->catalog_cache.GetDatabaseObjects();
 }
 
 }  // namespace catalog

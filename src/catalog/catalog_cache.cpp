@@ -16,6 +16,7 @@
 
 #include "catalog/database_catalog.h"
 #include "common/logger.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 namespace catalog {
@@ -109,6 +110,22 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     return nullptr;
   }
   return it->second;
+}
+
+/* @brief   Get database catalog object from cache,
+            or all the way from storage
+ * @param   txn   if nullptr, return nullptr on a cache miss
+ * @return  Shared pointer to the requested database catalog object
+ */
+std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
+CatalogCache::GetDatabaseObjects(concurrency::TransactionContext *txn) {
+  if (!valid_database_objects && txn != nullptr) {
+    // cache miss get from pg_database
+    return DatabaseCatalog::GetInstance()->GetDatabaseObjects(txn);
+  }
+  // make sure to check IsValidTableObjects() before getting table objects
+  PL_ASSERT(valid_database_objects);
+  return database_objects_cache;
 }
 
 /*@brief   search table catalog object from all cached database objects

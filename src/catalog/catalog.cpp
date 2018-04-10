@@ -15,6 +15,7 @@
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/foreign_key.h"
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
@@ -1331,6 +1332,338 @@ void Catalog::InitializeFunctions() {
     txn_manager.CommitTransaction(txn);
     initialized = true;
   }
+}
+
+void Catalog::SerializeTo(UNUSED_ATTRIBUTE concurrency::TransactionContext *txn, UNUSED_ATTRIBUTE SerializeOutput &out) {
+	// insert each database information into catalog file
+	auto db_objects = DatabaseCatalog::GetInstance()->GetDatabaseObjects(txn);
+	size_t database_count = db_objects.size();
+	out.WriteLong(database_count);
+	for (auto db_object_pair : db_objects) {
+		auto db_oid = db_object_pair.first;
+
+		// write database information (also all tables and indexes in this)
+		SerializeDatabaseTo(db_oid, txn, out);
+
+	}
+}
+
+void Catalog::SerializeDatabaseTo(oid_t db_oid, concurrency::TransactionContext *txn, SerializeOutput &out) {
+	// write database information (ID, name, table count)
+	auto db_catalog_object = GetDatabaseObject(db_oid, txn);
+	out.WriteInt(db_oid);
+	out.WriteTextString(db_catalog_object->GetDatabaseName());
+
+	auto table_objects = TableCatalog::GetInstance()->GetTableObjects(db_oid, txn);
+	out.WriteLong(table_objects.size());
+	LOG_DEBUG("Write database catalog %d '%s' : %lu tables",
+			db_oid, db_catalog_object->GetDatabaseName().c_str(), table_objects.size());
+
+	// write table catalogs in the database
+	for (auto table_object_pair : table_objects) {
+		auto table_oid = table_object_pair.first;
+		auto table_object = table_object_pair.second;
+
+		// write table catalog
+		SerializeTableTo(table_oid, txn, out);
+
+		// write indexes information
+		auto index_objects = table_object->GetIndexObjects();
+		out.WriteLong(index_objects.size());
+		for (auto index_object_pair : index_objects) {
+			SerializeIndexTo(index_object_pair.first, txn, out);
+		}
+
+	}
+}
+
+void Catalog::SerializeTableTo(oid_t table_oid, concurrency::TransactionContext *txn, SerializeOutput &out) {
+	auto table_object = TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+	auto table = storage::StorageManager::GetInstance()->GetTableWithOid(table_object->GetDatabaseOid(), table_oid);
+
+	// Write table information (ID, name)
+	out.WriteInt(table_oid);
+	out.WriteTextString(table_object->GetTableName());
+
+	// Write schema information
+	auto schema = table->GetSchema();
+	schema->SerializeTo(out);
+	LOG_DEBUG("Write table catalog %d '%s': %lu columns",
+			table_oid, table_object->GetTableName().c_str(), schema->GetColumnCount());
+
+	// Write foreign key information of this sink table
+	auto foreign_key_count = table->GetForeignKeyCount();
+	out.WriteLong(foreign_key_count);
+	for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
+		auto foreign_key = table->GetForeignKey(fk_idx);
+		foreign_key->SerializeTo(out);
+	  LOG_DEBUG("|-- foreign key '%s'", foreign_key->GetConstraintName().c_str());
+
+	}
+
+	// Write foreign key information of this source tables
+	auto foreign_key_src_count = table->GetForeignKeySrcCount();
+	out.WriteLong(foreign_key_src_count);
+	for (oid_t fk_src_idx = 0; fk_src_idx < foreign_key_src_count; fk_src_idx++) {
+		auto foreign_key_src = table->GetForeignKeySrc(fk_src_idx);
+		foreign_key_src->SerializeTo(out);
+	  LOG_DEBUG("|-- foreign key source '%s'", foreign_key_src->GetConstraintName().c_str());
+	}
+
+	// tuning
+
+}
+
+void Catalog::SerializeIndexTo(oid_t index_oid, concurrency::TransactionContext *txn, SerializeOutput &out) {
+	auto index_object = IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
+
+	// Index basic information
+	out.WriteInt(index_object->GetIndexOid());
+	out.WriteTextString(index_object->GetIndexName());
+	out.WriteInt((int)index_object->GetIndexType());
+	out.WriteInt((int)index_object->GetIndexConstraint());
+	out.WriteBool(index_object->HasUniqueKeys());
+	LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
+			index_object->GetIndexName().c_str(), IndexTypeToString(index_object->GetIndexType()).c_str(),
+			IndexConstraintTypeToString(index_object->GetIndexConstraint()).c_str(), index_object->HasUniqueKeys());
+
+	// Index key attributes
+	auto key_attrs = index_object->GetKeyAttrs();
+	out.WriteLong(key_attrs.size());
+	for (auto attr_oid : key_attrs) {
+		out.WriteInt(attr_oid);
+		LOG_DEBUG("|  |- Key attribute %d", attr_oid);
+	}
+}
+
+
+bool Catalog::DeserializeFrom(concurrency::TransactionContext *txn, SerializeInput &in) {
+	// recover database catalog
+	size_t db_count = in.ReadLong();
+	for(oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+		// create database catalog
+		try {
+			DeserializeDatabaseFrom(txn, in);
+		} catch (Exception &e) {
+			LOG_ERROR("Recover database error: %s", e.what());
+			return false;
+		}
+	}
+	return true;
+}
+
+oid_t Catalog::DeserializeDatabaseFrom(concurrency::TransactionContext *txn, SerializeInput &in) {
+  auto database_catalog = DatabaseCatalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
+
+	// read basic database information
+	oid_t database_oid = in.ReadInt();
+	std::string database_name = in.ReadTextString();
+
+  // Check if a database with the same name exists
+  auto database_object = database_catalog->GetDatabaseObject(database_oid, txn);
+  if (database_object == nullptr) {
+		// adjust next oid in the database catalog
+		if (database_catalog->oid_ <= database_oid) {
+			database_catalog->oid_ = database_oid + 1;
+		}
+
+		// Create actual database
+		storage::Database *database = new storage::Database(database_oid);
+		// TODO: This should be deprecated, dbname should only exists in pg_db
+		database->setDBName(database_name);
+		{
+			std::lock_guard<std::mutex> lock(catalog_mutex);
+			storage_manager->AddDatabaseToStorageManager(database);
+		}
+		// put database object into rw_object_set
+		txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
+		// Insert database record into pg_db
+		database_catalog->InsertDatabase(database_oid, database_name, pool_.get(), txn);
+  }
+  // if recovered database oid doesn't equal to existed database oid
+  else if (database_oid != database_object->GetDatabaseOid()){
+    throw CatalogException("Database " + database_name + " already exists and its oid is changed");
+  }
+
+  // get table count
+	size_t table_count = in.ReadLong();
+	LOG_DEBUG("Create database %d '%s' (including %lu tables)", database_oid, database_name.c_str(), table_count);
+
+	// Recover table catalog
+	for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+		try {
+			// create table
+			auto table_oid = DeserializeTableFrom(database_oid, txn, in);
+
+			// create index
+			size_t index_count = in.ReadLong();
+			for (oid_t index_idx = 0; index_idx < index_count; index_idx++) {
+				DeserializeIndexFrom(table_oid, txn, in);
+			}
+		} catch (Exception &e) {
+			throw e;
+		}
+
+	}
+
+	return database_oid;
+}
+
+oid_t Catalog::DeserializeTableFrom(oid_t db_oid, concurrency::TransactionContext *txn, SerializeInput &in) {
+	auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(db_oid);
+  auto table_catalog = TableCatalog::GetInstance();
+
+	// read basic table information
+	oid_t table_oid = in.ReadInt();
+	std::string table_name = in.ReadTextString();
+
+	// recover table schema
+	std::unique_ptr<Schema> schema = Schema::DeserializeFrom(in);
+
+  // get table catalog object from pg_table
+	storage::DataTable *table;
+  auto table_object = table_catalog->GetTableObject(table_oid, txn);
+  if (table_object == nullptr) {
+		// adjust next oid in the table catalog
+		if (table_catalog->oid_<= table_oid) {
+			table_catalog->oid_ = table_oid + 1;
+		}
+
+		// Check duplicate column names
+		std::set<std::string> column_names;
+		auto columns = schema.get()->GetColumns();
+		for (auto column : columns) {
+			auto column_name = column.GetName();
+			if (column_names.count(column_name) == 1)
+				throw CatalogException("Can't create table " + table_name +
+															 " with duplicate column name");
+			column_names.insert(column_name);
+		}
+
+		// Create actual table
+		bool own_schema = true;
+		bool adapt_table = false;
+		bool is_catalog = false;
+		table = storage::TableFactory::GetDataTable(
+				db_oid, table_oid, schema.release(), table_name,
+				DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
+		database->AddTable(table, is_catalog);
+
+		// put data table object into rw_object_set
+		txn->RecordCreate(db_oid, table_oid, INVALID_OID);
+
+		// Update pg_table with table info
+		table_catalog->InsertTable(table_oid, table_name,	db_oid, pool_.get(), txn);
+		oid_t column_id = 0;
+		for (const auto &column : table->GetSchema()->GetColumns()) {
+			ColumnCatalog::GetInstance()->InsertColumn(
+					table_oid, column.GetName(), column_id, column.GetOffset(),
+					column.GetType(), column.IsInlined(), column.GetConstraints(),
+					pool_.get(), txn);
+
+			column_id++;
+		}
+		CreatePrimaryIndex(db_oid, table_oid, txn);
+  }
+  // if recovered table oid doesn't equal to existed table oid
+  else if (table_oid != table_object->GetTableOid()) {
+    throw CatalogException("Table " + table_name + " already exists and its oid is changed");
+  } else {
+  	table = database->GetTableWithOid(table_oid);
+  }
+
+  LOG_DEBUG("Create table %d '%s'", table_oid, table_name.c_str());
+
+	// recover foreign key information as sink table
+	auto foreign_key_count = in.ReadLong();
+	for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
+		table->AddForeignKey(ForeignKey::DeserializeFrom(in));
+	  LOG_DEBUG("|-- Add foreign key '%s'", table->GetForeignKey(fk_idx)->GetConstraintName().c_str());
+	}
+
+	// recover foreign key information as source table
+	auto foreign_key_src_count = in.ReadLong();
+	for (oid_t fk_src_idx = 0; fk_src_idx < foreign_key_src_count; fk_src_idx++) {
+		table->RegisterForeignKeySource(ForeignKey::DeserializeFrom(in));
+	  LOG_DEBUG("|-- Add foreign key source '%s'", table->GetForeignKeySrc(fk_src_idx)->GetConstraintName().c_str());
+	}
+
+	// recover trigger object of the storage table
+	auto trigger_list = TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
+	for (int trigger_idx = 0; trigger_idx < trigger_list->GetTriggerListSize(); trigger_idx++ ) {
+		auto trigger = trigger_list->Get(trigger_idx);
+		table->AddTrigger(*trigger);
+	  LOG_DEBUG("|-- Add trigger '%s'", trigger->GetTriggerName().c_str());
+	}
+
+	// tuning
+
+	return table_oid;
+}
+
+
+oid_t Catalog::DeserializeIndexFrom(oid_t table_oid, concurrency::TransactionContext *txn, SerializeInput &in) {
+	// Index basic information
+	oid_t index_oid = in.ReadInt();
+	std::string index_name = in.ReadTextString();
+	IndexType index_type = (IndexType)in.ReadInt();
+	IndexConstraintType index_constraint_type = (IndexConstraintType)in.ReadInt();
+	bool index_unique_keys = in.ReadBool();
+	LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
+			index_name.c_str(), IndexTypeToString(index_type).c_str(),
+			IndexConstraintTypeToString(index_constraint_type).c_str(), index_unique_keys);
+
+	// Index key attributes
+	std::vector<oid_t> key_attrs;
+	size_t index_attr_count = in.ReadLong();
+	for (oid_t index_attr_idx = 0; index_attr_idx < index_attr_count; index_attr_idx++) {
+		oid_t index_attr = in.ReadInt();
+		key_attrs.push_back(index_attr);
+		LOG_DEBUG("|  |- Key attribute %d",	index_attr);
+	}
+
+  // check if table already has index with same name
+	auto index_catalog = IndexCatalog::GetInstance();
+	auto table_object = TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+	auto index_object = table_object->GetIndexObject(index_oid);
+	if (index_object == nullptr) {
+		// adjust next oid in the table catalog
+		if (index_catalog->oid_<= table_oid) {
+			index_catalog->oid_ = table_oid + 1;
+		}
+
+		auto storage_manager = storage::StorageManager::GetInstance();
+		auto table = storage_manager->GetTableWithOid(table_object->GetDatabaseOid(), table_oid);
+		auto schema = table->GetSchema();
+
+		auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+		key_schema->SetIndexedColumns(key_attrs);
+
+		// Set index metadata
+		auto index_metadata = new index::IndexMetadata(
+				index_name, index_oid, table_oid, table_object->GetDatabaseOid(), index_type,
+				index_constraint_type, schema, key_schema, key_attrs, index_unique_keys);
+
+		// Add index to table
+		std::shared_ptr<index::Index> key_index(
+				index::IndexFactory::GetIndex(index_metadata));
+		table->AddIndex(key_index);
+
+		// Put index object into rw_object_set
+		txn->RecordCreate(table_object->GetDatabaseOid(), table_oid, index_oid);
+
+		// Insert index record into pg_index
+		index_catalog->InsertIndex(index_oid, index_name, table_oid, index_type,
+				index_constraint_type, index_unique_keys, key_attrs, pool_.get(), txn);
+	}
+  // if recovered index oid doesn't equal to existed index oid
+	else if (index_oid != index_object->GetIndexOid()) {
+		throw CatalogException("Index " + index_name + " already exists and its oid is changed");
+	}
+
+	return index_oid;
 }
 
 }  // namespace catalog
