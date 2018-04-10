@@ -147,6 +147,13 @@ void PlanExecutor::ExecutePlan(
   PELOTON_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetQueryLatencyMetric()
+        .StartTimer();
+  }
+
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
 
@@ -163,6 +170,13 @@ void PlanExecutor::ExecutePlan(
     LOG_ERROR("Error thrown during execution: %s",
               result.m_error_message.c_str());
     on_complete(result, {});
+  }
+
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetQueryLatencyMetric()
+        .RecordLatency();
   }
 }
 

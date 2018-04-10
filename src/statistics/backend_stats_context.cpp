@@ -103,7 +103,7 @@ IndexMetric* BackendStatsContext::GetIndexMetric(oid_t database_id,
   return index_metric.get();
 }
 
-LatencyMetric& BackendStatsContext::GetTxnLatencyMetric() {
+LatencyMetric& BackendStatsContext::GetQueryLatencyMetric() {
   return txn_latencies_;
 }
 

@@ -66,13 +66,6 @@ TransactionContext *TransactionManager::BeginTransaction(
     txn = new TransactionContext(thread_id, type, read_id);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .StartTimer();
-  }
-
   txn->SetTimestamp(function::DateFunctions::Now());
 
   return txn;
@@ -91,14 +84,6 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   current_txn = nullptr;
-
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .RecordLatency();
-
-  }
 }
 
 // this function checks whether a concurrent transaction is inserting the same
