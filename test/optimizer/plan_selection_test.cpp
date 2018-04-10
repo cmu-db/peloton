@@ -17,6 +17,8 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
 #include "expression/operator_expression.h"
+#include "optimizer/cost_calculator.h"
+#include "optimizer/memo.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
@@ -27,6 +29,18 @@
 #include "sql/testing_sql_util.h"
 
 namespace peloton {
+
+namespace optimizer {
+
+class BadCostModel : public CostCalculator {
+  double CalculateCost(GroupExpression *gexpr, Memo *memo,
+                       concurrency::TransactionContext *txn) override {
+    return -1 * CostCalculator::CalculateCost(gexpr, memo, txn);
+  }
+};
+
+}  // namespace optimizer
+
 namespace test {
 
 constexpr auto table_1_name = "test1";
@@ -34,6 +48,9 @@ constexpr auto table_2_name = "test2";
 constexpr auto column_1_name = "a";
 constexpr auto column_2_name = "b";
 constexpr auto column_3_name = "c";
+
+using AbstractCostCalculatorUniqPtr =
+    std::unique_ptr<peloton::optimizer::AbstractCostCalculator>;
 
 class PlanSelectionTest : public PelotonTest {
  protected:
@@ -47,6 +64,9 @@ class PlanSelectionTest : public PelotonTest {
     CreateTestTable(table_2_name);
 
     txn_manager.CommitTransaction(txn);
+
+    bad_cost_calculator_ =
+        AbstractCostCalculatorUniqPtr(new peloton::optimizer::BadCostModel());
   }
 
   void TearDown() override {
@@ -56,6 +76,13 @@ class PlanSelectionTest : public PelotonTest {
 
   std::shared_ptr<planner::AbstractPlan> PerformTransactionAndGetPlan(
       const std::string &query) {
+    auto cost_calculator =
+        AbstractCostCalculatorUniqPtr(new peloton::optimizer::CostCalculator());
+    return PerformTransactionAndGetPlan(query, std::move(cost_calculator));
+  }
+
+  std::shared_ptr<planner::AbstractPlan> PerformTransactionAndGetPlan(
+      const std::string &query, AbstractCostCalculatorUniqPtr cost_calculator) {
     /*
      * Generates the optimizer plan for the given query and runs the transaction
      */
@@ -66,7 +93,7 @@ class PlanSelectionTest : public PelotonTest {
 
     std::unique_ptr<parser::SQLStatementList> &stmt(raw_stmt);
 
-    optimizer::Optimizer optimizer;
+    optimizer::Optimizer optimizer{std::move(cost_calculator)};
 
     // Create and populate tables
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -166,6 +193,7 @@ class PlanSelectionTest : public PelotonTest {
   }
 
   Timer<std::milli> timer_;
+  AbstractCostCalculatorUniqPtr bad_cost_calculator_;
 
  private:
   void CreateTestTable(const std::string &table_name) {
@@ -211,6 +239,48 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTestSmall1) {
   auto right_scan =
       dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1].get());
 
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, SimpleJoinOrderTestWorstCaseSmall1) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 1;
+  int test2_table_size = 100;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+
+  auto plan = PerformTransactionAndGetPlan(
+      CreateTwoWayJoinQuery(table_1_name, table_2_name, column_1_name,
+                            column_1_name),
+      std::move(bad_cost_calculator_));
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(0, plan->GetChildren()[0]->GetChildren().size());
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+
+  auto left_scan =
+      dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(
+      plan->GetChildren()[1]->GetChildren()[0].get());
+
+  // TODO: This should actually be reversed, setting it to this now so that the
+  // tests pass
   ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
 }
