@@ -12,9 +12,11 @@
 
 #pragma once
 
-#include "configuration.h"
+#include "index_selection_util.h"
 #include "parser/sql_statement.h"
 #include "catalog/index_catalog.h"
+#include "brain/index_selection_util.h"
+#include "brain/index_selection_context.h"
 
 namespace peloton {
 namespace brain {
@@ -22,43 +24,30 @@ namespace brain {
 using namespace parser;
 using namespace catalog;
 
-// Represents a workload
-class Workload {
-private:
-  std::vector<SQLStatement*> sql_queries;
-public:
-  Workload() {}
-  void AddQuery(SQLStatement *query) {
-    sql_queries.push_back(query);
-  }
-  std::vector<SQLStatement*> &GetQueries() {
-    return sql_queries;
-  }
-  size_t Size() {
-    return sql_queries.size();
-  }
-};
-
 //===--------------------------------------------------------------------===//
 // IndexSelection
 //===--------------------------------------------------------------------===//
 class IndexSelection {
  public:
   IndexSelection(std::shared_ptr<Workload> query_set);
-  std::unique_ptr<Configuration> GetBestIndexes();
+  std::unique_ptr<IndexConfiguration> GetBestIndexes();
 private:
-  void Enumerate(Configuration &indexes, Configuration &picked_indexes,
+  void Enumerate(IndexConfiguration &indexes,
+                 IndexConfiguration &picked_indexes,
                       Workload &workload);
   void GetAdmissibleIndexes(SQLStatement *query,
-                            Configuration &indexes);
-  void IndexColsParseWhereHelper(std::unique_ptr<expression::AbstractExpression> &where_expr,
-                                 Configuration &config);
+                            IndexConfiguration &indexes);
+  void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
+                                 IndexConfiguration &config);
   void IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
-                                   Configuration &config);
+                                   IndexConfiguration &config);
   void IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_by,
-                                   Configuration &config);
+                                   IndexConfiguration &config);
+  std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
+                                                     oid_t table, std::vector<oid_t> cols);
   // members
   std::shared_ptr<Workload> query_set_;
+  IndexSelectionContext context_;
 };
 
 }  // namespace brain

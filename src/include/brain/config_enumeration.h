@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "brain/configuration.h"
+#include "brain/index_selection_util.h"
 
 
 namespace peloton {
@@ -31,9 +31,9 @@ namespace brain {
       : intial_size_(0), optimal_size_(num_indexes) {}
 
 
-  Configuration getBestIndexes(Configuration c, std::vector<std::string> w);
+  IndexConfiguration getBestIndexes(IndexConfiguration c, std::vector<std::string> w);
 
-  
+
 
  private:
 
