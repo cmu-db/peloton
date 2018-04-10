@@ -495,26 +495,31 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
 
-  if (values_buf != nullptr) {
-    logging::LogRecord record =
-        logging::LogRecordFactory::CreateTupleRecord(
-            LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
-            current_txn->GetTransactionId(), current_txn->GetCommitId());
-    record.SetValuesArray(values_buf, values_size);
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    if (values_buf != nullptr) {
+      logging::LogRecord record =
+              logging::LogRecordFactory::CreateTupleRecord(
+                      LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
+                      current_txn->GetTransactionId(), current_txn->GetCommitId());
+      record.SetValuesArray(values_buf, values_size);
 
-    current_txn->GetLogBuffer()->WriteRecord(record);
+      current_txn->GetLogBuffer()->WriteRecord(record);
 
-    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+      if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
-      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
-      /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-          current_txn->GetLogToken(), current_txn->GetLogBuffer());
+        LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+        /* insert to the queue */
+        threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+                current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
-      /* allocate a new buffer for the current transaction */
-      current_txn->ResetLogBuffer();
+        /* allocate a new buffer for the current transaction */
+        current_txn->ResetLogBuffer();
+      }
     }
   }
+
+
   // Increment table insert op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -599,30 +604,34 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
 
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    if (values_buf != nullptr) {
+      logging::LogRecord record =
+              logging::LogRecordFactory::CreateTupleRecord(
+                      LogRecordType::TUPLE_UPDATE, location, new_location, current_txn->GetEpochId(),
+                      current_txn->GetTransactionId(), current_txn->GetCommitId());
 
-  if (values_buf != nullptr) {
-    logging::LogRecord record =
-        logging::LogRecordFactory::CreateTupleRecord(
-            LogRecordType::TUPLE_UPDATE, location, new_location, current_txn->GetEpochId(),
-            current_txn->GetTransactionId(), current_txn->GetCommitId());
+      record.SetOldItemPointer(location);
+      record.SetValuesArray(values_buf, values_size);
+      record.SetOffsetsArray(offsets);
 
-    record.SetOldItemPointer(location);
-    record.SetValuesArray(values_buf, values_size);
-    record.SetOffsetsArray(offsets);
+      current_txn->GetLogBuffer()->WriteRecord(record);
 
-    current_txn->GetLogBuffer()->WriteRecord(record);
-
-    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+      if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
 
-      /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-          current_txn->GetLogToken(), current_txn->GetLogBuffer());
+        /* insert to the queue */
+        threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+                current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
-      /* allocate a new buffer for the current transaction */
-      current_txn->ResetLogBuffer();
+        /* allocate a new buffer for the current transaction */
+        current_txn->ResetLogBuffer();
+      }
     }
   }
+
+
   // Increment table update op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -651,6 +660,33 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    if (values_buf != nullptr) {
+      logging::LogRecord record =
+              logging::LogRecordFactory::CreateTupleRecord(
+                      LogRecordType::TUPLE_UPDATE, location, INVALID_ITEMPOINTER,
+                      current_txn->GetEpochId(), current_txn->GetTransactionId(),
+                      current_txn->GetCommitId());
+
+      record.SetOldItemPointer(location);
+      record.SetValuesArray(values_buf, values_size);
+      record.SetOffsetsArray(offsets);
+
+      current_txn->GetLogBuffer()->WriteRecord(record);
+
+      if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+        /* insert to the queue */
+        threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+                current_txn->GetLogToken(), current_txn->GetLogBuffer());
+
+        /* allocate a new buffer for the current transaction */
+        current_txn->ResetLogBuffer();
+      }
+    }
+  }
+
   // no need to add the older version into the update set.
   // if there exists older version, then the older version must already
   // been added to the update set.
@@ -658,29 +694,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // transaction
   // is updating a version that is installed by itself.
   // in this case, nothing needs to be performed.
-  if (values_buf != nullptr) {
-    logging::LogRecord record =
-        logging::LogRecordFactory::CreateTupleRecord(
-            LogRecordType::TUPLE_UPDATE, location, INVALID_ITEMPOINTER,
-            current_txn->GetEpochId(), current_txn->GetTransactionId(),
-            current_txn->GetCommitId());
-
-    record.SetOldItemPointer(location);
-    record.SetValuesArray(values_buf, values_size);
-    record.SetOffsetsArray(offsets);
-
-    current_txn->GetLogBuffer()->WriteRecord(record);
-
-    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
-
-      /* insert to the queue */
-      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-          current_txn->GetLogToken(), current_txn->GetLogBuffer());
-
-      /* allocate a new buffer for the current transaction */
-      current_txn->ResetLogBuffer();
-    }
-  }
 
   // Increment table update op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
@@ -768,23 +781,28 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   current_txn->RecordDelete(old_location);
 
-  logging::LogRecord record =
-      logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_DELETE, old_location, current_txn->GetEpochId(),
-          current_txn->GetTransactionId(), current_txn->GetCommitId());
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
 
-  current_txn->GetLogBuffer()->WriteRecord(record);
+    logging::LogRecord record =
+            logging::LogRecordFactory::CreateTupleRecord(
+                    LogRecordType::TUPLE_DELETE, old_location, current_txn->GetEpochId(),
+                    current_txn->GetTransactionId(), current_txn->GetCommitId());
 
-  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+    current_txn->GetLogBuffer()->WriteRecord(record);
 
-    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-        current_txn->GetLogToken(), current_txn->GetLogBuffer());
+      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
-    /* allocate a new buffer for the current transaction */
-    current_txn->ResetLogBuffer();
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+              current_txn->GetLogToken(), current_txn->GetLogBuffer());
+
+      /* allocate a new buffer for the current transaction */
+      current_txn->ResetLogBuffer();
+    }
+
   }
 
   // Increment table delete op stats
@@ -823,23 +841,26 @@ void TimestampOrderingTransactionManager::PerformDelete(
     current_txn->RecordDelete(location);
   }
 
-  logging::LogRecord record =
-      logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_DELETE, location, current_txn->GetEpochId(),
-          current_txn->GetTransactionId(), current_txn->GetCommitId());
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    logging::LogRecord record =
+            logging::LogRecordFactory::CreateTupleRecord(
+                    LogRecordType::TUPLE_DELETE, location, current_txn->GetEpochId(),
+                    current_txn->GetTransactionId(), current_txn->GetCommitId());
 
-  current_txn->GetLogBuffer()->WriteRecord(record);
+    current_txn->GetLogBuffer()->WriteRecord(record);
 
-  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
+    if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
-    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+      LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-        current_txn->GetLogToken(), current_txn->GetLogBuffer());
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+              current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
-    /* allocate a new buffer for the current transaction */
-    current_txn->ResetLogBuffer();
+      /* allocate a new buffer for the current transaction */
+      current_txn->ResetLogBuffer();
+    }
   }
 
   // Increment table delete op stats
@@ -1017,28 +1038,33 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   ResultType result = current_txn->GetResult();
 
-  /* TODO(gandeevan): add logging switch */
-  if(task_callback !=  nullptr) {
 
-    auto on_flush = [this, result, task_callback] (){
-        task_callback(result);
-    };
 
-    logging::LogRecord record =
-            logging::LogRecordFactory::CreateTupleRecord(
-                    LogRecordType::TRANSACTION_COMMIT, current_txn->GetEpochId(),
-                    current_txn->GetTransactionId(), current_txn->GetCommitId());
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    // no need to log read-only transactions
+    if (!current_txn->IsReadOnly() && task_callback != nullptr) {
 
-    current_txn->GetLogBuffer()->WriteRecord(record);
+      auto on_flush = [this, result, task_callback]() {
+          task_callback(result);
+      };
 
-    current_txn->GetLogBuffer()->SetLoggerCallback(on_flush);
+      logging::LogRecord record =
+              logging::LogRecordFactory::CreateTupleRecord(
+                      LogRecordType::TRANSACTION_COMMIT, current_txn->GetEpochId(),
+                      current_txn->GetTransactionId(), current_txn->GetCommitId());
 
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-            current_txn->GetLogToken(), current_txn->GetLogBuffer());
+      current_txn->GetLogBuffer()->WriteRecord(record);
 
-    result = ResultType::QUEUING;
+      current_txn->GetLogBuffer()->SetLoggerCallback(on_flush);
 
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+              current_txn->GetLogToken(), current_txn->GetLogBuffer());
+
+      result = ResultType::QUEUING;
+
+    }
   }
 
   this->EndTransaction(current_txn);
@@ -1230,30 +1256,31 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
   ResultType result = current_txn->GetResult();
 
+  /* TODO(graghura): remove placeholder, add logging switch */
+  if(true) {
+    // no need to log read-only transactions
+    if (!current_txn->IsReadOnly() && task_callback != nullptr) {
 
-  /* TODO(gandeevan): add logging switch */
-  if(task_callback != nullptr) {
+      auto on_flush = [this, result, task_callback]() {
+          task_callback(result);
+      };
 
-    auto on_flush = [this, result, task_callback] (){
-        task_callback(result);
-    };
+      logging::LogRecord record =
+              logging::LogRecordFactory::CreateTupleRecord(
+                      LogRecordType::TRANSACTION_ABORT, current_txn->GetEpochId(),
+                      current_txn->GetTransactionId(), current_txn->GetCommitId());
 
-    logging::LogRecord record =
-            logging::LogRecordFactory::CreateTupleRecord(
-                    LogRecordType::TRANSACTION_ABORT, current_txn->GetEpochId(),
-                    current_txn->GetTransactionId(), current_txn->GetCommitId());
+      current_txn->GetLogBuffer()->WriteRecord(record);
 
-    current_txn->GetLogBuffer()->WriteRecord(record);
+      current_txn->GetLogBuffer()->SetLoggerCallback(on_flush);
 
-    current_txn->GetLogBuffer()->SetLoggerCallback(on_flush);
-
-    /* insert to the queue */
-    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
-            current_txn->GetLogToken(), current_txn->GetLogBuffer());
+      /* insert to the queue */
+      threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
+              current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
 
-    result = ResultType::QUEUING;
-
+      result = ResultType::QUEUING;
+    }
   }
 
   this->EndTransaction(current_txn);

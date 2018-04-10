@@ -100,6 +100,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       break;
     }
 
+    case LogRecordType::TRANSACTION_BEGIN:
     case LogRecordType::TRANSACTION_COMMIT:
     case LogRecordType::TRANSACTION_ABORT: {
       break;
