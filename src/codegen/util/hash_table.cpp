@@ -21,7 +21,6 @@ namespace util {
 
 static const uint32_t kDefaultNumElements = 256;
 static const uint32_t kNumBlockElems = 1024;
-static const uint32_t kDefaultEstimatePrecision = 5;
 
 static_assert((kDefaultNumElements & (kDefaultNumElements - 1)) == 0,
               "Default number of elements must be a power of two");
@@ -96,8 +95,7 @@ HashTable::HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
       directory_mask_(0),
       entry_buffer_(memory, Entry::Size(key_size, value_size)),
       num_elems_(0),
-      capacity_(kDefaultNumElements),
-      unique_key_estimate_(libcount::HLL::Create(kDefaultEstimatePrecision)) {
+      capacity_(kDefaultNumElements) {
   // Upon creation, we allocate room for kDefaultNumElements in the hash table.
   // We assume 50% load factor on the directory, thus the directory size is
   // twice the number of elements.
