@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/index_selection.h"
 #include <include/parser/statements.h>
+#include "brain/index_selection.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -30,7 +30,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
   auto queries = query_set_->GetQueries();
-  for (auto query : queries) {
+  for (auto query: queries) {
     // Get admissible indexes 'Ai'
     IndexConfiguration Ai;
     GetAdmissibleIndexes(query, Ai);
@@ -42,7 +42,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
     IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union Indexconfiguration set 'C'
+    // Add the 'Ci' to the union configuration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -55,9 +55,9 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
 void IndexSelection::Enumerate(IndexConfiguration &indexes,
                                IndexConfiguration &chosen_indexes,
                                Workload &workload) {
-  (void)indexes;
-  (void)chosen_indexes;
-  (void)workload;
+  (void) indexes;
+  (void) chosen_indexes;
+  (void) workload;
   return;
 }
 
@@ -71,7 +71,7 @@ void IndexSelection::Enumerate(IndexConfiguration &indexes,
 // 2. GROUP BY (if present)
 // 3. ORDER BY (if present)
 // 4. all updated columns for UPDATE query.
-void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
+void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
                                           IndexConfiguration &indexes) {
   union {
     parser::SelectStatement *select_stmt;
@@ -83,32 +83,30 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
   switch (query->GetType()) {
     case StatementType::INSERT:
       sql_statement.insert_stmt =
-          dynamic_cast<parser::InsertStatement *>(query);
-      // If the insert is along with a select statement, i.e another table's
-      // select output is fed into this table.
+        dynamic_cast<parser::InsertStatement *>(query);
+      // If the insert is along with a select statement, i.e another table's select
+      // output is fed into this table.
       if (sql_statement.insert_stmt->select != nullptr) {
-        IndexColsParseWhereHelper(
-            sql_statement.insert_stmt->select->where_clause, indexes);
+        IndexColsParseWhereHelper(sql_statement.insert_stmt->select->where_clause.get(), indexes);
       }
       break;
 
     case StatementType::DELETE:
       sql_statement.delete_stmt =
-          dynamic_cast<parser::DeleteStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.delete_stmt->expr, indexes);
+        dynamic_cast<parser::DeleteStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.delete_stmt->expr.get(), indexes);
       break;
 
     case StatementType::UPDATE:
       sql_statement.update_stmt =
-          dynamic_cast<parser::UpdateStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.update_stmt->where, indexes);
+        dynamic_cast<parser::UpdateStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.update_stmt->where.get(), indexes);
       break;
 
     case StatementType::SELECT:
       sql_statement.select_stmt =
-          dynamic_cast<parser::SelectStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause,
-                                indexes);
+        dynamic_cast<parser::SelectStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause.get(), indexes);
       IndexColsParseOrderByHelper(sql_statement.select_stmt->order, indexes);
       IndexColsParseGroupByHelper(sql_statement.select_stmt->group_by, indexes);
       break;
@@ -119,12 +117,17 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
   }
 }
 
-void IndexSelection::IndexColsParseWhereHelper(
-    std::unique_ptr<expression::AbstractExpression> &where_expr,
-    IndexConfiguration &config) {
+void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
+                                               IndexConfiguration &config) {
   auto expr_type = where_expr->GetExpressionType();
+  const expression::AbstractExpression *left_child;
+  const expression::AbstractExpression *right_child;
+  expression::TupleValueExpression *tuple_child;
+
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_NOTEQUAL:
       PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_GREATERTHAN:
       PELOTON_FALLTHROUGH;
@@ -136,26 +139,59 @@ void IndexSelection::IndexColsParseWhereHelper(
       PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_LIKE:
       PELOTON_FALLTHROUGH;
+    case ExpressionType::COMPARE_NOTLIKE:
+      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_IN:
+      // Get left and right child and extract the column name.
+      left_child = where_expr->GetChild(0);
+      right_child = where_expr->GetChild(1);
+
+      if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        tuple_child = (expression::TupleValueExpression *)(left_child);
+      } else {
+        assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+        tuple_child = (expression::TupleValueExpression *)(right_child);
+      }
+      (void) tuple_child;
+
+      break;
+    case ExpressionType::CONJUNCTION_AND:
+      PELOTON_FALLTHROUGH;
+    case ExpressionType::CONJUNCTION_OR:
+      left_child = where_expr->GetChild(0);
+      right_child = where_expr->GetChild(1);
+      IndexColsParseWhereHelper(left_child, config);
+      IndexColsParseWhereHelper(right_child, config);
       break;
     default:
+      LOG_ERROR("Index selection doesn't allow %s in where clause", where_expr->GetInfo().c_str());
       assert(false);
   }
-  (void)config;
+  (void) config;
 }
 
-void IndexSelection::IndexColsParseGroupByHelper(
-    std::unique_ptr<parser::GroupByDescription> &where_expr,
-    IndexConfiguration &config) {
-  (void)where_expr;
-  (void)config;
+void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &group_expr,
+                                                 IndexConfiguration &config) {
+  auto &columns = group_expr->columns;
+  for (auto it = columns.begin(); it != columns.end(); it++) {
+    assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    //(void) tuple_value;
+    // TODO
+    // config.AddIndexObj(tuple_value->GetColumnName());
+  }
+  (void) config;
 }
 
-void IndexSelection::IndexColsParseOrderByHelper(
-    std::unique_ptr<parser::OrderDescription> &order_expr,
-    IndexConfiguration &config) {
-  (void)order_expr;
-  (void)config;
+void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
+                                                 IndexConfiguration &config) {
+  auto &exprs = order_expr->exprs;
+  for (auto it = exprs.begin(); it != exprs.end(); it++) {
+    assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    //(void) tuple_value;
+  }
+  (void) config;
 }
 
 }  // namespace brain
