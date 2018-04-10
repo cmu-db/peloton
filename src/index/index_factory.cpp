@@ -89,7 +89,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   } else {
     throw IndexException("Unsupported index scheme.");
   }
-  PL_ASSERT(index != nullptr);
+  PELOTON_ASSERT(index != nullptr);
 
   return (index);
 }

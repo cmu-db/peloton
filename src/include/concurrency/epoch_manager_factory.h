@@ -18,6 +18,9 @@
 namespace peloton {
 namespace concurrency {
 
+/**
+ * @brief      Front-end to create epoch manager objects.
+ */
 class EpochManagerFactory {
  public:
   static EpochManager& GetInstance() {
@@ -35,6 +38,11 @@ class EpochManagerFactory {
     epoch_ = epoch;
   }
 
+  /**
+   * @brief      Gets the epoch type.
+   *
+   * @return     The epoch type.
+   */
   static EpochType GetEpochType() {
     return epoch_;
   }

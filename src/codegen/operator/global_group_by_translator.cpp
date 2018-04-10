@@ -49,7 +49,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 
   // Create the materialization buffer where we aggregate things
   auto *aggregate_storage = aggregation_.GetAggregateStorage().GetStorageType();
-  PL_ASSERT(aggregate_storage->isStructTy());
+  PELOTON_ASSERT(aggregate_storage->isStructTy());
 
   auto *mat_buffer_type = llvm::StructType::create(
       codegen.GetContext(),
@@ -85,7 +85,7 @@ void GlobalGroupByTranslator::Produce() const {
   std::vector<BufferAttributeAccess> buffer_accessors;
 
   const auto &agg_terms = plan_.GetUniqueAggTerms();
-  PL_ASSERT(agg_terms.size() == aggregate_vals.size());
+  PELOTON_ASSERT(agg_terms.size() == aggregate_vals.size());
   for (size_t i = 0; i < agg_terms.size(); i++) {
     buffer_accessors.emplace_back(aggregate_vals, i);
   }

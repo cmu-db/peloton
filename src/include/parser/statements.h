@@ -21,6 +21,7 @@
 #include "delete_statement.h"
 #include "drop_statement.h"
 #include "execute_statement.h"
+#include "explain_statement.h"
 #include "insert_statement.h"
 #include "prepare_statement.h"
 #include "select_statement.h"

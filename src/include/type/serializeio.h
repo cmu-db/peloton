@@ -53,14 +53,14 @@ class SerializeInput {
     const void* result = current_;
     current_ += length;
     // TODO: Make this a non-optional check?
-    PL_ASSERT(current_ <= end_);
+    PELOTON_ASSERT(current_ <= end_);
     return result;
   }
 
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int16_t stringLength = ReadShort();
-    PL_ASSERT(stringLength >= 0);
+    PELOTON_ASSERT(stringLength >= 0);
     return std::string(reinterpret_cast<const char*>(getRawPointer(stringLength)),
       stringLength);
   };
@@ -68,19 +68,19 @@ class SerializeInput {
   /** Copy a ByteArray from the buffer. */
   inline ByteArray ReadBinaryString() {
     int16_t stringLength = ReadShort();
-    PL_ASSERT(stringLength >= 0);
+    PELOTON_ASSERT(stringLength >= 0);
     return ByteArray(reinterpret_cast<const char*>(getRawPointer(stringLength)),
       stringLength);
   };
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void* destination, size_t length) {
-    PL_MEMCPY(destination, getRawPointer(length), length); 
+    PELOTON_MEMCPY(destination, getRawPointer(length), length); 
   };
 
   template<typename T> void ReadSimpleTypeVector(std::vector<T>* vec) {
     int size = ReadInt();
-    PL_ASSERT(size >= 0);
+    PELOTON_ASSERT(size >= 0);
     vec->resize(size);
     for (int i = 0; i < size; ++i) {
       vec[i] = ReadPrimitive<T>();
@@ -98,7 +98,7 @@ class SerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    PL_MEMCPY(&value, current_, sizeof(value));
+    PELOTON_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -121,7 +121,7 @@ class SerializeOutput {
   /** Set the buffer to buffer with capacity. Note this does not change the position. */
   void initialize(void* buffer, size_t capacity) {
     buffer_ = reinterpret_cast<char*>(buffer);
-    PL_ASSERT(position_ <= capacity);
+    PELOTON_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
   void setPosition(size_t position) {
@@ -155,7 +155,7 @@ class SerializeOutput {
   inline void WriteFloat(float value) { WritePrimitive(value); }
   inline void WriteDouble(double value) { WritePrimitive(value); }   
   inline void WriteEnumInSingleByte(int value) {
-    PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
+    PELOTON_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
       value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -163,14 +163,14 @@ class SerializeOutput {
   // this explicitly accepts char* and length (or ByteArray)
   // as std::string's implicit construction is unsafe!
   inline void WriteBinaryString(const void* value, size_t length) {
-    PL_ASSERT(length <= std::numeric_limits<int16_t>::max());
+    PELOTON_ASSERT(length <= std::numeric_limits<int16_t>::max());
     int16_t stringLength = static_cast<int16_t>(length);
     assureExpand(length + sizeof(stringLength));
 
     char* current = buffer_ + position_;
-    PL_MEMCPY(current, &stringLength, sizeof(stringLength));
+    PELOTON_MEMCPY(current, &stringLength, sizeof(stringLength));
     current += sizeof(stringLength);
-    PL_MEMCPY(current, value, length);
+    PELOTON_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -184,18 +184,18 @@ class SerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     assureExpand(length);
-    PL_MEMCPY(buffer_ + position_, value, length);
+    PELOTON_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     assureExpand(length);
-    PL_MEMSET(buffer_ + position_, 0, length); 
+    PELOTON_MEMSET(buffer_ + position_, 0, length); 
     position_ += length;
   }
 
   template<typename T> void WriteSimpleTypeVector(const std::vector<T> &vec) {
-    PL_ASSERT(vec.size() <= std::numeric_limits<int>::max());
+    PELOTON_ASSERT(vec.size() <= std::numeric_limits<int>::max());
     int size = static_cast<int>(vec.size());
 
     // Resize the buffer once
@@ -220,8 +220,8 @@ class SerializeOutput {
   * @return offset + length
   */
   inline size_t WriteBytesAt(size_t offset, const void *value, size_t length) {
-    PL_ASSERT(offset + length <= position_);
-    PL_MEMCPY(buffer_ + offset, value, length);
+    PELOTON_ASSERT(offset + length <= position_);
+    PELOTON_MEMCPY(buffer_ + offset, value, length);
     return offset + length;
   }
 
@@ -233,7 +233,7 @@ class SerializeOutput {
   static bool isLittleEndian() {
     static const uint16_t s = 0x0001;
     uint8_t byte;
-    PL_MEMCPY(&byte, &s, 1);
+    PELOTON_MEMCPY(&byte, &s, 1);
     return byte != 0;
   }
 
@@ -249,7 +249,7 @@ class SerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     assureExpand(sizeof(value));
-    PL_MEMCPY(buffer_ + position_, &value, sizeof(value)); 
+    PELOTON_MEMCPY(buffer_ + position_, &value, sizeof(value)); 
     position_ += sizeof(value);
   }
 
@@ -258,7 +258,7 @@ class SerializeOutput {
     if (minimum_desired > capacity_) {
       expand(minimum_desired);
     }
-    PL_ASSERT(capacity_ >= minimum_desired);
+    PELOTON_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.
@@ -325,7 +325,7 @@ class ReferenceSerializeOutput : public SerializeOutput {
   /** Reference output can't resize the buffer: just crash. */
   virtual void expand(UNUSED_ATTRIBUTE size_t minimum_desired) {
     //minimum_desired = minimum_desired;
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
     abort();
   }
 };
@@ -344,7 +344,7 @@ class CopySerializeOutput : public SerializeOutput {
   /** Resize this buffer to contain twice the amount desired. */
   virtual void expand(size_t minimum_desired) {
     size_t next_capacity = (bytes_.length() + minimum_desired) * 2;
-    PL_ASSERT(next_capacity < std::numeric_limits<int>::max());
+    PELOTON_ASSERT(next_capacity < std::numeric_limits<int>::max());
     bytes_.copyAndExpand(static_cast<int>(next_capacity));
     initialize(bytes_.data(), next_capacity);
   }

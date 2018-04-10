@@ -103,9 +103,9 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string config_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
   if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
     }
@@ -124,9 +124,9 @@ std::string SettingsCatalog::GetDefaultValue(const std::string &name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string config_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
   if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
     }

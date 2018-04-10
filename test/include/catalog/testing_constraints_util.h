@@ -336,7 +336,7 @@ class TestingConstraintsUtil {
                             storage::DataTable *table, int num_rows) {
     // Ensure that the tile group is as expected.
     UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
-    PL_ASSERT(schema->GetColumnCount() == 4);
+    PELOTON_ASSERT(schema->GetColumnCount() == 4);
 
     for (int rowid = 0; rowid < num_rows; rowid++) {
       int populate_value = rowid;

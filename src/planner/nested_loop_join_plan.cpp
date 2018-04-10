@@ -36,13 +36,13 @@ void NestedLoopJoinPlan::HandleSubplanBinding(bool from_left,
   if (from_left) {
     for (const auto left_col_id : join_column_ids_left_) {
       const auto *ai = ctx.Find(left_col_id);
-      PL_ASSERT(ai != nullptr);
+      PELOTON_ASSERT(ai != nullptr);
       join_ais_left_.push_back(ai);
     }
   } else {
     for (const auto right_col_id : join_column_ids_right_) {
       const auto *ai = ctx.Find(right_col_id);
-      PL_ASSERT(ai != nullptr);
+      PELOTON_ASSERT(ai != nullptr);
       join_ais_right_.push_back(ai);
     }
   }

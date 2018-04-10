@@ -130,7 +130,7 @@ void ProjectInfo::PerformRebinding(
     oid_t dest_col_id = target.first;
     auto &derived_attribute = const_cast<DerivedAttribute &>(target.second);
 
-    PL_ASSERT(derived_attribute.expr != nullptr);
+    PELOTON_ASSERT(derived_attribute.expr != nullptr);
 
     LOG_TRACE("Binding target-list expressions ...");
     auto *expr =
@@ -261,7 +261,7 @@ void ProjectInfo::VisitParameters(
 
     for (auto &target : GetTargetList()) {
       const auto &derived_attribute = target.second;
-      PL_ASSERT(derived_attribute.expr != nullptr);
+      PELOTON_ASSERT(derived_attribute.expr != nullptr);
 
       auto *expr =
           const_cast<expression::AbstractExpression *>(derived_attribute.expr);

@@ -627,7 +627,7 @@ void OAHashTable::VectorizedIterate(
   // 2. In the next-pass, only the valid buckets are read, invoking the callback
 
   uint32_t size = selection_vector.GetCapacity();
-  PL_ASSERT((size & (size - 1)) == 0);
+  PELOTON_ASSERT((size & (size - 1)) == 0);
 
   // The start of the buckets array
   llvm::Value *entry_ptr = LoadHashTableField(codegen, hash_table, 0);

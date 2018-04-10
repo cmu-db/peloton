@@ -22,7 +22,7 @@ TFSEIN_TYPE::TfSessionEntityInput(const InputType& input, const std::string &op)
   this->tensor_ =
       TF_AllocateTensor(this->data_type_, nullptr, 0, sizeof(InputType));
   auto buff = (InputType *)TF_TensorData(this->tensor_);
-  PL_MEMCPY(buff, &input_for_tf, sizeof(InputType));
+  PELOTON_MEMCPY(buff, &input_for_tf, sizeof(InputType));
 }
 
 // 1d vector
@@ -36,7 +36,7 @@ TFSEIN_TYPE::TfSessionEntityInput(const std::vector<InputType> &input,
   this->tensor_ =
       TF_AllocateTensor(this->data_type_, dims, 1, dims[0] * sizeof(InputType));
   auto buff = (InputType *)TF_TensorData(this->tensor_);
-  PL_MEMCPY(buff, input_for_tf, dims[0] * sizeof(InputType));
+  PELOTON_MEMCPY(buff, input_for_tf, dims[0] * sizeof(InputType));
 }
 
 // 2d vector
@@ -51,7 +51,7 @@ TFSEIN_TYPE::TfSessionEntityInput(const std::vector<std::vector<InputType>>& inp
   this->tensor_ = TF_AllocateTensor(this->data_type_, dims, 2,
                                     dims[0] * dims[1] * sizeof(InputType));
   auto buff = (InputType *)TF_TensorData(this->tensor_);
-  PL_MEMCPY(buff, input_for_tf, dims[0] * dims[1] * sizeof(InputType));
+  PELOTON_MEMCPY(buff, input_for_tf, dims[0] * dims[1] * sizeof(InputType));
 }
 
 // raw flattened input
@@ -68,7 +68,7 @@ TFSEIN_TYPE::TfSessionEntityInput(InputType *input, const std::vector<int64_t>& 
   this->tensor_ = TF_AllocateTensor(this->data_type_, dims.data(), dims.size(),
                                     num_elems * sizeof(InputType));
   auto buff = (InputType *)TF_TensorData(this->tensor_);
-  PL_MEMCPY(buff, input_for_tf, num_elems * sizeof(InputType));
+  PELOTON_MEMCPY(buff, input_for_tf, num_elems * sizeof(InputType));
 }
 
 // Flattens 2d inputs

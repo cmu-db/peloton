@@ -177,7 +177,7 @@ bool RunNewOrder(const size_t &thread_id){
 
     if (gii_lists_values.size() != 1) {
       LOG_ERROR("getItemInfo return size incorrect : %lu", gii_lists_values.size());
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
   }
@@ -220,7 +220,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   if (gwtr_lists_values.size() != 1) {
     LOG_ERROR("getWarehouseTaxRate return size incorrect : %lu", gwtr_lists_values.size());
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   UNUSED_ATTRIBUTE auto w_tax = gwtr_lists_values[0][0];
@@ -270,7 +270,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   if (gd_lists_values.size() != 1) {
     LOG_ERROR("getDistrict return size incorrect : %lu", gd_lists_values.size());
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   UNUSED_ATTRIBUTE auto d_tax = gd_lists_values[0][0];
@@ -326,7 +326,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   if (gc_lists_values.size() != 1) {
     LOG_ERROR("getCustomer return size incorrect : %lu", gc_lists_values.size());
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   UNUSED_ATTRIBUTE auto c_last = gc_lists_values[0][0];
@@ -508,7 +508,7 @@ bool RunNewOrder(const size_t &thread_id){
 
     if (gsi_lists_values.size() != 1) {
       LOG_ERROR("getStockInfo return size incorrect : %lu", gsi_lists_values.size());
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
     int s_quantity = type::ValuePeeker::PeekInteger(gsi_lists_values[0][0]);
@@ -629,7 +629,7 @@ bool RunNewOrder(const size_t &thread_id){
   }
 
   // transaction passed execution.
-  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
@@ -640,7 +640,7 @@ bool RunNewOrder(const size_t &thread_id){
     
   } else {
     // transaction failed commitment.
-    PL_ASSERT(result == ResultType::ABORTED ||
+    PELOTON_ASSERT(result == ResultType::ABORTED ||
            result == ResultType::FAILURE);
     LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
     return false;
