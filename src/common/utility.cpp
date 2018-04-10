@@ -11,10 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
-#include <include/common/logger.h>
 #include <vector>
 #include <string.h>
-
+#include "common/utility.h"
 #if __APPLE__
 extern "C"{
 #include <sys/cdefs.h>

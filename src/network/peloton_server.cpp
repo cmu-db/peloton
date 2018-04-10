@@ -13,7 +13,7 @@
 
 #include <fstream>
 #include <memory>
-#include <include/common/utility.h>
+#include "common/utility.h"
 #include "event2/thread.h"
 
 #include "common/dedicated_thread_registry.h"
