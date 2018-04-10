@@ -2510,8 +2510,6 @@ class BwTree : public BwTreeBase {
     (void)node_count;
     LOG_TRACE("Freed %lu tree nodes", node_count);
 
-    munmap(mapping_table, 1024 * 1024 * 1024);
-
     return;
   }
 
@@ -7577,6 +7575,8 @@ class BwTree : public BwTreeBase {
       // would always fail, until we have cleaned all epoch nodes
       current_epoch_p = nullptr;
 
+      LOG_DEBUG("Clearing the epoch in ~EpochManager()...");
+
       // If all threads has exited then all thread counts are
       // 0, and therefore this should proceed way to the end
       ClearEpoch();
@@ -7614,6 +7614,12 @@ class BwTree : public BwTreeBase {
                 epoch_leave.load());
 #endif
 
+      // NOTE: Only unmap memory here because we need to access the mapping
+      // table in the above routine. If it was unmapped in ~BwTree() then this
+      // function will invoke illegal memory access
+      int munmap_ret = munmap(tree_p->mapping_table, 1024 * 1024 * 1024);
+      LOG_DEBUG("munmap() returns with %d", munmap_ret);
+      
       return;
     }
 
