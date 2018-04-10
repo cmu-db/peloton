@@ -41,7 +41,7 @@ bool HybridScanExecutor::DInit() {
   table_ = node.GetTable();
   index_ = node.GetDataIndex();
   type_ = node.GetHybridType();
-  PL_ASSERT(table_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr);
 
   // SEQUENTIAL SCAN
   if (type_ == HybridScanType::SEQUENTIAL) {
@@ -63,7 +63,7 @@ bool HybridScanExecutor::DInit() {
     index_done_ = false;
     result_.clear();
 
-    PL_ASSERT(index_ != nullptr);
+    PELOTON_ASSERT(index_ != nullptr);
     column_ids_ = node.GetColumnIds();
     auto key_column_ids_ = node.GetKeyColumnIds();
     auto expr_types_ = node.GetExprTypes();
@@ -276,7 +276,7 @@ bool HybridScanExecutor::DExecute() {
   // INDEX SCAN
   else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
-    PL_ASSERT(children_.size() == 0);
+    PELOTON_ASSERT(children_.size() == 0);
 
     if (index_done_ == false) {
       if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
@@ -318,7 +318,7 @@ bool HybridScanExecutor::DExecute() {
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
-  PL_ASSERT(index_done_ == false);
+  PELOTON_ASSERT(index_done_ == false);
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
@@ -328,7 +328,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
+  PELOTON_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     LOG_TRACE("Scan all keys");

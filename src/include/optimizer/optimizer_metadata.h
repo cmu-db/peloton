@@ -11,9 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
+#include "common/timer.h"
 #include "optimizer/memo.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/rule.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace catalog {
@@ -26,10 +29,18 @@ class RuleSet;
 
 class OptimizerMetadata {
  public:
+  OptimizerMetadata()
+      : timeout_limit(settings::SettingsManager::GetInt(
+            settings::SettingId::task_execution_timeout)),
+        timer(Timer<std::milli>()) {}
+
   Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
-  catalog::CatalogCache* catalog_cache;
+  catalog::CatalogCache *catalog_cache;
+  unsigned int timeout_limit;
+  Timer<std::milli> timer;
+  concurrency::TransactionContext* txn;
 
   void SetTaskPool(OptimizerTaskPool *task_pool) {
     this->task_pool = task_pool;

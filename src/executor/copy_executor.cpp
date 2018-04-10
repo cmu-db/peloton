@@ -42,7 +42,7 @@ CopyExecutor::~CopyExecutor() {}
  * @return true on success, false otherwise.
  */
 bool CopyExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(children_.size() == 1);
 
   // Grab info from plan node and check it
   const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
@@ -92,8 +92,8 @@ bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
  * does many sanity checks. We use local buffer to amortize that.
  */
 void CopyExecutor::FlushBuffer() {
-  PL_ASSERT(buff_ptr < COPY_BUFFER_SIZE);
-  PL_ASSERT(buff_size + buff_ptr <= COPY_BUFFER_SIZE);
+  PELOTON_ASSERT(buff_ptr < COPY_BUFFER_SIZE);
+  PELOTON_ASSERT(buff_size + buff_ptr <= COPY_BUFFER_SIZE);
   while (buff_size > 0) {
     size_t bytes_written =
         fwrite(buff + buff_ptr, sizeof(char), buff_size, file_handle_.file);
@@ -109,7 +109,7 @@ void CopyExecutor::FlushBuffer() {
 
 void CopyExecutor::FFlushFsync() {
   // First, flush
-  PL_ASSERT(file_handle_.fd != -1);
+  PELOTON_ASSERT(file_handle_.fd != -1);
   if (file_handle_.fd == -1) return;
   int ret = fflush(file_handle_.file);
   if (ret != 0) {
@@ -175,7 +175,7 @@ void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   } else {
     buff[buff_size++] = new_line;
   }
-  PL_ASSERT(buff_size <= COPY_BUFFER_SIZE);
+  PELOTON_ASSERT(buff_size <= COPY_BUFFER_SIZE);
 }
 
 /**
@@ -226,7 +226,7 @@ bool CopyExecutor::DExecute() {
 
         } else if (origin_col_id == param_type_col_id) {
           // param_types column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+          PELOTON_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
           network::InputPacket packet(len, val);
@@ -243,7 +243,7 @@ bool CopyExecutor::DExecute() {
           }
         } else if (origin_col_id == param_format_col_id) {
           // param_formats column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+          PELOTON_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
           network::InputPacket packet(len, val);
@@ -255,7 +255,7 @@ bool CopyExecutor::DExecute() {
 
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+          PELOTON_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     type::TypeId::VARBINARY);
 
           network::InputPacket packet(len, val);

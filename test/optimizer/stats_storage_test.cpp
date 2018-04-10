@@ -6,14 +6,11 @@
 //
 // Identification: test/optimizer/stats_storage_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
-
-#define private public
-#define protected public
 
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
@@ -248,8 +245,10 @@ TEST_F(StatsStorageTests, GetTableStatsTest) {
   stats_storage->AnalyzeStatsForAllTables(txn);
   txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
-      data_table->GetDatabaseOid(), data_table->GetOid());
+      data_table->GetDatabaseOid(), data_table->GetOid(), txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(table_stats->num_rows, tuple_count);
 }
 

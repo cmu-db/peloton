@@ -387,7 +387,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
     return false;
   }
 
-  PL_ASSERT((*index_entry_ptr)->block == location.block &&
+  PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
             (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
@@ -406,7 +406,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   UNUSED_ATTRIBUTE auto index_count = GetIndexCount();
-  PL_ASSERT(index_count == 0);
+  PELOTON_ASSERT(index_count == 0);
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
   return location;
@@ -911,7 +911,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
-  PL_ASSERT(tile_group.get());
+  PELOTON_ASSERT(tile_group.get());
 
   tile_group_id = tile_group->GetTileGroupId();
 
@@ -937,7 +937,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 }
 
 void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
-  PL_ASSERT(tile_group_id);
+  PELOTON_ASSERT(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
   schemas.push_back(*schema);
@@ -999,7 +999,7 @@ size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const std::size_t &tile_group_offset) const {
-  PL_ASSERT(tile_group_offset < GetTileGroupCount());
+  PELOTON_ASSERT(tile_group_offset < GetTileGroupCount());
 
   auto tile_group_id =
       tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
@@ -1029,7 +1029,7 @@ void DataTable::DropTileGroups() {
   }
 
   // Clear array
-  tile_groups_.Clear(invalid_tile_group_id);
+  tile_groups_.Clear();
 
   tile_group_count_ = 0;
 }
@@ -1088,7 +1088,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
     }
   }
 
-  PL_ASSERT(index_offset < indexes_.GetSize());
+  PELOTON_ASSERT(index_offset < indexes_.GetSize());
 
   // Drop the index
   indexes_.Update(index_offset, nullptr);
@@ -1100,7 +1100,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 void DataTable::DropIndexes() {
   // TODO: iterate over all indexes, and actually drop them
 
-  indexes_.Clear(nullptr);
+  indexes_.Clear();
 
   indexes_columns_.clear();
 }
@@ -1109,7 +1109,7 @@ void DataTable::DropIndexes() {
 // that the returned index could be a nullptr once we can drop index
 // with oid (due to a limitation of LockFreeArray).
 std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
-  PL_ASSERT(index_offset < indexes_.GetSize());
+  PELOTON_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
 
   return ret_index;
@@ -1117,7 +1117,7 @@ std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
 
 //
 std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
-  PL_ASSERT(index_offset < GetIndexCount());
+  PELOTON_ASSERT(index_offset < GetIndexCount());
 
   auto index_attrs = indexes_columns_.at(index_offset);
 
@@ -1173,7 +1173,7 @@ catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
 void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    PL_ASSERT(key_offset < foreign_keys_.size());
+    PELOTON_ASSERT(key_offset < foreign_keys_.size());
     foreign_keys_.erase(foreign_keys_.begin() + key_offset);
   }
 }
@@ -1239,7 +1239,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   // Check the schema of the two tile groups
   auto new_column_map = new_tile_group->GetColumnMap();
   auto orig_column_map = orig_tile_group->GetColumnMap();
-  PL_ASSERT(new_column_map.size() == orig_column_map.size());
+  PELOTON_ASSERT(new_column_map.size() == orig_column_map.size());
 
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;

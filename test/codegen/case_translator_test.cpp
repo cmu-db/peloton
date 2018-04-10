@@ -90,21 +90,21 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
 
   for (uint32_t i = 2; i < NumRowsInTestTable(); i++) {
     EXPECT_TRUE(results[i].GetValue(1).CompareEquals(
                     type::ValueFactory::GetBigIntValue(0)) ==
-                CmpBool::TRUE);
+                CmpBool::CmpTrue);
   }
 }
 
@@ -160,22 +160,22 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[2].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(20)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
   EXPECT_TRUE(results[2].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(2)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
 }
 
 }  // namespace test

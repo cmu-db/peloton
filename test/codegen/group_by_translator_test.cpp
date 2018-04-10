@@ -91,7 +91,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
     EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) ==
-                CmpBool::TRUE);
+                CmpBool::CmpTrue);
   }
 }
 
@@ -152,7 +152,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
     type::Value group_count = tuple.GetValue(2);
-    EXPECT_TRUE(group_count.CompareEquals(const_one) == CmpBool::TRUE);
+    EXPECT_TRUE(group_count.CompareEquals(const_one) == CmpBool::CmpTrue);
   }
 }
 
@@ -236,7 +236,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
 
   // 5) The predicate on the average aggregate
   auto *x_exp =
-      new expression::TupleValueExpression(type::TypeId::DECIMAL, 1, 0);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
   ExpressionPtr x_gt_50{
@@ -381,7 +381,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   EXPECT_EQ(1, results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
 }
 
 TEST_F(GroupByTranslatorTest, MinAndMax) {
@@ -446,13 +446,13 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   // MAX(a) = (# inserted - 1) * 10 = (10 - 1) * 10 = 9 * 10 = 90
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
                   type::ValueFactory::GetBigIntValue(90)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
 
   // The values of 'b' are equal to the (zero-indexed) row ID * 10 + 1. The
   // minimum row ID is 0. Therefore: MIN(b) = 0 * 10 + 1 = 1
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
                   type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::TRUE);
+              CmpBool::CmpTrue);
 }
 
 }  // namespace test

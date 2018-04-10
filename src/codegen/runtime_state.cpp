@@ -24,7 +24,7 @@ RuntimeState::RuntimeState() : constructed_type_(nullptr) {}
 // whether the requesting operator wants to manage the memory.
 RuntimeState::StateID RuntimeState::RegisterState(std::string name,
                                                   llvm::Type *type) {
-  PL_ASSERT(constructed_type_ == nullptr);
+  PELOTON_ASSERT(constructed_type_ == nullptr);
   RuntimeState::StateID state_id = state_slots_.size();
   RuntimeState::StateInfo state_info;
   state_info.name = name;
@@ -38,8 +38,8 @@ llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
   // At this point, the runtime state type must have been finalized. Otherwise,
   // it'd be impossible for us to index into it because the type would be
   // incomplete.
-  PL_ASSERT(constructed_type_ != nullptr);
-  PL_ASSERT(state_id < state_slots_.size());
+  PELOTON_ASSERT(constructed_type_ != nullptr);
+  PELOTON_ASSERT(state_id < state_slots_.size());
 
   auto &state_info = state_slots_[state_id];
 
@@ -57,12 +57,12 @@ llvm::Value *RuntimeState::LoadStateValue(
   llvm::Value *state = codegen->CreateLoad(state_ptr);
 #ifndef NDEBUG
   auto &state_info = state_slots_[state_id];
-  PL_ASSERT(state->getType() == state_info.type);
+  PELOTON_ASSERT(state->getType() == state_info.type);
   if (state->getType()->isStructTy()) {
-    PL_ASSERT(state_info.type->isStructTy());
+    PELOTON_ASSERT(state_info.type->isStructTy());
     auto *our_type = llvm::cast<llvm::StructType>(state_info.type);
     auto *ret_type = llvm::cast<llvm::StructType>(state->getType());
-    PL_ASSERT(ret_type->isLayoutIdentical(our_type));
+    PELOTON_ASSERT(ret_type->isLayoutIdentical(our_type));
   }
 #endif
   return state;
