@@ -263,9 +263,9 @@ TableCatalogObject::GetColumnObjects(bool cached_only) {
 std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnNames(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
-    auto column_objects = this->GetColumnObjects();
+    auto column_objects = GetColumnObjects();
     std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject> > column_names;
-    for (auto pair : column_objects) {
+    for (auto& pair : column_objects) {
       auto column = pair.second;
       column_names[column->GetColumnName()] = column;
     }

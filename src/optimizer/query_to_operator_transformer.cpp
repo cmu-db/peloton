@@ -22,7 +22,6 @@
 #include "optimizer/query_node_visitor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "parser/statements.h"
-#include "planner/seq_scan_plan.h"
 #include "settings/settings_manager.h"
 
 using std::vector;

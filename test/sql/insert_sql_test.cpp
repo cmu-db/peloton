@@ -652,6 +652,7 @@ TEST_F(InsertSQLTests, BadInserts) {
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with more target columns (implicit) than values, violating
   // not null constraint for num3
@@ -659,36 +660,49 @@ TEST_F(InsertSQLTests, BadInserts) {
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num3) VALUES(3);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with more values than target columns (multiple tuples)
   query = "INSERT INTO test8(num1, num3) VALUES (1, 2), (3, 4), (3, 4, 5);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with more target columns than values (multiple tuples)
   query = "INSERT INTO test8(num1, num3) VALUES (6, 7), (5);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with a nonexistent target column
   query = "INSERT INTO test8(numx) VALUES(3);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // Insert a tuple with a nonexistent target column (non-singleton tuple)
   query = "INSERT INTO test8(num1, num4) VALUES(3, 4);";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
+
+  // Insert a tuple row with not-null field (num3) unspecified
+  query = "INSERT INTO test8 VALUES(1, 2)"
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.AbortTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
