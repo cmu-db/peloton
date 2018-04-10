@@ -1989,6 +1989,9 @@ std::string ResultTypeToString(ResultType type) {
     case ResultType::QUEUING: {
       return ("QUEUING");
     }
+    case ResultType::TO_ABORT: {
+      return ("TO_ABORT");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for ResultType value '%d'",
