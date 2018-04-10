@@ -7619,6 +7619,8 @@ class BwTree : public BwTreeBase {
       // function will invoke illegal memory access
       int munmap_ret = munmap(tree_p->mapping_table, 1024 * 1024 * 1024);
       LOG_DEBUG("munmap() returns with %d", munmap_ret);
+      // Avoid compiler error
+      (void)munmap_ret;
       
       return;
     }
