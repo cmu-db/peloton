@@ -112,6 +112,10 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
+//  void TransactionLevelGCManager::RemoveInvalidSlotsFromRecycleQueue(
+//      std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>recycle_queue,
+//      oid_t tile_group_id);
+
   virtual void RegisterTable(oid_t table_id, storage::DataTable *table) override {
     // Insert a new entry for the table
 
@@ -170,6 +174,8 @@ class TransactionLevelGCManager : public GCManager {
 
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
+  void ClearGarbage(int thread_id);
+
  private:
   inline unsigned int HashToThread(const size_t &thread_id) {
     return (unsigned int)thread_id % gc_thread_count_;
@@ -181,7 +187,6 @@ class TransactionLevelGCManager : public GCManager {
    *
    * @return No return value.
    */
-  void ClearGarbage(int thread_id);
 
   void Running(const int &thread_id);
 
