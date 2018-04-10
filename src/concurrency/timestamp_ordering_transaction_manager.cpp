@@ -841,6 +841,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_DELETE;
 
+      gc_set->operator[](new_version.block)[new_version.offset] =
+          GCVersionType::COMMIT_DELETE;
+
       log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
     } else if (tuple_entry.second == RWType::INSERT) {

@@ -251,13 +251,14 @@ void TransactionLevelGCManager::AddToRecycleMap(
 
     // for each garbage tuple in the Tile Group
     for (auto &element : entry.second) {
-
-      bool recycling = tile_group_header->GetRecycling();
-      bool immutable = tile_group_header->GetImmutability();
-
       auto offset = element.first;
-
       ItemPointer location(tile_group_id, offset);
+
+      // TODO: Ensure that immutable checks are compatible with ReturnFreeSlot's behavior
+      // Currently, we rely on ReturnFreeSlot to ignore immutable slots
+      // TODO: revisit queueing immutable ItemPointers
+      // TODO: revisit dropping immutable tile groups
+
 
       // If the tuple being reset no longer exists, just skip it
       if (ResetTuple(location) == false) {
@@ -274,32 +275,51 @@ void TransactionLevelGCManager::AddToRecycleMap(
       auto recycling_threshold = tuples_per_tile_group >> 1; // 50%
       auto compaction_threshold = tuples_per_tile_group - (tuples_per_tile_group >> 3); // 87.5%
 
-      if (recycling && num_recycled < recycling_threshold && immutable == false) {
-        // TODO: revisit queueing immutable ItemPointers, currently test expects this behavior
-        recycle_queue->Enqueue(location);
-      }
-      else if (recycling && num_recycled >= recycling_threshold) {
-        tile_group_header->StopRecycling();
-        recycling = tile_group_header->GetRecycling();
-      }
-      else if (!recycling && num_recycled >= compaction_threshold) {
-        // TODO: compact this tile group
+      bool recycling = tile_group_header->GetRecycling();
+
+      // check if recycling should be disabled (and if tile group should be compacted)
+      if (num_recycled >= recycling_threshold && table->IsActiveTileGroup(tile_group_id) == false) {
+        if (recycling) {
+          tile_group_header->StopRecycling();
+          recycling = false;
+        }
+
+        if (num_recycled >= compaction_threshold) {
+          // TODO: compact this tile group
+        }
       }
 
-      if (num_recycled == table->GetTuplesPerTileGroup() && (table->IsActiveTileGroup(tile_group_id) == false)) {
+      if (recycling) {
+        // this slot should be recycled, add it back to the recycle queue
+        recycle_queue->Enqueue(location);
+      }
+
+      // Check if tile group should be freed
+      if (num_recycled == tuples_per_tile_group && recycling == false) {
+
         // This GC thread should free the TileGroup
         while (tile_group_header->GetGCReaders() > 1) {
           // Spin here until the other GC threads stop operating on this TileGroup
         }
         table->DropTileGroup(tile_group_id);
+
         // TODO: clean the recycle queue of this TileGroup's ItemPointers
+        // RemoveInvalidSlotsFromRecycleQueue(recycle_queue, tile_group_id);
+        // For now, we'll rely on ReturnFreeSlot to consume and ignore invalid slots
       }
     }
-
     tile_group_header->DecrementGCReaders();
   }
   delete txn_ctx;
 }
+
+//void TransactionLevelGCManager::RemoveInvalidSlotsFromRecycleQueue(
+//    std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>recycle_queue,
+//    oid_t tile_group_id) {
+//
+//  size_t num_found = 0;
+//  while (recycle_queue->Dequeue(head);
+//}
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
@@ -319,13 +339,15 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   }
 
   ItemPointer location;
-  if (recycle_queue->Dequeue(location) == true) {
+  // TODO: We're relying on ReturnFreeSlot to clean the recycle queue. Fix this later.
+  while (recycle_queue->Dequeue(location) == true) {
     auto tile_group_id = location.block;
     auto tile_group = table->GetTileGroupById(tile_group_id);
 
     if (tile_group == nullptr) {
       // TileGroup no longer exists
-      return INVALID_ITEMPOINTER;
+      // return INVALID_ITEMPOINTER;
+      continue;
     }
 
     auto tile_group_header = tile_group->GetHeader();
@@ -334,13 +356,15 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
 
     if (recycling == false) {
       // Don't decrement because we want the recycled count to be our indicator to release the TileGroup
-      return INVALID_ITEMPOINTER;
+      // return INVALID_ITEMPOINTER;
+      continue;
     }
 
     if (immutable == true) {
-      // Requeue this location because it might be usable again later
-      recycle_queue->Enqueue(location);
-      return INVALID_ITEMPOINTER;
+      // TODO: revisit queueing immutable ItemPointers, currently test expects this behavior
+      // recycle_queue->Enqueue(location);
+      // return INVALID_ITEMPOINTER;
+      continue;
     }
     else {
       LOG_TRACE("Reuse tuple(%u, %u) in table %u", tile_group_id,
@@ -421,7 +445,7 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // if the version differs from the previous one in some columns where
     // secondary indexes are built on, then we need to unlink the previous
     // version from the secondary index.
-  } else if (type == GCVersionType::COMMIT_DELETE) {
+//  } else if (type == GCVersionType::COMMIT_DELETE) {
     // the gc'd version is an old version.
     // need to recycle this version as well as its newer (empty) version.
     // we also need to delete the tuple from the primary and secondary
@@ -439,7 +463,8 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
               type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL);
+              type == GCVersionType::ABORT_INS_DEL ||
+        type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
