@@ -59,6 +59,10 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
                     concurrency::TransactionContext *txn){
   LOG_DEBUG("Insert Sequence Database Oid: %u", database_oid);
   LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
+  if(GetSequence(database_oid, sequence_name, txn) != nullptr) {
+    throw SequenceException(StringUtil::Format("Insert Sequence with Duplicate Sequence Name: %s", sequence_name.c_str()));
+  }
+
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -155,52 +159,6 @@ std::shared_ptr<sequence::Sequence> SequenceCatalog::GetSequence(
   }
 
   return nullptr;
-}
-
-std::shared_ptr<sequence::Sequence> SequenceCatalog::GetSequenceFromPGTable(
-    oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn){
-  std::vector<oid_t> column_ids(
-      {ColumnId::SEQUENCE_NAME,ColumnId::SEQUENCE_START,
-       ColumnId::SEQUENCE_INC, ColumnId::SEQUENCE_MAX,
-       ColumnId::SEQUENCE_MIN, ColumnId::SEQUENCE_CYCLE,
-       ColumnId::SEQUENCE_VALUE});
-  oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
-  LOG_DEBUG("The database_oid is %u", database_oid);
-  LOG_DEBUG("The sequence_name is %s", sequence_name.c_str());
-
-  // the result is a vector of executor::LogicalTile
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  // carefull! the result tile could be null!
-  if (result_tiles == nullptr) {
-    LOG_INFO("no sequence on database %d and %s", database_oid, sequence_name.c_str());
-    return std::unique_ptr<sequence::Sequence>(nullptr);
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-  }
-
-  for (unsigned int i = 0; i < result_tiles->size(); i++) {
-    size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
-    for (size_t j = 0; j < tuple_count; j++) {
-      // create a new sequence instance
-      auto new_sequence =
-       std::make_shared<sequence::Sequence>(
-          (*result_tiles)[i]->GetValue(j, 0).ToString(),
-          (*result_tiles)[i]->GetValue(j, 1).GetAs<int64_t>(),
-          (*result_tiles)[i]->GetValue(j, 2).GetAs<int64_t>(),
-          (*result_tiles)[i]->GetValue(j, 3).GetAs<int64_t>(),
-          (*result_tiles)[i]->GetValue(j, 4).GetAs<int64_t>(),
-          (*result_tiles)[i]->GetValue(j, 5).GetAs<bool>(),
-          (*result_tiles)[i]->GetValue(j, 6).GetAs<int64_t>());
-
-      return new_sequence;
-    }
-  }
-
-  return std::unique_ptr<sequence::Sequence>(nullptr);
 }
 
 oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name, oid_t database_oid,

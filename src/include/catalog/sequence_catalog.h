@@ -70,9 +70,6 @@ class SequenceCatalog : public AbstractCatalog {
   std::shared_ptr<sequence::Sequence> GetSequence(
       oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn);
 
-  std::shared_ptr<sequence::Sequence> GetSequenceFromPGTable(
-    oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn);
-
   oid_t GetSequenceOid(std::string sequence_name, oid_t database_oid,
                       concurrency::TransactionContext *txn);
 

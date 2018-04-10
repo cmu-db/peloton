@@ -14,6 +14,7 @@
 #include "catalog/sequence_catalog.h"
 #include "storage/abstract_table.h"
 #include "common/harness.h"
+#include "common/exception.h"
 #include "sequence/sequence.h"
 #include "executor/executors.h"
 #include "parser/postgresparser.h"
@@ -34,7 +35,20 @@ class SequenceTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  std::shared_ptr<sequence::Sequence> CreateSequenceHelper(std::string query, std::string sequence_name) {
+  std::shared_ptr<sequence::Sequence> GetSequenceHelper(std::string sequence_name) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    // Check the effect of creation
+    oid_t database_oid = catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
+    std::shared_ptr<sequence::Sequence> new_sequence =
+        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid, sequence_name, txn);
+    txn_manager.CommitTransaction(txn);
+
+    return new_sequence;
+  }
+
+  void CreateSequenceHelper(std::string query) {
     // Bootstrap
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto parser = parser::PostgresParser::GetInstance();
@@ -61,14 +75,7 @@ class SequenceTests : public PelotonTest {
     executor::CreateExecutor createSequenceExecutor(&plan, context.get());
     createSequenceExecutor.Init();
     createSequenceExecutor.Execute();
-
-    // Check the effect of creation
-    oid_t database_oid = catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
-    std::shared_ptr<sequence::Sequence> new_sequence =
-        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid, sequence_name, txn);
     txn_manager.CommitTransaction(txn);
-
-    return new_sequence;
   }
 };
 
@@ -84,10 +91,9 @@ TEST_F(SequenceTests, BasicTest) {
       "START 10 CYCLE;";
   std::string name = "seq";
 
-  std::shared_ptr<sequence::Sequence> new_sequence = CreateSequenceHelper(query, name);
-  if(!new_sequence) {
-      std::cout << "get nullptr" << std::endl;
-  }
+  CreateSequenceHelper(query);
+  std::shared_ptr<sequence::Sequence> new_sequence = GetSequenceHelper(name);
+
   EXPECT_EQ(name, new_sequence->seq_name);
   EXPECT_EQ(2, new_sequence->seq_increment);
   EXPECT_EQ(10, new_sequence->seq_min);
@@ -95,6 +101,106 @@ TEST_F(SequenceTests, BasicTest) {
   EXPECT_EQ(10, new_sequence->seq_start);
   EXPECT_EQ(true, new_sequence->seq_cycle);
   EXPECT_EQ(10, new_sequence->GetCurrVal());
+
+  int64_t nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(10, nextVal);
+}
+
+TEST_F(SequenceTests, NoDuplicateTest) {
+  // Create statement
+  auto parser = parser::PostgresParser::GetInstance();
+
+  std::string query =
+      "CREATE SEQUENCE seq "
+      "INCREMENT BY 2 "
+      "MINVALUE 10 MAXVALUE 50 "
+      "START 10 CYCLE;";
+  std::string name = "seq";
+
+  // Expect exception
+  try {
+    CreateSequenceHelper(query);
+    EXPECT_EQ(0, 1);
+  }
+  catch(const SequenceException& expected) {
+    ASSERT_STREQ("Insert Sequence with Duplicate Sequence Name: seq", expected.what());
+  }
+}
+
+TEST_F(SequenceTests, NextValPosIncrementTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+
+  std::string query =
+      "CREATE SEQUENCE seq1 "
+      "INCREMENT BY 1 "
+      "MINVALUE 10 MAXVALUE 50 "
+      "START 10 CYCLE;";
+  std::string name = "seq1";
+
+  CreateSequenceHelper(query);
+  std::shared_ptr<sequence::Sequence> new_sequence = GetSequenceHelper(name);
+
+  int64_t nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(10, nextVal);
+  nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(11, nextVal);
+
+  // test cycle
+  new_sequence->SetCurrVal(50);
+  nextVal = new_sequence->GetNextVal();
+  nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(10, nextVal);
+
+  // test no cycle
+  new_sequence->SetCycle(false);
+  new_sequence->SetCurrVal(50);
+
+  // Expect exception
+  try {
+    nextVal = new_sequence->GetNextVal();
+    EXPECT_EQ(0, 1);
+  }
+  catch(const SequenceException& expected) {
+    ASSERT_STREQ("Sequence exceeds upper limit!", expected.what());
+  }
+}
+
+TEST_F(SequenceTests, NextValNegIncrementTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+
+  std::string query =
+      "CREATE SEQUENCE seq2 "
+      "INCREMENT BY -1 "
+      "MINVALUE 10 MAXVALUE 50 "
+      "START 10 CYCLE;";
+  std::string name = "seq2";
+
+  CreateSequenceHelper(query);
+  std::shared_ptr<sequence::Sequence> new_sequence = GetSequenceHelper(name);
+
+  // test cycle
+  int64_t nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(10, nextVal);
+  nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(50, nextVal);
+
+  new_sequence->SetCurrVal(49);
+  nextVal = new_sequence->GetNextVal();
+  nextVal = new_sequence->GetNextVal();
+  EXPECT_EQ(48, nextVal);
+
+  // test no cycle
+  new_sequence->SetCycle(false);
+  new_sequence->SetCurrVal(10);
+
+  // Expect exception
+  try {
+    nextVal = new_sequence->GetNextVal();
+    EXPECT_EQ(0, 1);
+  }
+  catch(const SequenceException& expected) {
+    ASSERT_STREQ("Sequence exceeds lower limit!", expected.what());
+  }
 }
 
 }
