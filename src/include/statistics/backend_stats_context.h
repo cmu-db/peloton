@@ -77,7 +77,7 @@ class BackendStatsContext {
   QueryMetric* GetOnGoingQueryMetric() { return ongoing_query_metric_.get(); }
 
   // Returns the latency metric
-  LatencyMetric& GetTxnLatencyMetric();
+  LatencyMetric& GetQueryLatencyMetric();
 
   // Increment the read stat for given tile group
   void IncrementTableReads(oid_t tile_group_id);
