@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <memory>
+#include <include/common/utility.h>
 #include "event2/thread.h"
 
 #include "common/dedicated_thread_registry.h"
@@ -279,7 +280,7 @@ void PelotonServer::ServerLoop() {
   LOG_INFO("Closing server");
   int status;
   do {
-    status = close(listen_fd_);
+    status = peloton_close(listen_fd_);
   } while (status < 0 && errno == EINTR);
   LOG_DEBUG("Already Closed the connection %d", listen_fd_);
 

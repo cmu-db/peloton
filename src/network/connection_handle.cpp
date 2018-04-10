@@ -20,13 +20,7 @@
 #include "network/protocol_handler_factory.h"
 
 #include "settings/settings_manager.h"
-
-#if __APPLE__
-extern "C"{
-#include <sys/cdefs.h>
-int close$NOCANCEL(int);
-};
-#endif
+#include "common/utility.h"
 
 namespace peloton {
 namespace network {
@@ -564,27 +558,7 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
-  int close_ret = -1;
-#if __APPLE__
-  close_ret = ::close$NOCANCEL(sock_fd_);
-#else
-  close_ret = close(sock_fd_);
-#endif
-
-  if (close_ret != 0) {
-    std::vector<char> buffer(100, '\0');
-    int saved_errno = errno;
-    char* error_message = nullptr;
-#if __APPLE__
-    (void)strerror_r(errno, buffer.data(), buffer.size() - 1);
-    error_message = buffer.data();
-#else
-    error_message = strerror_r(saved_errno, buffer.data(), buffer.size() - 1);
-#endif
-    (void)error_message;
-    LOG_DEBUG("Close failed on connection %d, errno %d [%s]", sock_fd_, saved_errno, error_message);
-  }
-
+  peloton_close(sock_fd_);
   return Transition::NONE;
 
 }
