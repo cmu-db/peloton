@@ -49,13 +49,13 @@ class ProcessorMetric : public AbstractMetric {
 
   // Get the CPU time for user execution (ms)
   inline double GetUserDuration() const {
-    PL_ASSERT(user_time_end_ - user_time_begin_ >= 0);
+    PELOTON_ASSERT(user_time_end_ - user_time_begin_ >= 0);
     return user_time_end_ - user_time_begin_;
   }
 
   // Get the CPU time for system execution (ms)
   inline double GetSystemDuration() const {
-    PL_ASSERT(sys_time_end_ - sys_time_begin_ >= 0);
+    PELOTON_ASSERT(sys_time_end_ - sys_time_begin_ >= 0);
     return sys_time_end_ - sys_time_begin_;
   }
 

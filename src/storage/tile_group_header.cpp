@@ -45,10 +45,10 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   // data = reinterpret_cast<char *>(
   // storage_manager.Allocate(backend_type, header_size));
   data = new char[header_size];
-  PL_ASSERT(data != nullptr);
+  PELOTON_ASSERT(data != nullptr);
 
   // zero out the data
-  PL_MEMSET(data, 0, header_size);
+  PELOTON_MEMSET(data, 0, header_size);
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
@@ -239,7 +239,7 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
        tuple_slot_id++) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     if (tuple_txn_id != INVALID_TXN_ID) {
-      PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+      PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
       active_tuple_slots++;
     }
   }

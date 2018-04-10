@@ -123,7 +123,7 @@ codegen::Value RowBatch::Row::DeriveValue(
 
   // Not in cache, derive using expression translator
   auto *translator = batch_.context_.GetTranslator(expr);
-  PL_ASSERT(translator != nullptr);
+  PELOTON_ASSERT(translator != nullptr);
   auto ret = translator->DeriveValue(codegen, *this);
   cache_.insert(std::make_pair(&expr, ret));
   return ret;
@@ -167,7 +167,7 @@ llvm::Value *RowBatch::Row::GetTID(CodeGen &codegen) {
   if (tid_ == nullptr) {
     tid_ = batch_.GetPhysicalPosition(codegen, *this);
   }
-  PL_ASSERT(tid_ != nullptr);
+  PELOTON_ASSERT(tid_ != nullptr);
   return tid_;
 }
 

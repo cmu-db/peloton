@@ -77,7 +77,7 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
 
 void Group::AddStats(std::string column_name,
                      std::shared_ptr<ColumnStats> stats) {
-  PL_ASSERT((size_t)GetNumRows() == stats->num_rows);
+  PELOTON_ASSERT((size_t)GetNumRows() == stats->num_rows);
   stats_[column_name] = stats;
 }
 

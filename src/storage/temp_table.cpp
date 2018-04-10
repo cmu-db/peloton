@@ -39,9 +39,9 @@ TempTable::~TempTable() {
 ItemPointer TempTable::InsertTuple(
     const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::TransactionContext *transaction,
     UNUSED_ATTRIBUTE ItemPointer **index_entry_ptr, UNUSED_ATTRIBUTE bool check_fk) {
-  PL_ASSERT(tuple != nullptr);
-  PL_ASSERT(transaction == nullptr);
-  PL_ASSERT(index_entry_ptr == nullptr);
+  PELOTON_ASSERT(tuple != nullptr);
+  PELOTON_ASSERT(transaction == nullptr);
+  PELOTON_ASSERT(index_entry_ptr == nullptr);
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
@@ -87,7 +87,7 @@ ItemPointer TempTable::InsertTuple(const Tuple *tuple) {
 
 std::shared_ptr<storage::TileGroup> TempTable::GetTileGroup(
     const std::size_t &tile_group_offset) const {
-  PL_ASSERT(tile_group_offset < GetTileGroupCount());
+  PELOTON_ASSERT(tile_group_offset < GetTileGroupCount());
   return (tile_groups_[tile_group_offset]);
 }
 
@@ -122,7 +122,7 @@ oid_t TempTable::AddDefaultTileGroup() {
   std::shared_ptr<storage::TileGroup> tile_group(
       AbstractTable::GetTileGroupWithLayout(
           INVALID_OID, tile_group_id, column_map, TEMPTABLE_DEFAULT_SIZE));
-  PL_ASSERT(tile_group.get());
+  PELOTON_ASSERT(tile_group.get());
 
   tile_groups_.push_back(tile_group);
 

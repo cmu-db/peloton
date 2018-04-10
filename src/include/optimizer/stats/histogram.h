@@ -133,7 +133,7 @@ class Histogram {
    * equal to sum of all points / max_bins.
    */
   std::vector<double> Uniform() {
-    PL_ASSERT(max_bins_ > 0);
+    PELOTON_ASSERT(max_bins_ > 0);
 
     std::vector<double> res{};
     if (bins.size() <= 1 || total_ <= 0) return res;
@@ -144,7 +144,7 @@ class Histogram {
       while (i < bins.size() - 1 && Sum(bins[i + 1].p) < s) {
         i += 1;
       }
-      PL_ASSERT(i < bins.size() - 1);
+      PELOTON_ASSERT(i < bins.size() - 1);
       double pi, pi1, mi, mi1;
       std::tie(pi, pi1, mi, mi1) = GetInterval(bins, i);
 
@@ -207,7 +207,7 @@ class Histogram {
         min_gap_idx = i;
       }
     }
-    //		PL_ASSERT(min_gap_idx >= 0 && min_gap_idx < bins.size());
+    //		PELOTON_ASSERT(min_gap_idx >= 0 && min_gap_idx < bins.size());
     Bin &prev_bin = bins[min_gap_idx];
     Bin &next_bin = bins[min_gap_idx + 1];
     prev_bin.MergeWith(next_bin);
@@ -238,7 +238,7 @@ class Histogram {
 
   inline std::tuple<double, double, double, double> GetInterval(
       std::vector<Bin> bins, uint8_t i) {
-    PL_ASSERT(i < bins.size() - 1);
+    PELOTON_ASSERT(i < bins.size() - 1);
     return std::make_tuple(bins[i].p, bins[i + 1].p, bins[i].m, bins[i + 1].m);
   }
 

@@ -38,7 +38,7 @@
 // void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
 //   for (unsigned int i = 0; i < count; i++) {
 //     auto buf = std::move(buffer_pool->Get());
-//     PL_ASSERT(buf);
+//     PELOTON_ASSERT(buf);
 //     EXPECT_EQ(buf->GetSize(), i);
 //   }
 // }
@@ -110,7 +110,7 @@
 //   logging::LogBuffer log_buffer(0);
 //   size_t total_length = 0;
 //   for (auto record : records) {
-//     PL_ASSERT(record.GetTuple()->GetSchema());
+//     PELOTON_ASSERT(record.GetTuple()->GetSchema());
 //     CopySerializeOutput output_buffer;
 //     record.Serialize(output_buffer);
 //     size_t len = record.GetMessageLength();
@@ -147,7 +147,7 @@
 
 //   logging::LogBuffer log_buffer(0);
 //   size_t total_length = 0;
-//   PL_ASSERT(record.GetTuple()->GetSchema());
+//   PELOTON_ASSERT(record.GetTuple()->GetSchema());
 //   CopySerializeOutput output_buffer;
 //   record.Serialize(output_buffer);
 //   size_t len = record.GetMessageLength();

@@ -32,9 +32,9 @@ HashSetOpExecutor::HashSetOpExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool HashSetOpExecutor::DInit() {
-  PL_ASSERT(children_.size() == 2);
-  PL_ASSERT(!hash_done_);
-  PL_ASSERT(set_op_ == SetOpType::INVALID);
+  PELOTON_ASSERT(children_.size() == 2);
+  PELOTON_ASSERT(!hash_done_);
+  PELOTON_ASSERT(set_op_ == SetOpType::INVALID);
 
   return true;
 }
@@ -44,7 +44,7 @@ bool HashSetOpExecutor::DExecute() {
 
   if (!hash_done_) ExecuteHelper();
 
-  PL_ASSERT(hash_done_);
+  PELOTON_ASSERT(hash_done_);
 
   // Avoid returning empty tiles
   while (next_tile_to_return_ < left_tiles_.size()) {
@@ -59,13 +59,13 @@ bool HashSetOpExecutor::DExecute() {
 }
 
 bool HashSetOpExecutor::ExecuteHelper() {
-  PL_ASSERT(children_.size() == 2);
-  PL_ASSERT(!hash_done_);
+  PELOTON_ASSERT(children_.size() == 2);
+  PELOTON_ASSERT(!hash_done_);
 
   // Grab data from plan node
   const planner::SetOpPlan &node = GetPlanNode<planner::SetOpPlan>();
   set_op_ = node.GetSetOp();
-  PL_ASSERT(set_op_ != SetOpType::INVALID);
+  PELOTON_ASSERT(set_op_ != SetOpType::INVALID);
 
   // Extract all input from left child
   while (children_[0]->Execute()) {
@@ -128,7 +128,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
     for (oid_t tuple_id : *tile) {
       auto it = htable_.find(HashSetOpMapType::key_type(tile.get(), tuple_id));
 
-      PL_ASSERT(it != htable_.end());
+      PELOTON_ASSERT(it != htable_.end());
 
       if (it->first.GetContainer() == tile.get() &&
           it->first.GetTupleId() == tuple_id)
@@ -143,7 +143,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
   // 2nd round
   for (auto &item : htable_) {
     // We should have at most one quota left
-    PL_ASSERT(item.second.left == 1 || item.second.left == 0);
+    PELOTON_ASSERT(item.second.left == 1 || item.second.left == 0);
     if (item.second.left == 0) {
       item.first.GetContainer()->RemoveVisibility(item.first.GetTupleId());
     }
