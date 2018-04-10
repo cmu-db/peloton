@@ -67,7 +67,8 @@ InsertPlan::InsertPlan(
         }
       }
       // for remaining columns, insert defaults
-      for(uint32_t column_id = values.size(); column_id != schema_col_count; ++column_id) {
+      for (uint32_t column_id = values.size(); column_id != schema_col_count;
+           ++column_id) {
         SetDefaultValue(column_id);
       }
     }

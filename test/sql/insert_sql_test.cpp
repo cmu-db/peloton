@@ -698,7 +698,7 @@ TEST_F(InsertSQLTests, BadInserts) {
   txn_manager.AbortTransaction(txn);
 
   // Insert a tuple row with not-null field (num3) unspecified
-  query = "INSERT INTO test8 VALUES(1, 2)"
+  query = "INSERT INTO test8 VALUES(1, 2)";
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
