@@ -34,6 +34,7 @@ void TableMetric::Aggregate(AbstractMetric& source) {
 
   TableMetric& table_metric = static_cast<TableMetric&>(source);
   table_access_.Aggregate(table_metric.GetTableAccess());
+  table_memory_.Aggregate(table_metric.GetTableMemory());
 }
 
 }  // namespace stats

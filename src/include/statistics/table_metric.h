@@ -73,7 +73,8 @@ class TableMetric : public AbstractMetric {
     ss << table_id_ << ")" << std::endl;
     ;
     ss << peloton::GETINFO_SINGLE_LINE << std::endl;
-    ss << table_access_.GetInfo();
+    ss << table_access_.GetInfo() << std::endl;
+    ss << table_memory_.GetInfo() << std::endl;
     return ss.str();
   }
 

@@ -20,7 +20,9 @@
 // 3: updates
 // 4: deletes
 // 5: inserts
-// 6: time_stamp
+// 6: memory_alloc
+// 7: memory_usage
+// 8: time_stamp
 //
 // Indexes: (index offset: indexed columns)
 // 0: index_oid (unique & primary key)
@@ -50,9 +52,11 @@ class TableMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertTableMetrics(oid_t database_oid, oid_t table_oid, int64_t reads,
                           int64_t updates, int64_t deletes, int64_t inserts,
+                          int64_t memory_alloc, int64_t memory_usage,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteTableMetrics(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool DeleteTableMetrics(oid_t table_oid,
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -69,7 +73,9 @@ class TableMetricsCatalog : public AbstractCatalog {
     UPDATES = 3,
     DELETES = 4,
     INSERTS = 5,
-    TIME_STAMP = 6,
+    MEMORY_ALLOC = 6,
+    MEMORY_USAGE = 7,
+    TIME_STAMP = 8,
     // Add new columns here in creation order
   };
 
