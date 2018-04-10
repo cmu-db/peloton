@@ -61,6 +61,15 @@ TileGroup::~TileGroup() {
 
   // clean up tile group header
   delete tile_group_header;
+
+  // Record memory deallocation for tile group header
+  if (table_id != INVALID_OID &&
+      static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->IncreaseTableMemoryAlloc(
+        database_id, table_id, tile_group_header->GetHeaderSize());
+  }
+
 }
 
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
