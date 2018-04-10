@@ -25,9 +25,10 @@ using namespace parser;
 // Represents a hypothetical index
 class IndexObject {
 public:
-  oid_t db_;
-  oid_t table_;
-  std::vector<oid_t> columns_;
+  oid_t db_oid;
+  oid_t table_oid;
+  std::vector<oid_t> column_oids;
+  IndexConstraintType type;
 };
 
 // Represents a set of hypothetical indexes - An index configuration.

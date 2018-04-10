@@ -25,6 +25,9 @@
 
 namespace peloton {
 namespace brain {
+
+unsigned long WhatIfIndex::index_seq_no = 0;
+
 // GetCostAndPlanTree()
 // Perform the cost computation for the query.
 // This interfaces with the optimizer to get the cost & physical plan of the
@@ -59,18 +62,20 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
     // insert the what-if indexes into the cache.
     table_object->EvictAllIndexObjects();
     auto index_set = config.GetIndexes();
-    for (auto index : index_set) {
-      if (index->GetTableOid() == table_object->GetTableOid()) {
-        table_object->InsertIndexObject(index);
+    for (auto it = index_set.begin(); it != index_set.end(); it++) {
+      auto index = *it;
+      if (index->table_oid == table_object->GetTableOid()) {
+        auto index_catalog_obj = CreateIndexCatalogObject(index.get());
+        table_object->InsertIndexObject(index_catalog_obj);
         LOG_DEBUG("Created a new hypothetical index %d on table: %d",
-                  index->GetIndexOid(), index->GetTableOid());
+                  index_catalog_obj->GetIndexOid(), index_catalog_obj->GetTableOid());
       }
     }
   }
 
   // Perform query optimization with the hypothetical indexes
   optimizer::Optimizer optimizer;
-  auto opt_info_obj = optimizer.PerformOptimization(parsed_sql_query, txn);
+  auto opt_info_obj = optimizer.GetOptimizedPlanInfo(parsed_sql_query, txn);
 
   txn_manager.CommitTransaction(txn);
 
@@ -151,29 +156,20 @@ void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
   }
 }
 
-//  // Search the optimized query plan tree to find all the indexes
-//  // that are present.
-//  void WhatIfIndex::FindIndexesUsed(optimizer::GroupID root_id,
-//                       optimizer::QueryInfo &query_info,
-//                       optimizer::OptimizerMetadata &md) {
-//    auto group = md.memo.GetGroupByID(root_id);
-//    auto expr = group->GetBestExpression(query_info.physical_props);
-//
-//    if (expr->Op().GetType() == optimizer::OpType::IndexScan &&
-//    expr->Op().IsPhysical()) {
-//      auto index = expr->Op().As<optimizer::PhysicalIndexScan>();
-//      for (auto hy_index: index_set) {
-//        if (index->index_id == hy_index->GetIndexOid()) {
-//          indexes_used.push_back(hy_index);
-//        }
-//      }
-//    }
-//
-//    // Explore children.
-//    auto child_gids = expr->GetChildGroupIDs();
-//    for (auto child: child_gids) {
-//      FindIndexesUsed(child, query_info, md);
-//    }
-//  }
+std::shared_ptr<catalog::IndexCatalogObject>
+  WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
+  // Create an index name: index_<database_name>_<table_name>_<col_oid1>_<col_oid2>_...
+  std::ostringstream index_name_oss;
+  index_name_oss << "index_" << index_obj->db_oid << "_" << index_obj->table_oid;
+  for (auto it = index_obj->column_oids.begin(); it != index_obj->column_oids.end(); it++) {
+    index_name_oss << (*it) << "_";
+  }
+  // Create a dummy catalog object.
+  auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(new catalog::IndexCatalogObject(
+    index_seq_no++, index_name_oss.str(), index_obj->table_oid,
+    IndexType::BWTREE, IndexConstraintType::DEFAULT, false, index_obj->column_oids));
+  return index_cat_obj;
+}
+
 }  // namespace brain
 }  // namespace peloton
