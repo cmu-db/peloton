@@ -21,6 +21,7 @@
 namespace peloton {
 namespace brain {
 
+// TODO: Remove these
 using namespace parser;
 using namespace catalog;
 
@@ -31,6 +32,7 @@ class IndexSelection {
  public:
   IndexSelection(std::shared_ptr<Workload> query_set);
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
+
 private:
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
