@@ -16,7 +16,8 @@ CLASSES = \
 	PLTestBase.java \
 	InsertTPCCTest.java \
 	InsertPSTest.java \
-	UpdateTest.java
+	UpdateTest.java \
+	TempTableTest.java
 
 default: classes
 
@@ -30,7 +31,8 @@ test:	$(CLASSES)
 	  --class-path $(CP) \
 	  -c InsertTPCCTest \
 	  -c InsertPSTest \
-          -c UpdateTest
+	  -c UpdateTest \
+	  -c TempTableTest
 
 
 
