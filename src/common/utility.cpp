@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <vector>
 #include <string.h>
+#include <errno.h>
+
 #include "common/utility.h"
 #if __APPLE__
 extern "C"{
@@ -24,10 +26,10 @@ int close$NOCANCEL(int);
 namespace peloton {
 
 
-int peloton_close(int fd, int failure_log_level = LOG_LEVEL_DEBUG) {
+int peloton_close(int fd, int failure_log_level) {
   int close_ret = -1;
 #if __APPLE__
-  close_ret = ::close$NOCANCEL(sock_fd_);
+  close_ret = ::close$NOCANCEL(fd);
 #else
   close_ret = close(fd);
 #endif
