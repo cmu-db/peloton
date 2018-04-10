@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration.h
+// index_configuration.h
 //
-// Identification: src/include/brain/configuration.h
+// Identification: src/include/brain/index_configuration.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -15,27 +15,31 @@
 #include <vector>
 
 #include "catalog/index_catalog.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace brain {
 
 //===--------------------------------------------------------------------===//
-// Configuration
+// IndexConfiguration
 //===--------------------------------------------------------------------===//
 
-class Configuration {
-public:
-  // Add indexes of a given configuration into this configuration.
-  void Add(Configuration &config) {
-    auto c_indexes = config.indexes_;
-    for (auto index: c_indexes) {
-      indexes_.push_back(index);
-    }
+class IndexConfiguration {
+ public:
+  IndexConfiguration() {}
+
+  // Add indexes of a given IndexConfiguration into this IndexConfiguration.
+  void Add(IndexConfiguration &config);
+
+  void AddIndex(std::shared_ptr<catalog::IndexCatalogObject> index);
+
+  const std::vector<std::shared_ptr<catalog::IndexCatalogObject>>
+      &GetIndexes() {
+    return indexes_;
   }
-  void AddIndex(std::shared_ptr<catalog::IndexCatalogObject> index) {
-    indexes_.push_back(index);
-  }
-  // The set of hypothetical indexes in the configuration
+
+ private:
+  // The set of hypothetical indexes in the IndexConfiguration
   std::vector<std::shared_ptr<catalog::IndexCatalogObject>> indexes_;
 };
 

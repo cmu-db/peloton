@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/what_if_index.h"
+#include "brain/index_configuration.h"
 #include "catalog/index_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -133,7 +134,7 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   query_str_oss << "SELECT a from " << table_name << " WHERE "
                 << "b < 100 and c < 5;";
 
-  std::vector<std::shared_ptr<IndexCatalogObject>> index_objs;
+  brain::IndexConfiguration config;
 
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser::PostgresParser::ParseSQLString(query_str_oss.str()));
@@ -142,24 +143,24 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   auto sql_statement = stmt_list.get()->GetStatement(0);
 
   // 1. Get the optimized plan tree without the indexes (sequential scan)
-  auto result = WhatIfIndex::GetCostAndPlanTree(sql_statement, index_objs,
-                                                DEFAULT_DB_NAME);
+  auto result =
+      WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
-  index_objs.push_back(CreateHypotheticalSingleIndex(table_name, 1));
+  config.AddIndex(CreateHypotheticalSingleIndex(table_name, 1));
 
-  result = WhatIfIndex::GetCostAndPlanTree(sql_statement, index_objs,
-                                           DEFAULT_DB_NAME);
+  result =
+      WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
   LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
-  index_objs.push_back(CreateHypotheticalSingleIndex(table_name, 2));
+  config.AddIndex(CreateHypotheticalSingleIndex(table_name, 2));
 
-  result = WhatIfIndex::GetCostAndPlanTree(sql_statement, index_objs,
-                                           DEFAULT_DB_NAME);
+  result =
+      WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
   LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
 

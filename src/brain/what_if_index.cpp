@@ -32,8 +32,7 @@ namespace brain {
 // @parsed_sql_query: SQL statement
 // @index_set: set of indexes to be examined
 std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
-    parser::SQLStatement *parsed_sql_query,
-    std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &index_set,
+    parser::SQLStatement *parsed_sql_query, IndexConfiguration &config,
     std::string database_name) {
   // Need transaction for fetching catalog information.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -59,6 +58,7 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
     table_object->EvictAllIndexObjects();
+    auto index_set = config.GetIndexes();
     for (auto index : index_set) {
       if (index->GetTableOid() == table_object->GetTableOid()) {
         table_object->InsertIndexObject(index);

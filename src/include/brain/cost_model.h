@@ -12,8 +12,12 @@
 
 #pragma once
 
+#include "brain/index_configuration.h"
+
 namespace peloton {
 namespace brain {
+
+class Workload;
 
 //===--------------------------------------------------------------------===//
 // CostModel
@@ -26,8 +30,10 @@ class CostModel {
    */
   CostModel() {}
 
- private:
+  double GetCost(IndexConfiguration config, Workload workload);
 
+ private:
+  // memo for cost of configuration, query
 };
 
 }  // namespace brain
