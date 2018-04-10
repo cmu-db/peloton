@@ -14,8 +14,6 @@
 
 #include <cstdint>
 
-#include "libcount/hll.h"
-
 #include "executor/executor_context.h"
 
 namespace peloton {
@@ -71,21 +69,42 @@ class HashTable {
   char *Insert(uint64_t hash);
 
   /**
+   * This function builds a hash table over all elements that have been lazily
+   * inserted into the hash table. It is assumed that this hash table is being
+   * used in two-phase mode, i.e., where all insertions are performed first,
+   * followed by a series of probes.
    *
+   * After this call, the hash table will not accept any more insertions. The
+   * hash-table will be frozen.
    */
   void BuildLazy();
 
   /**
+   * This function inspects the size of each thread-local hash table stored in
+   * the thread states argument to perfectly size a 50% loaded hash table.
    *
-   * @param thread_states
-   * @param hash_table_offset
+   * This function is called during parallel hash table builds once each thread
+   * has finished constructing its own thread-local hash table. The final phase
+   * is to build a global hash table (this one) with pointers into thread-local
+   * hash tables.
+   *
+   * @param thread_states Where thread-local hash tables are located
+   * @param hash_table_offset The offset into each state where the thread-local
+   * hash table can be found.
    */
   void ReserveLazy(const executor::ExecutorContext::ThreadStates &thread_states,
                    uint32_t hash_table_offset);
 
   /**
+   * This function is called to "merge" the contents of the provided hash table
+   * into this table. Each hash table is assumed to have been built lazily
+   * constructed and unfinished; that is, each able has not constructed a
+   * directory hash table, but has buffered a series of tuples into hash table
+   * memory.
    *
-   * @param
+   * This function is called from different threads!
+   *
+   * @param The hash table whose contents we will merge into this one..
    */
   void MergeLazyUnfinished(const HashTable &other);
 
@@ -96,6 +115,7 @@ class HashTable {
   //////////////////////////////////////////////////////////////////////////////
 
   uint64_t NumElements() const { return num_elems_; }
+  uint64_t Capacity() const { return capacity_; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -150,13 +170,29 @@ class HashTable {
    */
   class EntryBuffer {
    public:
+    /**
+     * Constructor for a buffer of entries.
+     *
+     * @param memory The memory pool to source memory for entries from
+     * @param entry_size The size of an entry
+     */
     EntryBuffer(::peloton::type::AbstractPool &memory, uint32_t entry_size);
 
+    /**
+     * Destructor.
+     */
     ~EntryBuffer();
 
+    /**
+     * Return a pointer to the next available Entry slot. If insufficient memory
+     * is available, memory is taken from the pool.
+     *
+     * @return A pointer to a free Entry slot.
+     */
     Entry *NextFree();
 
    private:
+    // This struct allows us to chain together chunks of memory
     struct MemoryBlock {
       MemoryBlock *next;
       char data[0];
@@ -200,9 +236,6 @@ class HashTable {
 
   // Info about partitions
   // ...
-
-  // Stats
-  std::unique_ptr<libcount::HLL> unique_key_estimate_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
