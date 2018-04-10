@@ -98,9 +98,9 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  ResultType CommitQueryHelper(std::function<void(ResultType)> callback = nullptr);
+  ResultType CommitQueryHelper();
 
-  ResultType AbortQueryHelper(std::function<void(ResultType)> callback = nullptr);
+  ResultType AbortQueryHelper();
 
   ResultType ExecuteStatementPlanGetResult();
 
@@ -145,6 +145,14 @@ class TrafficCop {
 
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);
+  }
+
+  inline std::function<void(ResultType)> GetOnCompleteCallback(){
+    auto on_complete = [this](ResultType result) {
+        this->p_status_.m_result = result;
+        this->task_callback_(this->task_callback_arg_);
+    };
+    return on_complete;
   }
 
   // TODO: this member variable should be in statement_ after parser part

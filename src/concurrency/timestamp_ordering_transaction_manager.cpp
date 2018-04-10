@@ -787,7 +787,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
     current_txn->ResetLogBuffer();
   }
 
-  LOG_INFO("Perform Delete");
   // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -842,8 +841,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
     /* allocate a new buffer for the current transaction */
     current_txn->ResetLogBuffer();
   }
-  LOG_INFO("Perform Delete");
-      // Increment table delete op stats
+
+  // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
@@ -1013,26 +1012,15 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // add to gc set.
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_INS_DEL;
-
-      // no log is needed for this case
     }
   }
 
-  // Increment # txns committed metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-            database_id);
-  }
+  ResultType result = current_txn->GetResult();
 
   /* TODO(gandeevan): add logging switch */
   if(task_callback !=  nullptr) {
 
-    ResultType result = current_txn->GetResult();
-
-    auto on_flush = [this, &result, task_callback, current_txn] (){
-        current_txn->SetResult(result);
-        this->EndTransaction(current_txn);
+    auto on_flush = [this, result, task_callback] (){
         task_callback(result);
     };
 
@@ -1049,10 +1037,20 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
             current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
-    current_txn->SetResult(ResultType::QUEUING);
+    result = ResultType::QUEUING;
+
   }
 
-  return current_txn->GetResult();
+  this->EndTransaction(current_txn);
+
+  // Increment # txns committed metric
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+      StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+            database_id);
+  }
+
+  return result;
 }
 
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
@@ -1230,21 +1228,13 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
   current_txn->SetResult(ResultType::ABORTED);
 
+  ResultType result = current_txn->GetResult();
 
-  // Increment # txns aborted metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
-  }
 
   /* TODO(gandeevan): add logging switch */
   if(task_callback != nullptr) {
 
-    ResultType result = current_txn->GetResult();
-
-    auto on_flush = [this, &result, task_callback, current_txn] (){
-        current_txn->SetResult(result);
-        this->EndTransaction(current_txn);
+    auto on_flush = [this, result, task_callback] (){
         task_callback(result);
     };
 
@@ -1261,10 +1251,20 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
             current_txn->GetLogToken(), current_txn->GetLogBuffer());
 
-    current_txn->SetResult(ResultType::QUEUING);
+
+    result = ResultType::QUEUING;
+
   }
 
-  return current_txn->GetResult();
+  this->EndTransaction(current_txn);
+
+  // Increment # txns aborted metric
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+      StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
+  }
+
+  return result;
 }
 
 }  // namespace storage
