@@ -75,7 +75,7 @@ class TimestampCheckpointManager : public CheckpointManager {
 	  // check the existence of checkpoint base directory.
 	  // if not exist, then create the directory.
 	  if (LoggingUtil::CheckDirectoryExistence(checkpoint_dir.c_str()) == false) {
-		  LOG_INFO("Checkpoint base directory %s does not exist", checkpoint_dir.c_str());
+		  LOG_INFO("Create checkpoint base directory %s", checkpoint_dir.c_str());
 		  if(LoggingUtil::CreateDirectory(checkpoint_dir.c_str(), 0700) == false) {
 			  LOG_ERROR("Cannot create base directory for checkpoints: %s", checkpoint_dir.c_str());
 		  }
@@ -107,14 +107,11 @@ class TimestampCheckpointManager : public CheckpointManager {
   // read table data and write it down to checkpoint data file
   void CheckpointingTableData(const storage::DataTable *target_table, const cid_t &begin_cid, FileHandle &file_handle);
 
-  // read catalog objects for user tables and write it down to a checkpoint catalog file
-  void CheckpointingCatalogObject(
-  		const std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> &target_db_catalogs,
-  		const std::vector<std::shared_ptr<catalog::TableCatalogObject>> &target_table_catalogs,
-  		FileHandle &file_handle);
-
   // check the value is committed before the checkpointing begins
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid);
+
+  // read catalog objects for user tables and write it down to a checkpoint catalog file
+  void CheckpointingCatalogObject(std::vector<oid_t> target_dbs, FileHandle &file_handle, concurrency::TransactionContext *txn);
 
 
   //===--------------------------------------------------------------------===//

@@ -181,52 +181,41 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(const cid_t begin_cid
 	auto catalog = catalog::Catalog::GetInstance();
 	auto storage_manager = storage::StorageManager::GetInstance();
 	auto db_count = storage_manager->GetDatabaseCount();
-	std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> target_db_catalogs;
-	std::vector<std::shared_ptr<catalog::TableCatalogObject>> target_table_catalogs;
+	std::vector<oid_t> target_dbs;
 
 	// do checkpointing to take tables into each file
 	for (oid_t db_idx = START_OID; db_idx < db_count; db_idx++) {
-		try {
-			auto database = storage_manager->GetDatabaseWithOffset(db_idx);
-			auto db_catalog = catalog->GetDatabaseObject(database->GetOid(), txn);
+		auto database = storage_manager->GetDatabaseWithOffset(db_idx);
+		auto db_catalog = catalog->GetDatabaseObject(database->GetOid(), txn);
 
-			// make sure the database exists in this epoch.
-			// catalog database is out of checkpoint.
-			if (db_catalog != nullptr && db_catalog->GetDatabaseOid() != CATALOG_DATABASE_OID) {
-				auto table_count = database->GetTableCount();
+		// make sure the database exists in this epoch.
+		// catalog database is out of checkpoint.
+		if (db_catalog != nullptr && db_catalog->GetDatabaseOid() != CATALOG_DATABASE_OID) {
+			auto table_count = database->GetTableCount();
 
-				// collect database info for catalog file
-				target_db_catalogs.push_back(db_catalog);
+			// collect database info for catalog file
+			target_dbs.push_back(db_catalog->GetDatabaseOid());
 
-				for (oid_t table_idx = START_OID; table_idx < table_count; table_idx++) {
-					try {
-						auto table = database->GetTable(table_idx);
-						auto table_catalog = db_catalog->GetTableObject(table->GetOid());
+			for (oid_t table_idx = START_OID; table_idx < table_count; table_idx++) {
+				auto table = database->GetTable(table_idx);
+				auto table_catalog = db_catalog->GetTableObject(table->GetOid());
 
-						// make sure the table exists in this epoch
-						if (table_catalog != nullptr) {
-							// create a table checkpoint file
-							CreateTableCheckpointFile(table, begin_cid, txn);
+				// make sure the table exists in this epoch
+				if (table_catalog != nullptr) {
+					// create a table checkpoint file
+					CreateTableCheckpointFile(table, begin_cid, txn);
 
-							// collect table info for catalog file
-							target_table_catalogs.push_back(table_catalog);
+				} else {
+					LOG_TRACE("Table %d in database %s (%d) is invisible.",
+							table->GetOid(), db_catalog->GetDatabaseName().c_str(), db_catalog->GetDatabaseOid());
+				}
 
-						} else {
-							LOG_TRACE("Table %d in database %s (%d) is invisible.",
-									table->GetOid(), db_catalog->GetDatabaseName().c_str(), db_catalog->GetDatabaseOid());
-						}
-					} catch (CatalogException& e) {
-						LOG_DEBUG("%s", e.what());
-					}
+			} // end table loop
 
-				} // end table loop
-
-			} else {
-				LOG_TRACE("Database %d is invisible or catalog database.",	database->GetOid());
-			}
-		} catch (CatalogException& e) {
-			LOG_DEBUG("%s", e.what());
+		} else {
+			LOG_TRACE("Database %d is invisible or catalog database.",	database->GetOid());
 		}
+
 	} // end database loop
 
 	// do checkpointing to catalog object
@@ -236,10 +225,12 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(const cid_t begin_cid
 		LOG_ERROR("Create catalog file failed!");
 		return;
 	}
-	CheckpointingCatalogObject(target_db_catalogs, target_table_catalogs, catalog_file);
+	CheckpointingCatalogObject(target_dbs, catalog_file, txn);
 	fclose(catalog_file.file);
 }
 
+// TODO: Integrate this function to CreateUserTableCheckpoint, after all catalog data
+//       can be recovered here including basic catalogs having the object class.
 void TimestampCheckpointManager::CreateCatalogTableCheckpoint(const cid_t begin_cid, concurrency::TransactionContext *txn) {
 	// make checkpoint files for catalog data
 	// except for basic catalogs having the object class: DatabaseCatalog, TableCatalog, IndexCatalog, ColumnCatalog
@@ -410,72 +401,20 @@ bool TimestampCheckpointManager::IsVisible(const storage::TileGroupHeader *heade
 	}
 }
 
-// TODO: migrate below serializing processes into each class file
-//			(DatabaseCatalogObject, TableCatalogObject, Index)
-void TimestampCheckpointManager::CheckpointingCatalogObject(
-		const std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> &target_db_catalogs,
-		const std::vector<std::shared_ptr<catalog::TableCatalogObject>> &target_table_catalogs,
-		FileHandle &file_handle) {
+// TODO: Integrate this function to CreateCatalogTableCheckpoint, after all necessary catalog data
+//       to recover all storage data is stored into catalog table. (Not serialize storage data for catalog)
+void TimestampCheckpointManager::CheckpointingCatalogObject(std::vector<oid_t> target_dbs, FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	CopySerializeOutput catalog_buffer;
-	auto storage_manager = storage::StorageManager::GetInstance();
+	auto catalog = catalog::Catalog::GetInstance();
 
 	LOG_DEBUG("Do checkpointing to catalog object");
 
-	// insert # of databases into catalog file
-	size_t db_count = target_db_catalogs.size();
-	catalog_buffer.WriteLong(db_count);
-
+	// TODO: When this function will be integrated, this should move catalog.cpp (new SerializeTo function)
 	// insert each database information into catalog file
-	for (auto db_catalog : target_db_catalogs) {
-		auto database = storage_manager->GetDatabaseWithOid(db_catalog->GetDatabaseOid());
-
-		// write database information (ID, name, and table count)
-		catalog_buffer.WriteInt(db_catalog->GetDatabaseOid());
-		catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
-		catalog_buffer.WriteLong(target_table_catalogs.size());
-
-		LOG_TRACE("Write database catalog %d '%s' : %lu tables",
-				db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str(), target_table_catalogs.size());
-
-		// insert each table information into catalog file
-		for (auto table_catalog : target_table_catalogs) {
-			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
-
-			// Write table information (ID, name and size)
-			catalog_buffer.WriteInt(table_catalog->GetTableOid());
-			catalog_buffer.WriteTextString(table_catalog->GetTableName());
-
-			// Write schema information (# of columns)
-			auto schema = table->GetSchema();
-
-			schema->SerializeTo(catalog_buffer);
-			LOG_TRACE("Write table catalog %d '%s': %lu columns",
-					table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(), schema->GetColumnCount());
-
-			// Write index information (index name, type, constraint, key attributes, and # of index)
-			auto index_catalogs = table_catalog->GetIndexObjects();
-			catalog_buffer.WriteLong(index_catalogs.size());
-			for (auto index_catalog_pair : index_catalogs) {
-				// Index basic information
-				auto index_catalog = index_catalog_pair.second;
-				catalog_buffer.WriteTextString(index_catalog->GetIndexName());
-				catalog_buffer.WriteInt((int)index_catalog->GetIndexType());
-				catalog_buffer.WriteInt((int)index_catalog->GetIndexConstraint());
-				catalog_buffer.WriteBool(index_catalog->HasUniqueKeys());
-				LOG_TRACE("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
-						index_catalog->GetIndexName().c_str(), IndexTypeToString(index_catalog->GetIndexType()).c_str(),
-						IndexConstraintTypeToString(index_catalog->GetIndexConstraint()).c_str(), index_catalog->HasUniqueKeys());
-
-				// Index key attributes
-				auto key_attrs = index_catalog->GetKeyAttrs();
-				catalog_buffer.WriteLong(key_attrs.size());
-				for (auto attr_oid : key_attrs) {
-					catalog_buffer.WriteInt(attr_oid);
-					LOG_TRACE("|  |- Key attribute %d '%s'", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
-				}
-			} // end index loop
-
-		} // end table loop
+	catalog_buffer.WriteLong(target_dbs.size());
+	for (auto db_oid : target_dbs) {
+		// write database information (also all tables and indexes in this)
+		catalog->SerializeDatabaseTo(db_oid, txn, catalog_buffer);
 
 	} // end database loop
 
@@ -528,8 +467,7 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id, 
 	return true;
 }
 
-// TODO: migrate below deserializing processes into each class file
-//			(DatabaseCatalogObject, TableCatalogObject, Index)
+// TODO: Use data in catalog table to create storage objects (not serialized catalog object data)
 bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	// read catalog file to be recovered
 	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
@@ -548,81 +486,21 @@ bool TimestampCheckpointManager::RecoverCatalogObject(FileHandle &file_handle, c
 	// recover database catalog
 	size_t db_count = catalog_buffer.ReadLong();
 	for(oid_t db_idx = 0; db_idx < db_count; db_idx++) {
-		// read basic database information
-		UNUSED_ATTRIBUTE oid_t db_oid = catalog_buffer.ReadInt();
-		std::string db_name = catalog_buffer.ReadTextString();
-		size_t table_count = catalog_buffer.ReadLong();
-
 		// create database catalog
-		// if already exists, use existed database
-		if (catalog->ExistDatabaseByName(db_name, txn) == false) {
-			LOG_TRACE("Create database %d '%s' (including %lu tables)", db_oid, db_name.c_str(), table_count);
-			auto result = catalog->CreateDatabase(db_name, txn);
-			if (result != ResultType::SUCCESS) {
-				LOG_ERROR("Create database error");
-				return false;
-			}
-		} else {
-			LOG_TRACE("Use existing database %d '%s'", db_oid, db_name.c_str());
+		try {
+			catalog->DeserializeDatabaseFrom(txn, catalog_buffer);
+		} catch (Exception &e) {
+			LOG_ERROR("Recover database error: %s", e.what());
+			return false;
 		}
-		oid_t new_db_oid = catalog->GetDatabaseObject(db_name, txn)->GetDatabaseOid();
-
-		// Recover table catalog
-		for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
-			// read basic table information
-			UNUSED_ATTRIBUTE oid_t table_oid = catalog_buffer.ReadInt();
-			std::string table_name = catalog_buffer.ReadTextString();
-			LOG_TRACE("Create table %d '%s'", table_oid, table_name.c_str());
-
-			// recover table schema
-			std::unique_ptr<catalog::Schema> schema = catalog::Schema::DeserializeFrom(catalog_buffer);
-
-			// create table
-			// if already exists, abort the catalog recovery
-			if (catalog->ExistTableByName(db_name, table_name, txn) == false) {
-				catalog->CreateTable(db_name, table_name, std::move(schema), txn);
-			} else {
-				LOG_TRACE("%s table already exists", table_name.c_str());
-			}
-			oid_t new_table_oid = catalog->GetTableObject(db_name, table_name, txn)->GetTableOid();
-
-			// recover index catalog
-			size_t index_count = catalog_buffer.ReadLong();
-			for (oid_t index_idx = 0; index_idx < index_count; index_idx++) {
-				// Index basic information
-				std::string index_name = catalog_buffer.ReadTextString();
-				IndexType index_type = (IndexType)catalog_buffer.ReadInt();
-				IndexConstraintType index_constraint_type = (IndexConstraintType)catalog_buffer.ReadInt();
-				bool index_unique_keys = catalog_buffer.ReadBool();
-				LOG_TRACE("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
-						index_name.c_str(), IndexTypeToString(index_type).c_str(),
-						IndexConstraintTypeToString(index_constraint_type).c_str(), index_unique_keys);
-
-				// Index key attributes
-				std::vector<oid_t> key_attrs;
-				size_t index_attr_count = catalog_buffer.ReadLong();
-				for (oid_t index_attr_idx = 0; index_attr_idx < index_attr_count; index_attr_idx++) {
-					oid_t index_attr = catalog_buffer.ReadInt();
-					key_attrs.push_back(index_attr);
-					LOG_TRACE("|  |- Key attribute %d",	index_attr);
-				}
-
-				// create index if not primary key
-				if (catalog->ExistIndexByName(db_name, table_name, index_name, txn) == false) {
-					catalog->CreateIndex(new_db_oid, new_table_oid, key_attrs, index_name, index_type, index_constraint_type, index_unique_keys, txn);
-				} else {
-					LOG_TRACE("|  %s index already exists", index_name.c_str());
-				}
-
-			} // end index loop
-
-		} // end table loop
 
 	} // end database loop
 
 	return true;
 }
 
+// TODO: Integrate this function to RecoverCatalogObject, after all catalog data
+//       can be recovered here including basic catalogs having the object class.
 bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_id, concurrency::TransactionContext *txn) {
 	// load checkpoint files for catalog data
 	// except for basic catalogs having the object class: DatabaseCatalog, TableCatalog, IndexCatalog, ColumnCatalog
