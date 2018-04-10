@@ -36,7 +36,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   // generate table and data taken into storage.
   // basic table test
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE checkpoint_table_test (id INTEGER, value1 REAL, value2 VARCHAR(32));");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE checkpoint_table_test (id INTEGER PRIMARY KEY, value1 REAL, value2 VARCHAR(32));");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (0, 1.2, 'aaa');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (1, 12.34, 'bbbbbb');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (2, 12345.678912345, 'ccccccccc');");
@@ -44,31 +44,33 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 
   // primary key and index test
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE checkpoint_index_test (pid INTEGER UNIQUE PRIMARY KEY, value1 INTEGER, value2 INTEGER, value3 INTEGER);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE checkpoint_index_test ("
+  		"upid1 INTEGER UNIQUE PRIMARY KEY, "
+  		"upid2 INTEGER PRIMARY KEY, "
+  		"value1 INTEGER, value2 INTEGER, value3 INTEGER);");
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX index_test1 ON checkpoint_index_test USING art (value1);");
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX index_test2 ON checkpoint_index_test USING skiplist (value2, value3);");
   TestingSQLUtil::ExecuteSQLQuery("CREATE UNIQUE INDEX unique_index_test ON checkpoint_index_test (value2);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (1, 2, 3, 4);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (5, 6, 7, 8);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (9, 10, 11, 12);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (1, 2, 3, 4, 5);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (6, 7, 8, 9, 10);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (11, 12, 13, 14, 15);");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // column constraint test
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
   std::string constraint_test_sql = "CREATE TABLE checkpoint_constraint_test ("
   		"pid1 INTEGER, pid2 INTEGER, "
-  		// error "value1 INTEGER UNIQUE"
-  		"value1 INTEGER DEFAULT 0 NOT NULL, "
-  		"value2 INTEGER CHECK (value2 > 2), "
-  		"value3 INTEGER REFERENCES checkpoint_index_test (pid), " // insert doesn't work correctly
+  		"value1 INTEGER DEFAULT 0 UNIQUE, "
+  		"value2 INTEGER NOT NULL CHECK (value2 > 2), " // check doesn't work correctly
+  		"value3 INTEGER REFERENCES checkpoint_table_test (id), "
   		"value4 INTEGER, value5 INTEGER, "
-  		// error "UNIQUE (value4, value5), "
-  		// insert doesn't work "FOREIGN KEY (value4, value5) REFERENCES checkpoint_index_test (value2, value3), "
+  		"FOREIGN KEY (value4, value5) REFERENCES checkpoint_index_test (upid1, upid2), "
+  		// not supported yet "UNIQUE (value4, value5), "
   		"PRIMARY KEY (pid1, pid2));";
   TestingSQLUtil::ExecuteSQLQuery(constraint_test_sql);
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (1, 2, 3, 4, 1, 3, 4);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (5, 6, 7, 8, 5, 7, 8);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (9, 10, 11, 12, 9, 11, 12);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (1, 2, 3, 4, 0, 1, 2);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (5, 6, 7, 8, 1, 6, 7);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_constraint_test VALUES (9, 10, 11, 12, 2, 11, 12);");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // insert test
