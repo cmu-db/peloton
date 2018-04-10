@@ -16,6 +16,7 @@
 #include <queue>
 #include <vector>
 
+#include "brain/index_configuration.h"
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
@@ -45,8 +46,7 @@ namespace brain {
 class WhatIfIndex {
  public:
   static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndPlanTree(
-      parser::SQLStatement *parsed_query,
-      std::vector<std::shared_ptr<catalog::IndexCatalogObject>> &indexes,
+      parser::SQLStatement *parsed_query, IndexConfiguration &config,
       std::string database_name);
 
  private:

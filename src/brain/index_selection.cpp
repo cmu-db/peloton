@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/parser/statements.h>
 #include "brain/index_selection.h"
+#include <include/parser/statements.h>
 #include "common/logger.h"
 
 namespace peloton {
@@ -21,8 +21,8 @@ IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) {
   query_set_ = query_set;
 }
 
-std::unique_ptr<Configuration> IndexSelection::GetBestIndexes() {
-  std::unique_ptr<Configuration> C(new Configuration());
+std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
+  std::unique_ptr<IndexConfiguration> C(new IndexConfiguration());
   // Figure 4 of the "Index Selection Tool" paper.
   // Split the workload 'W' into small workloads 'Wi', with each
   // containing one query, and find out the candidate indexes
@@ -30,19 +30,19 @@ std::unique_ptr<Configuration> IndexSelection::GetBestIndexes() {
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
   auto queries = query_set_->GetQueries();
-  for (auto query: queries) {
+  for (auto query : queries) {
     // Get admissible indexes 'Ai'
-    Configuration Ai;
+    IndexConfiguration Ai;
     GetAdmissibleIndexes(query, Ai);
 
     Workload Wi;
     Wi.AddQuery(query);
 
     // Get candidate indexes 'Ci' for the workload.
-    Configuration Ci;
+    IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union configuration set 'C'
+    // Add the 'Ci' to the union Indexconfiguration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -52,12 +52,12 @@ std::unique_ptr<Configuration> IndexSelection::GetBestIndexes() {
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-void IndexSelection::Enumerate(Configuration &indexes,
-                               Configuration &chosen_indexes,
+void IndexSelection::Enumerate(IndexConfiguration &indexes,
+                               IndexConfiguration &chosen_indexes,
                                Workload &workload) {
-  (void) indexes;
-  (void) chosen_indexes;
-  (void) workload;
+  (void)indexes;
+  (void)chosen_indexes;
+  (void)workload;
   return;
 }
 
@@ -71,8 +71,8 @@ void IndexSelection::Enumerate(Configuration &indexes,
 // 2. GROUP BY (if present)
 // 3. ORDER BY (if present)
 // 4. all updated columns for UPDATE query.
-void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
-                                          Configuration &indexes) {
+void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
+                                          IndexConfiguration &indexes) {
   union {
     parser::SelectStatement *select_stmt;
     parser::UpdateStatement *update_stmt;
@@ -83,30 +83,32 @@ void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
   switch (query->GetType()) {
     case StatementType::INSERT:
       sql_statement.insert_stmt =
-        dynamic_cast<parser::InsertStatement *>(query);
-      // If the insert is along with a select statement, i.e another table's select
-      // output is fed into this table.
+          dynamic_cast<parser::InsertStatement *>(query);
+      // If the insert is along with a select statement, i.e another table's
+      // select output is fed into this table.
       if (sql_statement.insert_stmt->select != nullptr) {
-        IndexColsParseWhereHelper(sql_statement.insert_stmt->select->where_clause, indexes);
+        IndexColsParseWhereHelper(
+            sql_statement.insert_stmt->select->where_clause, indexes);
       }
       break;
 
     case StatementType::DELETE:
       sql_statement.delete_stmt =
-        dynamic_cast<parser::DeleteStatement *>(query);
+          dynamic_cast<parser::DeleteStatement *>(query);
       IndexColsParseWhereHelper(sql_statement.delete_stmt->expr, indexes);
       break;
 
     case StatementType::UPDATE:
       sql_statement.update_stmt =
-        dynamic_cast<parser::UpdateStatement *>(query);
+          dynamic_cast<parser::UpdateStatement *>(query);
       IndexColsParseWhereHelper(sql_statement.update_stmt->where, indexes);
       break;
 
     case StatementType::SELECT:
       sql_statement.select_stmt =
-        dynamic_cast<parser::SelectStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause, indexes);
+          dynamic_cast<parser::SelectStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause,
+                                indexes);
       IndexColsParseOrderByHelper(sql_statement.select_stmt->order, indexes);
       IndexColsParseGroupByHelper(sql_statement.select_stmt->group_by, indexes);
       break;
@@ -117,8 +119,9 @@ void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
   }
 }
 
-void IndexSelection::IndexColsParseWhereHelper(std::unique_ptr<expression::AbstractExpression> &where_expr,
-                                               Configuration &config) {
+void IndexSelection::IndexColsParseWhereHelper(
+    std::unique_ptr<expression::AbstractExpression> &where_expr,
+    IndexConfiguration &config) {
   auto expr_type = where_expr->GetExpressionType();
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
@@ -138,21 +141,22 @@ void IndexSelection::IndexColsParseWhereHelper(std::unique_ptr<expression::Abstr
     default:
       assert(false);
   }
-  (void) config;
+  (void)config;
 }
 
-void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
-                                                 Configuration &config) {
-  (void) where_expr;
-  (void) config;
+void IndexSelection::IndexColsParseGroupByHelper(
+    std::unique_ptr<parser::GroupByDescription> &where_expr,
+    IndexConfiguration &config) {
+  (void)where_expr;
+  (void)config;
 }
 
-void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
-                                                 Configuration &config) {
-  (void) order_expr;
-  (void) config;
+void IndexSelection::IndexColsParseOrderByHelper(
+    std::unique_ptr<parser::OrderDescription> &order_expr,
+    IndexConfiguration &config) {
+  (void)order_expr;
+  (void)config;
 }
-
 
 }  // namespace brain
 }  // namespace peloton
