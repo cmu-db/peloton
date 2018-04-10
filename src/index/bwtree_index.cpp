@@ -65,7 +65,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   }
 
   // NOTE: If I use index_key.GetInfo() here, I always get an empty key?
-  LOG_DEBUG("InsertEntry(key=%s, val=%s) [%s]",
+  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
             key->GetInfo().c_str(),
             IndexUtil::GetInfo(value).c_str(),
             (ret ? "SUCCESS" : "FAIL"));
@@ -95,7 +95,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
         delete_count, metadata);
   }
 
-  LOG_DEBUG("DeleteEntry(key=%s, val=%s) [%s]",
+  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
             key->GetInfo().c_str(),
             IndexUtil::GetInfo(value).c_str(),
             (ret ? "SUCCESS" : "FAIL"));
