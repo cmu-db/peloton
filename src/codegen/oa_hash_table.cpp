@@ -268,9 +268,9 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
   // Return the result of comparison (if ptr is 0 then the slot is free)
   llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
-  lang::Loop probe_loop(
+  lang::Loop probe_loop{
       codegen, status_neq_zero,
-      {{"probeEntry", entry_ptr}, {"probeIndex", index}, {"probeKvl", kv_p}});
+      {{"probeEntry", entry_ptr}, {"probeIndex", index}, {"probeKvl", kv_p}}};
   {
     entry_ptr = probe_loop.GetLoopVar(0);
     index = probe_loop.GetLoopVar(1);
@@ -321,9 +321,9 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
 
             // Start a loop. Since we know at least one value exits, we build
             // a do-while loop.
-            lang::Loop value_loop(
+            lang::Loop value_loop{
                 codegen, codegen.ConstBool(true),
-                {{"probeCounter", loop_counter}, {"probeDataPtr", data_ptr}});
+                {{"probeCounter", loop_counter}, {"probeDataPtr", data_ptr}}};
             {
               // Loop variables
               loop_counter = value_loop.GetLoopVar(0);
@@ -551,9 +551,9 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
   llvm::Value *bucket_cond = codegen->CreateICmpULT(entry_index, num_buckets);
 
   // (1) loop var = bucket_index; loop cond = bucket_cond
-  lang::Loop bucket_loop(
+  lang::Loop bucket_loop{
       codegen, bucket_cond,
-      {{"iterateEntryIndex", entry_index}, {"iterateEntryPtr", entry_ptr}});
+      {{"iterateEntryIndex", entry_index}, {"iterateEntryPtr", entry_ptr}}};
   {
     entry_index = bucket_loop.GetLoopVar(0);
     entry_ptr = bucket_loop.GetLoopVar(1);
@@ -581,10 +581,10 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
       data_ptr = data_count_ptr_pair.second;
       llvm::Value *val_index = codegen.Const64(0);
 
-      lang::Loop read_value_loop(
+      lang::Loop read_value_loop{
           codegen,
           codegen.ConstBool(true),  // Always pass
-          {{"iterateCounter", val_index}, {"iterateDataPtr", data_ptr}});
+          {{"iterateCounter", val_index}, {"iterateDataPtr", data_ptr}}};
       {
         val_index = read_value_loop.GetLoopVar(0);
         data_ptr = read_value_loop.GetLoopVar(1);
@@ -640,7 +640,7 @@ void OAHashTable::VectorizedIterate(
         {"vectorizedIteratePos", start},
         {"vectorizedIterateSelPos", codegen.Const32(0)},
         {"vectorizedIterateCurrEntryPtr", entry_ptr}};
-    lang::Loop filter_loop(codegen, codegen.ConstBool(true), loop_vars);
+    lang::Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
     {
       llvm::Value *pos = filter_loop.GetLoopVar(0);
       llvm::Value *sel_pos = filter_loop.GetLoopVar(1);

@@ -50,7 +50,7 @@ void BufferAccessor::Iterate(CodeGen &codegen, llvm::Value *buffer_ptr,
                              BufferAccessor::IterateCallback &callback) const {
   auto *start = codegen.Load(BufferProxy::buffer_start, buffer_ptr);
   auto *end = codegen.Load(BufferProxy::buffer_pos, buffer_ptr);
-  lang::Loop loop(codegen, codegen->CreateICmpNE(start, end), {{"pos", start}});
+  lang::Loop loop{codegen, codegen->CreateICmpNE(start, end), {{"pos", start}}};
   {
     auto *pos = loop.GetLoopVar(0);
 

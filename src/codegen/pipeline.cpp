@@ -50,7 +50,7 @@ void PipelineContext::LoopOverStates::Do(
       states, {codegen->CreateMul(num_threads, state_size)});
 
   llvm::Value *loop_cond = codegen->CreateICmpNE(states, state_end);
-  lang::Loop state_loop(codegen, loop_cond, {{"threadState", states}});
+  lang::Loop state_loop{codegen, loop_cond, {{"threadState", states}}};
   {
     // Pull out state in this iteration
     llvm::Value *curr_state = state_loop.GetLoopVar(0);
@@ -285,8 +285,8 @@ uint32_t Pipeline::GetTranslatorStage(
 
 namespace {
 
-std::string ConstructFunctionName(Pipeline &pipeline,
-                                  const std::string &prefix) {
+std::string CreateUniqueFunctionName(Pipeline &pipeline,
+                                     const std::string &prefix) {
   CompilationContext &compilation_ctx = pipeline.GetCompilationContext();
   CodeContext &cc = compilation_ctx.GetCodeGen().GetCodeContext();
   return StringUtil::Format("_%" PRId64 "_pipeline_%u_%s_%s", cc.GetID(),
@@ -347,7 +347,7 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
   QueryState &query_state = compilation_ctx_.GetQueryState();
   CodeContext &cc = codegen.GetCodeContext();
 
-  auto func_name = ConstructFunctionName(*this, "initializeWorkerState");
+  auto func_name = CreateUniqueFunctionName(*this, "initializeWorkerState");
   auto visibility = FunctionDeclaration::Visibility::Internal;
   auto *ret_type = codegen.VoidType();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
@@ -445,7 +445,7 @@ void Pipeline::DoRun(
   CodeContext &cc = codegen.GetCodeContext();
 
   // Function signature
-  std::string func_name = ConstructFunctionName(
+  std::string func_name = CreateUniqueFunctionName(
       *this, IsParallel() ? "parallelWork" : "serialWork");
   auto visibility = FunctionDeclaration::Visibility::Internal;
   auto *ret_type = codegen.VoidType();
