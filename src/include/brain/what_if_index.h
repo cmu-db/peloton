@@ -16,7 +16,7 @@
 #include <queue>
 #include <vector>
 
-#include "brain/index_configuration.h"
+#include "brain/index_selection_util.h"
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
@@ -55,6 +55,9 @@ class WhatIfIndex {
                               optimizer::OptimizerMetadata &md);
   static void GetTablesUsed(parser::SQLStatement *statement,
                             std::vector<std::string> &table_names);
+  static std::shared_ptr<catalog::IndexCatalogObject>
+          CreateIndexCatalogObject(IndexObject *obj);
+  static unsigned long index_seq_no;
 };
 
 }  // namespace brain

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "brain/index_configuration.h"
+#include "brain/index_selection_util.h"
 
 namespace peloton {
 namespace brain {
