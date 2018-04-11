@@ -10,15 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/parser/statements.h>
 #include "brain/index_selection.h"
-#include "common/logger.h"
+#include <include/parser/statements.h>
 
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) {
-  query_set_ = query_set;
+IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) :
+  query_set_(query_set) {
 }
 
 std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
@@ -30,7 +29,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
   auto queries = query_set_->GetQueries();
-  for (auto query: queries) {
+  for (auto query : queries) {
     // Get admissible indexes 'Ai'
     IndexConfiguration Ai;
     GetAdmissibleIndexes(query, Ai);
@@ -42,7 +41,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
     IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union configuration set 'C'
+    // Add the 'Ci' to the union Index Configuration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -55,9 +54,9 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
 void IndexSelection::Enumerate(IndexConfiguration &indexes,
                                IndexConfiguration &chosen_indexes,
                                Workload &workload) {
-  (void) indexes;
-  (void) chosen_indexes;
-  (void) workload;
+  (void)indexes;
+  (void)chosen_indexes;
+  (void)workload;
   return;
 }
 
@@ -71,7 +70,7 @@ void IndexSelection::Enumerate(IndexConfiguration &indexes,
 // 2. GROUP BY (if present)
 // 3. ORDER BY (if present)
 // 4. all updated columns for UPDATE query.
-void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
+void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
                                           IndexConfiguration &indexes) {
   union {
     parser::SelectStatement *select_stmt;
@@ -83,9 +82,9 @@ void IndexSelection::GetAdmissibleIndexes(SQLStatement *query,
   switch (query->GetType()) {
     case StatementType::INSERT:
       sql_statement.insert_stmt =
-        dynamic_cast<parser::InsertStatement *>(query);
-      // If the insert is along with a select statement, i.e another table's select
-      // output is fed into this table.
+          dynamic_cast<parser::InsertStatement *>(query);
+      // If the insert is along with a select statement, i.e another table's
+      // select output is fed into this table.
       if (sql_statement.insert_stmt->select != nullptr) {
         IndexColsParseWhereHelper(sql_statement.insert_stmt->select->where_clause.get(), indexes);
       }
@@ -147,10 +146,11 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       right_child = where_expr->GetChild(1);
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        tuple_child = (expression::TupleValueExpression *)(left_child);
+        assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
+        tuple_child = (expression::TupleValueExpression*) (left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression *)(right_child);
+        tuple_child = (expression::TupleValueExpression*) (right_child);
       }
       (void) tuple_child;
 
@@ -167,7 +167,7 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       LOG_ERROR("Index selection doesn't allow %s in where clause", where_expr->GetInfo().c_str());
       assert(false);
   }
-  (void) config;
+  (void)config;
 }
 
 void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &group_expr,
@@ -193,31 +193,6 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   }
   (void) config;
 }
-
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
-  double cost = 0.0;
-  (void)config;
-  (void)workload;
-  // for (auto query : workload) {
-  //   result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
-
-  // }
-
-  // double cost = 0.0;
-  // auto queries = workload.GetQueries();
-  // for (auto query : queries) {
-  //   std::pair<IndexConfiguration, parser::SQLStatement *> state;
-  //   if (memo_.find(state) != memo_.end()) {
-  //     cost += memo_[state];
-  //   } else {
-  //     auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
-  //     memo_[state] = result->cost;
-  //     cost += result->cost;
-  //   }
-  // }
-  return cost;
-}
-
 
 }  // namespace brain
 }  // namespace peloton
