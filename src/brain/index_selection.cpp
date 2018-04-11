@@ -13,10 +13,6 @@
 #include "brain/index_selection.h"
 #include "brain/what_if_index.h"
 #include <include/parser/statements.h>
-#include <include/parser/statements.h>
-#include "common/logger.h"
-#include <algorithm>
-#include <set>
 
 namespace peloton {
 namespace brain {
@@ -52,81 +48,17 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   return C;
 }
 
-
+// TODO: [Siva]
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
 void IndexSelection::Enumerate(IndexConfiguration &indexes,
                                IndexConfiguration &chosen_indexes,
                                Workload &workload) {
-
-  auto top_indexes = ExhaustiveEnumeration(indexes, workload);
-
-  auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
-  (void)chosen_indexes;
-
-}
-
-
-void IndexSelection::GreedySearch(IndexConfiguration &indexes,
-                                           IndexConfiguration &chosen_indexes,
-                                           Workload &workload) {
-
-
   (void)indexes;
   (void)chosen_indexes;
   (void)workload;
-
-}
-
-IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes) {
-  return (indexes - top_indexes);
-}
-
-
-IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
-                               Workload &workload) {
-  unsigned long m = 2;
-
-  assert(m <= indexes.GetIndexCount());
-
-  std::set<IndexConfiguration, Comp> running_set(workload);
-  std::set<IndexConfiguration, Comp> temp_set(workload);
-  std::set<IndexConfiguration, Comp> result_set(workload);
-  IndexConfiguration new_element;
-  IndexConfiguration top_indexes;
-
-  IndexConfiguration empty;
-  running_set.insert(empty);
-
-
-  for (auto i : indexes.GetIndexes()) {
-    temp_set = running_set;
-
-    for(auto t : temp_set) {
-      new_element = t;
-      new_element.AddIndexObject(i);
-
-      if(new_element.GetIndexCount() >= m) {
-        result_set.insert(new_element);
-      } else {
-        running_set.insert(new_element);
-      }
-    }
-
-  }
-
-
-  result_set.insert(running_set.begin(), running_set.end());
-  result_set.erase(empty);
-
-
-  // combine all the index configurations and return
-  for (auto i : result_set) {
-    top_indexes.Add(i);
-  }
-
-  return top_indexes;
+  return;
 }
 
 // GetAdmissibleIndexes()
@@ -291,18 +223,7 @@ void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExp
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) const {
-  double cost = 0.0;
-  auto queries = workload.GetQueries();
-  for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
-    PL_ASSERT(context_.memo_.find(state) != context_.memo_.end());
-    cost += context_.memo_.find(state)->second;
-  }
-  return cost;
-}
-
-double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
@@ -316,6 +237,27 @@ double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workloa
     }
   }
   return cost;
+}
+
+IndexConfiguration IndexSelection::CrossProduct(
+    const IndexConfiguration &config,
+    const IndexConfiguration &single_column_indexes) {
+  IndexConfiguration result;
+  auto indexes = config.GetIndexes();
+  auto columns = single_column_indexes.GetIndexes();
+  for (auto index : indexes) {
+    for (auto column : columns) {
+      if(!index->IsCompatible(column)) continue;
+      auto merged_index = (index->Merge(column));
+      result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
+    }
+  }
+  return result;
+}
+
+
+IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
+  return CrossProduct(config, single_column_indexes);
 }
 
 }  // namespace brain

@@ -36,6 +36,7 @@
 
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
+#include <set>
 
 namespace peloton {
 namespace catalog {
