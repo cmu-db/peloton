@@ -1391,6 +1391,7 @@ void Catalog::SerializeTableTo(oid_t table_oid, concurrency::TransactionContext 
 	LOG_DEBUG("Write table catalog %d '%s': %lu columns",
 			table_oid, table_object->GetTableName().c_str(), schema->GetColumnCount());
 
+  /* disable foreign key recovery until a mutual reference problem is resolved
 	// Write foreign key information of this sink table
 	auto foreign_key_count = table->GetForeignKeyCount();
 	out.WriteLong(foreign_key_count);
@@ -1409,6 +1410,7 @@ void Catalog::SerializeTableTo(oid_t table_oid, concurrency::TransactionContext 
 		foreign_key_src->SerializeTo(out);
 	  LOG_DEBUG("|-- foreign key source '%s'", foreign_key_src->GetConstraintName().c_str());
 	}
+  */
 
 	// tuning
 
@@ -1576,6 +1578,7 @@ oid_t Catalog::DeserializeTableFrom(oid_t db_oid, concurrency::TransactionContex
 
   LOG_DEBUG("Create table %d '%s'", table_oid, table_name.c_str());
 
+  /* disable foreign key recovery until a mutual reference problem is resolved
 	// recover foreign key information as sink table
 	auto foreign_key_count = in.ReadLong();
 	for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
@@ -1589,6 +1592,7 @@ oid_t Catalog::DeserializeTableFrom(oid_t db_oid, concurrency::TransactionContex
 		table->RegisterForeignKeySource(ForeignKey::DeserializeFrom(in));
 	  LOG_DEBUG("|-- Add foreign key source '%s'", table->GetForeignKeySrc(fk_src_idx)->GetConstraintName().c_str());
 	}
+  */
 
 	// recover trigger object of the storage table
 	auto trigger_list = TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
