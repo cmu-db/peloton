@@ -16,9 +16,7 @@
 namespace peloton {
 namespace brain {
 
-IndexConfiguration::IndexConfiguration() {
-
-}
+IndexConfiguration::IndexConfiguration() {}
 
 void IndexConfiguration::Add(IndexConfiguration &config) {
   auto indexes = config.GetIndexes();
@@ -37,6 +35,27 @@ size_t IndexConfiguration::GetIndexCount() {
 
 std::set<std::shared_ptr<IndexObject>>& IndexConfiguration::GetIndexes() {
   return indexes_;
+}
+
+//===--------------------------------------------------------------------===//
+// IndexObjectPool
+//===--------------------------------------------------------------------===//
+
+IndexObjectPool::IndexObjectPool() {}
+
+std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
+  auto ret = map_.find(obj);
+  if (ret != map_.end()) {
+    return ret->second;
+  }
+  return nullptr;
+}
+
+void IndexObjectPool::PutIndexObject(IndexObject &obj) {
+  IndexObject *index_copy = new IndexObject();
+  *index_copy = obj;
+  auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
+  map_[*index_copy] = index_s_ptr;
 }
 
 }  // namespace brain

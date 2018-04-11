@@ -12,13 +12,12 @@
 
 #include "brain/index_selection.h"
 #include <include/parser/statements.h>
-#include "common/logger.h"
 
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) {
-  query_set_ = query_set;
+IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) :
+  query_set_(query_set) {
 }
 
 std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
@@ -42,7 +41,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
     IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union Indexconfiguration set 'C'
+    // Add the 'Ci' to the union Index Configuration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -147,10 +146,11 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       right_child = where_expr->GetChild(1);
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        tuple_child = (expression::TupleValueExpression *)(left_child);
+        assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
+        tuple_child = (expression::TupleValueExpression*) (left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression *)(right_child);
+        tuple_child = (expression::TupleValueExpression*) (right_child);
       }
       (void) tuple_child;
 
