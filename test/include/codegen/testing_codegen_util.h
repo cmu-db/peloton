@@ -89,11 +89,6 @@ class PelotonCodeGenTest : public PelotonTest {
                                     oid_t tile_group_count, oid_t column_count,
                                     bool is_inlined);
 
-  static void ExecuteSync(
-      codegen::Query &query,
-      std::unique_ptr<executor::ExecutorContext> executor_context,
-      codegen::ExecutionConsumer &consumer);
-
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
       planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer);

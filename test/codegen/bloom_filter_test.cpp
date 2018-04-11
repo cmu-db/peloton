@@ -36,7 +36,7 @@
 namespace peloton {
 namespace test {
 
-class BloomFilterCodegenTest : public PelotonTest {
+class BloomFilterCodegenTest : public PelotonCodeGenTest {
  public:
   BloomFilterCodegenTest() {
     // Create test db
@@ -299,19 +299,20 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
     // Binding
     planner::BindingContext context;
     plan->PerformBinding(context);
+
+    executor::ExecutorContext executor_context{txn};
+
     // Use simple CountConsumer since we don't care about the result
     codegen::CountingConsumer consumer;
+
     // Compile the query
     codegen::QueryCompiler compiler;
     codegen::Query::RuntimeStats stats;
-    std::unique_ptr<executor::ExecutorContext> executor_context(
-        new executor::ExecutorContext{txn});
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+        *plan, executor_context.GetParams().GetQueryParametersMap(), consumer);
 
     // Run
-    PelotonCodeGenTest::ExecuteSync(*compiled_query,
-                                    std::move(executor_context), consumer);
+    compiled_query->Execute(executor_context, consumer, &stats);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
     total_runtime += stats.plan_ms;

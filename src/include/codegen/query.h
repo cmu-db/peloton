@@ -66,19 +66,18 @@ class Query {
   /**
    * @brief Executes the compiled query.
    *
-   * This function is **asynchronous** - it returns before execution completes,
-   * and invokes a user-provided callback on completion. It is the user's
-   * responsibility that the result consumer object has a lifetime as far as
-   * the return of the callback.
-   *
    * @param executor_context Stores transaction and parameters.
    * @param consumer Stores the result.
-   * @param on_complete The callback to be invoked when execution completes.
+   * @param stats Handy struct to collect various runtime timing statistics
    */
-  void Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
-               ExecutionConsumer &consumer,
-               std::function<void(executor::ExecutionResult)> on_complete,
-               RuntimeStats *stats = nullptr);
+  void Execute(executor::ExecutorContext &executor_context,
+               ExecutionConsumer &consumer, RuntimeStats *stats = nullptr);
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
   /// Return the query plan
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
@@ -92,7 +91,7 @@ class Query {
  private:
   friend class QueryCompiler;
 
-  /// Constructor
+  /// Constructor. Private so callers use the QueryCompiler class.
   explicit Query(const planner::AbstractPlan &query_plan);
 
  private:
