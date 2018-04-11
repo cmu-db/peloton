@@ -40,7 +40,6 @@ private:
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
-
   // Admissible index selection related
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                  IndexConfiguration &config);
