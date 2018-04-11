@@ -72,7 +72,9 @@ public:
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   size_t GetIndexCount();
-  std::set<std::shared_ptr<IndexObject>> &GetIndexes();
+  const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
+  const std::string ToString() const;
+  bool operator==(const IndexConfiguration &obj) const;
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -87,7 +89,7 @@ public:
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }
-  std::vector<SQLStatement*> &GetQueries() {
+  const std::vector<SQLStatement*> &GetQueries() {
     return sql_queries_;
   }
   size_t Size() {

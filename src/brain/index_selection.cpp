@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
+#include "brain/what_if_index.h"
 #include <include/parser/statements.h>
 
 namespace peloton {
@@ -197,6 +198,7 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   (void) config;
 }
 
+<<<<<<< HEAD
 void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col) {
   auto db_oid = std::get<0>(tuple_col->GetBoundOid());
   auto table_oid = std::get<1>(tuple_col->GetBoundOid());
@@ -207,6 +209,24 @@ void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExp
   if (!context_.pool.GetIndexObject(iobj)) {
     context_.pool.PutIndexObject(iobj);
   }
+}
+
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+  double cost = 0.0;
+  (void) config;
+  (void) workload;
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    if (context_.memo_.find(state) != context_.memo_.end()) {
+      cost += context_.memo_[state];
+    } else {
+      auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+      context_.memo_[state] = result->cost;
+      cost += result->cost;
+    }
+  }
+  return cost;
 }
 
 }  // namespace brain
