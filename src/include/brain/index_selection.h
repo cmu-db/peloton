@@ -17,6 +17,7 @@
 #include "catalog/index_catalog.h"
 #include "brain/index_selection_util.h"
 #include "brain/index_selection_context.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace brain {
@@ -47,6 +48,7 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
+  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col);
   // members
   std::shared_ptr<Workload> query_set_;
   IndexSelectionContext context_;

@@ -33,6 +33,13 @@ public:
   std::vector<oid_t> column_oids;
   IndexConstraintType type;
 
+  IndexObject() {};
+
+  IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid):
+    db_oid(db_oid), table_oid(table_oid) {
+    column_oids.push_back(col_oid);
+  }
+
   // To string for performing hash.
   const std::string toString() const {
     std::stringstream str_stream;
