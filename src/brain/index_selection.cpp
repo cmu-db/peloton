@@ -198,7 +198,6 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   (void) config;
 }
 
-<<<<<<< HEAD
 void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col) {
   auto db_oid = std::get<0>(tuple_col->GetBoundOid());
   auto table_oid = std::get<1>(tuple_col->GetBoundOid());
