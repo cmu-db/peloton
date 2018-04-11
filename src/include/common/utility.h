@@ -16,5 +16,5 @@
 
 namespace peloton{
 
-  int peloton_close(int fd, int failure_log_level = LOG_LEVEL_DEBUG);
+  int peloton_close(int fd);
 }

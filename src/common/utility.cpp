@@ -25,8 +25,14 @@ int close$NOCANCEL(int);
 
 namespace peloton {
 
+int peloton_close(int fd) {
+  //On Mac OS, close$NOCANCEL guarantees that no descriptor leak & no need to retry on failure.
+  //On linux, close will do the same.
+  //In short, call close/close$NOCANCEL once and consider it done. AND NEVER RETRY ON FAILURE.
+  //The errno code is just a hint. It's logged but no further processing on it.
+  //Retry on failure may close another file descriptor that just has been assigned by OS with the same number
+  //and break assumptions of other threads.
 
-int peloton_close(int fd, int failure_log_level) {
   int close_ret = -1;
 #if __APPLE__
   close_ret = ::close$NOCANCEL(fd);
@@ -46,25 +52,7 @@ int peloton_close(int fd, int failure_log_level) {
 #endif
     (void) error_message;
 
-    const char *format_string = "Close failed on fd: %d, errno: %d [%s]";
-
-    switch (failure_log_level) {
-      case LOG_LEVEL_TRACE:
-        LOG_TRACE(format_string, fd, saved_errno, error_message);
-        break;
-      case LOG_LEVEL_DEBUG:
-        LOG_DEBUG(format_string, fd, saved_errno, error_message);
-        break;
-      case LOG_LEVEL_INFO:
-        LOG_INFO(format_string, fd, saved_errno, error_message);
-        break;
-      case LOG_LEVEL_WARN:
-        LOG_WARN(format_string, fd, saved_errno, error_message);
-        break;
-      case LOG_LEVEL_ERROR:
-        LOG_ERROR(format_string, fd, saved_errno, error_message);
-        break;
-    }
+    LOG_DEBUG("Close failed on fd: %d, errno: %d [%s]", fd, saved_errno, error_message);
   }
 
   return close_ret;
