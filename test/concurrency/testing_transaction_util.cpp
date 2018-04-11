@@ -216,8 +216,6 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
 storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
     std::string database_name, std::string table_name) {
-
-  LOG_INFO("hello");
   LOG_INFO("database name = %s", database_name.c_str());
   LOG_INFO("table name = %s", table_name.c_str());
   auto id_column = catalog::Column(
