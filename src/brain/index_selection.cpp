@@ -194,5 +194,30 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   (void) config;
 }
 
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+  double cost = 0.0;
+  (void)config;
+  (void)workload;
+  // for (auto query : workload) {
+  //   result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+
+  // }
+
+  // double cost = 0.0;
+  // auto queries = workload.GetQueries();
+  // for (auto query : queries) {
+  //   std::pair<IndexConfiguration, parser::SQLStatement *> state;
+  //   if (memo_.find(state) != memo_.end()) {
+  //     cost += memo_[state];
+  //   } else {
+  //     auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+  //     memo_[state] = result->cost;
+  //     cost += result->cost;
+  //   }
+  // }
+  return cost;
+}
+
+
 }  // namespace brain
 }  // namespace peloton
