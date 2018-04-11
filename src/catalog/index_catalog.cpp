@@ -255,11 +255,6 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
 
-
-    LOG_INFO("index_object->GetIndexOid()=%d", index_object->GetIndexOid());
-    LOG_INFO("index_object->GetTableOid()=%d",index_object->GetTableOid());
-    LOG_INFO("table_object->GetTableOid()=%d",table_object->GetTableOid());
-
     PL_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
