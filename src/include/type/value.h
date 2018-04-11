@@ -288,6 +288,16 @@ class Value : public Printable {
     }
   };
 
+  struct compress_equal_to {
+    inline bool operator()(const Value &x, const Value &y) const {
+      if (x.GetTypeId() != y.GetTypeId())
+        return false;
+      if (x.IsNull() && y.IsNull())
+        return true;
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::CmpTrue;
+    }
+  };
+
   template <class T>
   inline void hash_combine(std::size_t &seed, const T &v) const {
     std::hash<T> hasher;

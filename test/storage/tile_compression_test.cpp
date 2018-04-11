@@ -71,7 +71,7 @@ TEST_F(TileCompressionTests, BasicTest) {
   tuple1->SetValue(1, type::ValueFactory::GetVarcharValue("bohan"), pool);
   tuple1->SetValue(2, type::ValueFactory::GetIntegerValue(12), pool);
   tuple1->SetValue(3, type::ValueFactory::GetTinyIntValue(13), pool);
-  tuple1->SetValue(4, type::ValueFactory::GetVarcharValue("bohan again"),
+  tuple1->SetValue(4, type::ValueFactory::GetVarcharValue("bohan"),
                    pool);
 
   tuple2->SetValue(0, type::ValueFactory::GetIntegerValue(21), pool);
@@ -125,7 +125,7 @@ TEST_F(TileCompressionTests, BasicTest) {
       (val3.CompareEquals(type::ValueFactory::GetTinyIntValue(13))));
   EXPECT_TRUE(cmp.IsTrue());
   cmp = type::ValueFactory::GetBooleanValue(
-      (val4.CompareEquals(type::ValueFactory::GetVarcharValue("bohan again"))));
+      (val4.CompareEquals(type::ValueFactory::GetVarcharValue("bohan"))));
   EXPECT_TRUE(cmp.IsTrue());
 
   // check tuple 2

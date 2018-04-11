@@ -135,7 +135,7 @@ class DictEncodedTile : public Tile {
 	// the idx-string mapping
   std::vector<type::Value> element_array;
 	// the string-idx mapping
-  std::unordered_map<type::Value, uint8_t, type::Value::hash, type::Value::equal_to> dict;
+  std::unordered_map<type::Value, uint8_t, type::Value::hash, type::Value::compress_equal_to> dict;
 	// columns being encoded
   std::set<oid_t> dict_encoded_columns;
 	// original schema
