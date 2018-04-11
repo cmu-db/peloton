@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/statement_cache_manager.h"
 #include "executor/executor_context.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -116,6 +117,10 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();
 
+  oid_t table_id = catalog::Catalog::GetInstance()
+      ->GetTableObject(database_name, table_name, txn)
+      ->GetTableOid();
+
   if (node.IsMissing()) {
     try {
       auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
@@ -132,17 +137,17 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
-
     if (StatementCacheManager::GetStmtCacheManager().get()) {
-      oid_t table_id = catalog::Catalog::GetInstance()
-                           ->GetTableObject(database_name, table_name, txn)
-                           ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
     }
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
+
+  // Remove table lock
+  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  lm->RemoveLock(table_id);
   return false;
 }
 
@@ -178,16 +183,28 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   return false;
 }
 
+/**
+ * @brief   Drop an index.
+ * @details Drop an index. Will delete the corresponding entry from catalog, and
+ * the data structure of index itself will be garbage collected. Note that phantom
+ * could happen while dropping the index.
+ * @param   node    current planner node
+ * @param   txn     current transaction
+ * @return  bool    always false
+ */
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
+  // Get the name of index and the index in catalog.
   std::string index_name = node.GetIndexName();
   auto index_object =
       catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
 
+  // Drop index in catalog.
   ResultType result = catalog::Catalog::GetInstance()->DropIndex(
       index_object->GetIndexOid(), txn);
   txn->SetResult(result);
 
+  // Invalidate statement cache if drop successful.
   if (txn->GetResult() == ResultType::SUCCESS) {
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id = index_object->GetTableOid();

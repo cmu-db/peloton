@@ -16,9 +16,9 @@
 #include <map>
 #include <utility>
 
-#include <pthread.h>
 #include <common/internal_types.h>
 #include "common/logger.h"
+#include <boost/thread/shared_mutex.hpp>
 
 namespace peloton {
 namespace concurrency {
@@ -38,10 +38,10 @@ public:
   };
 
   // Constructor
-  LockManager() {pthread_rwlock_init(&internal_rw_lock_, nullptr);}
+  LockManager() {}
 
   // Destructor
-  virtual ~LockManager() {pthread_rwlock_destroy(&internal_rw_lock_);}
+  virtual ~LockManager() {}
 
   // Initialize lock for given oid
   bool InitLock(oid_t oid, LockType type);
@@ -61,8 +61,11 @@ public:
   // Unlock and lock to exclusive for RW_LOCK(blocking)
   bool LockToExclusive(oid_t oid);
 
-  // Unlock RW lock
-  bool UnlockRW(oid_t oid);
+  // Unlock Shared lock
+  bool UnlockShared(oid_t oid);
+
+  // Unlock Exclusive lock
+  bool UnlockExclusive(oid_t oid);
 
   // Return the global variable instance
   static LockManager* GetInstance();
@@ -70,17 +73,17 @@ public:
 private:
 
   // Local RW lock to protect lock dict
-  pthread_rwlock_t internal_rw_lock_;
+  boost::upgrade_mutex internal_rw_lock_;
 
   // Map to store RW_LOCK for different objects
-  std::map<oid_t, pthread_rwlock_t> lock_map_;
+  std::map<oid_t, boost::upgrade_mutex*> lock_map_;
 
   // Get RW lock by oid
-  pthread_rwlock_t *GetLock(oid_t oid){
+  boost::upgrade_mutex *GetLock(oid_t oid){
     // Try to access the lock
-    pthread_rwlock_t *rw_lock;
+    boost::upgrade_mutex *rw_lock;
     try{
-      rw_lock = &(lock_map_.at(oid));
+      rw_lock = lock_map_.at(oid);
       LOG_WARN("GET LOCK SUCCSS!!");
     }
     catch(const std::out_of_range& oor) {

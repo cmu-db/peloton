@@ -226,7 +226,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
         // Unlock the table
-        bool unlock_success = lm->UnlockRW(table_oid);
+        bool unlock_success = lm->UnlockShared(table_oid);
         if (!unlock_success){
           LOG_TRACE("Cannot unlock the table, abort!");
         }
@@ -268,7 +268,7 @@ bool UpdateExecutor::DExecute() {
         // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
           // Unlock the table
-          bool unlock_success = lm->UnlockRW(table_oid);
+          bool unlock_success = lm->UnlockShared(table_oid);
           if (!unlock_success){
             LOG_TRACE("Cannot unlock the table, abort!");
           }
@@ -312,7 +312,7 @@ bool UpdateExecutor::DExecute() {
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
           // Unlock the table
-          bool unlock_success = lm->UnlockRW(table_oid);
+          bool unlock_success = lm->UnlockShared(table_oid);
           if (!unlock_success){
             LOG_TRACE("Cannot unlock the table, abort!");
           }
@@ -330,7 +330,7 @@ bool UpdateExecutor::DExecute() {
           // When fail, ownership release is done inside PerformUpdatePrimaryKey
           else {
             // Unlock the table
-            bool unlock_success = lm->UnlockRW(table_oid);
+            bool unlock_success = lm->UnlockShared(table_oid);
             if (!unlock_success){
               LOG_TRACE("Cannot unlock the table, abort!");
             }
@@ -387,7 +387,7 @@ bool UpdateExecutor::DExecute() {
             transaction_manager.SetTransactionResult(current_txn,
                                                      ResultType::FAILURE);
             // Unlock the table
-            bool unlock_success = lm->UnlockRW(table_oid);
+            bool unlock_success = lm->UnlockShared(table_oid);
             if (!unlock_success){
               LOG_TRACE("Cannot unlock the table, abort!");
             }
@@ -453,7 +453,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
         // Unlock the table
-        bool unlock_success = lm->UnlockRW(table_oid);
+        bool unlock_success = lm->UnlockShared(table_oid);
         if (!unlock_success){
           LOG_TRACE("Cannot unlock the table, abort!");
         }
@@ -479,7 +479,7 @@ bool UpdateExecutor::DExecute() {
     }
   }
   // Unlock the table
-  bool unlock_success = lm->UnlockRW(table_oid);
+  bool unlock_success = lm->UnlockShared(table_oid);
   if (!unlock_success){
     LOG_TRACE("Cannot unlock the table, abort!");
   }

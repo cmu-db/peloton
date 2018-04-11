@@ -26,39 +26,45 @@ class LockManagerTests : public PelotonTest {};
 TEST_F(LockManagerTests, FunctionalityTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
+  bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
   // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
   // Try to unlock
-  bool result2 = lm->UnlockRW((oid_t)1);
+  bool result2 = lm->UnlockShared((oid_t)1);
   // Try to remove lock
   bool result3 = lm->RemoveLock((oid_t)1);
-  EXPECT_TRUE(result1 && result2 && result3);
+  EXPECT_TRUE(result0);
+  EXPECT_TRUE(result1);
+  EXPECT_TRUE(result2);
+  EXPECT_TRUE(result3);
 }
 
 TEST_F(LockManagerTests, LockSharedTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
-
+  bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
   // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
   // Try to lock shared
   bool result2 = lm->LockShared((oid_t)1);
   // Try to lock shared
-  bool result3 = lm->UnlockRW((oid_t)1);
+  bool result3 = lm->UnlockShared((oid_t)1);
   // Try to lock shared
-  bool result4 = lm->UnlockRW((oid_t)1);
+  bool result4 = lm->UnlockShared((oid_t)1);
   // Try to remove lock
   bool result5 = lm->RemoveLock((oid_t)1);
-  EXPECT_TRUE(result1 && result2 && result3 && result4 && result5);
+  EXPECT_TRUE(result0);
+  EXPECT_TRUE(result1);
+  EXPECT_TRUE(result2);
+  EXPECT_TRUE(result3);
+  EXPECT_TRUE(result4);
+  EXPECT_TRUE(result5);
 }
 
 TEST_F(LockManagerTests, LockChangeTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
-
+  bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
   // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
   // Try to lock change to exclusive
@@ -66,16 +72,47 @@ TEST_F(LockManagerTests, LockChangeTest){
   // Try to lock change to shared
   bool result3 = lm->LockToShared((oid_t)1);
   // Try to lock shared
-  bool result4 = lm->LockToShared((oid_t)1);
+  bool result4 = lm->LockShared((oid_t)1);
   // Try to lock shared
-  bool result5 = lm->UnlockRW((oid_t)1);
+  bool result5 = lm->UnlockShared((oid_t)1);
   // Try to lock shared
-  bool result6 = lm->UnlockRW((oid_t)1);
+  bool result6 = lm->UnlockShared((oid_t)1);
   // Try to remove lock
   bool result7 = lm->RemoveLock((oid_t)1);
+  EXPECT_TRUE(result0);
+  EXPECT_TRUE(result1);
+  EXPECT_TRUE(result2);
+  EXPECT_TRUE(result3);
+  EXPECT_TRUE(result4);
+  EXPECT_TRUE(result5);
+  EXPECT_TRUE(result6);
+  EXPECT_TRUE(result7);
+}
+
+TEST_F(LockManagerTests, DoubleCreateTest){
+  // Initialize lock
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
+  // Initialize lock again
+  bool result1 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
   // Try to remove lock
-  bool result8 = lm->RemoveLock((oid_t)1);
-  EXPECT_TRUE(result1 && result2 && result3 && result4 && result5 && result6 && result7 &&result8);
+  bool result2 = lm->RemoveLock((oid_t)1);
+  EXPECT_TRUE(result0);
+  EXPECT_FALSE(result1);
+  EXPECT_TRUE(result2);
+}
+
+TEST_F(LockManagerTests, DoubleRemoveTest){
+  // Initialize lock
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
+  // Try to remove lock
+  bool result1 = lm->RemoveLock((oid_t)1);
+  // Try to remove lock
+  bool result2 = lm->RemoveLock((oid_t)1);
+  EXPECT_TRUE(result0);
+  EXPECT_TRUE(result1);
+  EXPECT_FALSE(result2);
 }
 
 }  // namespace test

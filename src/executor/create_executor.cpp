@@ -251,7 +251,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
       index_type, txn);
 
   // Unlock the table being indexed
-  bool unlock_success = lm->UnlockRW(table_oid);
+  bool unlock_success = lm->UnlockExclusive(table_oid);
   if (!unlock_success){
     LOG_TRACE("Cannot unlock the table, abort!");
     return true;

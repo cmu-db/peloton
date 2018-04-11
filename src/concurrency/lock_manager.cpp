@@ -14,8 +14,8 @@
 #include <map>
 #include <utility>
 
-#include <pthread.h>
-#include <concurrency/lock_manager.h>
+#include <boost/thread/shared_mutex.hpp>
+#include "concurrency/lock_manager.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -33,18 +33,27 @@ LockManager *LockManager::GetInstance() {
 
 // Initialize lock for given oid
 bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/){
-  // Initialize new lock for the object
-  pthread_rwlock_t rw_lock;
-  pthread_rwlock_init(&rw_lock, nullptr);
-
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_wrlock(&internal_rw_lock_);
+  internal_rw_lock_.lock();
 
+  // Try to find the lock in table
+  boost::upgrade_mutex *lock = GetLock(oid);
+  if (lock != nullptr){
+    internal_rw_lock_.unlock();
+    return false;
+  }
+
+  // Initialize new lock for the object
+  boost::upgrade_mutex *rw_lock = new boost::upgrade_mutex();
+
+  std::pair<oid_t, boost::upgrade_mutex*> p;
+  p.first = oid;
+  p.second = rw_lock;
   // Insert lock into map
-  lock_map_.insert(std::make_pair(oid, rw_lock));
+  lock_map_.insert(p);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock();
   LOG_WARN("INIT LOCK SUCCSS!!%u", oid);
   return true;
 }
@@ -52,130 +61,161 @@ bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/){
 // Remove the lock specified by oid from data structure
 bool LockManager::RemoveLock(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_wrlock(&internal_rw_lock_);
+  internal_rw_lock_.lock();
   LOG_WARN("REMOVE LOCK!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock();
     return false;
   }
 
   // Remove from the lock map
   lock_map_.erase(oid);
-
+  delete(rw_lock);
 
   // Remove the lock, unlock internal lock
-  pthread_rwlock_destroy(rw_lock);
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock();
   return true;
 }
 
 // Acquire shared lock for RW_LOCK(blocking)
 bool LockManager::LockShared(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_rdlock(&internal_rw_lock_);
+  internal_rw_lock_.lock_shared();
   LOG_WARN("LOCK S!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock_shared();
     return false;
   }
 
   // Read (shared) lock
-  pthread_rwlock_rdlock(rw_lock);
+  rw_lock->lock_shared();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock_shared();
   return true;
 }
 
 // Acquire exclusive lock for RW_LOCK(blocking)
 bool LockManager::LockExclusive(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_rdlock(&internal_rw_lock_);
-  LOG_WARN("LOCK E!!%u", oid);
+  internal_rw_lock_.lock_shared();
+  LOG_WARN("LOCK S!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock_shared();
     return false;
   }
 
-  // Write (exclusive) lock
-  pthread_rwlock_wrlock(rw_lock);
+  // Read (shared) lock
+  rw_lock->lock();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock_shared();
   return true;
 }
 
 // Unlock and lock to shared for RW_LOCK(blocking)
 bool LockManager::LockToShared(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_rdlock(&internal_rw_lock_);
-  LOG_WARN("LOCK TS!!%u", oid);
+  internal_rw_lock_.lock_shared();
+  LOG_WARN("LOCK S!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock_shared();
     return false;
   }
 
-  // Unlock first, then lock to shared
-  pthread_rwlock_unlock(rw_lock);
-  pthread_rwlock_rdlock(rw_lock);
+  // Read (shared) lock
+  rw_lock->unlock_and_lock_shared();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock_shared();
   return true;
 }
 
 // Unlock and lock to exclusive for RW_LOCK(blocking)
 bool LockManager::LockToExclusive(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_rdlock(&internal_rw_lock_);
-  LOG_WARN("LOCK TE!!%u", oid);
+  internal_rw_lock_.lock_shared();
+  LOG_WARN("LOCK S!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock_shared();
     return false;
   }
 
-  // Unlock first, then lock to shared
-  pthread_rwlock_unlock(rw_lock);
-  pthread_rwlock_wrlock(rw_lock);
+  // Read (shared) lock
+  rw_lock->unlock_shared();
+  rw_lock->lock();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock_shared();
   return true;
 }
 
-// Unlock RW lock
-bool LockManager::UnlockRW(oid_t oid){
+// Unlock shared lock
+bool LockManager::UnlockShared(oid_t oid){
   // Need to lock internal lock to protect internal lock map
-  pthread_rwlock_rdlock(&internal_rw_lock_);
-  LOG_WARN("UNLOCK!!%u", oid);
+  internal_rw_lock_.lock_shared();
+  LOG_WARN("LOCK S!!%u", oid);
 
   // Try to access the lock
-  pthread_rwlock_t *rw_lock = GetLock(oid);
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
   if (rw_lock == nullptr){
-    pthread_rwlock_unlock(&internal_rw_lock_);
+    internal_rw_lock_.unlock_shared();
     return false;
   }
 
-  // Unlock
-  pthread_rwlock_unlock(rw_lock);
+  // unlock shared lock
+  rw_lock->unlock_shared();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
 
   // Unlock internal lock
-  pthread_rwlock_unlock(&internal_rw_lock_);
+  internal_rw_lock_.unlock_shared();
+  return true;
+}
+
+// Unlock exclusive lock
+bool LockManager::UnlockExclusive(oid_t oid){
+  // Need to lock internal lock to protect internal lock map
+  internal_rw_lock_.lock_shared();
+  LOG_WARN("LOCK S!!%u", oid);
+
+  // Try to access the lock
+  boost::upgrade_mutex *rw_lock = GetLock(oid);
+  if (rw_lock == nullptr){
+    internal_rw_lock_.unlock_shared();
+    return false;
+  }
+
+  // unlock shared lock
+  rw_lock->unlock();
+
+  LOG_WARN("LOCKed Ssss!!%u", oid);
+
+  // Unlock internal lock
+  internal_rw_lock_.unlock_shared();
   return true;
 }
 
