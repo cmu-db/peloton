@@ -300,29 +300,6 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) return database_object;
 
-  /*
-  // cache miss, get from pg_database
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
-    // insert into cache
-    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-    PL_ASSERT(success == true);
-    (void)success;
-    return database_object;
-  } else {
-    LOG_DEBUG("Found %lu database tiles with oid %u", result_tiles->size(),
-              database_oid);
-  }*/
-
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
@@ -368,29 +345,6 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
   if (database_object) return database_object;
-
-    /*
-  // cache miss, get from pg_database
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_DATABASE_NAME;  // Index of database_name
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
-    if (database_object) {
-      // insert into cache
-      bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-      PL_ASSERT(success == true);
-      (void)success;
-    }
-    return database_object;
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 
