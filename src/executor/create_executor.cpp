@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "executor/create_executor.h"
-
+#include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
 #include "catalog/trigger_catalog.h"
@@ -105,7 +105,9 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   std::string table_namespace = node.GetNamespace();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
-      database_name, table_name, std::move(schema), current_txn, false, table_namespace);
+      database_name, table_name, std::move(schema), current_txn, false, 
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      table_namespace);
   current_txn->SetResult(result);
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {

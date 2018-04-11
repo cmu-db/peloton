@@ -234,8 +234,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::TransactionContext *txn,
                                 bool is_catalog,
-                                const std::string &table_namespace,
-                                oid_t tuples_per_tilegroup) {
+                                oid_t tuples_per_tilegroup,
+                                const std::string &table_namespace) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
