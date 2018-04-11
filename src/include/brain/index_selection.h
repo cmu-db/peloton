@@ -21,10 +21,6 @@
 namespace peloton {
 namespace brain {
 
-// TODO: Remove these
-using namespace parser;
-using namespace catalog;
-
 //===--------------------------------------------------------------------===//
 // IndexSelection
 //===--------------------------------------------------------------------===//
@@ -52,7 +48,7 @@ private:
   IndexConfiguration GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes);
   void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
                                    IndexConfiguration &config);
-  IndexConfiguration Crossproduct(const IndexConfiguration &config,
+  IndexConfiguration CrossProduct(const IndexConfiguration &config,
       const IndexConfiguration &single_column_indexes);
   // members
   Workload query_set_;

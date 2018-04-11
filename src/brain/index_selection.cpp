@@ -239,7 +239,7 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
-IndexConfiguration IndexSelection::Crossproduct(
+IndexConfiguration IndexSelection::CrossProduct(
     const IndexConfiguration &config,
     const IndexConfiguration &single_column_indexes) {
   IndexConfiguration result;
@@ -257,7 +257,7 @@ IndexConfiguration IndexSelection::Crossproduct(
 
 
 IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return Crossproduct(config, single_column_indexes);
+  return CrossProduct(config, single_column_indexes);
 }
 
 }  // namespace brain
