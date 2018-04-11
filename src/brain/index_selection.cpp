@@ -11,13 +11,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
+#include "brain/what_if_index.h"
 #include <include/parser/statements.h>
+#include "common/logger.h"
 
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) :
-  query_set_(query_set) {
+IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) {
+  query_set_ = query_set;
 }
 
 std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
@@ -41,7 +43,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
     IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union Index Configuration set 'C'
+    // Add the 'Ci' to the union Indexconfiguration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -146,11 +148,10 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       right_child = where_expr->GetChild(1);
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (left_child);
+        tuple_child = (expression::TupleValueExpression *)(left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (right_child);
+        tuple_child = (expression::TupleValueExpression *)(right_child);
       }
       (void) tuple_child;
 
@@ -193,6 +194,25 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   }
   (void) config;
 }
+
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+  double cost = 0.0;
+  (void) config;
+  (void) workload;
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    if (context_.memo_.find(state) != context_.memo_.end()) {
+      cost += context_.memo_[state];
+    } else {
+      auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+      context_.memo_[state] = result->cost;
+      cost += result->cost;
+    }
+  }
+  return cost;
+}
+
 
 }  // namespace brain
 }  // namespace peloton
