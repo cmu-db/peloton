@@ -58,16 +58,15 @@ bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
   return true;
 }
 
-void IndexConfiguration::Crossproduct(const IndexConfiguration &single_column_indexes) {
-  IndexConfiguration result;
-  auto columns = single_column_indexes.GetIndexes();
-  for (auto index : indexes_) {
-    for (auto column : columns) {
-      result.insert(index->merge(column));
-    }
-  }
-  return result;
+IndexConfiguration IndexConfiguration::operator -(const IndexConfiguration &config)  {
+  auto config_indexes = config.GetIndexes();
+
+  std::set<std::shared_ptr<IndexObject>> result;
+  std::set_difference(indexes_.begin(), indexes_.end(), config_indexes.begin(), config_indexes.end(),
+                      std::inserter(result, result.end()));
+  return IndexConfiguration(result);
 }
+
 
 //===--------------------------------------------------------------------===//
 // IndexObjectPool
@@ -83,11 +82,12 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
   return nullptr;
 }
 
-void IndexObjectPool::PutIndexObject(IndexObject &obj) {
+std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
   auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
   map_[*index_copy] = index_s_ptr;
+  return index_s_ptr;
 }
 
 }  // namespace brain

@@ -75,12 +75,14 @@ struct IndexObjectHasher {
 class IndexConfiguration {
 public:
   IndexConfiguration();
+  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> index_obj_set) {indexes_ = index_obj_set;};
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   size_t GetIndexCount() const;
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;
+  IndexConfiguration operator-(const IndexConfiguration &obj);
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
