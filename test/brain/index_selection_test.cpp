@@ -77,7 +77,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   queries.push_back(oss.str());
   admissible_index_counts.push_back(2);
   oss.str("");
-  oss << "SELECT * FROM " << table_name << " WHERE a < 1 or b > 4 ORDER BY a";
+  oss << "SELECT a, b, c FROM " << table_name << " WHERE a < 1 or b > 4 ORDER BY a";
   queries.push_back(oss.str());
   admissible_index_counts.push_back(2);
   oss.str("");
@@ -93,6 +93,23 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   queries.push_back(oss.str());
   admissible_index_counts.push_back(1);
   oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(0);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name << " ORDER BY a";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(1);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name << " GROUP BY a";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(1);
+  oss.str("");
+  oss << "SELECT * FROM " << table_name;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(0);
+  oss.str("");
+
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
