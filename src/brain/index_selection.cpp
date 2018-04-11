@@ -157,7 +157,7 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
         LOG_INFO("Query is not bound");
         assert(false);
       }
-      IndexObjectPoolInsertHelper(tuple_child);
+      IndexObjectPoolInsertHelper(tuple_child, config);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
@@ -181,9 +181,8 @@ void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescript
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    IndexObjectPoolInsertHelper(tuple_value);
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
-  (void) config;
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
@@ -192,21 +191,24 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    IndexObjectPoolInsertHelper(tuple_value);
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
   (void) config;
 }
 
-void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col) {
+void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                                 IndexConfiguration &config) {
   auto db_oid = std::get<0>(tuple_col->GetBoundOid());
   auto table_oid = std::get<1>(tuple_col->GetBoundOid());
   auto col_oid = std::get<2>(tuple_col->GetBoundOid());
 
   // Add the object to the pool.
   IndexObject iobj(db_oid, table_oid, col_oid);
-  if (!context_.pool.GetIndexObject(iobj)) {
-    context_.pool.PutIndexObject(iobj);
+  auto pool_index_obj = context_.pool.GetIndexObject(iobj)
+  if (!pool_index_obj) {
+    pool_index_obj = context_.pool.PutIndexObject(iobj);
   }
+  config.AddIndexObject(pool_index_obj);
 }
 
 }  // namespace brain

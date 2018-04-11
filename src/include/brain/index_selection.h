@@ -12,12 +12,11 @@
 
 #pragma once
 
-#include "index_selection_util.h"
-#include "parser/sql_statement.h"
-#include "catalog/index_catalog.h"
-#include "brain/index_selection_util.h"
 #include "brain/index_selection_context.h"
 #include "expression/tuple_value_expression.h"
+#include "brain/index_selection_util.h"
+#include "catalog/index_catalog.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace brain {
@@ -35,9 +34,13 @@ class IndexSelection {
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
 
 private:
+  // Cost evaluation related
+  double GetCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
+
+  // Admissible index selection related
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
@@ -48,7 +51,8 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
-  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col);
+  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                   IndexConfiguration &config);
   // members
   std::shared_ptr<Workload> query_set_;
   IndexSelectionContext context_;

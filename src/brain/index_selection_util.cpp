@@ -51,11 +51,12 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
   return nullptr;
 }
 
-void IndexObjectPool::PutIndexObject(IndexObject &obj) {
+std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
   auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
   map_[*index_copy] = index_s_ptr;
+  return index_s_ptr;
 }
 
 }  // namespace brain
