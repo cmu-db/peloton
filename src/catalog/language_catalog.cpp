@@ -81,20 +81,6 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
     oid_t lang_oid, concurrency::TransactionContext *txn) const {
-  /*std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(lang_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
-
-  std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 
@@ -123,21 +109,6 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
-  /*
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(lang_name).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
-
-  std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 

@@ -229,28 +229,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     return index_object;
   }
 
-  /*
   // cache miss, get from pg_index
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto index_object =
-        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
-    // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
-              table_object->GetTableOid() == index_object->GetTableOid());
-    return table_object->GetIndexObject(index_oid);
-  } else {
-    LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 
@@ -296,28 +275,6 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   }
 
   // cache miss, get from pg_index
-  /*std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_INDEX_NAME;  // Index of index_name
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto index_object =
-        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
-    // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
-              table_object->GetTableOid() == index_object->GetTableOid());
-    return table_object->GetIndexObject(index_name);
-  } else {
-    LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
-              index_name.c_str());
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 
@@ -371,22 +328,6 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *
   if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
-    /*
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto index_object =
-          std::make_shared<IndexCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertIndexObject(index_object);
-    }
-  }*/
 
   std::vector<oid_t> column_ids(all_column_ids);
 

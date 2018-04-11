@@ -259,9 +259,6 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
 
   // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids(all_column_ids);
-//  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-//  std::vector<type::Value> values;
-//  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   expression::AbstractExpression *tb_oid_expr = expression::ExpressionUtil::TupleValueFactory(
       type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);

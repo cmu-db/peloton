@@ -470,21 +470,16 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
-  // try get from cache
-//  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
-//  if (database_object) {
-//    auto table_object = database_object->GetTableObject(table_name, true);
-//    if (table_object) return table_object;
-//  }
+
+  //try get from cache
+  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+  if (database_object) {
+    auto table_object = database_object->GetTableObject(table_name, true);
+    if (table_object) return table_object;
+  }
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-//  oid_t index_offset =
-//      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
-//  std::vector<type::Value> values;
-//  values.push_back(
-//      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-//  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   // need the predicate for the seq scan (conjunction)
   // table_name == table_name and database_oid need to be same
@@ -556,9 +551,6 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  //oid_t index_offset = IndexId::SKEY_DATABASE_OID;  // Index of database_oid
-  //std::vector<type::Value> values;
-  //values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
       type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
@@ -569,20 +561,9 @@ TableCatalog::GetTableObjects(oid_t database_oid,
           ExpressionType::COMPARE_EQUAL, db_oid_expr,
           db_oid_const_expr);
 
-  //auto result_tiles =
-  //    GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
   expression::AbstractExpression *predicate = db_oid_equality_expr;
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
-
-  /*for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto table_object =
-          std::make_shared<TableCatalogObject>(tile.get(), txn, tuple_id);
-      database_object->InsertTableObject(table_object);
-    }
-  }*/
 
   for (auto tuple : result_tuples) {
 
