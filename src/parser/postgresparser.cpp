@@ -1021,7 +1021,11 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
         }
         // Update Reference Table
         col->fk_sink_table_name = constraint->pktable->relname;
-        col->fk_sink_table_namespace = constraint->pktable->schemaname;
+        if (constraint->pktable->schemaname) {
+          col->fk_sink_table_namespace = constraint->pktable->schemaname;
+        } else {
+          col->fk_sink_table_namespace = std::string();
+        }
         // Action type
         col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
