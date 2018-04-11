@@ -13,6 +13,10 @@
 #include "brain/index_selection.h"
 #include "brain/what_if_index.h"
 #include <include/parser/statements.h>
+#include <include/parser/statements.h>
+#include "common/logger.h"
+#include <algorithm>
+#include <set>
 
 namespace peloton {
 namespace brain {
@@ -40,7 +44,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
 
     // Get candidate indexes 'Ci' for the workload.
     IndexConfiguration Ci;
-    Enumerate(Ai, Ci, Wi);
+    Ci = Enumerate(Ai, Wi, 4);
 
     // Add the 'Ci' to the union Index Configuration set 'C'
     C->Add(Ci);
@@ -48,17 +52,115 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   return C;
 }
 
-// TODO: [Siva]
+
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-void IndexSelection::Enumerate(IndexConfiguration &indexes,
-                               IndexConfiguration &chosen_indexes,
+IndexConfiguration& IndexSelection::Enumerate(IndexConfiguration &indexes,
+                               Workload &workload, size_t k) {
+
+  auto top_indexes = ExhaustiveEnumeration(indexes, workload);
+
+  auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
+
+  return GreedySearch(top_indexes, remaining_indexes, workload, k);
+
+}
+
+
+IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
+                                           IndexConfiguration &remaining_indexes,
+                                           Workload &workload, size_t k) {
+
+  size_t current_index_count = getMinEnumerateCount();
+
+  if(current_index_count >= k)
+    return indexes;
+
+  double global_min_cost = GetCost(indexes, workload);
+  double cur_min_cost = global_min_cost;
+  double cur_cost;
+  std::shared_ptr<IndexObject> best_index;
+
+  while(current_index_count < k) {
+    auto original_indexes = indexes;
+    for (auto i : remaining_indexes.GetIndexes()) {
+      indexes = original_indexes;
+      indexes.AddIndexObject(i);
+      cur_cost = GetCost(indexes, workload);
+      if (cur_cost < cur_min_cost) {
+        cur_min_cost = cur_cost;
+        best_index = i;
+      }
+    }
+    if(cur_min_cost < global_min_cost) {
+      indexes.AddIndexObject(best_index);
+      remaining_indexes.RemoveIndexObject(best_index);
+      current_index_count++;
+      global_min_cost = cur_min_cost;
+
+      if(remaining_indexes.GetIndexCount() == 0) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  return indexes;
+}
+
+IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes) {
+  return (indexes - top_indexes);
+}
+
+unsigned long IndexSelection::getMinEnumerateCount() {
+  return context_.min_enumerate_count_;
+}
+
+IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
                                Workload &workload) {
-  (void)indexes;
-  (void)chosen_indexes;
-  (void)workload;
-  return;
+  size_t m = getMinEnumerateCount();
+
+  assert(m <= indexes.GetIndexCount());
+
+  std::set<IndexConfiguration, Comp> running_set(workload);
+  std::set<IndexConfiguration, Comp> temp_set(workload);
+  std::set<IndexConfiguration, Comp> result_set(workload);
+  IndexConfiguration new_element;
+  IndexConfiguration top_indexes;
+
+  IndexConfiguration empty;
+  running_set.insert(empty);
+
+
+  for (auto i : indexes.GetIndexes()) {
+    temp_set = running_set;
+
+    for(auto t : temp_set) {
+      new_element = t;
+      new_element.AddIndexObject(i);
+
+      if(new_element.GetIndexCount() >= m) {
+        result_set.insert(new_element);
+      } else {
+        running_set.insert(new_element);
+      }
+    }
+
+  }
+
+
+  result_set.insert(running_set.begin(), running_set.end());
+  result_set.erase(empty);
+
+
+  // combine all the index configurations and return top m configurations
+  for (auto i : result_set) {
+    top_indexes.Add(i);
+  }
+
+  return top_indexes;
 }
 
 // GetAdmissibleIndexes()
@@ -239,7 +341,7 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
-IndexConfiguration IndexSelection::CrossProduct(
+IndexConfiguration IndexSelection::Crossproduct(
     const IndexConfiguration &config,
     const IndexConfiguration &single_column_indexes) {
   IndexConfiguration result;
@@ -257,7 +359,7 @@ IndexConfiguration IndexSelection::CrossProduct(
 
 
 IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return CrossProduct(config, single_column_indexes);
+  return Crossproduct(config, single_column_indexes);
 }
 
 }  // namespace brain

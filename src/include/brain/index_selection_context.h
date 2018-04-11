@@ -24,6 +24,8 @@ class IndexSelectionContext {
 public:
   IndexSelectionContext();
   IndexObjectPool pool;
+
+  size_t min_enumerate_count_;
 };
 
 }  // namespace brain
