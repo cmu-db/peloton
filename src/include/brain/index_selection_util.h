@@ -43,9 +43,9 @@ public:
   // To string for performing hash.
   const std::string toString() const {
     std::stringstream str_stream;
-    str_stream << db_oid << table_oid;
+    str_stream << db_oid << " " << table_oid << " ";
     for (auto col: column_oids) {
-      str_stream << col;
+      str_stream << col << " ";
     }
     return str_stream.str();
   }

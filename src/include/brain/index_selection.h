@@ -30,9 +30,10 @@ using namespace catalog;
 //===--------------------------------------------------------------------===//
 class IndexSelection {
  public:
-  IndexSelection(std::shared_ptr<Workload> query_set);
+  IndexSelection(Workload &query_set);
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
-
+  void GetAdmissibleIndexes(SQLStatement *query,
+                            IndexConfiguration &indexes);
 private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload);
@@ -41,8 +42,6 @@ private:
                       Workload &workload);
 
   // Admissible index selection related
-  void GetAdmissibleIndexes(SQLStatement *query,
-                            IndexConfiguration &indexes);
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                  IndexConfiguration &config);
   void IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
@@ -54,7 +53,7 @@ private:
   void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
                                    IndexConfiguration &config);
   // members
-  std::shared_ptr<Workload> query_set_;
+  Workload query_set_;
   IndexSelectionContext context_;
 };
 
