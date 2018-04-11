@@ -94,7 +94,7 @@ matrix:
               # run jdbc tests
               - python ../script/validators/jdbc_validator.py
               # run junit tests
-	      - python ../script/testing/junit/run_junit.py
+              - python ../script/testing/junit/run_junit.py
               # upload coverage info
               - make coveralls
 
@@ -137,7 +137,7 @@ matrix:
               # run jdbc tests
               - python ../script/validators/jdbc_validator.py
               # run junit tests
-	      - python ../script/testing/junit/run_junit.py
+              - python ../script/testing/junit/run_junit.py
 
 install:
     # setup environment
