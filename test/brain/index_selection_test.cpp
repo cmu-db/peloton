@@ -23,15 +23,7 @@
 #include "sql/testing_sql_util.h"
 
 namespace peloton {
-
-// TODO [vamshi]: remove these
-using namespace brain;
-using namespace catalog;
-
 namespace test {
-
-// TODO [vamshi]: remove these
-using namespace optimizer;
 
 //===--------------------------------------------------------------------===//
 // IndexSelectionTest
@@ -70,145 +62,82 @@ class IndexSelectionTest : public PelotonTest {
   }
 };
 
-TEST_F(IndexSelectionTest, AdmissibleIndexesSelectTest) {
+TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::string table_name = "dummy_table";
   std::string database_name = DEFAULT_DB_NAME;
 
   CreateDatabase(database_name);
   CreateTable(table_name);
+
+  std::vector<std::string> queries;
+  std::vector<int> admissible_index_counts;
 
   std::ostringstream oss;
   oss << "SELECT * FROM " << table_name << " WHERE a < 1 or b > 4 GROUP BY a";
-
-  auto parser = parser::PostgresParser::GetInstance();
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-    parser.BuildParseTree(oss.str()).release());
-  EXPECT_TRUE(stmt_list->is_valid);
-
-  auto select_stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<binder::BindNodeVisitor> binder(
-    new binder::BindNodeVisitor(txn, database_name));
-
-  binder->BindNameToNode(select_stmt);
-
-  LOG_INFO("%s", stmt_list->GetInfo().c_str());
-
-  Workload w;
-  w.AddQuery(select_stmt);
-
-  IndexSelection is(w);
-  IndexConfiguration ic;
-  is.GetAdmissibleIndexes(select_stmt, ic);
-
-  LOG_INFO("Got indexes count: %zu", ic.GetIndexCount());
-  auto indexes = ic.GetIndexes();
-
-  for (auto it = indexes.begin(); it != indexes.end(); it++) {
-    LOG_INFO("%s\n", it->get()->toString().c_str());
-  }
-
-  EXPECT_EQ(ic.GetIndexCount(), 2);
-
-  DropTable(table_name);
-  DropDatabase(database_name);
-
-  txn_manager.CommitTransaction(txn);
-}
-
-
-TEST_F(IndexSelectionTest, AdmissibleIndexesDeleteTest) {
-  std::string table_name = "dummy_table";
-  std::string database_name = DEFAULT_DB_NAME;
-
-  CreateDatabase(database_name);
-  CreateTable(table_name);
-
-  std::ostringstream oss;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(2);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name << " WHERE a < 1 or b > 4 ORDER BY a";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(2);
+  oss.str("");
   oss << "DELETE FROM " << table_name << " WHERE a < 1 or b > 4";
-
-  auto parser = parser::PostgresParser::GetInstance();
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-    parser.BuildParseTree(oss.str()).release());
-  EXPECT_TRUE(stmt_list->is_valid);
-
-  auto select_stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<binder::BindNodeVisitor> binder(
-    new binder::BindNodeVisitor(txn, database_name));
-
-  binder->BindNameToNode(select_stmt);
-
-  LOG_INFO("%s", stmt_list->GetInfo().c_str());
-
-  Workload w;
-  w.AddQuery(select_stmt);
-
-  IndexSelection is(w);
-  IndexConfiguration ic;
-  is.GetAdmissibleIndexes(select_stmt, ic);
-
-  LOG_INFO("Got indexes count: %zu", ic.GetIndexCount());
-  auto indexes = ic.GetIndexes();
-
-  for (auto it = indexes.begin(); it != indexes.end(); it++) {
-    LOG_INFO("%s\n", it->get()->toString().c_str());
-  }
-
-  EXPECT_EQ(ic.GetIndexCount(), 2);
-
-  DropTable(table_name);
-  DropDatabase(database_name);
-
-  txn_manager.CommitTransaction(txn);
-}
-
-
-TEST_F(IndexSelectionTest, AdmissibleIndexesUpdateTest) {
-  std::string table_name = "dummy_table";
-  std::string database_name = DEFAULT_DB_NAME;
-
-  CreateDatabase(database_name);
-  CreateTable(table_name);
-
-  std::ostringstream oss;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(2);
+  oss.str("");
   oss << "UPDATE " << table_name << " SET a = 45 WHERE a < 1 or b > 4";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(2);
+  oss.str("");
+  oss << "UPDATE " << table_name << " SET a = 45 WHERE a < 1";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(1);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(0);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name << " ORDER BY a";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(1);
+  oss.str("");
+  oss << "SELECT a, b, c FROM " << table_name << " GROUP BY a";
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(1);
+  oss.str("");
+  oss << "SELECT * FROM " << table_name;
+  queries.push_back(oss.str());
+  admissible_index_counts.push_back(0);
+  oss.str("");
 
-  auto parser = parser::PostgresParser::GetInstance();
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-    parser.BuildParseTree(oss.str()).release());
-  EXPECT_TRUE(stmt_list->is_valid);
-
-  auto select_stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<binder::BindNodeVisitor> binder(
-    new binder::BindNodeVisitor(txn, database_name));
 
-  binder->BindNameToNode(select_stmt);
+  for (auto i=0UL; i<queries.size(); i++) {
+    // Parse the query.
+    auto parser = parser::PostgresParser::GetInstance();
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(queries[i]).release());
+    EXPECT_TRUE(stmt_list->is_valid);
 
-  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+    auto stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
 
-  Workload w;
-  w.AddQuery(select_stmt);
+    // Bind the query
+    std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, database_name));
+    binder->BindNameToNode(stmt);
 
-  IndexSelection is(w);
-  IndexConfiguration ic;
-  is.GetAdmissibleIndexes(select_stmt, ic);
+    brain::Workload w;
+    w.AddQuery(stmt);
 
-  LOG_INFO("Got indexes count: %zu", ic.GetIndexCount());
-  auto indexes = ic.GetIndexes();
+    brain::IndexSelection is(w);
+    brain::IndexConfiguration ic;
+    is.GetAdmissibleIndexes(stmt, ic);
 
-  for (auto it = indexes.begin(); it != indexes.end(); it++) {
-    LOG_INFO("%s\n", it->get()->toString().c_str());
+    auto indexes = ic.GetIndexes();
+    EXPECT_EQ(ic.GetIndexCount(), admissible_index_counts[i]);
   }
-
-  EXPECT_EQ(ic.GetIndexCount(), 2);
 
   DropTable(table_name);
   DropDatabase(database_name);

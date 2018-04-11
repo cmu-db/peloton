@@ -79,8 +79,11 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
+  IndexConfiguration GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes);
   void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
                                    IndexConfiguration &config);
+  IndexConfiguration Crossproduct(const IndexConfiguration &config,
+      const IndexConfiguration &single_column_indexes);
   // members
   Workload query_set_;
   IndexSelectionContext context_;

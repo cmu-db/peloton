@@ -307,5 +307,26 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
+IndexConfiguration IndexSelection::Crossproduct(
+    const IndexConfiguration &config,
+    const IndexConfiguration &single_column_indexes) {
+  IndexConfiguration result;
+  auto indexes = config.GetIndexes();
+  auto columns = single_column_indexes.GetIndexes();
+  for (auto index : indexes) {
+    for (auto column : columns) {
+      if(!index->IsCompatible(column)) continue;
+      auto merged_index = (index->Merge(column));
+      result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
+    }
+  }
+  return result;
+}
+
+
+IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
+  return Crossproduct(config, single_column_indexes);
+}
+
 }  // namespace brain
 }  // namespace peloton

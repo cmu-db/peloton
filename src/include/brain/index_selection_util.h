@@ -30,14 +30,14 @@ class IndexObject {
 public:
   oid_t db_oid;
   oid_t table_oid;
-  std::vector<oid_t> column_oids;
+  std::set<oid_t> column_oids;
   IndexConstraintType type;
 
   IndexObject() {};
 
   IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid):
     db_oid(db_oid), table_oid(table_oid) {
-    column_oids.push_back(col_oid);
+    column_oids.insert(col_oid);
   }
 
   IndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids):
@@ -47,22 +47,12 @@ public:
   }
 
   // To string for performing hash.
-  const std::string toString() const {
-    std::stringstream str_stream;
-    str_stream << db_oid << " " << table_oid << " ";
-    for (auto col: column_oids) {
-      str_stream << col << " ";
-    }
-    return str_stream.str();
-  }
+  const std::string toString() const;
 
-  bool operator==(const IndexObject &obj) const {
-    if (db_oid == obj.db_oid && table_oid == obj.table_oid
-        && column_oids == obj.column_oids) {
-      return true;
-    }
-    return false;
-  }
+  bool operator==(const IndexObject &obj) const;
+
+  bool IsCompatible(std::shared_ptr<IndexObject> index);
+  IndexObject Merge(std::shared_ptr<IndexObject> index);
 };
 
 struct IndexObjectHasher {

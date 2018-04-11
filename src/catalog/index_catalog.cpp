@@ -54,14 +54,14 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
 IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
-                                       bool unique_keys, std::vector<oid_t> key_attrs) {
+                                       bool unique_keys, std::set<oid_t> key_attrs) {
   this->index_oid = index_oid;
   this->index_name = index_name;
   this->table_oid = table_oid;
   this->index_type = index_type;
   this->index_constraint = index_constraint;
   this->unique_keys = unique_keys;
-  this->key_attrs = key_attrs;
+  this->key_attrs = std::vector<oid_t>(key_attrs.begin(), key_attrs.end());
 }
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
