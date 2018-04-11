@@ -1,0 +1,36 @@
+<project name="test" basedir=".">
+<property name="src" value="." />
+<property name="lib" value="./lib" />
+
+<target name="compile">
+  <javac srcdir="${src}" destdir="." includeantruntime="false" debug="true">
+    <classpath refid="test.classpath"/>
+    </javac>
+</target>
+
+<target name="clean">
+  <delete failonerror="false">
+    <fileset dir="${src}" >
+      <include name="*.class"/>
+    </fileset>
+  </delete>
+</target>
+
+<path id="test.classpath">
+  <fileset dir="${lib}">
+    <include name="**/*.jar"/>
+  </fileset>
+  <pathelement location="${src}" />
+</path>
+
+<target name="test" depends="compile">
+  <junit fork="yes" haltonfailure="true" logfailedtests="true">
+    <formatter type="plain" usefile="false" />
+    <classpath refid="test.classpath" />
+    <batchtest skipNonTests="true">
+      <fileset dir="${src}" includes="*.class"/>
+    </batchtest>
+  </junit>
+</target>
+</project>
+
