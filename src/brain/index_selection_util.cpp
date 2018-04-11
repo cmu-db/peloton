@@ -33,7 +33,7 @@ void IndexConfiguration::AddIndexObject(std::shared_ptr<IndexObject> index_info)
   indexes_.insert(index_info);
 }
 
-size_t IndexConfiguration::GetIndexCount() {
+size_t IndexConfiguration::GetIndexCount() const {
   return indexes_.size();
 }
 
