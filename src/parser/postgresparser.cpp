@@ -196,7 +196,6 @@ bool IsTargetListWithVariable(List *target_list) {
       case T_BoolExpr:
         continue;
       default:
-        LOG_DEBUG("HERE");
         return true;
     }
   }
@@ -1909,7 +1908,7 @@ parser::SQLStatementList *PostgresParser::ParseSQLString(const char *text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  print_pg_parse_tree(result.tree);
+  //print_pg_parse_tree(result.tree);
   parser::SQLStatementList *transform_result;
   try {
     transform_result = ListTransform(result.tree);

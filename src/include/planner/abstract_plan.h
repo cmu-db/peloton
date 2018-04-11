@@ -175,7 +175,7 @@ class AbstractPlan : public Printable {
   std::string table_namespace_;
 
   // session namespace
-  std::string session_namespace_;
+  std::string session_namespace_ = DEFAULT_NAMESPACE;
   
   // TODO: This field is harded coded now. This needs to be changed when
   // optimizer has the cost model and cardinality estimation

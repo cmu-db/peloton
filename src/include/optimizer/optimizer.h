@@ -76,7 +76,7 @@ class Optimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
       concurrency::TransactionContext *txn,
-      const std::string table_namespace=DEFAULT_NAMESPACE) override;
+      const std::string session_namespace=DEFAULT_NAMESPACE) override;
 
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);
@@ -105,8 +105,9 @@ class Optimizer : public AbstractOptimizer {
    * return: the DDL plan if it is a DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
-      parser::SQLStatement *tree, bool &is_ddl_stmt, const std::string &table_namespace,
-      concurrency::TransactionContext *txn);
+      parser::SQLStatement *tree, bool &is_ddl_stmt,
+      concurrency::TransactionContext *txn,
+      const std::string &session_namespace=DEFAULT_NAMESPACE);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.

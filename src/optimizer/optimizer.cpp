@@ -95,7 +95,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
     const std::string default_database_name,
     concurrency::TransactionContext *txn,
-    const std::string table_namespace) {
+    const std::string session_namespace) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -107,27 +107,27 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   switch (stmt_type) {
     case StatementType::SELECT: {
       auto select_stmt = (parser::SelectStatement *)parse_tree;
-      select_stmt->from_table->table_info_->session_namespace = table_namespace;
+      select_stmt->from_table->table_info_->session_namespace = session_namespace;
       break;
     }
     case StatementType::INSERT: {
       auto insert_stmt = (parser::InsertStatement *)parse_tree;
-      insert_stmt->table_ref_->table_info_->session_namespace = table_namespace;
+      insert_stmt->table_ref_->table_info_->session_namespace = session_namespace;
       break;
     }
     case StatementType::UPDATE: {
       auto update_stmt = (parser::UpdateStatement *)parse_tree;
-      update_stmt->table->table_info_->session_namespace = table_namespace;
+      update_stmt->table->table_info_->session_namespace = session_namespace;
       break;
     }
     case StatementType::DELETE: {
       auto delete_stmt = (parser::DeleteStatement *)parse_tree;
-      delete_stmt->table_ref->table_info_->session_namespace = table_namespace;
+      delete_stmt->table_ref->table_info_->session_namespace = session_namespace;
       break;
     }
     case StatementType::CREATE: {
       auto create_stmt = (parser::CreateStatement *) parse_tree;
-      create_stmt->table_info_->session_namespace = table_namespace;
+      create_stmt->table_info_->session_namespace = session_namespace;
       break;
     }
 
@@ -142,7 +142,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   // Handle ddl statement
   bool is_ddl_stmt;
-  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, table_namespace, txn);
+  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn, session_namespace);
   if (is_ddl_stmt) {
     return move(ddl_plan);
   }
@@ -167,7 +167,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     // Reset memo after finishing the optimization
     Reset();
     //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
-    best_plan->SetSessionNamespace(table_namespace);
+    best_plan->SetSessionNamespace(session_namespace);
     return move(best_plan);
   } catch (Exception &e) {
     Reset();
@@ -178,8 +178,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
-    parser::SQLStatement *tree, bool &is_ddl_stmt, const std::string &table_namespace,
-    concurrency::TransactionContext *txn) {
+    parser::SQLStatement *tree, bool &is_ddl_stmt,
+    concurrency::TransactionContext *txn,
+    const std::string &session_namespace) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
@@ -206,13 +207,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         //data table.
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn,
-                                            table_namespace,
+                                            session_namespace,
                                             create_plan->GetNamespace());
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
         auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn, 
-                                            table_namespace, 
+                                            session_namespace, 
                                             create_plan->GetNamespace());
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
@@ -253,7 +254,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Analyze plan...");
       parser::AnalyzeStatement *analyze_parse_tree =
           static_cast<parser::AnalyzeStatement *>(tree);
-      analyze_parse_tree->analyze_table->table_info_->session_namespace = table_namespace;
+      analyze_parse_tree->analyze_table->table_info_->session_namespace = session_namespace;
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
           analyze_parse_tree, txn));
       ddl_plan = move(analyze_plan);
@@ -263,7 +264,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      copy_parse_tree->cpy_table->table_info_->session_namespace = table_namespace;
+      copy_parse_tree->cpy_table->table_info_->session_namespace = session_namespace;
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
@@ -272,7 +273,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   }
   if(ddl_plan) {
     //set session namespace if is a ddl plan
-    ddl_plan->SetSessionNamespace(table_namespace);
+    ddl_plan->SetSessionNamespace(session_namespace);
   }
   return ddl_plan;
 }
