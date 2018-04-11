@@ -217,6 +217,9 @@ class PostgresParser {
   // transform helper for select statements
   static parser::SelectStatement *SelectTransform(SelectStmt *root);
 
+  // transform helper for explain statements
+  static parser::SQLStatement *ExplainTransform(ExplainStmt *root);
+
   // transform helper for delete statements
   static parser::SQLStatement *DeleteTransform(DeleteStmt *root);
 

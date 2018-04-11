@@ -42,7 +42,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
 
-  PL_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
+  PELOTON_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
             storage::TileGroupHeader::GetReservedSize());
 
   // Reclaim the varlen pool
@@ -53,7 +53,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 }
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
-  PL_ASSERT(is_running_ == true);
+  PELOTON_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
   while (true) {
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
@@ -139,7 +139,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
         for(auto query_string: query_strings) {
-          pool.SubmitTask([this, query_string, timestamp] {
+          pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
           });        
         }
@@ -227,15 +227,15 @@ void TransactionLevelGCManager::AddToRecycleMap(
       return;
     }
 
-    PL_ASSERT(tile_group != nullptr);
+    PELOTON_ASSERT(tile_group != nullptr);
 
     storage::DataTable *table =
         dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
-    PL_ASSERT(table != nullptr);
+    PELOTON_ASSERT(table != nullptr);
 
     oid_t table_id = table->GetOid();
     auto tile_group_header = tile_group->GetHeader();
-    PL_ASSERT(tile_group_header != nullptr);
+    PELOTON_ASSERT(tile_group_header != nullptr);
     bool immutable = tile_group_header->GetImmutability();
 
     for (auto &element : entry.second) {
@@ -260,22 +260,22 @@ void TransactionLevelGCManager::AddToRecycleMap(
     oid_t database_oid = std::get<0>(entry);
     oid_t table_oid = std::get<1>(entry);
     oid_t index_oid = std::get<2>(entry);
-    PL_ASSERT(database_oid != INVALID_OID);
+    PELOTON_ASSERT(database_oid != INVALID_OID);
     auto database = storage_manager->GetDatabaseWithOid(database_oid);
-    PL_ASSERT(database != nullptr);
+    PELOTON_ASSERT(database != nullptr);
     if (table_oid == INVALID_OID) {
       storage_manager->RemoveDatabaseFromStorageManager(database_oid);
       continue;
     }
     auto table = database->GetTableWithOid(table_oid);
-    PL_ASSERT(table != nullptr);
+    PELOTON_ASSERT(table != nullptr);
     if (index_oid == INVALID_OID) {
       database->DropTableWithOid(table_oid);
       LOG_DEBUG("GCing table %u", table_oid);
       continue;
     }
     auto index = table->GetIndexWithOid(index_oid);
-    PL_ASSERT(index != nullptr);
+    PELOTON_ASSERT(index != nullptr);
     table->DropIndexWithOid(index_oid);
   }
 
@@ -290,7 +290,7 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
     return INVALID_ITEMPOINTER;
   }
   ItemPointer location;
-  PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
+  PELOTON_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
   auto recycle_queue = recycle_queue_map_[table_id];
 
   if (recycle_queue->Dequeue(location) == true) {
@@ -360,7 +360,7 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
 
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
-  PL_ASSERT(table != nullptr);
+  PELOTON_ASSERT(table != nullptr);
 
   // NOTE: for now, we only consider unlinking tuple versions from primary
   // indexes.
@@ -386,7 +386,7 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // need to recycle this version.
     // no index manipulation needs to be made.
   } else {
-    PL_ASSERT(type == GCVersionType::ABORT_INSERT ||
+    PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
               type == GCVersionType::COMMIT_INS_DEL ||
               type == GCVersionType::ABORT_INS_DEL);
 

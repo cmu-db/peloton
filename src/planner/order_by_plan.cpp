@@ -33,13 +33,13 @@ void OrderByPlan::PerformBinding(BindingContext &binding_context) {
 
   for (const oid_t col_id : GetOutputColumnIds()) {
     auto* ai = binding_context.Find(col_id);
-    PL_ASSERT(ai != nullptr);
+    PELOTON_ASSERT(ai != nullptr);
     output_ais_.push_back(ai);
   }
 
   for (const oid_t sort_key_col_id : GetSortKeys()) {
     auto* ai = binding_context.Find(sort_key_col_id);
-    PL_ASSERT(ai != nullptr);
+    PELOTON_ASSERT(ai != nullptr);
     sort_key_ais_.push_back(ai);
   }
 }

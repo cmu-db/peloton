@@ -23,7 +23,7 @@ namespace codegen {
 NullCheckTranslator::NullCheckTranslator(
     const expression::OperatorExpression &null_check, CompilationContext &ctx)
     : ExpressionTranslator(null_check, ctx) {
-  PL_ASSERT(null_check.GetChildrenSize() == 1);
+  PELOTON_ASSERT(null_check.GetChildrenSize() == 1);
 }
 
 Value NullCheckTranslator::DeriveValue(CodeGen &codegen,

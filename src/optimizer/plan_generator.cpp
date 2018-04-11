@@ -107,7 +107,7 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {
-  PL_ASSERT(children_plans_.size() == 1);
+  PELOTON_ASSERT(children_plans_.size() == 1);
   output_plan_ = move(children_plans_[0]);
 }
 
@@ -120,7 +120,7 @@ void PlanGenerator::Visit(const PhysicalLimit *op) {
 
 void PlanGenerator::Visit(const PhysicalOrderBy *) {
   vector<oid_t> column_ids;
-  PL_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
   auto &child_cols_map = children_expr_map_[0];
   for (size_t i = 0; i < output_cols_.size(); ++i) {
     column_ids.push_back(child_cols_map[output_cols_[i]]);
@@ -144,19 +144,15 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
 void PlanGenerator::Visit(const PhysicalHashGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalSortGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalAggregate *) {
@@ -166,12 +162,12 @@ void PlanGenerator::Visit(const PhysicalAggregate *) {
 void PlanGenerator::Visit(const PhysicalDistinct *) {
   // Now distinct is a flag in the parser, so we only support
   // distinct on all output columns
-  PL_ASSERT(children_expr_map_.size() == 1);
-  PL_ASSERT(children_plans_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_plans_.size() == 1);
   auto &child_expr_map = children_expr_map_[0];
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   for (auto &col : output_cols_) {
-    PL_ASSERT(child_expr_map.count(col) > 0);
+    PELOTON_ASSERT(child_expr_map.count(col) > 0);
     auto &column_offset = child_expr_map[col];
     hash_keys.emplace_back(new expression::TupleValueExpression(
         col->GetValueType(), 0, column_offset));
@@ -190,16 +186,18 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<oid_t> left_keys;
   vector<oid_t> right_keys;
   for (auto &expr : op->left_keys) {
-    PL_ASSERT(children_expr_map_[0].find(expr.get()) !=
+    PELOTON_ASSERT(children_expr_map_[0].find(expr.get()) !=
               children_expr_map_[0].end());
     left_keys.push_back(children_expr_map_[0][expr.get()]);
   }
   for (auto &expr : op->right_keys) {
-    PL_ASSERT(children_expr_map_[1].find(expr.get()) !=
+    PELOTON_ASSERT(children_expr_map_[1].find(expr.get()) !=
               children_expr_map_[1].end());
     right_keys.emplace_back(children_expr_map_[1][expr.get()]);
   }
@@ -229,6 +227,8 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<unique_ptr<const expression::AbstractExpression>> left_keys;
   vector<unique_ptr<const expression::AbstractExpression>> right_keys;
@@ -372,12 +372,12 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
   vector<oid_t> column_ids;
   for (oid_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto &output_expr = output_cols_[idx];
-    PL_ASSERT(output_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(output_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto output_tvexpr =
         reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 
     // Set column offset
-    PL_ASSERT(output_tvexpr->GetIsBound() == true);
+    PELOTON_ASSERT(output_tvexpr->GetIsBound() == true);
     auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
     column_ids.push_back(col_id);
   }
@@ -427,7 +427,7 @@ void PlanGenerator::BuildProjectionPlan() {
       // Copy then evaluate the expression and add to target list
       auto col_copy = col->Copy();
       // TODO(boweic) : integrate the following two functions
-      expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
+      expression::ExpressionUtil::ConvertToTvExpr(col_copy, {child_expr_map});
       expression::ExpressionUtil::EvaluateExpression(output_expr_maps,
                                                      col_copy);
       planner::DerivedAttribute attribute{col_copy};
@@ -457,17 +457,19 @@ void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
-    expression::AbstractExpression *having_predicate) {
+    std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;
   TargetList tl;
-  PL_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
   auto &child_expr_map = children_expr_map_[0];
 
   auto agg_id = 0;
+  ExprMap output_expr_map;
   for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto expr = output_cols_[idx];
+    output_expr_map[expr] = idx;
     expr->DeduceExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (expression::ExpressionUtil::IsAggregateExpression(
@@ -501,7 +503,12 @@ void PlanGenerator::BuildAggregatePlan(
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
+  expression::ExpressionUtil::EvaluateExpression({output_expr_map},
+                                                 having_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(having_predicate.get(),
+                                              {output_expr_map});
+  unique_ptr<const expression::AbstractExpression> predicate(
+      having_predicate.release());
   // TODO(boweic): Ditto, since the aggregate plan will own the schema, we may
   // want make the parameter as unique_ptr
   shared_ptr<const catalog::Schema> output_table_schema(
@@ -517,8 +524,8 @@ void PlanGenerator::BuildAggregatePlan(
 void PlanGenerator::GenerateProjectionForJoin(
     std::unique_ptr<const planner::ProjectInfo> &proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema) {
-  PL_ASSERT(children_expr_map_.size() == 2);
-  PL_ASSERT(children_plans_.size() == 2);
+  PELOTON_ASSERT(children_expr_map_.size() == 2);
+  PELOTON_ASSERT(children_plans_.size() == 2);
 
   TargetList tl = TargetList();
   // columns which can be returned directly

@@ -70,8 +70,8 @@ bool TinyintType::IsZero(const Value& val) const {
 }
 
 Value TinyintType::Add(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -81,8 +81,8 @@ Value TinyintType::Add(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Subtract(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -92,8 +92,8 @@ Value TinyintType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Multiply(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -103,8 +103,8 @@ Value TinyintType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Divide(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -119,8 +119,8 @@ Value TinyintType::Divide(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Modulo(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -154,7 +154,7 @@ Value TinyintType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Sqrt(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   if (val.IsNull())
     return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
@@ -187,8 +187,8 @@ Value TinyintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
 }
 
 CmpBool TinyintType::CompareEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
@@ -200,8 +200,8 @@ CmpBool TinyintType::CompareEquals(const Value& left, const Value &right) const 
 
 CmpBool TinyintType::CompareNotEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -212,8 +212,8 @@ CmpBool TinyintType::CompareNotEquals(const Value& left,
 
 CmpBool TinyintType::CompareLessThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -224,8 +224,8 @@ CmpBool TinyintType::CompareLessThan(const Value& left,
 
 CmpBool TinyintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -236,8 +236,8 @@ CmpBool TinyintType::CompareLessThanEquals(const Value& left,
 
 CmpBool TinyintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -248,8 +248,8 @@ CmpBool TinyintType::CompareGreaterThan(const Value& left,
 
 CmpBool TinyintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -259,7 +259,7 @@ CmpBool TinyintType::CompareGreaterThanEquals(const Value& left,
 }
 
 std::string TinyintType::ToString(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   if (val.IsNull())
     return "tinyint_null";
   return std::to_string(val.value_.tinyint);
@@ -267,7 +267,7 @@ std::string TinyintType::ToString(const Value& val) const {
 }
 
 size_t TinyintType::Hash(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   return std::hash<int8_t> { }(val.value_.tinyint);
 }
 
@@ -300,7 +300,7 @@ Value TinyintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 }
 
 Value TinyintType::Copy(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   return ValueFactory::GetTinyIntValue(val.value_.tinyint);
 }
 

@@ -33,7 +33,7 @@ public:
   LogBuffer(const size_t thread_id, const size_t eid) : 
       thread_id_(thread_id), eid_(eid), size_(0){
     data_ = new char[log_buffer_capacity_];
-    PL_MEMSET(data_, 0, log_buffer_capacity_);
+    PELOTON_MEMSET(data_, 0, log_buffer_capacity_);
   }
   ~LogBuffer() {
     delete[] data_;

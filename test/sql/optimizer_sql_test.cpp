@@ -349,7 +349,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
   LOG_DEBUG("here");
-  
+
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
                    DEFAULT_DB_NAME, "test2", txn),
@@ -391,6 +391,9 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   // Test group by with having
   TestUtil("SELECT AVG(a), b FROM test GROUP BY b having b=22", {"3.5", "22"},
            false);
+  // Test group by with having
+  TestUtil("SELECT AVG(a), b FROM test GROUP BY b having AVG(a)=3.5",
+           {"3.5", "11", "3.5", "22"}, false);
 
   // Test group by combined with ORDER BY
   TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},
@@ -491,6 +494,7 @@ TEST_F(OptimizerSQLTests, SelectConstantTest) {
 }
 
 TEST_F(OptimizerSQLTests, JoinTest) {
+  // The original table
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   // TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
@@ -515,6 +519,16 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, 333);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 22, 555);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (4, 00, 000);");
+
+  // Create the fourth table
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test3(a INT PRIMARY KEY, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (1, 22, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (2, 11, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (3, 22, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test3 VALUES (4, 00, 000);");
 
   /************************* Basic Queries (only joins)
    * *******************************/
@@ -634,6 +648,14 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       "GROUP BY test.a "
       "ORDER BY test.a",
       {"22", "1", "11", "2", "22", "3", "0", "4"}, true);
+
+  // Basic 4 table join
+  TestUtil(
+      "SELECT test.a, test1.a, test2.a, test3.c FROM test, test1, test2, test3 "
+      "WHERE test.a = test2.a AND test2.a = test1.a and test.b = test3.b",
+      {"1", "1", "1", "0", "1", "1", "1", "555", "2", "2", "2", "333", "4",
+       "4", "4", "0"},
+      false);
 }
 
 TEST_F(OptimizerSQLTests, IndexTest) {
@@ -733,7 +755,6 @@ TEST_F(OptimizerSQLTests, NestedQueryTest) {
       {"1", "2", "3", "4"}, false);
 }
 
-/*
 TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
   // Nested with aggregation
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE agg(a int, b int);");
@@ -783,14 +804,58 @@ TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 1, 45);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 2, 65);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 3, 77);");
-  TestUtil(
-      "select s.name, c.cid from student as s join course as c on s.sid = "
-      "c.sid "
-      "where c.score = (select min(score) from course where sid = s.sid) and "
-      "s.sid < 4;",
-      {"Patrick", "4", "David", "4", "Alice", "2"}, false);
+  // TODO(boweic): We produce NLJoin for this query, but because introducing
+  // join order enumeration, the right child of NLJoin is aggregation. Due to
+  // the old execution engine only support right child as scan, this test
+  // currently breaks.
+  // TestUtil(
+  //     "select s.name, c.cid from student as s join course as c on s.sid = "
+  //     "c.sid "
+  //     "where c.score = (select min(score) from course where sid = s.sid) and
+  //     "
+  //     "s.sid < 4;",
+  //     {"Patrick", "4", "David", "4", "Alice", "2"}, false);
 }
-*/
+
+TEST_F(OptimizerSQLTests, NestedQueryInHavingTest) {
+  // 4 previously inserted tuples
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (5, 11, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (7, 22, 333);");
+  // Create extra tables
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test2(a int primary key, b int, c varchar(32))");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (7, 22, '1st');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (8, 11, '2nd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (11, 33, '3rd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (22, 00, '4th');");
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE agg(a int, b int);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 22);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 33);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 11);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 11);");
+  TestUtil(
+      "select sum(a) as c, b from test as B group by b having exists (select b "
+      "from test2 where a = B.b);",
+      {"7", "11", "8", "22"}, false);
+  // TestUtil(
+  //     "select sum(a) as d, b from test as B group by b having exists (select
+  //     b "
+  //     "from test2 where a = B.d);",
+  //     {"7", "11", "8", "22"}, false);
+  TestUtil(
+      "select sum(a) as c, b from test as B group by b having exists (select "
+      "avg(a) from agg where b = B.b);",
+      {"7", "11", "8", "22", "3", "33"}, false);
+  TestUtil(
+      "select sum(a) as c, b from test as B group by b having exists (select "
+      "avg(a) from agg where b = B.b group by b having avg(a) < 2);",
+      {"7", "11", "8", "22"}, false);
+}
 
 }  // namespace test
 }  // namespace peloton

@@ -57,8 +57,9 @@ enum class ExceptionType {
   CONNECTION = 21,        // connection related
   SYNTAX = 22,            // syntax related
   SETTINGS = 23,          // settings related
-  BINDER = 24,            // settings related
-  NETWORK = 25
+  BINDER = 24,            // binder related
+  NETWORK = 25,           // network related
+  OPTIMIZER = 26          // optimizer related
 };
 
 class Exception : public std::runtime_error {
@@ -73,6 +74,10 @@ class Exception : public std::runtime_error {
     exception_message_ = "Exception Type :: " +
                          ExceptionTypeToString(exception_type) +
                          "\nMessage :: " + message;
+  }
+
+  std::string GetMessage() {
+    return exception_message_;
   }
 
   std::string ExceptionTypeToString(ExceptionType type) {
@@ -125,6 +130,8 @@ class Exception : public std::runtime_error {
         return "Syntax";
       case ExceptionType::SETTINGS:
         return "Settings";
+      case ExceptionType::OPTIMIZER:
+        return "Optimizer";
       default:
         return "Unknown";
     }
@@ -450,6 +457,14 @@ class BinderException : public Exception {
 
  public:
   BinderException(std::string msg) : Exception(ExceptionType::BINDER, msg) {}
+};
+
+class OptimizerException : public Exception {
+  OptimizerException() = delete;
+
+ public:
+  OptimizerException(std::string msg)
+      : Exception(ExceptionType::OPTIMIZER, msg) {}
 };
 
 }  // namespace peloton

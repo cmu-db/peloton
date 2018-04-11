@@ -144,8 +144,8 @@ void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
         hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
@@ -374,7 +374,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
 void CopyTuple(const oid_t &tuple_slot_id, storage::Tuple *tuple,
                storage::TileGroup *tile_group, const size_t column_count) {
-  PL_ASSERT(tuple->GetColumnCount() == column_count);
+  PELOTON_ASSERT(tuple->GetColumnCount() == column_count);
   for (oid_t col_id = 0; col_id < column_count; ++col_id) {
     type::Value val = tile_group->GetValue(tuple_slot_id, col_id);
     tuple->SetValue(col_id, val, nullptr);

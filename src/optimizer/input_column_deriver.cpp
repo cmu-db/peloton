@@ -87,7 +87,7 @@ void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
 void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   // we need to pass down both required columns and sort columns
   auto prop = properties_->GetPropertyOfType(PropertyType::SORT);
-  PL_ASSERT(prop.get() != nullptr);
+  PELOTON_ASSERT(prop.get() != nullptr);
   ExprSet input_cols_set;
   for (auto expr : required_cols_) {
     if (expression::ExpressionUtil::IsAggregateExpression(expr))
@@ -200,24 +200,40 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
       // input_cols_set.insert(tv_expr);
     }
   }
-  vector<AbstractExpression *> output_cols(output_col_idx, nullptr);
-  for (auto &expr_idx_pair : output_cols_map) {
-    output_cols[expr_idx_pair.second] = expr_idx_pair.first;
-  }
 
   // TODO(boweic): do not use shared_ptr
   vector<shared_ptr<AbstractExpression>> groupby_cols;
+  vector<AnnotatedExpression> having_exprs;
   if (op->GetType() == OpType::HashGroupBy) {
-    groupby_cols = reinterpret_cast<const PhysicalHashGroupBy *>(op)->columns;
+    auto groupby = reinterpret_cast<const PhysicalHashGroupBy *>(op);
+    groupby_cols = groupby->columns;
+    having_exprs = groupby->having;
   } else if (op->GetType() == OpType::SortGroupBy) {
-    groupby_cols = reinterpret_cast<const PhysicalSortGroupBy *>(op)->columns;
+    auto groupby = reinterpret_cast<const PhysicalSortGroupBy *>(op);
+    groupby_cols = groupby->columns;
+    having_exprs = groupby->having;
   }
   for (auto &groupby_col : groupby_cols) {
     input_cols_set.insert(groupby_col.get());
   }
+  // Check having predicate, since the predicate may use columns other than
+  // output columns
+  for (auto &having_expr : having_exprs) {
+    // We perform aggregate here so the output contains aggregate exprs while
+    // input should contain all tuple value exprs used to perform aggregation.
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
+                                                   having_expr.expr.get());
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(
+        output_cols_map, having_expr.expr.get());
+  }
   vector<AbstractExpression *> input_cols;
   for (auto &col : input_cols_set) {
     input_cols.push_back(col);
+  }
+  output_col_idx = output_cols_map.size();
+  vector<AbstractExpression *> output_cols(output_col_idx, nullptr);
+  for (auto &expr_idx_pair : output_cols_map) {
+    output_cols[expr_idx_pair.second] = expr_idx_pair.first;
   }
 
   output_input_cols_ =
@@ -244,24 +260,25 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
 
   ExprSet input_cols_set;
 
-  PL_ASSERT(left_keys != nullptr);
-  PL_ASSERT(right_keys != nullptr);
-  PL_ASSERT(join_conds != nullptr);
+  PELOTON_ASSERT(left_keys != nullptr);
+  PELOTON_ASSERT(right_keys != nullptr);
+  PELOTON_ASSERT(join_conds != nullptr);
   for (auto &left_key : *left_keys) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
-                                                   left_key.get());
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(input_cols_set,
+                                                          left_key.get());
   }
   for (auto &right_key : *right_keys) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
-                                                   right_key.get());
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(input_cols_set,
+                                                          right_key.get());
   }
   for (auto &join_cond : *join_conds) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
-                                                   join_cond.expr.get());
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(input_cols_set,
+                                                          join_cond.expr.get());
   }
   ExprMap output_cols_map;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(output_cols_map,
+                                                          expr);
   }
   for (auto &expr_idx_pair : output_cols_map) {
     input_cols_set.insert(expr_idx_pair.first);
@@ -274,12 +291,25 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   UNUSED_ATTRIBUTE auto &probe_table_aliases =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetTableAliases();
   for (auto &col : input_cols_set) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
+    expression::TupleValueExpression *tv_expr;
+    if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
+    } else {
+      PELOTON_ASSERT(expression::ExpressionUtil::IsAggregateExpression(col));
+      ExprSet tv_exprs;
+      expression::ExpressionUtil::GetTupleValueExprs(tv_exprs, col);
+      if (tv_exprs.empty()) {
+        // Do not need input columns like COUNT(1)
+        continue;
+      }
+      tv_expr = reinterpret_cast<expression::TupleValueExpression *>(
+          *(tv_exprs.begin()));
+    }
+
     if (build_table_aliases.count(tv_expr->GetTableName())) {
       build_table_cols_set.insert(col);
     } else {
-      PL_ASSERT(probe_table_aliases.count(tv_expr->GetTableName()));
+      PELOTON_ASSERT(probe_table_aliases.count(tv_expr->GetTableName()));
       probe_table_cols_set.insert(col);
     }
   }
