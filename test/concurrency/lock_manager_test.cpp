@@ -23,6 +23,9 @@ namespace test {
 
 class LockManagerTests : public PelotonTest {};
 
+/**
+ * @brief Test basic functionalities of lock manager
+ */
 TEST_F(LockManagerTests, FunctionalityTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();

@@ -41,7 +41,7 @@ public:
   LockManager() {}
 
   // Destructor
-  virtual ~LockManager() {}
+  virtual ~LockManager() {lock_map_.clear();}
 
   // Initialize lock for given oid
   bool InitLock(oid_t oid, LockType type);
@@ -84,10 +84,8 @@ private:
     boost::upgrade_mutex *rw_lock;
     try{
       rw_lock = lock_map_.at(oid);
-      LOG_WARN("GET LOCK SUCCSS!!");
     }
     catch(const std::out_of_range& oor) {
-      LOG_WARN("GET LOCK FAILED!! %u", oid);
       return nullptr;
     }
     return rw_lock;
