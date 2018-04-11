@@ -19,6 +19,7 @@
 // Libevent 2.0
 #include "event.h"
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/column.h"
 #include "common/internal_types.h"
 #include "common/portal.h"
@@ -27,6 +28,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
+
 
 namespace peloton {
 
@@ -156,7 +158,7 @@ class TrafficCop {
   std::string query_;
 
  private:
-  std::string session_namespace_;
+  std::string session_namespace_ = DEFAULT_NAMESPACE;
 
   bool is_queuing_;
 
