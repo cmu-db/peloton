@@ -133,25 +133,6 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
 oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
                                     concurrency::TransactionContext *txn) {
-  /*std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
-  oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(trigger_name).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t trigger_oid = INVALID_OID;
-  if (result_tiles->size() == 0) {
-    LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
-    }
-  }*/
 
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
 
@@ -207,43 +188,6 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
     oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
-  // select trigger_name, fire condition, function_name, function_args
-  /*std::vector<oid_t> column_ids(
-      {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
-       ColumnId::FUNCTION_ARGS});
-  oid_t index_offset = IndexId::TABLE_TYPE_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(trigger_type).Copy());
-
-  // the result is a vector of executor::LogicalTile
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  // carefull! the result tile could be null!
-  if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-  }
-
-  // create the trigger list
-  std::unique_ptr<trigger::TriggerList> new_trigger_list{
-      new trigger::TriggerList()};
-  if (result_tiles != nullptr) {
-    for (unsigned int i = 0; i < result_tiles->size(); i++) {
-      size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
-      for (size_t j = 0; j < tuple_count; j++) {
-        // create a new trigger instance
-        trigger::Trigger new_trigger(
-            (*result_tiles)[i]->GetValue(j, 0).ToString(), trigger_type,
-            (*result_tiles)[i]->GetValue(j, 2).ToString(),
-            (*result_tiles)[i]->GetValue(j, 3).ToString(),
-            (*result_tiles)[i]->GetValue(j, 1).GetData());
-        new_trigger_list->AddTrigger(new_trigger);
-      }
-    }
-  }*/
-
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
        ColumnId::FUNCTION_ARGS});
@@ -272,7 +216,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  // carefull! the result tile could be null!
+  // carefull! the result could be null!
   LOG_INFO("size of the result tiles = %lu", result_tuples.size());
 
 
@@ -297,44 +241,6 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
     oid_t table_oid, concurrency::TransactionContext *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
-  // select trigger_name, fire condition, function_name, function_args
-  /*std::vector<oid_t> column_ids(
-      {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
-       ColumnId::FUNCTION_OID, ColumnId::FUNCTION_ARGS});
-  oid_t index_offset = IndexId::TABLE_KEY_1;
-  std::vector<type::Value> values;
-  // where database_oid = args.database_oid and table_oid = args.table_oid and
-  // trigger_type = args.trigger_type
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  // the result is a vector of executor::LogicalTile
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  // carefull! the result tile could be null!
-  if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-  }
-
-  // create the trigger list
-  std::unique_ptr<trigger::TriggerList> new_trigger_list{
-      new trigger::TriggerList()};
-  if (result_tiles != nullptr) {
-    for (unsigned int i = 0; i < result_tiles->size(); i++) {
-      size_t tuple_count = (*result_tiles)[i]->GetTupleCount();
-      for (size_t j = 0; j < tuple_count; j++) {
-        // create a new trigger instance
-        trigger::Trigger new_trigger(
-            (*result_tiles)[i]->GetValue(j, 0).ToString(),
-            (*result_tiles)[i]->GetValue(j, 1).GetAs<int16_t>(),
-            (*result_tiles)[i]->GetValue(j, 3).ToString(),
-            (*result_tiles)[i]->GetValue(j, 4).ToString(),
-            (*result_tiles)[i]->GetValue(j, 2).GetData());
-        new_trigger_list->AddTrigger(new_trigger);
-      }
-    }
-  }*/
 
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
