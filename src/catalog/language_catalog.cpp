@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/buffering_consumer.h"
-#include "expression/expression_util.h"
 #include "catalog/language_catalog.h"
 
 #include "catalog/catalog.h"
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -81,7 +81,6 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
     oid_t lang_oid, concurrency::TransactionContext *txn) const {
-
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -96,8 +95,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
 
-
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tuples.size() == 1) {
@@ -109,7 +107,6 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
-
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -124,7 +121,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tuples.size() == 1) {

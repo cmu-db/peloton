@@ -106,7 +106,7 @@ bool TableCatalogObject::EvictIndexObject(oid_t index_oid) {
   }
 
   auto index_object = it->second;
-  PL_ASSERT(index_object);
+  PELOTON_ASSERT(index_object);
   index_objects.erase(it);
   index_names.erase(index_object->GetIndexName());
   return true;
@@ -126,7 +126,7 @@ bool TableCatalogObject::EvictIndexObject(const std::string &index_name) {
   }
 
   auto index_object = it->second;
-  PL_ASSERT(index_object);
+  PELOTON_ASSERT(index_object);
   index_names.erase(it);
   index_objects.erase(index_object->GetIndexOid());
   return true;
@@ -230,7 +230,7 @@ bool TableCatalogObject::EvictColumnObject(oid_t column_id) {
   }
 
   auto column_object = it->second;
-  PL_ASSERT(column_object);
+  PELOTON_ASSERT(column_object);
   column_objects.erase(it);
   column_names.erase(column_object->GetColumnName());
   return true;
@@ -250,7 +250,7 @@ bool TableCatalogObject::EvictColumnObject(const std::string &column_name) {
   }
 
   auto column_object = it->second;
-  PL_ASSERT(column_object);
+  PELOTON_ASSERT(column_object);
   column_names.erase(it);
   column_objects.erase(column_object->GetColumnId());
   return true;
@@ -444,9 +444,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
         table_object->GetDatabaseOid(), txn);
-    PL_ASSERT(database_object);
+    PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
-    PL_ASSERT(success == true);
+    PELOTON_ASSERT(success == true);
     (void)success;
     return table_object;
   } else {
@@ -470,8 +470,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
-
-  //try get from cache
+  // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
     auto table_object = database_object->GetTableObject(table_name, true);
@@ -519,13 +518,14 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
             table_object->GetDatabaseOid(), txn);
-    PL_ASSERT(database_object);
+    PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
-    PL_ASSERT(success == true);
+    PELOTON_ASSERT(success == true);
     (void) success;
 
     return table_object;
   }
+
   // return empty object if not found
   return nullptr;
 }
@@ -544,7 +544,7 @@ TableCatalog::GetTableObjects(oid_t database_oid,
   // try get from cache
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-  PL_ASSERT(database_object != nullptr);
+  PELOTON_ASSERT(database_object != nullptr);
   if (database_object->IsValidTableObjects()) {
     return database_object->GetTableObjects(true);
   }

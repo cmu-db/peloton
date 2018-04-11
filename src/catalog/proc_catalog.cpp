@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/codegen/buffering_consumer.h>
 #include "catalog/proc_catalog.h"
 
 #include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
+#include "codegen/buffering_consumer.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -111,11 +111,11 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
   if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
   }
 
@@ -153,7 +153,7 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
   if (result_tuples.size() == 1) {

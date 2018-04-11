@@ -13,12 +13,12 @@
 #include "catalog/index_catalog.h"
 
 #include <sstream>
-#include "codegen/buffering_consumer.h"
-#include "expression/expression_util.h"
 
 #include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -230,7 +230,6 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   }
 
   // cache miss, get from pg_index
-
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *idx_oid_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -252,8 +251,8 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
-                  table_object->GetTableOid() == index_object->GetTableOid());
+    PELOTON_ASSERT(table_object &&
+              table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
   } else {
     LOG_DEBUG("Found %lu index with oid %u", result_tuples.size(), index_oid);
@@ -275,7 +274,6 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   }
 
   // cache miss, get from pg_index
-
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *idx_name_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -296,7 +294,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
+    PELOTON_ASSERT(table_object &&
                   table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
   } else {
@@ -319,16 +317,14 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
-
   // try get from cache
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
-  PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
-
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -351,7 +347,6 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *
     table_object->InsertIndexObject(index_object);
 
   }
-
 
   return table_object->GetIndexObjects();
 }

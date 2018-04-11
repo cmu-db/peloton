@@ -149,7 +149,7 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
   auto result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  PL_ASSERT(result_tuples.size() <= 1);  // unique
+  PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
   if (result_tuples.size() == 0) {
     LOG_DEBUG("Result Tiles = 0");
     return nullptr;

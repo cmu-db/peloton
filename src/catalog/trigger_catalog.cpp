@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression/expression_util.h"
-#include "codegen/buffering_consumer.h"
 #include "catalog/trigger_catalog.h"
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -133,7 +133,6 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 
 oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
                                     concurrency::TransactionContext *txn) {
-
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
 
   expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -165,7 +164,7 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
     LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
   } else {
     LOG_INFO("size of the result tiles = %lu", result_tuples.size());
-    PL_ASSERT(result_tuples.size() <= 1);
+    PELOTON_ASSERT(result_tuples.size() <= 1);
     if (result_tuples.size() != 0) {
       trigger_oid = result_tuples[0].GetValue(0).GetAs<oid_t>();
     }
@@ -188,6 +187,7 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
     oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
+  // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
        ColumnId::FUNCTION_ARGS});
@@ -241,7 +241,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
     oid_t table_oid, concurrency::TransactionContext *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
-
+  // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
        ColumnId::FUNCTION_OID, ColumnId::FUNCTION_ARGS});

@@ -96,7 +96,6 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 
 std::string SettingsCatalog::GetSettingValue(const std::string &name,
                                              concurrency::TransactionContext *txn) {
-
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
 
   expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -112,13 +111,12 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
   std::string config_value = "";
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
 
     config_value = (result_tuples[0]).GetValue(0).ToString();
 
   }
-
   return config_value;
 }
 
@@ -139,7 +137,7 @@ std::string SettingsCatalog::GetDefaultValue(const std::string &name,
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
   std::string config_value = "";
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
       config_value = result_tuples[0].GetValue(0).ToString();
   }

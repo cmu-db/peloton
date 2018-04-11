@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <memory>
-#include <include/expression/expression_util.h>
-#include <include/codegen/buffering_consumer.h>
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 
 #include "catalog/database_catalog.h"
 
@@ -92,7 +92,7 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
   }
 
   auto table_object = it->second;
-  PL_ASSERT(table_object);
+  PELOTON_ASSERT(table_object);
   table_objects_cache.erase(it);
   table_name_cache.erase(table_object->GetTableName());
   return true;
@@ -110,7 +110,7 @@ bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   }
 
   auto table_object = it->second;
-  PL_ASSERT(table_object);
+  PELOTON_ASSERT(table_object);
   table_name_cache.erase(it);
   table_objects_cache.erase(table_object->GetTableOid());
   return true;
@@ -175,7 +175,7 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
     return TableCatalog::GetInstance()->GetTableObjects(database_oid, txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PL_ASSERT(valid_table_objects);
+  PELOTON_ASSERT(valid_table_objects);
   return table_objects_cache;
 }
 
@@ -321,7 +321,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
         std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
     // insert into cache
     bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-    PL_ASSERT(success == true);
+    PELOTON_ASSERT(success == true);
     (void)success;
     return database_object;
   } else {
@@ -346,6 +346,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
   if (database_object) return database_object;
 
+  // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *db_name_expr = expression::ExpressionUtil::TupleValueFactory(
@@ -365,12 +366,12 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
         std::make_shared<DatabaseCatalogObject>(result_tuples[0], txn);
     // insert into cache
     bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-    PL_ASSERT(success == true);
+    PELOTON_ASSERT(success == true);
     (void) success;
     return database_object;
   }
 
-    // return empty object if not found
+  // return empty object if not found
   return nullptr;
 }
 

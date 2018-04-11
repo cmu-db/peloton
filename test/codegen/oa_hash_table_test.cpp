@@ -43,7 +43,7 @@ class OAHashTableTest : public PelotonTest {
   };
 
   OAHashTableTest() {
-    PL_MEMSET(raw_hash_table, 1, sizeof(raw_hash_table));
+    PELOTON_MEMSET(raw_hash_table, 1, sizeof(raw_hash_table));
     GetHashTable().Init(sizeof(Key), sizeof(Value));
   }
 

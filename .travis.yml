@@ -28,11 +28,50 @@ matrix:
                     - g++-4.8
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc4.8 Debug+Tests+Coveralls"
+              - NAME="gcc4.8 Debug"
               - CXX=g++-4.8
               - CC=gcc-4.8
               - PELOTON_BUILD_TYPE=Debug
               # COVERALLS: we run coveralls only for one compiler
+              - COVERALLS=Off
+
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - g++-4.8
+          env:
+              # NAME has no actual use, just to make the travis jobs overview more clear
+              - NAME="gcc4.8 Release"
+              - CXX=g++-4.8
+              - CC=gcc-4.8
+              - PELOTON_BUILD_TYPE=Release
+              - COVERALLS=Off
+
+        # Linux builds for gcc 5
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - g++-5
+          env:
+              # NAME has no actual use, just to make the travis jobs overview more clear
+              - NAME="gcc5 Debug/Tests/AddressSanitizer/Coveralls"
+              - CXX=g++-5
+              - CC=gcc-5
+              - PELOTON_BUILD_TYPE=Debug
               - COVERALLS=On
           # override script value to run also tests and benchmarks
           script:
@@ -67,12 +106,12 @@ matrix:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
-                    - g++-4.8
+                    - g++-5
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc4.8 Release+Tests"
-              - CXX=g++-4.8
-              - CC=gcc-4.8
+              - NAME="gcc5 Release/Tests/AddressSanitizer"
+              - CXX=g++-5
+              - CC=gcc-5
               - PELOTON_BUILD_TYPE=Release
               - COVERALLS=Off
           # override script value to run also tests and benchmarks
@@ -95,45 +134,6 @@ matrix:
               - bash ../script/testing/psql/psql_test.sh
               # run jdbc tests
               - python ../script/validators/jdbc_validator.py
-
-        # Linux builds for gcc 5
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-5
-          env:
-              # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc5 Debug"
-              - CXX=g++-5
-              - CC=gcc-5
-              - PELOTON_BUILD_TYPE=Debug
-              - COVERALLS=Off
-
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-5
-          env:
-              # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc5 Release"
-              - CXX=g++-5
-              - CC=gcc-5
-              - PELOTON_BUILD_TYPE=Release
-              - COVERALLS=Off
 
 install:
     # setup environment

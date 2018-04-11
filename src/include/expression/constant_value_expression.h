@@ -102,7 +102,7 @@ inline bool ConstantValueExpression::ExactlyEquals(
     const AbstractExpression &other) const {
   if (exp_type_ != other.GetExpressionType()) return false;
   auto &const_expr = static_cast<const ConstantValueExpression &>(other);
-  return value_.CompareEquals(const_expr.value_) == CmpBool::TRUE;
+  return value_.CompareEquals(const_expr.value_) == CmpBool::CmpTrue;
 }
 
 inline hash_t ConstantValueExpression::HashForExactMatch() const {

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/optimizer.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -81,6 +81,19 @@ class Optimizer : public AbstractOptimizer {
 
   void Reset() override;
 
+  OptimizerMetadata &GetMetadata() { return metadata_; }
+
+  /* For test purposes only */
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
+  concurrency::TransactionContext *txn) {
+    return InsertQueryTree(tree, txn);
+  }
+  /* For test purposes only */
+  void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
+                        std::shared_ptr<OptimizeContext> root_context) {
+    return ExecuteTaskStack(task_stack, root_group_id, root_context);
+  }
+
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
    *CREATE), set
@@ -123,6 +136,19 @@ class Optimizer : public AbstractOptimizer {
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
       GroupID id, std::shared_ptr<PropertySet> required_props,
       std::vector<expression::AbstractExpression *> required_cols);
+
+  /* ExecuteTaskStack - Execute elements of given optimization task stack
+   * and ensure that we do not go beyond the time limit (unless if one plan has
+   *    not been generated yet)
+   *
+   * task_stack: the optimizer's task stack to iterate through
+   * root_group_id: the root group id to check if we have generated a plan or
+   *not
+   * root_context: the OptimizerContext to use that maintains required
+   *properties
+   */
+  void ExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
+                        std::shared_ptr<OptimizeContext> root_context);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata

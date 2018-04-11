@@ -95,7 +95,7 @@ class Cost {
    */
  //  static inline double AggregateCost(
  //      const std::shared_ptr<TableStats>& input_stats) {
- //    PL_ASSERT(input_stats != nullptr);
+ //    PELOTON_ASSERT(input_stats != nullptr);
  //    return input_stats->num_rows * DEFAULT_TUPLE_COST;
  //  }
  //
