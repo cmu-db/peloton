@@ -122,7 +122,7 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
   auto expr_type = where_expr->GetExpressionType();
   const expression::AbstractExpression *left_child;
   const expression::AbstractExpression *right_child;
-  expression::TupleValueExpression *tuple_child;
+  const expression::TupleValueExpression *tuple_child;
 
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
@@ -148,12 +148,17 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (left_child);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (right_child);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (right_child);
       }
-      (void) tuple_child;
+
+      if (!tuple_child->GetIsBound()) {
+        LOG_INFO("Query is not bound");
+        assert(false);
+      }
+      IndexObjectPoolInsertHelper(tuple_child, config);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
@@ -176,12 +181,9 @@ void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescript
   auto &columns = group_expr->columns;
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
-    // TODO
-    // config.AddIndexObj(tuple_value->GetColumnName());
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
-  (void) config;
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
@@ -189,10 +191,25 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   auto &exprs = order_expr->exprs;
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
   (void) config;
+}
+
+void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                                 IndexConfiguration &config) {
+  auto db_oid = std::get<0>(tuple_col->GetBoundOid());
+  auto table_oid = std::get<1>(tuple_col->GetBoundOid());
+  auto col_oid = std::get<2>(tuple_col->GetBoundOid());
+
+  // Add the object to the pool.
+  IndexObject iobj(db_oid, table_oid, col_oid);
+  auto pool_index_obj = context_.pool.GetIndexObject(iobj);
+  if (!pool_index_obj) {
+    pool_index_obj = context_.pool.PutIndexObject(iobj);
+  }
+  config.AddIndexObject(pool_index_obj);
 }
 
 double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
@@ -213,8 +230,25 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
+IndexConfiguration IndexSelection::Crossproduct(
+    const IndexConfiguration &config,
+    const IndexConfiguration &single_column_indexes) {
+  IndexConfiguration result;
+  auto indexes = config.GetIndexes();
+  auto columns = single_column_indexes.GetIndexes();
+  for (auto index : indexes) {
+    for (auto column : columns) {
+      if(!index->IsCompatible(column)) continue;
+      auto merged_index = (index->Merge(column));
+      result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
+    }
+  }
+  return result;
+}
+
+
 IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return config.Crossproduct(single_column_indexes);
+  return Crossproduct(config, single_column_indexes);
 }
 
 }  // namespace brain

@@ -40,7 +40,7 @@ struct KeyHasher {
 //===--------------------------------------------------------------------===//
 class IndexSelectionContext {
 public:
-  IndexSelectionContext() {}
+  IndexSelectionContext();
 
 private:
   friend class IndexSelection;

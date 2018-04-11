@@ -17,6 +17,43 @@ namespace peloton {
 namespace brain {
 
 //===--------------------------------------------------------------------===//
+// IndexObject
+//===--------------------------------------------------------------------===//
+
+const std::string IndexObject::toString() const {
+  std::stringstream str_stream;
+  str_stream << db_oid << table_oid;
+  for (auto col: column_oids) {
+    str_stream << col;
+  }
+  return str_stream.str();
+}
+
+bool IndexObject::operator==(const IndexObject &obj) const {
+  if (db_oid == obj.db_oid && table_oid == obj.table_oid
+      && column_oids == obj.column_oids) {
+    return true;
+  }
+  return false;
+}
+
+bool IndexObject::IsCompatible(std::shared_ptr<IndexObject> index) {
+  return (db_oid == index->db_oid) && (table_oid == index->table_oid);
+}
+
+IndexObject IndexObject::Merge(std::shared_ptr<IndexObject> index) {
+  (void) index;
+  IndexObject result;
+  result.db_oid = db_oid;
+  result.table_oid = table_oid;
+  result.column_oids = column_oids;
+  for (auto column : index->column_oids) {
+    result.column_oids.insert(column);
+  }
+  return result;
+}
+
+//===--------------------------------------------------------------------===//
 // IndexConfiguration
 //===--------------------------------------------------------------------===//
 
@@ -51,22 +88,7 @@ const std::string IndexConfiguration::ToString() const {
 
 bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
   auto config_indexes = config.GetIndexes();
-  if(config_indexes.size() != indexes_.size()) return false;
-  for (uint i = 0; i < indexes_.size(); i++) {
-    // if(indexes_[i] != config_indexes[i]) return false;
-  }
-  return true;
-}
-
-void IndexConfiguration::Crossproduct(const IndexConfiguration &single_column_indexes) {
-  IndexConfiguration result;
-  auto columns = single_column_indexes.GetIndexes();
-  for (auto index : indexes_) {
-    for (auto column : columns) {
-      result.insert(index->merge(column));
-    }
-  }
-  return result;
+  return indexes_ == config_indexes;
 }
 
 //===--------------------------------------------------------------------===//
@@ -83,11 +105,12 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
   return nullptr;
 }
 
-void IndexObjectPool::PutIndexObject(IndexObject &obj) {
+std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
   auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
   map_[*index_copy] = index_s_ptr;
+  return index_s_ptr;
 }
 
 }  // namespace brain

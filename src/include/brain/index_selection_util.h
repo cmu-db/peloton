@@ -30,30 +30,23 @@ class IndexObject {
 public:
   oid_t db_oid;
   oid_t table_oid;
-  std::vector<oid_t> column_oids;
+  std::set<oid_t> column_oids;
   IndexConstraintType type;
 
+  IndexObject() {};
+
+  IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid):
+    db_oid(db_oid), table_oid(table_oid) {
+    column_oids.insert(col_oid);
+  }
+
   // To string for performing hash.
-  const std::string toString() const {
-    std::stringstream str_stream;
-    str_stream << db_oid << table_oid;
-    for (auto col: column_oids) {
-      str_stream << col;
-    }
-    return str_stream.str();
-  }
+  const std::string toString() const;
 
-  bool operator==(const IndexObject &obj) const {
-    if (db_oid == obj.db_oid && table_oid == obj.table_oid
-        && column_oids == obj.column_oids) {
-      return true;
-    }
-    return false;
-  }
+  bool operator==(const IndexObject &obj) const;
 
-  std::shared_ptr<IndexObject> merge(std::shared_ptr<IndexObject>) {
-    
-  }
+  bool IsCompatible(std::shared_ptr<IndexObject> index);
+  IndexObject Merge(std::shared_ptr<IndexObject> index);
 };
 
 struct IndexObjectHasher {
@@ -72,7 +65,6 @@ public:
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;
-  void Crossproduct(const IndexConfiguration &single_column_indexes);
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -99,7 +91,7 @@ class IndexObjectPool {
 public:
   IndexObjectPool();
   std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
-  void PutIndexObject(IndexObject &obj);
+  std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
 private:
   std::unordered_map<IndexObject, std::shared_ptr<IndexObject>, IndexObjectHasher> map_;
 };

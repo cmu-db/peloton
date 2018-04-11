@@ -16,5 +16,7 @@
 namespace peloton {
 namespace brain {
 
+IndexSelectionContext::IndexSelectionContext() {}
+
 }  // namespace brain
 }  // namespace peloton

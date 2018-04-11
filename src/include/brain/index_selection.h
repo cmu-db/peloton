@@ -13,6 +13,7 @@
 #pragma once
 
 #include "brain/index_selection_context.h"
+#include "expression/tuple_value_expression.h"
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
 #include "parser/sql_statement.h"
@@ -33,9 +34,13 @@ class IndexSelection {
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
 
 private:
+  // Cost evaluation related
+  double GetCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
+
+  // Admissible index selection related
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
@@ -46,8 +51,11 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
-  double GetCost(IndexConfiguration &config, Workload &workload);
   IndexConfiguration GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes);
+  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                   IndexConfiguration &config);
+  IndexConfiguration Crossproduct(const IndexConfiguration &config,
+      const IndexConfiguration &single_column_indexes);
   // members
   std::shared_ptr<Workload> query_set_;
   IndexSelectionContext context_;
