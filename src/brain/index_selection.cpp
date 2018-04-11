@@ -291,7 +291,18 @@ void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExp
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) const {
+  double cost = 0.0;
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    PL_ASSERT(context_.memo_.find(state) != context_.memo_.end());
+    cost += context_.memo_.find(state)->second;
+  }
+  return cost;
+}
+
+double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
