@@ -18,11 +18,12 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include "common/internal_types.h"
 
 #include "common/macros.h"
 #include "common/internal_types.h"
 #include "common/container/lock_free_array.h"
-
+#include "tbb/concurrent_unordered_map.h"
 namespace peloton {
 
 namespace storage {
@@ -64,7 +65,6 @@ class Manager {
 
   void ClearTileGroup(void);
 
-
   //===--------------------------------------------------------------------===//
   // INDIRECTION ARRAY ALLOCATION
   //===--------------------------------------------------------------------===//
@@ -94,8 +94,8 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
-
+  tbb::concurrent_unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
+      tile_group_locator_;
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 
   //===--------------------------------------------------------------------===//
@@ -103,8 +103,9 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
-
+  tbb::concurrent_unordered_map<oid_t,
+                                std::shared_ptr<storage::IndirectionArray>>
+      indirection_array_locator_;
   static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 

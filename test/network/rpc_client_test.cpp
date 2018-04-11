@@ -62,18 +62,18 @@ TEST_F(RpcClientTests, BasicTest) {
 
     // total length of the message: header length (4bytes) + message length
     // (8bytes + ...)
-    PL_ASSERT(HEADERLEN == sizeof(msg_len));
+    PELOTON_ASSERT(HEADERLEN == sizeof(msg_len));
     char buf[sizeof(msg_len) + msg_len];
 
     // copy the header into the buf
-    PL_MEMCPY(buf, &msg_len, sizeof(msg_len));
+    PELOTON_MEMCPY(buf, &msg_len, sizeof(msg_len));
 
     // copy the type into the buf
-    PL_MEMCPY(buf + sizeof(msg_len), &type, sizeof(type));
+    PELOTON_MEMCPY(buf + sizeof(msg_len), &type, sizeof(type));
 
     // copy the hashcode into the buf, following the header
-    PL_ASSERT(OPCODELEN == sizeof(opcode));
-    PL_MEMCPY(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
+    PELOTON_ASSERT(OPCODELEN == sizeof(opcode));
+    PELOTON_MEMCPY(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
 
     // call protobuf to serialize the request message into sending buf
     request.SerializeToArray(

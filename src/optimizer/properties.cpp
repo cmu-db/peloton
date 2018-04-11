@@ -36,7 +36,7 @@ bool PropertySort::operator>=(const Property &r) const {
   // All the sorting orders in r must be satisfied
   size_t l_num_sort_columns = sort_columns_.size();
   size_t r_num_sort_columns = r_sort.sort_columns_.size();
-  PL_ASSERT(r_num_sort_columns == r_sort.sort_ascending_.size());
+  PELOTON_ASSERT(r_num_sort_columns == r_sort.sort_ascending_.size());
   // We want to ensure that Sort(a, b, c, d, e) >= Sort(a, b, c)
   if (l_num_sort_columns < r_num_sort_columns) {
     return false;

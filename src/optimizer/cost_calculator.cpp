@@ -24,9 +24,11 @@
 namespace peloton {
 namespace optimizer {
 
-double CostCalculator::CalculateCost(GroupExpression *gexpr, Memo *memo) {
+double CostCalculator::CalculateCost(GroupExpression *gexpr, Memo *memo,
+                                     concurrency::TransactionContext *txn) {
   gexpr_ = gexpr;
   memo_ = memo;
+  txn_ = txn;
   gexpr_->Op().Accept(this);
   return output_cost_;
 }
@@ -36,8 +38,8 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const DummyScan *op) {
 }
 void CostCalculator::Visit(const PhysicalSeqScan *op) {
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
-      StatsStorage::GetInstance()->GetTableStats(op->table_->GetDatabaseOid(),
-                                                 op->table_->GetTableOid()));
+      StatsStorage::GetInstance()->GetTableStats(
+          op->table_->GetDatabaseOid(), op->table_->GetTableOid(), txn_));
   if (table_stats->GetColumnCount() == 0) {
     output_cost_ = 1.f;
     return;
@@ -46,8 +48,8 @@ void CostCalculator::Visit(const PhysicalSeqScan *op) {
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
-      StatsStorage::GetInstance()->GetTableStats(op->table_->GetDatabaseOid(),
-                                                 op->table_->GetTableOid()));
+      StatsStorage::GetInstance()->GetTableStats(
+          op->table_->GetDatabaseOid(), op->table_->GetTableOid(), txn_));
   if (table_stats->GetColumnCount() == 0 || table_stats->num_rows == 0) {
     output_cost_ = 0.f;
     return;

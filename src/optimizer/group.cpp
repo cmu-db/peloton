@@ -62,6 +62,12 @@ GroupExpression *Group::GetBestExpression(
   return nullptr;
 }
 
+bool Group::HasExpressions(
+    const std::shared_ptr<PropertySet> &properties) const {
+  const auto &it = lowest_cost_expressions_.find(properties);
+  return (it != lowest_cost_expressions_.end());
+}
+
 std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
   if (!stats_.count(column_name)) {
     return nullptr;
@@ -71,7 +77,7 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
 
 void Group::AddStats(std::string column_name,
                      std::shared_ptr<ColumnStats> stats) {
-  PL_ASSERT((size_t)GetNumRows() == stats->num_rows);
+  PELOTON_ASSERT((size_t)GetNumRows() == stats->num_rows);
   stats_[column_name] = stats;
 }
 

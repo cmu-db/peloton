@@ -35,7 +35,7 @@ class ThreadPool {
                   const size_t &dedicated_thread_count) {
     current_thread_count_ = ATOMIC_VAR_INIT(0);
     pool_size_ = pool_size;
-    // PL_ASSERT(pool_size_ != 0);
+    // PELOTON_ASSERT(pool_size_ != 0);
 
     dedicated_thread_count_ = dedicated_thread_count;
 

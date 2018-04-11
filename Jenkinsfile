@@ -17,7 +17,7 @@ pipeline {
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
+                        sh 'cd build && make check -j4'
                         // sh 'cd build && cp -pr test /job/' // special tests collection step just for this stage
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
@@ -33,7 +33,7 @@ pipeline {
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
+                        sh 'cd build && make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -48,7 +48,7 @@ pipeline {
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
+                        sh 'cd build && make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -63,7 +63,7 @@ pipeline {
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
+                        sh 'cd build && make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -88,7 +88,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -103,7 +103,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -118,7 +118,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
@@ -133,7 +133,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
@@ -141,35 +141,35 @@ pipeline {
                 //     }
                 // }
 
-                stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Debug)') {
-                    agent { docker { image 'fedora:27' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
-                        sh 'cd build && make install'
-                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
-                        sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
-                        sh 'cd build && python ../script/validators/jdbc_validator.py'
-                    }
-                }
+                // stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Debug)') {
+                //     agent { docker { image 'fedora:27' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && make check -j4'
+                //         sh 'cd build && make install'
+                //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
+                //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                //     }
+                // }
 
-                stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Release)') {
-                    agent { docker { image 'fedora:27' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                        sh 'cd build && make check -j4 || true'
-                        sh 'cd build && make install'
-                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
-                        sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
-                        sh 'cd build && python ../script/validators/jdbc_validator.py'
-                    }
-                }
+                // stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Release)') {
+                //     agent { docker { image 'fedora:27' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && make check -j4'
+                //         sh 'cd build && make install'
+                //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
+                //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                //     }
+                // }
 
                 // stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Debug)') {
                 //     agent { docker { image 'centos:7' } }
@@ -178,7 +178,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo yum -q install -y wget java-devel' // prerequisites for jdbc_validator
@@ -193,7 +193,7 @@ pipeline {
                 //         sh 'python script/validators/source_validator.py'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make check -j4'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo yum -q install -y wget java-devel' // prerequisites for jdbc_validator

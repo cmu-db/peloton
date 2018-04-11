@@ -60,7 +60,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
-  PL_ASSERT(sql_stmt_list);
+  PELOTON_ASSERT(sql_stmt_list);
   if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
@@ -132,6 +132,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     return status.m_result;
   } catch (Exception &e) {
     error_message = e.what();
+    LOG_DEBUG("Testing SQL Util Caught Exception : %s", e.what());
     return ResultType::FAILURE;
   }
 }
@@ -156,7 +157,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
-  PL_ASSERT(sql_stmt_list);
+  PELOTON_ASSERT(sql_stmt_list);
   if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
@@ -195,7 +196,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
-  PL_ASSERT(sql_stmt_list);
+  PELOTON_ASSERT(sql_stmt_list);
   if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }

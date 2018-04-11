@@ -64,7 +64,7 @@ TileGroup::~TileGroup() {
 }
 
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
-  PL_ASSERT(tiles[tile_id]);
+  PELOTON_ASSERT(tiles[tile_id]);
   return tiles[tile_id]->GetTileId();
 }
 
@@ -113,9 +113,9 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    PL_ASSERT(tile);
+    PELOTON_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    PL_ASSERT(tile_tuple_location);
+    PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -157,10 +157,10 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   CopyTuple(tuple, tuple_slot_id);
 
   // Set MVCC info
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
             INVALID_TXN_ID);
-  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-  PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
   return tuple_slot_id;
 }
 
@@ -195,9 +195,9 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    PL_ASSERT(tile);
+    PELOTON_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    PL_ASSERT(tile_tuple_location);
+    PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -295,9 +295,9 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    PL_ASSERT(tile);
+    PELOTON_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    PL_ASSERT(tile_tuple_location);
+    PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -332,7 +332,7 @@ oid_t TileGroup::GetTileColumnId(oid_t column_id) {
 }
 
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
-  PL_ASSERT(tuple_id < GetNextTupleSlot());
+  PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
@@ -340,7 +340,7 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
 
 void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
                          oid_t column_id) {
-  PL_ASSERT(tuple_id < GetNextTupleSlot());
+  PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
@@ -349,7 +349,7 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
-  PL_ASSERT(tile_offset < tile_count);
+  PELOTON_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
 }
 

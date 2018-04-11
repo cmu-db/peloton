@@ -118,7 +118,7 @@ void PelotonServer::SSLInit() {
   }
   // TODO(Yuchen): change this.
   // load trusted CA certificates (peer authentication)
-  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(),
+  if (SSL_CTX_load_verify_locations(ssl_context, root_cert_file_.c_str(),
                                     nullptr) != 1) {
     LOG_WARN("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
@@ -240,7 +240,7 @@ PelotonServer &PelotonServer::SetupServer() {
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
-  PL_MEMSET(&sin, 0, sizeof(sin));
+  PELOTON_MEMSET(&sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_addr.s_addr = INADDR_ANY;
   sin.sin_port = htons(port_);
@@ -270,8 +270,8 @@ void PelotonServer::ServerLoop() {
   if (settings::SettingsManager::GetBool(settings::SettingId::rpc_enabled)) {
     int rpc_port =
         settings::SettingsManager::GetInt(settings::SettingId::rpc_port);
-    auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(("127.0.0.1:"
-        + std::to_string(rpc_port)).c_str());
+    std::string address = "127.0.0.1:" + std::to_string(rpc_port);
+    auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(address.c_str());
     DedicatedThreadRegistry::GetInstance()
         .RegisterDedicatedThread<PelotonRpcHandlerTask>(this, rpc_task);
   }

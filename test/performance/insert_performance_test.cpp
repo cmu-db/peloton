@@ -119,22 +119,33 @@ TEST_F(InsertPerformanceTests, LoadingTest) {
   auto expected_tile_group_count = 0;
 
   int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
-  int max_cached_tuple_count = TEST_TUPLES_PER_TILEGROUP * storage::DataTable::default_active_tilegroup_count_;
-  int max_unfill_cached_tuple_count = (TEST_TUPLES_PER_TILEGROUP - 1) * storage::DataTable::default_active_tilegroup_count_;
+  int max_cached_tuple_count =
+      TEST_TUPLES_PER_TILEGROUP * storage::DataTable::GetActiveTileGroupCount();
+  int max_unfill_cached_tuple_count =
+      (TEST_TUPLES_PER_TILEGROUP - 1) *
+      storage::DataTable::GetActiveTileGroupCount();
 
   if (total_tuple_count - max_cached_tuple_count <= 0) {
     if (total_tuple_count <= max_unfill_cached_tuple_count) {
-      expected_tile_group_count = storage::DataTable::default_active_tilegroup_count_;
+      expected_tile_group_count = storage::DataTable::GetActiveTileGroupCount();
     } else {
-      expected_tile_group_count = storage::DataTable::default_active_tilegroup_count_ + total_tuple_count - max_unfill_cached_tuple_count; 
+      expected_tile_group_count =
+          storage::DataTable::GetActiveTileGroupCount() + total_tuple_count -
+          max_unfill_cached_tuple_count;
     }
   } else {
-    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * storage::DataTable::default_active_tilegroup_count_;
-    
+    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count *
+                                  storage::DataTable::GetActiveTileGroupCount();
+
     if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
-      expected_tile_group_count = filled_tile_group_count + storage::DataTable::default_active_tilegroup_count_;
+      expected_tile_group_count = filled_tile_group_count +
+                                  storage::DataTable::GetActiveTileGroupCount();
     } else {
-      expected_tile_group_count = filled_tile_group_count + storage::DataTable::default_active_tilegroup_count_ + (total_tuple_count - filled_tile_group_count - max_unfill_cached_tuple_count); 
+      expected_tile_group_count =
+          filled_tile_group_count +
+          storage::DataTable::GetActiveTileGroupCount() +
+          (total_tuple_count - filled_tile_group_count -
+           max_unfill_cached_tuple_count);
     }
   }
 

@@ -51,7 +51,7 @@ void OAHashTable::Init(uint64_t key_size, uint64_t value_size,
   bucket_mask_ = num_buckets_ - 1;
 
   // Sanity check
-  PL_ASSERT((num_buckets_ & bucket_mask_) == 0);
+  PELOTON_ASSERT((num_buckets_ & bucket_mask_) == 0);
 
   // No elements in the table right now
   num_entries_ = num_valid_buckets_ = 0;
@@ -84,7 +84,7 @@ char *OAHashTable::StoreToKeyValueList(KeyValueList **kv_list_p_p) {
   KeyValueList *kv_list_p = *kv_list_p_p;
 
   // Size always <= capacity
-  PL_ASSERT(kv_list_p->capacity >= kv_list_p->size);
+  PELOTON_ASSERT(kv_list_p->capacity >= kv_list_p->size);
 
   // We always need this to compute something
   uint32_t size = kv_list_p->size;
@@ -110,10 +110,10 @@ char *OAHashTable::StoreToKeyValueList(KeyValueList **kv_list_p_p) {
     uint64_t new_kv_list_length = GetCurrentKeyValueListSize(new_capacity);
 
     kv_list_p = static_cast<KeyValueList *>(malloc(new_kv_list_length));
-    PL_ASSERT(kv_list_p != nullptr);
+    PELOTON_ASSERT(kv_list_p != nullptr);
 
     // Copy from the old memory chunk to the new chunk
-    PL_MEMCPY(kv_list_p, *kv_list_p_p, current_length);
+    PELOTON_MEMCPY(kv_list_p, *kv_list_p_p, current_length);
 
     // Update capacity field after copying
     kv_list_p->capacity = new_capacity;
@@ -158,7 +158,7 @@ OAHashTable::HashEntry *OAHashTable::FindNextFreeEntry(uint64_t hash_value) {
     }
   }
 
-  PL_ASSERT(false);
+  PELOTON_ASSERT(false);
   return nullptr;
 }
 
@@ -217,8 +217,8 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
     entry->kv_list = static_cast<KeyValueList *>(malloc(
         GetCurrentKeyValueListSize(OAHashTable::kInitialKVListCapacity)));
 
-    PL_ASSERT(entry->kv_list != nullptr);
-    PL_ASSERT(entry->HasKeyValueList());
+    PELOTON_ASSERT(entry->kv_list != nullptr);
+    PELOTON_ASSERT(entry->HasKeyValueList());
 
     // Initialize members - also copy the current data into the kv list
     // to simplify iterating over the hash table
@@ -229,7 +229,7 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
     // in the HashEntry to provide a fast path for key comparison during probing
     // because no matter whether there is a KeyValueList, the key is always at
     // the same location.
-    PL_MEMCPY(entry->kv_list->data, entry->data + key_size_, value_size_);
+    PELOTON_MEMCPY(entry->kv_list->data, entry->data + key_size_, value_size_);
 
     // Return the second element's payload. The first element has been copied
     // from the HashEntry. This pointer is for dumping value.
@@ -272,7 +272,7 @@ void OAHashTable::InitializeArray(HashEntry *entries) {
 //===----------------------------------------------------------------------===//
 void OAHashTable::Resize(HashEntry **entry_p_p) {
   // Make it an assertion to prevent potential bugs
-  PL_ASSERT(NeedsResize());
+  PELOTON_ASSERT(NeedsResize());
 
   LOG_DEBUG("Resizing hash-table from %llu buckets to %llu",
             (unsigned long long)num_buckets_,
@@ -346,7 +346,7 @@ void OAHashTable::Resize(HashEntry **entry_p_p) {
 
       // Copy everything, including is_free flag, hash value and key-value
       // to the new free entry we just found
-      PL_MEMCPY(new_entry_char_p, current_entry_char_p, entry_size_);
+      PELOTON_MEMCPY(new_entry_char_p, current_entry_char_p, entry_size_);
     }
 
     // No matter we ignore an entry or not this has to be done
