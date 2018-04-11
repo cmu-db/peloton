@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
+#include "brain/what_if_index.h"
 #include <include/parser/statements.h>
 #include "common/logger.h"
 
@@ -198,17 +199,17 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   (void) config;
   (void) workload;
-  // auto queries = workload.GetQueries();
-  // for (auto query : queries) {
-  //   std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
-  //   if (context_->memo_.find(state) != context_->memo_.end()) {
-  //     cost += context_->memo_[state];
-  //   } else {
-  //     auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
-  //     context_->memo_[state] = result->cost;
-  //     cost += result->cost;
-  //   }
-  // }
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    if (context_.memo_.find(state) != context_.memo_.end()) {
+      cost += context_.memo_[state];
+    } else {
+      auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+      context_.memo_[state] = result->cost;
+      cost += result->cost;
+    }
+  }
   return cost;
 }
 
