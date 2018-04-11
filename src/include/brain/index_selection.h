@@ -34,9 +34,13 @@ class IndexSelection {
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
 
 private:
+  // Cost evaluation related
+  double GetCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
+
+  // Admissible index selection related
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
@@ -47,8 +51,8 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
-  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col);
-  double GetCost(IndexConfiguration &config, Workload &workload);
+  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                   IndexConfiguration &config);
   // members
   std::shared_ptr<Workload> query_set_;
   IndexSelectionContext context_;

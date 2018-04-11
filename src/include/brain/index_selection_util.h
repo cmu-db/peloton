@@ -101,7 +101,7 @@ class IndexObjectPool {
 public:
   IndexObjectPool();
   std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
-  void PutIndexObject(IndexObject &obj);
+  std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
 private:
   std::unordered_map<IndexObject, std::shared_ptr<IndexObject>, IndexObjectHasher> map_;
 };
