@@ -41,7 +41,7 @@ public:
   LockManager() {}
 
   // Destructor
-  virtual ~LockManager() {lock_map_.clear();}
+  ~LockManager() {lock_map_.clear();}
 
   // Initialize lock for given oid
   bool InitLock(oid_t oid, LockType type);
