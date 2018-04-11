@@ -58,6 +58,16 @@ bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
   return true;
 }
 
+IndexConfiguration IndexConfiguration::operator -(const IndexConfiguration &config)  {
+  auto config_indexes = config.GetIndexes();
+
+  std::set<std::shared_ptr<IndexObject>> result;
+  std::set_difference(indexes_.begin(), indexes_.end(), config_indexes.begin(), config_indexes.end(),
+                      std::inserter(result, result.end()));
+  return IndexConfiguration(result);
+}
+
+
 //===--------------------------------------------------------------------===//
 // IndexObjectPool
 //===--------------------------------------------------------------------===//

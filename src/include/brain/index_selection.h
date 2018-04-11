@@ -26,6 +26,21 @@ using namespace parser;
 using namespace catalog;
 
 
+struct Comp
+{
+  Comp(Workload &workload) {this->w = &workload;}
+  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2)
+  {
+
+//     IndexSelection::GetCost(s1, w);
+    // TODO Call CostModel::GetCost(s1, w);
+    return s1.GetIndexCount() < s2.GetIndexCount();
+  }
+
+  Workload *w;
+};
+
+
 //===--------------------------------------------------------------------===//
 // IndexSelection
 //===--------------------------------------------------------------------===//
@@ -42,9 +57,15 @@ private:
                       Workload &workload);
 
 
-  void ExhaustiveEnumeration(IndexConfiguration &indexes,
-                 IndexConfiguration &picked_indexes,
-                      Workload &workload);
+  // Configuration Enumeration Method
+  IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes, Workload &workload);
+
+  IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes);
+
+
+    void GreedySearch(IndexConfiguration &indexes,
+                             IndexConfiguration &picked_indexes,
+                             Workload &workload);
 
   // Admissible index selection related
   void GetAdmissibleIndexes(SQLStatement *query,

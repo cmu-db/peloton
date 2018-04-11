@@ -60,34 +60,41 @@ void IndexSelection::Enumerate(IndexConfiguration &indexes,
                                IndexConfiguration &chosen_indexes,
                                Workload &workload) {
 
-  ExhaustiveEnumeration(indexes, chosen_indexes, workload);
+  auto top_indexes = ExhaustiveEnumeration(indexes, workload);
 
+  auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
+  (void)chosen_indexes;
 
 }
 
 
-struct Comp
-{
-   Comp(Workload &workload) {this->w = &workload;}
-   bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2)
-   {
+void IndexSelection::GreedySearch(IndexConfiguration &indexes,
+                                           IndexConfiguration &chosen_indexes,
+                                           Workload &workload) {
 
-       // TODO Call CostModel::GetCost(s1, w);
-       return s1.GetIndexCount() < s2.GetIndexCount();
-   }
 
-   Workload *w;
-};
+  (void)indexes;
+  (void)chosen_indexes;
+  (void)workload;
 
-void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
-                               IndexConfiguration &chosen_indexes,
+}
+
+IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes) {
+  return (indexes - top_indexes);
+}
+
+
+IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
                                Workload &workload) {
   unsigned long m = 2;
+
+  assert(m <= indexes.GetIndexCount());
 
   std::set<IndexConfiguration, Comp> running_set(workload);
   std::set<IndexConfiguration, Comp> temp_set(workload);
   std::set<IndexConfiguration, Comp> result_set(workload);
   IndexConfiguration new_element;
+  IndexConfiguration top_indexes;
 
   IndexConfiguration empty;
   running_set.insert(empty);
@@ -112,11 +119,14 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
 
   result_set.insert(running_set.begin(), running_set.end());
   result_set.erase(empty);
-  (void) m;
-  (void)indexes;
-  (void)chosen_indexes;
-  (void)workload;
-  return;
+
+
+  // combine all the index configurations and return
+  for (auto i : result_set) {
+    top_indexes.Add(i);
+  }
+
+  return top_indexes;
 }
 
 // GetAdmissibleIndexes()
