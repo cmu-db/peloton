@@ -25,9 +25,10 @@ using namespace parser;
 // Represents a hypothetical index
 class IndexObject {
 public:
-  oid_t db_;
-  oid_t table_;
-  std::vector<oid_t> columns_;
+  oid_t db_oid;
+  oid_t table_oid;
+  std::vector<oid_t> column_oids;
+  IndexConstraintType type;
 };
 
 // Represents a set of hypothetical indexes - An index configuration.
@@ -37,7 +38,9 @@ public:
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   size_t GetIndexCount();
-  std::set<std::shared_ptr<IndexObject>> &GetIndexes();
+  const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
+  const std::string ToString() const;
+  bool operator==(const IndexConfiguration &obj) const;
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -52,7 +55,7 @@ public:
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }
-  std::vector<SQLStatement*> &GetQueries() {
+  const std::vector<SQLStatement*> &GetQueries() {
     return sql_queries_;
   }
   size_t Size() {

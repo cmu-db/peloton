@@ -12,11 +12,10 @@
 
 #pragma once
 
-#include "index_selection_util.h"
-#include "parser/sql_statement.h"
-#include "catalog/index_catalog.h"
-#include "brain/index_selection_util.h"
 #include "brain/index_selection_context.h"
+#include "brain/index_selection_util.h"
+#include "catalog/index_catalog.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace brain {

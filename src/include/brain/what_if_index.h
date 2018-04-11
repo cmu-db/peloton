@@ -55,6 +55,9 @@ class WhatIfIndex {
                               optimizer::OptimizerMetadata &md);
   static void GetTablesUsed(parser::SQLStatement *statement,
                             std::vector<std::string> &table_names);
+  static std::shared_ptr<catalog::IndexCatalogObject>
+          CreateIndexCatalogObject(IndexObject *obj);
+  static unsigned long index_seq_no;
 };
 
 }  // namespace brain

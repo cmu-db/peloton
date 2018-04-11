@@ -145,7 +145,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 // GetOptimizedQueryTree()
 // Return an optimized physical query tree for the given parse tree along
 // with the cost.
-std::unique_ptr<OptimizerPlanInfo> Optimizer::PerformOptimization(
+std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
     parser::SQLStatement *parsed_statement,
     concurrency::TransactionContext *txn) {
   metadata_.txn = txn;
