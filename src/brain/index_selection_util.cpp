@@ -16,6 +16,10 @@
 namespace peloton {
 namespace brain {
 
+//===--------------------------------------------------------------------===//
+// IndexConfiguration
+//===--------------------------------------------------------------------===//
+
 IndexConfiguration::IndexConfiguration() {}
 
 void IndexConfiguration::Add(IndexConfiguration &config) {
@@ -33,8 +37,36 @@ size_t IndexConfiguration::GetIndexCount() {
   return indexes_.size();
 }
 
-std::set<std::shared_ptr<IndexObject>>& IndexConfiguration::GetIndexes() {
+const std::set<std::shared_ptr<IndexObject>>& IndexConfiguration::GetIndexes() const {
   return indexes_;
+}
+
+const std::string IndexConfiguration::ToString() const {
+  std::stringstream str_stream;
+  for (auto index: indexes_) {
+    // str_stream << index->ToString() << " ";
+  }
+  return str_stream.str();
+}
+
+bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
+  auto config_indexes = config.GetIndexes();
+  if(config_indexes.size() != indexes_.size()) return false;
+  for (uint i = 0; i < indexes_.size(); i++) {
+    // if(indexes_[i] != config_indexes[i]) return false;
+  }
+  return true;
+}
+
+void IndexConfiguration::Crossproduct(const IndexConfiguration &single_column_indexes) {
+  IndexConfiguration result;
+  auto columns = single_column_indexes.GetIndexes();
+  for (auto index : indexes_) {
+    for (auto column : columns) {
+      result.insert(index->merge(column));
+    }
+  }
+  return result;
 }
 
 //===--------------------------------------------------------------------===//
@@ -51,12 +83,11 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
   return nullptr;
 }
 
-std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
+void IndexObjectPool::PutIndexObject(IndexObject &obj) {
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
   auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
   map_[*index_copy] = index_s_ptr;
-  return index_s_ptr;
 }
 
 }  // namespace brain

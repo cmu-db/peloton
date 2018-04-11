@@ -33,13 +33,6 @@ public:
   std::vector<oid_t> column_oids;
   IndexConstraintType type;
 
-  IndexObject() {};
-
-  IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid):
-    db_oid(db_oid), table_oid(table_oid) {
-    column_oids.push_back(col_oid);
-  }
-
   // To string for performing hash.
   const std::string toString() const {
     std::stringstream str_stream;
@@ -57,6 +50,10 @@ public:
     }
     return false;
   }
+
+  std::shared_ptr<IndexObject> merge(std::shared_ptr<IndexObject>) {
+    
+  }
 };
 
 struct IndexObjectHasher {
@@ -72,7 +69,10 @@ public:
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   size_t GetIndexCount();
-  std::set<std::shared_ptr<IndexObject>> &GetIndexes();
+  const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
+  const std::string ToString() const;
+  bool operator==(const IndexConfiguration &obj) const;
+  void Crossproduct(const IndexConfiguration &single_column_indexes);
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -87,7 +87,7 @@ public:
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }
-  std::vector<SQLStatement*> &GetQueries() {
+  const std::vector<SQLStatement*> &GetQueries() {
     return sql_queries_;
   }
   size_t Size() {
@@ -99,7 +99,7 @@ class IndexObjectPool {
 public:
   IndexObjectPool();
   std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
-  std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
+  void PutIndexObject(IndexObject &obj);
 private:
   std::unordered_map<IndexObject, std::shared_ptr<IndexObject>, IndexObjectHasher> map_;
 };
