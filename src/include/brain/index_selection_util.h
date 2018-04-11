@@ -51,7 +51,7 @@ public:
 
   bool operator==(const IndexObject &obj) const;
 
-  bool IsCompatible(std::shared_ptr<IndexObject> index);
+  bool IsCompatible(std::shared_ptr<IndexObject> index) const;
   IndexObject Merge(std::shared_ptr<IndexObject> index);
 };
 
@@ -65,7 +65,7 @@ struct IndexObjectHasher {
 class IndexConfiguration {
 public:
   IndexConfiguration();
-  void Add(IndexConfiguration &config);
+  void Merge(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   size_t GetIndexCount();
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
@@ -82,6 +82,8 @@ private:
   std::vector<SQLStatement*> sql_queries_;
 public:
   Workload() {}
+  Workload(SQLStatement *query) : sql_queries_({query}) {
+  }
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }

@@ -47,6 +47,7 @@ private:
 
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>, double, KeyHasher> memo_;
 
+  unsigned long num_iterations;
   IndexObjectPool pool;
 };
 

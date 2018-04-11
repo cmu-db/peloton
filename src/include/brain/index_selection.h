@@ -27,10 +27,12 @@ namespace brain {
 class IndexSelection {
  public:
   IndexSelection(Workload &query_set);
-  std::unique_ptr<IndexConfiguration> GetBestIndexes();
+  void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
 private:
+  void GenCandidateIndexes(IndexConfiguration &config, IndexConfiguration &admissible_config,
+                           Workload &workload);
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload) const;
   double ComputeCost(IndexConfiguration &config, Workload &workload);

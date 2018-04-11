@@ -37,12 +37,11 @@ bool IndexObject::operator==(const IndexObject &obj) const {
   return false;
 }
 
-bool IndexObject::IsCompatible(std::shared_ptr<IndexObject> index) {
+bool IndexObject::IsCompatible(std::shared_ptr<IndexObject> index) const {
   return (db_oid == index->db_oid) && (table_oid == index->table_oid);
 }
 
 IndexObject IndexObject::Merge(std::shared_ptr<IndexObject> index) {
-  (void) index;
   IndexObject result;
   result.db_oid = db_oid;
   result.table_oid = table_oid;
@@ -59,7 +58,7 @@ IndexObject IndexObject::Merge(std::shared_ptr<IndexObject> index) {
 
 IndexConfiguration::IndexConfiguration() {}
 
-void IndexConfiguration::Add(IndexConfiguration &config) {
+void IndexConfiguration::Merge(IndexConfiguration &config) {
   auto indexes = config.GetIndexes();
   for (auto it = indexes.begin(); it != indexes.end(); it++) {
     indexes_.insert(*it);
