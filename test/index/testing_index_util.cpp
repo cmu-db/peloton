@@ -118,6 +118,7 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
+  LOG_DEBUG("Checking key0's value: %lu", location_ptrs.size());
   EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
@@ -127,6 +128,7 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
 
   index->ScanKey(key1.get(), location_ptrs);
+  LOG_DEBUG("Checking key1's value: %lu", location_ptrs.size());
   EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
