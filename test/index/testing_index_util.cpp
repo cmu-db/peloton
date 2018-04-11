@@ -112,7 +112,7 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   LaunchParallelTest(1, TestingIndexUtil::InsertHelper, index.get(), pool,
                      scale_factor);
 
-  // Checks
+  // Check basic insert (key0 only has 1 value, so it is not sufficient)
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   key0->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
@@ -120,6 +120,17 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
+
+  // This tests non-unqie key. If scan returns more than 1 then it should fail
+  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
+  key1->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
+
+  index->ScanKey(key1.get(), location_ptrs);
+  EXPECT_EQ(1, location_ptrs.size());
+  location_ptrs.clear();
+
+  return;
 }
 
 void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
