@@ -127,11 +127,6 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
     const std::vector<type::TypeId> &proc_arg_types,
     concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
-//  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-//  std::vector<type::Value> values;
-//  values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
-//  values.push_back(type::ValueFactory::GetVarcharValue(
-//      TypeIdArrayToString(proc_arg_types)).Copy());
 
   expression::AbstractExpression *proc_name_expr = expression::ExpressionUtil::TupleValueFactory(
       type::TypeId::VARCHAR, 0, ColumnId::PRONAME);
