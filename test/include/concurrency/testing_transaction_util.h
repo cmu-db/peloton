@@ -68,6 +68,7 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "catalog/catalog_defaults.h"
+#include "catalog/catalog.h"
 #include "common/internal_types.h"
 #pragma once
 
@@ -107,7 +108,9 @@ enum txn_op_t {
   TXN_OP_ABORT,
   TXN_OP_COMMIT,
   TXN_OP_READ_STORE,
-  TXN_OP_UPDATE_BY_VALUE
+  TXN_OP_UPDATE_BY_VALUE,
+  TXN_OP_CREATE_INDEX,
+  TXN_OP_DROP_INDEX
 };
 
 #define TXN_STORED_VALUE -10000
@@ -119,6 +122,12 @@ class TestingTransactionUtil {
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
   static storage::DataTable *CreateTable(
+      int num_key = 10, std::string table_name = "TEST_TABLE",
+      oid_t database_id = CATALOG_DATABASE_OID,
+      oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
+      bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
+
+  static storage::DataTable *CreateTableWithoutIndex(
       int num_key = 10, std::string table_name = "TEST_TABLE",
       oid_t database_id = CATALOG_DATABASE_OID,
       oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
@@ -175,6 +184,8 @@ struct TransactionSchedule {
   ResultType txn_result;
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
+  std::vector<int> create_index_results;
+  std::vector<int> drop_index_results;
   int stored_value;
   int schedule_id;
   bool declared_ro;
@@ -241,7 +252,8 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        txn = txn_manager->BeginTransaction(IsolationLevelType::READ_ONLY);
+        // txn = txn_manager->BeginTransaction(IsolationLevelType::READ_ONLY);
+        txn = txn_manager->BeginTransaction(IsolationLevelType::READ_COMMITTED);
       } else {
         txn = txn_manager->BeginTransaction();
       }
@@ -324,6 +336,32 @@ class TransactionThread {
         schedule->stored_value = result + value;
         break;
       }
+      case TXN_OP_CREATE_INDEX: {
+        auto catalog = catalog::Catalog::GetInstance();
+        LOG_INFO("txn isolation level = %d", txn->GetIsolationLevel());
+        LOG_INFO("database_id = %d", database_id);
+        LOG_INFO("relation_id = %d", relation_id);
+        auto tmp = catalog->CreateIndex(database_id, relation_id, key_attrs,
+                                                    index_name1, IndexType::BWTREE,
+                                                    IndexConstraintType::DEFAULT, false,
+                                                    txn, true);
+        if (tmp == ResultType::SUCCESS)
+          schedule->create_index_results.push_back(1);
+        else
+          schedule->create_index_results.push_back(0);
+        LOG_INFO("Txn %d Create Index", schedule->schedule_id);
+        break;
+      }
+      case TXN_OP_DROP_INDEX: {
+        auto catalog = catalog::Catalog::GetInstance();
+        auto tmp =  catalog->DropIndex(index_name1, txn);
+        if (tmp == ResultType::SUCCESS)
+          schedule->drop_index_results.push_back(1);
+        else
+          schedule->drop_index_results.push_back(0);
+        LOG_INFO("Txn %d Drop Index", schedule->schedule_id);
+        break;
+      }
     }
 
     if (txn != NULL && txn->GetResult() == ResultType::FAILURE) {
@@ -341,6 +379,12 @@ class TransactionThread {
   int cur_seq;
   bool go;
   concurrency::TransactionContext *txn;
+
+private:
+  const std::string index_name1 = "transaction_index_test_index1";
+  const oid_t database_id = CATALOG_DATABASE_OID;
+  const oid_t relation_id = TEST_TABLE_OID;
+  const std::vector<oid_t> key_attrs = {0};
 };
 
 // Transaction scheduler, to make life easier for writing txn test
@@ -433,6 +477,15 @@ class TransactionScheduler {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
     sequence[time++] = cur_txn_id;
   }
+  void CreateIndex() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_CREATE_INDEX, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void DropIndex() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DROP_INDEX, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+
   void UpdateByValue(int old_value, int new_value, bool is_for_update = false) {
     schedules[cur_txn_id].operations.emplace_back(
         TXN_OP_UPDATE_BY_VALUE, old_value, new_value, is_for_update);

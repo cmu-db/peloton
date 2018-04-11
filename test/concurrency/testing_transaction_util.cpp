@@ -13,6 +13,7 @@
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
+#include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
@@ -211,6 +212,52 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
   return table;
 }
+
+storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
+    int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
+    UNUSED_ATTRIBUTE oid_t index_oid, UNUSED_ATTRIBUTE bool need_primary_index, size_t tuples_per_tilegroup) {
+
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
+  auto value_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "value", true);
+
+  // Create the table
+  catalog::Schema *table_schema =
+      new catalog::Schema({id_column, value_column});
+
+  auto table = storage::TableFactory::GetDataTable(
+      database_id, relation_id, table_schema, table_name, tuples_per_tilegroup,
+      true, false);
+
+  // add this table to current database
+  auto catalog = catalog::Catalog::GetInstance();
+  LOG_INFO("the database_id is %d", database_id);
+  storage::Database *db = nullptr;
+  try {
+    db =
+        storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
+  } catch (CatalogException &e) {
+    LOG_TRACE("Can't find database %d! ", database_id);
+    return nullptr;
+  }
+  PL_ASSERT(db);
+  db->AddTable(table);
+
+  // Insert tuple
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  for (int i = 0; i < num_key; i++) {
+    ExecuteInsert(txn, table, i, 0);
+  }
+  // insert table
+  txn_manager.CommitTransaction(txn);
+
+  return table;
+}
+
 
 std::unique_ptr<const planner::ProjectInfo>
 TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
