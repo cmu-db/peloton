@@ -22,8 +22,7 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 class IndexSelectionContext {
 public:
-
-private:
+  IndexSelectionContext();
   IndexObjectPool pool;
 };
 

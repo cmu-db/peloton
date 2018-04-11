@@ -11,15 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
-#include "brain/what_if_index.h"
 #include <include/parser/statements.h>
-#include "common/logger.h"
 
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) {
-  query_set_ = query_set;
+IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) :
+  query_set_(query_set) {
 }
 
 std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
@@ -43,7 +41,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
     IndexConfiguration Ci;
     Enumerate(Ai, Ci, Wi);
 
-    // Add the 'Ci' to the union Indexconfiguration set 'C'
+    // Add the 'Ci' to the union Index Configuration set 'C'
     C->Add(Ci);
   }
   return C;
@@ -123,7 +121,7 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
   auto expr_type = where_expr->GetExpressionType();
   const expression::AbstractExpression *left_child;
   const expression::AbstractExpression *right_child;
-  expression::TupleValueExpression *tuple_child;
+  const expression::TupleValueExpression *tuple_child;
 
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
@@ -148,12 +146,18 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       right_child = where_expr->GetChild(1);
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        tuple_child = (expression::TupleValueExpression *)(left_child);
+        assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression *)(right_child);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (right_child);
       }
-      (void) tuple_child;
+
+      if (!tuple_child->GetIsBound()) {
+        LOG_INFO("Query is not bound");
+        assert(false);
+      }
+      IndexObjectPoolInsertHelper(tuple_child);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
@@ -176,10 +180,8 @@ void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescript
   auto &columns = group_expr->columns;
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
-    // TODO
-    // config.AddIndexObj(tuple_value->GetColumnName());
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value);
   }
   (void) config;
 }
@@ -189,30 +191,23 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   auto &exprs = order_expr->exprs;
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value);
   }
   (void) config;
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
-  double cost = 0.0;
-  (void) config;
-  (void) workload;
-  auto queries = workload.GetQueries();
-  for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
-    if (context_.memo_.find(state) != context_.memo_.end()) {
-      cost += context_.memo_[state];
-    } else {
-      auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
-      context_.memo_[state] = result->cost;
-      cost += result->cost;
-    }
-  }
-  return cost;
-}
+void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col) {
+  auto db_oid = std::get<0>(tuple_col->GetBoundOid());
+  auto table_oid = std::get<1>(tuple_col->GetBoundOid());
+  auto col_oid = std::get<2>(tuple_col->GetBoundOid());
 
+  // Add the object to the pool.
+  IndexObject iobj(db_oid, table_oid, col_oid);
+  if (!context_.pool.GetIndexObject(iobj)) {
+    context_.pool.PutIndexObject(iobj);
+  }
+}
 
 }  // namespace brain
 }  // namespace peloton
