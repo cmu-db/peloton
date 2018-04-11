@@ -1000,19 +1000,6 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
     // Change column name in the global schema
     schema->ChangeColumnName(columnId, names[0]);
 
-    // TODO: verify do we really need doing so
-    // Modify all the tiles within the Data Table
-    /*
-    for (oid_t i = 0; i < table->GetTileGroupCount(); i++) {
-      auto tile_group = table->GetTileGroup(i);
-      for (oid_t j = 0; j < tile_group->GetNextTupleSlot(); j++) {
-        // Change schema in the tiles
-        auto tile = tile_group->GetTile(j);
-        tile->ChangeColumnName(columnId, names[0]);
-      }
-    }
-    */
-
     // Change cached ColumnCatalog
     oid_t table_oid = Catalog::GetInstance()
                           ->GetTableObject(database_name, table_name, txn)
