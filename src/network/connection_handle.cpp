@@ -560,6 +560,9 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
+  // Drop all the temporary tables for the current session
+  traffic_cop_.DropTempTables();
+
   while (true) {
     int status = close(sock_fd_);
     if (status < 0) {
@@ -569,8 +572,7 @@ Transition ConnectionHandle::CloseSocket() {
         continue;
       }
     }
-    //drop all the temporary table.
-    traffic_cop_.DropTempTables();
+    
     LOG_DEBUG("Already Closed the connection %d", sock_fd_);
     return Transition::NONE;
   }
