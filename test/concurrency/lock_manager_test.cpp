@@ -24,7 +24,7 @@ namespace test {
 class LockManagerTests : public PelotonTest {};
 
 /**
- * @brief Test basic functionalities of lock manager
+ * @brief Test basic functionality of lock manager
  */
 TEST_F(LockManagerTests, FunctionalityTest){
   // Initialize lock
@@ -42,6 +42,9 @@ TEST_F(LockManagerTests, FunctionalityTest){
   EXPECT_TRUE(result3);
 }
 
+/**
+ * @brief Test shared lock behaviour
+ */
 TEST_F(LockManagerTests, LockSharedTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
@@ -64,6 +67,9 @@ TEST_F(LockManagerTests, LockSharedTest){
   EXPECT_TRUE(result5);
 }
 
+/**
+ * @brief Test lock upgrade/downgrade behaviour
+ */
 TEST_F(LockManagerTests, LockChangeTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
@@ -92,6 +98,9 @@ TEST_F(LockManagerTests, LockChangeTest){
   EXPECT_TRUE(result7);
 }
 
+/**
+ * @brief Test double create
+ */
 TEST_F(LockManagerTests, DoubleCreateTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
@@ -105,6 +114,9 @@ TEST_F(LockManagerTests, DoubleCreateTest){
   EXPECT_TRUE(result2);
 }
 
+/**
+ * @brief Test double remove
+ */
 TEST_F(LockManagerTests, DoubleRemoveTest){
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();

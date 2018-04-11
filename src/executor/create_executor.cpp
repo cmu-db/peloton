@@ -242,7 +242,6 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   bool lock_success = lm->LockExclusive(table_oid);
   if (!lock_success){
     LOG_TRACE("Cannot obtain lock for the table, abort!");
-    return true;
   }
 
   // Create index in the catalog
@@ -254,7 +253,6 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   bool unlock_success = lm->UnlockExclusive(table_oid);
   if (!unlock_success){
     LOG_TRACE("Cannot unlock the table, abort!");
-    return true;
   }
   txn->SetResult(result);
 
