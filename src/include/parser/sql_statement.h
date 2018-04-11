@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "catalog/catalog_defaults.h"
 #include "common/internal_types.h"
 #include "common/macros.h"
 #include "common/printable.h"
@@ -35,7 +36,7 @@ struct TableInfo {
 
   std::string database_name;
 
-  std::string session_namespace;
+  std::string session_namespace = DEFAULT_NAMESPACE;
 
   std::string table_namespace;
 };
