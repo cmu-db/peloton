@@ -65,6 +65,15 @@ TEST_F(ParserTests, BasicTest) {
       "CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, "
       "grade DOUBLE)");
 
+  // CREATE temporary table
+  queries.push_back("CREATE TEMP TABLE t1(id INT);");
+  queries.push_back("CREATE TEMPORARY TABLE t1(id INT);");
+  queries.push_back("CREATE GLOBAL TEMP TABLE t1(id INT);");
+  queries.push_back("CREATE LOCAL TEMP TABLE t1(id INT);");
+  queries.push_back("CREATE TEMP TABLE t1(id INT) ON COMMIT PRESERVE ROWS;");
+  queries.push_back("CREATE TEMP TABLE t1(id INT) ON COMMIT DELETE ROWS;");
+  queries.push_back("CREATE TEMP TABLE t1(id INT) ON COMMIT DROP;");
+
   // Multiple statements
   queries.push_back(
       "CREATE TABLE students (name TEXT, student_number INTEGER); SELECT * "
