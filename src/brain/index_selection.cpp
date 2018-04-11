@@ -13,6 +13,10 @@
 #include "brain/index_selection.h"
 #include "brain/what_if_index.h"
 #include <include/parser/statements.h>
+#include <include/parser/statements.h>
+#include "common/logger.h"
+#include <algorithm>
+#include <set>
 
 namespace peloton {
 namespace brain {
@@ -48,13 +52,67 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   return C;
 }
 
-// TODO: [Siva]
+
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
 void IndexSelection::Enumerate(IndexConfiguration &indexes,
                                IndexConfiguration &chosen_indexes,
                                Workload &workload) {
+
+  ExhaustiveEnumeration(indexes, chosen_indexes, workload);
+
+
+}
+
+
+struct Comp
+{
+   Comp(Workload &workload) {this->w = &workload;}
+   bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2)
+   {
+
+       // TODO Call CostModel::GetCost(s1, w);
+       return s1.GetIndexCount() < s2.GetIndexCount();
+   }
+
+   Workload *w;
+};
+
+void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
+                               IndexConfiguration &chosen_indexes,
+                               Workload &workload) {
+  unsigned long m = 2;
+
+  std::set<IndexConfiguration, Comp> running_set(workload);
+  std::set<IndexConfiguration, Comp> temp_set(workload);
+  std::set<IndexConfiguration, Comp> result_set(workload);
+  IndexConfiguration new_element;
+
+  IndexConfiguration empty;
+  running_set.insert(empty);
+
+
+  for (auto i : indexes.GetIndexes()) {
+    temp_set = running_set;
+
+    for(auto t : temp_set) {
+      new_element = t;
+      new_element.AddIndexObject(i);
+
+      if(new_element.GetIndexCount() >= m) {
+        result_set.insert(new_element);
+      } else {
+        running_set.insert(new_element);
+      }
+    }
+
+  }
+
+
+  result_set.insert(running_set.begin(), running_set.end());
+  result_set.erase(empty);
+  (void) m;
   (void)indexes;
   (void)chosen_indexes;
   (void)workload;

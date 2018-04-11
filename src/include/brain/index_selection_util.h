@@ -77,7 +77,7 @@ public:
   IndexConfiguration();
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
-  size_t GetIndexCount();
+  size_t GetIndexCount() const;
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;

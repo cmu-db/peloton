@@ -17,13 +17,14 @@
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
 #include "parser/sql_statement.h"
-
+#include <set>
 namespace peloton {
 namespace brain {
 
 // TODO: Remove these
 using namespace parser;
 using namespace catalog;
+
 
 //===--------------------------------------------------------------------===//
 // IndexSelection
@@ -32,15 +33,23 @@ class IndexSelection {
  public:
   IndexSelection(Workload &query_set);
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
-  void GetAdmissibleIndexes(SQLStatement *query,
-                            IndexConfiguration &indexes);
+
 private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
+
+
+  void ExhaustiveEnumeration(IndexConfiguration &indexes,
+                 IndexConfiguration &picked_indexes,
+                      Workload &workload);
+
   // Admissible index selection related
+  void GetAdmissibleIndexes(SQLStatement *query,
+                            IndexConfiguration &indexes);
+
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                  IndexConfiguration &config);
   void IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
