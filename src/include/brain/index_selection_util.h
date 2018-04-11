@@ -14,8 +14,11 @@
 
 #include <vector>
 #include <set>
+#include <sstream>
+#include <string.h>
 #include "catalog/index_catalog.h"
 #include "parser/sql_statement.h"
+
 
 namespace peloton {
 namespace brain {
@@ -29,6 +32,30 @@ public:
   oid_t table_oid;
   std::vector<oid_t> column_oids;
   IndexConstraintType type;
+
+  // To string for performing hash.
+  const std::string toString() const {
+    std::stringstream str_stream;
+    str_stream << db_oid << table_oid;
+    for (auto col: column_oids) {
+      str_stream << col;
+    }
+    return str_stream.str();
+  }
+
+  bool operator==(const IndexObject &obj) const {
+    if (db_oid == obj.db_oid && table_oid == obj.table_oid
+        && column_oids == obj.column_oids) {
+      return true;
+    }
+    return false;
+  }
+};
+
+struct IndexObjectHasher {
+  size_t operator()(const IndexObject &obj) const {
+    return std::hash<std::string>()(obj.toString());
+  }
 };
 
 // Represents a set of hypothetical indexes - An index configuration.
@@ -61,6 +88,15 @@ public:
   size_t Size() {
     return sql_queries_.size();
   }
+};
+
+class IndexObjectPool {
+public:
+  IndexObjectPool();
+  std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
+  void PutIndexObject(IndexObject &obj);
+private:
+  std::unordered_map<IndexObject, std::shared_ptr<IndexObject>, IndexObjectHasher> map_;
 };
 
 }  // namespace brain
