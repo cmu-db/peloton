@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/group_expression.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -87,8 +87,14 @@ hash_t GroupExpression::Hash() const {
 bool GroupExpression::operator==(const GroupExpression &r) {
   bool eq = (op == r.Op());
 
-  for (size_t i = 0; i < child_groups.size(); ++i) {
-    eq = eq && (child_groups[i] == r.child_groups[i]);
+  auto left_groups = child_groups;
+  auto right_groups = r.child_groups;
+
+  std::sort(left_groups.begin(), left_groups.end());
+  std::sort(right_groups.begin(), right_groups.end());
+
+  for (size_t i = 0; i < left_groups.size(); ++i) {
+    eq = eq && (left_groups[i] == right_groups[i]);
   }
 
   return eq;
