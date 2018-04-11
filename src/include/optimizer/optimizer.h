@@ -17,6 +17,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
+#include "catalog/catalog_defaults.h"
 
 namespace peloton {
 
@@ -74,8 +75,8 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
-      const std::string table_namespace,
-      concurrency::TransactionContext *txn) override;
+      concurrency::TransactionContext *txn,
+      const std::string table_namespace=DEFAULT_NAMESPACE) override;
 
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);

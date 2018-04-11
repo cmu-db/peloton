@@ -313,8 +313,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   try {
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), default_database_name_,
-        session_namespace_,
-        tcop_txn_state_.top().first);
+        tcop_txn_state_.top().first,
+        session_namespace_);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -583,8 +583,8 @@ ResultType TrafficCop::ExecuteStatement(
           // to increase coherence
           auto plan = optimizer_->BuildPelotonPlanTree(
               statement->GetStmtParseTreeList(), default_database_name_,
-              session_namespace_,
-              tcop_txn_state_.top().first);
+              tcop_txn_state_.top().first,
+              session_namespace_);
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }

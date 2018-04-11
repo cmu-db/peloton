@@ -94,8 +94,8 @@ void Optimizer::OptimizeLoop(int root_group_id,
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
     const std::string default_database_name,
-    const std::string table_namespace,
-    concurrency::TransactionContext *txn) {
+    concurrency::TransactionContext *txn,
+    const std::string table_namespace) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
