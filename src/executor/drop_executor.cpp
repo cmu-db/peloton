@@ -117,10 +117,6 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();
 
-  oid_t table_id = catalog::Catalog::GetInstance()
-      ->GetTableObject(database_name, table_name, txn)
-      ->GetTableOid();
-
   if (node.IsMissing()) {
     try {
       auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
@@ -137,6 +133,14 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
+    oid_t table_id = catalog::Catalog::GetInstance()
+        ->GetTableObject(database_name, table_name, txn)
+        ->GetTableOid();
+
+    // Remove table lock
+    concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+    lm->RemoveLock(table_id);
+
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
@@ -145,9 +149,6 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
 
-  // Remove table lock
-  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
-  lm->RemoveLock(table_id);
   return false;
 }
 
