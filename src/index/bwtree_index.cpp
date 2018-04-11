@@ -16,7 +16,7 @@
 #include "index/scan_optimizer.h"
 #include "statistics/stats_aggregator.h"
 #include "settings/settings_manager.h"
-
+ 
 namespace peloton {
 namespace index {
 
