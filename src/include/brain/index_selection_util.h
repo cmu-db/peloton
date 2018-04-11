@@ -43,7 +43,7 @@ public:
   IndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids):
     db_oid(db_oid), table_oid(table_oid) {
     for (auto col : col_oids)
-      column_oids.push_back(col);
+      column_oids.insert(col);
   }
 
   // To string for performing hash.
@@ -68,7 +68,9 @@ public:
   IndexConfiguration(std::set<std::shared_ptr<IndexObject>> index_obj_set) {indexes_ = index_obj_set;};
   void Add(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
-  size_t GetIndexCount() const;
+  void RemoveIndexObject(std::shared_ptr<IndexObject> index_info);
+
+    size_t GetIndexCount() const;
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;

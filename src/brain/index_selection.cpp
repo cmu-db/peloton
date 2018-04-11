@@ -44,7 +44,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
 
     // Get candidate indexes 'Ci' for the workload.
     IndexConfiguration Ci;
-    Enumerate(Ai, Ci, Wi);
+    Ci = Enumerate(Ai, Wi, 4);
 
     // Add the 'Ci' to the union Index Configuration set 'C'
     C->Add(Ci);
@@ -56,37 +56,71 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-void IndexSelection::Enumerate(IndexConfiguration &indexes,
-                               IndexConfiguration &chosen_indexes,
-                               Workload &workload) {
+IndexConfiguration& IndexSelection::Enumerate(IndexConfiguration &indexes,
+                               Workload &workload, size_t k) {
 
   auto top_indexes = ExhaustiveEnumeration(indexes, workload);
 
   auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
-  (void)chosen_indexes;
+
+  return GreedySearch(top_indexes, remaining_indexes, workload, k);
 
 }
 
 
-void IndexSelection::GreedySearch(IndexConfiguration &indexes,
-                                           IndexConfiguration &chosen_indexes,
-                                           Workload &workload) {
+IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
+                                           IndexConfiguration &remaining_indexes,
+                                           Workload &workload, size_t k) {
 
+  size_t current_index_count = getMinEnumerateCount();
 
-  (void)indexes;
-  (void)chosen_indexes;
-  (void)workload;
+  if(current_index_count >= k)
+    return indexes;
 
+  double global_min_cost = GetCost(indexes, workload);
+  double cur_min_cost = global_min_cost;
+  double cur_cost;
+  std::shared_ptr<IndexObject> best_index;
+
+  while(current_index_count < k) {
+    auto original_indexes = indexes;
+    for (auto i : remaining_indexes.GetIndexes()) {
+      indexes = original_indexes;
+      indexes.AddIndexObject(i);
+      cur_cost = GetCost(indexes, workload);
+      if (cur_cost < cur_min_cost) {
+        cur_min_cost = cur_cost;
+        best_index = i;
+      }
+    }
+    if(cur_min_cost < global_min_cost) {
+      indexes.AddIndexObject(best_index);
+      remaining_indexes.RemoveIndexObject(best_index);
+      current_index_count++;
+      global_min_cost = cur_min_cost;
+
+      if(remaining_indexes.GetIndexCount() == 0) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  return indexes;
 }
 
 IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes) {
   return (indexes - top_indexes);
 }
 
+unsigned long IndexSelection::getMinEnumerateCount() {
+  return context_.min_enumerate_count_;
+}
 
 IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
                                Workload &workload) {
-  unsigned long m = 2;
+  size_t m = getMinEnumerateCount();
 
   assert(m <= indexes.GetIndexCount());
 
@@ -121,7 +155,7 @@ IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &ind
   result_set.erase(empty);
 
 
-  // combine all the index configurations and return
+  // combine all the index configurations and return top m configurations
   for (auto i : result_set) {
     top_indexes.Add(i);
   }

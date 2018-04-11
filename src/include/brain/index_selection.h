@@ -52,20 +52,17 @@ class IndexSelection {
 private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload);
-  void Enumerate(IndexConfiguration &indexes,
-                 IndexConfiguration &picked_indexes,
-                      Workload &workload);
+  IndexConfiguration& Enumerate(IndexConfiguration &indexes,
+                      Workload &workload, size_t k);
 
 
-  // Configuration Enumeration Method
+  // Configuration Enumeration related
+  unsigned long getMinEnumerateCount();
   IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes, Workload &workload);
-
   IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes);
-
-
-    void GreedySearch(IndexConfiguration &indexes,
+  IndexConfiguration& GreedySearch(IndexConfiguration &indexes,
                              IndexConfiguration &picked_indexes,
-                             Workload &workload);
+                             Workload &workload, size_t k);
 
   // Admissible index selection related
   void GetAdmissibleIndexes(SQLStatement *query,

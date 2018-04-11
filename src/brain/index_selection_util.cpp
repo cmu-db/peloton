@@ -66,6 +66,11 @@ void IndexConfiguration::Add(IndexConfiguration &config) {
   }
 }
 
+void IndexConfiguration::RemoveIndexObject(std::shared_ptr<IndexObject> index_info) {
+    indexes_.erase(index_info);
+}
+
+
 void IndexConfiguration::AddIndexObject(std::shared_ptr<IndexObject> index_info) {
   indexes_.insert(index_info);
 }

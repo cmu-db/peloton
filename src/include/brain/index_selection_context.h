@@ -48,6 +48,8 @@ private:
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>, double, KeyHasher> memo_;
 
   IndexObjectPool pool;
+
+  size_t min_enumerate_count_;
 };
 
 }  // namespace brain

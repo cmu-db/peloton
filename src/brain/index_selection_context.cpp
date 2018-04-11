@@ -16,7 +16,7 @@
 namespace peloton {
 namespace brain {
 
-IndexSelectionContext::IndexSelectionContext() {}
+IndexSelectionContext::IndexSelectionContext() {min_enumerate_count_ = 2;}
 
 }  // namespace brain
 }  // namespace peloton
