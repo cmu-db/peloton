@@ -38,7 +38,7 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
       container{false, comparator, equals, hash_func} {
   return;
 }
-
+        
 BWTREE_TEMPLATE_ARGUMENTS
 BWTREE_INDEX_TYPE::~BWTreeIndex() {}
 
