@@ -213,6 +213,9 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
+IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
+  return config.Crossproduct(single_column_indexes);
+}
 
 }  // namespace brain
 }  // namespace peloton

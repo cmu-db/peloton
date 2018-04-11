@@ -50,6 +50,10 @@ public:
     }
     return false;
   }
+
+  std::shared_ptr<IndexObject> merge(std::shared_ptr<IndexObject>) {
+    
+  }
 };
 
 struct IndexObjectHasher {
@@ -68,6 +72,7 @@ public:
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;
+  void Crossproduct(const IndexConfiguration &single_column_indexes);
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;

@@ -58,6 +58,17 @@ bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
   return true;
 }
 
+void IndexConfiguration::Crossproduct(const IndexConfiguration &single_column_indexes) {
+  IndexConfiguration result;
+  auto columns = single_column_indexes.GetIndexes();
+  for (auto index : indexes_) {
+    for (auto column : columns) {
+      result.insert(index->merge(column));
+    }
+  }
+  return result;
+}
+
 //===--------------------------------------------------------------------===//
 // IndexObjectPool
 //===--------------------------------------------------------------------===//
