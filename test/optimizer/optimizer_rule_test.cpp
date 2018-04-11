@@ -73,6 +73,81 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   EXPECT_EQ(output_join->Children()[1], left_get);
 }
 
+TEST_F(OptimizerRuleTests, LeftJoinCommutativeRuleTest) {
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::LEFT));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::RIGHT);
+}
+
+TEST_F(OptimizerRuleTests, RightJoinCommutativeRuleTest) {
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::RIGHT));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::LEFT);
+}
+
+TEST_F(OptimizerRuleTests, OuterJoinCommutativeRuleTest) {
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::OUTER));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::OUTER);
+}
+
 TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   // Start Join Structure: (left JOIN middle) JOIN right
   // End Join Structure: left JOIN (middle JOIN right)
