@@ -103,7 +103,15 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 			LOG_INFO("encoding column %s", schema.GetColumn(i).column_name.c_str());
 			// to for tuple offset
 			for (oid_t to = 0; to < num_tuple_slots; to++) {
-				type::Value curr_val = tile->GetValue(to, i);
+				type::Value curr_old_val = tile->GetValue(to, i);
+				type::Value curr_val;
+				if (curr_old_val.GetTypeId() == type::TypeId::VARBINARY) {
+					curr_val = type::ValueFactory::GetVarbinaryValue((const unsigned char*) curr_old_val.GetData(),
+					    curr_old_val.GetLength(), true);
+				} else {
+					curr_val = type::ValueFactory::GetVarcharValue(curr_old_val.GetData(), curr_old_val.GetLength(),
+							true);
+				}
 				LOG_INFO("%s", curr_val.GetInfo().c_str());
 				// assume the idx take 1 byte
 				char idx_data[1];
