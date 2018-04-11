@@ -13,6 +13,7 @@
 #pragma once
 
 #include "brain/index_selection_context.h"
+#include "expression/tuple_value_expression.h"
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
 #include "parser/sql_statement.h"
@@ -29,15 +30,18 @@ using namespace catalog;
 //===--------------------------------------------------------------------===//
 class IndexSelection {
  public:
-  IndexSelection(std::shared_ptr<Workload> query_set);
+  IndexSelection(Workload &query_set);
   std::unique_ptr<IndexConfiguration> GetBestIndexes();
-
+  void GetAdmissibleIndexes(SQLStatement *query,
+                            IndexConfiguration &indexes);
 private:
+  // Cost evaluation related
+  double GetCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
-  void GetAdmissibleIndexes(SQLStatement *query,
-                            IndexConfiguration &indexes);
+
+  // Admissible index selection related
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                  IndexConfiguration &config);
   void IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &where_expr,
@@ -46,10 +50,10 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
-  double GetCost(IndexConfiguration &config, Workload &workload);
-  IndexConfiguration GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes);
+  void IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                   IndexConfiguration &config);
   // members
-  std::shared_ptr<Workload> query_set_;
+  Workload query_set_;
   IndexSelectionContext context_;
 };
 

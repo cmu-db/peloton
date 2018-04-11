@@ -17,7 +17,7 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(std::shared_ptr<Workload> query_set) :
+IndexSelection::IndexSelection(Workload &query_set) :
   query_set_(query_set) {
 }
 
@@ -29,7 +29,7 @@ std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
   // for these 'Wi'
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
-  auto queries = query_set_->GetQueries();
+  auto queries = query_set_.GetQueries();
   for (auto query : queries) {
     // Get admissible indexes 'Ai'
     IndexConfiguration Ai;
@@ -119,10 +119,14 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
 
 void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                                IndexConfiguration &config) {
+  if (where_expr == nullptr) {
+    LOG_INFO("No Where Clause Found");
+    return;
+  }
   auto expr_type = where_expr->GetExpressionType();
   const expression::AbstractExpression *left_child;
   const expression::AbstractExpression *right_child;
-  expression::TupleValueExpression *tuple_child;
+  const expression::TupleValueExpression *tuple_child;
 
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
@@ -148,12 +152,17 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (left_child);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = (expression::TupleValueExpression*) (right_child);
+        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (right_child);
       }
-      (void) tuple_child;
+
+      if (!tuple_child->GetIsBound()) {
+        LOG_INFO("Query is not bound");
+        assert(false);
+      }
+      IndexObjectPoolInsertHelper(tuple_child, config);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
@@ -173,32 +182,49 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
 
 void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &group_expr,
                                                  IndexConfiguration &config) {
+  if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
+    LOG_INFO("Group by expression not present");
+    return;
+  }
   auto &columns = group_expr->columns;
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
-    // TODO
-    // config.AddIndexObj(tuple_value->GetColumnName());
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
-  (void) config;
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
                                                  IndexConfiguration &config) {
+  if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
+    LOG_INFO("Order by expression not present");
+    return;
+  }
   auto &exprs = order_expr->exprs;
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    //auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
-    //(void) tuple_value;
+    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    IndexObjectPoolInsertHelper(tuple_value, config);
   }
-  (void) config;
+}
+
+void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
+                                                 IndexConfiguration &config) {
+  auto db_oid = std::get<0>(tuple_col->GetBoundOid());
+  auto table_oid = std::get<1>(tuple_col->GetBoundOid());
+  auto col_oid = std::get<2>(tuple_col->GetBoundOid());
+
+  // Add the object to the pool.
+  IndexObject iobj(db_oid, table_oid, col_oid);
+  auto pool_index_obj = context_.pool.GetIndexObject(iobj);
+  if (!pool_index_obj) {
+    pool_index_obj = context_.pool.PutIndexObject(iobj);
+  }
+  config.AddIndexObject(pool_index_obj);
 }
 
 double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
-  (void) config;
-  (void) workload;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
     std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
@@ -211,10 +237,6 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
     }
   }
   return cost;
-}
-
-IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return config.Crossproduct(single_column_indexes);
 }
 
 }  // namespace brain
