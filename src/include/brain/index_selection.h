@@ -32,7 +32,8 @@ class IndexSelection {
                             IndexConfiguration &indexes);
 private:
   // Cost evaluation related
-  double GetCost(IndexConfiguration &config, Workload &workload);
+  double GetCost(IndexConfiguration &config, Workload &workload) const;
+  double ComputeCost(IndexConfiguration &config, Workload &workload);
   void Enumerate(IndexConfiguration &indexes,
                  IndexConfiguration &picked_indexes,
                       Workload &workload);
