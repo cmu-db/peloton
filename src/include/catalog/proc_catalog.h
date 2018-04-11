@@ -41,8 +41,10 @@ class LanguageCatalogObject;
 //===----------------------------------------------------------------------===//
 class ProcCatalogObject {
  public:
-  ProcCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn);
-  ProcCatalogObject(codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn);
+  ProcCatalogObject(executor::LogicalTile *tile,
+                    concurrency::TransactionContext *txn);
+  ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                    concurrency::TransactionContext *txn);
   // Accessors
 
   oid_t GetOid() const { return oid_; }
@@ -80,7 +82,8 @@ class ProcCatalog : public AbstractCatalog {
   ~ProcCatalog();
 
   // Global Singleton
-  static ProcCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static ProcCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API

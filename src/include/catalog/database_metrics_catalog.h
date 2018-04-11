@@ -49,7 +49,8 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
                              oid_t txn_aborted, oid_t time_stamp,
                              type::AbstractPool *pool,
                              concurrency::TransactionContext *txn);
-  bool DeleteDatabaseMetrics(oid_t database_oid, concurrency::TransactionContext *txn);
+  bool DeleteDatabaseMetrics(oid_t database_oid,
+                             concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API

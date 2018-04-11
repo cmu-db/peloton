@@ -26,11 +26,12 @@ LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
     : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
       lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
 
-  LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple tuple)
-      : lang_oid_(tuple.GetValue(0).GetAs<oid_t>()),
-        lang_name_(tuple.GetValue(1).GetAs<const char *>()) {}
+LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple tuple)
+    : lang_oid_(tuple.GetValue(0).GetAs<oid_t>()),
+      lang_name_(tuple.GetValue(1).GetAs<const char *>()) {}
 
-LanguageCatalog &LanguageCatalog::GetInstance(concurrency::TransactionContext *txn) {
+LanguageCatalog &LanguageCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static LanguageCatalog language_catalog{txn};
   return language_catalog;
 }
@@ -83,14 +84,15 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
     oid_t lang_oid, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::OID);
-  expression::AbstractExpression *oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(lang_oid).Copy());
+  expression::AbstractExpression *oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::OID);
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(lang_oid).Copy());
   expression::AbstractExpression *oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
-
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
@@ -109,14 +111,15 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::VARCHAR, 0, ColumnId::LANNAME);
-  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue(lang_name, nullptr).Copy());
+  expression::AbstractExpression *name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::LANNAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(lang_name, nullptr).Copy());
   expression::AbstractExpression *name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, name_expr,
-          name_const_expr);
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);

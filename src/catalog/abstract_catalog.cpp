@@ -247,13 +247,15 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 * @return  Unique pointer of vector of logical tiles
 */
 std::vector<codegen::WrappedTuple>
-AbstractCatalog::GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
-                                      expression::AbstractExpression *predicate,
-                                      concurrency::TransactionContext *txn) const {
+AbstractCatalog::GetResultWithCompiledSeqScan(
+    std::vector<oid_t> column_offsets,
+    expression::AbstractExpression *predicate,
+    concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Create sequential scan
-  auto plan_ptr = std::make_shared<planner::SeqScanPlan>(catalog_table_, predicate, column_offsets);
+  auto plan_ptr = std::make_shared<planner::SeqScanPlan>(
+      catalog_table_, predicate, column_offsets);
   planner::BindingContext scan_context;
   plan_ptr->PerformBinding(scan_context);
 
@@ -269,16 +271,18 @@ AbstractCatalog::GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
   std::unique_ptr<codegen::Query> compiled_query(nullptr);
   cached = (query != nullptr);
-  //LOG_DEBUG("cache %d", cached);
+  // LOG_DEBUG("cache %d", cached);
   // if not cached, compile the query and save it into cache
   if (!cached) {
     compiled_query = codegen::QueryCompiler().Compile(
-        *plan_ptr, executor_context->GetParams().GetQueryParametersMap(), buffer);
+        *plan_ptr, executor_context->GetParams().GetQueryParametersMap(),
+        buffer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
   }
 
-  query->Execute(std::move(executor_context), buffer, [](executor::ExecutionResult result){return result;});
+  query->Execute(std::move(executor_context), buffer,
+                 [](executor::ExecutionResult result) { return result; });
 
   return buffer.GetOutputTuples();
 }

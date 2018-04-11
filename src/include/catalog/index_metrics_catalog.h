@@ -52,7 +52,8 @@ class IndexMetricsCatalog : public AbstractCatalog {
                           int64_t reads, int64_t deletes, int64_t inserts,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteIndexMetrics(oid_t index_oid, concurrency::TransactionContext *txn);
+  bool DeleteIndexMetrics(oid_t index_oid,
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API

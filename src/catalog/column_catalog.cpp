@@ -43,34 +43,29 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
 
+ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple)
+    : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      column_name(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_NAME)
+                      .ToString()),
+      column_id(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_ID)
+                    .GetAs<oid_t>()),
+      column_offset(
+          wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_OFFSET)
+              .GetAs<oid_t>()),
+      column_type(StringToTypeId(
+          wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_TYPE)
+              .ToString())),
+      is_inlined(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_INLINED)
+                     .GetAs<bool>()),
+      is_primary(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_PRIMARY)
+                     .GetAs<bool>()),
+      is_not_null(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_NOT_NULL)
+                      .GetAs<bool>()) {}
 
-    ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple)
-        : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)
-                        .GetAs<oid_t>()),
-          column_name(wrapped_tuple.GetValue( ColumnCatalog::ColumnId::COLUMN_NAME)
-                          .ToString()),
-          column_id(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_ID)
-                        .GetAs<oid_t>()),
-          column_offset(
-              wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_OFFSET)
-                  .GetAs<oid_t>()),
-          column_type(StringToTypeId(
-              wrapped_tuple.GetValue( ColumnCatalog::ColumnId::COLUMN_TYPE)
-                  .ToString())),
-          is_inlined(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_INLINED)
-                         .GetAs<bool>()),
-          is_primary(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_PRIMARY)
-                         .GetAs<bool>()),
-          is_not_null(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_NOT_NULL)
-                          .GetAs<bool>()){}
-
-
-
-
-
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
+ColumnCatalog *ColumnCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static ColumnCatalog column_catalog{pg_catalog, pool, txn};
   return &column_catalog;
 }
@@ -260,25 +255,23 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *tb_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);
-  expression::AbstractExpression *tb_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *tb_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
   expression::AbstractExpression *col_oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, tb_oid_expr,
-          tb_oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
   expression::AbstractExpression *predicate = col_oid_equality_expr;
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   for (auto tuple : result_tuples) {
-
-    auto column_object =
-        std::make_shared<ColumnCatalogObject>(tuple);
+    auto column_object = std::make_shared<ColumnCatalogObject>(tuple);
     table_object->InsertColumnObject(column_object);
-
   }
 
   return table_object->GetColumnObjects();

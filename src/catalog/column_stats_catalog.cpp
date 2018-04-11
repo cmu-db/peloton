@@ -112,9 +112,9 @@ bool ColumnStatsCatalog::InsertColumnStats(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
-                                           oid_t column_id,
-                                           concurrency::TransactionContext *txn) {
+bool ColumnStatsCatalog::DeleteColumnStats(
+    oid_t database_id, oid_t table_id, oid_t column_id,
+    concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -133,38 +133,43 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
        ColumnId::HISTOGRAM_BOUNDS, ColumnId::COLUMN_NAME, ColumnId::HAS_INDEX});
 
-  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::DATABASE_ID);
-  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_id).Copy());
   expression::AbstractExpression *db_oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, db_oid_expr,
-          db_oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
-  expression::AbstractExpression *tb_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::TABLE_ID);
-  expression::AbstractExpression *tb_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_id).Copy());
   expression::AbstractExpression *tb_oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, tb_oid_expr,
-          tb_oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
-  expression::AbstractExpression *col_id_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::COLUMN_ID);
-  expression::AbstractExpression *col_id_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *col_id_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::COLUMN_ID);
+  expression::AbstractExpression *col_id_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(column_id).Copy());
   expression::AbstractExpression *col_oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, col_id_expr,
-          col_id_const_expr);
+          ExpressionType::COMPARE_EQUAL, col_id_expr, col_id_const_expr);
 
-  expression::AbstractExpression *db_and_tb = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, db_oid_equality_expr, tb_oid_equality_expr);
-  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, db_and_tb, col_oid_equality_expr);
-
+  expression::AbstractExpression *db_and_tb =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+          tb_oid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_and_tb, col_oid_equality_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
@@ -199,8 +204,8 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
-    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
-        &column_stats_map) {
+    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
+        column_stats_map) {
   std::vector<oid_t> column_ids(
       {ColumnId::COLUMN_ID, ColumnId::NUM_ROWS, ColumnId::CARDINALITY,
        ColumnId::FRAC_NULL, ColumnId::MOST_COMMON_VALS,

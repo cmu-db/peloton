@@ -69,8 +69,8 @@ bool TableMetricsCatalog::InsertTableMetrics(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool TableMetricsCatalog::DeleteTableMetrics(oid_t table_oid,
-                                             concurrency::TransactionContext *txn) {
+bool TableMetricsCatalog::DeleteTableMetrics(
+    oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;

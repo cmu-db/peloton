@@ -106,9 +106,9 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
-                                             oid_t database_oid,
-                                             concurrency::TransactionContext *txn) {
+bool QueryMetricsCatalog::DeleteQueryMetrics(
+    const std::string &name, oid_t database_oid,
+    concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -145,9 +145,9 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   return param_types;
 }
 
-int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
-                                          oid_t database_oid,
-                                          concurrency::TransactionContext *txn) {
+int64_t QueryMetricsCatalog::GetNumParams(
+    const std::string &name, oid_t database_oid,
+    concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
   oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
   std::vector<type::Value> values;

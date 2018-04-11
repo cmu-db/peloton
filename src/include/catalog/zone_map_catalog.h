@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <map>
@@ -31,7 +30,8 @@ class ZoneMapCatalog : public AbstractCatalog {
   // am sorry to do this. When PelotonMain() becomes a reality, I will
   // fix this for sure.
 
-  static ZoneMapCatalog *GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static ZoneMapCatalog *GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -64,11 +64,7 @@ class ZoneMapCatalog : public AbstractCatalog {
     TYPE = 6
   };
 
-  enum ZoneMapOffset {
-    MINIMUM_OFF = 0, 
-    MAXIMUM_OFF = 1, 
-    TYPE_OFF = 2 
-  };
+  enum ZoneMapOffset { MINIMUM_OFF = 0, MAXIMUM_OFF = 1, TYPE_OFF = 2 };
 
  private:
   ZoneMapCatalog(concurrency::TransactionContext *txn);

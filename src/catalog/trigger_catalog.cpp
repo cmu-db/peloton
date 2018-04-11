@@ -23,7 +23,8 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog &TriggerCatalog::GetInstance(concurrency::TransactionContext *txn) {
+TriggerCatalog &TriggerCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static TriggerCatalog trigger_catalog{txn};
   return trigger_catalog;
 }
@@ -135,26 +136,30 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
                                     concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
 
-  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::VARCHAR, 0, ColumnId::TRIGGER_NAME);
-  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue(trigger_name, nullptr).Copy());
+  expression::AbstractExpression *name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::TRIGGER_NAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(trigger_name, nullptr).Copy());
   expression::AbstractExpression *name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, name_expr,
-          name_const_expr);
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
 
-  expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);
-  expression::AbstractExpression *oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
   expression::AbstractExpression *oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, oid_expr,
-          oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
 
-  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, name_equality_expr, oid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, name_equality_expr,
+          oid_equality_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
@@ -185,33 +190,38 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
-    oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
+    oid_t table_oid, int16_t trigger_type,
+    concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
        ColumnId::FUNCTION_ARGS});
 
-  expression::AbstractExpression *type_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::SMALLINT, 0, ColumnId::TRIGGER_TYPE);
-  expression::AbstractExpression *type_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetSmallIntValue(trigger_type).Copy());
+  expression::AbstractExpression *type_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::SMALLINT, 0,
+                                                    ColumnId::TRIGGER_TYPE);
+  expression::AbstractExpression *type_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetSmallIntValue(trigger_type).Copy());
   expression::AbstractExpression *type_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, type_expr,
-          type_const_expr);
+          ExpressionType::COMPARE_EQUAL, type_expr, type_const_expr);
 
-  expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);
-  expression::AbstractExpression *oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
   expression::AbstractExpression *oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, oid_expr,
-          oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
 
-  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, type_equality_expr, oid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, type_equality_expr,
+          oid_equality_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
@@ -219,20 +229,18 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
   // carefull! the result could be null!
   LOG_INFO("size of the result tiles = %lu", result_tuples.size());
 
-
   // create the trigger list
   std::unique_ptr<trigger::TriggerList> new_trigger_list{
       new trigger::TriggerList()};
 
   for (unsigned int i = 0; i < result_tuples.size(); i++) {
-        // create a new trigger instance
-        trigger::Trigger new_trigger(
-            result_tuples[i].GetValue(0).ToString(), trigger_type,
-            result_tuples[i].GetValue(2).ToString(),
-            result_tuples[i].GetValue(3).ToString(),
-            result_tuples[i].GetValue(1).GetData());
-        new_trigger_list->AddTrigger(new_trigger);
-
+    // create a new trigger instance
+    trigger::Trigger new_trigger(result_tuples[i].GetValue(0).ToString(),
+                                 trigger_type,
+                                 result_tuples[i].GetValue(2).ToString(),
+                                 result_tuples[i].GetValue(3).ToString(),
+                                 result_tuples[i].GetValue(1).GetData());
+    new_trigger_list->AddTrigger(new_trigger);
   }
 
   return new_trigger_list;
@@ -245,14 +253,15 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
        ColumnId::FUNCTION_OID, ColumnId::FUNCTION_ARGS});
-  expression::AbstractExpression *oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::TABLE_OID);
-  expression::AbstractExpression *oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
   expression::AbstractExpression *oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, oid_expr,
-          oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
@@ -260,20 +269,18 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
   // carefull! the result tile could be null!
   LOG_INFO("size of the result tiles = %lu", result_tuples.size());
 
-// create the trigger list
+  // create the trigger list
   std::unique_ptr<trigger::TriggerList> new_trigger_list{
       new trigger::TriggerList()};
 
   for (unsigned int i = 0; i < result_tuples.size(); i++) {
     // create a new trigger instance
-    trigger::Trigger new_trigger(
-        result_tuples[i].GetValue(0).ToString(),
-        result_tuples[i].GetValue(1).GetAs<int16_t>(),
-        result_tuples[i].GetValue(3).ToString(),
-        result_tuples[i].GetValue(4).ToString(),
-        result_tuples[i].GetValue(2).GetData());
+    trigger::Trigger new_trigger(result_tuples[i].GetValue(0).ToString(),
+                                 result_tuples[i].GetValue(1).GetAs<int16_t>(),
+                                 result_tuples[i].GetValue(3).ToString(),
+                                 result_tuples[i].GetValue(4).ToString(),
+                                 result_tuples[i].GetValue(2).GetData());
     new_trigger_list->AddTrigger(new_trigger);
-
   }
 
   return new_trigger_list;

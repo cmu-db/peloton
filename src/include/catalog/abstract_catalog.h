@@ -75,18 +75,17 @@ class AbstractCatalog {
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
-                                        expression::AbstractExpression *predicate,
-                                        concurrency::TransactionContext *txn);
-
-  std::vector<codegen::WrappedTuple>
-  GetResultWithCompiledSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
-                       concurrency::TransactionContext *txn) const;
+                       concurrency::TransactionContext *txn);
+
+  std::vector<codegen::WrappedTuple> GetResultWithCompiledSeqScan(
+      std::vector<oid_t> column_offsets,
+      expression::AbstractExpression *predicate,
+      concurrency::TransactionContext *txn) const;
 
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
                 IndexConstraintType index_constraint);
-
 
   //===--------------------------------------------------------------------===//
   // Members

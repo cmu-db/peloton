@@ -23,7 +23,8 @@
 namespace peloton {
 namespace catalog {
 
-SettingsCatalog &SettingsCatalog::GetInstance(concurrency::TransactionContext *txn) {
+SettingsCatalog &SettingsCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static SettingsCatalog settings_catalog{txn};
   return settings_catalog;
 }
@@ -94,18 +95,19 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string SettingsCatalog::GetSettingValue(const std::string &name,
-                                             concurrency::TransactionContext *txn) {
+std::string SettingsCatalog::GetSettingValue(
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
 
-  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::VARCHAR, 0, ColumnId::NAME);
-  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::NAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
   expression::AbstractExpression *name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, name_expr,
-          name_const_expr);
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
@@ -113,25 +115,24 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-
     config_value = (result_tuples[0]).GetValue(0).ToString();
-
   }
   return config_value;
 }
 
-std::string SettingsCatalog::GetDefaultValue(const std::string &name,
-                                             concurrency::TransactionContext *txn) {
+std::string SettingsCatalog::GetDefaultValue(
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
 
-  expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::VARCHAR, 0, ColumnId::NAME);
-  expression::AbstractExpression *name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::NAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
   expression::AbstractExpression *name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, name_expr,
-          name_const_expr);
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
@@ -139,7 +140,7 @@ std::string SettingsCatalog::GetDefaultValue(const std::string &name,
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-      config_value = result_tuples[0].GetValue(0).ToString();
+    config_value = result_tuples[0].GetValue(0).ToString();
   }
   return config_value;
 }

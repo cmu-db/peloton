@@ -100,9 +100,10 @@ class DatabaseCatalog : public AbstractCatalog {
   ~DatabaseCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                      type::AbstractPool *pool = nullptr,
-                                      concurrency::TransactionContext *txn = nullptr);
+  static DatabaseCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
@@ -110,7 +111,8 @@ class DatabaseCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
-                      type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                      type::AbstractPool *pool,
+                      concurrency::TransactionContext *txn);
   bool DeleteDatabase(oid_t database_oid, concurrency::TransactionContext *txn);
 
  private:

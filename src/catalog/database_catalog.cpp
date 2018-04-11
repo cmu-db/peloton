@@ -27,8 +27,8 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
@@ -38,12 +38,14 @@ DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
       valid_table_objects(false),
       txn(txn) {}
 
-DatabaseCatalogObject::DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
-                                             concurrency::TransactionContext *txn)
-    : database_oid(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      database_name(wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_NAME)
-                        .ToString()),
+DatabaseCatalogObject::DatabaseCatalogObject(
+    codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn)
+    : database_oid(
+          wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)
+              .GetAs<oid_t>()),
+      database_name(
+          wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_NAME)
+              .ToString()),
       table_objects_cache(),
       table_name_cache(),
       valid_table_objects(false),
@@ -209,9 +211,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }
@@ -303,18 +305,18 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
-  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
   expression::AbstractExpression *db_oid_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, db_oid_expr,
-          db_oid_const_expr);
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
   expression::AbstractExpression *predicate = db_oid_equality_expr;
-  auto result_tuples =
-      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+  auto result_tuples = GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   if (result_tuples.size() == 1) {
     auto database_object =
@@ -349,14 +351,15 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *db_name_expr = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::VARCHAR, 0, ColumnId::DATABASE_NAME);
-  expression::AbstractExpression *db_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
+  expression::AbstractExpression *db_name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::DATABASE_NAME);
+  expression::AbstractExpression *db_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
   expression::AbstractExpression *db_name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
-          ExpressionType::COMPARE_EQUAL, db_name_expr,
-          db_name_const_expr);
+          ExpressionType::COMPARE_EQUAL, db_name_expr, db_name_const_expr);
 
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, db_name_equality_expr, txn);
@@ -367,7 +370,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     // insert into cache
     bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
     PELOTON_ASSERT(success == true);
-    (void) success;
+    (void)success;
     return database_object;
   }
 
