@@ -287,14 +287,6 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
-    void Catalog::InsertTable() {
-      // Create actual table
-      auto pg_table = TableCatalog::GetInstance();
-
-      pg_table->InsertTable(table_oid, table_name,
-                            database_object->GetDatabaseOid(), pool_.get(), txn);
-    }
-
 /*@brief   create primary index on table
  * Note that this is a catalog helper function only called within catalog.cpp
  * If you want to create index on table outside, call CreateIndex() instead
@@ -441,9 +433,6 @@ ResultType Catalog::CreateIndex(
             table_oid);
   auto pg_index = IndexCatalog::GetInstance();
   oid_t index_oid = pg_index->GetNextOid();
-
-  LOG_INFO("index_oid = %d", index_oid);
-  LOG_INFO("table_oid = %d", table_oid);
 
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
@@ -595,7 +584,6 @@ ResultType Catalog::DropIndex(oid_t index_oid,
                            std::to_string(index_oid));
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
-  LOG_INFO("index_oid = %d", index_oid);
   auto index_object =
       IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
   if (index_object == nullptr) {
