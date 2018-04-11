@@ -64,11 +64,12 @@ class LoggerQueuePool {
     }
 
     void Shutdown() {
+      is_running_ = false;
+
       for (auto &logger : loggers_) {
         logger.join();
       }
       loggers_.clear();
-      is_running_ = false;
     }
 
     void SubmitLogBuffer(logging::LogBuffer *buffer) {

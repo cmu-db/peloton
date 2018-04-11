@@ -93,7 +93,7 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-ResultType TrafficCop::CommitQueryHelper(std::function<void(ResultType)> task_callback) {
+ResultType TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -107,14 +107,14 @@ ResultType TrafficCop::CommitQueryHelper(std::function<void(ResultType)> task_ca
 
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn, task_callback);
+    return txn_manager.CommitTransaction(txn, GetOnCompleteCallback());
   } else {
     // otherwise, rollback
-    return txn_manager.AbortTransaction(txn, task_callback);
+    return txn_manager.AbortTransaction(txn, GetOnCompleteCallback());
   }
 }
 
-ResultType TrafficCop::AbortQueryHelper(std::function<void(ResultType)> task_callback) {
+ResultType TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -123,7 +123,7 @@ ResultType TrafficCop::AbortQueryHelper(std::function<void(ResultType)> task_cal
   if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    return txn_manager.AbortTransaction(txn, task_callback);
+    return txn_manager.AbortTransaction(txn, GetOnCompleteCallback());
   } else {
     delete curr_state.first;
     // otherwise, the txn has already been aborted
@@ -183,6 +183,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   auto on_complete = [&result, this, &txn](executor::ExecutionResult p_status,
                                      std::vector<ResultValue> &&values) {
     this->p_status_ = p_status;
+
     // TODO (Tianyi) I would make a decision on keeping one of p_status or
     // error_message in my next PR
     this->error_message_ = std::move(p_status.m_error_message);
@@ -206,6 +207,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
 
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
             tcop_txn_state_.size());
+
   return p_status_;
 }
 
@@ -222,24 +224,17 @@ ResultType TrafficCop::ExecuteStatementPlanGetResult() {
     LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
               single_statement_txn_, ResultTypeToString(txn_result).c_str());
 
-    auto on_complete = [this](ResultType result) {
-        this->p_status_.m_result = result;
-        this->task_callback_(this->task_callback_arg_);
-    };
-
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement
-        return CommitQueryHelper(on_complete);
-        break;
+        return CommitQueryHelper();
 
       case ResultType::FAILURE:
       default:
         // Abort
-        LOG_TRACE("Abort Transaction");
         if (single_statement_txn_) {
           LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          return AbortQueryHelper(on_complete);
+          return AbortQueryHelper();
         } else {
           tcop_txn_state_.top().second = ResultType::ABORTED;
           p_status_.m_result = ResultType::ABORTED;
@@ -595,12 +590,8 @@ ResultType TrafficCop::ExecuteStatement(
         this->is_queuing_ = true;
         auto &pool = threadpool::MonoQueuePool::GetInstance();
 
-        auto on_commit = [this](ResultType result UNUSED_ATTRIBUTE) {
-            this->task_callback_(this->task_callback_arg_);
-        };
-
-        pool.SubmitTask([this, on_commit] {
-            ResultType result = this->CommitQueryHelper(on_commit);
+        pool.SubmitTask([this] {
+            ResultType result = this->CommitQueryHelper();
 
             if(result!=ResultType::QUEUING)
               task_callback_(task_callback_arg_);
@@ -614,18 +605,12 @@ ResultType TrafficCop::ExecuteStatement(
         this->is_queuing_ = true;
         auto &pool = threadpool::MonoQueuePool::GetInstance();
 
-        auto on_abort = [this](ResultType result UNUSED_ATTRIBUTE) {
-            this->task_callback_(this->task_callback_arg_);
-        };
-
-
-        pool.SubmitTask([this, on_abort] {
-            ResultType result = this->AbortQueryHelper(on_abort);
+        pool.SubmitTask([this] {
+            ResultType result = this->AbortQueryHelper();
 
             if(result!=ResultType::QUEUING) {
               task_callback_(task_callback_arg_);
             }
-
         });
 
         return ResultType::QUEUING;

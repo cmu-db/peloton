@@ -114,7 +114,8 @@ public:
                                      txn_id_t txn_id, cid_t current_cid)  {
 
     PL_ASSERT(log_type == LogRecordType::TRANSACTION_COMMIT ||
-              log_type == LogRecordType::TRANSACTION_ABORT);
+              log_type == LogRecordType::TRANSACTION_ABORT  ||
+              log_type == LogRecordType::TRANSACTION_BEGIN);
 
     return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_ITEMPOINTER,
                      current_eid, txn_id, current_cid);

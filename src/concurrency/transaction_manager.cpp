@@ -72,6 +72,18 @@ TransactionContext *TransactionManager::BeginTransaction(
         .StartTimer();
   }
 
+
+  // TODO(graghura) - add logging switch here:
+  // placeholder for logging switch
+  if(true) {
+    logging::LogRecord record =
+            logging::LogRecordFactory::CreateTupleRecord(
+                    LogRecordType::TRANSACTION_BEGIN, txn->GetEpochId(),
+                    txn->GetTransactionId(), txn->GetCommitId());
+
+    txn->GetLogBuffer()->WriteRecord(record);
+  }
+
   txn->SetTimestamp(function::DateFunctions::Now());
 
   return txn;
