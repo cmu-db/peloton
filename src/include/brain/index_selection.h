@@ -47,6 +47,7 @@ private:
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table, std::vector<oid_t> cols);
+  double GetCost(IndexConfiguration &config, Workload &workload);
   // members
   std::shared_ptr<Workload> query_set_;
   IndexSelectionContext context_;

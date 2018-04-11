@@ -16,7 +16,7 @@
 #include <queue>
 #include <vector>
 
-#include "brain/index_configuration.h"
+#include "brain/index_selection_util.h"
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
