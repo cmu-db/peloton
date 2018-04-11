@@ -13,6 +13,7 @@
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
@@ -199,7 +200,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     LOG_TRACE("Can't find database %d! ", database_id);
     return nullptr;
   }
-  PL_ASSERT(db);
+  //PL_ASSERT(db);
   db->AddTable(table);
 
   // Insert tuple
@@ -214,9 +215,11 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 }
 
 storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
-    int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
-    UNUSED_ATTRIBUTE oid_t index_oid, UNUSED_ATTRIBUTE bool need_primary_index, size_t tuples_per_tilegroup) {
+    std::string database_name, std::string table_name) {
 
+  LOG_INFO("hello");
+  LOG_INFO("database name = %s", database_name.c_str());
+  LOG_INFO("table name = %s", table_name.c_str());
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
@@ -224,36 +227,28 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
 
-  // Create the table
-  catalog::Schema *table_schema =
-      new catalog::Schema({id_column, value_column});
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, value_column}));
 
-  auto table = storage::TableFactory::GetDataTable(
-      database_id, relation_id, table_schema, table_name, tuples_per_tilegroup,
-      true, false);
-
-  // add this table to current database
   auto catalog = catalog::Catalog::GetInstance();
-  LOG_INFO("the database_id is %d", database_id);
-  storage::Database *db = nullptr;
-  try {
-    db =
-        storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
-  } catch (CatalogException &e) {
-    LOG_TRACE("Can't find database %d! ", database_id);
-    return nullptr;
-  }
-  PL_ASSERT(db);
-  db->AddTable(table);
-
-  // Insert tuple
+  // Create Database and Table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  for (int i = 0; i < num_key; i++) {
-    ExecuteInsert(txn, table, i, 0);
-  }
-  // insert table
+  catalog->CreateDatabase(database_name, txn);
   txn_manager.CommitTransaction(txn);
+  LOG_INFO("create database %s", database_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  catalog->CreateTable(database_name, table_name, std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create table %s", table_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  auto table = catalog->GetTableWithName(database_name, table_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("table name = %s", table->GetName().c_str());
+  LOG_INFO("table oid = %d", table->GetOid());
+  LOG_INFO("database oid = %d", table->GetDatabaseOid());
 
   return table;
 }

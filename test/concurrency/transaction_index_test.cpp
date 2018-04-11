@@ -59,11 +59,12 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
       concurrency::EpochManagerFactory::GetInstance().Reset();
       storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
 
-      TransactionScheduler scheduler(1, table, &txn_manager, true);
+      TransactionScheduler scheduler(2, table, &txn_manager, true);
       scheduler.Txn(0).CreateIndex();
       scheduler.Txn(0).Scan(0);
-      scheduler.Txn(0).DropIndex();
       scheduler.Txn(0).Commit();
+      scheduler.Txn(1).DropIndex();
+      scheduler.Txn(1).Commit();
       //scheduler.Txn(0).DropIndex();
       scheduler.Run();
 
@@ -71,8 +72,8 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
       EXPECT_EQ(0, scheduler.schedules[0].results.size());
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results.size());
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
-      EXPECT_EQ(1, scheduler.schedules[0].drop_index_results.size());
-      EXPECT_EQ(1, scheduler.schedules[0].drop_index_results[0]);
+      EXPECT_EQ(1, scheduler.schedules[1].drop_index_results.size());
+      EXPECT_EQ(1, scheduler.schedules[1].drop_index_results[0]);
       //EXPECT_EQ(0, scheduler.schedules[0].drop_index_results[0]);
     }
   }

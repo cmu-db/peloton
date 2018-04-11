@@ -70,6 +70,8 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
 #include "common/internal_types.h"
+
+#include <assert.h>
 #pragma once
 
 namespace peloton {
@@ -128,10 +130,8 @@ class TestingTransactionUtil {
       bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
 
   static storage::DataTable *CreateTableWithoutIndex(
-      int num_key = 10, std::string table_name = "TEST_TABLE",
-      oid_t database_id = CATALOG_DATABASE_OID,
-      oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
-      bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
+      std::string database_name = "TEST_DATABASE",
+      std::string table_name = "TEST_TABLE");
 
   // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value
@@ -312,7 +312,7 @@ class TransactionThread {
       case TXN_OP_ABORT: {
         LOG_INFO("Txn %d Abort", schedule->schedule_id);
         // Assert last operation
-        PL_ASSERT(cur_seq == (int)schedule->operations.size());
+        assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction(txn);
         txn = NULL;
         break;
@@ -338,13 +338,9 @@ class TransactionThread {
       }
       case TXN_OP_CREATE_INDEX: {
         auto catalog = catalog::Catalog::GetInstance();
-        LOG_INFO("txn isolation level = %d", txn->GetIsolationLevel());
-        LOG_INFO("database_id = %d", database_id);
-        LOG_INFO("relation_id = %d", relation_id);
-        auto tmp = catalog->CreateIndex(database_id, relation_id, key_attrs,
-                                                    index_name1, IndexType::BWTREE,
-                                                    IndexConstraintType::DEFAULT, false,
-                                                    txn, true);
+        LOG_INFO("txn isolation level = %d", static_cast<int>(txn->GetIsolationLevel()));
+        auto tmp = catalog->CreateIndex(database_name, table_name, key_attrs,
+                                        index_name1, false, IndexType::BWTREE, txn);
         if (tmp == ResultType::SUCCESS)
           schedule->create_index_results.push_back(1);
         else
@@ -382,8 +378,8 @@ class TransactionThread {
 
 private:
   const std::string index_name1 = "transaction_index_test_index1";
-  const oid_t database_id = CATALOG_DATABASE_OID;
-  const oid_t relation_id = TEST_TABLE_OID;
+  const std::string database_name = "TEST_DATABASE";
+  const std::string table_name = "TEST_TABLE";
   const std::vector<oid_t> key_attrs = {0};
 };
 
@@ -439,7 +435,7 @@ class TransactionScheduler {
   }
 
   TransactionScheduler &Txn(int txn_id) {
-    PL_ASSERT(txn_id < (int)schedules.size());
+    assert(txn_id < (int)schedules.size());
     cur_txn_id = txn_id;
     return *this;
   }
