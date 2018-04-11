@@ -70,7 +70,7 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
 
     // The tuple column must be included into key_attrs, otherwise
     // the construction argument is malformed
-    PL_ASSERT(tuple_column_id < tuple_attrs.size());
+    PELOTON_ASSERT(tuple_column_id < tuple_attrs.size());
 
     tuple_attrs[tuple_column_id] = i;
   }
@@ -158,11 +158,11 @@ oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
   const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
 
   // First check whether the table column ID is valid
-  PL_ASSERT(tuple_column_id < mapping.size());
+  PELOTON_ASSERT(tuple_column_id < mapping.size());
   oid_t key_column_id = mapping[tuple_column_id];
 
   // Then check the table column actually have a index key column
-  PL_ASSERT(key_column_id != INVALID_OID);
+  PELOTON_ASSERT(key_column_id != INVALID_OID);
 
   return key_column_id;
 }
@@ -196,8 +196,8 @@ bool Index::Compare(const AbstractTuple &index_key,
   // int diff;
 
   // The size of these three arrays must be the same
-  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
-  PL_ASSERT(expr_list.size() == value_list.size());
+  PELOTON_ASSERT(tuple_column_id_list.size() == expr_list.size());
+  PELOTON_ASSERT(expr_list.size() == value_list.size());
 
   // Need the mapping
   const IndexMetadata *metadata_p = GetMetadata();
@@ -253,7 +253,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     }
 
     LOG_TRACE("Difference : %d ", diff);*/
-    if (lhs.CompareEquals(rhs) == CmpBool::TRUE) {
+    if (lhs.CompareEquals(rhs) == CmpBool::CmpTrue) {
       switch (expr_type) {
         case ExpressionType::COMPARE_EQUAL:
         case ExpressionType::COMPARE_LESSTHANOREQUALTO:
@@ -271,7 +271,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                ExpressionTypeToString(expr_type));
       }
     } else {
-      if (lhs.CompareLessThan(rhs) == CmpBool::TRUE) {
+      if (lhs.CompareLessThan(rhs) == CmpBool::CmpTrue) {
         switch (expr_type) {
           case ExpressionType::COMPARE_NOTEQUAL:
           case ExpressionType::COMPARE_LESSTHAN:
@@ -289,7 +289,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                  ExpressionTypeToString(expr_type));
         }
       } else {
-        if (lhs.CompareGreaterThan(rhs) == CmpBool::TRUE) {
+        if (lhs.CompareGreaterThan(rhs) == CmpBool::CmpTrue) {
           switch (expr_type) {
             case ExpressionType::COMPARE_NOTEQUAL:
             case ExpressionType::COMPARE_GREATERTHAN:

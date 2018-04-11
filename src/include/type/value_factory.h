@@ -214,10 +214,12 @@ class ValueFactory {
           std::string str = value.ToString();
           int64_t bigint = 0;
           try {
-            bigint = std::stoll(str);
+            bigint = stoll(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for bigint: \'" + str + "\'");
           }
           if (bigint > PELOTON_INT64_MAX || bigint < PELOTON_INT64_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -262,11 +264,14 @@ class ValueFactory {
           std::string str = value.ToString();
           int32_t integer = 0;
           try {
-            integer = std::stoi(str);
+            integer = stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch (std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for integer: \'" + str + "\'");
           }
+
           if (integer > PELOTON_INT32_MAX || integer < PELOTON_INT32_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -317,10 +322,12 @@ class ValueFactory {
           std::string str = value.ToString();
           int16_t smallint = 0;
           try {
-            smallint = std::stoi(str);
+            smallint = stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for smallint: \'" + str + "\'");
           }
           if (smallint < PELOTON_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -375,10 +382,12 @@ class ValueFactory {
           std::string str = value.ToString();
           int8_t tinyint = 0;
           try {
-            tinyint = std::stoi(str);
+            tinyint = stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for tinyint: \'" + str + "\'");
           }
           if (tinyint < PELOTON_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -413,10 +422,12 @@ class ValueFactory {
           std::string str = value.ToString();
           double res = 0;
           try {
-            res = std::stod(str);
+            res = stod(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for decimal: \'" + str + "\'");
           }
           if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,

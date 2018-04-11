@@ -117,8 +117,8 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
         if (expected_null) expected = false;
 
-        EXPECT_EQ(expected, result == CmpBool::TRUE);
-        EXPECT_EQ(!expected, result == CmpBool::FALSE);
+        EXPECT_EQ(expected, result == CmpBool::CmpTrue);
+        EXPECT_EQ(!expected, result == CmpBool::CmpFalse);
         EXPECT_EQ(expected_null, result == CmpBool::NULL_);
       }
     }
@@ -169,7 +169,7 @@ TEST_F(BooleanValueTests, HashTest) {
       auto hash0 = val0.Hash();
       auto hash1 = val1.Hash();
 
-      if (result == CmpBool::TRUE) {
+      if (result == CmpBool::CmpTrue) {
         EXPECT_EQ(hash0, hash1);
       } else {
         EXPECT_NE(hash0, hash1);

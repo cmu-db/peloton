@@ -32,8 +32,8 @@ Listener::Listener(int port)
   // make libevent support multiple threads (pthread)
   // TODO: put evthread_use_pthreads before event_base_new()?
 
-  PL_ASSERT(listen_base_ != NULL);
-  PL_ASSERT(port_ > 0 && port_ < 65535);
+  PELOTON_ASSERT(listen_base_ != NULL);
+  PELOTON_ASSERT(port_ > 0 && port_ < 65535);
 }
 
 Listener::~Listener() {
@@ -57,7 +57,7 @@ void Listener::Run(void *arg) {
 
   /* Clear the sockaddr before using it, in case there are extra
    *          * platform-specific fields that can mess us up. */
-  PL_MEMSET(&sin, 0, sizeof(sin));
+  PELOTON_MEMSET(&sin, 0, sizeof(sin));
 
   /* This is an INET address */
   sin.sin_family = AF_INET;
@@ -101,7 +101,7 @@ void Listener::Run(void *arg) {
 void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             struct sockaddr *address,
                             UNUSED_ATTRIBUTE int socklen, void *ctx) {
-  PL_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
+  PELOTON_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
   LOG_TRACE("Server: connection received");
 
@@ -122,7 +122,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,
                              UNUSED_ATTRIBUTE void *ctx) {
-  PL_ASSERT(ctx != NULL);
+  PELOTON_ASSERT(ctx != NULL);
 
   struct event_base *base = evconnlistener_get_base(listener);
 

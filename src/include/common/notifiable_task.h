@@ -4,7 +4,7 @@
 //
 // notifiable_task.h
 //
-// Identification: src/include/network/notifiable_task.h
+// Identification: src/include/common/notifiable_task.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -12,23 +12,11 @@
 
 #pragma once
 
-#include <csignal>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
 #include <unordered_set>
-
-#include <sys/file.h>
 #include <event2/thread.h>
-
-#include "common/exception.h"
-#include "common/logger.h"
-#include "network_state.h"
-#include "error_util.h"
+#include "common/event_util.h"
 
 namespace peloton {
-namespace network {
 
 /**
  * Convenient MACRO to use a method as a libevent callback function. Example
@@ -61,34 +49,19 @@ class NotifiableTask {
    * Constructs a new NotifiableTask instance.
    * @param task_id a unique id assigned to this task
    */
-  explicit NotifiableTask(int task_id) : task_id_(task_id) {
-    base_ = EventUtil::EventBaseNew();
-    // TODO(tianyu) Determine whether we actually need this line. Tianyi says we
-    // need it, libevent documentation says no
-    // evthread_make_base_notifiable(base_);
-
-    // For exiting a loop
-    terminate_ = RegisterManualEvent([](int, short, void *arg) {
-      EventUtil::EventBaseLoopExit((struct event_base *)arg, nullptr);
-    }, base_);
-  };
+  explicit NotifiableTask(int task_id);
 
   /**
- * Destructs this NotifiableTask. All events currently registered to its base
- * are also deleted and freed.
- */
-  virtual ~NotifiableTask() {
-    for (struct event *event : events_) {
-      EventUtil::EventDel(event);
-      event_free(event);
-    }
-    event_base_free(base_);
-  }
+   * Destructs this NotifiableTask. All events currently registered to its base
+   * are also deleted and freed.
+   */
+  virtual ~NotifiableTask();
 
   /**
    * @return unique id assigned to this task
    */
   inline int Id() const { return task_id_; }
+
 
   /**
    * @brief Register an event with the event base associated with this
@@ -114,13 +87,7 @@ class NotifiableTask {
    */
   struct event *RegisterEvent(int fd, short flags, event_callback_fn callback,
                               void *arg,
-                              const struct timeval *timeout = nullptr) {
-    struct event *event = event_new(base_, fd, flags, callback, arg);
-    events_.insert(event);
-    EventUtil::EventAdd(event, timeout);
-    return event;
-  }
-
+                              const struct timeval *timeout = nullptr);
   /**
    * @brief Register a signal event. This is a wrapper around RegisterEvent()
    *
@@ -133,8 +100,9 @@ class NotifiableTask {
    * null which will wait forever
    * @return pointer to the allocated event.
    */
-  struct event *RegisterSignalEvent(int signal, event_callback_fn callback,
-                                    void *arg) {
+  inline struct event *RegisterSignalEvent(int signal,
+                                           event_callback_fn callback,
+                                           void *arg) {
     return RegisterEvent(signal, EV_SIGNAL | EV_PERSIST, callback, arg);
   }
 
@@ -150,8 +118,9 @@ class NotifiableTask {
    * @param arg an argument to be passed to the callback function
    * @return pointer to the allocated event.
    */
-  struct event *RegisterPeriodicEvent(const struct timeval *timeout,
-                                      event_callback_fn callback, void *arg) {
+  inline struct event *RegisterPeriodicEvent(const struct timeval *timeout,
+                                             event_callback_fn callback,
+                                             void *arg) {
     return RegisterEvent(-1, EV_TIMEOUT | EV_PERSIST, callback, arg, timeout);
   }
 
@@ -166,18 +135,18 @@ class NotifiableTask {
    * @param arg an argument to be passed to the callback function
    * @return pointer to the allocated event.
    */
-  struct event *RegisterManualEvent(event_callback_fn callback, void *arg) {
+  inline struct event *RegisterManualEvent(event_callback_fn callback,
+                                           void *arg) {
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
   // TODO(tianyu): The original network code seems to do this as an
   //  optimization. Specifically it avoids new memory allocation by reusing
   //  an existing event. I am leaving this out until we get numbers.
-
   //  void UpdateEvent(struct event *event, int fd, short flags,
   //                   event_callback_fn callback, void *arg,
   //                   const struct timeval *timeout = nullptr) {
-  //    PL_ASSERT(!(events_.find(event) == events_.end()));
+  //    PELOTON_ASSERT(!(events_.find(event) == events_.end()));
   //    EventUtil::EventDel(event);
   //    EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
   //    EventUtil::EventAdd(event, timeout);
@@ -198,25 +167,15 @@ class NotifiableTask {
    *
    * @param event the event to be freed
    */
-  void UnregisterEvent(struct event *event) {
-    auto it = events_.find(event);
-    if (it == events_.end()) return;
-    if (event_del(event) == -1) {
-      LOG_ERROR("Failed to delete event");
-      return;
-    }
-    event_free(event);
-    events_.erase(event);
-  }
+  void UnregisterEvent(struct event *event);
 
   /**
    * In a loop, make this notifiable task wait and respond to incoming events
    */
-  void EventLoop() {
+  inline void EventLoop() {
     EventUtil::EventBaseDispatch(base_);
     LOG_TRACE("stop");
   }
-
   /**
    * Exits the event loop
    */
@@ -225,7 +184,7 @@ class NotifiableTask {
   /**
    * Wrapper around ExitLoop() to conform to libevent callback signature
    */
-  void ExitLoop(int, short) { ExitLoop(); }
+  inline void ExitLoop(int, short) { ExitLoop(); }
 
  private:
   const int task_id_;
@@ -236,5 +195,4 @@ class NotifiableTask {
   std::unordered_set<struct event *> events_;
 };
 
-}  // namespace network
 }  // namespace peloton
