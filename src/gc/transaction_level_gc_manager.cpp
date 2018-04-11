@@ -190,7 +190,9 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
   return tuple_counter;
 }
 
-// executed by a single thread. so no synchronization is required.
+// It was originally assumed that this function would be executed by a single
+// thread and that no synchronization is required. However, this is no longer
+// true. So it should be reviewed for race conditions.
 int TransactionLevelGCManager::Reclaim(const int &thread_id,
                                        const eid_t &expired_eid) {
   int gc_counter = 0;
@@ -313,12 +315,11 @@ void TransactionLevelGCManager::AddToRecycleMap(
   delete txn_ctx;
 }
 
+// TODO: Implement this function
+// This will enable the GC to prune invalid slots from the recycle queue,
+// which are created when tile groups are freed
 //void TransactionLevelGCManager::RemoveInvalidSlotsFromRecycleQueue(
 //    std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>recycle_queue,
-//    oid_t tile_group_id) {
-//
-//  size_t num_found = 0;
-//  while (recycle_queue->Dequeue(head);
 //}
 
 // this function returns a free tuple slot, if one exists
@@ -401,9 +402,17 @@ void TransactionLevelGCManager::StopGC() {
 
 void TransactionLevelGCManager::UnlinkVersions(
     concurrency::TransactionContext *txn_ctx) {
+
+  // for each tile group that has garbage tuples in the txn
   for (auto entry : *(txn_ctx->GetGCSetPtr().get())) {
-    for (auto &element : entry.second) {
-      UnlinkVersion(ItemPointer(entry.first, element.first), element.second);
+    auto tile_group_id = entry.first;
+    auto garbage_tuples = entry.second;
+
+    // for each garbage tuple in the tile group
+    for (auto &element : garbage_tuples) {
+      auto offset = element.first;
+      auto gc_type = element.second;
+      UnlinkVersion(ItemPointer(tile_group_id, offset), gc_type);
     }
   }
 }
@@ -445,11 +454,14 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // if the version differs from the previous one in some columns where
     // secondary indexes are built on, then we need to unlink the previous
     // version from the secondary index.
-//  } else if (type == GCVersionType::COMMIT_DELETE) {
+  } else if (type == GCVersionType::COMMIT_DELETE) {
     // the gc'd version is an old version.
     // need to recycle this version as well as its newer (empty) version.
     // we also need to delete the tuple from the primary and secondary
     // indexes.
+
+    // TODO: add TOMBSTONE to GC, to be collected once its EID has expired
+    // GCVerstionType::TOMBSTONE
   } else if (type == GCVersionType::ABORT_UPDATE) {
     // the gc'd version is a newly created version.
     // if the version differs from the previous one in some columns where
@@ -461,10 +473,10 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // need to recycle this version.
     // no index manipulation needs to be made.
   } else {
+
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
               type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL ||
-        type == GCVersionType::COMMIT_DELETE);
+              type == GCVersionType::ABORT_INS_DEL);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {

@@ -1221,7 +1221,7 @@ enum class GCVersionType {
   ABORT_UPDATE,    // a version that is updated during txn abort.
   ABORT_DELETE,    // a version that is deleted during txn abort.
   ABORT_INSERT,    // a version that is inserted during txn abort.
-  ABORT_INS_DEL,   // a version that is inserted and deleted during txn commit.
+  ABORT_INS_DEL,   // a version that is inserted and deleted during txn abort.
 };
 std::string GCVersionTypeToString(GCVersionType type);
 GCVersionType StringToGCVersionType(const std::string &str);

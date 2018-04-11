@@ -841,8 +841,10 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_DELETE;
 
-      gc_set->operator[](new_version.block)[new_version.offset] =
-          GCVersionType::COMMIT_DELETE;
+      // TODO: Add the new, empty version to the garbage of this txn
+      // The line below is one possible implementation
+//      gc_set->operator[](new_version.block)[new_version.offset] = GCVersionType::TOMBSTONE;
+      //
 
       log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
