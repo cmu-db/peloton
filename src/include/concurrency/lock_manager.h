@@ -19,6 +19,7 @@
 #include <common/internal_types.h>
 #include "common/logger.h"
 #include <boost/thread/shared_mutex.hpp>
+#include <boost/foreach.hpp>
 
 namespace peloton {
 namespace concurrency {
@@ -41,7 +42,21 @@ public:
   LockManager() {}
 
   // Destructor
-  ~LockManager() {lock_map_.clear();}
+  ~LockManager() {
+
+    // Iterate through mapped locks
+    std::pair<oid_t, boost::upgrade_mutex*> tmp;
+    std::vector<oid_t> v;
+    BOOST_FOREACH(tmp, lock_map_){
+      v.push_back(tmp.first);
+    }
+
+    // Remove each lock
+    for (std::vector<oid_t>::iterator itr = v.begin(); itr != v.end(); itr++){
+      RemoveLock(*itr);
+    }
+    lock_map_.clear();
+  }
 
   // Initialize lock for given oid
   bool InitLock(oid_t oid, LockType type);
