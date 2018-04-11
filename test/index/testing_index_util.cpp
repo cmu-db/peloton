@@ -176,9 +176,10 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key0.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key0 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key0 size: %lu", location_ptrs.size());
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
@@ -186,9 +187,10 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key1.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key1 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key1 size: %lu", location_ptrs.size());
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
@@ -196,12 +198,15 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key2.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key2 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key2 size: %lu", location_ptrs.size());
   EXPECT_EQ(1, location_ptrs.size());
   EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
+
+  return;
 }
 
 void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
@@ -856,11 +861,13 @@ void TestingIndexUtil::DeleteHelper(index::Index *index,
     index->DeleteEntry(key3.get(), TestingIndexUtil::item1.get());
     index->DeleteEntry(key4.get(), TestingIndexUtil::item1.get());
 
-    // should be no key0
+    // For non-unique key should be no key0
     // key1 item 0 1 2
     // key2 item 1
     // no key3
     // no key4
+
+    // For unique key should be only key2
   }
 }
 
