@@ -30,14 +30,14 @@ class IndexObject {
 public:
   oid_t db_oid;
   oid_t table_oid;
-  std::vector<oid_t> column_oids;
+  std::set<oid_t> column_oids;
   IndexConstraintType type;
 
   IndexObject() {};
 
   IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid):
     db_oid(db_oid), table_oid(table_oid) {
-    column_oids.push_back(col_oid);
+    column_oids.insert(col_oid);
   }
 
   IndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids):
@@ -47,22 +47,12 @@ public:
   }
 
   // To string for performing hash.
-  const std::string toString() const {
-    std::stringstream str_stream;
-    str_stream << db_oid << " " << table_oid << " ";
-    for (auto col: column_oids) {
-      str_stream << col << " ";
-    }
-    return str_stream.str();
-  }
+  const std::string toString() const;
 
-  bool operator==(const IndexObject &obj) const {
-    if (db_oid == obj.db_oid && table_oid == obj.table_oid
-        && column_oids == obj.column_oids) {
-      return true;
-    }
-    return false;
-  }
+  bool operator==(const IndexObject &obj) const;
+
+  bool IsCompatible(std::shared_ptr<IndexObject> index) const;
+  IndexObject Merge(std::shared_ptr<IndexObject> index);
 };
 
 struct IndexObjectHasher {
@@ -75,16 +65,12 @@ struct IndexObjectHasher {
 class IndexConfiguration {
 public:
   IndexConfiguration();
-  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> index_obj_set) {indexes_ = index_obj_set;};
-  void Add(IndexConfiguration &config);
+  void Merge(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
-  void RemoveIndexObject(std::shared_ptr<IndexObject> index_info);
-
-    size_t GetIndexCount() const;
+  size_t GetIndexCount();
   const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
   const std::string ToString() const;
   bool operator==(const IndexConfiguration &obj) const;
-  IndexConfiguration operator-(const IndexConfiguration &obj);
 private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -96,6 +82,8 @@ private:
   std::vector<SQLStatement*> sql_queries_;
 public:
   Workload() {}
+  Workload(SQLStatement *query) : sql_queries_({query}) {
+  }
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }
