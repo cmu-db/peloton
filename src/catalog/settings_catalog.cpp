@@ -96,22 +96,6 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 
 std::string SettingsCatalog::GetSettingValue(const std::string &name,
                                              concurrency::TransactionContext *txn) {
-  /*std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string config_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
-  }*/
 
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
 
@@ -140,22 +124,6 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
 
 std::string SettingsCatalog::GetDefaultValue(const std::string &name,
                                              concurrency::TransactionContext *txn) {
-  /*std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string config_value = "";
-  PL_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
-  }*/
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
 
   expression::AbstractExpression *name_expr = expression::ExpressionUtil::TupleValueFactory(
