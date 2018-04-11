@@ -40,6 +40,12 @@ public:
     column_oids.push_back(col_oid);
   }
 
+  IndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids):
+    db_oid(db_oid), table_oid(table_oid) {
+    for (auto col : col_oids)
+      column_oids.push_back(col);
+  }
+
   // To string for performing hash.
   const std::string toString() const {
     std::stringstream str_stream;

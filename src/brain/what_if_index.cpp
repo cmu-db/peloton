@@ -78,7 +78,6 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(parsed_sql_query, txn);
 
   txn_manager.CommitTransaction(txn);
-
   return opt_info_obj;
 }
 
