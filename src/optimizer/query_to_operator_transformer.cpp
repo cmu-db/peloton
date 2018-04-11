@@ -120,6 +120,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   predicates_ = std::move(pre_predicates);
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
+  auto pre_predicates = std::move(predicates_);
+  
   // Get left operator
   node->left->Accept(this);
   auto left_expr = output_expr_;
@@ -134,25 +136,25 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
     case JoinType::INNER: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalJoin::make(JoinType::INNER));
+          LogicalJoin::make(JoinType::INNER, predicates_));
       break;
     }
     case JoinType::OUTER: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalJoin::make(JoinType::OUTER));
+          LogicalJoin::make(JoinType::OUTER, predicates_));
       break;
     }
     case JoinType::LEFT: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalJoin::make(JoinType::LEFT));
+          LogicalJoin::make(JoinType::LEFT, predicates_));
       break;
     }
     case JoinType::RIGHT: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalJoin::make(JoinType::RIGHT));
+          LogicalJoin::make(JoinType::RIGHT, predicates_));
       break;
     }
     case JoinType::SEMI: {
@@ -168,6 +170,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   join_expr->PushChild(right_expr);
 
   output_expr_ = join_expr;
+  predicates_ = std::move(pre_predicates);
 }
 void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   if (node->select != nullptr) {

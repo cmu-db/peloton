@@ -46,7 +46,7 @@ RuleSet::RuleSet() {
   AddImplementationRule(new ImplementLimit());
 
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
-                 new PushFilterThroughJoin());
+		 new PushFilterThroughJoin());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughAggregation());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,

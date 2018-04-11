@@ -87,6 +87,10 @@ class AbstractJoinPlan : public AbstractPlan {
   virtual void HandleSubplanBinding(bool from_left,
                                     const BindingContext &input) = 0;
 
+  const std::string GetPredicateInfo() const {
+    return predicate_ != nullptr ? predicate_->GetInfo() : "";
+  }
+
  private:
   /** @brief The type of join that we're going to perform */
   JoinType join_type_;

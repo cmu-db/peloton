@@ -57,7 +57,9 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   void SetBloomFilterFlag(bool flag) { build_bloomfilter_ = flag; }
 
-  const std::string GetInfo() const override { return "HashJoin"; }
+  const std::string GetInfo() const override {
+    return "HashJoin(" + GetPredicateInfo() + ")";
+  }
 
   const std::vector<oid_t> &GetOuterHashIds() const {
     return outer_column_ids_;

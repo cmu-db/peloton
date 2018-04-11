@@ -423,6 +423,11 @@ void TopDownRewrite::execute() {
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
+
+      if (!r.rule->Check(before, context_.get())) {
+	continue;
+      }
+      
       PELOTON_ASSERT(!iterator.HasNext());
       std::vector<std::shared_ptr<OperatorExpression>> after;
       r.rule->Transform(before, after, context_.get());

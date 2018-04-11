@@ -853,6 +853,11 @@ void PushFilterThroughJoin::Transform(
   std::vector<AnnotatedExpression> right_predicates;
   std::vector<AnnotatedExpression> join_predicates;
 
+  auto join_type = join_op_expr->Op().As<LogicalJoin>()->type;
+  bool outer_push = (join_type == JoinType::OUTER ||
+		     join_type == JoinType::LEFT ||
+		     join_type == JoinType::RIGHT);
+
   // Loop over all predicates, check each of them if they can be pushed down to
   // either the left child or the right child to be evaluated
   // All predicates in this loop follow conjunction relationship because we
@@ -860,10 +865,10 @@ void PushFilterThroughJoin::Transform(
   // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
-    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set)) {
+    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set) && !outer_push) {
       left_predicates.emplace_back(predicate);
     } else if (util::IsSubset(right_group_aliases_set,
-                              predicate.table_alias_set)) {
+                              predicate.table_alias_set) && !outer_push) {
       right_predicates.emplace_back(predicate);
     } else {
       join_predicates.emplace_back(predicate);
