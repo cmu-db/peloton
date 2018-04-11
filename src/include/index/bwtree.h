@@ -2871,11 +2871,15 @@ class BwTree : public BwTreeBase {
                          PROT_READ | PROT_WRITE, 
                          MAP_ANONYMOUS | MAP_PRIVATE,
                          -1, 0);
+    // If allocation fails, we throw an error because this is uncoverable
+    // The upper level functions should either catch this exception
+    // and then use another index instead, or simply kill the system
     if(mapping_table == (void *)-1) {
-      LOG_TRACE("Failed to initialize mapping table");
+      LOG_ERROR("Failed to initialize mapping table");
+      throw IndexException("mmap() failed to initialize mapping table for Bw-Tree");
     }
 
-    LOG_TRACE("Mapping table done");
+    LOG_TRACE("Mapping table allocated via mmap()");
 
     LOG_TRACE("Initializing mapping table.... size = %lu", MAPPING_TABLE_SIZE);
     LOG_TRACE("Fast initialization: Do not set to zero");
@@ -7618,9 +7622,15 @@ class BwTree : public BwTreeBase {
       // table in the above routine. If it was unmapped in ~BwTree() then this
       // function will invoke illegal memory access
       int munmap_ret = munmap(tree_p->mapping_table, 1024 * 1024 * 1024);
-      LOG_DEBUG("munmap() returns with %d", munmap_ret);
-      // Avoid compiler error
-      (void)munmap_ret;
+
+      // Although failure of munmap is not fatal, we still print out 
+      // an error log entry
+      // Otherwise just trace log
+      if(munmap_ret != 0) {
+        LOG_ERROR("munmap() returns with %d", munmap_ret);
+      } else {
+        LOG_TRACE("Mapping table is unmapped for Bw-Tree");
+      }
       
       return;
     }
