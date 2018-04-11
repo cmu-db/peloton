@@ -77,7 +77,6 @@ class DictEncodedTile : public Tile {
    * Insert tuple at slot
    * NOTE : No checks, must be at valid slot.
    */
-//  void InsertTuple(const oid_t tuple_offset, Tuple *tuple);
 	// this function is used before GetValueFast which use
 	// original schema, so return original schema
   const catalog::Schema *GetSchema() const override { return &original_schema; }  ;

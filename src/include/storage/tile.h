@@ -182,16 +182,6 @@ class Tile : public Printable {
   // Sync the contents
   void Sync();
 
-  //===--------------------------------------------------------------------===//
-  // Dictionary Encoding
-  //===--------------------------------------------------------------------===//
-
-//	inline bool GetDictEncoded() const { return is_dict_encoded; }
-//
-//	// only encode varchar, assume this tail is full
-//	void DictEncode();
-//
-//  void DictDecode();
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -243,19 +233,6 @@ class Tile : public Printable {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
-
-  // is dictionary encoded
-//  bool is_dict_encoded;
-//
-//  std::vector<type::Value> element_array;
-//
-//  std::map<type::Value, uint8_t, type::Value::equal_to> dict;
-//
-//  std::set<oid_t> dict_encoded_columns;
-//
-//  std::vector<size_t> encoded_column_offsets;
-//
-//  size_t dict_encoded_tile_size;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index

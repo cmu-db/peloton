@@ -26,11 +26,13 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
      original_schema(tuple_schema) {
 	std::vector<catalog::Column> columns;
 	size_t offset = 0;
+
+	// find out which column to encode
 	for (oid_t i = 0; i < column_count; i++) {
 		auto column_type = schema.GetType(i);
 		original_schema_offsets.emplace(offset, i);
-		if ((column_type == type::TypeId::VARCHAR ||
-				column_type == type::TypeId::VARBINARY) && !schema.IsInlined(i)) {
+		if (column_type == type::TypeId::VARCHAR ||
+				column_type == type::TypeId::VARBINARY) {
 			catalog::Column encoded_column(type::TypeId::TINYINT,
 				type::Type::GetTypeSize(type::TypeId::TINYINT),
 				schema.GetColumn(i).GetName(), true);
@@ -42,6 +44,7 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 		offset += schema.GetLength(i);
 	}
 
+	// if nothing needs to be encoded
 	if (dict_encoded_columns.empty()) return;
 
 	delete[] data;
