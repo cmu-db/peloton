@@ -443,7 +443,7 @@ void IndexSelection::CrossProduct(
   }
 }
 
-void IndexSelection::GenMultiColumnIndexes(
+void IndexSelection::GenerateMultiColumnIndexes(
     IndexConfiguration &config, IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
   CrossProduct(config, single_column_indexes, result);
