@@ -23,7 +23,9 @@ namespace planner {
 
 CreatePlan::CreatePlan(std::string database_name, CreateType c_type)
     : database_name(database_name),
-      create_type(c_type) {}
+      create_type(c_type) {
+        SetNamespace(DEFAULT_NAMESPACE);
+      }
 
 //TODO (Yijia): figure out when this is used.
 CreatePlan::CreatePlan(std::string table_name, std::string database_name,
@@ -32,7 +34,9 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
     : table_name(table_name),
       database_name(database_name),
       table_schema(schema.release()),
-      create_type(c_type) {}
+      create_type(c_type) {
+        SetNamespace(DEFAULT_NAMESPACE);
+      }
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
 {
@@ -45,7 +49,6 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
       database_name = std::string(parse_tree->GetDatabaseName());
-      LOG_INFO("start to create a table with name %s at database %s", table_name.c_str(), database_name.c_str());
       std::vector<catalog::Column> columns;
       std::vector<catalog::Constraint> column_constraints;
 
