@@ -13,9 +13,9 @@
 #include "index/skiplist.h"
 
 namespace peloton {
-  namespace index {
+namespace index {
 
 // Add your function definitions here
 
-  }  // namespace index
+}  // namespace index
 }  // namespace peloton

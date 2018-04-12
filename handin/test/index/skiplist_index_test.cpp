@@ -25,40 +25,34 @@ namespace test {
 
 class SkipListIndexTests : public PelotonTest {};
 
-    
 TEST_F(SkipListIndexTests, BasicTest) {
-   TestingIndexUtil::BasicTest(IndexType::SKIPLIST);
-   }
+  TestingIndexUtil::BasicTest(IndexType::SKIPLIST);
+}
 
-  
 TEST_F(SkipListIndexTests, MultiMapInsertTest) {
   TestingIndexUtil::MultiMapInsertTest(IndexType::SKIPLIST);
-  }
+}
 
-    
 TEST_F(SkipListIndexTests, UniqueKeyInsertTest) {
   TestingIndexUtil::UniqueKeyInsertTest(IndexType::SKIPLIST);
-  }
+}
 
-  
 TEST_F(SkipListIndexTests, UniqueKeyDeleteTest) {
   TestingIndexUtil::UniqueKeyDeleteTest(IndexType::SKIPLIST);
-  }
+}
 
-  
 TEST_F(SkipListIndexTests, NonUniqueKeyDeleteTest) {
   TestingIndexUtil::NonUniqueKeyDeleteTest(IndexType::SKIPLIST);
 }
 
 TEST_F(SkipListIndexTests, MultiThreadedInsertTest) {
   TestingIndexUtil::MultiThreadedInsertTest(IndexType::SKIPLIST);
-  }
-  
+}
+
 TEST_F(SkipListIndexTests, UniqueKeyMultiThreadedTest) {
   TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::SKIPLIST);
-  }
+}
 
-  
 TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedTest) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedTest(IndexType::SKIPLIST);
 }
@@ -69,8 +63,7 @@ TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
 TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(IndexType::SKIPLIST);
-  }
-
+}
 
 }  // namespace test
 }  // namespace peloton
