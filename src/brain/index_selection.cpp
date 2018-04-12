@@ -37,61 +37,63 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
   // Start the index selection.
   for (unsigned long i = 0; i < context_.num_iterations; i++) {
-    GenCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
+    GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
 
-    GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
+    GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
   }
   final_indexes = candidate_indexes;
 }
 
-void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
+
+void IndexSelection::GenerateCandidateIndexes(IndexConfiguration &candidate_config,
                                          IndexConfiguration &admissible_config,
                                          Workload &workload) {
   if (admissible_config.GetIndexCount() == 0) {
-    // If there are no admissible indexes, then this
-    // is the first iteration.
-    // Candidate indexes will be a union of admissible
-    // index set of each query.
+    // If there are no admissible indexes, then this is the first iteration.
+    // Candidate indexes will be a union of admissible index set of each query.
     for (auto query : workload.GetQueries()) {
-      Workload workload(query);
+      Workload wi(query);
 
-      IndexConfiguration Ai;
-      GetAdmissibleIndexes(query, Ai);
-      admissible_config.Merge(Ai);
+      IndexConfiguration ai;
+      GetAdmissibleIndexes(query, ai);
+      admissible_config.Merge(ai);
 
-      IndexConfiguration Ci;
-      Enumerate(Ai, Ci, workload, context_.num_indexes_);
-      candidate_config.Merge(Ci);
+      PruneUselessIndexes(ai, wi);
+      candidate_config.Merge(ai);
     }
   } else {
-    IndexConfiguration empty_config;
-    auto cand_indexes = candidate_config.GetIndexes();
+    PruneUselessIndexes(candidate_config, workload);
+  }
+}
 
-    auto it = cand_indexes.begin();
-    while (it != cand_indexes.end()) {
-      bool is_useful = false;
+void IndexSelection::PruneUselessIndexes(IndexConfiguration &config, Workload &workload) {
+  IndexConfiguration empty_config;
+  auto indexes = config.GetIndexes();
+  auto it = indexes.begin();
 
-      for (auto query : workload.GetQueries()) {
-        IndexConfiguration c;
-        c.AddIndexObject(*it);
+  while (it != indexes.end()) {
+    bool is_useful = false;
 
-        Workload w(query);
+    for (auto query : workload.GetQueries()) {
+      IndexConfiguration c;
+      c.AddIndexObject(*it);
 
-        if (ComputeCost(c, w) > ComputeCost(empty_config, w)) {
-          is_useful = true;
-          break;
-        }
+      Workload w(query);
+
+      if (ComputeCost(c, w) > ComputeCost(empty_config, w)) {
+        is_useful = true;
+        break;
       }
-      // Index is useful if it benefits any query.
-      if (!is_useful) {
-        it = cand_indexes.erase(it);
-      } else {
-        it++;
-      }
+    }
+    // Index is useful if it benefits any query.
+    if (!is_useful) {
+      it = indexes.erase(it);
+    } else {
+      it++;
     }
   }
 }
@@ -407,7 +409,7 @@ void IndexSelection::CrossProduct(
   }
 }
 
-void IndexSelection::GenMultiColumnIndexes(
+void IndexSelection::GenerateMultiColumnIndexes(
     IndexConfiguration &config,
     IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
