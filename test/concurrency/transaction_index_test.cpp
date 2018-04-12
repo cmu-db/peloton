@@ -72,6 +72,72 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
       EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
     }
 
+    // create index and insert new record
+    {
+      TransactionScheduler scheduler(3, table, &txn_manager);
+      scheduler.Txn(0).CreateIndex();
+      scheduler.Txn(1).Insert(100, 0);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Commit();
+      scheduler.Txn(2).Read(100);
+      scheduler.Txn(2).DropIndex();
+      scheduler.Txn(2).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+
+      EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
+      EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
+    }
+
+    // create index and update record
+    {
+      TransactionScheduler scheduler(3, table, &txn_manager);
+      scheduler.Txn(0).CreateIndex();
+      scheduler.Txn(1).Update(1, 1);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Commit();
+      scheduler.Txn(2).Read(1);
+      scheduler.Txn(2).DropIndex();
+      scheduler.Txn(2).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+
+      EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
+    }
+
+    // create index and delete record
+    {
+      TransactionScheduler scheduler(3, table, &txn_manager);
+      scheduler.Txn(0).CreateIndex();
+      scheduler.Txn(1).Delete(1);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Commit();
+      scheduler.Txn(2).Read(1);
+      scheduler.Txn(2).DropIndex();
+      scheduler.Txn(2).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+
+      EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
+      EXPECT_EQ(-1, scheduler.schedules[2].results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
+    }
+
     // transaction abort test
     {
       TransactionScheduler scheduler(3, table, &txn_manager);
