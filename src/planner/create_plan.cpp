@@ -21,8 +21,7 @@ namespace peloton {
 namespace planner {
 
 CreatePlan::CreatePlan(std::string database_name, CreateType c_type)
-    : database_name(database_name),
-      create_type(c_type) {}
+    : database_name(database_name), create_type(c_type) {}
 
 CreatePlan::CreatePlan(std::string table_name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
@@ -32,8 +31,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
       table_schema(schema.release()),
       create_type(c_type) {}
 
-CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
-{
+CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;
@@ -57,25 +55,31 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
       for (auto &col : parse_tree->columns) {
         type::TypeId val = col->GetValueType(col->type);
 
-        LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name.c_str(), col->primary);
+        LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(),
+                  col->name.c_str(), col->primary);
 
         // Check main constraints
         if (col->primary) {
-          catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
+          catalog::Constraint constraint(ConstraintType::PRIMARY,
+                                         "con_primary");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a primary key constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
+          LOG_TRACE("Added a primary key constraint on column \"%s.%s\"",
+                    table_name.c_str(), col->name.c_str());
         }
 
         if (col->not_null) {
-          catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
+          catalog::Constraint constraint(ConstraintType::NOTNULL,
+                                         "con_not_null");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a not-null constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
+          LOG_TRACE("Added a not-null constraint on column \"%s.%s\"",
+                    table_name.c_str(), col->name.c_str());
         }
 
         if (col->unique) {
           catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
+          LOG_TRACE("Added a unique constraint on column \"%s.%s\"",
+                    table_name.c_str(), col->name.c_str());
         }
 
         /* **************** */
@@ -83,16 +87,20 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
         // Add the default value
         if (col->default_value != nullptr) {
           // Referenced from insert_plan.cpp
-          if (col->default_value->GetExpressionType() != ExpressionType::VALUE_PARAMETER) {
+          if (col->default_value->GetExpressionType() !=
+              ExpressionType::VALUE_PARAMETER) {
             expression::ConstantValueExpression *const_expr_elem =
-              dynamic_cast<expression::ConstantValueExpression *>(col->default_value.get());
+                dynamic_cast<expression::ConstantValueExpression *>(
+                    col->default_value.get());
 
-            catalog::Constraint constraint(ConstraintType::DEFAULT, "con_default");
+            catalog::Constraint constraint(ConstraintType::DEFAULT,
+                                           "con_default");
             type::Value v = const_expr_elem->GetValue();
             constraint.addDefaultValue(v);
             column_constraints.push_back(constraint);
             LOG_TRACE("Added a default constraint %s on column \"%s.%s\"",
-                      v.ToString().c_str(), table_name.c_str(), col->name.c_str());
+                      v.ToString().c_str(), table_name.c_str(),
+                      col->name.c_str());
           }
         }
 
@@ -104,10 +112,13 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
             catalog::Constraint constraint(ConstraintType::CHECK, "con_check");
 
             const expression::ConstantValueExpression *const_expr_elem =
-              dynamic_cast<const expression::ConstantValueExpression *>(col->check_expression->GetChild(1));
+                dynamic_cast<const expression::ConstantValueExpression *>(
+                    col->check_expression->GetChild(1));
 
             type::Value tmp_value = const_expr_elem->GetValue();
-            constraint.AddCheck(std::move(col->check_expression->GetExpressionType()), std::move(tmp_value));
+            constraint.AddCheck(
+                std::move(col->check_expression->GetExpressionType()),
+                std::move(tmp_value));
             column_constraints.push_back(constraint);
             LOG_TRACE("Added a check constraint on column \"%s.%s\"",
                       table_name.c_str(), col->name.c_str());
@@ -196,23 +207,22 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
     }
     default:
       LOG_ERROR("UNKNOWN CREATE TYPE");
-      //TODO Should we handle this here?
+      // TODO Should we handle this here?
       break;
   }
 
   // TODO check type CreateType::kDatabase
 }
 
-void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
-                                             const parser::ColumnDefinition *col) {
-
+void CreatePlan::ProcessForeignKeyConstraint(
+    const std::string &table_name, const parser::ColumnDefinition *col) {
   ForeignKeyInfo fkey_info;
 
   // Extract source and sink column names
-  for (auto& key : col->foreign_key_source) {
+  for (auto &key : col->foreign_key_source) {
     fkey_info.foreign_key_sources.push_back(key);
   }
-  for (auto& key : col->foreign_key_sink) {
+  for (auto &key : col->foreign_key_sink) {
     fkey_info.foreign_key_sinks.push_back(key);
   }
 

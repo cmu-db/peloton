@@ -52,30 +52,31 @@ namespace catalog {
 class SequenceCatalogObject {
  public:
   SequenceCatalogObject(oid_t seqoid, const std::string &name,
-          const int64_t seqstart, const int64_t seqincrement,
-          const int64_t seqmax, const int64_t seqmin,
-          const bool seqcycle, const int64_t seqval, concurrency::TransactionContext *txn):
-          seq_oid(seqoid),
-          seq_name(name),
-          seq_start(seqstart),
-          seq_increment(seqincrement),
-          seq_max(seqmax),
-          seq_min(seqmin),
-          seq_cycle(seqcycle),
-          txn_(txn),
-          seq_curr_val(seqval){};
+                        const int64_t seqstart, const int64_t seqincrement,
+                        const int64_t seqmax, const int64_t seqmin,
+                        const bool seqcycle, const int64_t seqval,
+                        concurrency::TransactionContext *txn)
+      : seq_oid(seqoid),
+        seq_name(name),
+        seq_start(seqstart),
+        seq_increment(seqincrement),
+        seq_max(seqmax),
+        seq_min(seqmin),
+        seq_cycle(seqcycle),
+        txn_(txn),
+        seq_curr_val(seqval){};
 
   oid_t seq_oid;
   std::string seq_name;
-  int64_t seq_start;	// Start value of the sequence
-  int64_t seq_increment;	// Increment value of the sequence
-  int64_t seq_max;		// Maximum value of the sequence
-  int64_t seq_min;		// Minimum value of the sequence
-  int64_t seq_cache;	// Cache size of the sequence
-  bool seq_cycle;	// Whether the sequence cycles
+  int64_t seq_start;      // Start value of the sequence
+  int64_t seq_increment;  // Increment value of the sequence
+  int64_t seq_max;        // Maximum value of the sequence
+  int64_t seq_min;        // Minimum value of the sequence
+  int64_t seq_cache;      // Cache size of the sequence
+  bool seq_cycle;         // Whether the sequence cycles
   concurrency::TransactionContext *txn_;
 
-  std::mutex sequence_mutex; // mutex for all operations
+  std::mutex sequence_mutex;  // mutex for all operations
   int64_t GetNextVal() {
     std::lock_guard<std::mutex> lock(sequence_mutex);
     return get_next_val();
@@ -86,7 +87,9 @@ class SequenceCatalogObject {
     return seq_curr_val;
   };
 
-  void SetCurrVal(int64_t curr_val) { seq_curr_val = curr_val; }; // only visible for test!
+  void SetCurrVal(int64_t curr_val) {
+    seq_curr_val = curr_val;
+  };  // only visible for test!
   void SetCycle(bool cycle) { seq_cycle = cycle; };
 
  private:
@@ -94,35 +97,37 @@ class SequenceCatalogObject {
   int64_t get_next_val();
 };
 
-
 class SequenceCatalog : public AbstractCatalog {
  public:
   ~SequenceCatalog();
 
   // Global Singleton
-  static SequenceCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static SequenceCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertSequence(oid_t database_oid, std::string sequence_name,
-                     int64_t seq_increment, int64_t seq_max, int64_t seq_min,
-                     int64_t seq_start, bool seq_cycle,
+                      int64_t seq_increment, int64_t seq_max, int64_t seq_min,
+                      int64_t seq_start, bool seq_cycle,
                       type::AbstractPool *pool,
                       concurrency::TransactionContext *txn);
 
   ResultType DropSequence(const std::string &database_name,
-                         const std::string &sequence_name,
-                         concurrency::TransactionContext *txn);
+                          const std::string &sequence_name,
+                          concurrency::TransactionContext *txn);
 
-  bool DeleteSequenceByName(const std::string &sequence_name, oid_t database_oid,
-                           concurrency::TransactionContext *txn);
+  bool DeleteSequenceByName(const std::string &sequence_name,
+                            oid_t database_oid,
+                            concurrency::TransactionContext *txn);
 
   std::shared_ptr<SequenceCatalogObject> GetSequence(
-      oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn);
+      oid_t database_oid, const std::string &sequence_name,
+      concurrency::TransactionContext *txn);
 
   oid_t GetSequenceOid(std::string sequence_name, oid_t database_oid,
-                      concurrency::TransactionContext *txn);
+                       concurrency::TransactionContext *txn);
 
   enum ColumnId {
     SEQUENCE_OID = 0,
@@ -141,10 +146,7 @@ class SequenceCatalog : public AbstractCatalog {
 
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
 
-  enum IndexId {
-    PRIMARY_KEY = 0,
-    DBOID_SEQNAME_KEY = 1
-  };
+  enum IndexId { PRIMARY_KEY = 0, DBOID_SEQNAME_KEY = 1 };
 };
 
 }  // namespace catalog

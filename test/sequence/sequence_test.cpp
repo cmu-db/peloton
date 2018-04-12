@@ -34,16 +34,21 @@ class SequenceTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  std::shared_ptr<catalog::SequenceCatalogObject> GetSequenceHelper(std::string sequence_name, concurrency::TransactionContext *txn) {
+  std::shared_ptr<catalog::SequenceCatalogObject> GetSequenceHelper(
+      std::string sequence_name, concurrency::TransactionContext *txn) {
     // Check the effect of creation
-    oid_t database_oid = catalog::Catalog::GetInstance()->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetOid();
+    oid_t database_oid = catalog::Catalog::GetInstance()
+                             ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
+                             ->GetOid();
     std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
-        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid, sequence_name, txn);
+        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid,
+                                                            sequence_name, txn);
 
     return new_sequence;
   }
 
-  void CreateSequenceHelper(std::string query, concurrency::TransactionContext *txn) {
+  void CreateSequenceHelper(std::string query,
+                            concurrency::TransactionContext *txn) {
     auto parser = parser::PostgresParser::GetInstance();
 
     std::unique_ptr<parser::SQLStatementList> stmt_list(
@@ -83,7 +88,8 @@ TEST_F(SequenceTests, BasicTest) {
   std::string name = "seq";
 
   CreateSequenceHelper(query, txn);
-  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence = GetSequenceHelper(name, txn);
+  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
+      GetSequenceHelper(name, txn);
 
   EXPECT_EQ(name, new_sequence->seq_name);
   EXPECT_EQ(2, new_sequence->seq_increment);
@@ -114,9 +120,9 @@ TEST_F(SequenceTests, NoDuplicateTest) {
   try {
     CreateSequenceHelper(query, txn);
     EXPECT_EQ(0, 1);
-  }
-  catch(const SequenceException& expected) {
-    ASSERT_STREQ("Insert Sequence with Duplicate Sequence Name: seq", expected.what());
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("Insert Sequence with Duplicate Sequence Name: seq",
+                 expected.what());
   }
   txn_manager.CommitTransaction(txn);
 }
@@ -133,7 +139,8 @@ TEST_F(SequenceTests, NextValPosIncrementFunctionalityTest) {
   std::string name = "seq1";
 
   CreateSequenceHelper(query, txn);
-  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence = GetSequenceHelper(name, txn);
+  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
+      GetSequenceHelper(name, txn);
 
   int64_t nextVal = new_sequence->GetNextVal();
   EXPECT_EQ(10, nextVal);
@@ -154,8 +161,7 @@ TEST_F(SequenceTests, NextValPosIncrementFunctionalityTest) {
   try {
     nextVal = new_sequence->GetNextVal();
     EXPECT_EQ(0, 1);
-  }
-  catch(const SequenceException& expected) {
+  } catch (const SequenceException &expected) {
     ASSERT_STREQ("Sequence exceeds upper limit!", expected.what());
   }
   txn_manager.CommitTransaction(txn);
@@ -173,7 +179,8 @@ TEST_F(SequenceTests, NextValNegIncrementFunctionalityTest) {
   std::string name = "seq2";
 
   CreateSequenceHelper(query, txn);
-  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence = GetSequenceHelper(name, txn);
+  std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
+      GetSequenceHelper(name, txn);
 
   // test cycle
   int64_t nextVal = new_sequence->GetNextVal();
@@ -194,12 +201,10 @@ TEST_F(SequenceTests, NextValNegIncrementFunctionalityTest) {
   try {
     nextVal = new_sequence->GetNextVal();
     EXPECT_EQ(0, 1);
-  }
-  catch(const SequenceException& expected) {
+  } catch (const SequenceException &expected) {
     ASSERT_STREQ("Sequence exceeds lower limit!", expected.what());
   }
   txn_manager.CommitTransaction(txn);
 }
-
 }
 }

@@ -28,7 +28,8 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
          << StringUtil::Format("IF NOT EXISTS: %s",
                                (if_not_exists) ? "True" : "False") << std::endl;
       os << StringUtil::Indent(num_indent + 1)
-         << StringUtil::Format("Table name: %s", GetTableName().c_str());;
+         << StringUtil::Format("Table name: %s", GetTableName().c_str());
+      ;
       break;
     }
     case CreateStatement::CreateType::kDatabase: {

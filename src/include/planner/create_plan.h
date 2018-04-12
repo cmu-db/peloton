@@ -86,7 +86,9 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
-  inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+  inline std::vector<ForeignKeyInfo> GetForeignKeys() const {
+    return foreign_keys;
+  }
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
   void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
@@ -116,11 +118,11 @@ class CreatePlan : public AbstractPlan {
   int64_t GetSequenceCacheSize() const { return seq_cache; }
   bool GetSequenceCycle() const { return seq_cycle; }
 
-protected:
-    // This is a helper method for extracting foreign key information
-    // and storing it in an internal struct.
-    void ProcessForeignKeyConstraint(const std::string &table_name,
-                                     const parser::ColumnDefinition *col);
+ protected:
+  // This is a helper method for extracting foreign key information
+  // and storing it in an internal struct.
+  void ProcessForeignKeyConstraint(const std::string &table_name,
+                                   const parser::ColumnDefinition *col);
 
  private:
   // Table Name
@@ -164,7 +166,7 @@ protected:
   int64_t seq_increment;
   int64_t seq_max_value;
   int64_t seq_min_value;
-  int64_t seq_cache; // sequence cache size, not supported yet
+  int64_t seq_cache;  // sequence cache size, not supported yet
   bool seq_cycle;
 
  private:

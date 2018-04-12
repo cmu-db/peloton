@@ -588,8 +588,7 @@ TEST_F(PostgresParserTests, InsertTest) {
     CmpBool res = five.CompareEquals(
         ((expression::ConstantValueExpression *)insert_stmt->insert_values.at(1)
              .at(1)
-             .get())
-            ->GetValue());
+             .get())->GetValue());
     EXPECT_EQ(CmpBool::CmpTrue, res);
 
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
@@ -1021,15 +1020,13 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(left)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(right)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // level
   // the level is for each row
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
@@ -1096,16 +1093,11 @@ TEST_F(PostgresParserTests, CreateSequenceTest) {
   // create type
   EXPECT_EQ(parser::CreateStatement::CreateType::kSequence,
             create_sequence_stmt->type);
-  EXPECT_EQ(10,
-            create_sequence_stmt->seq_start);
-  EXPECT_EQ(2,
-            create_sequence_stmt->seq_increment);
-  EXPECT_EQ(50,
-            create_sequence_stmt->seq_max_value);
-  EXPECT_EQ(10,
-            create_sequence_stmt->seq_min_value);
-  EXPECT_EQ(true,
-            create_sequence_stmt->seq_cycle);
+  EXPECT_EQ(10, create_sequence_stmt->seq_start);
+  EXPECT_EQ(2, create_sequence_stmt->seq_increment);
+  EXPECT_EQ(50, create_sequence_stmt->seq_max_value);
+  EXPECT_EQ(10, create_sequence_stmt->seq_min_value);
+  EXPECT_EQ(true, create_sequence_stmt->seq_cycle);
 }
 
 TEST_F(PostgresParserTests, FuncCallTest) {

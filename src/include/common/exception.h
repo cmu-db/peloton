@@ -59,8 +59,8 @@ enum class ExceptionType {
   SETTINGS = 23,          // settings related
   BINDER = 24,            // binder related
   NETWORK = 25,           // network related
-  OPTIMIZER = 26,          // optimizer related
-  SEQUENCE = 27          // sequence related
+  OPTIMIZER = 26,         // optimizer related
+  SEQUENCE = 27           // sequence related
 };
 
 class Exception : public std::runtime_error {
@@ -77,9 +77,7 @@ class Exception : public std::runtime_error {
                          "\nMessage :: " + message;
   }
 
-  std::string GetMessage() {
-    return exception_message_;
-  }
+  std::string GetMessage() { return exception_message_; }
 
   std::string ExceptionTypeToString(ExceptionType type) {
     switch (type) {
