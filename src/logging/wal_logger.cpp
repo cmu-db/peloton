@@ -49,13 +49,13 @@ void WalLogger::FlushToDisk(){
   stream->write(disk_buffer_->GetData(), disk_buffer_->GetSize());
 
   if(stream->fail()){
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   stream->flush();
 
   if(stream->fail()){
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
 
