@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <numeric>
+
 #include "brain/index_selection.h"
 #include "binder/bind_node_visitor.h"
 #include "brain/index_selection_util.h"
@@ -58,89 +60,79 @@ class IndexSelectionTest : public PelotonTest {
     std::string create_str = "DROP DATABASE " + db_name + ";";
     TestingSQLUtil::ExecuteSQLQuery(create_str);
   }
+
+  void GetQueries(std::string table_name, std::vector<std::string> queries,
+                  std::vector<int> &admissible_index_counts) {
+    queries.push_back("SELECT * FROM " + table_name + " WHERE a < 1 or b > 4 GROUP BY a");
+    admissible_index_counts.push_back(2);
+    queries.push_back("SELECT a, b, c FROM " + table_name + " WHERE a < 1 or b > 4 ORDER BY a");
+    admissible_index_counts.push_back(2);
+    queries.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
+    admissible_index_counts.push_back(2);
+    queries.push_back("UPDATE " + table_name + " SET a = 45 WHERE a < 1 or b > 4");
+    admissible_index_counts.push_back(2);
+  }
+
+  void CreateWorkload(std::vector<std::string> queries, brain::Workload &workload,
+                      std::string database_name) {
+
+    // Parse the query.
+    auto parser = parser::PostgresParser::GetInstance();
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    // Bind the query
+    std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, database_name));
+
+    for (auto query: queries) {
+      // Parse
+      std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser.BuildParseTree(query).release());
+      EXPECT_TRUE(stmt_list->is_valid);
+      auto stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
+
+      // Bind.
+      binder->BindNameToNode(stmt);
+
+      workload.AddQuery(stmt);
+    }
+  }
 };
 
 TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::string table_name = "dummy_table";
   std::string database_name = DEFAULT_DB_NAME;
+  size_t max_cols = 2;
+  size_t enumeration_threshold = 2;
+  size_t num_indexes = 10;
 
   CreateDatabase(database_name);
   CreateTable(table_name);
 
-  std::vector<std::string> queries;
-  std::vector<int> admissible_index_counts;
+  std::vector<std::string> queries_strs;
+  std::vector<int> index_counts;
+  GetQueries(table_name, queries_strs, index_counts);
 
-  std::ostringstream oss;
-  oss << "SELECT * FROM " << table_name << " WHERE a < 1 or b > 4 GROUP BY a";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(2);
-  oss.str("");
-  oss << "SELECT a, b, c FROM " << table_name
-      << " WHERE a < 1 or b > 4 ORDER BY a";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(2);
-  oss.str("");
-  oss << "DELETE FROM " << table_name << " WHERE a < 1 or b > 4";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(2);
-  oss.str("");
-  oss << "UPDATE " << table_name << " SET a = 45 WHERE a < 1 or b > 4";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(2);
-  oss.str("");
-  oss << "UPDATE " << table_name << " SET a = 45 WHERE a < 1";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(1);
-  oss.str("");
-  oss << "SELECT a, b, c FROM " << table_name;
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(0);
-  oss.str("");
-  oss << "SELECT a, b, c FROM " << table_name << " ORDER BY a";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(1);
-  oss.str("");
-  oss << "SELECT a, b, c FROM " << table_name << " GROUP BY a";
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(1);
-  oss.str("");
-  oss << "SELECT * FROM " << table_name;
-  queries.push_back(oss.str());
-  admissible_index_counts.push_back(0);
-  oss.str("");
+  brain::Workload workload;
+  CreateWorkload(queries_strs, workload, database_name);
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  auto queries = workload.GetQueries();
 
-  for (auto i = 0UL; i < queries.size(); i++) {
-    // Parse the query.
-    auto parser = parser::PostgresParser::GetInstance();
-    std::unique_ptr<parser::SQLStatementList> stmt_list(
-        parser.BuildParseTree(queries[i]).release());
-    EXPECT_TRUE(stmt_list->is_valid);
+  for (unsigned long i=0; i<queries.size(); i++) {
+    brain::Workload w(queries[i]);
+    brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
 
-    auto stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
-
-    // Bind the query
-    std::unique_ptr<binder::BindNodeVisitor> binder(
-        new binder::BindNodeVisitor(txn, database_name));
-    binder->BindNameToNode(stmt);
-
-    brain::Workload w;
-    w.AddQuery(stmt);
-
-    brain::IndexSelection is(w, 5, 2, 10);
     brain::IndexConfiguration ic;
-    is.GetAdmissibleIndexes(stmt, ic);
+    is.GetAdmissibleIndexes(queries[i], ic);
 
     auto indexes = ic.GetIndexes();
-    EXPECT_EQ(ic.GetIndexCount(), admissible_index_counts[i]);
+    EXPECT_EQ(ic.GetIndexCount(), index_counts[i]);
   }
 
   DropTable(table_name);
   DropDatabase(database_name);
-
-  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
@@ -212,8 +204,36 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   std::string table_name = "dummy_table";
   std::string database_name = DEFAULT_DB_NAME;
 
+  size_t max_cols = 2;
+  size_t enumeration_threshold = 2;
+  size_t num_indexes = 10;
+
   CreateDatabase(database_name);
   CreateTable(table_name);
+
+  // Generate workload
+  std::vector<std::string> queries;
+  std::vector<int> index_counts;
+  GetQueries(table_name, queries, index_counts);
+
+  brain::Workload workload;
+  CreateWorkload(queries, workload, database_name);
+
+  // Generate candidate configurations.
+  brain::IndexConfiguration candidate_config;
+  brain::IndexConfiguration admissible_config;
+
+  brain::IndexSelection index_selection(workload, max_cols, enumeration_threshold, num_indexes);
+  index_selection.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
+
+  auto admissible_indexes_count = admissible_config.GetIndexCount();
+  auto expected_count = std::accumulate(index_counts.begin(), index_counts.end(), 0);
+
+  EXPECT_EQ(admissible_indexes_count, expected_count);
+  EXPECT_LE(candidate_config.GetIndexCount(), expected_count);
+
+  // TODO: Test is not complete
+  // Check the candidate indexes.
 
   DropTable(table_name);
   DropDatabase(database_name);
