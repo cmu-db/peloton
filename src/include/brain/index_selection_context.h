@@ -49,8 +49,8 @@ class IndexSelectionContext {
    *
    */
   IndexSelectionContext(size_t num_iterations,
-                        size_t naive_enumeration_threshold_,
-                        size_t num_indexes_);
+                        size_t naive_enumeration_threshold,
+                        size_t num_indexes);
 
  private:
   friend class IndexSelection;
@@ -61,13 +61,13 @@ class IndexSelectionContext {
       memo_;
   // map from index configuration to the sharedpointer of the
   // IndexConfiguration object
-  IndexObjectPool pool;
+  IndexObjectPool pool_;
 
   // Tunable knobs of the index selection algorithm
   // The number of iterations of the main algorithm which is also the maximum
   // number of columns in a single index as in ith iteration we consider indexes
   // with i or lesser columns
-  size_t num_iterations;
+  size_t num_iterations_;
   // The number of indexes up to which we will do exhaustive enumeration
   size_t naive_enumeration_threshold_;
   // The number of indexes in the final configuration returned by the
