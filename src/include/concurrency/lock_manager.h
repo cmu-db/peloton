@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <map>
@@ -29,30 +28,22 @@ namespace concurrency {
 //===--------------------------------------------------------------------===//
 
 class LockManager {
-public:
-
+ public:
   // Type of locks. Currently only supports RW_LOCK
-  enum LockType{
-    LOCK,
-    RW_LOCK,
-    SPIN_LOCK
-  };
+  enum LockType { LOCK, RW_LOCK, SPIN_LOCK };
 
   // Constructor
   LockManager() {}
 
   // Destructor
   ~LockManager() {
-
     // Iterate through mapped locks
-    std::pair<oid_t, boost::upgrade_mutex*> tmp;
+    std::pair<oid_t, boost::upgrade_mutex *> tmp;
     std::vector<oid_t> v;
-    BOOST_FOREACH(tmp, lock_map_){
-      v.push_back(tmp.first);
-    }
+    BOOST_FOREACH (tmp, lock_map_) { v.push_back(tmp.first); }
 
     // Remove each lock
-    for (std::vector<oid_t>::iterator itr = v.begin(); itr != v.end(); itr++){
+    for (std::vector<oid_t>::iterator itr = v.begin(); itr != v.end(); itr++) {
       RemoveLock(*itr);
     }
     lock_map_.clear();
@@ -83,29 +74,26 @@ public:
   bool UnlockExclusive(oid_t oid);
 
   // Return the global variable instance
-  static LockManager* GetInstance();
+  static LockManager *GetInstance();
 
-private:
-
+ private:
   // Local RW lock to protect lock dict
   boost::upgrade_mutex internal_rw_lock_;
 
   // Map to store RW_LOCK for different objects
-  std::map<oid_t, boost::upgrade_mutex*> lock_map_;
+  std::map<oid_t, boost::upgrade_mutex *> lock_map_;
 
   // Get RW lock by oid
-  boost::upgrade_mutex *GetLock(oid_t oid){
+  boost::upgrade_mutex *GetLock(oid_t oid) {
     // Try to access the lock
     boost::upgrade_mutex *rw_lock;
-    try{
+    try {
       rw_lock = lock_map_.at(oid);
-    }
-    catch(const std::out_of_range& oor) {
+    } catch (const std::out_of_range &oor) {
       return nullptr;
     }
     return rw_lock;
   }
-
 };
 }  // namespace concurrency
 }  // namespace peloton

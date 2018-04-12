@@ -13,6 +13,8 @@
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
@@ -212,6 +214,43 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   return table;
 }
 
+storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
+    std::string database_name, std::string table_name) {
+  LOG_INFO("database name = %s", database_name.c_str());
+  LOG_INFO("table name = %s", table_name.c_str());
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
+  auto value_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "value", true);
+
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, value_column}));
+
+  auto catalog = catalog::Catalog::GetInstance();
+  // Create Database and Table
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(database_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create database %s", database_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  catalog->CreateTable(database_name, table_name, std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create table %s", table_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  auto table = catalog->GetTableWithName(database_name, table_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("table name = %s", table->GetName().c_str());
+  LOG_INFO("table oid = %d", table->GetOid());
+  LOG_INFO("database oid = %d", table->GetDatabaseOid());
+
+  return table;
+}
+
 std::unique_ptr<const planner::ProjectInfo>
 TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   TargetList target_list;
@@ -229,8 +268,8 @@ TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 }
 
 bool TestingTransactionUtil::ExecuteInsert(
-    concurrency::TransactionContext *transaction, storage::DataTable *table, int id,
-    int value) {
+    concurrency::TransactionContext *transaction, storage::DataTable *table,
+    int id, int value) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -278,9 +317,9 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
       index, key_column_ids, expr_types, values, runtime_keys);
 }
 
-bool TestingTransactionUtil::ExecuteRead(concurrency::TransactionContext *transaction,
-                                         storage::DataTable *table, int id,
-                                         int &result, bool select_for_update) {
+bool TestingTransactionUtil::ExecuteRead(
+    concurrency::TransactionContext *transaction, storage::DataTable *table,
+    int id, int &result, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -311,8 +350,8 @@ bool TestingTransactionUtil::ExecuteRead(concurrency::TransactionContext *transa
   return true;
 }
 bool TestingTransactionUtil::ExecuteDelete(
-    concurrency::TransactionContext *transaction, storage::DataTable *table, int id,
-    bool select_for_update) {
+    concurrency::TransactionContext *transaction, storage::DataTable *table,
+    int id, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -337,8 +376,8 @@ bool TestingTransactionUtil::ExecuteDelete(
   return delete_executor.Execute();
 }
 bool TestingTransactionUtil::ExecuteUpdate(
-    concurrency::TransactionContext *transaction, storage::DataTable *table, int id,
-    int value, bool select_for_update) {
+    concurrency::TransactionContext *transaction, storage::DataTable *table,
+    int id, int value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -376,10 +415,9 @@ bool TestingTransactionUtil::ExecuteUpdate(
   return update_executor.Execute();
 }
 
-bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::TransactionContext *txn,
-                                                  storage::DataTable *table,
-                                                  int old_value, int new_value,
-                                                  bool select_for_update) {
+bool TestingTransactionUtil::ExecuteUpdateByValue(
+    concurrency::TransactionContext *txn, storage::DataTable *table,
+    int old_value, int new_value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -424,10 +462,9 @@ bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::TransactionContex
   return update_executor.Execute();
 }
 
-bool TestingTransactionUtil::ExecuteScan(concurrency::TransactionContext *transaction,
-                                         std::vector<int> &results,
-                                         storage::DataTable *table, int id,
-                                         bool select_for_update) {
+bool TestingTransactionUtil::ExecuteScan(
+    concurrency::TransactionContext *transaction, std::vector<int> &results,
+    storage::DataTable *table, int id, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 

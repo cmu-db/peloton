@@ -88,9 +88,9 @@ bool DeleteExecutor::DExecute() {
 
   oid_t table_oid = target_table_->GetOid();
   // Lock the table (reader lock)
-  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockShared(table_oid);
-  if (!lock_success){
+  if (!lock_success) {
     LOG_WARN("Cannot obtain lock for the table, abort!");
   }
 
@@ -146,23 +146,21 @@ bool DeleteExecutor::DExecute() {
     storage::Tuple prev_tuple(target_table_->GetSchema(), true);
 
     // Get a copy of the old tuple
-    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+    for (oid_t column_itr = 0;
+         column_itr < target_table_schema->GetColumnCount(); column_itr++) {
       type::Value val = (old_tuple.GetValue(column_itr));
       prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
     }
 
     // Check the foreign key source table
-    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
-                                                    nullptr,
-                                                    current_txn,
-                                                    executor_context_,
-                                                    false) == false)
-    {
+    if (target_table_->CheckForeignKeySrcAndCascade(
+            &prev_tuple, nullptr, current_txn, executor_context_, false) ==
+        false) {
       transaction_manager.SetTransactionResult(current_txn,
-                                              peloton::ResultType::FAILURE);
+                                               peloton::ResultType::FAILURE);
       // Unlock the table
       bool unlock_success = lm->UnlockShared(table_oid);
-      if (!unlock_success){
+      if (!unlock_success) {
         LOG_TRACE("Cannot unlock the table, abort!");
       }
       return false;
@@ -226,7 +224,7 @@ bool DeleteExecutor::DExecute() {
                                                    ResultType::FAILURE);
           // Unlock the table
           bool unlock_success = lm->UnlockShared(table_oid);
-          if (!unlock_success){
+          if (!unlock_success) {
             LOG_TRACE("Cannot unlock the table, abort!");
           }
           return false;
@@ -253,7 +251,7 @@ bool DeleteExecutor::DExecute() {
                                                    ResultType::FAILURE);
           // Unlock the table
           bool unlock_success = lm->UnlockShared(table_oid);
-          if (!unlock_success){
+          if (!unlock_success) {
             LOG_TRACE("Cannot unlock the table, abort!");
           }
           return false;
@@ -269,7 +267,7 @@ bool DeleteExecutor::DExecute() {
                                                  ResultType::FAILURE);
         // Unlock the table
         bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success){
+        if (!unlock_success) {
           LOG_TRACE("Cannot unlock the table, abort!");
         }
         return false;
@@ -323,7 +321,7 @@ bool DeleteExecutor::DExecute() {
   }
   // Unlock the table
   bool unlock_success = lm->UnlockShared(table_oid);
-  if (!unlock_success){
+  if (!unlock_success) {
     LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;

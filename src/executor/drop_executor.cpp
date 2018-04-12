@@ -136,12 +136,12 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id = catalog::Catalog::GetInstance()
-          ->GetTableObject(database_name, table_name, txn)
-          ->GetTableOid();
+                           ->GetTableObject(database_name, table_name, txn)
+                           ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
       // Remove table lock
-      concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+      concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
       lm->RemoveLock(table_id);
     }
   } else {
@@ -186,7 +186,8 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 /**
  * @brief   Drop an index.
  * @details Drop an index. Will delete the corresponding entry from catalog, and
- * the data structure of index itself will be garbage collected. Note that phantom
+ * the data structure of index itself will be garbage collected. Note that
+ * phantom
  * could happen while dropping the index.
  * @param   node    current planner node
  * @param   txn     current transaction
