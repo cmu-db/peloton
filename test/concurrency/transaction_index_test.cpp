@@ -23,17 +23,18 @@ namespace test {
 class TransactionIndexTests : public PelotonTest {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
-    ProtocolType::TIMESTAMP_ORDERING
-};
+    ProtocolType::TIMESTAMP_ORDERING};
 
 static IsolationLevelType ISOLATION_LEVEL_TYPE =
     IsolationLevelType::SERIALIZABLE;
 
 TEST_F(TransactionIndexTests, BasicIndexTest) {
   for (auto protocol_type : PROTOCOL_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
+    concurrency::TransactionManagerFactory::Configure(protocol_type,
+                                                      ISOLATION_LEVEL_TYPE);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
+    storage::DataTable *table =
+        TestingTransactionUtil::CreateTableWithoutIndex();
     // basic create and drop index test
     {
       TransactionScheduler scheduler(2, table, &txn_manager);

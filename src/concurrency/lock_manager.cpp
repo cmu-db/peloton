@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <map>
 
 #include <boost/thread/shared_mutex.hpp>
@@ -32,7 +31,6 @@ LockManager *LockManager::GetInstance() {
   return &global_lm;
 }
 
-
 /**
  * @brief    Initialize lock for given oid
  * @details  Initialize lock for given oid. Currently,
@@ -41,13 +39,13 @@ LockManager *LockManager::GetInstance() {
  * @param    type The type of lock to initialize
  * @return   bool true if successful, false if not
  */
-bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/){
+bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock();
 
   // Try to find the lock in table
   boost::upgrade_mutex *lock = GetLock(oid);
-  if (lock != nullptr){
+  if (lock != nullptr) {
     internal_rw_lock_.unlock();
     LOG_TRACE("Init lock failed.");
     return false;
@@ -56,7 +54,7 @@ bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/){
   // Initialize new lock for the object
   boost::upgrade_mutex *rw_lock = new boost::upgrade_mutex();
 
-  std::pair<oid_t, boost::upgrade_mutex*> p;
+  std::pair<oid_t, boost::upgrade_mutex *> p;
   p.first = oid;
   p.second = rw_lock;
   // Insert lock into map
@@ -73,13 +71,13 @@ bool LockManager::InitLock(oid_t oid, LockManager::LockType /*type*/){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::RemoveLock(oid_t oid){
+bool LockManager::RemoveLock(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock();
     LOG_TRACE("Remove lock failed.");
     return false;
@@ -87,7 +85,7 @@ bool LockManager::RemoveLock(oid_t oid){
 
   // Remove from the lock map
   lock_map_.erase(oid);
-  delete(rw_lock);
+  delete (rw_lock);
 
   // Remove the lock, unlock internal lock
   internal_rw_lock_.unlock();
@@ -100,13 +98,13 @@ bool LockManager::RemoveLock(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::LockShared(oid_t oid){
+bool LockManager::LockShared(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Shared lock failed.");
     return false;
@@ -126,13 +124,13 @@ bool LockManager::LockShared(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::LockExclusive(oid_t oid){
+bool LockManager::LockExclusive(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Exclusive lock failed.");
     return false;
@@ -152,13 +150,13 @@ bool LockManager::LockExclusive(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::LockToShared(oid_t oid){
+bool LockManager::LockToShared(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Change to shared lock failed.");
     return false;
@@ -178,13 +176,13 @@ bool LockManager::LockToShared(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::LockToExclusive(oid_t oid){
+bool LockManager::LockToExclusive(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Change to exclusive lock failed.");
     return false;
@@ -205,13 +203,13 @@ bool LockManager::LockToExclusive(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::UnlockShared(oid_t oid){
+bool LockManager::UnlockShared(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Unlock shared lock failed.");
     return false;
@@ -231,13 +229,13 @@ bool LockManager::UnlockShared(oid_t oid){
  * @param    oid  The oid of data table
  * @return   bool true if successful, false if not
  */
-bool LockManager::UnlockExclusive(oid_t oid){
+bool LockManager::UnlockExclusive(oid_t oid) {
   // Need to lock internal lock to protect internal lock map
   internal_rw_lock_.lock_shared();
 
   // Try to access the lock
   boost::upgrade_mutex *rw_lock = GetLock(oid);
-  if (rw_lock == nullptr){
+  if (rw_lock == nullptr) {
     internal_rw_lock_.unlock_shared();
     LOG_TRACE("Unlock exclusive lock failed.");
     return false;

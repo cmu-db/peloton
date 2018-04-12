@@ -337,9 +337,11 @@ class TransactionThread {
       }
       case TXN_OP_CREATE_INDEX: {
         auto catalog = catalog::Catalog::GetInstance();
-        LOG_INFO("txn isolation level = %d", static_cast<int>(txn->GetIsolationLevel()));
-        auto tmp = catalog->CreateIndex(database_name, table_name, key_attrs,
-                                        index_name1, false, IndexType::BWTREE, txn);
+        LOG_INFO("txn isolation level = %d",
+                 static_cast<int>(txn->GetIsolationLevel()));
+        auto tmp =
+            catalog->CreateIndex(database_name, table_name, key_attrs,
+                                 index_name1, false, IndexType::BWTREE, txn);
         if (tmp == ResultType::SUCCESS)
           schedule->create_index_results.push_back(1);
         else
@@ -349,7 +351,7 @@ class TransactionThread {
       }
       case TXN_OP_DROP_INDEX: {
         auto catalog = catalog::Catalog::GetInstance();
-        auto tmp =  catalog->DropIndex(index_name1, txn);
+        auto tmp = catalog->DropIndex(index_name1, txn);
         if (tmp == ResultType::SUCCESS)
           schedule->drop_index_results.push_back(1);
         else
@@ -375,7 +377,7 @@ class TransactionThread {
   bool go;
   concurrency::TransactionContext *txn;
 
-private:
+ private:
   const std::string index_name1 = "transaction_index_test_index1";
   const std::string database_name = "TEST_DATABASE";
   const std::string table_name = "TEST_TABLE";

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/lock_manager.h"
 #include "common/harness.h"
 
@@ -26,7 +25,7 @@ class LockManagerTests : public PelotonTest {};
 /**
  * @brief Test basic functionality of lock manager
  */
-TEST_F(LockManagerTests, FunctionalityTest){
+TEST_F(LockManagerTests, FunctionalityTest) {
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
@@ -45,7 +44,7 @@ TEST_F(LockManagerTests, FunctionalityTest){
 /**
  * @brief Test shared lock behaviour
  */
-TEST_F(LockManagerTests, LockSharedTest){
+TEST_F(LockManagerTests, LockSharedTest) {
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
@@ -70,7 +69,7 @@ TEST_F(LockManagerTests, LockSharedTest){
 /**
  * @brief Test lock upgrade/downgrade behaviour
  */
-TEST_F(LockManagerTests, LockChangeTest){
+TEST_F(LockManagerTests, LockChangeTest) {
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
@@ -101,7 +100,7 @@ TEST_F(LockManagerTests, LockChangeTest){
 /**
  * @brief Test double create
  */
-TEST_F(LockManagerTests, DoubleCreateTest){
+TEST_F(LockManagerTests, DoubleCreateTest) {
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
@@ -117,7 +116,7 @@ TEST_F(LockManagerTests, DoubleCreateTest){
 /**
  * @brief Test double remove
  */
-TEST_F(LockManagerTests, DoubleRemoveTest){
+TEST_F(LockManagerTests, DoubleRemoveTest) {
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
@@ -132,6 +131,3 @@ TEST_F(LockManagerTests, DoubleRemoveTest){
 
 }  // namespace test
 }  // namespace peloton
-
-
-

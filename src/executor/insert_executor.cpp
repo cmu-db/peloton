@@ -77,9 +77,9 @@ bool InsertExecutor::DExecute() {
 
   oid_t table_oid = target_table->GetOid();
   // Lock the table (reader lock)
-  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockShared(table_oid);
-  if (!lock_success){
+  if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");
   }
 
@@ -103,7 +103,7 @@ bool InsertExecutor::DExecute() {
     if (!children_[0]->Execute()) {
       // Unlock the table
       bool unlock_success = lm->UnlockShared(table_oid);
-      if (!unlock_success){
+      if (!unlock_success) {
         LOG_TRACE("Cannot unlock the table, abort!");
       }
       return false;
@@ -143,7 +143,7 @@ bool InsertExecutor::DExecute() {
                                                  peloton::ResultType::FAILURE);
         // Unlock the table
         bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success){
+        if (!unlock_success) {
           LOG_TRACE("Cannot unlock the table, abort!");
         }
         return false;
@@ -173,7 +173,7 @@ bool InsertExecutor::DExecute() {
     }
     // Unlock the table
     bool unlock_success = lm->UnlockShared(table_oid);
-    if (!unlock_success){
+    if (!unlock_success) {
       LOG_TRACE("Cannot unlock the table, abort!");
     }
     return true;
@@ -268,7 +268,7 @@ bool InsertExecutor::DExecute() {
                                                  ResultType::FAILURE);
         // Unlock the table
         bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success){
+        if (!unlock_success) {
           LOG_TRACE("Cannot unlock the table, abort!");
         }
         return false;
@@ -330,7 +330,7 @@ bool InsertExecutor::DExecute() {
     }
     // Unlock the table
     bool unlock_success = lm->UnlockShared(table_oid);
-    if (!unlock_success){
+    if (!unlock_success) {
       LOG_TRACE("Cannot unlock the table, abort!");
     }
     done_ = true;
@@ -338,7 +338,7 @@ bool InsertExecutor::DExecute() {
   }
   // Unlock the table
   bool unlock_success = lm->UnlockShared(table_oid);
-  if (!unlock_success){
+  if (!unlock_success) {
     LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
