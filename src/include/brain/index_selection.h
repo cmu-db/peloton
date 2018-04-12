@@ -22,10 +22,15 @@ namespace peloton {
 namespace brain {
 
 
+/**
+ * @brief Comparator for set of (Index Configuration, Cost)
+ */
 struct IndexConfigComparator {
   IndexConfigComparator(Workload &workload) { this->w = &workload; }
   bool operator()(const std::pair<IndexConfiguration, double> &s1,
                   const std::pair<IndexConfiguration, double> &s2) {
+    // Order by cost. If cost is same, then by the number of indexes
+    // Unless the configuration is exactly the same, get some ordering
     return ((s1.second < s2.second) ||
         (s1.first.GetIndexCount() < s2.first.GetIndexCount()) ||
         (s1.first.ToString() < s2.first.ToString()));
@@ -40,6 +45,9 @@ struct IndexConfigComparator {
 
 class IndexSelection {
  public:
+  /**
+   * @brief Constructor
+   */
   IndexSelection(Workload &query_set, size_t max_index_cols,
                  size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
@@ -66,7 +74,7 @@ class IndexSelection {
    * @param indexes - the indexes in the workload
    * @param top_indexes - the top k cheapest indexes in the workload are returned through this parameter
    * @param workload - the given workload
-   * @param k - the number of indexes to return. The number 'k' described above
+   * @param k - the number of indexes to return
    */
   void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
   void GenerateMultiColumnIndexes(IndexConfiguration &config,
@@ -84,17 +92,30 @@ private:
    * @param workload - queries
    */
   void PruneUselessIndexes(IndexConfiguration &config, Workload &workload);
+
+  /**
+   * @brief Gets the cost of an index configuration for a given workload directly
+   * from the memo table. Assumes ComputeCost is called.
+   * TODO (Priyatham): This function can be removed now since the requirement for
+   * the comparator to be a const has been eliminated by me.
+   */
   double GetCost(IndexConfiguration &config, Workload &workload) const;
+
+  /**
+   * @brief Gets the cost of an index configuration for a given workload. It would call
+   * the What-If API appropriately and stores the results in the memo table
+   */
   double ComputeCost(IndexConfiguration &config, Workload &workload);
 
   // Configuration Enumeration related
   /**
-   * @brief gets the cheapest indexes through naive exhaustive enumeration by generating all possible subsets of size <= m    * where m is a tunable parameter
+   * @brief Gets the cheapest indexes through naive exhaustive enumeration by
+   * generating all possible subsets of size <= m where m is a tunable parameter
    */
   void ExhaustiveEnumeration(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload);
 
   /**
-   * @brief gets the remaining cheapest indexes through greedy search
+   * @brief Gets the remaining cheapest indexes through greedy search
    */
   void GreedySearch(IndexConfiguration &indexes,
                     IndexConfiguration &remaining_indexes,
