@@ -102,7 +102,7 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
       scheduler.Txn(1).Update(100, 1);
       scheduler.Txn(0).Commit();
       scheduler.Txn(1).Commit();
-      scheduler.Txn(2).Read(1);
+      scheduler.Txn(2).Read(100);
       scheduler.Txn(2).DropIndex();
       scheduler.Txn(2).Commit();
 
