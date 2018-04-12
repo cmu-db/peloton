@@ -150,7 +150,7 @@ public class InsertTest extends PLTestBase {
      * 2 tuple insert, with no column specification, with fewer than
      * schema columns
      */
-    @Test
+    //@Test
     public void test_2Tuple_NCS_2() throws SQLException {
 	
         String sql = "INSERT INTO tbl VALUES (1), (11, 12);";
