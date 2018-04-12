@@ -20,7 +20,7 @@ namespace brain {
 // IndexObject
 //===--------------------------------------------------------------------===//
 
-const std::string IndexObject::toString() const {
+const std::string IndexObject::ToString() const {
   std::stringstream str_stream;
   str_stream << db_oid << table_oid;
   for (auto col : column_oids) {

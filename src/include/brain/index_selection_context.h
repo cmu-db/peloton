@@ -31,7 +31,8 @@ struct KeyHasher {
     // TODO[Siva]: Can we do better?
     auto result = std::hash<std::string>()(key.second->GetInfo());
     for (auto index : indexes) {
-      result ^= IndexObjectHasher()(index->ToString());
+      // TODO[Siva]: Use IndexObjectHasher to hash this
+      result ^= std::hash<std::string>()(index->ToString());
     }
     return result;
   }
