@@ -277,11 +277,8 @@ void PelotonServer::ServerLoop() {
         .RegisterDedicatedThread<PelotonRpcHandlerTask>(this, rpc_task);
   }
   dispatcher_task_->EventLoop();
-  LOG_INFO("Closing server");
 
   peloton_close(listen_fd_);
-
-  LOG_DEBUG("Already Closed the connection %d", listen_fd_);
 
   LOG_INFO("Server Closed");
 }
