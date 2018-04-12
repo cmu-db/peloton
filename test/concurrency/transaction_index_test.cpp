@@ -98,11 +98,11 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
     {
       TransactionScheduler scheduler(3, table, &txn_manager);
       scheduler.Txn(0).CreateIndex();
-      scheduler.Txn(1).Insert(100, 0);
-      scheduler.Txn(1).Update(100, 1);
+      scheduler.Txn(1).Insert(200, 0);
+      scheduler.Txn(1).Update(200, 1);
       scheduler.Txn(0).Commit();
       scheduler.Txn(1).Commit();
-      scheduler.Txn(2).Read(100);
+      scheduler.Txn(2).Read(200);
       scheduler.Txn(2).DropIndex();
       scheduler.Txn(2).Commit();
 
