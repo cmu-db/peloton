@@ -124,9 +124,6 @@ class TransactionContext : public Printable {
 
   inline logging::LogBuffer* GetLogBuffer() const { return log_buffer_; }
 
-  inline const std::vector<std::string>& GetQueryStrings() const {
-                                                      return query_strings_; }
-
   inline void ResetLogBuffer() {
     log_buffer_ = new logging::LogBuffer(logging::LogManager::GetInstance().GetTransactionBufferSize());
   }
