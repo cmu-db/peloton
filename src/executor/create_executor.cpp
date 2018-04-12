@@ -233,7 +233,6 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
       database_name, table_name, txn);
 
   // Get table oid
-  PL_ASSERT(table_object != nullptr);
   oid_t table_oid = table_object->GetTableOid();
 
   // Lock the table being indexed
