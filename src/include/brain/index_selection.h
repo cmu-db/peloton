@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <set>
-
 #include "brain/index_selection_context.h"
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
@@ -23,12 +21,14 @@
 namespace peloton {
 namespace brain {
 
-struct Comp {
-  Comp(Workload &workload) { this->w = &workload; }
-  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2) {
-    //     IndexSelection::GetCost(s1, w);
-    // TODO Call CostModel::GetCost(s1, w);
-    return s1.GetIndexCount() < s2.GetIndexCount();
+
+struct IndexConfigComparator {
+  IndexConfigComparator(Workload &workload) { this->w = &workload; }
+  bool operator()(const std::pair<IndexConfiguration, double> &s1,
+                  const std::pair<IndexConfiguration, double> &s2) {
+    return ((s1.second < s2.second) ||
+        (s1.first.GetIndexCount() < s2.first.GetIndexCount()) ||
+        (s1.first.ToString() < s2.first.ToString()));
   }
 
   Workload *w;
@@ -58,6 +58,15 @@ class IndexSelection {
   void GenerateCandidateIndexes(IndexConfiguration &candidate_config,
                            IndexConfiguration &admissible_config,
                            Workload &workload);
+
+  /**
+   * @brief gets the top k cheapest indexes for the workload
+   *
+   * @param indexes - the indexes in the workload
+   * @param top_indexes - the top k cheapest indexes in the workload are returned through this parameter
+   * @param workload - the given workload
+   * @param k - the number of indexes to return. The number 'k' described above
+   */
   void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
   void GenerateMultiColumnIndexes(IndexConfiguration &config,
                              IndexConfiguration &single_column_indexes,
@@ -78,10 +87,17 @@ private:
   double ComputeCost(IndexConfiguration &config, Workload &workload);
 
   // Configuration Enumeration related
+  /**
+   * @brief gets the cheapest indexes through naive exhaustive enumeration by generating all possible subsets of size <= m    * where m is a tunable parameter
+   */
   void ExhaustiveEnumeration(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload);
+
+  /**
+   * @brief gets the remaining cheapest indexes through greedy search
+   */
   void GreedySearch(IndexConfiguration &indexes,
-                    IndexConfiguration &picked_indexes,
-                    Workload &workload, size_t k);
+                    IndexConfiguration &remaining_indexes,
+                    Workload &workload, size_t num_indexes);
 
   // Admissible index selection related
   void IndexColsParseWhereHelper(
