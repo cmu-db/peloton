@@ -23,7 +23,7 @@ namespace codegen {
 // can be found it (i.e., which index to pass into Get() to get the value)
 //===----------------------------------------------------------------------===//
 uint32_t UpdateableStorage::AddType(const type::Type &type) {
-  PL_ASSERT(storage_type_ == nullptr);
+  PELOTON_ASSERT(storage_type_ == nullptr);
   schema_.push_back(type);
   return static_cast<uint32_t>(schema_.size() - 1);
 }
@@ -96,23 +96,23 @@ void UpdateableStorage::FindStoragePositionFor(uint32_t item_index,
   for (const auto &entry_info : storage_format_) {
     if (entry_info.logical_index == item_index) {
       if (entry_info.is_length) {
-        PL_ASSERT(len_idx == -1);
+        PELOTON_ASSERT(len_idx == -1);
         len_idx = entry_info.physical_index;
       } else {
-        PL_ASSERT(val_idx == -1);
+        PELOTON_ASSERT(val_idx == -1);
         val_idx = entry_info.physical_index;
       }
     }
   }
-  PL_ASSERT(val_idx >= 0);
+  PELOTON_ASSERT(val_idx >= 0);
 }
 
 // Get the value at a specific index into the storage area
 codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
                                                    llvm::Value *space,
                                                    uint64_t index) const {
-  PL_ASSERT(storage_type_ != nullptr);
-  PL_ASSERT(index < schema_.size());
+  PELOTON_ASSERT(storage_type_ != nullptr);
+  PELOTON_ASSERT(index < schema_.size());
 
   // Get the physical position in the storage space where the data is located
   int32_t val_idx, len_idx;
@@ -192,7 +192,7 @@ void UpdateableStorage::SetValue(
     CodeGen &codegen, llvm::Value *space, uint64_t index,
     const codegen::Value &value,
     UpdateableStorage::NullBitmap &null_bitmap) const {
-  PL_ASSERT(null_bitmap.IsNullable(index));
+  PELOTON_ASSERT(null_bitmap.IsNullable(index));
 
   // Set the NULL bit
   llvm::Value *null = value.IsNull(codegen);
@@ -258,7 +258,7 @@ llvm::Value *UpdateableStorage::NullBitmap::IsNull(CodeGen &codegen,
 
 void UpdateableStorage::NullBitmap::SetNull(CodeGen &codegen, uint32_t index,
                                             llvm::Value *null_bit) {
-  PL_ASSERT(null_bit->getType() == codegen.BoolType());
+  PELOTON_ASSERT(null_bit->getType() == codegen.BoolType());
 
   uint32_t byte_pos = index >> 3;
 
@@ -293,7 +293,7 @@ void UpdateableStorage::NullBitmap::SetNull(CodeGen &codegen, uint32_t index,
 
 void UpdateableStorage::NullBitmap::MergeValues(lang::If &if_clause,
                                                 llvm::Value *before_if_value) {
-  PL_ASSERT(bytes_[active_byte_pos_] != nullptr);
+  PELOTON_ASSERT(bytes_[active_byte_pos_] != nullptr);
   bytes_[active_byte_pos_] =
       if_clause.BuildPHI(bytes_[active_byte_pos_], before_if_value);
 }

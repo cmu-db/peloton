@@ -131,9 +131,9 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   stats::QueryMetric::QueryParamBuf param_types;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
+  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       auto param_types_value = (*result_tiles)[0]->GetValue(0, 0);
       param_types.buf = const_cast<uchar *>(
@@ -158,9 +158,9 @@ int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   int64_t num_params = 0;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
+  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       num_params = (*result_tiles)[0]
                        ->GetValue(0, 0)

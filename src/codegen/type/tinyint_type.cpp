@@ -193,7 +193,7 @@ struct Abs : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val,
              const TypeSystem::InvocationContext &ctx)
     const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
     // The tinyint subtraction implementation
     Sub sub;
     // Zero place-holder
@@ -220,7 +220,7 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
     llvm::Value *result = codegen.CallSubWithOverflow(
@@ -248,7 +248,7 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
     return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
@@ -268,7 +268,7 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
     return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
@@ -316,7 +316,7 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do addition
     llvm::Value *overflow_bit = nullptr;
@@ -346,7 +346,7 @@ Type Sub::ResultType(UNUSED_ATTRIBUTE const Type &left_type,
 
 Value Sub::Impl(CodeGen &codegen, const Value &left, const Value &right,
            const TypeSystem::InvocationContext &ctx) const {
-  PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+  PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
   // Do subtraction
   llvm::Value *overflow_bit = nullptr;
@@ -376,7 +376,7 @@ struct Mul : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do multiplication
     llvm::Value *overflow_bit = nullptr;
@@ -407,7 +407,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
     auto *div0 = codegen->CreateICmpEQ(right.GetValue(), codegen.Const8(0));
@@ -463,7 +463,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
     auto *div0 = codegen->CreateICmpEQ(right.GetValue(), codegen.Const8(0));

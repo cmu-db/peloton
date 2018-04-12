@@ -347,8 +347,8 @@ void BloomFilterCodegenTest::InsertTuple(const std::vector<int> &vals,
   }
   ItemPointer *index_entry_ptr = nullptr;
   auto tuple_slot_id = table->InsertTuple(&tuple, txn, &index_entry_ptr);
-  PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-  PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+  PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+  PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
   txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
 }
 

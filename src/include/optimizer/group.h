@@ -95,16 +95,16 @@ class Group {
   // This is called in rewrite phase to erase the only logical expression in the
   // group
   inline void EraseLogicalExpression() {
-    PL_ASSERT(logical_expressions_.size() == 1);
-    PL_ASSERT(physical_expressions_.size() == 0);
+    PELOTON_ASSERT(logical_expressions_.size() == 1);
+    PELOTON_ASSERT(physical_expressions_.size() == 0);
     logical_expressions_.clear();
   }
 
   // This should only be called in rewrite phase to retrieve the only logical
   // expr in the group
   inline GroupExpression *GetLogicalExpression() {
-    PL_ASSERT(logical_expressions_.size() == 1);
-    PL_ASSERT(physical_expressions_.size() == 0);
+    PELOTON_ASSERT(logical_expressions_.size() == 1);
+    PELOTON_ASSERT(physical_expressions_.size() == 0);
     return logical_expressions_[0].get();
   }
 

@@ -57,8 +57,8 @@ struct CastDecimal : public TypeSystem::CastHandleNull {
   // Cast the given decimal value into the provided type
   Value Impl(CodeGen &codegen, const Value &value,
              const type::Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
-    PL_ASSERT(!to_type.nullable);
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(!to_type.nullable);
 
     llvm::Type *val_type = nullptr, *len_type = nullptr;
     to_type.GetSqlType().GetTypeForMaterialization(codegen, val_type, len_type);
@@ -167,7 +167,7 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
     llvm::Value *result = codegen.CallSubWithOverflow(
@@ -250,7 +250,7 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsType(val.GetType()));
+    PELOTON_ASSERT(SupportsType(val.GetType()));
 
     auto *result = codegen.Call(DecimalFunctionsProxy::Ceil, {val.GetValue()});
 
@@ -299,7 +299,7 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFAdd(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
   }
@@ -321,7 +321,7 @@ struct Sub : public TypeSystem::BinaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFSub(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
   }
@@ -343,7 +343,7 @@ struct Mul : public TypeSystem::BinaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFMul(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
   }
@@ -364,7 +364,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
     llvm::Value *div0 =
@@ -421,7 +421,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
     llvm::Value *div0 =

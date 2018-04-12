@@ -221,7 +221,7 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
   }
 
   // transaction passed execution.
-  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
@@ -230,7 +230,7 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
     
   } else {
     // transaction failed commitment.
-    PL_ASSERT(result == ResultType::ABORTED ||
+    PELOTON_ASSERT(result == ResultType::ABORTED ||
            result == ResultType::FAILURE);
     return false;
   }

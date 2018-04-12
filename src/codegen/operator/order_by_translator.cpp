@@ -68,7 +68,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // Now consider the sort columns
   const auto &sort_col_ais = plan_.GetSortKeyAIs();
   const auto &sort_col_ids = plan_.GetSortKeys();
-  PL_ASSERT(!sort_col_ids.empty());
+  PELOTON_ASSERT(!sort_col_ids.empty());
 
   for (uint32_t i = 0; i < sort_col_ais.size(); i++) {
     const auto *ai = sort_col_ais[i];
@@ -167,7 +167,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
 
       // Read values from storage
       if (!left_null_bitmap.IsNullable(slot)) {
-        PL_ASSERT(!right_null_bitmap.IsNullable(slot));
+        PELOTON_ASSERT(!right_null_bitmap.IsNullable(slot));
         left = storage_format.GetValueSkipNull(codegen, left_tuple, slot);
         right = storage_format.GetValueSkipNull(codegen, right_tuple, slot);
       } else {

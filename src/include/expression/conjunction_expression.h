@@ -36,7 +36,7 @@ class ConjunctionExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    PL_ASSERT(children_.size() == 2);
+    PELOTON_ASSERT(children_.size() == 2);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {

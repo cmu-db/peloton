@@ -61,7 +61,7 @@ void BloomFilter::Init(uint64_t estimated_num_tuples) {
   // Allocate memory for the underlying bytes array
   uint64_t num_bytes = (num_bits_ + 7) / 8;
   bytes_ = new char[num_bytes];
-  PL_MEMSET(bytes_, 0, num_bytes);
+  PELOTON_MEMSET(bytes_, 0, num_bytes);
 
   // Initialize Statistics
   num_misses_ = 0;

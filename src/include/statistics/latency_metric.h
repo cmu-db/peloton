@@ -76,7 +76,7 @@ class LatencyMetric : public AbstractMetric {
 
   // Returns the first latency value recorded
   inline double GetFirstLatencyValue() {
-    PL_ASSERT(latencies_.begin() != latencies_.end());
+    PELOTON_ASSERT(latencies_.begin() != latencies_.end());
     return *(latencies_.begin());
   }
 

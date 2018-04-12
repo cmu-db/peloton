@@ -72,13 +72,13 @@ DecimalType::DecimalType()
 }
 
 bool DecimalType::IsZero(const Value& val) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
   return (val.value_.decimal == 0);
 }
 
 Value DecimalType::Add(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -88,8 +88,8 @@ Value DecimalType::Add(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Subtract(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -99,8 +99,8 @@ Value DecimalType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Multiply(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -110,8 +110,8 @@ Value DecimalType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Divide(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -127,8 +127,8 @@ Value DecimalType::Divide(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Modulo(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
   
@@ -158,8 +158,8 @@ Value DecimalType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Min(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -169,8 +169,8 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Max(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -180,7 +180,7 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
 }
 
 Value DecimalType::Sqrt(const Value& val) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
   if (val.IsNull())
     return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
   if (val.value_.decimal < 0) {
@@ -195,8 +195,8 @@ Value DecimalType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
 }
 
 CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
     
@@ -206,8 +206,8 @@ CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const 
 }
 
 CmpBool DecimalType::CompareNotEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -217,8 +217,8 @@ CmpBool DecimalType::CompareNotEquals(const Value& left, const Value &right) con
 }
 
 CmpBool DecimalType::CompareLessThan(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -228,8 +228,8 @@ CmpBool DecimalType::CompareLessThan(const Value& left, const Value &right) cons
 }
 
 CmpBool DecimalType::CompareLessThanEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -239,8 +239,8 @@ CmpBool DecimalType::CompareLessThanEquals(const Value& left, const Value &right
 }
 
 CmpBool DecimalType::CompareGreaterThan(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -250,8 +250,8 @@ CmpBool DecimalType::CompareGreaterThan(const Value& left, const Value &right) c
 }
 
 CmpBool DecimalType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::DECIMAL);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 

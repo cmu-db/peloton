@@ -33,7 +33,7 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   // If leaf, then just return
   if (gexpr->Op().GetType() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
-    assert(target_group == UNDEFINED_GROUP ||
+    PELOTON_ASSERT(target_group == UNDEFINED_GROUP ||
            target_group == leaf->origin_group);
     gexpr->SetGroupID(leaf->origin_group);
     return nullptr;
@@ -43,7 +43,7 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   auto it = group_expressions_.find(gexpr.get());
 
   if (it != group_expressions_.end()) {
-    assert(target_group == UNDEFINED_GROUP ||
+    PELOTON_ASSERT(target_group == UNDEFINED_GROUP ||
            target_group == (*it)->GetGroupID());
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
