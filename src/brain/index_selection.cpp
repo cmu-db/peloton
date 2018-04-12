@@ -36,14 +36,15 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
-  for (unsigned long i=0; i<context_.num_iterations; i++) {
+  for (unsigned long i = 0; i < context_.num_iterations; i++) {
     GenCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
 
-    candidate_indexes = GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
+    candidate_indexes =
+        GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
   }
   final_indexes = candidate_indexes;
 }
@@ -56,7 +57,7 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
     // is the first iteration.
     // Candidate indexes will be a union of admissible
     // index set of each query.
-    for (auto query: workload.GetQueries()) {
+    for (auto query : workload.GetQueries()) {
       Workload workload(query);
 
       IndexConfiguration Ai;
@@ -73,10 +74,9 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
 
     auto it = cand_indexes.begin();
     while (it != cand_indexes.end()) {
-
       bool is_useful = false;
 
-      for (auto query: workload.GetQueries()) {
+      for (auto query : workload.GetQueries()) {
         IndexConfiguration c;
         c.AddIndexObject(*it);
 
@@ -125,7 +125,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   double cur_cost;
   std::shared_ptr<IndexObject> best_index;
 
-  while(current_index_count < k) {
+  while (current_index_count < k) {
     auto original_indexes = indexes;
     for (auto i : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
@@ -136,13 +136,13 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
         best_index = i;
       }
     }
-    if(cur_min_cost < global_min_cost) {
+    if (cur_min_cost < global_min_cost) {
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
       global_min_cost = cur_min_cost;
 
-      if(remaining_indexes.GetIndexCount() == 0) {
+      if (remaining_indexes.GetIndexCount() == 0) {
         break;
       }
     } else {
@@ -167,23 +167,22 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   for (auto index : indexes.GetIndexes()) {
     temp_index_config = running_index_config;
 
-    for(auto t : temp_index_config) {
+    for (auto t : temp_index_config) {
       new_element = t;
       new_element.AddIndexObject(index);
 
-      if(new_element.GetIndexCount() >= context_.naive_enumeration_threshold_) {
+      if (new_element.GetIndexCount() >=
+          context_.naive_enumeration_threshold_) {
         result_index_config.insert(new_element);
       } else {
         running_index_config.insert(new_element);
       }
     }
-
   }
 
-
-  result_index_config.insert(running_index_config.begin(), running_index_config.end());
+  result_index_config.insert(running_index_config.begin(),
+                             running_index_config.end());
   result_index_config.erase(empty);
-
 
   // combine all the index configurations and return top m configurations
   for (auto i : result_index_config) {
@@ -217,26 +216,29 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
       // If the insert is along with a select statement, i.e another table's
       // select output is fed into this table.
       if (sql_statement.insert_stmt->select != nullptr) {
-        IndexColsParseWhereHelper(sql_statement.insert_stmt->select->where_clause.get(), indexes);
+        IndexColsParseWhereHelper(
+            sql_statement.insert_stmt->select->where_clause.get(), indexes);
       }
       break;
 
     case StatementType::DELETE:
       sql_statement.delete_stmt =
-        dynamic_cast<parser::DeleteStatement *>(query);
+          dynamic_cast<parser::DeleteStatement *>(query);
       IndexColsParseWhereHelper(sql_statement.delete_stmt->expr.get(), indexes);
       break;
 
     case StatementType::UPDATE:
       sql_statement.update_stmt =
-        dynamic_cast<parser::UpdateStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.update_stmt->where.get(), indexes);
+          dynamic_cast<parser::UpdateStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.update_stmt->where.get(),
+                                indexes);
       break;
 
     case StatementType::SELECT:
       sql_statement.select_stmt =
-        dynamic_cast<parser::SelectStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause.get(), indexes);
+          dynamic_cast<parser::SelectStatement *>(query);
+      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause.get(),
+                                indexes);
       IndexColsParseOrderByHelper(sql_statement.select_stmt->order, indexes);
       IndexColsParseGroupByHelper(sql_statement.select_stmt->group_by, indexes);
       break;
@@ -247,8 +249,9 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
   }
 }
 
-void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
-                                               IndexConfiguration &config) {
+void IndexSelection::IndexColsParseWhereHelper(
+    const expression::AbstractExpression *where_expr,
+    IndexConfiguration &config) {
   if (where_expr == nullptr) {
     LOG_INFO("No Where Clause Found");
     return;
@@ -282,10 +285,12 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
-        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (left_child);
+        tuple_child =
+            dynamic_cast<const expression::TupleValueExpression *>(left_child);
       } else {
         assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-        tuple_child = dynamic_cast<const expression::TupleValueExpression*> (right_child);
+        tuple_child =
+            dynamic_cast<const expression::TupleValueExpression *>(right_child);
       }
 
       if (!tuple_child->GetIsBound()) {
@@ -304,14 +309,16 @@ void IndexSelection::IndexColsParseWhereHelper(const expression::AbstractExpress
       IndexColsParseWhereHelper(right_child, config);
       break;
     default:
-      LOG_ERROR("Index selection doesn't allow %s in where clause", where_expr->GetInfo().c_str());
+      LOG_ERROR("Index selection doesn't allow %s in where clause",
+                where_expr->GetInfo().c_str());
       assert(false);
   }
   (void)config;
 }
 
-void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescription> &group_expr,
-                                                 IndexConfiguration &config) {
+void IndexSelection::IndexColsParseGroupByHelper(
+    std::unique_ptr<GroupByDescription> &group_expr,
+    IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
     LOG_INFO("Group by expression not present");
     return;
@@ -319,13 +326,13 @@ void IndexSelection::IndexColsParseGroupByHelper(std::unique_ptr<GroupByDescript
   auto &columns = group_expr->columns;
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    auto tuple_value = (expression::TupleValueExpression *)((*it).get());
     IndexObjectPoolInsertHelper(tuple_value, config);
   }
 }
 
-void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_expr,
-                                                 IndexConfiguration &config) {
+void IndexSelection::IndexColsParseOrderByHelper(
+    std::unique_ptr<OrderDescription> &order_expr, IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
     LOG_INFO("Order by expression not present");
     return;
@@ -333,13 +340,14 @@ void IndexSelection::IndexColsParseOrderByHelper(std::unique_ptr<OrderDescriptio
   auto &exprs = order_expr->exprs;
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto tuple_value = (expression::TupleValueExpression*) ((*it).get());
+    auto tuple_value = (expression::TupleValueExpression *)((*it).get());
     IndexObjectPoolInsertHelper(tuple_value, config);
   }
 }
 
-void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExpression *tuple_col,
-                                                 IndexConfiguration &config) {
+void IndexSelection::IndexObjectPoolInsertHelper(
+    const expression::TupleValueExpression *tuple_col,
+    IndexConfiguration &config) {
   auto db_oid = std::get<0>(tuple_col->GetBoundOid());
   auto table_oid = std::get<1>(tuple_col->GetBoundOid());
   auto col_oid = std::get<2>(tuple_col->GetBoundOid());
@@ -353,26 +361,31 @@ void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExp
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) const {
+double IndexSelection::GetCost(IndexConfiguration &config,
+                               Workload &workload) const {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
+                                                                   query};
     PL_ASSERT(context_.memo_.find(state) != context_.memo_.end());
     cost += context_.memo_.find(state)->second;
   }
   return cost;
 }
 
-double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::ComputeCost(IndexConfiguration &config,
+                                   Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
+                                                                   query};
     if (context_.memo_.find(state) != context_.memo_.end()) {
       cost += context_.memo_[state];
     } else {
-      auto result = WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+      auto result =
+          WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }
@@ -388,7 +401,7 @@ IndexConfiguration IndexSelection::CrossProduct(
   auto columns = single_column_indexes.GetIndexes();
   for (auto index : indexes) {
     for (auto column : columns) {
-      if(!index->IsCompatible(column)) continue;
+      if (!index->IsCompatible(column)) continue;
       auto merged_index = (index->Merge(column));
       result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
     }
@@ -396,8 +409,8 @@ IndexConfiguration IndexSelection::CrossProduct(
   return result;
 }
 
-
-IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
+IndexConfiguration IndexSelection::GenMultiColumnIndexes(
+    IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
   return CrossProduct(config, single_column_indexes);
 }
 
