@@ -25,39 +25,83 @@ IndexSelection::IndexSelection(Workload &query_set) :
   query_set_(query_set) {
 }
 
-std::unique_ptr<IndexConfiguration> IndexSelection::GetBestIndexes() {
-  std::unique_ptr<IndexConfiguration> C(new IndexConfiguration());
+void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // Figure 4 of the "Index Selection Tool" paper.
   // Split the workload 'W' into small workloads 'Wi', with each
   // containing one query, and find out the candidate indexes
   // for these 'Wi'
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
-  auto queries = query_set_.GetQueries();
-  for (auto query : queries) {
-    // Get admissible indexes 'Ai'
-    IndexConfiguration Ai;
-    GetAdmissibleIndexes(query, Ai);
+  IndexConfiguration candidate_indexes;
+  IndexConfiguration admissible_indexes;
 
-    Workload Wi;
-    Wi.AddQuery(query);
+  // Start the index selection.
+  for (unsigned long i=0; i<context_.num_iterations; i++) {
+    GenCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
 
-    // Get candidate indexes 'Ci' for the workload.
-    IndexConfiguration Ci;
-    Ci = Enumerate(Ai, Wi, 4);
+    // Configuration Enumeration
+    IndexConfiguration top_candidate_indexes;
+    Enumerate(candidate_indexes, top_candidate_indexes, query_set_);
 
-    // Add the 'Ci' to the union Index Configuration set 'C'
-    C->Add(Ci);
+    candidate_indexes = GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
   }
-  return C;
+  final_indexes = candidate_indexes;
 }
 
+void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
+                                         IndexConfiguration &admissible_config,
+                                         Workload &workload) {
+  if (admissible_config.GetIndexCount() == 0) {
+    // If there are no admissible indexes, then this
+    // is the first iteration.
+    // Candidate indexes will be a union of admissible
+    // index set of each query.
+    for (auto query: workload.GetQueries()) {
+      Workload workload(query);
+
+      IndexConfiguration Ai;
+      GetAdmissibleIndexes(query, Ai);
+      admissible_config.Merge(Ai);
+
+      IndexConfiguration Ci;
+      Ci = Enumerate(Ai, workload, 4);
+    }
+    candidate_config = admissible_config;
+  } else {
+    IndexConfiguration empty_config;
+    auto cand_indexes = candidate_config.GetIndexes();
+
+    auto it = cand_indexes.begin();
+    while (it != cand_indexes.end()) {
+
+      bool is_useful = false;
+
+      for (auto query: workload.GetQueries()) {
+        IndexConfiguration c;
+        c.AddIndexObject(*it);
+
+        Workload w(query);
+
+        if (ComputeCost(c, w) > ComputeCost(empty_config, w)) {
+          is_useful = true;
+          break;
+        }
+      }
+      // Index is useful if it benefits any query.
+      if (!is_useful) {
+        it = cand_indexes.erase(it);
+      } else {
+        it++;
+      }
+    }
+  }
+}
 
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
 IndexConfiguration& IndexSelection::Enumerate(IndexConfiguration &indexes,
-                               Workload &workload, size_t k) {
+                                              Workload &workload, size_t k) {
 
   auto top_indexes = ExhaustiveEnumeration(indexes, workload);
 
@@ -69,8 +113,8 @@ IndexConfiguration& IndexSelection::Enumerate(IndexConfiguration &indexes,
 
 
 IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
-                                           IndexConfiguration &remaining_indexes,
-                                           Workload &workload, size_t k) {
+                                                 IndexConfiguration &remaining_indexes,
+                                                 Workload &workload, size_t k) {
 
   size_t current_index_count = getMinEnumerateCount();
 
@@ -119,7 +163,7 @@ unsigned long IndexSelection::getMinEnumerateCount() {
 }
 
 IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
-                               Workload &workload) {
+                                                         Workload &workload) {
   size_t m = getMinEnumerateCount();
 
   assert(m <= indexes.GetIndexCount());
@@ -325,7 +369,18 @@ void IndexSelection::IndexObjectPoolInsertHelper(const expression::TupleValueExp
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) const {
+  double cost = 0.0;
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config, query};
+    PL_ASSERT(context_.memo_.find(state) != context_.memo_.end());
+    cost += context_.memo_.find(state)->second;
+  }
+  return cost;
+}
+
+double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
@@ -341,7 +396,7 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   return cost;
 }
 
-IndexConfiguration IndexSelection::Crossproduct(
+IndexConfiguration IndexSelection::CrossProduct(
     const IndexConfiguration &config,
     const IndexConfiguration &single_column_indexes) {
   IndexConfiguration result;
@@ -359,7 +414,7 @@ IndexConfiguration IndexSelection::Crossproduct(
 
 
 IndexConfiguration IndexSelection::GenMultiColumnIndexes(IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return Crossproduct(config, single_column_indexes);
+  return CrossProduct(config, single_column_indexes);
 }
 
 }  // namespace brain

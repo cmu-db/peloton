@@ -51,7 +51,7 @@ public:
 
   bool operator==(const IndexObject &obj) const;
 
-  bool IsCompatible(std::shared_ptr<IndexObject> index);
+  bool IsCompatible(std::shared_ptr<IndexObject> index) const;
   IndexObject Merge(std::shared_ptr<IndexObject> index);
 };
 
@@ -67,6 +67,7 @@ public:
   IndexConfiguration();
   IndexConfiguration(std::set<std::shared_ptr<IndexObject>> index_obj_set) {indexes_ = index_obj_set;};
   void Add(IndexConfiguration &config);
+  void Merge(IndexConfiguration &config);
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
   void RemoveIndexObject(std::shared_ptr<IndexObject> index_info);
 
@@ -86,6 +87,8 @@ private:
   std::vector<SQLStatement*> sql_queries_;
 public:
   Workload() {}
+  Workload(SQLStatement *query) : sql_queries_({query}) {
+  }
   void AddQuery(SQLStatement *query) {
     sql_queries_.push_back(query);
   }
