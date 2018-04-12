@@ -45,7 +45,7 @@ class IndexObject {
   }
 
   // To string for performing hash.
-  const std::string toString() const;
+  const std::string ToString() const;
 
   bool operator==(const IndexObject &obj) const;
 
@@ -55,7 +55,7 @@ class IndexObject {
 
 struct IndexObjectHasher {
   size_t operator()(const IndexObject &obj) const {
-    return std::hash<std::string>()(obj.toString());
+    return std::hash<std::string>()(obj.ToString());
   }
 };
 
@@ -63,7 +63,7 @@ struct IndexObjectHasher {
 class IndexConfiguration {
  public:
   IndexConfiguration();
-  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> index_obj_set) {
+  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> &index_obj_set) {
     indexes_ = index_obj_set;
   };
   void Add(IndexConfiguration &config);
