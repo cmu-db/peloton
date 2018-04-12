@@ -20,9 +20,10 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols, size_t enum_threshold, size_t num_indexes) :
-  query_set_(query_set), context_(max_index_cols, enum_threshold, num_indexes) {
-}
+IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
+                               size_t enum_threshold, size_t num_indexes)
+    : query_set_(query_set),
+      context_(max_index_cols, enum_threshold, num_indexes) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // Figure 4 of the "Index Selection Tool" paper.
@@ -41,7 +42,8 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
-    Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
+    Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
+              context_.num_indexes_);
 
     GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
   }
@@ -98,96 +100,128 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config, Workload &w
   }
 }
 
-// Enumerate()
-// Given a set of indexes, this function
-// finds out the set of cheapest indexes for the workload.
-void IndexSelection::Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes,
-                                              Workload &workload, size_t k) {
-
+void IndexSelection::Enumerate(IndexConfiguration &indexes,
+                               IndexConfiguration &top_indexes,
+                               Workload &workload, size_t num_indexes) {
+  // Get the cheapest indexes through exhaustive search upto a threshold
   ExhaustiveEnumeration(indexes, top_indexes, workload);
 
+  // Get all the remaining indexes which can be part of our optimal set
   auto remaining_indexes = indexes - top_indexes;
 
-  GreedySearch(top_indexes, remaining_indexes, workload, k);
+  // Greedily add the remaining indexes until there is no improvement in the
+  // cost or our required size is reached
+  GreedySearch(top_indexes, remaining_indexes, workload, num_indexes);
 }
 
-
 void IndexSelection::GreedySearch(IndexConfiguration &indexes,
-                                                 IndexConfiguration &remaining_indexes,
-                                                 Workload &workload, size_t k) {
+                                  IndexConfiguration &remaining_indexes,
+                                  Workload &workload, size_t k) {
+  // Algorithm:
+  // 1. Let S = the best m index configuration using the naive enumeration
+  // algorithm. If m = k then exit.
+  // 2. Pick a new index I such that Cost (S U {I}, W) <= Cost(S U {I'}, W) for
+  // any choice of I' != I
+  // 3. If Cost (S U {I}) >= Cost(S) then exit
+  // Else S = S U {I}
+  // 4. If |S| = k then exit
 
   size_t current_index_count = context_.naive_enumeration_threshold_;
 
-  if(current_index_count >= k)
-    return;
+  if (current_index_count >= k) return;
 
   double global_min_cost = GetCost(indexes, workload);
   double cur_min_cost = global_min_cost;
   double cur_cost;
   std::shared_ptr<IndexObject> best_index;
 
+  // go through till you get top k indexes
   while (current_index_count < k) {
+    // this is the set S so far
     auto original_indexes = indexes;
-    for (auto i : remaining_indexes.GetIndexes()) {
+    for (auto index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
-      indexes.AddIndexObject(i);
+      indexes.AddIndexObject(index);
       cur_cost = ComputeCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
-        best_index = i;
+        best_index = index;
       }
     }
+
+    // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
       global_min_cost = cur_min_cost;
 
+      // we are done with all remaining indexes
       if (remaining_indexes.GetIndexCount() == 0) {
         break;
       }
-    } else {
+    } else {  // we did not find any better index to add to our current
+              // configuration
       break;
     }
   }
 }
 
 void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
-                                                         IndexConfiguration &top_indexes,
-                                                         Workload &workload) {
+                                           IndexConfiguration &top_indexes,
+                                           Workload &workload) {
+  // Get the best m index configurations using the naive enumeration algorithm
+  // The naive algorithm gets all the possible subsets of size <= m and then
+  // returns the cheapest m indexes
   assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
 
-  std::set<IndexConfiguration, Comp> running_index_config(workload);
-  std::set<IndexConfiguration, Comp> temp_index_config(workload);
-  std::set<IndexConfiguration, Comp> result_index_config(workload);
+  // Define a set ordering of (index config, cost) and define the ordering in
+  // the set
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      running_index_config(workload);
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      temp_index_config(workload);
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      result_index_config(workload);
   IndexConfiguration new_element;
 
+  // Add an empty configuration as initialization
   IndexConfiguration empty;
-  running_index_config.insert(empty);
+  // The running index configuration contains the possible subsets generated so
+  // far. It is updated after every iteration
+  running_index_config.insert({empty, 0.0});
 
   for (auto index : indexes.GetIndexes()) {
+    // Make a copy of the running index configuration and add each element to it
     temp_index_config = running_index_config;
 
     for (auto t : temp_index_config) {
-      new_element = t;
+      new_element = t.first;
       new_element.AddIndexObject(index);
 
+      // If the size of the subset reaches our threshold, add to result set
+      // instead of adding to the running list
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
-        result_index_config.insert(new_element);
+        result_index_config.insert(
+            {new_element, GetCost(new_element, workload)});
       } else {
-        running_index_config.insert(new_element);
+        running_index_config.insert(
+            {new_element, GetCost(new_element, workload)});
       }
     }
   }
 
+  // Put all the subsets in the result set
   result_index_config.insert(running_index_config.begin(),
                              running_index_config.end());
-  result_index_config.erase(empty);
+  // Remove the starting empty set that we added
+  result_index_config.erase({empty, 0.0});
 
-  // combine all the index configurations and return top m configurations
-  for (auto i : result_index_config) {
-    top_indexes.Merge(i);
+  // Since the insertion into the sets ensures the order of cost, get the first
+  // m configurations
+  for (auto index_pair : result_index_config) {
+    top_indexes.Merge(index_pair.first);
   }
 }
 
@@ -410,8 +444,7 @@ void IndexSelection::CrossProduct(
 }
 
 void IndexSelection::GenerateMultiColumnIndexes(
-    IndexConfiguration &config,
-    IndexConfiguration &single_column_indexes,
+    IndexConfiguration &config, IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
   CrossProduct(config, single_column_indexes, result);
 }
