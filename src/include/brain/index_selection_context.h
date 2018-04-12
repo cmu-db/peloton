@@ -46,6 +46,7 @@ class IndexSelectionContext {
  public:
   /**
    * @brief Constructor
+   *
    */
   IndexSelectionContext(size_t num_iterations,
                         size_t naive_enumeration_threshold_,
@@ -54,11 +55,11 @@ class IndexSelectionContext {
  private:
   friend class IndexSelection;
 
-  // memoization of the cost of a query for a given configuration 
+  // memoization of the cost of a query for a given configuration
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>,
                      double, KeyHasher>
       memo_;
-  // map from index configuration to the sharedpointer of the 
+  // map from index configuration to the sharedpointer of the
   // IndexConfiguration object
   IndexObjectPool pool;
 

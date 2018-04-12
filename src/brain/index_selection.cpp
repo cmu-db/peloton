@@ -333,7 +333,7 @@ void IndexSelection::IndexColsParseWhereHelper(
         LOG_INFO("Query is not bound");
         assert(false);
       }
-      IndexObjectPoolInsertHelper(tuple_child, config);
+      IndexObjectPoolInsertHelper(tuple_child->GetBoundOid(), config);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
@@ -363,7 +363,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
   for (auto it = columns.begin(); it != columns.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression *)((*it).get());
-    IndexObjectPoolInsertHelper(tuple_value, config);
+    IndexObjectPoolInsertHelper(tuple_value->GetBoundOid(), config);
   }
 }
 
@@ -377,12 +377,12 @@ void IndexSelection::IndexColsParseOrderByHelper(
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
     assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression *)((*it).get());
-    IndexObjectPoolInsertHelper(tuple_value, config);
+    IndexObjectPoolInsertHelper(tuple_value->GetBoundOid(), config);
   }
 }
 
 void IndexSelection::IndexObjectPoolInsertHelper(
-    const expression::TupleValueExpression *tuple_col,
+    const std::tuple<oid_t, oid_t, oid_t> tuple_col,
     IndexConfiguration &config) {
   auto db_oid = std::get<0>(tuple_col->GetBoundOid());
   auto table_oid = std::get<1>(tuple_col->GetBoundOid());
