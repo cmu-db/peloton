@@ -88,7 +88,7 @@ class RunJunit:
     def _run_junit(self):
         """ Run the JUnit tests, via ant """
         self.junit_output_fd = open(self.junit_output_file, "w+")
-        ret_val = subprocess.call(["ant test"],
+        ret_val = subprocess.call(["ant testconsole"],
                                   stdout=self.junit_output_fd,
                                   stderr=self.junit_output_fd,
                                   shell=True)
