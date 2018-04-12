@@ -40,15 +40,21 @@ struct KeyHasher {
 //===--------------------------------------------------------------------===//
 class IndexSelectionContext {
 public:
-  IndexSelectionContext();
+  IndexSelectionContext(size_t num_iterations,
+                        size_t naive_enumeration_threshold_,
+                        size_t num_indexes_);
 
 private:
   friend class IndexSelection;
 
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>, double, KeyHasher> memo_;
 
-  unsigned long num_iterations;
   IndexObjectPool pool;
+
+  // Configuration knobs
+  size_t num_iterations;
+  size_t naive_enumeration_threshold_;
+  size_t num_indexes_;
 };
 
 }  // namespace brain

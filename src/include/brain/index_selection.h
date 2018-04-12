@@ -17,16 +17,28 @@
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
 #include "parser/sql_statement.h"
-
+#include <set>
 namespace peloton {
 namespace brain {
+
+struct Comp {
+  Comp(Workload &workload) {this->w = &workload;}
+  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2) {
+//     IndexSelection::GetCost(s1, w);
+    // TODO Call CostModel::GetCost(s1, w);
+    return s1.GetIndexCount() < s2.GetIndexCount();
+  }
+
+  Workload *w;
+};
 
 //===--------------------------------------------------------------------===//
 // IndexSelection
 //===--------------------------------------------------------------------===//
 class IndexSelection {
  public:
-  IndexSelection(Workload &query_set);
+  IndexSelection(Workload &query_set, size_t max_index_cols,
+                 size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
@@ -36,9 +48,16 @@ private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload) const;
   double ComputeCost(IndexConfiguration &config, Workload &workload);
-  void Enumerate(IndexConfiguration &indexes,
-                 IndexConfiguration &picked_indexes,
-                      Workload &workload);
+  IndexConfiguration& Enumerate(IndexConfiguration &indexes,
+                                Workload &workload, size_t k);
+
+  // Configuration Enumeration related
+  IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes, Workload &workload);
+  IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes);
+  IndexConfiguration& GreedySearch(IndexConfiguration &indexes,
+                                   IndexConfiguration &picked_indexes,
+                                   Workload &workload, size_t k);
+
   // Admissible index selection related
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,
                                  IndexConfiguration &config);
