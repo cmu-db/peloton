@@ -29,15 +29,13 @@ static std::vector<ProtocolType> PROTOCOL_TYPES = {
 static IsolationLevelType ISOLATION_LEVEL_TYPE =
     IsolationLevelType::SERIALIZABLE;
 
-// basic create and drop index test
 TEST_F(TransactionIndexTests, BasicIndexTest) {
   for (auto protocol_type : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
+    // basic create and drop index test
     {
-      concurrency::EpochManagerFactory::GetInstance().Reset();
-      storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
-
       TransactionScheduler scheduler(2, table, &txn_manager);
       scheduler.Txn(0).CreateIndex();
       scheduler.Txn(0).Commit();
@@ -51,54 +49,47 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
       EXPECT_EQ(1, scheduler.schedules[1].drop_index_results[0]);
     }
-  }
-}
 
-// test with concurrent transactions
-TEST_F(TransactionIndexTests, ConcurrentTransactionsTest) {
-  for (auto protocol_type : PROTOCOL_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    // test with concurrent transactions
     {
-      concurrency::EpochManagerFactory::GetInstance().Reset();
-      storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
-
-      TransactionScheduler scheduler(2, table, &txn_manager);
+      TransactionScheduler scheduler(3, table, &txn_manager);
       scheduler.Txn(0).CreateIndex();
       scheduler.Txn(1).CreateIndex();
       scheduler.Txn(0).Commit();
       scheduler.Txn(1).Commit();
+      scheduler.Txn(2).DropIndex();
+      scheduler.Txn(2).Commit();
 
       scheduler.Run();
 
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
 
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
       EXPECT_EQ(0, scheduler.schedules[1].create_index_results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
     }
-  }
-}
 
-// transaction abort test
-TEST_F(TransactionIndexTests, AbortTest) {
-  for (auto protocol_type : PROTOCOL_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(protocol_type);
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    storage::DataTable *table = TestingTransactionUtil::CreateTableWithoutIndex();
+    // transaction abort test
     {
-      TransactionScheduler scheduler(2, table, &txn_manager);
+      TransactionScheduler scheduler(3, table, &txn_manager);
       scheduler.Txn(0).CreateIndex();
       scheduler.Txn(0).Abort();
       scheduler.Txn(1).CreateIndex();
       scheduler.Txn(1).Commit();
+      scheduler.Txn(2).DropIndex();
+      scheduler.Txn(2).Commit();
 
       scheduler.Run();
 
       EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
       EXPECT_EQ(1, scheduler.schedules[1].create_index_results[0]);
+      EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
     }
 
     {
@@ -114,6 +105,7 @@ TEST_F(TransactionIndexTests, AbortTest) {
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
+
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
       EXPECT_EQ(1, scheduler.schedules[1].drop_index_results[0]);
       EXPECT_EQ(1, scheduler.schedules[2].drop_index_results[0]);
