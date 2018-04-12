@@ -116,7 +116,6 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, table_name, current_txn);
 
-    PL_ASSERT(table_object != nullptr);
     oid_t table_oid = table_object->GetTableOid();
     concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
     lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
