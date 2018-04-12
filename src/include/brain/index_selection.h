@@ -56,6 +56,10 @@ class IndexSelection {
    * @returns The best possible Index Congurations for the workload
    */
   void GetBestIndexes(IndexConfiguration &final_indexes);
+
+  /**
+   * @brief Gets the indexable columns of a given query
+   */
   void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
 
   /**
