@@ -107,21 +107,39 @@ private:
   void IndexColsParseGroupByHelper(
       std::unique_ptr<GroupByDescription> &where_expr,
       IndexConfiguration &config);
+
   void IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_by,
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table,
                                                      std::vector<oid_t> cols);
+  /**
+   * @brief Helper function to convert a tuple of <db_oid, table_oid, col_oid>
+   * to an IndexObject and store into the IndexObject shared pool.
+   *
+   * @tuple_col: representation of a column
+   * @config: returns a new index object here
+   */
   void IndexObjectPoolInsertHelper(
-      const expression::TupleValueExpression *tuple_col,
+      const std::tuple<oid_t, oid_t, oid_t> tuple_col,
       IndexConfiguration &config);
+
+  /**
+   * @brief Create a new index configuration which is a cross product of the given configurations.
+   * Ex: {I1} * {I23, I45} = {I123, I145}
+   *
+   * @configuration1: config1
+   * @configuration2: config2
+   * @result: cross product
+   */
   void CrossProduct(
-      const IndexConfiguration &config,
-      const IndexConfiguration &single_column_indexes,
+      const IndexConfiguration &configuration1,
+      const IndexConfiguration &configuration2,
       IndexConfiguration &result);
 
-  // members
+  // Set of parsed and bound queries
   Workload query_set_;
+  // Common context of index selection object.
   IndexSelectionContext context_;
 };
 
