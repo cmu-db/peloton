@@ -68,7 +68,8 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
         LOG_DEBUG("Created a new hypothetical index %d on table: %d",
-                  index_catalog_obj->GetIndexOid(), index_catalog_obj->GetTableOid());
+                  index_catalog_obj->GetIndexOid(),
+                  index_catalog_obj->GetTableOid());
       }
     }
   }
@@ -156,17 +157,22 @@ void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
 }
 
 std::shared_ptr<catalog::IndexCatalogObject>
-  WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
-  // Create an index name: index_<database_name>_<table_name>_<col_oid1>_<col_oid2>_...
+WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
+  // Create an index name:
+  // index_<database_name>_<table_name>_<col_oid1>_<col_oid2>_...
   std::ostringstream index_name_oss;
-  index_name_oss << "index_" << index_obj->db_oid << "_" << index_obj->table_oid;
-  for (auto it = index_obj->column_oids.begin(); it != index_obj->column_oids.end(); it++) {
+  index_name_oss << "index_" << index_obj->db_oid << "_"
+                 << index_obj->table_oid;
+  for (auto it = index_obj->column_oids.begin();
+       it != index_obj->column_oids.end(); it++) {
     index_name_oss << (*it) << "_";
   }
   // Create a dummy catalog object.
-  auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(new catalog::IndexCatalogObject(
-    index_seq_no++, index_name_oss.str(), index_obj->table_oid,
-    IndexType::BWTREE, IndexConstraintType::DEFAULT, false, index_obj->column_oids));
+  auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
+      new catalog::IndexCatalogObject(index_seq_no++, index_name_oss.str(),
+                                      index_obj->table_oid, IndexType::BWTREE,
+                                      IndexConstraintType::DEFAULT, false,
+                                      index_obj->column_oids));
   return index_cat_obj;
 }
 

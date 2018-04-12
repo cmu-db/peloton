@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/index_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Index Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,9 +14,9 @@
 
 #include <sstream>
 
-#include "concurrency/transaction_context.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -54,7 +54,8 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
 IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
-                                       bool unique_keys, std::set<oid_t> key_attrs) {
+                                       bool unique_keys,
+                                       std::set<oid_t> key_attrs) {
   this->index_oid = index_oid;
   this->index_name = index_name;
   this->table_oid = table_oid;
@@ -188,7 +189,8 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
+bool IndexCatalog::DeleteIndex(oid_t index_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -286,7 +288,8 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
  * @return  a vector of index catalog objects
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
+IndexCatalog::GetIndexObjects(oid_t table_oid,
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

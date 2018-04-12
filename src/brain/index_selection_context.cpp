@@ -16,11 +16,12 @@
 namespace peloton {
 namespace brain {
 
-IndexSelectionContext::IndexSelectionContext(
-  size_t num_iterations, size_t naive_threshold, size_t num_indexes):
-  num_iterations(num_iterations), naive_enumeration_threshold_(naive_threshold),
-                                               num_indexes_(num_indexes) {
-}
+IndexSelectionContext::IndexSelectionContext(size_t num_iterations,
+                                             size_t naive_threshold,
+                                             size_t num_indexes)
+    : num_iterations(num_iterations),
+      naive_enumeration_threshold_(naive_threshold),
+      num_indexes_(num_indexes) {}
 
 }  // namespace brain
 }  // namespace peloton
