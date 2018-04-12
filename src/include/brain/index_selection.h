@@ -41,7 +41,7 @@ struct IndexConfigComparator {
 class IndexSelection {
  public:
   IndexSelection(Workload &query_set, size_t max_index_cols,
-                 size_t enum_threshold, size_t num_indexes);
+                 size_t enumeration_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
 
