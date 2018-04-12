@@ -146,13 +146,13 @@ void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
           }
         default:
           LOG_ERROR("Invalid select statement type");
-          PL_ASSERT(false);
+          PELOTON_ASSERT(false);
       }
       break;
 
     default:
       LOG_WARN("Cannot handle DDL statements");
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
   }
 }
 
