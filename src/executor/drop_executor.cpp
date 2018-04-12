@@ -133,17 +133,16 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
-    oid_t table_id = catalog::Catalog::GetInstance()
-        ->GetTableObject(database_name, table_name, txn)
-        ->GetTableOid();
-
-    // Remove table lock
-    concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
-    lm->RemoveLock(table_id);
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
+      oid_t table_id = catalog::Catalog::GetInstance()
+          ->GetTableObject(database_name, table_name, txn)
+          ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
+      // Remove table lock
+      concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+      lm->RemoveLock(table_id);
     }
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
