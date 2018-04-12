@@ -1260,7 +1260,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     // no need to log read-only transactions
     if (!current_txn->IsReadOnly() && task_callback != nullptr) {
-
       auto on_flush = [this, result, task_callback]() {
           task_callback(result);
       };

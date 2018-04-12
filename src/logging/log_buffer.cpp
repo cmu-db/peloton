@@ -32,7 +32,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
   switch (type) {
     case LogRecordType::TUPLE_INSERT: {
-      LOG_INFO("inserting tuple");
+//      LOG_INFO("inserting tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -54,7 +54,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       break;
     }
     case LogRecordType::TUPLE_DELETE: {
-      LOG_INFO("Deleting tuple");
+//      LOG_INFO("Deleting tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -69,7 +69,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       break;
     }
     case LogRecordType::TUPLE_UPDATE: {
-      LOG_INFO("Updating tuple");
+//      LOG_INFO("Updating tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto old_tuple_pos = record.GetOldItemPointer();
