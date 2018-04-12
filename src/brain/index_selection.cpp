@@ -41,7 +41,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
-    Enumerate(candidate_indexes, top_candidate_indexes, query_set_);
+    top_candidate_indexes = Enumerate(candidate_indexes, query_set_, 4);
 
     candidate_indexes = GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
   }
@@ -201,7 +201,7 @@ IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &ind
 
   // combine all the index configurations and return top m configurations
   for (auto i : result_set) {
-    top_indexes.Add(i);
+    top_indexes.Merge(i);
   }
 
   return top_indexes;
