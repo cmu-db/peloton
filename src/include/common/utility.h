@@ -11,10 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-
-#include "common/logger.h"
+#include <string>
 
 namespace peloton{
 
   int peloton_close(int fd);
+
+  std::string peloton_error_message();
 }

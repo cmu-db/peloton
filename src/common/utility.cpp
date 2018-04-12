@@ -15,6 +15,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "common/logger.h"
 #include "common/utility.h"
 #if __APPLE__
 extern "C"{
@@ -41,20 +42,25 @@ int peloton_close(int fd) {
 #endif
 
   if (close_ret != 0) {
-    std::vector<char> buffer(100, '\0');
-    int saved_errno = errno;
-    char *error_message = nullptr;
-#if __APPLE__
-    (void)strerror_r(errno, buffer.data(), buffer.size() - 1);
-    error_message = buffer.data();
-#else
-    error_message = strerror_r(saved_errno, buffer.data(), buffer.size() - 1);
-#endif
-    (void) error_message;
-
-    LOG_DEBUG("Close failed on fd: %d, errno: %d [%s]", fd, saved_errno, error_message);
+    auto error_message = peloton_error_message();
+    LOG_DEBUG("Close failed on fd: %d, errno: %d [%s]", fd, errno, error_message.c_str());
   }
 
   return close_ret;
+}
+
+std::string peloton_error_message() {
+  std::vector<char> buffer(100, '\0');
+  int saved_errno = errno;
+  char *error_message = nullptr;
+#if __APPLE__
+  (void)strerror_r(errno, buffer.data(), buffer.size() - 1);
+  error_message = buffer.data();
+#else
+  error_message = strerror_r(saved_errno, buffer.data(), buffer.size() - 1);
+#endif
+
+  errno = saved_errno;
+  return std::string(error_message);
 }
 }

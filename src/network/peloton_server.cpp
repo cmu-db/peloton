@@ -278,10 +278,9 @@ void PelotonServer::ServerLoop() {
   }
   dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");
-  int status;
-  do {
-    status = peloton_close(listen_fd_);
-  } while (status < 0 && errno == EINTR);
+
+  peloton_close(listen_fd_);
+
   LOG_DEBUG("Already Closed the connection %d", listen_fd_);
 
   LOG_INFO("Server Closed");
