@@ -50,6 +50,11 @@ class IndexSelection {
    */
   IndexSelection(Workload &query_set, size_t max_index_cols,
                  size_t enumeration_threshold, size_t num_indexes);
+
+  /**
+   * @brief The main external API for the Index Prediction Tool
+   * @returns The best possible Index Congurations for the workload
+   */
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
 
