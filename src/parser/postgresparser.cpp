@@ -1347,14 +1347,11 @@ parser::SQLStatement *PostgresParser::CreateViewTransform(ViewStmt *root) {
 }
 
 parser::SQLStatement *PostgresParser::CreateSequenceTransform(CreateSeqStmt *root){
-  LOG_DEBUG("In create sequence transform");
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kSequence);
   result->sequence_name = std::string(root->sequence->relname);
-  LOG_DEBUG("New Sequence Name:%s\n", result->sequence_name.c_str());
   result->table.reset(
         RangeVarTransform(reinterpret_cast<RangeVar *>(root->sequence)));
-  LOG_DEBUG("Before parse sequences");
   parse_sequence_params(root->options, result);
   return result;
 }

@@ -277,7 +277,6 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
 }
 
 bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
-  LOG_DEBUG("In create executor: sequence");
   auto txn = context_->GetTransaction();
   std::string database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();

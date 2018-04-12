@@ -181,7 +181,6 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
       break;
     }
     case parser::CreateStatement::CreateType::kSequence: {
-      LOG_DEBUG("CreatePlan: Create Sequence");
       create_type = CreateType::SEQUENCE;
       database_name = std::string(parse_tree->GetDatabaseName());
 
