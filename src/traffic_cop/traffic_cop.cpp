@@ -193,6 +193,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     ResultType result = this->ExecuteStatementPlanGetResult();
 
     if(result != ResultType::QUEUING) {
+      p_status_.m_result = result;
       task_callback_(task_callback_arg_);
     }
   };

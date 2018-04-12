@@ -8,7 +8,7 @@
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
 #include "storage/tile_group.h"
-
+#include "../include/logging/wal_logger.h"
 
 
 namespace peloton{
@@ -41,10 +41,26 @@ bool WalLogger::IsFlushNeeded(bool pending_buffers){
 
 
 void WalLogger::FlushToDisk(){
+
+  if(disk_buffer_->GetSize()==0)
+    return;
+
   std::ofstream *stream = LogManager::GetInstance().GetFileStream();
   stream->write(disk_buffer_->GetData(), disk_buffer_->GetSize());
+
+  if(stream->fail()){
+    PL_ASSERT(false);
+  }
+
   stream->flush();
+
+  if(stream->fail()){
+    PL_ASSERT(false);
+  }
+
+
   disk_buffer_->GetCopySerializedOutput().Reset();
+
 
   /* send out the callbacks */
   while(!callbacks_.empty()){
