@@ -465,7 +465,6 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
       logging::LogRecord record =
@@ -574,7 +573,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
       logging::LogRecord record =
@@ -629,7 +627,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
       logging::LogRecord record =
@@ -750,7 +747,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   current_txn->RecordDelete(old_location);
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
 
     logging::LogRecord record =
@@ -810,7 +806,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
     current_txn->RecordDelete(location);
   }
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
@@ -1009,7 +1004,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
 
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     // no need to log read-only transactions
     if (!current_txn->IsReadOnly() && task_callback != nullptr) {
@@ -1225,7 +1219,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
   ResultType result = current_txn->GetResult();
 
-  /* TODO(graghura): remove placeholder, add logging switch */
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     // no need to log read-only transactions
     if (!current_txn->IsReadOnly() && task_callback != nullptr) {
