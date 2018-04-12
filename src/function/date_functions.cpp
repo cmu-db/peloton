@@ -61,7 +61,7 @@ int64_t DateFunctions::Now() {
 }
 
 type::Value DateFunctions::_Now(const UNUSED_ATTRIBUTE std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 0);
+  PELOTON_ASSERT(args.size() == 0);
   int64_t now = Now();
   return type::ValueFactory::GetTimestampValue(now);
 }

@@ -61,7 +61,7 @@ void ChildStatsDeriver::PassDownRequiredCols() {
 }
 
 void ChildStatsDeriver::PassDownColumn(expression::AbstractExpression *col) {
-  PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
   auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
   for (size_t idx = 0; idx < gexpr_->GetChildrenGroupsSize(); ++idx) {
     auto child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(idx));

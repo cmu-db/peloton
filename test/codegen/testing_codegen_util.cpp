@@ -57,7 +57,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
 }
 
 catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
-  PL_ASSERT(col_id < 4);
+  PELOTON_ASSERT(col_id < 4);
   static const uint64_t int_size =
       type::Type::GetTypeSize(type::TypeId::INTEGER);
   static const uint64_t dec_size =
@@ -160,8 +160,8 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
         test_table.InsertTuple(&tuple, txn, &index_entry_ptr);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
@@ -347,7 +347,7 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
     }
     first = false;
     codegen::Value val = row.DeriveValue(codegen, ai);
-    PL_ASSERT(val.GetType().type_id != peloton::type::TypeId::INVALID);
+    PELOTON_ASSERT(val.GetType().type_id != peloton::type::TypeId::INVALID);
     switch (val.GetType().type_id) {
       case type::TypeId::BOOLEAN:
       case type::TypeId::TINYINT:

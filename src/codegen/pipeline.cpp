@@ -33,7 +33,7 @@ void Pipeline::Add(const OperatorTranslator *translator) {
 void Pipeline::InstallBoundaryAtInput(const OperatorTranslator *translator) {
   // Validate the assumption
   (void)translator;
-  PL_ASSERT(pipeline_[pipeline_index_] == translator);
+  PELOTON_ASSERT(pipeline_[pipeline_index_] == translator);
   stage_boundaries_.push_back(pipeline_index_ + 1);
 }
 
@@ -41,7 +41,7 @@ void Pipeline::InstallBoundaryAtInput(const OperatorTranslator *translator) {
 void Pipeline::InstallBoundaryAtOutput(const OperatorTranslator *translator) {
   // Validate the assumption
   (void)translator;
-  PL_ASSERT(pipeline_[pipeline_index_] == translator);
+  PELOTON_ASSERT(pipeline_[pipeline_index_] == translator);
   if (!stage_boundaries_.empty() &&
       stage_boundaries_.back() != pipeline_index_) {
     stage_boundaries_.push_back(pipeline_index_);

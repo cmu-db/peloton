@@ -37,9 +37,9 @@ TEST_F(BwTreeIndexTests, UniqueKeyInsertTest) {
   TestingIndexUtil::UniqueKeyInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(BwTreeIndexTests, UniqueKeyDeleteTest) {
-//  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
-//}
+TEST_F(BwTreeIndexTests, UniqueKeyDeleteTest) {
+  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
+}
 
 TEST_F(BwTreeIndexTests, NonUniqueKeyDeleteTest) {
   TestingIndexUtil::NonUniqueKeyDeleteTest(IndexType::BWTREE);
@@ -49,9 +49,9 @@ TEST_F(BwTreeIndexTests, MultiThreadedInsertTest) {
   TestingIndexUtil::MultiThreadedInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
-//  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::BWTREE);
-//}
+TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
+  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::BWTREE);
+}
 
 TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedTest) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedTest(IndexType::BWTREE);

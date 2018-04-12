@@ -64,14 +64,14 @@ class ExportSerializeInput {
   inline float ReadFloat() {
     int32_t value = ReadPrimitive<int32_t>();
     float retval;
-    PL_MEMCPY(&retval, &value, sizeof(retval));
+    PELOTON_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
   inline double ReadDouble() {
     int64_t value = ReadPrimitive<int64_t>();
     double retval;
-    PL_MEMCPY(&retval, &value, sizeof(retval));
+    PELOTON_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -80,14 +80,14 @@ class ExportSerializeInput {
   const void *getRawPointer(size_t length) {
     const void *result = current_;
     current_ += length;
-    PL_ASSERT(current_ <= end_);
+    PELOTON_ASSERT(current_ <= end_);
     return result;
   }
 
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int32_t stringLength = ReadInt();
-    PL_ASSERT(stringLength >= 0);
+    PELOTON_ASSERT(stringLength >= 0);
     return std::string(
         reinterpret_cast<const char *>(getRawPointer(stringLength)),
         stringLength);
@@ -95,7 +95,7 @@ class ExportSerializeInput {
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void *destination, size_t length) {
-    ::PL_MEMCPY(destination, getRawPointer(length), length);
+    ::PELOTON_MEMCPY(destination, getRawPointer(length), length);
   };
 
   /** Move the Read Position back by bytes. Warning: this method is
@@ -108,7 +108,7 @@ class ExportSerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    ::PL_MEMCPY(&value, current_, sizeof(value));
+    ::PELOTON_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -129,7 +129,7 @@ class ExportSerializeOutput {
   ExportSerializeOutput(void *buffer, size_t capacity)
       : buffer_(NULL), position_(0), capacity_(0) {
     buffer_ = reinterpret_cast<char *>(buffer);
-    PL_ASSERT(position_ <= capacity);
+    PELOTON_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
 
@@ -163,18 +163,18 @@ class ExportSerializeOutput {
 
   inline void WriteFloat(float value) {
     int32_t Data;
-    PL_MEMCPY(&Data, &value, sizeof(Data));
+    PELOTON_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
   inline void WriteDouble(double value) {
     int64_t Data;
-    PL_MEMCPY(&Data, &value, sizeof(Data));
+    PELOTON_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
   inline void WriteEnumInSingleByte(int value) {
-    PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
+    PELOTON_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
               value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -186,9 +186,9 @@ class ExportSerializeOutput {
     AssureExpand(length + sizeof(stringLength));
 
     char *current = buffer_ + position_;
-    PL_MEMCPY(current, &stringLength, sizeof(stringLength));
+    PELOTON_MEMCPY(current, &stringLength, sizeof(stringLength));
     current += sizeof(stringLength);
-    PL_MEMCPY(current, value, length);
+    PELOTON_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -198,13 +198,13 @@ class ExportSerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
-    PL_MEMCPY(buffer_ + position_, value, length);
+    PELOTON_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     AssureExpand(length);
-    PL_MEMSET(buffer_ + position_, 0, length);
+    PELOTON_MEMSET(buffer_ + position_, 0, length);
     position_ += length;
   }
 
@@ -225,7 +225,7 @@ class ExportSerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
-    PL_MEMCPY(buffer_ + position_, &value, sizeof(value));
+    PELOTON_MEMCPY(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
@@ -239,7 +239,7 @@ class ExportSerializeOutput {
     if (minimum_desired > capacity_) {
       // TODO: die
     }
-    PL_ASSERT(capacity_ >= minimum_desired);
+    PELOTON_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.

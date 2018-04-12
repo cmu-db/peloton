@@ -24,6 +24,7 @@
 #include "storage/tile.h"
 #include "storage/storage_manager.h"
 #include "catalog/foreign_key.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -41,17 +42,19 @@ UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(target_table_ == nullptr);
-  PL_ASSERT(project_info_ == nullptr);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(target_table_ == nullptr);
+  PELOTON_ASSERT(project_info_ == nullptr);
 
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   project_info_ = node.GetProjectInfo();
 
-  PL_ASSERT(target_table_);
-  PL_ASSERT(project_info_);
+  PELOTON_ASSERT(target_table_);
+  PELOTON_ASSERT(project_info_);
+
+  statement_write_set_.clear();
 
   return true;
 }
@@ -60,6 +63,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     bool is_owner, storage::TileGroup *tile_group,
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -136,7 +140,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
-
+  statement_write_set_.insert(location);
   return true;
 }
 
@@ -145,8 +149,8 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DExecute() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(executor_context_);
 
   // We are scanning over a logical tile.
   LOG_TRACE("Update executor :: 1 child ");
@@ -163,6 +167,14 @@ bool UpdateExecutor::DExecute() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
+
+  oid_t table_oid = target_table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  if (!lock_success){
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
 
   auto executor_pool = executor_context_->GetPool();
   auto target_table_schema = target_table_->GetSchema();
@@ -188,6 +200,9 @@ bool UpdateExecutor::DExecute() {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
+    if (IsInStatementWriteSet(old_location)) {
+      continue;
+    }
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
@@ -210,6 +225,11 @@ bool UpdateExecutor::DExecute() {
       if (visibility != VisibilityType::OK) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success){
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
     }
@@ -247,6 +267,11 @@ bool UpdateExecutor::DExecute() {
         }
         // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success){
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
       }
@@ -262,6 +287,7 @@ bool UpdateExecutor::DExecute() {
                                 executor_context_);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
+        statement_write_set_.insert(old_location);
       }
     }
     // if we have already obtained the ownership
@@ -285,6 +311,11 @@ bool UpdateExecutor::DExecute() {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success){
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
 
@@ -298,6 +329,11 @@ bool UpdateExecutor::DExecute() {
           }
           // When fail, ownership release is done inside PerformUpdatePrimaryKey
           else {
+            // Unlock the table
+            bool unlock_success = lm->UnlockShared(table_oid);
+            if (!unlock_success){
+              LOG_TRACE("Cannot unlock the table, abort!");
+            }
             return false;
           }
         }
@@ -350,6 +386,11 @@ bool UpdateExecutor::DExecute() {
             }
             transaction_manager.SetTransactionResult(current_txn,
                                                      ResultType::FAILURE);
+            // Unlock the table
+            bool unlock_success = lm->UnlockShared(table_oid);
+            if (!unlock_success){
+              LOG_TRACE("Cannot unlock the table, abort!");
+            }
             return false;
           }
 
@@ -359,6 +400,7 @@ bool UpdateExecutor::DExecute() {
                     new_location.offset);
           transaction_manager.PerformUpdate(current_txn, old_location,
                                             new_location);
+          statement_write_set_.insert(new_location);
 
           // TODO: Why don't we also do this in the if branch above?
           executor_context_->num_processed += 1;  // updated one
@@ -410,6 +452,11 @@ bool UpdateExecutor::DExecute() {
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success){
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
     }
@@ -430,6 +477,11 @@ bool UpdateExecutor::DExecute() {
       trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_STATEMENT,
                                  current_txn);
     }
+  }
+  // Unlock the table
+  bool unlock_success = lm->UnlockShared(table_oid);
+  if (!unlock_success){
+    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }

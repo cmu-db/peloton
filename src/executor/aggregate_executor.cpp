@@ -41,7 +41,7 @@ AggregateExecutor::~AggregateExecutor() {
  * @return true on success, false otherwise.
  */
 bool AggregateExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(children_.size() == 1);
 
   LOG_TRACE("Aggregate executor :: 1 child ");
 
@@ -52,7 +52,7 @@ bool AggregateExecutor::DInit() {
   auto output_table_schema =
       const_cast<catalog::Schema *>(node.GetOutputSchema());
 
-  PL_ASSERT(output_table_schema->GetColumnCount() >= 1);
+  PELOTON_ASSERT(output_table_schema->GetColumnCount() >= 1);
 
   // clean up result
   result_itr = START_OID;
@@ -163,7 +163,7 @@ bool AggregateExecutor::DExecute() {
         tuple->SetAllNulls();
       }
       UNUSED_ATTRIBUTE auto location = output_table->InsertTuple(tuple.get());
-      PL_ASSERT(location.block != INVALID_OID);
+      PELOTON_ASSERT(location.block != INVALID_OID);
     } else {
       done = true;
       return false;
@@ -178,7 +178,7 @@ bool AggregateExecutor::DExecute() {
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
-    PL_ASSERT(tile_group != nullptr);
+    PELOTON_ASSERT(tile_group != nullptr);
     LOG_TRACE("\n%s", tile_group->GetInfo().c_str());
 
     // Get the logical tiles corresponding to the given tile group

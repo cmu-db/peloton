@@ -311,7 +311,7 @@ class TransactionThread {
       case TXN_OP_ABORT: {
         LOG_INFO("Txn %d Abort", schedule->schedule_id);
         // Assert last operation
-        assert(cur_seq == (int)schedule->operations.size());
+        PELOTON_ASSERT(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction(txn);
         txn = NULL;
         break;
@@ -434,7 +434,7 @@ class TransactionScheduler {
   }
 
   TransactionScheduler &Txn(int txn_id) {
-    assert(txn_id < (int)schedules.size());
+    PELOTON_ASSERT(txn_id < (int)schedules.size());
     cur_txn_id = txn_id;
     return *this;
   }

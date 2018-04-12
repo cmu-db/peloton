@@ -200,7 +200,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     LOG_TRACE("Can't find database %d! ", database_id);
     return nullptr;
   }
-  //PL_ASSERT(db);
+  PELOTON_ASSERT(db);
   db->AddTable(table);
 
   // Insert tuple

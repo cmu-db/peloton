@@ -18,6 +18,7 @@
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
+#include "concurrency/lock_manager.h"
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
 #include "storage/database.h"
@@ -111,6 +112,14 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Creating table succeeded!");
 
+    // Initialize table lock
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+        database_name, table_name, current_txn);
+
+    oid_t table_oid = table_object->GetTableOid();
+    concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+    lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
+
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
       auto catalog = catalog::Catalog::GetInstance();
@@ -135,7 +144,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
           }
           source_col_ids.push_back(col_id);
         }  // FOR
-        PL_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
+        PELOTON_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
 
         // Sink Column Offsets
         std::vector<oid_t> sink_col_ids;
@@ -150,7 +159,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
           }
           sink_col_ids.push_back(col_id);
         }  // FOR
-        PL_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
+        PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
 
         // Create the catalog object and shove it into the table
         auto catalog_fk = new catalog::ForeignKey(INVALID_OID,
@@ -197,12 +206,21 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     LOG_TRACE("Result is: %s",
               ResultTypeToString(current_txn->GetResult()).c_str());
   }
-
-  return (true);
+  return true;
 }
 
+/**
+ * @brief   Create an index.
+ * @details Create an index. Will block other transactions while creating
+ * the index. TODO: implement support for "create index concurrently"
+ * @param   node    current planner node
+ * @return  bool    always true
+ */
 bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
+  // Get transaction
   auto txn = context_->GetTransaction();
+
+  // Get metadata about the index
   auto database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
@@ -211,20 +229,40 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
 
   auto key_attrs = node.GetKeyAttrs();
 
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      database_name, table_name, txn);
+
+  // Get table oid
+  oid_t table_oid = table_object->GetTableOid();
+
+  // Lock the table being indexed
+  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockExclusive(table_oid);
+  if (!lock_success){
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
+
+  // Create index in the catalog
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
       database_name, table_name, key_attrs, index_name, unique_flag,
       index_type, txn);
+
+  // Unlock the table being indexed
+  bool unlock_success = lm->UnlockExclusive(table_oid);
+  if (!unlock_success){
+    LOG_TRACE("Cannot unlock the table, abort!");
+  }
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Creating table succeeded!");
+    LOG_TRACE("Creating index succeeded!");
   } else if (txn->GetResult() == ResultType::FAILURE) {
-    LOG_TRACE("Creating table failed!");
+    LOG_TRACE("Creating index failed!");
   } else {
     LOG_TRACE("Result is: %s",
               ResultTypeToString(txn->GetResult()).c_str());
   }
-  return (true);
+  return true;
 }
 
 bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {

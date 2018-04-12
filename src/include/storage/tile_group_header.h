@@ -78,7 +78,7 @@ class TileGroupHeader : public Printable {
     header_size = other.header_size;
 
     // copy over all the data
-    PL_MEMCPY(data, other.data, header_size);
+    PELOTON_MEMCPY(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
     oid_t val = other.next_tuple_slot;
@@ -141,7 +141,7 @@ class TileGroupHeader : public Printable {
 
   // Getters
   inline const TileGroup *GetTileGroup() const {
-    PL_ASSERT(tile_group);
+    PELOTON_ASSERT(tile_group);
     return tile_group;
   }
 
@@ -304,7 +304,7 @@ class TileGroupHeader : public Printable {
 
   common::synchronization::SpinLatch tile_header_lock;
 
-  // Immmutable Flag. Should be set by the brain to be true.
+  // Immmutable Flag. Should be set by the indextuner to be true.
   // By default it will be set to false.
   bool immutable;
 };

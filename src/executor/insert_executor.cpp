@@ -25,6 +25,7 @@
 #include "storage/tuple.h"
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -42,8 +43,8 @@ InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DInit() {
-  PL_ASSERT(children_.size() == 0 || children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  PELOTON_ASSERT(children_.size() == 0 || children_.size() == 1);
+  PELOTON_ASSERT(executor_context_);
 
   done_ = false;
   return true;
@@ -56,8 +57,8 @@ bool InsertExecutor::DInit() {
 bool InsertExecutor::DExecute() {
   if (done_) return false;
 
-  PL_ASSERT(!done_);
-  PL_ASSERT(executor_context_ != nullptr);
+  PELOTON_ASSERT(!done_);
+  PELOTON_ASSERT(executor_context_ != nullptr);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
@@ -72,6 +73,14 @@ bool InsertExecutor::DExecute() {
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
     return false;
+  }
+
+  oid_t table_oid = target_table->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  if (!lock_success){
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
@@ -92,13 +101,18 @@ bool InsertExecutor::DExecute() {
   // Inserting a logical tile.
   if (children_.size() == 1) {
     if (!children_[0]->Execute()) {
+      // Unlock the table
+      bool unlock_success = lm->UnlockShared(table_oid);
+      if (!unlock_success){
+        LOG_TRACE("Cannot unlock the table, abort!");
+      }
       return false;
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
 
     // FIXME: Wrong? What if the result of select is nothing? Michael
-    PL_ASSERT(logical_tile.get() != nullptr);
+    PELOTON_ASSERT(logical_tile.get() != nullptr);
 
     auto target_table_schema = target_table->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
@@ -127,6 +141,11 @@ bool InsertExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  peloton::ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success){
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
 
@@ -152,6 +171,11 @@ bool InsertExecutor::DExecute() {
                                    current_txn);
       }
     }
+    // Unlock the table
+    bool unlock_success = lm->UnlockShared(table_oid);
+    if (!unlock_success){
+      LOG_TRACE("Cannot unlock the table, abort!");
+    }
     return true;
   }
   // Inserting a collection of tuples from plan node
@@ -166,9 +190,9 @@ bool InsertExecutor::DExecute() {
     // Check if this is not a raw tuple
     if (project_info) {
       // Otherwise, there must exist a project info
-      PL_ASSERT(project_info);
+      PELOTON_ASSERT(project_info);
       // There should be no direct maps
-      PL_ASSERT(project_info->GetDirectMapList().size() == 0);
+      PELOTON_ASSERT(project_info->GetDirectMapList().size() == 0);
 
       storage_tuple.reset(new storage::Tuple(schema, true));
 
@@ -242,6 +266,11 @@ bool InsertExecutor::DExecute() {
         LOG_TRACE("Failed to Insert. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success){
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
 
@@ -299,8 +328,18 @@ bool InsertExecutor::DExecute() {
                                    current_txn);
       }
     }
+    // Unlock the table
+    bool unlock_success = lm->UnlockShared(table_oid);
+    if (!unlock_success){
+      LOG_TRACE("Cannot unlock the table, abort!");
+    }
     done_ = true;
     return true;
+  }
+  // Unlock the table
+  bool unlock_success = lm->UnlockShared(table_oid);
+  if (!unlock_success){
+    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }

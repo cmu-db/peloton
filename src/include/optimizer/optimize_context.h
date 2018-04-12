@@ -12,9 +12,12 @@
 
 #pragma once
 
+#include "common/timer.h"
+
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimizer_task_pool.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace optimizer {

@@ -123,7 +123,7 @@ CodeContext::CodeContext()
                     .setMCPU(llvm::sys::getHostCPUName())
                     .setErrorStr(&err_str_)
                     .create());
-  PL_ASSERT(engine_ != nullptr);
+  PELOTON_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
   pass_manager_.reset(new llvm::legacy::FunctionPassManager(module_));
@@ -153,7 +153,7 @@ CodeContext::~CodeContext() {
 }
 
 void CodeContext::RegisterFunction(llvm::Function *func) {
-  PL_ASSERT(func->getParent() == &GetModule() &&
+  PELOTON_ASSERT(func->getParent() == &GetModule() &&
             "The provided function is part of a different context and module");
   // Insert the function without an implementation
   functions_.emplace_back(func, nullptr);
@@ -161,9 +161,9 @@ void CodeContext::RegisterFunction(llvm::Function *func) {
 
 void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
                                            CodeContext::FuncPtr func_impl) {
-  PL_ASSERT(func_decl->isDeclaration() &&
+  PELOTON_ASSERT(func_decl->isDeclaration() &&
             "The first argument must be a function declaration");
-  PL_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
+  PELOTON_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
   functions_.emplace_back(func_decl, func_impl);
 
   // Register the builtin symbol by name
@@ -179,7 +179,7 @@ void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
   }
 
   // Sanity check
-  PL_ASSERT(func_decl->isDeclaration() &&
+  PELOTON_ASSERT(func_decl->isDeclaration() &&
             "You cannot provide a function definition for a builtin function");
 
   // Register the builtin function

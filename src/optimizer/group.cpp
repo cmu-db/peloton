@@ -40,7 +40,7 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 bool Group::SetExpressionCost(GroupExpression *expr, double cost,
                               std::shared_ptr<PropertySet> &properties) {
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
-            expr->GetGroupID(), expr->Op().name().c_str(),
+            expr->GetGroupID(), expr->Op().GetName().c_str(),
             properties->ToString().c_str());
   auto it = lowest_cost_expressions_.find(properties);
   if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
@@ -62,6 +62,12 @@ GroupExpression *Group::GetBestExpression(
   return nullptr;
 }
 
+bool Group::HasExpressions(
+    const std::shared_ptr<PropertySet> &properties) const {
+  const auto &it = lowest_cost_expressions_.find(properties);
+  return (it != lowest_cost_expressions_.end());
+}
+
 std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
   if (!stats_.count(column_name)) {
     return nullptr;
@@ -71,7 +77,7 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
 
 void Group::AddStats(std::string column_name,
                      std::shared_ptr<ColumnStats> stats) {
-  PL_ASSERT((size_t)GetNumRows() == stats->num_rows);
+  PELOTON_ASSERT((size_t)GetNumRows() == stats->num_rows);
   stats_[column_name] = stats;
 }
 

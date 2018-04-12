@@ -140,13 +140,13 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
+  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() == 0) {
     return nullptr;
   }
 
   auto tile = (*result_tiles)[0].get();
-  PL_ASSERT(tile->GetTupleCount() <= 1);
+  PELOTON_ASSERT(tile->GetTupleCount() <= 1);
   if (tile->GetTupleCount() == 0) {
     return nullptr;
   }
@@ -190,7 +190,7 @@ size_t ColumnStatsCatalog::GetTableStats(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
+  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() == 0) {
     return 0;
   }

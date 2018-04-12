@@ -30,6 +30,7 @@
 #include "trigger/trigger.h"
 #include "catalog/table_catalog.h"
 #include "parser/pg_trigger.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -47,10 +48,10 @@ DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(executor_context_);
 
-  PL_ASSERT(target_table_ == nullptr);
+  PELOTON_ASSERT(target_table_ == nullptr);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child ");
@@ -58,7 +59,7 @@ bool DeleteExecutor::DInit() {
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
-  PL_ASSERT(target_table_);
+  PELOTON_ASSERT(target_table_);
 
   return true;
 }
@@ -70,7 +71,7 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
-  PL_ASSERT(target_table_);
+  PELOTON_ASSERT(target_table_);
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
     return false;
@@ -84,6 +85,14 @@ bool DeleteExecutor::DExecute() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
+
+  oid_t table_oid = target_table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager* lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  if (!lock_success){
+    LOG_WARN("Cannot obtain lock for the table, abort!");
+  }
 
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
@@ -151,6 +160,11 @@ bool DeleteExecutor::DExecute() {
     {
       transaction_manager.SetTransactionResult(current_txn,
                                               peloton::ResultType::FAILURE);
+      // Unlock the table
+      bool unlock_success = lm->UnlockShared(table_oid);
+      if (!unlock_success){
+        LOG_TRACE("Cannot unlock the table, abort!");
+      }
       return false;
     }
 
@@ -210,6 +224,11 @@ bool DeleteExecutor::DExecute() {
         if (acquire_ownership_success == false) {
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success){
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
         // if it is the latest version and not locked by other threads, then
@@ -232,6 +251,11 @@ bool DeleteExecutor::DExecute() {
           }
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success){
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
         transaction_manager.PerformDelete(current_txn, old_location,
@@ -243,6 +267,11 @@ bool DeleteExecutor::DExecute() {
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success){
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
     }
@@ -291,6 +320,11 @@ bool DeleteExecutor::DExecute() {
       trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_STATEMENT,
                                  current_txn);
     }
+  }
+  // Unlock the table
+  bool unlock_success = lm->UnlockShared(table_oid);
+  if (!unlock_success){
+    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }

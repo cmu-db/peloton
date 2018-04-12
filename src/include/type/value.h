@@ -31,7 +31,7 @@ namespace type {
 class Type;
 
 inline CmpBool GetCmpBool(bool boolean) {
-  return boolean ? CmpBool::TRUE : CmpBool::FALSE;
+  return boolean ? CmpBool::CmpTrue : CmpBool::CmpFalse;
 }
 
 // A value is an abstract class that represents a view over SQL data stored in
@@ -129,6 +129,10 @@ class Value : public Printable {
   inline CmpBool CompareGreaterThanEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, o);
   }
+  inline bool CompareBetweenInclusive(const Value &a, const Value &b) const {
+    return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, a) == CmpBool::CmpTrue &&
+           Type::GetInstance(type_id_)->CompareLessThanEquals(*this, b) == CmpBool::CmpTrue;
+  }
 
   // Other mathematical functions
   inline Value Add(const Value &o) const {
@@ -176,12 +180,12 @@ class Value : public Printable {
   bool CheckComparable(const Value &o) const;
 
   inline bool IsTrue() const {
-    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+    PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 1);
   }
 
   inline bool IsFalse() const {
-    PL_ASSERT(GetTypeId() == TypeId::BOOLEAN);
+    PELOTON_ASSERT(GetTypeId() == TypeId::BOOLEAN);
     return (value_.boolean == 0);
   }
 
@@ -278,7 +282,7 @@ class Value : public Printable {
   // For unordered_map
   struct equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
-      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::TRUE;
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::CmpTrue;
     }
   };
 
