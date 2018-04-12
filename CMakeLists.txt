@@ -12,8 +12,6 @@ project(Peloton CXX C)
 # ---[ CTest
 include(CTest)
 
-set(ENV{LLVM_DIR} /usr/local/Cellar/llvm@3.7/3.7.1/lib/llvm-3.7/share/llvm/cmake)
-
 # ---[ Peloton version
 set(PELOTON_TARGET_VERSION "0.0.5" CACHE STRING "Peloton logical version")
 set(PELOTON_TARGET_SOVERSION "0.0.5" CACHE STRING "Peloton soname version")

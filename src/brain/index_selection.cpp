@@ -281,7 +281,7 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
 
     default:
       LOG_WARN("Cannot handle DDL statements");
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
   }
 }
 
@@ -404,7 +404,7 @@ double IndexSelection::GetCost(IndexConfiguration &config,
   for (auto query : queries) {
     std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
                                                                    query};
-    PL_ASSERT(context_.memo_.find(state) != context_.memo_.end());
+    PELOTON_ASSERT(context_.memo_.find(state) != context_.memo_.end());
     cost += context_.memo_.find(state)->second;
   }
   return cost;

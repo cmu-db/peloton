@@ -160,7 +160,7 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
     OptimizeLoop(root_id, query_info.physical_props);
   } catch (OptimizerException &e) {
     LOG_WARN("Optimize Loop ended prematurely: %s", e.what());
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
 
   try {
