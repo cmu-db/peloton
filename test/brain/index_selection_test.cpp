@@ -193,7 +193,6 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   cols = {1, 2, 3};
   auto abc12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
 
-
   std::set<std::shared_ptr<brain::IndexObject>> indexes;
 
   indexes = {a11, b11, c11, a12, b12, c12, a21, b21, c21};
@@ -207,6 +206,17 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   expected = {indexes};
 
   //TODO[Siva]: This test needs more support in as we use an IndexObjectPool
+}
+
+TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
+  std::string table_name = "dummy_table";
+  std::string database_name = DEFAULT_DB_NAME;
+
+  CreateDatabase(database_name);
+  CreateTable(table_name);
+
+  DropTable(table_name);
+  DropDatabase(database_name);
 }
 
 }  // namespace test
