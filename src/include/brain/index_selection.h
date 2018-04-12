@@ -110,19 +110,11 @@ class IndexSelection {
   void PruneUselessIndexes(IndexConfiguration &config, Workload &workload);
 
   /**
-   * @brief Gets the cost of an index configuration for a given workload
-   * directly from the memo table. Assumes ComputeCost is called.
-   * TODO (Priyatham): This function can be removed now since the requirement
-   * for the comparator to be a const has been eliminated by me.
-   */
-  double GetCost(IndexConfiguration &config, Workload &workload) const;
-
-  /**
    * @brief Gets the cost of an index configuration for a given workload. It
    * would call the What-If API appropriately and stores the results in the memo
    * table
    */
-  double ComputeCost(IndexConfiguration &config, Workload &workload);
+  double GetCost(IndexConfiguration &config, Workload &workload);
 
   // Configuration Enumeration related
   /**

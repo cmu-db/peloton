@@ -87,7 +87,7 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       Workload w(query);
 
-      if (ComputeCost(c, w) > ComputeCost(empty_config, w)) {
+      if (GetCost(c, w) > GetCost(empty_config, w)) {
         is_useful = true;
         break;
       }
@@ -143,7 +143,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
     for (auto index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
       indexes.AddIndexObject(index);
-      cur_cost = ComputeCost(indexes, workload);
+      cur_cost = GetCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -205,10 +205,10 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
         result_index_config.insert(
-            {new_element, ComputeCost(new_element, workload)});
+            {new_element, GetCost(new_element, workload)});
       } else {
         running_index_config.insert(
-            {new_element, ComputeCost(new_element, workload)});
+            {new_element, GetCost(new_element, workload)});
       }
     }
   }
@@ -398,21 +398,7 @@ void IndexSelection::IndexObjectPoolInsertHelper(
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config,
-                               Workload &workload) const {
-  double cost = 0.0;
-  auto queries = workload.GetQueries();
-  for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
-                                                                   query};
-    PELOTON_ASSERT(context_.memo_.find(state) != context_.memo_.end());
-    cost += context_.memo_.find(state)->second;
-  }
-  return cost;
-}
-
-double IndexSelection::ComputeCost(IndexConfiguration &config,
-                                   Workload &workload) {
+double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
