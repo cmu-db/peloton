@@ -1,7 +1,4 @@
 
-
-#include "logging/log_record.h"
-#include "logging/log_buffer.h"
 #include "logging/wal_logger.h"
 #include "catalog/manager.h"
 #include "common/container_tuple.h"

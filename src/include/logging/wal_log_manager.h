@@ -1,7 +1,15 @@
-
-
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_log_manager.h
+//
+// Identification: src/logging/wal_log_manager.h
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 #pragma once
-
 #include <fstream>
 
 namespace peloton{

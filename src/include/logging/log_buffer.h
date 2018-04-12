@@ -1,5 +1,16 @@
-#pragma once
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_buffer.h
+//
+// Identification: src/include/logging/log_buffer.h
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
+#pragma once
 #include "type/serializeio.h"
 #include "logging/log_record.h"
 

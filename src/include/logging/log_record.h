@@ -6,12 +6,10 @@
 //
 // Identification: src/logging/log_record.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 #pragma once
-
 #include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/macros.h"

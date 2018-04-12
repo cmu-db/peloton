@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Gandeevan R on 2/12/18.
+//                         Peloton
 //
+// wal_logger.h
+//
+// Identification: src/logging/wal_logger.h
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
