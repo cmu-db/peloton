@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration.cpp
+// index_selection_util.cpp
 //
-// Identification: src/brain/configuration.cpp
+// Identification: src/brain/index_selection_util.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -23,15 +23,15 @@ namespace brain {
 const std::string IndexObject::toString() const {
   std::stringstream str_stream;
   str_stream << db_oid << table_oid;
-  for (auto col: column_oids) {
+  for (auto col : column_oids) {
     str_stream << col;
   }
   return str_stream.str();
 }
 
 bool IndexObject::operator==(const IndexObject &obj) const {
-  if (db_oid == obj.db_oid && table_oid == obj.table_oid
-      && column_oids == obj.column_oids) {
+  if (db_oid == obj.db_oid && table_oid == obj.table_oid &&
+      column_oids == obj.column_oids) {
     return true;
   }
   return false;
@@ -65,29 +65,45 @@ void IndexConfiguration::Merge(IndexConfiguration &config) {
   }
 }
 
-void IndexConfiguration::AddIndexObject(std::shared_ptr<IndexObject> index_info) {
+void IndexConfiguration::RemoveIndexObject(
+    std::shared_ptr<IndexObject> index_info) {
+  indexes_.erase(index_info);
+}
+
+void IndexConfiguration::AddIndexObject(
+    std::shared_ptr<IndexObject> index_info) {
   indexes_.insert(index_info);
 }
 
-size_t IndexConfiguration::GetIndexCount() {
-  return indexes_.size();
-}
+size_t IndexConfiguration::GetIndexCount() const { return indexes_.size(); }
 
-const std::set<std::shared_ptr<IndexObject>>& IndexConfiguration::GetIndexes() const {
+const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
+    const {
   return indexes_;
 }
 
 const std::string IndexConfiguration::ToString() const {
   std::stringstream str_stream;
-  for (auto index: indexes_) {
+  for (auto index : indexes_) {
     // str_stream << index->ToString() << " ";
   }
   return str_stream.str();
 }
 
-bool IndexConfiguration::operator ==(const IndexConfiguration &config) const {
+bool IndexConfiguration::operator==(const IndexConfiguration &config) const {
   auto config_indexes = config.GetIndexes();
   return indexes_ == config_indexes;
+}
+
+IndexConfiguration IndexConfiguration::operator-(
+    const IndexConfiguration &config) {
+  auto config_indexes = config.GetIndexes();
+
+  std::set<std::shared_ptr<IndexObject>> result;
+  std::set_difference(indexes_.begin(), indexes_.end(), config_indexes.begin(),
+                      config_indexes.end(),
+                      std::inserter(result, result.end()));
+  return IndexConfiguration(result);
 }
 
 //===--------------------------------------------------------------------===//

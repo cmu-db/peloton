@@ -65,7 +65,8 @@ class WhatIfIndexTests : public PelotonTest {
   void GenerateTableStats() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    optimizer::StatsStorage *stats_storage = optimizer::StatsStorage::GetInstance();
+    optimizer::StatsStorage *stats_storage =
+        optimizer::StatsStorage::GetInstance();
     ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
     assert(result == ResultType::SUCCESS);
     txn_manager.CommitTransaction(txn);
@@ -138,24 +139,24 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   auto sql_statement = stmt_list.get()->GetStatement(0);
 
   // 1. Get the optimized plan tree without the indexes (sequential scan)
-  auto result =
-      brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
+  auto result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+                                                       DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 1));
 
-  result =
-      brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
+  result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+                                                  DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
   LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 2));
 
-  result =
-      brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config, DEFAULT_DB_NAME);
+  result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+                                                  DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
   LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
 
