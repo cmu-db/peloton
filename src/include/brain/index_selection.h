@@ -48,15 +48,13 @@ private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload) const;
   double ComputeCost(IndexConfiguration &config, Workload &workload);
-  IndexConfiguration& Enumerate(IndexConfiguration &indexes,
-                                Workload &workload, size_t k);
+  void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
 
   // Configuration Enumeration related
-  IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes, Workload &workload);
-  IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes);
-  IndexConfiguration& GreedySearch(IndexConfiguration &indexes,
-                                   IndexConfiguration &picked_indexes,
-                                   Workload &workload, size_t k);
+  void ExhaustiveEnumeration(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload);
+  void GreedySearch(IndexConfiguration &indexes,
+                    IndexConfiguration &picked_indexes,
+                    Workload &workload, size_t k);
 
   // Admissible index selection related
   void IndexColsParseWhereHelper(const expression::AbstractExpression *where_expr,

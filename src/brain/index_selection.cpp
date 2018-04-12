@@ -10,17 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/index_selection.h"
-#include "brain/what_if_index.h"
-#include <include/parser/statements.h>
-#include <include/parser/statements.h>
-#include "common/logger.h"
 #include <algorithm>
 #include <set>
 
+#include "brain/index_selection.h"
+#include "brain/what_if_index.h"
+#include "common/logger.h"
+
 namespace peloton {
 namespace brain {
-
 
 IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols, size_t enum_threshold, size_t num_indexes) :
   query_set_(query_set), context_(max_index_cols, enum_threshold, num_indexes) {
@@ -33,6 +31,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // for these 'Wi'
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
+
   IndexConfiguration candidate_indexes;
   IndexConfiguration admissible_indexes;
 
@@ -42,7 +41,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
-    top_candidate_indexes = Enumerate(candidate_indexes, query_set_, 4);
+    Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
 
     candidate_indexes = GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
   }
@@ -65,9 +64,9 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
       admissible_config.Merge(Ai);
 
       IndexConfiguration Ci;
-      Ci = Enumerate(Ai, workload, 4);
+      Enumerate(Ai, Ci, workload, context_.num_indexes_);
+      candidate_config.Merge(Ci);
     }
-    candidate_config = admissible_config;
   } else {
     IndexConfiguration empty_config;
     auto cand_indexes = candidate_config.GetIndexes();
@@ -101,26 +100,25 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-IndexConfiguration& IndexSelection::Enumerate(IndexConfiguration &indexes,
+void IndexSelection::Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes,
                                               Workload &workload, size_t k) {
 
-  auto top_indexes = ExhaustiveEnumeration(indexes, workload);
+  ExhaustiveEnumeration(indexes, top_indexes, workload);
 
-  auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
+  auto remaining_indexes = indexes - top_indexes;
 
-  return GreedySearch(top_indexes, remaining_indexes, workload, k);
-
+  GreedySearch(top_indexes, remaining_indexes, workload, k);
 }
 
 
-IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
+void IndexSelection::GreedySearch(IndexConfiguration &indexes,
                                                  IndexConfiguration &remaining_indexes,
                                                  Workload &workload, size_t k) {
 
   size_t current_index_count = context_.naive_enumeration_threshold_;
 
   if(current_index_count >= k)
-    return indexes;
+    return;
 
   double global_min_cost = GetCost(indexes, workload);
   double cur_min_cost = global_min_cost;
@@ -151,15 +149,10 @@ IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
       break;
     }
   }
-
-  return indexes;
 }
 
-IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes) {
-  return (indexes - top_indexes);
-}
-
-IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
+void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
+                                                         IndexConfiguration &top_indexes,
                                                          Workload &workload) {
   assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
 
@@ -167,7 +160,6 @@ IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &ind
   std::set<IndexConfiguration, Comp> temp_index_config(workload);
   std::set<IndexConfiguration, Comp> result_index_config(workload);
   IndexConfiguration new_element;
-  IndexConfiguration top_indexes;
 
   IndexConfiguration empty;
   running_index_config.insert(empty);
@@ -197,8 +189,6 @@ IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &ind
   for (auto i : result_index_config) {
     top_indexes.Merge(i);
   }
-
-  return top_indexes;
 }
 
 // GetAdmissibleIndexes()
