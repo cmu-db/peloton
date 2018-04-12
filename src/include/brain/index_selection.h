@@ -13,11 +13,13 @@
 #pragma once
 
 #include <set>
+
 #include "brain/index_selection_context.h"
 #include "brain/index_selection_util.h"
 #include "catalog/index_catalog.h"
 #include "expression/tuple_value_expression.h"
 #include "parser/sql_statement.h"
+
 namespace peloton {
 namespace brain {
 
@@ -41,25 +43,24 @@ class IndexSelection {
                  size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
-
- private:
   void GenCandidateIndexes(IndexConfiguration &config,
                            IndexConfiguration &admissible_config,
                            Workload &workload);
+  void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
+  void GenMultiColumnIndexes(IndexConfiguration &config,
+                             IndexConfiguration &single_column_indexes,
+                             IndexConfiguration &result);
+
+private:
   // Cost evaluation related
   double GetCost(IndexConfiguration &config, Workload &workload) const;
   double ComputeCost(IndexConfiguration &config, Workload &workload);
-  IndexConfiguration &Enumerate(IndexConfiguration &indexes, Workload &workload,
-                                size_t k);
 
   // Configuration Enumeration related
-  IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes,
-                                           Workload &workload);
-  IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes,
-                                         IndexConfiguration top_indexes);
-  IndexConfiguration &GreedySearch(IndexConfiguration &indexes,
-                                   IndexConfiguration &picked_indexes,
-                                   Workload &workload, size_t k);
+  void ExhaustiveEnumeration(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload);
+  void GreedySearch(IndexConfiguration &indexes,
+                    IndexConfiguration &picked_indexes,
+                    Workload &workload, size_t k);
 
   // Admissible index selection related
   void IndexColsParseWhereHelper(
@@ -73,14 +74,14 @@ class IndexSelection {
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table,
                                                      std::vector<oid_t> cols);
-  IndexConfiguration GenMultiColumnIndexes(
-      IndexConfiguration &config, IndexConfiguration &single_column_indexes);
   void IndexObjectPoolInsertHelper(
       const expression::TupleValueExpression *tuple_col,
       IndexConfiguration &config);
-  IndexConfiguration CrossProduct(
+  void CrossProduct(
       const IndexConfiguration &config,
-      const IndexConfiguration &single_column_indexes);
+      const IndexConfiguration &single_column_indexes,
+      IndexConfiguration &result);
+
   // members
   Workload query_set_;
   IndexSelectionContext context_;

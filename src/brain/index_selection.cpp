@@ -10,20 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/index_selection.h"
-#include <include/parser/statements.h>
 #include <algorithm>
 #include <set>
+
+#include "brain/index_selection.h"
 #include "brain/what_if_index.h"
 #include "common/logger.h"
 
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
-                               size_t enum_threshold, size_t num_indexes)
-    : query_set_(query_set),
-      context_(max_index_cols, enum_threshold, num_indexes) {}
+IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols, size_t enum_threshold, size_t num_indexes) :
+  query_set_(query_set), context_(max_index_cols, enum_threshold, num_indexes) {
+}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // Figure 4 of the "Index Selection Tool" paper.
@@ -32,6 +31,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // for these 'Wi'
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
+
   IndexConfiguration candidate_indexes;
   IndexConfiguration admissible_indexes;
 
@@ -41,10 +41,9 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
-    top_candidate_indexes = Enumerate(candidate_indexes, query_set_, 4);
+    Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
 
-    candidate_indexes =
-        GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
+    GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
   }
   final_indexes = candidate_indexes;
 }
@@ -65,9 +64,9 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
       admissible_config.Merge(Ai);
 
       IndexConfiguration Ci;
-      Ci = Enumerate(Ai, workload, 4);
+      Enumerate(Ai, Ci, workload, context_.num_indexes_);
+      candidate_config.Merge(Ci);
     }
-    candidate_config = admissible_config;
   } else {
     IndexConfiguration empty_config;
     auto cand_indexes = candidate_config.GetIndexes();
@@ -100,21 +99,25 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-IndexConfiguration &IndexSelection::Enumerate(IndexConfiguration &indexes,
+void IndexSelection::Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes,
                                               Workload &workload, size_t k) {
-  auto top_indexes = ExhaustiveEnumeration(indexes, workload);
 
-  auto remaining_indexes = GetRemainingIndexes(indexes, top_indexes);
+  ExhaustiveEnumeration(indexes, top_indexes, workload);
 
-  return GreedySearch(top_indexes, remaining_indexes, workload, k);
+  auto remaining_indexes = indexes - top_indexes;
+
+  GreedySearch(top_indexes, remaining_indexes, workload, k);
 }
 
-IndexConfiguration &IndexSelection::GreedySearch(
-    IndexConfiguration &indexes, IndexConfiguration &remaining_indexes,
-    Workload &workload, size_t k) {
+
+void IndexSelection::GreedySearch(IndexConfiguration &indexes,
+                                                 IndexConfiguration &remaining_indexes,
+                                                 Workload &workload, size_t k) {
+
   size_t current_index_count = context_.naive_enumeration_threshold_;
 
-  if (current_index_count >= k) return indexes;
+  if(current_index_count >= k)
+    return;
 
   double global_min_cost = GetCost(indexes, workload);
   double cur_min_cost = global_min_cost;
@@ -145,24 +148,17 @@ IndexConfiguration &IndexSelection::GreedySearch(
       break;
     }
   }
-
-  return indexes;
 }
 
-IndexConfiguration IndexSelection::GetRemainingIndexes(
-    IndexConfiguration &indexes, IndexConfiguration top_indexes) {
-  return (indexes - top_indexes);
-}
-
-IndexConfiguration IndexSelection::ExhaustiveEnumeration(
-    IndexConfiguration &indexes, Workload &workload) {
+void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
+                                                         IndexConfiguration &top_indexes,
+                                                         Workload &workload) {
   assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
 
   std::set<IndexConfiguration, Comp> running_index_config(workload);
   std::set<IndexConfiguration, Comp> temp_index_config(workload);
   std::set<IndexConfiguration, Comp> result_index_config(workload);
   IndexConfiguration new_element;
-  IndexConfiguration top_indexes;
 
   IndexConfiguration empty;
   running_index_config.insert(empty);
@@ -191,8 +187,6 @@ IndexConfiguration IndexSelection::ExhaustiveEnumeration(
   for (auto i : result_index_config) {
     top_indexes.Merge(i);
   }
-
-  return top_indexes;
 }
 
 // GetAdmissibleIndexes()
@@ -398,10 +392,10 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
   return cost;
 }
 
-IndexConfiguration IndexSelection::CrossProduct(
+void IndexSelection::CrossProduct(
     const IndexConfiguration &config,
-    const IndexConfiguration &single_column_indexes) {
-  IndexConfiguration result;
+    const IndexConfiguration &single_column_indexes,
+    IndexConfiguration &result) {
   auto indexes = config.GetIndexes();
   auto columns = single_column_indexes.GetIndexes();
   for (auto index : indexes) {
@@ -411,12 +405,13 @@ IndexConfiguration IndexSelection::CrossProduct(
       result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
     }
   }
-  return result;
 }
 
-IndexConfiguration IndexSelection::GenMultiColumnIndexes(
-    IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return CrossProduct(config, single_column_indexes);
+void IndexSelection::GenMultiColumnIndexes(
+    IndexConfiguration &config,
+    IndexConfiguration &single_column_indexes,
+    IndexConfiguration &result) {
+  CrossProduct(config, single_column_indexes, result);
 }
 
 }  // namespace brain
