@@ -382,11 +382,11 @@ void IndexSelection::IndexColsParseOrderByHelper(
 }
 
 void IndexSelection::IndexObjectPoolInsertHelper(
-    const std::tuple<oid_t, oid_t, oid_t> tuple_col,
+    const std::tuple<oid_t, oid_t, oid_t> tuple_oid,
     IndexConfiguration &config) {
-  auto db_oid = std::get<0>(tuple_col->GetBoundOid());
-  auto table_oid = std::get<1>(tuple_col->GetBoundOid());
-  auto col_oid = std::get<2>(tuple_col->GetBoundOid());
+  auto db_oid = std::get<0>(tuple_oid);
+  auto table_oid = std::get<1>(tuple_oid);
+  auto col_oid = std::get<2>(tuple_oid);
 
   // Add the object to the pool.
   IndexObject iobj(db_oid, table_oid, col_oid);
