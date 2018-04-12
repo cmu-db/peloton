@@ -16,7 +16,7 @@
 #include <map>
 #include <utility>
 
-#include <common/internal_types.h>
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/foreach.hpp>
