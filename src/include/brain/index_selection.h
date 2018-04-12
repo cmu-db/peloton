@@ -43,7 +43,7 @@ class IndexSelection {
   IndexSelection(Workload &query_set, size_t max_index_cols,
                  size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
-  void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
+  void GetAdmissibleIndexes(parser::SQLStatement *query, IndexConfiguration &indexes);
 
   /**
    * @brief GenerateCandidateIndexes.
@@ -105,9 +105,9 @@ private:
       const expression::AbstractExpression *where_expr,
       IndexConfiguration &config);
   void IndexColsParseGroupByHelper(
-      std::unique_ptr<GroupByDescription> &where_expr,
+      std::unique_ptr<parser::GroupByDescription> &where_expr,
       IndexConfiguration &config);
-  void IndexColsParseOrderByHelper(std::unique_ptr<OrderDescription> &order_by,
+  void IndexColsParseOrderByHelper(std::unique_ptr<parser::OrderDescription> &order_by,
                                    IndexConfiguration &config);
   std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
                                                      oid_t table,

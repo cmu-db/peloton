@@ -352,7 +352,7 @@ void IndexSelection::IndexColsParseWhereHelper(
 }
 
 void IndexSelection::IndexColsParseGroupByHelper(
-    std::unique_ptr<GroupByDescription> &group_expr,
+    std::unique_ptr<parser::GroupByDescription> &group_expr,
     IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
     LOG_INFO("Group by expression not present");
@@ -367,7 +367,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(
-    std::unique_ptr<OrderDescription> &order_expr, IndexConfiguration &config) {
+    std::unique_ptr<parser::OrderDescription> &order_expr, IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
     LOG_INFO("Order by expression not present");
     return;
