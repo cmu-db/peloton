@@ -38,7 +38,6 @@ fi
 unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
-TF_VERSION="1.4.0"
 TF_TYPE="cpu"
 
 
@@ -68,11 +67,12 @@ function install_protobuf3.4.0() {
 # Utility function for installing tensorflow components of python/C++
 function install_tf() {
  TFCApiFile=$1
- TFBinaryURL=$2
+ TF_VERSION=$2
  LinkerConfigCmd=$3
  TARGET_DIRECTORY="/usr/local"
  # Install Tensorflow Python Binary
- sudo -E pip3 install --upgrade ${TFBinaryURL}
+ sudo -E pip3 install --upgrade pip
+ sudo -E pip3 install --upgrade tensorflow==${TF_VERSION}
 
  # Install C-API
  TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
@@ -89,7 +89,6 @@ function install_tf() {
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
     MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
-
     # Fix for LLVM-3.7 on Ubuntu 14 + 17
     if [ "$MAJOR_VER" == "14" -o "$MAJOR_VER" == "17" ]; then
         if [ "$MAJOR_VER" == "14" ]; then
@@ -115,21 +114,22 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     PKG_CMAKE="cmake"
     PKG_LLVM="llvm-3.7"
     PKG_CLANG="clang-3.7"
+    TF_VERSION="1.4.0"
 
     # Fix for cmake name change on Ubuntu 14.x and 16.x plus --force-yes deprecation
     if [ "$MAJOR_VER" == "14" ]; then
         PKG_CMAKE="cmake3"
         FORCE_Y="--force-yes"
-        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp34-cp34m-linux_x86_64.whl"
+        TF_VERSION="1.4.0"
     fi
     if [ "$MAJOR_VER" == "16" ]; then
-        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
+        TF_VERSION="1.5.0"
     fi
     # Fix for llvm on Ubuntu 17.x
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
-        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
+        TF_VERSION="1.5.0"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo ldconfig"
@@ -153,6 +153,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libedit-dev \
         libssl-dev \
         postgresql-client \
+        libtbb-dev \
         python3-pip \
         curl \
         autoconf \
@@ -164,7 +165,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## DEBIAN
@@ -191,7 +192,8 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
         libpqxx-dev \
         llvm-dev \
         libedit-dev \
-        postgresql-client
+        postgresql-client \
+        libtbb-dev
 
 ## ------------------------------------------------
 ## FEDORA
@@ -201,8 +203,8 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         26) LLVM="llvm";;
         *)  LLVM="llvm4.0";;
     esac
+    TF_VERSION="1.5.0"
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
-    TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
     LinkerConfigCmd="sudo ldconfig"
     sudo dnf -q install -y \
         git \
@@ -229,6 +231,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         libtsan \
         libubsan \
         libatomic \
+        tbb-devel \
         python3-pip \
         curl \
         autoconf \
@@ -237,7 +240,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "fedora"        
     # Install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## REDHAT
@@ -299,7 +302,8 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         llvm3.9 \
         llvm3.9-static \
         llvm3.9-devel \
-        postgresql
+        postgresql \
+        libtbb-dev
 
     # Manually download some packages to guarantee
     # version compatibility
@@ -316,7 +320,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
       echo "Installing homebrew..."
       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     fi
-    TFBinaryURL="https://storage.googleapis.com/tensorflow/mac/${TF_TYPE}/tensorflow-${TF_VERSION}-py3-none-any.whl"
+    TF_VERSION="1.4.0"
     TFCApiFile="libtensorflow-${TF_TYPE}-darwin-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo update_dyld_shared_cache"
     brew install git
@@ -333,13 +337,14 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install tbb
     brew install curl
     brew install wget
     brew install python
     brew upgrade python
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
-    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## UNKNOWN

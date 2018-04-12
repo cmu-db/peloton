@@ -134,8 +134,44 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     // Derive the column's final value
     Value val = row.DeriveValue(codegen, output_ais_[i]);
 
-    PL_ASSERT(output_ais_[i]->type == val.GetType());
+    PELOTON_ASSERT(output_ais_[i]->type == val.GetType());
     AddToTupleBuffer(val, codegen, tuple_buffer_, i);
+    PELOTON_ASSERT(output_ais_[i]->type == val.GetType());
+    const auto &sql_type = val.GetType().GetSqlType();
+
+    // Check if it's NULL
+    Value null_val;
+    lang::If val_is_null{codegen, val.IsNull(codegen)};
+    {
+      // If the value is NULL (i.e., has the NULL bit set), produce the NULL
+      // value for the given type.
+      null_val = sql_type.GetNullValue(codegen);
+    }
+    val_is_null.EndIf();
+    val = val_is_null.BuildPHI(null_val, val);
+
+    // Output the value using the type's output function
+    auto *output_func = sql_type.GetOutputFunction(codegen, val.GetType());
+
+    // Setup the function arguments
+    std::vector<llvm::Value *> args = {tuple_buffer_, codegen.Const32(i),
+                                       val.GetValue()};
+    // If the value is a string, push back the length
+    if (val.GetLength() != nullptr) {
+      args.push_back(val.GetLength());
+    }
+
+    // If the value is a boolean, push back the NULL bit. We don't do that for
+    // the other data types because we have special values for NULL. Booleans
+    // in codegen are 1-bit types, as opposed to 1-byte types in the rest of the
+    // system. Since, we cannot have a special value for NULL in a 1-bit boolean
+    // system, we pass along the NULL bit during output.
+    if (sql_type.TypeId() == peloton::type::TypeId::BOOLEAN) {
+      args.push_back(val.IsNull(codegen));
+    }
+
+    // Call the function
+    codegen.CallFunc(output_func, args);
   }
 
   // Append the tuple to the output buffer (by calling BufferTuple(...))

@@ -45,13 +45,14 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
       UpdaterProxy::GetType(GetCodeGen()));
 }
 
-bool IsTarget(const TargetList &target_list, uint32_t index) {
-  for (const auto &target : target_list) {
-    if (target.first == index) {
-      return true;
+oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
+  oid_t target_size = target_list.size();
+  for (oid_t i = 0; i < target_size; i++) {
+    if (target_list[i].first == index) {
+      return i;
     }
   }
-  return false;
+  return INVALID_OID;
 }
 
 void UpdateTranslator::InitializeState() {
@@ -116,9 +117,10 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   std::vector<codegen::Value> values;
   for (size_t i = 0, target_id = 0; i < column_num; i++) {
     codegen::Value val;
-    if (IsTarget(target_list, i)) {
+    uint32_t target_index = GetTargetIndex(target_list, i);
+    if (target_index != INVALID_OID) {
       // Set the value for the update
-      const auto &derived_attribute = target_list[target_id].second;
+      const auto &derived_attribute = target_list[target_index].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
       size_t offset = 0;
       if (is_primary_key) {

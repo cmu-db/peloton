@@ -20,7 +20,7 @@ namespace concurrency {
   // enter epoch with thread id
   cid_t DecentralizedEpochManager::EnterEpoch(const size_t thread_id, const TimestampType ts_type) {
 
-    PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
+    PELOTON_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
     if (ts_type == TimestampType::SNAPSHOT_READ) {
 
@@ -50,7 +50,7 @@ namespace concurrency {
 
   void DecentralizedEpochManager::ExitEpoch(const size_t thread_id, const eid_t epoch_id) {
 
-    PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
+    PELOTON_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
     // exit from the corresponding local epoch.
     local_epochs_.at(thread_id)->ExitEpoch(epoch_id);

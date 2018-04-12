@@ -24,7 +24,7 @@ namespace codegen {
 
 void Inserter::Init(storage::DataTable *table,
                     executor::ExecutorContext *executor_context) {
-  PL_ASSERT(table && executor_context);
+  PELOTON_ASSERT(table && executor_context);
   table_ = table;
   executor_context_ = executor_context;
 }
@@ -42,12 +42,17 @@ char *Inserter::AllocateTupleStorage() {
 
 peloton::type::AbstractPool *Inserter::GetPool() {
   // This should be called after AllocateTupleStorage()
-  PL_ASSERT(tile_);
+  PELOTON_ASSERT(tile_);
   return tile_->GetPool();
 }
 
+<<<<<<< HEAD
 void Inserter::Insert(char *values_buf, uint32_t values_size) {
   PL_ASSERT(table_ && executor_context_ && tile_);
+=======
+void Inserter::Insert() {
+  PELOTON_ASSERT(table_ && executor_context_ && tile_);
+>>>>>>> master
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

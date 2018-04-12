@@ -138,12 +138,12 @@ codegen::Value TileGroup::LoadColumn(
       codegen::Varlen::SafeGetPtrAndLength(
           codegen, codegen->CreateLoad(varlen_ptr_ptr), val, length);
     }
-    PL_ASSERT(val != nullptr && length != nullptr);
+    PELOTON_ASSERT(val != nullptr && length != nullptr);
   } else {
     // Get the LLVM type of the column
     llvm::Type *col_type = nullptr, *col_len_type = nullptr;
     sql_type.GetTypeForMaterialization(codegen, col_type, col_len_type);
-    PL_ASSERT(col_type != nullptr && col_len_type == nullptr);
+    PELOTON_ASSERT(col_type != nullptr && col_len_type == nullptr);
 
     // val = *(col_type*)col_address;
     val = codegen->CreateLoad(
@@ -162,7 +162,7 @@ codegen::Value TileGroup::LoadColumn(
         auto null_val =
             codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
         auto val_is_null = val_tmp.CompareEq(codegen, null_val);
-        PL_ASSERT(!val_is_null.IsNullable());
+        PELOTON_ASSERT(!val_is_null.IsNullable());
         is_null = val_is_null.GetValue();
       }
     }
@@ -189,7 +189,7 @@ TileGroup::TileGroupAccess::Row::Row(const TileGroup &tile_group,
 
 codegen::Value TileGroup::TileGroupAccess::Row::LoadColumn(
     CodeGen &codegen, uint32_t col_idx) const {
-  PL_ASSERT(col_idx < layout_.size());
+  PELOTON_ASSERT(col_idx < layout_.size());
   return tile_group_.LoadColumn(codegen, GetTID(), layout_[col_idx]);
 }
 

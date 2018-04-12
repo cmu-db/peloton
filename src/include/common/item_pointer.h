@@ -44,6 +44,10 @@ class ItemPointer {
     }
   }
 
+  bool operator==(const ItemPointer &rhs) const {
+    return (block == rhs.block && offset == rhs.offset);
+  }
+
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;

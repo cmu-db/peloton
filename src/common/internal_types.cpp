@@ -471,6 +471,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::VARIABLE_SET: {
       return "SET";
     }
+    case StatementType::EXPLAIN: {
+      return "EXPLAIN";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -572,6 +575,8 @@ std::string QueryTypeToString(QueryType query_type) {
       return "EXECUTE";
     case QueryType::QUERY_SELECT:
       return "SELECT";
+    case QueryType::QUERY_EXPLAIN: 
+      return "EXPLAIN";
     case QueryType::QUERY_OTHER:
     default:
       return "OTHER";
@@ -630,6 +635,7 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
           {StatementType::DROP, QueryType::QUERY_DROP},
           {StatementType::SELECT, QueryType::QUERY_SELECT},
           {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
+          {StatementType::EXPLAIN, QueryType::QUERY_EXPLAIN}
       };
   QueryType query_type = QueryType::QUERY_OTHER;
   std::unordered_map<StatementType, QueryType,

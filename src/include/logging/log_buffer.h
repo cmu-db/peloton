@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "type/serializeio.h"

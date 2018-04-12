@@ -126,7 +126,7 @@ storage::DataTable *CreateTable() {
  */
 expression::AbstractExpression *CreatePredicate(
     const std::set<oid_t> &tuple_ids) {
-  PL_ASSERT(tuple_ids.size() >= 1);
+  PELOTON_ASSERT(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConstantValueFactory(
@@ -238,7 +238,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
           (type::ValueFactory::GetVarcharValue(std::to_string(val2)));
       type::Value val =
           (result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
-      EXPECT_TRUE(val.CompareEquals(string_value) == CmpBool::TRUE);
+      EXPECT_TRUE(val.CompareEquals(string_value) == CmpBool::CmpTrue);
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }

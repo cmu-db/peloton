@@ -393,8 +393,8 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   auto constant =
       (expression::ConstantValueExpression *)update_stmt->updates.at(0)
           ->value.get();
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-                               type::ValueFactory::GetDecimalValue(48)));
+  EXPECT_EQ(CmpBool::CmpTrue, constant->GetValue().CompareEquals(
+                                  type::ValueFactory::GetDecimalValue(48)));
 
   // Test Second Set Condition
   EXPECT_EQ(update_stmt->updates.at(1)->column, "s_ytd");
@@ -403,8 +403,8 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   auto child1 = (expression::TupleValueExpression *)op_expr->GetChild(0);
   EXPECT_EQ(child1->GetColumnName(), "s_ytd");
   auto child2 = (expression::ConstantValueExpression *)op_expr->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, child2->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::CmpTrue, child2->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(1)));
 
   // Test Where clause
   auto where = (expression::OperatorExpression *)update_stmt->where.get();
@@ -414,15 +414,15 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   auto column = (expression::TupleValueExpression *)cond1->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_i_id");
   constant = (expression::ConstantValueExpression *)cond1->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(68999)));
+  EXPECT_EQ(CmpBool::CmpTrue, constant->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(68999)));
   auto cond2 = (expression::OperatorExpression *)where->GetChild(1);
   EXPECT_EQ(cond2->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
   column = (expression::TupleValueExpression *)cond2->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_w_id");
   constant = (expression::ConstantValueExpression *)cond2->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(4)));
+  EXPECT_EQ(CmpBool::CmpTrue, constant->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(4)));
 }
 
 TEST_F(PostgresParserTests, StringUpdateTest) {
@@ -590,7 +590,7 @@ TEST_F(PostgresParserTests, InsertTest) {
              .at(1)
              .get())
             ->GetValue());
-    EXPECT_EQ(CmpBool::TRUE, res);
+    EXPECT_EQ(CmpBool::CmpTrue, res);
 
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
@@ -856,10 +856,10 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   auto child2 =
       (expression::ConstantValueExpression *)default_expr->GetChild(1);
   EXPECT_TRUE(child2 != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, child1->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(CmpBool::TRUE, child2->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(CmpBool::CmpTrue, child1->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::CmpTrue, child2->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(2)));
 
   // Check Second column
   column = create_stmt->columns.at(1).get();
@@ -906,14 +906,14 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   auto plus_child2 =
       (expression::ConstantValueExpression *)check_child1->GetChild(1);
   EXPECT_TRUE(plus_child2 != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, plus_child2->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::CmpTrue, plus_child2->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(1)));
   auto check_child2 =
       (expression::ConstantValueExpression *)column->check_expression->GetChild(
           1);
   EXPECT_TRUE(check_child2 != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, check_child2->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(CmpBool::CmpTrue, check_child2->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(0)));
 
   // Check the last foreign key
   column = create_stmt->foreign_keys.at(2).get();
@@ -1089,8 +1089,8 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   auto const_expr =
       (expression::ConstantValueExpression *)fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::CmpTrue, const_expr->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(1)));
   auto tv_expr = (expression::TupleValueExpression *)fun_expr->GetChild(1);
   EXPECT_TRUE(tv_expr != nullptr);
   EXPECT_EQ("a", tv_expr->GetColumnName());
@@ -1103,8 +1103,8 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   EXPECT_EQ(1, fun_expr->GetChildrenSize());
   const_expr = (expression::ConstantValueExpression *)fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(99)));
+  EXPECT_EQ(CmpBool::CmpTrue, const_expr->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(99)));
 
   // Check FUN(b) > 2
   auto op_expr =
@@ -1119,8 +1119,8 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   EXPECT_EQ("b", tv_expr->GetColumnName());
   const_expr = (expression::ConstantValueExpression *)op_expr->GetChild(1);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(CmpBool::CmpTrue, const_expr->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(2)));
 }
 
 TEST_F(PostgresParserTests, UDFFuncCallTest) {
@@ -1142,8 +1142,8 @@ TEST_F(PostgresParserTests, UDFFuncCallTest) {
   auto const_expr =
       (expression::ConstantValueExpression *)fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
-                               type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::CmpTrue, const_expr->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(1)));
 
   auto tv_expr = (expression::TupleValueExpression *)fun_expr->GetChild(1);
   EXPECT_TRUE(tv_expr != nullptr);
@@ -1204,6 +1204,26 @@ TEST_F(PostgresParserTests, TypeCastTest) {
   queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::DECIMAL);");
   queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::TEXT);");
   queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::VARCHAR);");
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+}
+
+TEST_F(PostgresParserTests, TypeCastInExpressionTest) {
+  std::vector<std::string> queries;
+  queries.push_back("SELECT * FROM a WHERE d <= date '2018-04-04';");
+  queries.push_back("SELECT '12345'::INTEGER - 12");
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {

@@ -23,7 +23,7 @@ ComparisonExpression::ComparisonExpression(ExpressionType type,
 type::Value ComparisonExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     executor::ExecutorContext *context) const {
-  PL_ASSERT(children_.size() == 2);
+  PELOTON_ASSERT(children_.size() == 2);
   auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
   auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
   switch (exp_type_) {

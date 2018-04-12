@@ -194,7 +194,7 @@ void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  PL_ASSERT(schema->GetColumnCount() == 4);
+  PELOTON_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -237,8 +237,8 @@ void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
         table->InsertTuple(&tuple, current_txn, &index_entry_ptr);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     txn_manager.PerformInsert(current_txn, tuple_slot_id, index_entry_ptr);
@@ -258,7 +258,7 @@ void TestingExecutorUtil::PopulateTiles(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
   // Ensure that the tile group is as expected.
-  PL_ASSERT(schema->GetColumnCount() == 4);
+  PELOTON_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

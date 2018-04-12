@@ -233,7 +233,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
                    context_, table_name, col_name, value_type, depth))
         throw Exception("Invalid table reference " + expr->GetTableName());
     }
-    PL_ASSERT(!expr->GetIsBound());
+    PELOTON_ASSERT(!expr->GetIsBound());
     expr->SetDepth(depth);
     expr->SetColName(col_name);
     expr->SetValueType(value_type);

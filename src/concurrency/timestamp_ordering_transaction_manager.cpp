@@ -29,8 +29,6 @@
 namespace peloton {
 namespace concurrency {
 
-// timestamp ordering requires a spinlock field for protecting the atomic access
-// to txn_id field and last_reader_cid field.
 common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -38,9 +36,6 @@ common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpin
             (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
-// in timestamp ordering, the last_reader_cid records the timestamp of the last
-// transaction
-// that reads the tuple.
 cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -77,7 +72,6 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   }
 }
 
-// Initiate reserved area of a tuple
 void TimestampOrderingTransactionManager::InitTupleReserved(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t tuple_id) {
@@ -98,7 +92,6 @@ TimestampOrderingTransactionManager::GetInstance(
   return txn_manager;
 }
 
-// check whether the current transaction owns the tuple version.
 bool TimestampOrderingTransactionManager::IsOwner(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -108,7 +101,6 @@ bool TimestampOrderingTransactionManager::IsOwner(
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// check whether any other transaction owns the tuple version.
 bool TimestampOrderingTransactionManager::IsOwned(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -119,19 +111,6 @@ bool TimestampOrderingTransactionManager::IsOwned(
          tuple_txn_id != INITIAL_TXN_ID;
 }
 
-// This method tests whether the current transaction has
-// created this version of the tuple
-//
-// this method is designed for select_for_update.
-//
-// The DBMS can acquire write locks for a transaction in two cases:
-// (1) Every time a transaction updates a tuple, the DBMS creates
-//     a new version of the tuple and acquire the locks on both
-//     the older and the newer version;
-// (2) Every time a transaction executes a select_for_update statement,
-//     the DBMS needs to acquire the lock on the corresponding version
-//     without creating a new version.
-// IsWritten() method is designed for distinguishing these two cases.
 bool TimestampOrderingTransactionManager::IsWritten(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -141,9 +120,6 @@ bool TimestampOrderingTransactionManager::IsWritten(
   return tuple_begin_cid == MAX_CID;
 }
 
-// if the tuple is not owned by any transaction and is visible to current
-// transaction.
-// the version must be the latest version in the version chain.
 bool TimestampOrderingTransactionManager::IsOwnable(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -187,17 +163,11 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   }
 }
 
-// release write lock on a tuple.
-// one example usage of this method is when a tuple is acquired, but operation
-// (insert,update,delete) can't proceed, the executor needs to yield the
-// ownership before return false to upper layer.
-// It should not be called if the tuple is in the write set as commit and abort
-// will release the write lock anyway.
 void TimestampOrderingTransactionManager::YieldOwnership(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
+  PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
 
@@ -255,7 +225,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       }
 
       // if we have already owned the version.
-      PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
+      PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
 
       // Increment table read op stats
       if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
@@ -313,7 +283,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         current_txn->RecordReadOwn(location);
       }
       // if we have already owned the version.
-      PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
+      PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       // Increment table read op stats
       if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
           StatsType::INVALID) {
@@ -364,7 +334,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //// handle SERIALIZABLE and REPEATABLE_READS
   //////////////////////////////////////////////////////////
   else {
-    PL_ASSERT(current_txn->GetIsolationLevel() ==
+    PELOTON_ASSERT(current_txn->GetIsolationLevel() ==
                   IsolationLevelType::SERIALIZABLE ||
               current_txn->GetIsolationLevel() ==
                   IsolationLevelType::REPEATABLE_READS);
@@ -400,14 +370,14 @@ bool TimestampOrderingTransactionManager::PerformRead(
         UNUSED_ATTRIBUTE bool ret = SetLastReaderCommitId(
             tile_group_header, tuple_id, current_txn->GetCommitId(), true);
 
-        PL_ASSERT(ret == true);
+        PELOTON_ASSERT(ret == true);
         // there's no need to maintain read set for timestamp ordering protocol.
         // T/O does not check the read set during commit phase.
       }
 
       // if we have already owned the version.
-      PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
-      PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
+      PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
+      PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
                     current_txn->GetCommitId() ||
                 GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
       // Increment table read op stats
@@ -444,7 +414,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       } else {
         // if the current transaction has already owned this tuple,
         // then perform read directly.
-        PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
+        PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
                       current_txn->GetCommitId() ||
                   GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
 
@@ -467,8 +437,13 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
 void TimestampOrderingTransactionManager::PerformInsert(
     TransactionContext *const current_txn, const ItemPointer &location,
+<<<<<<< HEAD
     ItemPointer *index_entry_ptr, char *values_buf, uint32_t values_size) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+=======
+    ItemPointer *index_entry_ptr) {
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+>>>>>>> master
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -479,9 +454,9 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   // check MVCC info
   // the tuple slot must be empty.
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
@@ -530,9 +505,14 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn, const ItemPointer &location,
+<<<<<<< HEAD
     const ItemPointer &new_location, char *values_buf,
     uint32_t values_size, TargetList *offsets) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+=======
+    const ItemPointer &new_location) {
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+>>>>>>> master
 
   ItemPointer old_location = location;
 
@@ -551,17 +531,17 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
   // version.
-  PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
             transaction_id);
-  PL_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
+  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
                 .IsNull() == true);
 
   // check whether the new version is empty.
-  PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
             INVALID_TXN_ID);
-  PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
             MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
             MAX_CID);
 
   // if the executor doesn't call PerformUpdate after AcquireOwnership,
@@ -598,7 +578,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     // its first trial.
     UNUSED_ATTRIBUTE auto res =
         AtomicUpdateItemPointer(index_entry_ptr, new_location);
-    PL_ASSERT(res == true);
+    PELOTON_ASSERT(res == true);
   }
 
   // Add the old tuple into the update set
@@ -640,13 +620,18 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   }
 }
 
-// NOTE: this function is deprecated.
 void TimestampOrderingTransactionManager::PerformUpdate(
+<<<<<<< HEAD
     TransactionContext *const current_txn,
     const ItemPointer &location, char *values_buf,
     uint32_t values_size, TargetList *offsets) {
 
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+=======
+    TransactionContext *const current_txn UNUSED_ATTRIBUTE,
+    const ItemPointer &location) {
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+>>>>>>> master
 
   oid_t tile_group_id = location.block;
   UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
@@ -655,10 +640,10 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   UNUSED_ATTRIBUTE auto tile_group_header =
       manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
             current_txn->GetTransactionId());
-  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   /* TODO(graghura): remove placeholder, add logging switch */
   if(true) {
@@ -706,7 +691,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   ItemPointer old_location = location;
 
@@ -724,23 +709,23 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
+  PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
             current_txn->GetCommitId());
 
   // if we can perform delete, then we must have already locked the older
   // version.
-  PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
             transaction_id);
   // we must be deleting the latest version.
-  PL_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
+  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
                 .IsNull() == true);
 
   // check whether the new version is empty.
-  PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
             INVALID_TXN_ID);
-  PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
             MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+  PELOTON_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
             MAX_CID);
 
   // Set up double linked list
@@ -776,7 +761,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
     // its first trial.
     UNUSED_ATTRIBUTE auto res =
         AtomicUpdateItemPointer(index_entry_ptr, new_location);
-    PL_ASSERT(res == true);
+    PELOTON_ASSERT(res == true);
   }
 
   current_txn->RecordDelete(old_location);
@@ -816,7 +801,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 // called when the current transaction creates a new version and then deletes that version.
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -824,9 +809,9 @@ void TimestampOrderingTransactionManager::PerformDelete(
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
             current_txn->GetTransactionId());
-  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
@@ -946,10 +931,10 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       ItemPointer new_version =
           tile_group_header->GetPrevItemPointer(tuple_slot);
 
-      PL_ASSERT(new_version.IsNull() == false);
+      PELOTON_ASSERT(new_version.IsNull() == false);
 
       auto cid = tile_group_header->GetEndCommitId(tuple_slot);
-      PL_ASSERT(cid > end_commit_id);
+      PELOTON_ASSERT(cid > end_commit_id);
       auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
       new_tile_group_header->SetBeginCommitId(new_version.offset,
@@ -977,7 +962,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
           tile_group_header->GetPrevItemPointer(tuple_slot);
 
       auto cid = tile_group_header->GetEndCommitId(tuple_slot);
-      PL_ASSERT(cid > end_commit_id);
+      PELOTON_ASSERT(cid > end_commit_id);
       auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
       new_tile_group_header->SetBeginCommitId(new_version.offset,
@@ -1004,7 +989,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
           GCVersionType::COMMIT_DELETE;
 
     } else if (tuple_entry.second == RWType::INSERT) {
-      PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
+      PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                 current_txn->GetTransactionId());
       // set the begin commit id to persist insert
       tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -1018,7 +1003,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // nothing to be added to gc set.
 
     } else if (tuple_entry.second == RWType::INS_DEL) {
-      PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
+      PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                 current_txn->GetTransactionId());
 
       tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1083,7 +1068,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn, std::function<void(ResultType)> task_callback) {
 
   // a pre-declared read-only transaction will never abort.
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
@@ -1145,10 +1130,10 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // we need to unlink it by resetting the item pointers.
 
       // this must be the latest version of a version chain.
-      PL_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
+      PELOTON_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
                     .IsNull() == true);
 
-      PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
+      PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
       // if we updated the latest version.
       // We must first adjust the head pointer
       // before we unlink the aborted version from version list
@@ -1156,7 +1141,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
           tile_group_header->GetIndirection(tuple_slot);
       UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
           index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-      PL_ASSERT(res == true);
+      PELOTON_ASSERT(res == true);
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.
@@ -1193,7 +1178,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // we need to unlink it by resetting the item pointers.
 
       // this must be the latest version of a version chain.
-      PL_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
+      PELOTON_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
                     .IsNull() == true);
 
       // if we updated the latest version.
@@ -1203,7 +1188,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
           tile_group_header->GetIndirection(tuple_slot);
       UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
           index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-      PL_ASSERT(res == true);
+      PELOTON_ASSERT(res == true);
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.

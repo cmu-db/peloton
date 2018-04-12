@@ -89,8 +89,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Make sure the key types are equal
-  PL_ASSERT(left_key_type.size() == right_key_type.size());
-  PL_ASSERT(std::equal(left_key_type.begin(), left_key_type.end(),
+  PELOTON_ASSERT(left_key_type.size() == right_key_type.size());
+  PELOTON_ASSERT(std::equal(left_key_type.begin(), left_key_type.end(),
                        right_key_type.begin()));
 
   // Collect (unique) attributes that are stored in hash-table

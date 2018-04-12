@@ -80,7 +80,7 @@ void AbstractExpression::DeduceExpressionName() {
     }
     expr_name_.append(")");
   } else {
-    PL_ASSERT(children_size <= 2);
+    PELOTON_ASSERT(children_size <= 2);
     if (children_size == 2) {
       expr_name_ = GetChild(0)->expr_name_ + " " + op_str + " " +
                    GetChild(1)->expr_name_;

@@ -43,11 +43,11 @@ bool NestedLoopJoinExecutor::DInit() {
     return status;
   }
 
-  PL_ASSERT(right_result_tiles_.empty());
+  PELOTON_ASSERT(right_result_tiles_.empty());
   right_child_done_ = false;
   right_result_itr_ = 0;
 
-  PL_ASSERT(left_result_tiles_.empty());
+  PELOTON_ASSERT(left_result_tiles_.empty());
 
   return true;
 }
@@ -128,7 +128,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         LOG_TRACE("Advance the Right child.");
         std::unique_ptr<LogicalTile> right_tile(children_[1]->GetOutput());
 
-        PL_ASSERT(right_tile != nullptr);
+        PELOTON_ASSERT(right_tile != nullptr);
 
         // Construct output result
         auto output_tile =
