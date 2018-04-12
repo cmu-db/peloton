@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include <memory>
-#include "expression/expression_util.h"
-#include "codegen/buffering_consumer.h"
 
 #include "catalog/database_catalog.h"
 
 #include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"

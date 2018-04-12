@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/codegen/buffering_consumer.h>
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction_context.h"
 
 #include "catalog/table_catalog.h"
+#include "codegen/buffering_consumer.h"
+#include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 #include "expression/expression_util.h"
