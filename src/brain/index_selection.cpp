@@ -43,8 +43,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
 
-    candidate_indexes =
-        GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes);
+    GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
   }
   final_indexes = candidate_indexes;
 }
@@ -393,10 +392,10 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
   return cost;
 }
 
-IndexConfiguration IndexSelection::CrossProduct(
+void IndexSelection::CrossProduct(
     const IndexConfiguration &config,
-    const IndexConfiguration &single_column_indexes) {
-  IndexConfiguration result;
+    const IndexConfiguration &single_column_indexes,
+    IndexConfiguration &result) {
   auto indexes = config.GetIndexes();
   auto columns = single_column_indexes.GetIndexes();
   for (auto index : indexes) {
@@ -406,12 +405,13 @@ IndexConfiguration IndexSelection::CrossProduct(
       result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
     }
   }
-  return result;
 }
 
-IndexConfiguration IndexSelection::GenMultiColumnIndexes(
-    IndexConfiguration &config, IndexConfiguration &single_column_indexes) {
-  return CrossProduct(config, single_column_indexes);
+void IndexSelection::GenMultiColumnIndexes(
+    IndexConfiguration &config,
+    IndexConfiguration &single_column_indexes,
+    IndexConfiguration &result) {
+  CrossProduct(config, single_column_indexes, result);
 }
 
 }  // namespace brain
