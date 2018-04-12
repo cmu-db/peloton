@@ -45,15 +45,15 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.num_indexes_);
 
-    GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
+    GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
+                               candidate_indexes);
   }
   final_indexes = candidate_indexes;
 }
 
-
-void IndexSelection::GenerateCandidateIndexes(IndexConfiguration &candidate_config,
-                                         IndexConfiguration &admissible_config,
-                                         Workload &workload) {
+void IndexSelection::GenerateCandidateIndexes(
+    IndexConfiguration &candidate_config, IndexConfiguration &admissible_config,
+    Workload &workload) {
   if (admissible_config.GetIndexCount() == 0) {
     // If there are no admissible indexes, then this is the first iteration.
     // Candidate indexes will be a union of admissible index set of each query.
@@ -72,7 +72,8 @@ void IndexSelection::GenerateCandidateIndexes(IndexConfiguration &candidate_conf
   }
 }
 
-void IndexSelection::PruneUselessIndexes(IndexConfiguration &config, Workload &workload) {
+void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
+                                         Workload &workload) {
   IndexConfiguration empty_config;
   auto indexes = config.GetIndexes();
   auto it = indexes.begin();
@@ -204,10 +205,10 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
         result_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       } else {
         running_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       }
     }
   }
@@ -225,18 +226,18 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   }
 }
 
-// GetAdmissibleIndexes()
-// Find out the indexable columns of the given workload.
-// The following rules define what indexable columns are:
-// 1. A column that appears in the WHERE clause with format
-//    ==> Column OP Expr <==
-//    OP such as {=, <, >, <=, >=, LIKE, etc.}
-//    Column is a table column name.
-// 2. GROUP BY (if present)
-// 3. ORDER BY (if present)
-// 4. all updated columns for UPDATE query.
 void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
                                           IndexConfiguration &indexes) {
+  // Find out the indexable columns of the given workload.
+  // The following rules define what indexable columns are:
+  // 1. A column that appears in the WHERE clause with format
+  //    ==> Column OP Expr <==
+  //    OP such as {=, <, >, <=, >=, LIKE, etc.}
+  //    Column is a table column name.
+  // 2. GROUP BY (if present)
+  // 3. ORDER BY (if present)
+  // 4. all updated columns for UPDATE query.
+
   union {
     parser::SelectStatement *select_stmt;
     parser::UpdateStatement *update_stmt;
