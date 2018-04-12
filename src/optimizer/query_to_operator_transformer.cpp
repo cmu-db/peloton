@@ -280,10 +280,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       }
     }
 
-    // map below contains column names of the columns mapped to column objects,
-    // as mentioned in the insert statement
-    std::unordered_map<std::string,
-                       std::shared_ptr<catalog::ColumnCatalogObject>> specified;
+    // set below contains names of columns mentioned in the insert statement
+    std::unordered_set<std::string> specified;
     auto column_names = target_table->GetColumnNames();
 
     for (const auto col : op->columns) {
@@ -291,9 +289,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
         throw CatalogException(StringUtil::Format(
             "ERROR:  column \"%s\" of relation \"%s\" does not exist",
             col.c_str(), target_table->GetTableName().c_str()));
-      } else {
-        specified[col] = column_names[col];
       }
+      specified.insert(col);
     }
 
     for (auto column : column_names) {
