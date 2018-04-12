@@ -437,13 +437,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
 void TimestampOrderingTransactionManager::PerformInsert(
     TransactionContext *const current_txn, const ItemPointer &location,
-<<<<<<< HEAD
     ItemPointer *index_entry_ptr, char *values_buf, uint32_t values_size) {
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
-=======
-    ItemPointer *index_entry_ptr) {
   PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
->>>>>>> master
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -505,14 +500,9 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn, const ItemPointer &location,
-<<<<<<< HEAD
     const ItemPointer &new_location, char *values_buf,
     uint32_t values_size, TargetList *offsets) {
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
-=======
-    const ItemPointer &new_location) {
   PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
->>>>>>> master
 
   ItemPointer old_location = location;
 
@@ -621,18 +611,12 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 }
 
 void TimestampOrderingTransactionManager::PerformUpdate(
-<<<<<<< HEAD
     TransactionContext *const current_txn,
     const ItemPointer &location, char *values_buf,
     uint32_t values_size, TargetList *offsets) {
 
-  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
-=======
-    TransactionContext *const current_txn UNUSED_ATTRIBUTE,
-    const ItemPointer &location) {
   PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
->>>>>>> master
-
+  
   oid_t tile_group_id = location.block;
   UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
 

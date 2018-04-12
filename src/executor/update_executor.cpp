@@ -144,13 +144,8 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     }
   }
 
-<<<<<<< HEAD
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
-
-=======
-  transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
   statement_write_set_.insert(location);
->>>>>>> master
   return true;
 }
 

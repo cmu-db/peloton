@@ -120,7 +120,6 @@ class TransactionContext : public Printable {
    */
   inline uint64_t GetTimestamp() const { return timestamp_; }
 
-<<<<<<< HEAD
   inline int GetLogToken() const { return log_token_; }
 
   inline logging::LogBuffer* GetLogBuffer() const { return log_buffer_; }
@@ -132,8 +131,6 @@ class TransactionContext : public Printable {
     log_buffer_ = new logging::LogBuffer(logging::LogManager::GetInstance().GetTransactionBufferSize());
   }
 
-
-=======
   /**
    * @brief      Gets the query strings.
    *
@@ -147,7 +144,6 @@ class TransactionContext : public Printable {
    *
    * @param[in]  commit_id  The commit identifier
    */
->>>>>>> master
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   /**

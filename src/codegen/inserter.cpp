@@ -46,13 +46,8 @@ peloton::type::AbstractPool *Inserter::GetPool() {
   return tile_->GetPool();
 }
 
-<<<<<<< HEAD
 void Inserter::Insert(char *values_buf, uint32_t values_size) {
   PELOTON_ASSERT(table_ && executor_context_ && tile_);
-=======
-void Inserter::Insert() {
-  PELOTON_ASSERT(table_ && executor_context_ && tile_);
->>>>>>> master
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
