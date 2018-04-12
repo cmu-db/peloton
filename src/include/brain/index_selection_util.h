@@ -97,8 +97,8 @@ class IndexConfiguration {
   /**
    * @brief - Constructor
    */
-  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> &index_obj_set) 
-      : indexes_ (index_obj_set) {}
+  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> &index_obj_set)
+      : indexes_(index_obj_set) {}
 
   /**
    * @brief - Merges with the argument configuration
@@ -146,7 +146,7 @@ class IndexConfiguration {
 // IndexObjectPool
 //===--------------------------------------------------------------------===//
 
-// This class is a wrapper around a map from the IndexConfiguration to the 
+// This class is a wrapper around a map from the IndexConfiguration to the
 // shared pointer of the object. This shared pointer is used else where in the
 // the algorithm to identify a configuration - memoization, enumeration,
 // equality while sorting etc.
@@ -199,7 +199,9 @@ class Workload {
   /**
    * @brief - Return the queries
    */
-  const std::vector<parser::SQLStatement *> &GetQueries() { return sql_queries_; }
+  const std::vector<parser::SQLStatement *> &GetQueries() {
+    return sql_queries_;
+  }
 
   /**
    * @brief - Return the parsed SQLstatements

@@ -368,7 +368,8 @@ void IndexSelection::IndexColsParseGroupByHelper(
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(
-    std::unique_ptr<parser::OrderDescription> &order_expr, IndexConfiguration &config) {
+    std::unique_ptr<parser::OrderDescription> &order_expr,
+    IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
     LOG_INFO("Order by expression not present");
     return;

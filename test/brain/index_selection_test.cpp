@@ -12,8 +12,8 @@
 
 #include <numeric>
 
-#include "brain/index_selection.h"
 #include "binder/bind_node_visitor.h"
+#include "brain/index_selection.h"
 #include "brain/index_selection_util.h"
 #include "brain/what_if_index.h"
 #include "catalog/index_catalog.h"
@@ -63,19 +63,21 @@ class IndexSelectionTest : public PelotonTest {
 
   void GetQueries(std::string table_name, std::vector<std::string> queries,
                   std::vector<int> &admissible_index_counts) {
-    queries.push_back("SELECT * FROM " + table_name + " WHERE a < 1 or b > 4 GROUP BY a");
+    queries.push_back("SELECT * FROM " + table_name +
+                      " WHERE a < 1 or b > 4 GROUP BY a");
     admissible_index_counts.push_back(2);
-    queries.push_back("SELECT a, b, c FROM " + table_name + " WHERE a < 1 or b > 4 ORDER BY a");
+    queries.push_back("SELECT a, b, c FROM " + table_name +
+                      " WHERE a < 1 or b > 4 ORDER BY a");
     admissible_index_counts.push_back(2);
     queries.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
     admissible_index_counts.push_back(2);
-    queries.push_back("UPDATE " + table_name + " SET a = 45 WHERE a < 1 or b > 4");
+    queries.push_back("UPDATE " + table_name +
+                      " SET a = 45 WHERE a < 1 or b > 4");
     admissible_index_counts.push_back(2);
   }
 
-  void CreateWorkload(std::vector<std::string> queries, brain::Workload &workload,
-                      std::string database_name) {
-
+  void CreateWorkload(std::vector<std::string> queries,
+                      brain::Workload &workload, std::string database_name) {
     // Parse the query.
     auto parser = parser::PostgresParser::GetInstance();
 
@@ -84,12 +86,12 @@ class IndexSelectionTest : public PelotonTest {
 
     // Bind the query
     std::unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, database_name));
+        new binder::BindNodeVisitor(txn, database_name));
 
-    for (auto query: queries) {
+    for (auto query : queries) {
       // Parse
       std::unique_ptr<parser::SQLStatementList> stmt_list(
-        parser.BuildParseTree(query).release());
+          parser.BuildParseTree(query).release());
       EXPECT_TRUE(stmt_list->is_valid);
       auto stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
 
@@ -120,7 +122,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
 
   auto queries = workload.GetQueries();
 
-  for (unsigned long i=0; i<queries.size(); i++) {
+  for (unsigned long i = 0; i < queries.size(); i++) {
     brain::Workload w(queries[i]);
     brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
 
@@ -136,9 +138,9 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
 }
 
 TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
-  void GenMultiColumnIndexes(brain::IndexConfiguration &config,
-                             brain::IndexConfiguration &single_column_indexes,
-                             brain::IndexConfiguration &result);
+  void GenMultiColumnIndexes(brain::IndexConfiguration & config,
+                             brain::IndexConfiguration & single_column_indexes,
+                             brain::IndexConfiguration & result);
 
   brain::IndexConfiguration candidates;
   brain::IndexConfiguration single_column_indexes;
@@ -152,38 +154,50 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   // Database: 1
   // Table: 1
   // Column: 1
-  auto a11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 1));
+  auto a11 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 1));
   // Column: 2
-  auto b11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 2));
+  auto b11 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 2));
   // Column: 3
-  auto c11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 3));
+  auto c11 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 3));
 
   // Database: 1
   // Table: 2
   // Column: 1
-  auto a12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 1));
+  auto a12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 1));
   // Column: 2
-  auto b12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 2));
+  auto b12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 2));
   // Column: 3
-  auto c12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 3));
+  auto c12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 3));
   // Column: 2, 3
   cols = {2, 3};
-  auto bc12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto bc12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
   // Column: 1, 3
   cols = {1, 3};
-  auto ac12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto ac12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
 
   // Database: 2
   // Table: 1
   // Column: 1
-  auto a21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 1));
+  auto a21 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 1));
   // Column: 2
-  auto b21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 2));
+  auto b21 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 2));
   // Column: 3
-  auto c21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 3));
+  auto c21 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 3));
   // Column: 1, 2 3
   cols = {1, 2, 3};
-  auto abc12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto abc12 =
+      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
 
   std::set<std::shared_ptr<brain::IndexObject>> indexes;
 
@@ -192,12 +206,12 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 
   indexes = {a11, b11, bc12, ac12, b12, c12, a21, b21, c21};
   candidates = {indexes};
-  
+
   result = {indexes};
-  
+
   expected = {indexes};
 
-  //TODO[Siva]: This test needs more support in as we use an IndexObjectPool
+  // TODO[Siva]: This test needs more support in as we use an IndexObjectPool
 }
 
 TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
@@ -223,11 +237,14 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexConfiguration candidate_config;
   brain::IndexConfiguration admissible_config;
 
-  brain::IndexSelection index_selection(workload, max_cols, enumeration_threshold, num_indexes);
-  index_selection.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
+  brain::IndexSelection index_selection(workload, max_cols,
+                                        enumeration_threshold, num_indexes);
+  index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
+                                           workload);
 
   auto admissible_indexes_count = admissible_config.GetIndexCount();
-  auto expected_count = std::accumulate(index_counts.begin(), index_counts.end(), 0);
+  auto expected_count =
+      std::accumulate(index_counts.begin(), index_counts.end(), 0);
 
   EXPECT_EQ(admissible_indexes_count, expected_count);
   EXPECT_LE(candidate_config.GetIndexCount(), expected_count);
