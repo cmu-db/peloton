@@ -49,9 +49,7 @@ class InsertStatement : public SQLStatement {
   }
 
   // Get the name of the namespace of this table
-  inline std::string GetNamespace() const {
-    return table_ref_->GetNamespace();
-  }
+  inline std::string GetNamespace() const { return table_ref_->GetNamespace(); }
 
   const std::string GetInfo(int num_indent) const override;
 

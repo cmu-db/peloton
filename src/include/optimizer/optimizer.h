@@ -39,9 +39,9 @@ class TransactionContext;
 }
 
 namespace test {
-  class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-} 
+class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
+}
 
 namespace optimizer {
 
@@ -61,8 +61,10 @@ class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
 
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
  public:
   Optimizer(const Optimizer &) = delete;
@@ -76,7 +78,7 @@ class Optimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
       concurrency::TransactionContext *txn,
-      const std::string session_namespace=DEFAULT_NAMESPACE) override;
+      const std::string session_namespace = DEFAULT_NAMESPACE) override;
 
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);
@@ -86,13 +88,13 @@ class Optimizer : public AbstractOptimizer {
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
   /* For test purposes only */
-  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
-  concurrency::TransactionContext *txn) {
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(
+      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */
   void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                        std::shared_ptr<OptimizeContext> root_context) {
+                            std::shared_ptr<OptimizeContext> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
 
@@ -107,7 +109,7 @@ class Optimizer : public AbstractOptimizer {
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       parser::SQLStatement *tree, bool &is_ddl_stmt,
       concurrency::TransactionContext *txn,
-      const std::string &session_namespace=DEFAULT_NAMESPACE);
+      const std::string &session_namespace = DEFAULT_NAMESPACE);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.

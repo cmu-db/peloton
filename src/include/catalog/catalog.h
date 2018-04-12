@@ -88,27 +88,26 @@ class Catalog {
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::TransactionContext *txn);
 
-   // Create a table in a database
+  // Create a table in a database
   ResultType CreateTable(
       const std::string &database_name, const std::string &table_name,
-      std::unique_ptr<catalog::Schema>, concurrency::TransactionContext *txn, 
+      std::unique_ptr<catalog::Schema>, concurrency::TransactionContext *txn,
       bool is_catalog = false,
       oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
-      const std::string &table_namespace=DEFAULT_NAMESPACE);
+      const std::string &table_namespace = DEFAULT_NAMESPACE);
 
   // Create the primary key index for a table, don't call this function outside
   // catalog.cpp
   ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
                                 concurrency::TransactionContext *txn);
   // Create index for a table
-  ResultType CreateIndex(const std::string &database_name,
-                         const std::string &table_name,
-                         const std::vector<oid_t> &key_attrs,
-                         const std::string &index_name, bool unique_keys,
-                         IndexType index_type,
-                         concurrency::TransactionContext *txn,
-                         const std::string &session_namespace=std::string(),
-                         const std::string &table_namespace=DEFAULT_NAMESPACE);
+  ResultType CreateIndex(
+      const std::string &database_name, const std::string &table_name,
+      const std::vector<oid_t> &key_attrs, const std::string &index_name,
+      bool unique_keys, IndexType index_type,
+      concurrency::TransactionContext *txn,
+      const std::string &session_namespace = std::string(),
+      const std::string &table_namespace = DEFAULT_NAMESPACE);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
@@ -132,8 +131,8 @@ class Catalog {
   ResultType DropTable(const std::string &database_name,
                        const std::string &table_name,
                        concurrency::TransactionContext *txn,
-                       const std::string &session_namespace=std::string(),
-                       const std::string &table_namespace=DEFAULT_NAMESPACE);
+                       const std::string &session_namespace = std::string(),
+                       const std::string &table_namespace = DEFAULT_NAMESPACE);
   // Drop a table, use this one in the future
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::TransactionContext *txn);
@@ -158,11 +157,11 @@ class Catalog {
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  storage::DataTable *GetTableWithName(const std::string &database_name,
-                                       const std::string &table_name,
-                                       concurrency::TransactionContext *txn,
-                                       const std::string &session_namespace=std::string(),
-                                       const std::string &table_namespace=DEFAULT_NAMESPACE);
+  storage::DataTable *GetTableWithName(
+      const std::string &database_name, const std::string &table_name,
+      concurrency::TransactionContext *txn,
+      const std::string &session_namespace = std::string(),
+      const std::string &table_namespace = DEFAULT_NAMESPACE);
 
   /* Check table from pg_database with database_name using txn,
    * get it from storage layer using table_oid,
@@ -178,15 +177,15 @@ class Catalog {
    * throw exception and abort txn if not exists/invisible
    * */
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &database_name, const std::string &table_name, 
+      const std::string &database_name, const std::string &table_name,
       concurrency::TransactionContext *txn,
-      const std::string &session_namespace=std::string(),
-      const std::string &table_namesapce=DEFAULT_NAMESPACE);
+      const std::string &session_namespace = std::string(),
+      const std::string &table_namesapce = DEFAULT_NAMESPACE);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
 
-  //drop all temp tables for a session
+  // drop all temp tables for a session
   void DropTempTables(const std::string &session_namespace,
                       concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//

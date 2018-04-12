@@ -29,7 +29,6 @@
 #include "parser/sql_statement.h"
 #include "type/type.h"
 
-
 namespace peloton {
 
 namespace concurrency {

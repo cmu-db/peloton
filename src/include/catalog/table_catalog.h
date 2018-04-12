@@ -47,8 +47,8 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
-                     int tupleId = 0);
+  TableCatalogObject(executor::LogicalTile *tile,
+                     concurrency::TransactionContext *txn, int tupleId = 0);
 
  public:
   // Get indexes
@@ -123,9 +123,10 @@ class TableCatalog : public AbstractCatalog {
   ~TableCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                   type::AbstractPool *pool = nullptr,
-                                   concurrency::TransactionContext *txn = nullptr);
+  static TableCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
@@ -133,8 +134,9 @@ class TableCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertTable(oid_t table_oid, const std::string &table_namespace,
-                  const std::string &table_name, oid_t database_oid, 
-                  type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                   const std::string &table_name, oid_t database_oid,
+                   type::AbstractPool *pool,
+                   concurrency::TransactionContext *txn);
   bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
@@ -143,14 +145,16 @@ class TableCatalog : public AbstractCatalog {
  private:
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::TransactionContext *txn);
-  //added with namespace
+  // added with namespace
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, oid_t database_oid, 
-      concurrency::TransactionContext *txn, const std::string &table_namespace=DEFAULT_NAMESPACE);
+      const std::string &table_name, oid_t database_oid,
+      concurrency::TransactionContext *txn,
+      const std::string &table_namespace = DEFAULT_NAMESPACE);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
-  std::vector<std::shared_ptr<TableCatalogObject>>
-  GetTableObjects(const std::string &table_namespace, concurrency::TransactionContext *txn);
+  std::vector<std::shared_ptr<TableCatalogObject>> GetTableObjects(
+      const std::string &table_namespace, concurrency::TransactionContext *txn);
+
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::TransactionContext *txn);

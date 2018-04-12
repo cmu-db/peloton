@@ -40,9 +40,8 @@ void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_alias,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
-  auto table_object =
-    catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn,
-                                                    session_namespace, table_namespace);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      db_name, table_name, txn, session_namespace, table_namespace);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||

@@ -33,8 +33,9 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
-      table_namespace(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAMESPACE)
-                     .ToString()),
+      table_namespace(
+          tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAMESPACE)
+              .ToString()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
@@ -343,14 +344,15 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  //namespace column
-  auto table_namespace_column = catalog::Column(type::TypeId::VARCHAR, max_name_size,
-                                           "table_namespace", false);
+  // namespace column
+  auto table_namespace_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "table_namespace", false);
   table_namespace_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
-      {table_id_column, table_name_column, database_id_column, table_namespace_column}));
+  std::unique_ptr<catalog::Schema> table_catalog_schema(
+      new catalog::Schema({table_id_column, table_name_column,
+                           database_id_column, table_namespace_column}));
 
   return table_catalog_schema;
 }
@@ -363,9 +365,11 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  * @param   txn     TransactionContext
  * @return  Whether insertion is Successful
  */
-bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_namespace,
-                               const std::string &table_name, oid_t database_oid, 
-                               type::AbstractPool *pool, concurrency::TransactionContext *txn) {
+bool TableCatalog::InsertTable(oid_t table_oid,
+                               const std::string &table_namespace,
+                               const std::string &table_name,
+                               oid_t database_oid, type::AbstractPool *pool,
+                               concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -389,7 +393,8 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_namespa
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -456,7 +461,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, oid_t database_oid, 
+    const std::string &table_name, oid_t database_oid,
     concurrency::TransactionContext *txn, const std::string &table_namespace) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
@@ -464,19 +469,22 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
-    //no session namespace. - getTableObject is used for exact search in table_catalog.
-    auto table_object = database_object->GetTableObject(table_name, std::string(), table_namespace, true);
+    // no session namespace. - getTableObject is used for exact search in
+    // table_catalog.
+    auto table_object = database_object->GetTableObject(
+        table_name, std::string(), table_namespace, true);
     if (table_object) return table_object;
   }
-  //search under namespace first.
+  // search under namespace first.
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid & namespace.
+  oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name &
+                                                  // database_oid & namespace.
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-  //push namespace into it.
+  // push namespace into it.
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_namespace, nullptr).Copy());
 
@@ -543,18 +551,18 @@ TableCatalog::GetTableObjects(oid_t database_oid,
  * @param   txn     TransactionContext
  * @return  table catalog objects
  */
-std::vector<std::shared_ptr<TableCatalogObject>>
-TableCatalog::GetTableObjects(const std::string &table_namespace,
-                              concurrency::TransactionContext *txn) {
+std::vector<std::shared_ptr<TableCatalogObject>> TableCatalog::GetTableObjects(
+    const std::string &table_namespace, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
 
-  //can't get from cache.
+  // can't get from cache.
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_NAMESPACE;  // Index of table namespace.
+  oid_t index_offset =
+      IndexId::SKEY_TABLE_NAMESPACE;  // Index of table namespace.
   std::vector<type::Value> values;
-   values.push_back(
+  values.push_back(
       type::ValueFactory::GetVarcharValue(table_namespace, nullptr).Copy());
 
   auto result_tiles =

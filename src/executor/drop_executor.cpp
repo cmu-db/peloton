@@ -136,8 +136,8 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id = catalog::Catalog::GetInstance()
-                           ->GetTableObject(database_name, table_name, 
-                              txn, session_namespace, table_namespace)
+                           ->GetTableObject(database_name, table_name, txn,
+                                            session_namespace, table_namespace)
                            ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
@@ -154,21 +154,22 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   std::string table_name = node.GetTableName();
   std::string table_namespace = node.GetNamespace();
   std::string session_namespace = node.GetSessionNamespace();
-  
+
   LOG_DEBUG("database name: %s", database_name.c_str());
   LOG_DEBUG("table name: %s", table_name.c_str());
   std::string trigger_name = node.GetTriggerName();
 
   ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
-      database_name, table_name, session_namespace, table_namespace, trigger_name, txn);
+      database_name, table_name, session_namespace, table_namespace,
+      trigger_name, txn);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping trigger succeeded!");
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id = catalog::Catalog::GetInstance()
-                           ->GetTableObject(database_name, table_name, 
-                            txn, session_namespace, table_namespace)
+                           ->GetTableObject(database_name, table_name, txn,
+                                            session_namespace, table_namespace)
                            ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
