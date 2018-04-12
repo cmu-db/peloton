@@ -49,7 +49,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       for (uint32_t i = 0; i < record.GetNumValues(); i++) {
         //TODO(akanjani): Check if just copying the offset info will perform better
         values_array[i].SerializeTo(log_buffer_);
-        LOG_INFO("The value at offset %u is %d", i, type::ValuePeeker::PeekInteger(values_array[i]));
       }
 
       break;
@@ -94,7 +93,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
         //TODO(akanjani): Check if just copying the offset info will perform better
         log_buffer_.WriteInt(((*offsets)[i]).first);
         values_array[i].SerializeTo(log_buffer_);
-        LOG_INFO("The value at offset %u is %d", ((*offsets)[i]).first, type::ValuePeeker::PeekInteger(values_array[i]));
       }
 
       break;
