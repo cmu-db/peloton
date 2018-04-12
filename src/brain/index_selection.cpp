@@ -20,9 +20,10 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols, size_t enum_threshold, size_t num_indexes) :
-  query_set_(query_set), context_(max_index_cols, enum_threshold, num_indexes) {
-}
+IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
+                               size_t enum_threshold, size_t num_indexes)
+    : query_set_(query_set),
+      context_(max_index_cols, enum_threshold, num_indexes) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // Figure 4 of the "Index Selection Tool" paper.
@@ -41,9 +42,11 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
-    Enumerate(candidate_indexes, top_candidate_indexes, query_set_, context_.num_indexes_);
+    Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
+              context_.num_indexes_);
 
-    GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes, candidate_indexes);
+    GenMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
+                          candidate_indexes);
   }
   final_indexes = candidate_indexes;
 }
@@ -99,9 +102,9 @@ void IndexSelection::GenCandidateIndexes(IndexConfiguration &candidate_config,
 // Enumerate()
 // Given a set of indexes, this function
 // finds out the set of cheapest indexes for the workload.
-void IndexSelection::Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes,
-                                              Workload &workload, size_t k) {
-
+void IndexSelection::Enumerate(IndexConfiguration &indexes,
+                               IndexConfiguration &top_indexes,
+                               Workload &workload, size_t k) {
   ExhaustiveEnumeration(indexes, top_indexes, workload);
 
   auto remaining_indexes = indexes - top_indexes;
@@ -109,30 +112,27 @@ void IndexSelection::Enumerate(IndexConfiguration &indexes, IndexConfiguration &
   GreedySearch(top_indexes, remaining_indexes, workload, k);
 }
 
-
 void IndexSelection::GreedySearch(IndexConfiguration &indexes,
-                                                 IndexConfiguration &remaining_indexes,
-                                                 Workload &workload, size_t k) {
-
+                                  IndexConfiguration &remaining_indexes,
+                                  Workload &workload, size_t num_indexes) {
   size_t current_index_count = context_.naive_enumeration_threshold_;
 
-  if(current_index_count >= k)
-    return;
+  if (current_index_count >= num_indexes) return;
 
   double global_min_cost = GetCost(indexes, workload);
   double cur_min_cost = global_min_cost;
   double cur_cost;
   std::shared_ptr<IndexObject> best_index;
 
-  while (current_index_count < k) {
+  while (current_index_count < num_indexes) {
     auto original_indexes = indexes;
-    for (auto i : remaining_indexes.GetIndexes()) {
+    for (auto index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
-      indexes.AddIndexObject(i);
+      indexes.AddIndexObject(index);
       cur_cost = ComputeCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
-        best_index = i;
+        best_index = index;
       }
     }
     if (cur_min_cost < global_min_cost) {
@@ -151,41 +151,46 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 }
 
 void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
-                                                         IndexConfiguration &top_indexes,
-                                                         Workload &workload) {
+                                           IndexConfiguration &top_indexes,
+                                           Workload &workload) {
   assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
 
-  std::set<IndexConfiguration, Comp> running_index_config(workload);
-  std::set<IndexConfiguration, Comp> temp_index_config(workload);
-  std::set<IndexConfiguration, Comp> result_index_config(workload);
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      running_index_config(workload);
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      temp_index_config(workload);
+  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      result_index_config(workload);
   IndexConfiguration new_element;
 
   IndexConfiguration empty;
-  running_index_config.insert(empty);
+  running_index_config.insert({empty, 0.0});
 
   for (auto index : indexes.GetIndexes()) {
     temp_index_config = running_index_config;
 
     for (auto t : temp_index_config) {
-      new_element = t;
+      new_element = t.first;
       new_element.AddIndexObject(index);
 
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
-        result_index_config.insert(new_element);
+        result_index_config.insert(
+            {new_element, GetCost(new_element, workload)});
       } else {
-        running_index_config.insert(new_element);
+        running_index_config.insert(
+            {new_element, GetCost(new_element, workload)});
       }
     }
   }
 
   result_index_config.insert(running_index_config.begin(),
                              running_index_config.end());
-  result_index_config.erase(empty);
+  result_index_config.erase({empty, 0.0});
 
   // combine all the index configurations and return top m configurations
-  for (auto i : result_index_config) {
-    top_indexes.Merge(i);
+  for (auto index_pair : result_index_config) {
+    top_indexes.Merge(index_pair.first);
   }
 }
 
@@ -408,8 +413,7 @@ void IndexSelection::CrossProduct(
 }
 
 void IndexSelection::GenMultiColumnIndexes(
-    IndexConfiguration &config,
-    IndexConfiguration &single_column_indexes,
+    IndexConfiguration &config, IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
   CrossProduct(config, single_column_indexes, result);
 }

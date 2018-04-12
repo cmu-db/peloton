@@ -23,12 +23,14 @@
 namespace peloton {
 namespace brain {
 
-struct Comp {
-  Comp(Workload &workload) { this->w = &workload; }
-  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2) {
-    //     IndexSelection::GetCost(s1, w);
-    // TODO Call CostModel::GetCost(s1, w);
-    return s1.GetIndexCount() < s2.GetIndexCount();
+
+struct IndexConfigComparator {
+  IndexConfigComparator(Workload &workload) { this->w = &workload; }
+  bool operator()(const std::pair<IndexConfiguration, double> &s1,
+                  const std::pair<IndexConfiguration, double> &s2) {
+    return ((s1.second > s2.second) ||
+        (s1.first.GetIndexCount() > s2.first.GetIndexCount()) ||
+        (s1.first.ToString() > s2.first.ToString()));
   }
 
   Workload *w;
