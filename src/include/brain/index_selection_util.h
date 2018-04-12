@@ -63,7 +63,7 @@ struct IndexObject {
 
   /**
    * @brief - Checks whether the 2 indexes can be merged to make a multi column
-   * index
+   * index. Return true if they are in the same database and table, else false
    */
   bool IsCompatible(std::shared_ptr<IndexObject> index) const;
 
