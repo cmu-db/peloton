@@ -42,6 +42,7 @@ struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
   std::string sink_table_name;
+  std::string sink_table_namespace;
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
@@ -50,7 +51,7 @@ struct ForeignKeyInfo {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  
+
   // This construnctor is for Create Database Test used only
   explicit CreatePlan(std::string database_name, CreateType c_type);
 
@@ -86,7 +87,9 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
-  inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+  inline std::vector<ForeignKeyInfo> GetForeignKeys() const {
+    return foreign_keys;
+  }
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
   void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
@@ -108,11 +111,11 @@ class CreatePlan : public AbstractPlan {
 
   int16_t GetTriggerType() const { return trigger_type; }
 
-protected:
-    // This is a helper method for extracting foreign key information
-    // and storing it in an internal struct.
-    void ProcessForeignKeyConstraint(const std::string &table_name,
-                                     const parser::ColumnDefinition *col);
+ protected:
+  // This is a helper method for extracting foreign key information
+  // and storing it in an internal struct.
+  void ProcessForeignKeyConstraint(const std::string &table_name,
+                                   const parser::ColumnDefinition *col);
 
  private:
   // Table Name

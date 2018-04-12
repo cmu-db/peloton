@@ -29,16 +29,19 @@ void BinderContext::AddRegularTable(parser::TableRef *table_ref,
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_alias = table_ref->GetTableAlias();
   AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetTableName(),
+                  table_ref->GetSessionNamespace(), table_ref->GetNamespace(),
                   table_alias, txn);
 }
 
 void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_name,
+                                    const std::string session_namespace,
+                                    const std::string table_namespace,
                                     const std::string table_alias,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
-  auto table_object =
-    catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      db_name, table_name, txn, session_namespace, table_namespace);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||

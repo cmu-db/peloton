@@ -86,6 +86,16 @@ struct TableRef {
     return table_info_->database_name;
   }
 
+  // Get the name of the session
+  inline std::string GetSessionNamespace() const {
+    return table_info_->session_namespace;
+  }
+
+  // Get the name of the namespace of this table
+  inline std::string GetNamespace() const {
+    return table_info_->table_namespace;
+  }
+
   // Get the name of the table
   inline std::string GetTableAlias() const {
     if (!alias.empty())

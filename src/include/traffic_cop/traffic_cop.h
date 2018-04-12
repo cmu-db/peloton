@@ -19,6 +19,7 @@
 // Libevent 2.0
 #include "event.h"
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/column.h"
 #include "common/internal_types.h"
 #include "common/portal.h"
@@ -145,11 +146,19 @@ class TrafficCop {
     default_database_name_ = std::move(default_database_name);
   }
 
+  void setSessionNamespace(std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
+
+  void DropTempTables();
+
   // TODO: this member variable should be in statement_ after parser part
   // finished
   std::string query_;
 
  private:
+  std::string session_namespace_ = DEFAULT_NAMESPACE;
+
   bool is_queuing_;
 
   std::string error_message_;

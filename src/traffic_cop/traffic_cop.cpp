@@ -308,13 +308,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
-
   // TODO(Tianyi) Move Statement Planing into Statement's method
   // to increase coherence
   try {
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), default_database_name_,
-        tcop_txn_state_.top().first);
+        tcop_txn_state_.top().first, session_namespace_);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -417,7 +416,8 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
           static_cast<storage::DataTable *>(
               catalog::Catalog::GetInstance()->GetTableWithName(
                   from_table->GetDatabaseName(), from_table->GetTableName(),
-                  GetCurrentTxnState().first))
+                  GetCurrentTxnState().first, from_table->GetSessionNamespace(),
+                  from_table->GetNamespace()))
               ->GetSchema()
               ->GetColumns();
       target_columns.insert(target_columns.end(), columns.begin(),
@@ -582,11 +582,10 @@ ResultType TrafficCop::ExecuteStatement(
           // to increase coherence
           auto plan = optimizer_->BuildPelotonPlanTree(
               statement->GetStmtParseTreeList(), default_database_name_,
-              tcop_txn_state_.top().first);
+              tcop_txn_state_.top().first, session_namespace_);
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }
-
         ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
                       thread_id);
         if (GetQueuing()) {
@@ -600,6 +599,17 @@ ResultType TrafficCop::ExecuteStatement(
     error_message_ = e.what();
     return ResultType::FAILURE;
   }
+}
+
+void TrafficCop::DropTempTables() {
+  // begin a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto pg_catalog = catalog::Catalog::GetInstance();
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  pg_catalog->DropTempTables(session_namespace_, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace tcop

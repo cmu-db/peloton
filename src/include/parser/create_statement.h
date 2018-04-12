@@ -196,6 +196,7 @@ struct ColumnDefinition {
   std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
   std::string fk_sink_table_name;
+  std::string fk_sink_table_namespace;
   std::vector<std::string> primary_key;
   std::vector<std::string> foreign_key_source;
   std::vector<std::string> foreign_key_sink;
@@ -220,7 +221,8 @@ class CreateStatement : public TableRefStatement {
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
         type(type),
-        if_not_exists(false){};
+        if_not_exists(false),
+        temp(false){};
 
   virtual ~CreateStatement() {}
 
@@ -232,6 +234,7 @@ class CreateStatement : public TableRefStatement {
 
   CreateType type;
   bool if_not_exists;
+  bool temp;
 
   std::vector<std::unique_ptr<ColumnDefinition>> columns;
   std::vector<std::unique_ptr<ColumnDefinition>> foreign_keys;

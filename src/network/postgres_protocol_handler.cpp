@@ -262,8 +262,8 @@ ResultType PostgresProtocolHandler::ExecQueryExplain(
   std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
       new parser::SQLStatementList());
   unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
-  auto stmt = traffic_cop_->PrepareStatement(
-      "explain", query, std::move(unnamed_sql_stmt_list));
+  auto stmt = traffic_cop_->PrepareStatement("explain", query,
+                                             std::move(unnamed_sql_stmt_list));
   ResultType status = ResultType::UNKNOWN;
   if (stmt != nullptr) {
     traffic_cop_->SetStatement(stmt);
@@ -635,7 +635,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       } else {
         // BINARY mode
         PostgresValueType pg_value_type =
@@ -715,7 +716,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       }
     }
   }
@@ -899,6 +901,7 @@ void PostgresProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
       // do nothing, simply send close complete
       break;
   }
+  LOG_DEBUG("CLOSE MESSAGE EXECUTED");
   // Send close complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::CLOSE_COMPLETE;

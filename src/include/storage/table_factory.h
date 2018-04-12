@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/internal_types.h"
 #include "storage/data_table.h"
@@ -30,13 +31,12 @@ class TableFactory {
   /**
    * For a given Schema, instantiate a DataTable object and return it
    */
-  static DataTable *GetDataTable(oid_t database_id, oid_t table_id,
-                                 catalog::Schema *schema,
-                                 std::string table_name,
-                                 size_t tuples_per_tile_group_count,
-                                 bool own_schema, bool adapt_table,
-                                 bool is_catalog = false,
-                                 peloton::LayoutType layout_type = peloton::LayoutType::ROW);
+  static DataTable *GetDataTable(
+      oid_t database_id, oid_t table_id, catalog::Schema *schema,
+      std::string table_name, size_t tuples_per_tile_group_count,
+      bool own_schema, bool adapt_table, bool is_catalog = false,
+      peloton::LayoutType layout_type = peloton::LayoutType::ROW,
+      std::string table_namespace = DEFAULT_NAMESPACE);
 
   static TempTable *GetTempTable(catalog::Schema *schema, bool own_schema);
 

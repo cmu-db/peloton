@@ -26,7 +26,7 @@
 #pragma once
 
 #include <mutex>
-
+#include "catalog/catalog_defaults.h"
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
 
@@ -49,7 +49,10 @@ class DatabaseCatalogObject {
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, bool cached_only = false);
+      const std::string &table_name,
+      const std::string &session_namespace = std::string(),
+      const std::string &table_namespace = DEFAULT_NAMESPACE,
+      bool cached_only = false);
 
   bool IsValidTableObjects() {
     // return true if this database object contains all table
@@ -98,9 +101,10 @@ class DatabaseCatalog : public AbstractCatalog {
   ~DatabaseCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                      type::AbstractPool *pool = nullptr,
-                                      concurrency::TransactionContext *txn = nullptr);
+  static DatabaseCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
@@ -108,7 +112,8 @@ class DatabaseCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
-                      type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                      type::AbstractPool *pool,
+                      concurrency::TransactionContext *txn);
   bool DeleteDatabase(oid_t database_oid, concurrency::TransactionContext *txn);
 
  private:

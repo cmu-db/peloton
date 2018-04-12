@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "catalog/database_catalog.h"
-
 #include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
@@ -25,8 +24,8 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
@@ -53,8 +52,10 @@ bool DatabaseCatalogObject::InsertTableObject(
     return false;
   }
 
-  if (table_name_cache.find(table_object->GetTableName()) !=
-      table_name_cache.end()) {
+  // table key
+  std::string table_key = table_object->GetTableNamespace() + std::string("#") +
+                          table_object->GetTableName();
+  if (table_name_cache.find(table_key) != table_name_cache.end()) {
     LOG_DEBUG("Table %s already exists in cache!",
               table_object->GetTableName().c_str());
     return false;
@@ -62,8 +63,7 @@ bool DatabaseCatalogObject::InsertTableObject(
 
   table_objects_cache.insert(
       std::make_pair(table_object->GetTableOid(), table_object));
-  table_name_cache.insert(
-      std::make_pair(table_object->GetTableName(), table_object));
+  table_name_cache.insert(std::make_pair(table_key, table_object));
   return true;
 }
 
@@ -81,13 +81,17 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
   auto table_object = it->second;
   PELOTON_ASSERT(table_object);
   table_objects_cache.erase(it);
-  table_name_cache.erase(table_object->GetTableName());
+  std::string table_key = table_object->GetTableNamespace() + std::string("#") +
+                          table_object->GetTableName();
+  table_name_cache.erase(table_key);
   return true;
 }
 
 /* @brief   evict table catalog object from cache
  * @param   table_name
  * @return  true if table_name is found and evicted; false if not found
+ * TODO: This isn't used in Peloton. If you want to use it, be sure to add
+ * namespace to search for table_name_cache.
  */
 bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   // find table name from table name cache
@@ -136,8 +140,42 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  * @return  Shared pointer to the requested table catalog object
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
-    const std::string &table_name, bool cached_only) {
-  auto it = table_name_cache.find(table_name);
+    const std::string &table_name, const std::string &session_namespace,
+    const std::string &table_namespace, bool cached_only) {
+  // no namespace specified.
+  if (table_namespace.empty()) {
+    // search session first.
+    std::string table_key = session_namespace + std::string("#") + table_name;
+    auto it = table_name_cache.find(table_key);
+    if (it != table_name_cache.end()) return it->second;
+
+    // fetch from table_catalog under session_namespace.
+    auto table_object = TableCatalog::GetInstance()->GetTableObject(
+        table_name, database_oid, txn, session_namespace);
+    if (table_object == nullptr) {
+      // search under public namespace
+      std::string table_key = DEFAULT_NAMESPACE + std::string("#") + table_name;
+      auto it = table_name_cache.find(table_key);
+      if (it != table_name_cache.end()) return it->second;
+
+      if (cached_only) {
+        // cache miss return empty object
+        return nullptr;
+      } else {
+        // cache miss get from pg_table
+        return TableCatalog::GetInstance()->GetTableObject(
+            table_name, database_oid, txn, DEFAULT_NAMESPACE);
+      }
+    }
+    // cache miss return empty object
+    if (cached_only) {
+      return nullptr;
+    }
+    return table_object;
+  }
+  // not empty. - get exact.
+  std::string table_key = table_namespace + std::string("#") + table_name;
+  auto it = table_name_cache.find(table_key);
   if (it != table_name_cache.end()) return it->second;
 
   if (cached_only) {
@@ -145,8 +183,9 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     return nullptr;
   } else {
     // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObject(table_name, database_oid,
-                                                       txn);
+    auto table = TableCatalog::GetInstance()->GetTableObject(
+        table_name, database_oid, txn, table_namespace);
+    return table;
   }
 }
 
@@ -196,9 +235,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }

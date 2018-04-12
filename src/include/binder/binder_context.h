@@ -58,6 +58,8 @@ class BinderContext {
    * clause)
    */
   void AddRegularTable(const std::string db_name, const std::string table_name,
+                       const std::string session_namespace,
+                       const std::string table_namespace,
                        const std::string table_alias,
                        concurrency::TransactionContext *txn);
 
@@ -66,8 +68,8 @@ class BinderContext {
    */
   void AddNestedTable(
       const std::string table_alias,
-      std::vector<std::unique_ptr<expression::AbstractExpression>>
-          &select_list);
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &
+          select_list);
 
   /**
    * @brief Check if the current context has any table

@@ -161,7 +161,9 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       copy_stmt->cpy_table->GetDatabaseName(),
-      copy_stmt->cpy_table->GetTableName(), txn);
+      copy_stmt->cpy_table->GetTableName(), txn,
+      copy_stmt->cpy_table->GetSessionNamespace(),
+      copy_stmt->cpy_table->GetNamespace());
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<planner::SeqScanPlan> select_plan(
@@ -197,8 +199,8 @@ ConstructSelectElementMap(
 
 expression::AbstractExpression *TransformQueryDerivedTablePredicates(
     const std::unordered_map<std::string,
-                             std::shared_ptr<expression::AbstractExpression>>
-        &alias_to_expr_map,
+                             std::shared_ptr<expression::AbstractExpression>> &
+        alias_to_expr_map,
     expression::AbstractExpression *expr) {
   if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
     auto new_expr =

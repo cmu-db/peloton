@@ -196,7 +196,6 @@ bool IsTargetListWithVariable(List *target_list) {
       case T_BoolExpr:
         continue;
       default:
-        LOG_DEBUG("HERE");
         return true;
     }
   }
@@ -286,12 +285,10 @@ expression::AbstractExpression *PostgresParser::ColumnRefTransform(
                 ->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string(
-                (reinterpret_cast<value *>(fields->head->next->data.ptr_value))
-                    ->val.str),
-            std::string(
-                (reinterpret_cast<value *>(fields->head->data.ptr_value))
-                    ->val.str));
+            std::string((reinterpret_cast<value *>(
+                             fields->head->next->data.ptr_value))->val.str),
+            std::string((reinterpret_cast<value *>(
+                             fields->head->data.ptr_value))->val.str));
       }
       break;
     }
@@ -490,9 +487,8 @@ expression::AbstractExpression *PostgresParser::TypeCastTransform(
   }
 
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   type::VarlenType temp(StringToTypeId("INVALID"));
   result = new expression::ConstantValueExpression(
       temp.CastAs(source_value, ColumnDefinition::StrToValueType(name)));
@@ -558,8 +554,8 @@ expression::AbstractExpression *PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-std::vector<std::unique_ptr<expression::AbstractExpression>>
-    *PostgresParser::TargetTransform(List *root) {
+std::vector<std::unique_ptr<expression::AbstractExpression>> *
+PostgresParser::TargetTransform(List *root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
@@ -865,9 +861,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 void PostgresParser::ColumnDefTransform(ColumnDef *root,
                                         parser::CreateStatement *stmt) {
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::ColumnDefinition *result = nullptr;
 
   parser::ColumnDefinition::DataType data_type =
@@ -970,12 +965,17 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
 
+  // if the persistance is temporary.
+  if (relation->relpersistence == 't') {
+    result->temp = true;
+  }
+
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
   if (relation->catalogname) {
     result->table_info_->database_name = relation->catalogname;
-  };
+  }
 
   std::unordered_set<std::string> primary_keys;
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
@@ -1016,6 +1016,11 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
         }
         // Update Reference Table
         col->fk_sink_table_name = constraint->pktable->relname;
+        if (constraint->pktable->schemaname) {
+          col->fk_sink_table_namespace = constraint->pktable->schemaname;
+        } else {
+          col->fk_sink_table_namespace = std::string();
+        }
         // Action type
         col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
@@ -1055,9 +1060,8 @@ parser::FuncParameter *PostgresParser::FunctionParameterTransform(
     FunctionParameter *root) {
   parser::FuncParameter::DataType data_type;
   TypeName *type_name = root->argType;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::FuncParameter *result = nullptr;
 
   // Transform parameter type
@@ -1515,8 +1519,8 @@ std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
 // parsenode and transfers it into Peloton AbstractExpression.
 // This is a vector pointer of vector pointers because one InsertStmt can insert
 // multiple tuples.
-std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-    *PostgresParser::ValueListsTransform(List *root) {
+std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+PostgresParser::ValueListsTransform(List *root) {
   auto result = new std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
@@ -1627,8 +1631,8 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PELOTON_ASSERT(select_stmt->valuesLists != NULL);
-    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-        *insert_values = nullptr;
+    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+        insert_values = nullptr;
     try {
       insert_values = ValueListsTransform(select_stmt->valuesLists);
     } catch (Exception e) {
@@ -1843,8 +1847,8 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>>
-    *PostgresParser::UpdateTargetTransform(List *root) {
+std::vector<std::unique_ptr<parser::UpdateClause>> *
+PostgresParser::UpdateTargetTransform(List *root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();

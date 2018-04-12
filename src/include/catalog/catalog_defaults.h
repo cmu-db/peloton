@@ -34,6 +34,10 @@ namespace catalog {
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
 
+// default namespae for table to be visible everywhere.
+#define DEFAULT_NAMESPACE "public"
+#define TEMP_NAMESPACE_PREFIX "pg_temp_"
+
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
 
@@ -58,11 +62,13 @@ namespace catalog {
 #define COLUMN_CATALOG_PKEY_OID (0 | INDEX_OID_MASK)
 #define COLUMN_CATALOG_SKEY0_OID (1 | INDEX_OID_MASK)
 #define COLUMN_CATALOG_SKEY1_OID (2 | INDEX_OID_MASK)
+#define COLUMN_CATALOG_SKEY2_OID (3 | INDEX_OID_MASK)
 
 // Reserved pg_index index oid
-#define INDEX_CATALOG_PKEY_OID (3 | INDEX_OID_MASK)
-#define INDEX_CATALOG_SKEY0_OID (4 | INDEX_OID_MASK)
-#define INDEX_CATALOG_SKEY1_OID (5 | INDEX_OID_MASK)
+#define INDEX_CATALOG_PKEY_OID (4 | INDEX_OID_MASK)
+#define INDEX_CATALOG_SKEY0_OID (5 | INDEX_OID_MASK)
+#define INDEX_CATALOG_SKEY1_OID (6 | INDEX_OID_MASK)
+#define INDEX_CATALOG_SKEY2_OID (7 | INDEX_OID_MASK)
 
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24

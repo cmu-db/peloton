@@ -84,9 +84,10 @@ class DataTable : public AbstractTable {
  public:
   // Table constructor
   DataTable(catalog::Schema *schema, const std::string &table_name,
-            const oid_t &database_oid, const oid_t &table_oid,
-            const size_t &tuples_per_tilegroup, const bool own_schema,
-            const bool adapt_table, const bool is_catalog = false,
+            const std::string &table_namespace, const oid_t &database_oid,
+            const oid_t &table_oid, const size_t &tuples_per_tilegroup,
+            const bool own_schema, const bool adapt_table,
+            const bool is_catalog = false,
             const peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
   ~DataTable();
@@ -125,8 +126,8 @@ class DataTable : public AbstractTable {
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
-      bool check_fk = true);
+                   concurrency::TransactionContext *transaction,
+                   ItemPointer **index_entry_ptr, bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -158,12 +159,11 @@ class DataTable : public AbstractTable {
 
   int GetTriggerNumber();
 
-  trigger::Trigger* GetTriggerByIndex(int n);
+  trigger::Trigger *GetTriggerByIndex(int n);
 
-  trigger::TriggerList* GetTriggerList();
+  trigger::TriggerList *GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn);
-
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -194,11 +194,10 @@ class DataTable : public AbstractTable {
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
-  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
-                                    storage::Tuple *new_tuple,
-                                    concurrency::TransactionContext *transaction,
-                                    executor::ExecutorContext *context,
-                                    bool is_update);
+  bool CheckForeignKeySrcAndCascade(
+      storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
+      concurrency::TransactionContext *transaction,
+      executor::ExecutorContext *context, bool is_update);
 
   void AddForeignKey(catalog::ForeignKey *key);
 
@@ -271,6 +270,8 @@ class DataTable : public AbstractTable {
   // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 
+  inline std::string GetNamespace() const { return (table_namespace); }
+
   bool HasPrimaryKey() const { return (has_primary_key_); }
 
   bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
@@ -318,8 +319,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
-//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
-//                          std::vector<oid_t> cols) const;
+  //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+  //                          std::vector<oid_t> cols) const;
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   //              std::pair<ExpressionType, type::Value> exp) const;
@@ -369,6 +370,8 @@ class DataTable : public AbstractTable {
 
   // deprecated, use catalog::TableCatalog::GetInstance()->GetTableName()
   std::string table_name;
+
+  std::string table_namespace;
 
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;

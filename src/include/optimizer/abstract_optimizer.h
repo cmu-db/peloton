@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "common/internal_types.h"
+#include "catalog/catalog_defaults.h"
 
 namespace peloton {
 namespace planner {
@@ -50,9 +51,10 @@ class AbstractOptimizer {
   virtual ~AbstractOptimizer();
 
   virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree, 
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
-      concurrency::TransactionContext *txn) = 0;
+      concurrency::TransactionContext *txn,
+      const std::string table_namespace = DEFAULT_NAMESPACE) = 0;
 
   virtual void Reset(){};
 };

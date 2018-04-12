@@ -21,7 +21,8 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog &TriggerCatalog::GetInstance(concurrency::TransactionContext *txn) {
+TriggerCatalog &TriggerCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static TriggerCatalog trigger_catalog{txn};
   return trigger_catalog;
 }
@@ -93,6 +94,8 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
 
 ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
                                        const std::string &table_name,
+                                       const std::string &session_namespace,
+                                       const std::string &table_namespace,
                                        const std::string &trigger_name,
                                        concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
@@ -102,8 +105,8 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
   }
 
   // Checking if statement is valid
-  auto table_object =
-      Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
+  auto table_object = Catalog::GetInstance()->GetTableObject(
+      database_name, table_name, txn, session_namespace, table_namespace);
 
   oid_t trigger_oid = TriggerCatalog::GetInstance().GetTriggerOid(
       trigger_name, table_object->GetTableOid(), txn);
@@ -120,8 +123,9 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
     LOG_DEBUG("Delete trigger successfully");
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                          table_name, txn);
+        catalog::Catalog::GetInstance()->GetTableWithName(
+            database_name, table_name, txn, session_namespace,
+            table_object->GetTableNamespace());
     target_table->UpdateTriggerListFromCatalog(txn);
     return ResultType::SUCCESS;
   }
@@ -165,7 +169,8 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
-    oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
+    oid_t table_oid, int16_t trigger_type,
+    concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(

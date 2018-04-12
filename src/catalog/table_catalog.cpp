@@ -33,6 +33,9 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
+      table_namespace(
+          tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAMESPACE)
+              .ToString()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
@@ -341,20 +344,30 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
-      {table_id_column, table_name_column, database_id_column}));
+  // namespace column
+  auto table_namespace_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "table_namespace", false);
+  table_namespace_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> table_catalog_schema(
+      new catalog::Schema({table_id_column, table_name_column,
+                           database_id_column, table_namespace_column}));
 
   return table_catalog_schema;
 }
 
 /*@brief   insert a tuple about table info into pg_table
  * @param   table_oid
+ * @param   table_namespace
  * @param   table_name
  * @param   database_oid
  * @param   txn     TransactionContext
  * @return  Whether insertion is Successful
  */
-bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
+bool TableCatalog::InsertTable(oid_t table_oid,
+                               const std::string &table_namespace,
+                               const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
   // Create the tuple first
@@ -364,10 +377,12 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
+  auto val3 = type::ValueFactory::GetVarcharValue(table_namespace, nullptr);
 
   tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
   tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
+  tuple->SetValue(TableCatalog::ColumnId::TABLE_NAMESPACE, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -378,7 +393,8 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -440,34 +456,40 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * oid
  * @param   table_name
  * @param   database_oid
+ * @param   the table namespace.
  * @param   txn     TransactionContext
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    concurrency::TransactionContext *txn, const std::string &table_namespace) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, true);
+    // no session namespace. - getTableObject is used for exact search in
+    // table_catalog.
+    auto table_object = database_object->GetTableObject(
+        table_name, std::string(), table_namespace, true);
     if (table_object) return table_object;
   }
-
+  // search under namespace first.
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
+  oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name &
+                                                  // database_oid & namespace.
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  // push namespace into it.
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(table_namespace, nullptr).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
@@ -480,7 +502,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     (void)success;
     return table_object;
   }
-
   // return empty object if not found
   return nullptr;
 }
@@ -523,6 +544,39 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   database_object->SetValidTableObjects(true);
   return database_object->GetTableObjects();
+}
+
+/*@brief   read table catalog objects from pg_table using namespace
+ * @param   table_namespace
+ * @param   txn     TransactionContext
+ * @return  table catalog objects
+ */
+std::vector<std::shared_ptr<TableCatalogObject>> TableCatalog::GetTableObjects(
+    const std::string &table_namespace, concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+
+  // can't get from cache.
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset =
+      IndexId::SKEY_TABLE_NAMESPACE;  // Index of table namespace.
+  std::vector<type::Value> values;
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(table_namespace, nullptr).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  std::vector<std::shared_ptr<TableCatalogObject>> result_objects;
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      auto table_object =
+          std::make_shared<TableCatalogObject>(tile.get(), txn, tuple_id);
+      result_objects.push_back(table_object);
+    }
+  }
+  return result_objects;
 }
 
 }  // namespace catalog

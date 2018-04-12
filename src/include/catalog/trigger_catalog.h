@@ -50,7 +50,8 @@ class TriggerCatalog : public AbstractCatalog {
   ~TriggerCatalog();
 
   // Global Singleton
-  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static TriggerCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -63,6 +64,8 @@ class TriggerCatalog : public AbstractCatalog {
 
   ResultType DropTrigger(const std::string &database_name,
                          const std::string &table_name,
+                         const std::string &session_namespace,
+                         const std::string &table_namespace,
                          const std::string &trigger_name,
                          concurrency::TransactionContext *txn);
 
@@ -74,7 +77,8 @@ class TriggerCatalog : public AbstractCatalog {
   // of the same type
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggersByType(
-      oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn);
+      oid_t table_oid, int16_t trigger_type,
+      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table

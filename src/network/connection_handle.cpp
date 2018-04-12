@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <cstring>
 
+#include "catalog/catalog_defaults.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 #include "network/peloton_server.h"
@@ -123,8 +124,8 @@ DEF_TRANSITION_GRAPH
 END_DEF
     // clang-format on
 
-void ConnectionHandle::StateMachine::Accept(Transition action,
-                                            ConnectionHandle &connection) {
+    void ConnectionHandle::StateMachine::Accept(Transition action,
+                                                ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -162,6 +163,9 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
     struct event *event = static_cast<struct event *>(arg);
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
+  // pg_temp_sockfd.
+  traffic_cop_.setSessionNamespace(TEMP_NAMESPACE_PREFIX +
+                                   std::to_string(sock_fd));
 }
 
 void ConnectionHandle::UpdateEventFlags(short flags) {
@@ -557,6 +561,9 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
+  // Drop all the temporary tables for the current session
+  traffic_cop_.DropTempTables();
+
   while (true) {
     int status = close(sock_fd_);
     if (status < 0) {
@@ -566,6 +573,7 @@ Transition ConnectionHandle::CloseSocket() {
         continue;
       }
     }
+
     LOG_DEBUG("Already Closed the connection %d", sock_fd_);
     return Transition::NONE;
   }

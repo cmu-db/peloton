@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "catalog/catalog_defaults.h"
 #include "common/internal_types.h"
 #include "common/macros.h"
 #include "common/printable.h"
@@ -34,6 +35,10 @@ struct TableInfo {
   std::string table_name;
 
   std::string database_name;
+
+  std::string session_namespace = DEFAULT_NAMESPACE;
+
+  std::string table_namespace;
 };
 
 // Base class for every SQLStatement
@@ -80,6 +85,16 @@ class TableRefStatement : public SQLStatement {
   // Get the name of the database of this table
   virtual inline std::string GetDatabaseName() const {
     return table_info_->database_name;
+  }
+
+  // Get the namespace of the current session
+  virtual inline std::string GetSessionNamespace() const {
+    return table_info_->session_namespace;
+  }
+
+  // Get the namespace of the table.
+  virtual inline std::string GetNamespace() const {
+    return table_info_->session_namespace;
   }
 
   std::unique_ptr<TableInfo> table_info_ = nullptr;

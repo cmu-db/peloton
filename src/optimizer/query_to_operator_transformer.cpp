@@ -170,6 +170,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   output_expr_ = join_expr;
 }
 void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
+  LOG_INFO("inside visit for select statements");
   if (node->select != nullptr) {
     // Store previous context
 
@@ -215,10 +216,13 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
+    LOG_INFO("SINGLE TABLE for node with session namespace %s, namespace %s",
+             node->GetSessionNamespace().c_str(), node->GetNamespace().c_str());
     if (node->list.size() == 1) node = node->list.at(0).get();
     std::shared_ptr<catalog::TableCatalogObject> target_table =
         catalog::Catalog::GetInstance()->GetTableObject(
-            node->GetDatabaseName(), node->GetTableName(), txn_);
+            node->GetDatabaseName(), node->GetTableName(), txn_,
+            node->GetSessionNamespace(), node->GetNamespace());
     std::string table_alias =
         StringUtil::Lower(std::string(node->GetTableAlias()));
     output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
@@ -237,7 +241,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   std::shared_ptr<catalog::TableCatalogObject> target_table =
       catalog::Catalog::GetInstance()
           ->GetDatabaseObject(op->GetDatabaseName(), txn_)
-          ->GetTableObject(op->GetTableName());
+          ->GetTableObject(op->GetTableName(), op->GetSessionNamespace(),
+                           op->GetNamespace());
 
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
@@ -253,9 +258,11 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
-  auto target_table = catalog::Catalog::GetInstance()
-                          ->GetDatabaseObject(op->GetDatabaseName(), txn_)
-                          ->GetTableObject(op->GetTableName());
+  auto target_table =
+      catalog::Catalog::GetInstance()
+          ->GetDatabaseObject(op->GetDatabaseName(), txn_)
+          ->GetTableObject(op->GetTableName(), op->GetSessionNamespace(),
+                           op->GetNamespace());
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr) {
     std::vector<AnnotatedExpression> predicates =
@@ -283,7 +290,9 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
   auto target_table =
       catalog::Catalog::GetInstance()
           ->GetDatabaseObject(op->table->GetDatabaseName(), txn_)
-          ->GetTableObject(op->table->GetTableName());
+          ->GetTableObject(op->table->GetTableName(),
+                           op->table->GetSessionNamespace(),
+                           op->table->GetNamespace());
   std::shared_ptr<OperatorExpression> table_scan;
 
   auto update_expr = std::make_shared<OperatorExpression>(

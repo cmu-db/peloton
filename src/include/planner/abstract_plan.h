@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "catalog/schema.h"
+#include "catalog/catalog_defaults.h"
 #include "codegen/query_parameters_map.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
@@ -67,7 +68,7 @@ class AbstractPlan : public Printable {
   const AbstractPlan *GetChild(uint32_t child_index) const;
 
   const AbstractPlan *GetParent() const;
-  
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -80,19 +81,31 @@ class AbstractPlan : public Printable {
   virtual void SetParameterValues(std::vector<type::Value> *values);
 
   // FIXME. Clear the value_ vector.
-  virtual void ClearParameterValues() {};
-  
+  virtual void ClearParameterValues(){};
+
   // Get the estimated cardinality of this plan
   int GetCardinality() const { return estimated_cardinality_; }
-  
+
   // TODO: This is only for testing now. When the optimizer is ready, we should
   // delete this function and pass this information to constructor
   void SetCardinality(int cardinality) { estimated_cardinality_ = cardinality; }
 
+  // for temporary namespace
+  void SetNamespace(const std::string table_namespace) {
+    table_namespace_ = table_namespace;
+  }
+
+  std::string GetNamespace() const { return table_namespace_; }
+
+  void SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = session_namespace;
+  }
+
+  std::string GetSessionNamespace() const { return session_namespace_; }
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
-
   // Binding allows a plan to track the source of an attribute/column regardless
   // of its position in a tuple.  This binding allows a plan to know the types
   // of all the attributes it uses *before* execution. This is primarily used
@@ -103,8 +116,8 @@ class AbstractPlan : public Printable {
     }
   }
 
-  virtual void GetOutputColumns(std::vector<oid_t> &columns UNUSED_ATTRIBUTE)
-      const { }
+  virtual void GetOutputColumns(std::vector<oid_t> &columns
+                                    UNUSED_ATTRIBUTE) const {}
 
   // Get a string representation for debugging
   const std::string GetInfo() const override;
@@ -135,7 +148,8 @@ class AbstractPlan : public Printable {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) {
     for (auto &child : GetChildren()) {
@@ -152,7 +166,13 @@ class AbstractPlan : public Printable {
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
-  
+
+  // table namespace
+  std::string table_namespace_;
+
+  // session namespace
+  std::string session_namespace_ = DEFAULT_NAMESPACE;
+
   // TODO: This field is harded coded now. This needs to be changed when
   // optimizer has the cost model and cardinality estimation
   int estimated_cardinality_ = 500000;

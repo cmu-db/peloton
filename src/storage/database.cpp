@@ -68,9 +68,11 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
 }
 
 storage::DataTable *Database::GetTableWithName(
-    const std::string &table_name) const {
+    const std::string &table_name, const std::string &table_namespace) const {
   for (auto table : tables)
-    if (table->GetName() == table_name) return table;
+    if (table->GetName() == table_name &&
+        table->GetNamespace() == table_namespace)
+      return table;
   throw CatalogException("Table '" + table_name + "' does not exist");
   return nullptr;
 }
