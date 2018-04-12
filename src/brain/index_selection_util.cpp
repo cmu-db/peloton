@@ -85,7 +85,7 @@ const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
 const std::string IndexConfiguration::ToString() const {
   std::stringstream str_stream;
   for (auto index : indexes_) {
-    // str_stream << index->ToString() << " ";
+    str_stream << index->ToString() << " ";
   }
   return str_stream.str();
 }
