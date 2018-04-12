@@ -37,7 +37,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
-  for (unsigned long i = 0; i < context_.num_iterations; i++) {
+  for (unsigned long i = 0; i < context_.num_iterations_; i++) {
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
 
     // Configuration Enumeration
@@ -45,6 +45,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.num_indexes_);
 
+    candidate_indexes = top_candidate_indexes;
     GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
                                candidate_indexes);
   }
@@ -391,9 +392,9 @@ void IndexSelection::IndexObjectPoolInsertHelper(
 
   // Add the object to the pool.
   IndexObject iobj(db_oid, table_oid, col_oid);
-  auto pool_index_obj = context_.pool.GetIndexObject(iobj);
+  auto pool_index_obj = context_.pool_.GetIndexObject(iobj);
   if (!pool_index_obj) {
-    pool_index_obj = context_.pool.PutIndexObject(iobj);
+    pool_index_obj = context_.pool_.PutIndexObject(iobj);
   }
   config.AddIndexObject(pool_index_obj);
 }
@@ -440,7 +441,7 @@ void IndexSelection::CrossProduct(
     for (auto column : columns) {
       if (!index->IsCompatible(column)) continue;
       auto merged_index = (index->Merge(column));
-      result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
+      result.AddIndexObject(context_.pool_.PutIndexObject(merged_index));
     }
   }
 }
@@ -449,6 +450,11 @@ void IndexSelection::GenerateMultiColumnIndexes(
     IndexConfiguration &config, IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
   CrossProduct(config, single_column_indexes, result);
+}
+
+std::shared_ptr<IndexObject> IndexSelection::AddConfigurationToPool(
+    IndexObject object) {
+  return context_.pool_.PutIndexObject(object);
 }
 
 }  // namespace brain
