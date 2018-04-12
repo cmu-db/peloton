@@ -68,7 +68,10 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "catalog/catalog_defaults.h"
+#include "catalog/catalog.h"
 #include "common/internal_types.h"
+
+#include <assert.h>
 #pragma once
 
 namespace peloton {
@@ -107,7 +110,9 @@ enum txn_op_t {
   TXN_OP_ABORT,
   TXN_OP_COMMIT,
   TXN_OP_READ_STORE,
-  TXN_OP_UPDATE_BY_VALUE
+  TXN_OP_UPDATE_BY_VALUE,
+  TXN_OP_CREATE_INDEX,
+  TXN_OP_DROP_INDEX
 };
 
 #define TXN_STORED_VALUE -10000
@@ -123,6 +128,10 @@ class TestingTransactionUtil {
       oid_t database_id = CATALOG_DATABASE_OID,
       oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
       bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
+
+  static storage::DataTable *CreateTableWithoutIndex(
+      std::string database_name = "TEST_DATABASE",
+      std::string table_name = "TEST_TABLE");
 
   // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value
@@ -175,6 +184,8 @@ struct TransactionSchedule {
   ResultType txn_result;
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
+  std::vector<int> create_index_results;
+  std::vector<int> drop_index_results;
   int stored_value;
   int schedule_id;
   bool declared_ro;
@@ -324,6 +335,28 @@ class TransactionThread {
         schedule->stored_value = result + value;
         break;
       }
+      case TXN_OP_CREATE_INDEX: {
+        auto catalog = catalog::Catalog::GetInstance();
+        LOG_INFO("txn isolation level = %d", static_cast<int>(txn->GetIsolationLevel()));
+        auto tmp = catalog->CreateIndex(database_name, table_name, key_attrs,
+                                        index_name1, false, IndexType::BWTREE, txn);
+        if (tmp == ResultType::SUCCESS)
+          schedule->create_index_results.push_back(1);
+        else
+          schedule->create_index_results.push_back(0);
+        LOG_INFO("Txn %d Create Index", schedule->schedule_id);
+        break;
+      }
+      case TXN_OP_DROP_INDEX: {
+        auto catalog = catalog::Catalog::GetInstance();
+        auto tmp =  catalog->DropIndex(index_name1, txn);
+        if (tmp == ResultType::SUCCESS)
+          schedule->drop_index_results.push_back(1);
+        else
+          schedule->drop_index_results.push_back(0);
+        LOG_INFO("Txn %d Drop Index", schedule->schedule_id);
+        break;
+      }
     }
 
     if (txn != NULL && txn->GetResult() == ResultType::FAILURE) {
@@ -341,6 +374,12 @@ class TransactionThread {
   int cur_seq;
   bool go;
   concurrency::TransactionContext *txn;
+
+private:
+  const std::string index_name1 = "transaction_index_test_index1";
+  const std::string database_name = "TEST_DATABASE";
+  const std::string table_name = "TEST_TABLE";
+  const std::vector<oid_t> key_attrs = {0};
 };
 
 // Transaction scheduler, to make life easier for writing txn test
@@ -433,6 +472,15 @@ class TransactionScheduler {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
     sequence[time++] = cur_txn_id;
   }
+  void CreateIndex() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_CREATE_INDEX, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+  void DropIndex() {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DROP_INDEX, 0, 0);
+    sequence[time++] = cur_txn_id;
+  }
+
   void UpdateByValue(int old_value, int new_value, bool is_for_update = false) {
     schedules[cur_txn_id].operations.emplace_back(
         TXN_OP_UPDATE_BY_VALUE, old_value, new_value, is_for_update);

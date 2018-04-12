@@ -433,6 +433,7 @@ ResultType Catalog::CreateIndex(
             table_oid);
   auto pg_index = IndexCatalog::GetInstance();
   oid_t index_oid = pg_index->GetNextOid();
+
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
