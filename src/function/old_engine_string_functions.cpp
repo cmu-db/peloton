@@ -26,7 +26,7 @@ namespace function {
 // ASCII code of the first character of the argument.
 type::Value OldEngineStringFunctions::Ascii(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
@@ -39,7 +39,7 @@ type::Value OldEngineStringFunctions::Ascii(
 
 type::Value OldEngineStringFunctions::Like(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
@@ -54,7 +54,7 @@ type::Value OldEngineStringFunctions::Like(
 // Get Character from integer
 type::Value OldEngineStringFunctions::Chr(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -66,7 +66,7 @@ type::Value OldEngineStringFunctions::Chr(
 // substring
 type::Value OldEngineStringFunctions::Substr(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 3);
+  PELOTON_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -80,7 +80,7 @@ type::Value OldEngineStringFunctions::Substr(
 // Number of characters in string
 type::Value OldEngineStringFunctions::CharLength(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
@@ -92,7 +92,7 @@ type::Value OldEngineStringFunctions::CharLength(
 // Concatenate two strings
 type::Value OldEngineStringFunctions::Concat(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -103,7 +103,7 @@ type::Value OldEngineStringFunctions::Concat(
 // Number of bytes in string
 type::Value OldEngineStringFunctions::OctetLength(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   std::string str = args[0].ToString();
   int32_t len = str.length();
   return (type::ValueFactory::GetIntegerValue(len));
@@ -112,7 +112,7 @@ type::Value OldEngineStringFunctions::OctetLength(
 // Repeat string the specified number of times
 type::Value OldEngineStringFunctions::Repeat(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -136,7 +136,7 @@ type::Value OldEngineStringFunctions::Repeat(
 // Replace all occurrences in string of substring from with substring to
 type::Value OldEngineStringFunctions::Replace(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 3);
+  PELOTON_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -155,7 +155,7 @@ type::Value OldEngineStringFunctions::Replace(
 // from the start of string
 type::Value OldEngineStringFunctions::LTrim(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -173,7 +173,7 @@ type::Value OldEngineStringFunctions::LTrim(
 // from the end of string
 type::Value OldEngineStringFunctions::RTrim(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -189,7 +189,7 @@ type::Value OldEngineStringFunctions::RTrim(
 
 type::Value OldEngineStringFunctions::Trim(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   return BTrim({args[0], type::ValueFactory::GetVarcharValue(" ")});
 }
 
@@ -197,7 +197,7 @@ type::Value OldEngineStringFunctions::Trim(
 // the start and end of string
 type::Value OldEngineStringFunctions::BTrim(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
+  PELOTON_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
@@ -214,7 +214,7 @@ type::Value OldEngineStringFunctions::BTrim(
 // The length of the string
 type::Value OldEngineStringFunctions::Length(
     const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }

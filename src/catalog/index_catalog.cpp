@@ -216,7 +216,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
+    PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
   } else {
@@ -254,7 +254,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
-    PL_ASSERT(table_object &&
+    PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
   } else {
@@ -280,7 +280,7 @@ IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *
   // try get from cache
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
-  PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;
 

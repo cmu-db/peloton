@@ -80,7 +80,7 @@ void CompilationContext::Prepare(const expression::AbstractExpression &exp) {
 // Produce tuples for the given operator
 void CompilationContext::Produce(const planner::AbstractPlan &op) {
   auto *translator = GetTranslator(op);
-  PL_ASSERT(translator != nullptr);
+  PELOTON_ASSERT(translator != nullptr);
   translator->Produce();
 }
 

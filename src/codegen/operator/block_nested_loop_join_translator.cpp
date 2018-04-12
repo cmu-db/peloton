@@ -59,7 +59,7 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     : OperatorTranslator(context, pipeline),
       nlj_plan_(nlj_plan),
       left_pipeline_(this) {
-  PL_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
+  PELOTON_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
             "NLJ must have exactly two children");
 
   // Prepare children
@@ -247,7 +247,7 @@ BufferedTupleCallback::BufferedTupleCallback(
 // This function is called for each tuple in the BNLJ buffer.
 void BufferedTupleCallback::ProcessEntry(
     CodeGen &codegen, const std::vector<codegen::Value> &left_row) const {
-  PL_ASSERT(left_row.size() == left_attributes_.size());
+  PELOTON_ASSERT(left_row.size() == left_attributes_.size());
 
   // Add all the attributes from left tuple (from the sorter) into the row
   // coming from the right input side. We need to do this in order to evaluate

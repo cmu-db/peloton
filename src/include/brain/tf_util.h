@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include <tensorflow/c/c_api.h>
 
 namespace peloton {

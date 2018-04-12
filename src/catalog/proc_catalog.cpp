@@ -98,11 +98,11 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
   if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
   }
 
@@ -122,11 +122,11 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PL_ASSERT(result_tiles->size() <= 1);
+  PELOTON_ASSERT(result_tiles->size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
   if (result_tiles->size() == 1) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
   }
 

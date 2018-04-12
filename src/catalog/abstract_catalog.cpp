@@ -125,10 +125,10 @@ bool AbstractCatalog::DeleteWithIndexScan(
   // Index scan as child node
   std::vector<oid_t> column_offsets;  // No projection
   auto index = catalog_table_->GetIndex(index_offset);
-  PL_ASSERT(index != nullptr);
+  PELOTON_ASSERT(index != nullptr);
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
-  PL_ASSERT(values.size() == key_column_offsets.size());
+  PELOTON_ASSERT(values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(values.size(),
                                          ExpressionType::COMPARE_EQUAL);
   std::vector<expression::AbstractExpression *> runtime_keys;
@@ -173,7 +173,7 @@ AbstractCatalog::GetResultWithIndexScan(
   auto index = catalog_table_->GetIndex(index_offset);
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
-  PL_ASSERT(values.size() == key_column_offsets.size());
+  PELOTON_ASSERT(values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(values.size(),
                                          ExpressionType::COMPARE_EQUAL);
   std::vector<expression::AbstractExpression *> runtime_keys;

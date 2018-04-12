@@ -161,7 +161,7 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
       num_params = query_params->num_params;
       format_buf = query_params->format_buf_copy;
       type_buf = query_params->type_buf_copy;
-      PL_ASSERT(num_params > 0);
+      PELOTON_ASSERT(num_params > 0);
     }
 
     // Generate and insert the tuple
@@ -305,7 +305,7 @@ void StatsAggregator::RegisterContext(std::thread::id id_,
   {
     std::lock_guard<std::mutex> lock(stats_mutex_);
 
-    PL_ASSERT(backend_stats_.find(id_) == backend_stats_.end());
+    PELOTON_ASSERT(backend_stats_.find(id_) == backend_stats_.end());
 
     thread_number_++;
     backend_stats_[id_] = context_;
@@ -331,12 +331,12 @@ void StatsAggregator::UnregisterContext(std::thread::id id) {
 
 storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
   auto storage_manager = storage::StorageManager::GetInstance();
-  PL_ASSERT(storage_manager->GetDatabaseCount() > 0);
+  PELOTON_ASSERT(storage_manager->GetDatabaseCount() > 0);
   storage::Database *catalog_database =
       storage_manager->GetDatabaseWithOid(CATALOG_DATABASE_OID);
-  PL_ASSERT(catalog_database != nullptr);
+  PELOTON_ASSERT(catalog_database != nullptr);
   auto metrics_table = catalog_database->GetTableWithName(table_name);
-  PL_ASSERT(metrics_table != nullptr);
+  PELOTON_ASSERT(metrics_table != nullptr);
   return metrics_table;
 }
 

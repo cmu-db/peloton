@@ -434,8 +434,8 @@ class CompactIntsKey {
    * to indicate index column
    */
   inline void SetFromKey(const storage::Tuple *tuple) {
-    PL_ASSERT(tuple != nullptr);
-    PL_ASSERT(tuple->GetSchema() != nullptr);
+    PELOTON_ASSERT(tuple != nullptr);
+    PELOTON_ASSERT(tuple->GetSchema() != nullptr);
 
     // Must clear previous result first
     ZeroOut();
@@ -464,7 +464,7 @@ class CompactIntsKey {
       offset = SetFromColumn(column_id, column_id, key_schema, tuple, offset);
 
       // We could either have it just after the array or inside the array
-      PL_ASSERT(offset <= key_size_byte);
+      PELOTON_ASSERT(offset <= key_size_byte);
     }
 
     return;
@@ -482,9 +482,9 @@ class CompactIntsKey {
    */
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            const catalog::Schema *key_schema) {
-    PL_ASSERT(tuple != nullptr);
-    PL_ASSERT(indices != nullptr);
-    PL_ASSERT(key_schema != nullptr);
+    PELOTON_ASSERT(tuple != nullptr);
+    PELOTON_ASSERT(indices != nullptr);
+    PELOTON_ASSERT(key_schema != nullptr);
 
     ZeroOut();
 
@@ -499,7 +499,7 @@ class CompactIntsKey {
 
       offset = SetFromColumn(key_column_id, tuple_column_id, key_schema, tuple,
                              offset);
-      PL_ASSERT(offset <= key_size_byte);
+      PELOTON_ASSERT(offset <= key_size_byte);
     }
 
     return;
@@ -512,7 +512,7 @@ class CompactIntsKey {
    */
   const storage::Tuple GetTupleForComparison(
       const catalog::Schema *key_schema) const {
-    PL_ASSERT(key_schema != nullptr);
+    PELOTON_ASSERT(key_schema != nullptr);
 
     size_t offset = 0;
     // Yes the tuple has an allocated chunk of memory and is not just a wrapper

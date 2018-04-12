@@ -18,7 +18,7 @@ namespace function {
 
 // Get square root of the value
 type::Value DecimalFunctions::Sqrt(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
@@ -27,7 +27,7 @@ type::Value DecimalFunctions::Sqrt(const std::vector<type::Value> &args) {
 
 // Get Abs of value
 type::Value DecimalFunctions::_Abs(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
@@ -76,7 +76,7 @@ double DecimalFunctions::Abs(const double args) { return fabs(args); }
 
 // Get ceiling of value
 type::Value DecimalFunctions::_Ceil(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
@@ -107,7 +107,7 @@ double DecimalFunctions::Ceil(const double args) { return ceil(args); }
 
 // Get floor value
 type::Value DecimalFunctions::_Floor(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
@@ -138,7 +138,7 @@ double DecimalFunctions::Floor(const double val) { return floor(val); }
 
 // Round to nearest integer
 type::Value DecimalFunctions::_Round(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
+  PELOTON_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }

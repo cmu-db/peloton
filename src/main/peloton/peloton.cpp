@@ -22,7 +22,7 @@
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
 
-void RunPelotonEngine() {
+void RunPelotonServer() {
   try {
     // Setup
     peloton::PelotonInit::Initialize();
@@ -49,8 +49,18 @@ void RunPelotonBrain() {
   // TODO(tianyu): register jobs here
   struct timeval one_second;
   one_second.tv_sec = 1;
-  peloton::brain::ExampleBrainJob job;
-  brain.RegisterJob(&one_second, "test", job);
+  one_second.tv_usec = 0;
+
+  auto example_task = [](peloton::brain::BrainEnvironment *) {
+    // TODO(tianyu): Replace with real address
+    capnp::EzRpcClient client("localhost:15445");
+    PelotonService::Client peloton_service = client.getMain<PelotonService>();
+    auto request = peloton_service.createIndexRequest();
+    request.getRequest().setIndexKeys(42);
+    auto response = request.send().wait(client.getWaitScope());
+  };
+
+  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test", example_task);
   brain.Run();
 }
 
@@ -65,17 +75,22 @@ int main(int argc, char *argv[]) {
     ::google::HandleCommandLineHelpFlags();
   }
 
-  // Print settings
-  if (peloton::settings::SettingsManager::GetBool(
-          peloton::settings::SettingId::display_settings)) {
-    auto &settings = peloton::settings::SettingsManager::GetInstance();
-    settings.ShowInfo();
+  try {
+    // Print settings
+    if (peloton::settings::SettingsManager::GetBool(
+      peloton::settings::SettingId::display_settings)) {
+      auto &settings = peloton::settings::SettingsManager::GetInstance();
+      settings.ShowInfo();
+    }
+  } catch (peloton::SettingsException &exception) {
+    peloton::LOG_ERROR("Cannot load settings. Failed with %s\n", exception.GetMessage().c_str());
+    return 0; // TODO: Use an enum with exit error codes
   }
 
   if (peloton::settings::SettingsManager::GetBool(
       peloton::settings::SettingId::brain))
     RunPelotonBrain();
   else
-    RunPelotonEngine();
+    RunPelotonServer();
   return 0;
 }

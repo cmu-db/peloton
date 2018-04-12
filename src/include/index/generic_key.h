@@ -30,8 +30,8 @@ template <std::size_t KeySize>
 class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
-    PL_ASSERT(tuple);
-    PL_MEMCPY(data, tuple->GetData(), tuple->GetLength());
+    PELOTON_ASSERT(tuple);
+    PELOTON_MEMCPY(data, tuple->GetData(), tuple->GetLength());
     schema = tuple->GetSchema();
   }
 

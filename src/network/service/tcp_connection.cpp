@@ -41,7 +41,7 @@ Connection::Connection(int fd, struct event_base *base, void *arg,
                        NetworkAddress &addr)
     : addr_(addr), close_(false), status_(INIT), base_(base) {
   // we must pass rpc_server when new a connection
-  PL_ASSERT(arg != NULL);
+  PELOTON_ASSERT(arg != NULL);
   rpc_server_ = (RpcServer *)arg;
 
   // BEV_OPT_THREADSAFE must be specified
@@ -101,7 +101,7 @@ void Connection::Close() {
  *          corresponding RPC method.
  */
 void *Connection::ProcessMessage(void *connection) {
-  PL_ASSERT(connection != NULL);
+  PELOTON_ASSERT(connection != NULL);
 
   Connection *conn = (Connection *)connection;
 
@@ -148,11 +148,11 @@ void *Connection::ProcessMessage(void *connection) {
 
     // Get the message type
     uint16_t type = 0;
-    PL_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
+    PELOTON_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
 
     // Get the hashcode of the rpc method
     uint64_t opcode = 0;
-    PL_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
+    PELOTON_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
 
     // Get the rpc method meta info: method descriptor
     RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
@@ -186,20 +186,20 @@ void *Connection::ProcessMessage(void *connection) {
         msg_len = response->ByteSize() + OPCODELEN + TYPELEN;
 
         char send_buf[sizeof(msg_len) + msg_len];
-        PL_ASSERT(sizeof(msg_len) == HEADERLEN);
+        PELOTON_ASSERT(sizeof(msg_len) == HEADERLEN);
 
         // copy the header into the buf
-        PL_MEMCPY(send_buf, &msg_len, sizeof(msg_len));
+        PELOTON_MEMCPY(send_buf, &msg_len, sizeof(msg_len));
 
         // copy the type into the buf
         type = MSG_TYPE_REP;
 
-        PL_ASSERT(sizeof(type) == TYPELEN);
-        PL_MEMCPY(send_buf + HEADERLEN, &type, TYPELEN);
+        PELOTON_ASSERT(sizeof(type) == TYPELEN);
+        PELOTON_MEMCPY(send_buf + HEADERLEN, &type, TYPELEN);
 
         // copy the opcode into the buf
-        PL_ASSERT(sizeof(opcode) == OPCODELEN);
-        PL_MEMCPY(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
+        PELOTON_ASSERT(sizeof(opcode) == OPCODELEN);
+        PELOTON_MEMCPY(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
         // call protobuf to serialize the request message into sending buf
         response->SerializeToArray(send_buf + HEADERLEN + TYPELEN + OPCODELEN,
@@ -274,7 +274,7 @@ void *Connection::ProcessMessage(void *connection) {
  */
 void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev, void *ctx) {
   // TODO: We might use bev in future
-  PL_ASSERT(bev != NULL);
+  PELOTON_ASSERT(bev != NULL);
 
   Connection *conn = (Connection *)ctx;
 
@@ -305,7 +305,7 @@ void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev, void *ctx) {
 void Connection::EventCb(UNUSED_ATTRIBUTE struct bufferevent *bev, short events,
                          void *ctx) {
   Connection *conn = (Connection *)ctx;
-  PL_ASSERT(conn != NULL && bev != NULL);
+  PELOTON_ASSERT(conn != NULL && bev != NULL);
 
   if (events & BEV_EVENT_ERROR) {
     LOG_TRACE("Error from client bufferevent: %s",

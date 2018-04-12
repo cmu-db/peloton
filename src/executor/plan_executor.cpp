@@ -144,7 +144,7 @@ void PlanExecutor::ExecutePlan(
     const std::vector<int> &result_format,
     std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
-  PL_ASSERT(plan != nullptr && txn != nullptr);
+  PELOTON_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
   bool codegen_enabled =
@@ -179,12 +179,12 @@ void PlanExecutor::ExecutePlan(
 int PlanExecutor::ExecutePlan(
     planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
-  PL_ASSERT(plan != nullptr);
+  PELOTON_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  PL_ASSERT(txn);
+  PELOTON_ASSERT(txn);
   LOG_TRACE("Txn ID = %" PRId64, txn->GetTransactionId());
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
