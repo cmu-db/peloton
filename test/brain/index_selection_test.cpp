@@ -143,19 +143,71 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
+  void GenMultiColumnIndexes(brain::IndexConfiguration &config,
+                             brain::IndexConfiguration &single_column_indexes,
+                             brain::IndexConfiguration &result);
+
+  brain::IndexConfiguration candidates;
+  brain::IndexConfiguration single_column_indexes;
+  brain::IndexConfiguration result;
+  brain::IndexConfiguration expected;
+  brain::Workload workload;
+  brain::IndexSelection index_selection(workload, 5, 2, 10);
+
+  std::vector<oid_t> cols;
+
+  // Database: 1
+  // Table: 1
+  // Column: 1
+  auto a11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 1));
+  // Column: 2
+  auto b11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 2));
+  // Column: 3
+  auto c11 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 3));
+
+  // Database: 1
+  // Table: 2
+  // Column: 1
+  auto a12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 1));
+  // Column: 2
+  auto b12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 2));
+  // Column: 3
+  auto c12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 3));
+  // Column: 2, 3
+  cols = {2, 3};
+  auto bc12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  // Column: 1, 3
+  cols = {1, 3};
+  auto ac12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+
+  // Database: 2
+  // Table: 1
+  // Column: 1
+  auto a21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 1));
+  // Column: 2
+  auto b21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 2));
+  // Column: 3
+  auto c21 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 3));
+  // Column: 1, 2 3
+  cols = {1, 2, 3};
+  auto abc12 = std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
 
 
-TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
-  std::string table_name = "dummy_table";
-  std::string database_name = DEFAULT_DB_NAME;
+  std::set<std::shared_ptr<brain::IndexObject>> indexes;
 
-  CreateDatabase(database_name);
-  CreateTable(table_name);
+  indexes = {a11, b11, c11, a12, b12, c12, a21, b21, c21};
+  single_column_indexes = {indexes};
 
-  DropTable(table_name);
-  DropDatabase(database_name);
+  indexes = {a11, b11, bc12, ac12, b12, c12, a21, b21, c21};
+  candidates = {indexes};
+  
+  result = {indexes};
+  
+  expected = {indexes};
+
+  //TODO[Siva]: This test needs more support in as we use an IndexObjectPool
 }
-
 
 }  // namespace test
 }  // namespace peloton

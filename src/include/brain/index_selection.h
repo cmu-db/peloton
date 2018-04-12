@@ -37,6 +37,7 @@ struct IndexConfigComparator {
 //===--------------------------------------------------------------------===//
 // IndexSelection
 //===--------------------------------------------------------------------===//
+
 class IndexSelection {
  public:
   IndexSelection(Workload &query_set, size_t max_index_cols,
