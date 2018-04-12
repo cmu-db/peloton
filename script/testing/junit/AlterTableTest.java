@@ -17,7 +17,7 @@ import org.postgresql.util.PSQLException;
 
 public class AlterTableTest extends PLTestBase {
     private Connection conn;
-    private String s_sql = "SELECT * FROM foo;";
+    private Connection conn2;
 
     private static final String SQL_DROP_TABLE =
             "DROP TABLE IF EXISTS foo;";
@@ -26,6 +26,12 @@ public class AlterTableTest extends PLTestBase {
             "CREATE TABLE foo (" +
                     "id integer, " +
                     "year integer);";
+
+    private static final String SQL_SELECT_STAR = "SELECT * FROM foo;";
+
+    private static final String SQL_RENAME_COLUMN =
+            "ALTER TABLE foo RENAME year to month;";
+
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -37,12 +43,16 @@ public class AlterTableTest extends PLTestBase {
         Statement stmt = conn.createStatement();
         stmt.execute(SQL_DROP_TABLE);
         stmt.execute(SQL_CREATE_TABLE);
+
+        String sql = "INSERT INTO foo VALUES (5, 400);";
+        conn.createStatement().execute(sql);
     }
 
     @Before
     public void Setup() throws SQLException {
         conn = makeDefaultConnection();
         conn.setAutoCommit(true);
+        conn2 = makeDefaultConnection();
         InitDatabase();
     }
 
@@ -57,29 +67,17 @@ public class AlterTableTest extends PLTestBase {
      */
     @Test
     public void test_RenameColumn_1() throws SQLException {
-        String sql_1 = "INSERT INTO foo VALUES (5, 400);";
-        conn.createStatement().execute(sql_1);
-
-        ResultSet rs_1 = conn.createStatement().executeQuery(s_sql);
-        rs_1.next();
-        checkRow(rs_1,
-                new String [] {"id", "year"},
-                new int [] {5, 400});
-        assertNoMoreRows(rs_1);
-
-        String sql_2 = "ALTER TABLE foo RENAME year to month;";
-        conn.createStatement().execute(sql_2);
-        ResultSet rs_2 = conn.createStatement().executeQuery(s_sql);
-
-        rs_2.next();
-        checkRow(rs_2,
+        conn.createStatement().execute(SQL_RENAME_COLUMN);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
                 new String [] {"id", "month"},
                 new int [] {5, 400});
-        assertNoMoreRows(rs_2);
+        assertNoMoreRows(rs);
     }
 
     /**
-     * Rename a column that does not exist, should throw exception
+     * Rename a column that does not exists, should throw exception
      */
     @Test
     public void test_RenameColumn_2() throws SQLException {
@@ -91,7 +89,7 @@ public class AlterTableTest extends PLTestBase {
     }
 
     /**
-     * Rename a column to a name that already exists, should throw exception
+     * Rename a column that does not exists, should throw exception
      */
     @Test
     public void test_RenameColumn_3() throws SQLException {
@@ -101,5 +99,90 @@ public class AlterTableTest extends PLTestBase {
         thrown.expect(PSQLException.class);
         conn.createStatement().execute(sql);
     }
+
+    /**
+     * Two transactions try to rename at the same time, should throw exception
+     */
+    @Test
+    public void test_RenameColumn_4() throws SQLException {
+        conn.setAutoCommit(false);
+        conn2.setAutoCommit(false);
+
+        conn.createStatement().execute(SQL_RENAME_COLUMN);
+
+        thrown.expect(PSQLException.class);
+        conn2.createStatement().execute(SQL_RENAME_COLUMN);
+
+        conn.commit();
+        conn2.commit();
+    }
+
+//    The following tests are currently broken.
+//    @Test
+//    public void test_RenameColumn_5() throws SQLException {
+//        conn.setAutoCommit(false);
+//        conn2.setAutoCommit(false);
+//
+//        String sql = "ALTER TABLE foo RENAME year to month;";
+//        conn.createStatement().execute(sql);
+//
+//        ResultSet rs = conn2.createStatement().executeQuery(SQL_SELECT_STAR);
+//        rs.next();
+//        checkRow(rs,
+//                new String [] {"id", "year"},
+//                new int [] {5, 400});
+//        assertNoMoreRows(rs);
+//
+//        conn.commit();
+//        conn2.commit();
+//    }
+//
+//    /**
+//     * 2 transactions, t2 read the table before and after t1 change the column
+//     * name and should not see the changes.
+//     */
+//    @Test
+//    public void test_RenameColumn_6() throws SQLException {
+//        conn.setAutoCommit(false);
+//        conn2.setAutoCommit(false);
+//
+//        ResultSet rs_1 = conn2.createStatement().executeQuery(SQL_SELECT_STAR);
+//        rs_1.next();
+//        checkRow(rs_1,
+//                new String [] {"id", "year"},
+//                new int [] {5, 400});
+//        assertNoMoreRows(rs_1);
+//
+//        conn.createStatement().execute(SQL_RENAME_COLUMN);
+//        conn.commit();
+//
+//        ResultSet rs_2 = conn2.createStatement().executeQuery(SQL_SELECT_STAR);
+//        rs_2.next();
+//        checkRow(rs_2,
+//                new String [] {"id", "year"},
+//                new int [] {5, 400});
+//        assertNoMoreRows(rs_2);
+//        conn2.commit();
+//    }
+
+//    @Test
+//    public void test_RenameColumn_7() throws SQLException {
+//        conn.setAutoCommit(false);
+//        conn2.setAutoCommit(false);
+//
+//        Statement alter_statement = conn.createStatement();
+//        Statement select_statement = conn2.createStatement();
+//
+//        alter_statement.execute(SQL_RENAME_COLUMN);
+//        conn.commit();
+//
+//        ResultSet rs = select_statement.executeQuery(SQL_SELECT_STAR);
+//        rs.next();
+//        checkRow(rs,
+//                new String [] {"id", "year"},
+//                new int [] {5, 400});
+//        assertNoMoreRows(rs);
+//        conn2.commit();
+//    }
 
 }
