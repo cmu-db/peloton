@@ -21,8 +21,9 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set) :
-  query_set_(query_set) {
+
+IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols, size_t enum_threshold, size_t num_indexes) :
+  query_set_(query_set), context_(max_index_cols, enum_threshold, num_indexes) {
 }
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
@@ -116,7 +117,7 @@ IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
                                                  IndexConfiguration &remaining_indexes,
                                                  Workload &workload, size_t k) {
 
-  size_t current_index_count = getMinEnumerateCount();
+  size_t current_index_count = context_.naive_enumeration_threshold_;
 
   if(current_index_count >= k)
     return indexes;
@@ -131,7 +132,7 @@ IndexConfiguration& IndexSelection::GreedySearch(IndexConfiguration &indexes,
     for (auto i : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
       indexes.AddIndexObject(i);
-      cur_cost = GetCost(indexes, workload);
+      cur_cost = ComputeCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = i;
@@ -158,49 +159,42 @@ IndexConfiguration IndexSelection::GetRemainingIndexes(IndexConfiguration &index
   return (indexes - top_indexes);
 }
 
-unsigned long IndexSelection::getMinEnumerateCount() {
-  return context_.min_enumerate_count_;
-}
-
 IndexConfiguration IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
                                                          Workload &workload) {
-  size_t m = getMinEnumerateCount();
+  assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
 
-  assert(m <= indexes.GetIndexCount());
-
-  std::set<IndexConfiguration, Comp> running_set(workload);
-  std::set<IndexConfiguration, Comp> temp_set(workload);
-  std::set<IndexConfiguration, Comp> result_set(workload);
+  std::set<IndexConfiguration, Comp> running_index_config(workload);
+  std::set<IndexConfiguration, Comp> temp_index_config(workload);
+  std::set<IndexConfiguration, Comp> result_index_config(workload);
   IndexConfiguration new_element;
   IndexConfiguration top_indexes;
 
   IndexConfiguration empty;
-  running_set.insert(empty);
+  running_index_config.insert(empty);
 
+  for (auto index : indexes.GetIndexes()) {
+    temp_index_config = running_index_config;
 
-  for (auto i : indexes.GetIndexes()) {
-    temp_set = running_set;
-
-    for(auto t : temp_set) {
+    for(auto t : temp_index_config) {
       new_element = t;
-      new_element.AddIndexObject(i);
+      new_element.AddIndexObject(index);
 
-      if(new_element.GetIndexCount() >= m) {
-        result_set.insert(new_element);
+      if(new_element.GetIndexCount() >= context_.naive_enumeration_threshold_) {
+        result_index_config.insert(new_element);
       } else {
-        running_set.insert(new_element);
+        running_index_config.insert(new_element);
       }
     }
 
   }
 
 
-  result_set.insert(running_set.begin(), running_set.end());
-  result_set.erase(empty);
+  result_index_config.insert(running_index_config.begin(), running_index_config.end());
+  result_index_config.erase(empty);
 
 
   // combine all the index configurations and return top m configurations
-  for (auto i : result_set) {
+  for (auto i : result_index_config) {
     top_indexes.Merge(i);
   }
 

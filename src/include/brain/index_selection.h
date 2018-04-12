@@ -21,12 +21,9 @@
 namespace peloton {
 namespace brain {
 
-struct Comp
-{
+struct Comp {
   Comp(Workload &workload) {this->w = &workload;}
-  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2)
-  {
-
+  bool operator()(const IndexConfiguration &s1, const IndexConfiguration &s2) {
 //     IndexSelection::GetCost(s1, w);
     // TODO Call CostModel::GetCost(s1, w);
     return s1.GetIndexCount() < s2.GetIndexCount();
@@ -40,7 +37,8 @@ struct Comp
 //===--------------------------------------------------------------------===//
 class IndexSelection {
  public:
-  IndexSelection(Workload &query_set);
+  IndexSelection(Workload &query_set, size_t max_index_cols,
+                 size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query,
                             IndexConfiguration &indexes);
@@ -54,7 +52,6 @@ private:
                                 Workload &workload, size_t k);
 
   // Configuration Enumeration related
-  unsigned long getMinEnumerateCount();
   IndexConfiguration ExhaustiveEnumeration(IndexConfiguration &indexes, Workload &workload);
   IndexConfiguration GetRemainingIndexes(IndexConfiguration &indexes, IndexConfiguration top_indexes);
   IndexConfiguration& GreedySearch(IndexConfiguration &indexes,

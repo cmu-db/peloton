@@ -131,7 +131,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
     brain::Workload w;
     w.AddQuery(stmt);
 
-    brain::IndexSelection is(w);
+    brain::IndexSelection is(w, 5, 2, 10);
     brain::IndexConfiguration ic;
     is.GetAdmissibleIndexes(stmt, ic);
 
