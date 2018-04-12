@@ -34,7 +34,7 @@ def cleanup():
     peloton_proc.kill()
     call("rm -rf %s" % (OLTP_HOME), shell=True)
 
-def config_xml_file(host, port, benchmark, transaction, scalefactor,terminals,time,weights):
+def config_xml_file(host, port, benchmark, transaction, scalefactor, terminals, time, weights, upload_url, upload_code):
     xml = ElementTree.parse("%ssample_" % (CONFIG_FILES_HOME)+benchmark+"_config.xml")
     root = xml.getroot()
     root.find("dbtype").text = "peloton"
@@ -45,6 +45,8 @@ def config_xml_file(host, port, benchmark, transaction, scalefactor,terminals,ti
     root.find("isolation").text = str(transaction) 
     root.find("scalefactor").text = str(scalefactor)
     root.find("terminals").text = str(terminals)
+    root.find("uploadCode").text = str(upload_code)
+    root.find("uploadUrl").text = str(upload_url)
     for work in root.find('works').findall('work'):
         work.find('time').text = str(time) 
         work.find('rate').text ="unlimited"
@@ -87,6 +89,10 @@ if __name__ == "__main__":
     aparser.add_argument('db-port', type=int, help='DB Port')
     aparser.add_argument('benchmark', help='Benchmark Type')
     aparser.add_argument('weights', help="Benchmark weights")
+    aparser.add_argument('--upload-code', type=str, \
+                         help='Upload code.')
+    aparser.add_argument('--upload-url', type=str, \
+                         help='Upload url. (default: https://oltpbench.cs.cmu.edu/new_result/)')
     aparser.add_argument('--scale-factor', type=int, metavar='S', \
                          help='The scale factor. (default: 1)')
     aparser.add_argument('--transaction-isolation', metavar='I', \
@@ -109,24 +115,33 @@ if __name__ == "__main__":
     scalefactor=1
     transaction_isolation = "TRANSACTION_SERIALIZABLE"
     terminals = 1
-    if("client-time" in args and args["client-time"]):
-        time = int(args["client-time"])
+    upload_code = ''
+    upload_url = r'https://oltpbench.cs.cmu.edu/new_result/'
+
+    if("upload_code" in args and args["upload_code"]):
+        upload_code = str(args["upload_code"])
+
+    if("upload_url" in args and args["upload_url"]):
+        upload_url = str(args["upload_url"])
+
+    if("client_time" in args and args["client_time"]):
+        time = int(args["client_time"])
     
-    if("scale-factor" in args and args["scale-factor"]):
-        scalefactor = int(args["scale-factor"])
+    if("scale_factor" in args and args["scale_factor"]):
+        scalefactor = int(args["scale_factor"])
     
     if("terminals" in args and args["terminals"]):
         terminals = int(args["terminals"])
     
-    if("transaction-isolation" in args and args["transaction-isolation"]):
-        transaction_isolation = str(args["transaction-isolation"])
+    if("transaction_isolation" in args and args["transaction_isolation"]):
+        transaction_isolation = str(args["transaction_isolation"])
     
     run_peloton()
     gather_oltpbench()
     ## ----------------------------------------------
     ## EXECUTE
     ## ----------------------------------------------
-    config_xml_file(db_host, db_port, benchmark, transaction_isolation, scalefactor, terminals, time, weights)
+    config_xml_file(db_host, db_port, benchmark, transaction_isolation, scalefactor, terminals, time, weights, upload_url, upload_code)
     start_bench(benchmark, weights,scalefactor)
     result_dir_name = "tpcc_collected_data_"+weights.replace(",","_")+"_"+str(scalefactor)
     collect_data(result_dir_name,weights,scalefactor)
