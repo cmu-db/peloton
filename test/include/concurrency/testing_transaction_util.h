@@ -252,8 +252,7 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        // txn = txn_manager->BeginTransaction(IsolationLevelType::READ_ONLY);
-        txn = txn_manager->BeginTransaction(IsolationLevelType::READ_COMMITTED);
+        txn = txn_manager->BeginTransaction(IsolationLevelType::READ_ONLY);
       } else {
         txn = txn_manager->BeginTransaction();
       }
