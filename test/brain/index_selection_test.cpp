@@ -143,5 +143,19 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+
+
+TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
+  std::string table_name = "dummy_table";
+  std::string database_name = DEFAULT_DB_NAME;
+
+  CreateDatabase(database_name);
+  CreateTable(table_name);
+
+  DropTable(table_name);
+  DropDatabase(database_name);
+}
+
+
 }  // namespace test
 }  // namespace peloton

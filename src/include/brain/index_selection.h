@@ -43,7 +43,19 @@ class IndexSelection {
                  size_t enum_threshold, size_t num_indexes);
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(SQLStatement *query, IndexConfiguration &indexes);
-  void GenCandidateIndexes(IndexConfiguration &config,
+
+  /**
+   * @brief GenerateCandidateIndexes.
+   * If the admissible config set is empty, generate
+   * the single-column (admissible) indexes for each query from the provided queries
+   * and prune the useless ones. This becomes candidate index set. If not empty, prune
+   * the useless indexes from the candidate set for the given workload.
+   *
+   * @param candidate_config - new candidate index to be pruned.
+   * @param admissible_config - admissible index set of the queries
+   * @param workload - queries
+   */
+  void GenerateCandidateIndexes(IndexConfiguration &candidate_config,
                            IndexConfiguration &admissible_config,
                            Workload &workload);
 
@@ -56,12 +68,21 @@ class IndexSelection {
    * @param k - the number of indexes to return. The number 'k' described above
    */
   void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
-  void GenMultiColumnIndexes(IndexConfiguration &config,
+  void GenerateMultiColumnIndexes(IndexConfiguration &config,
                              IndexConfiguration &single_column_indexes,
                              IndexConfiguration &result);
 
 private:
-  // Cost evaluation related
+
+  /**
+   * @brief PruneUselessIndexes
+   * Delete the indexes from the configuration which do not help at least one of the
+   * queries in the workload
+   *
+   * @param config - index set
+   * @param workload - queries
+   */
+  void PruneUselessIndexes(IndexConfiguration &config, Workload &workload);
   double GetCost(IndexConfiguration &config, Workload &workload) const;
   double ComputeCost(IndexConfiguration &config, Workload &workload);
 
