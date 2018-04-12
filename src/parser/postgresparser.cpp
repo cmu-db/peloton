@@ -1364,8 +1364,6 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 	DefElem    *min_value = NULL;
 	DefElem    *cache_value = NULL;
 	DefElem    *is_cycled = NULL;
-	// bool		reset_max_value = false;
-	// bool		reset_min_value = false;
   if(!options) return;
 
 	ListCell   *option;
@@ -1387,15 +1385,6 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 			start_value = defel;
       result->seq_start = get_long_in_defel(start_value);
 		}
-		// else if (strcmp(defel->defname, "restart") == 0)
-		// {
-		// 	// if (restart_value)
-		// 	// 	ereport(ERROR,
-		// 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
-		// 	// 			 errmsg("conflicting or redundant options"),
-		// 	// 			 parser_errposition(pstate, defel->location)));
-		// 	restart_value = defel;
-		// }
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
 			if (max_value)
@@ -1434,24 +1423,10 @@ void PostgresParser::parse_sequence_params(List* options, parser::CreateStatemen
 		// 	// 			 parser_errposition(pstate, defel->location)));
 		// 	*owned_by = defGetQualifiedName(defel);
 		// }
-		// else if (strcmp(defel->defname, "sequence_name") == 0)
-		// {
-			/*
-			 * The parser allows this, but it is only for identity columns, in
-			 * which case it is filtered out in parse_utilcmd.c.  We only get
-			 * here if someone puts it into a CREATE SEQUENCE.
-			 */
-			// ereport(ERROR,
-			// 		(errcode(ERRCODE_SYNTAX_ERROR),
-			// 		 errmsg("invalid sequence option SEQUENCE NAME"),
-			// 		 parser_errposition(pstate, defel->location)));
-		// }
 		else
       throw ParserException(StringUtil::Format(
           "option \"%s\" not recognized\n", defel->defname));
 	}
-
-  //TODO: support type in sequence
 }
 
 parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {

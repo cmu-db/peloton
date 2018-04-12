@@ -30,6 +30,10 @@
 namespace peloton {
 namespace catalog {
 
+/* @brief   Get the nextval of the sequence
+ * @return  the next value of the sequence.
+ * @exception throws SequenceException if the sequence exceeds the upper/lower limit.
+ */
 int64_t SequenceCatalogObject::get_next_val() {
   int64_t result = seq_curr_val;
   if(seq_increment > 0) {
@@ -56,21 +60,20 @@ int64_t SequenceCatalogObject::get_next_val() {
       seq_curr_val += seq_increment;
   }
 
-  // auto &peloton_parser = parser::PostgresParser::GetInstance();
-  // std::string update_statement = "UPDATE " + std::string(SEQUENCE_CATALOG_NAME) +
-  //                                " SET sqval=" + std::to_string(seq_curr_val) +
-  //                                " WHERE oid=" + std::to_string(seq_oid);
-  // LOG_DEBUG("update sql statement:%s", update_statement.c_str());
-  // auto update_plan = optimizer::Optimizer().BuildPelotonPlanTree(
-  //           peloton_parser.BuildParseTree(update_statement),
-  //           CATALOG_DATABASE_NAME, txn_).get();
+  // TODO: this will become visible after Mengran's team push the AbstractCatalog::UpdateWithIndexScan.
+  // Link for the function:
+  // https://github.com/camellyx/peloton/blob/master/src/catalog/abstract_catalog.cpp#L305
 
-  // std::unique_ptr<executor::ExecutorContext> context(
-  //     new executor::ExecutorContext(txn_));
-  // executor::UpdateExecutor executor(update_plan, context.get());
-  // executor.Init();
-  // bool status = executor.Execute();
-  // LOG_DEBUG("status of update nextval:%d", status);
+  // std::vector<oid_t> update_columns({ColumnId::SEQUENCE_VALUE});
+  // std::vector<oid_t> update_values;
+  // update_values.push_back(type::ValueFactory::GetBigIntValue(seq_curr_val).Copy());
+  // std::vector<type::Value> scan_values;
+  // scan_values.push_back(type::ValueFactory::GetIntegerValue(seq_oid).Copy());
+  // oid_t index_offset = IndexId::PRIMARY_KEY;
+
+  // bool status = catalog::SequenceCatalog::GetInstance().UpdateWithIndexScan(update_columns, update_values, scan_values, index_offset, txn_);
+  // LOG_DEBUG("status of update pg_sequence: %d", status);
+
   return result;
 }
 
@@ -100,6 +103,19 @@ SequenceCatalog::SequenceCatalog(concurrency::TransactionContext *txn)
 
 SequenceCatalog::~SequenceCatalog() {}
 
+/* @brief   Delete the sequence by name.
+ * @param   database_oid  the databse_oid associated with the sequence
+ * @param   sequence_name the name of the sequence
+ * @param   seq_increment the increment per step of the sequence
+ * @param   seq_max       the max value of the sequence
+ * @param   seq_min       the min value of the sequence
+ * @param   seq_start     the start of the sequence
+ * @param   seq_cycle     whether the sequence cycles
+ * @param   pool          an instance of abstract pool
+ * @param   txn           current transaction
+ * @return  ResultType::SUCCESS if the sequence exists, ResultType::FAILURE otherwise.
+ * @exception throws SequenceException if the sequence already exists.
+ */
 bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_name,
                     int64_t seq_increment, int64_t seq_max, int64_t seq_min,
                     int64_t seq_start, bool seq_cycle,
@@ -139,6 +155,12 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid, std::string sequence_na
   return InsertTuple(std::move(tuple), txn);
 }
 
+/* @brief   Delete the sequence by name.
+ * @param   database_oid  the databse_oid associated with the sequence
+ * @param   sequence_name the name of the sequence
+ * @param   txn           current transaction
+ * @return  ResultType::SUCCESS if the sequence exists, ResultType::FAILURE otherwise.
+ */
 ResultType SequenceCatalog::DropSequence(const std::string &database_name,
                         const std::string &sequence_name,
                         concurrency::TransactionContext *txn) {
@@ -166,6 +188,12 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
+/* @brief   Delete the sequence by name. The sequence is guaranteed to exist.
+ * @param   database_oid  the databse_oid associated with the sequence
+ * @param   sequence_name the name of the sequence
+ * @param   txn           current transaction
+ * @return  The result of DeleteWithIndexScan.
+ */
 bool SequenceCatalog::DeleteSequenceByName(const std::string &sequence_name, oid_t database_oid,
                           concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
@@ -176,6 +204,12 @@ bool SequenceCatalog::DeleteSequenceByName(const std::string &sequence_name, oid
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+/* @brief   get sequence from pg_sequence table
+ * @param   database_oid  the databse_oid associated with the sequence
+ * @param   sequence_name the name of the sequence
+ * @param   txn           current transaction
+ * @return  a SequenceCatalogObject if the sequence is found, nullptr otherwise
+ */
 std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
     oid_t database_oid, const std::string &sequence_name, concurrency::TransactionContext *txn){
   std::vector<oid_t> column_ids(
@@ -216,6 +250,12 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   return new_sequence;
 }
 
+/* @brief   get sequence oid from pg_sequence table given sequence_name and database_oid
+ * @param   database_oid  the databse_oid associated with the sequence
+ * @param   sequence_name the name of the sequence
+ * @param   txn           current transaction
+ * @return  the oid_t of the sequence if the sequence is found, INVALID_OID otherwise
+ */
 oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name, oid_t database_oid,
                     concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
