@@ -107,7 +107,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
     }
 
     default: {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
   }
 

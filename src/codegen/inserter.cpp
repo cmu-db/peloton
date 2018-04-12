@@ -48,7 +48,7 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 
 <<<<<<< HEAD
 void Inserter::Insert(char *values_buf, uint32_t values_size) {
-  PL_ASSERT(table_ && executor_context_ && tile_);
+  PELOTON_ASSERT(table_ && executor_context_ && tile_);
 =======
 void Inserter::Insert() {
   PELOTON_ASSERT(table_ && executor_context_ && tile_);

@@ -59,7 +59,7 @@ void WalLogger::FlushToDisk(){
 void WalLogger::PerformCompaction(LogBuffer *log_buffer){
 
   if(nullptr==log_buffer)
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
 
   disk_buffer_->GetCopySerializedOutput()
           .WriteBytes(log_buffer->GetData(),

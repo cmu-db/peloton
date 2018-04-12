@@ -104,7 +104,7 @@ public:
   static LogRecord CreateTupleRecord(const LogRecordType log_type,
                                      const ItemPointer &pos, eid_t current_eid,
                                      txn_id_t txn_id, cid_t current_cid) {
-    PL_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
+    PELOTON_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
               log_type == LogRecordType::TUPLE_DELETE);
 
     return LogRecord(log_type, INVALID_ITEMPOINTER, pos, current_eid, txn_id, current_cid);
@@ -113,7 +113,7 @@ public:
   static LogRecord CreateTupleRecord(const LogRecordType log_type, eid_t current_eid,
                                      txn_id_t txn_id, cid_t current_cid)  {
 
-    PL_ASSERT(log_type == LogRecordType::TRANSACTION_COMMIT ||
+    PELOTON_ASSERT(log_type == LogRecordType::TRANSACTION_COMMIT ||
               log_type == LogRecordType::TRANSACTION_ABORT  ||
               log_type == LogRecordType::TRANSACTION_BEGIN);
 
@@ -125,20 +125,20 @@ public:
                                      const ItemPointer &pos, eid_t current_eid,
                                      txn_id_t txn_id, cid_t current_cid) {
 
-    PL_ASSERT(log_type == LogRecordType::TUPLE_UPDATE);
+    PELOTON_ASSERT(log_type == LogRecordType::TUPLE_UPDATE);
 
     return LogRecord(log_type, old_pos, pos, current_eid, txn_id, current_cid);
   }
 
 //
 //  static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
-//    PL_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN ||
+//    PELOTON_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN ||
 //              log_type == LogRecordType::TRANSACTION_COMMIT);
 //    return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_EID, commit_id);
 //  }
 //
 //  static LogRecord CreateEpochRecord(const LogRecordType log_type, const eid_t epoch_id) {
-//    PL_ASSERT(log_type == LogRecordType::EPOCH_BEGIN ||
+//    PELOTON_ASSERT(log_type == LogRecordType::EPOCH_BEGIN ||
 //              log_type == LogRecordType::EPOCH_END);
 //    return LogRecord(log_type, INVALID_ITEMPOINTER, epoch_id, INVALID_CID);
 //  }
