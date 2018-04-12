@@ -50,6 +50,11 @@ class IndexSelection {
    */
   IndexSelection(Workload &query_set, size_t max_index_cols,
                  size_t enumeration_threshold, size_t num_indexes);
+
+  /**
+   * @brief The main external API for the Index Prediction Tool
+   * @returns The best possible Index Congurations for the workload
+   */
   void GetBestIndexes(IndexConfiguration &final_indexes);
   void GetAdmissibleIndexes(parser::SQLStatement *query, IndexConfiguration &indexes);
 
@@ -77,6 +82,10 @@ class IndexSelection {
    * @param k - the number of indexes to return
    */
   void Enumerate(IndexConfiguration &indexes, IndexConfiguration &top_indexes, Workload &workload, size_t k);
+
+  /**
+   * @brief generate multi-column indexes from the single column indexes by doing a cross product.
+   */
   void GenerateMultiColumnIndexes(IndexConfiguration &config,
                              IndexConfiguration &single_column_indexes,
                              IndexConfiguration &result);
@@ -122,23 +131,35 @@ private:
                     Workload &workload, size_t num_indexes);
 
   // Admissible index selection related
+  /**
+   * @brief Helper to parse the order where in the SQL statements such as
+   * select, delete, update.
+   */
   void IndexColsParseWhereHelper(
       const expression::AbstractExpression *where_expr,
       IndexConfiguration &config);
+
+  /**
+   * @brief Helper to parse the group by clause in the SQL statements such as
+   * select, delete, update.
+   */
   void IndexColsParseGroupByHelper(
       std::unique_ptr<parser::GroupByDescription> &where_expr,
       IndexConfiguration &config);
+
+  /**
+   * @brief Helper to parse the order by clause in the SQL statements such as
+   * select, delete, update.
+   */
   void IndexColsParseOrderByHelper(std::unique_ptr<parser::OrderDescription> &order_by,
                                    IndexConfiguration &config);
-  std::shared_ptr<IndexObject> AddIndexColumnsHelper(oid_t database,
-                                                     oid_t table,
-                                                     std::vector<oid_t> cols);
+
   /**
    * @brief Helper function to convert a tuple of <db_oid, table_oid, col_oid>
    * to an IndexObject and store into the IndexObject shared pool.
    *
-   * @tuple_col: representation of a column
-   * @config: returns a new index object here
+   * @param - tuple_col: representation of a column
+   * @param - config: returns a new index object here
    */
   void IndexObjectPoolInsertHelper(
       const std::tuple<oid_t, oid_t, oid_t> tuple_col,
@@ -148,9 +169,9 @@ private:
    * @brief Create a new index configuration which is a cross product of the given configurations.
    * Ex: {I1} * {I23, I45} = {I123, I145}
    *
-   * @configuration1: config1
-   * @configuration2: config2
-   * @result: cross product
+   * @param - configuration1: config1
+   * @param - configuration2: config2
+   * @param - result: cross product
    */
   void CrossProduct(
       const IndexConfiguration &configuration1,
