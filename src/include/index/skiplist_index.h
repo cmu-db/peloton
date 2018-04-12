@@ -78,11 +78,14 @@ class SkipListIndex : public Index {
 
   std::string GetTypeName() const;
 
-  size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
+  // TODO: Implement this
+  size_t GetMemoryFootprint() { return 0; }
 
-  bool NeedGC() { return true; }
+  // TODO: Implement this
+  bool NeedGC() { return false; }
 
-  void PerformGC() { container.PerformGC(); }
+  // TODO: Implement this
+  void PerformGC() { return; }
 
  protected:
   // equality checker and comparator
