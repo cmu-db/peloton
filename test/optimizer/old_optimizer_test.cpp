@@ -12,6 +12,8 @@
 
 #include <common/harness.h>
 #include "catalog/catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -169,6 +171,11 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
   // Expected 1 , Primary key index + created index
+  auto table_obj = catalog::Catalog::GetInstance()->GetTableObject(
+      DEFAULT_DB_NAME, "department_table", txn);
+  LOG_WARN("Index count: %lu", table_obj->GetIndexObjects().size());
+  auto index_obj = catalog::IndexCatalog::GetInstance()->GetIndexObject(50331753, txn);
+  LOG_WARN("index: %u", index_obj->GetIndexOid());
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
   txn_manager.CommitTransaction(txn);
 
@@ -225,10 +232,12 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 
+  LOG_WARN("here3");
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+  LOG_WARN("here4");
 }
 
 }  // namespace test

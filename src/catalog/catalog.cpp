@@ -552,14 +552,14 @@ ResultType Catalog::DropTable(const std::string &database_name,
  */
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::TransactionContext *txn) {
-  LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
+  LOG_WARN("Dropping table %d from database %d", database_oid, table_oid);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
   auto table_object = database_object->GetTableObject(table_oid);
   auto index_objects = table_object->GetIndexObjects();
-  LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
+  LOG_WARN("dropping #%d indexes", (int)index_objects.size());
 
   for (auto it : index_objects) DropIndex(it.second->GetIndexOid(), txn);
   ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);

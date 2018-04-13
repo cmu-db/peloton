@@ -270,7 +270,8 @@ AbstractCatalog::GetResultWithCompiledSeqScan(
   // search for query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
   std::unique_ptr<codegen::Query> compiled_query(nullptr);
-  cached = (query != nullptr);
+  // cached = (query != nullptr);
+  cached = false;
   // LOG_DEBUG("cache %d", cached);
   // if not cached, compile the query and save it into cache
   if (!cached) {
