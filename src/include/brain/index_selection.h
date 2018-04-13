@@ -96,7 +96,7 @@ class IndexSelection {
    *
    * @param config - the set of candidate indexes chosen after the enumeration
    * @param single_column_indexes - the set of admissible single column indexes
-   * @param result - return the set of multi column indexes 
+   * @param result - return the set of multi column indexes
    */
   void GenerateMultiColumnIndexes(IndexConfiguration &config,
                                   IndexConfiguration &single_column_indexes,
@@ -127,7 +127,7 @@ class IndexSelection {
    * would call the What-If API appropriately and stores the results in the memo
    * table
    */
-  double GetCost(IndexConfiguration &config, Workload &workload);
+  double ComputeCost(IndexConfiguration &config, Workload &workload);
 
   // Configuration Enumeration related
   /**

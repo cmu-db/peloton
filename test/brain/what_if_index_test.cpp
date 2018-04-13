@@ -68,7 +68,8 @@ class WhatIfIndexTests : public PelotonTest {
     optimizer::StatsStorage *stats_storage =
         optimizer::StatsStorage::GetInstance();
     ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
-    assert(result == ResultType::SUCCESS);
+    PELOTON_ASSERT(result == ResultType::SUCCESS);
+    (void) result;
     txn_manager.CommitTransaction(txn);
   }
 

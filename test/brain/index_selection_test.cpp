@@ -79,7 +79,8 @@ class IndexSelectionTest : public PelotonTest {
     optimizer::StatsStorage *stats_storage =
       optimizer::StatsStorage::GetInstance();
     ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
-    assert(result == ResultType::SUCCESS);
+    PELOTON_ASSERT(result == ResultType::SUCCESS);
+    (void) result;
     txn_manager.CommitTransaction(txn);
   }
 };
@@ -181,7 +182,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   LOG_DEBUG("Candidate Indexes: %s", candidate_config.ToString().c_str());
 
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
-  // TODO: There is no data in the table. Indexes should not help. Should return 0 but getting 2.
+  // TODO: There is no data in the table. Indexes should not help. Should return 0.
   // EXPECT_EQ(candidate_config.GetIndexCount(), 0);
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
 

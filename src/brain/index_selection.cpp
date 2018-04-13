@@ -92,7 +92,7 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       Workload w(query);
 
-      if (GetCost(c, w) < GetCost(empty_config, w)) {
+      if (ComputeCost(c, w) < ComputeCost(empty_config, w)) {
         is_useful = true;
         break;
       }
@@ -134,7 +134,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
   if (current_index_count >= k) return;
 
-  double global_min_cost = GetCost(indexes, workload);
+  double global_min_cost = ComputeCost(indexes, workload);
   double cur_min_cost = global_min_cost;
   double cur_cost;
   std::shared_ptr<IndexObject> best_index;
@@ -146,7 +146,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
     for (auto index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
       indexes.AddIndexObject(index);
-      cur_cost = GetCost(indexes, workload);
+      cur_cost = ComputeCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -208,10 +208,10 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
         result_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       } else {
         running_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       }
     }
   }
@@ -401,7 +401,7 @@ void IndexSelection::IndexObjectPoolInsertHelper(
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
