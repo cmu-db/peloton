@@ -112,14 +112,27 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   LaunchParallelTest(1, TestingIndexUtil::InsertHelper, index.get(), pool,
                      scale_factor);
 
-  // Checks
+  // Check basic insert (key0 only has 1 value, so it is not sufficient)
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   key0->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
+  LOG_DEBUG("Checking key0's value: %lu", location_ptrs.size());
   EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
+
+  // This tests non-unqie key. If scan returns more than 1 then it should fail
+  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
+  key1->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
+
+  index->ScanKey(key1.get(), location_ptrs);
+  LOG_DEBUG("Checking key1's value: %lu", location_ptrs.size());
+  EXPECT_EQ(1, location_ptrs.size());
+  location_ptrs.clear();
+
+  return;
 }
 
 void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
@@ -163,9 +176,10 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key0.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key0 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key0 size: %lu", location_ptrs.size());
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
@@ -173,9 +187,10 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key1.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key1 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key1 size: %lu", location_ptrs.size());
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
@@ -183,12 +198,15 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   index->ScanKey(key2.get(), location_ptrs);
 #ifdef LOG_DEBUG_ENABLED
   for (auto ptr : location_ptrs) {
-    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+    LOG_DEBUG("key2 FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
   }
 #endif
+  LOG_DEBUG("key2 size: %lu", location_ptrs.size());
   EXPECT_EQ(1, location_ptrs.size());
   EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
+
+  return;
 }
 
 void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
@@ -843,11 +861,13 @@ void TestingIndexUtil::DeleteHelper(index::Index *index,
     index->DeleteEntry(key3.get(), TestingIndexUtil::item1.get());
     index->DeleteEntry(key4.get(), TestingIndexUtil::item1.get());
 
-    // should be no key0
+    // For non-unique key should be no key0
     // key1 item 0 1 2
     // key2 item 1
     // no key3
     // no key4
+
+    // For unique key should be only key2
   }
 }
 
