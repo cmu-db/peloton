@@ -40,7 +40,7 @@ class LockFreeQueue {
   }
 
   void Enqueue(const ProducerToken &token, const T &item) {
-    queue_.enqueue(token, item);
+    queue_.enqueue(token, item)
   }
 
   // Dequeues one item, returning true if an item was found

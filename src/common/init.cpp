@@ -25,6 +25,7 @@
 #include "index/index.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
+#include "threadpool/logger_queue_pool.h"
 #include "logging/wal_log_manager.h"
 
 namespace peloton {
@@ -97,6 +98,8 @@ void PelotonInit::Initialize() {
   } else {
     LOG_DEBUG("logging disabled");
   }
+
+  threadpool::LoggerQueuePool::GetInstance().Startup();
 
 }
 

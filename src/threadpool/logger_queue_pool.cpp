@@ -1,7 +1,6 @@
 #include "threadpool/logger_queue_pool.h"
 #include "common/container/lock_free_queue.h"
 #include "logging/wal_logger.h"
-
 #include <exception>
 
 
@@ -16,7 +15,6 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
   auto pause_time = kMinPauseTime;
 
   logging::WalLogger logger;
-
 
   while (is_running->load() || !logger_queue->IsEmpty()) {
 
@@ -38,8 +36,6 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
       pause_time = kMinPauseTime;
     }
   }
-
-
 
   logger.FlushToDisk();
 

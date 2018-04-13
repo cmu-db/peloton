@@ -1076,6 +1076,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
             database_id);
   }
 
+
   return result;
 }
 

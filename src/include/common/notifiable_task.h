@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <event2/thread.h>
 #include "common/event_util.h"
+#include "common/logger.h"
 
 namespace peloton {
 
