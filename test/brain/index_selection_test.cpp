@@ -225,64 +225,104 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   // Database: 1
   // Table: 1
   // Column: 1
-  auto a11 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 1));
+  auto a11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, 1));
   // Column: 2
-  auto b11 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 2));
+  auto b11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, 2));
   // Column: 3
-  auto c11 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 1, 3));
+  auto c11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, 3));
+  // Column: 1, 2
+  cols = {1, 2};
+  auto ab11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, cols));
+  // Column: 1, 3
+  cols = {1, 3};
+  auto ac11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, cols));
+  // Column: 2, 3
+  cols = {2, 3};
+  auto bc11 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 1, cols));
 
   // Database: 1
   // Table: 2
   // Column: 1
-  auto a12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 1));
+  auto a12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, 1));
   // Column: 2
-  auto b12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 2));
+  auto b12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, 2));
   // Column: 3
-  auto c12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, 3));
+  auto c12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, 3));
   // Column: 2, 3
   cols = {2, 3};
-  auto bc12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto bc12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, cols));
   // Column: 1, 3
   cols = {1, 3};
-  auto ac12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto ac12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, cols));
+  // Column: 1, 2 3
+  cols = {1, 2, 3};
+  auto abc12 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(1, 2, cols));
 
   // Database: 2
   // Table: 1
   // Column: 1
-  auto a21 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 1));
+  auto a21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, 1));
   // Column: 2
-  auto b21 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 2));
+  auto b21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, 2));
   // Column: 3
-  auto c21 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(2, 1, 3));
+  auto c21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, 3));
+  // Column: 1, 2
+  cols = {1, 2};
+  auto ab21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, cols));
+  // Column: 1, 3
+  cols = {1, 3};
+  auto ac21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, cols));
   // Column: 1, 2 3
   cols = {1, 2, 3};
-  auto abc12 =
-      std::shared_ptr<brain::IndexObject>(new brain::IndexObject(1, 2, cols));
+  auto abc21 = index_selection.AddConfigurationToPool(
+      brain::IndexObject(2, 1, cols));
 
   std::set<std::shared_ptr<brain::IndexObject>> indexes;
 
   indexes = {a11, b11, c11, a12, b12, c12, a21, b21, c21};
   single_column_indexes = {indexes};
 
-  indexes = {a11, b11, bc12, ac12, b12, c12, a21, b21, c21};
+  indexes = {a11, b11, bc12, ac12, c12, a21, abc21};
   candidates = {indexes};
 
-  result = {indexes};
+  index_selection.GenerateMultiColumnIndexes(candidates, single_column_indexes,
+        result);
 
+  // candidates union (candidates * single_column_indexes)
+  indexes = {a11, b11, bc12, ac12, c12, a21, abc21, // candidates
+             ab11, ac11, bc11, abc12, ab21, ac21};  // crossproduct
   expected = {indexes};
 
-  // TODO[Siva]: This test needs more support in as we use an IndexObjectPool
+  auto chosen_indexes = result.GetIndexes();
+  auto expected_indexes = expected.GetIndexes();
+
+  for (auto index : chosen_indexes) {
+    int count = 0;
+    for (auto expected_index : expected_indexes) {
+      auto index_object = *(index.get());
+      auto expected_index_object = *(expected_index.get());
+      if(index_object == expected_index_object) count++;
+    }
+    EXPECT_EQ(1, count);
+  }
+  EXPECT_EQ(expected_indexes.size(), chosen_indexes.size());
 }
 
 }  // namespace test

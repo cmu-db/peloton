@@ -92,11 +92,23 @@ class IndexSelection {
 
   /**
    * @brief generate multi-column indexes from the single column indexes by
-   * doing a cross product.
+   * doing a cross product and adds it into the result.
+   *
+   * @param config - the set of candidate indexes chosen after the enumeration
+   * @param single_column_indexes - the set of admissible single column indexes
+   * @param result - return the set of multi column indexes 
    */
   void GenerateMultiColumnIndexes(IndexConfiguration &config,
                                   IndexConfiguration &single_column_indexes,
                                   IndexConfiguration &result);
+
+  /**
+   * @brief Add a given configuration to the IndexObject pool
+   * return the corresponding shared pointer if the object already exists in
+   * the pool. Otherwise create one and return.
+   * Currently, this is used only for unit testing
+   */
+  std::shared_ptr<IndexObject> AddConfigurationToPool(IndexObject object);
 
  private:
   /**
@@ -111,19 +123,11 @@ class IndexSelection {
   void PruneUselessIndexes(IndexConfiguration &config, Workload &workload, IndexConfiguration &pruned_config);
 
   /**
-   * @brief Gets the cost of an index configuration for a given workload
-   * directly from the memo table. Assumes ComputeCost is called.
-   * TODO (Priyatham): This function can be removed now since the requirement
-   * for the comparator to be a const has been eliminated by me.
-   */
-  double GetCost(IndexConfiguration &config, Workload &workload) const;
-
-  /**
    * @brief Gets the cost of an index configuration for a given workload. It
    * would call the What-If API appropriately and stores the results in the memo
    * table
    */
-  double ComputeCost(IndexConfiguration &config, Workload &workload);
+  double GetCost(IndexConfiguration &config, Workload &workload);
 
   // Configuration Enumeration related
   /**
@@ -179,7 +183,9 @@ class IndexSelection {
 
   /**
    * @brief Create a new index configuration which is a cross product of the
-   * given configurations. Ex: {I1} * {I23, I45} = {I123, I145}
+   * given configurations and merge it into the result.
+   * result = result union (configuration1 * configuration2)
+   * Ex: {I1} * {I23, I45} = {I123, I145}
    *
    * @param - configuration1: config1
    * @param - configuration2: config2

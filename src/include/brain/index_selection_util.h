@@ -42,7 +42,7 @@ struct IndexObject {
   /**
    * @brief - Constructor
    */
-  IndexObject(){};
+  IndexObject() {};
 
   /**
    * @brief - Constructor
@@ -67,7 +67,7 @@ struct IndexObject {
 
   /**
    * @brief - Checks whether the 2 indexes can be merged to make a multi column
-   * index
+   * index. Return true if they are in the same database and table, else false
    */
   bool IsCompatible(std::shared_ptr<IndexObject> index) const;
 
@@ -96,7 +96,7 @@ class IndexConfiguration {
   /**
    * @brief - Constructor
    */
-  IndexConfiguration();
+  IndexConfiguration() {}
 
   /**
    * @brief - Constructor
@@ -161,7 +161,7 @@ class IndexObjectPool {
   /**
    * @brief - Constructor
    */
-  IndexObjectPool();
+  IndexObjectPool() {}
 
   /**
    * @brief - Return the shared pointer of the object from the global
@@ -169,7 +169,9 @@ class IndexObjectPool {
   std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
 
   /**
-   * @brief - Constructor
+   * @brief - Add the object to the pool of index objects
+   * if the object already exists, return the shared pointer 
+   * else create the object, add it to the pool and return the shared pointer
    */
   std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
 
