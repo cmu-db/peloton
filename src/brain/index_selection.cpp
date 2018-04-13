@@ -37,7 +37,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
-  for (unsigned long i = 0; i < context_.num_iterations_; i++) {
+  for (unsigned long i = 0; i < context_.num_iterations; i++) {
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
 
     // Configuration Enumeration
@@ -45,7 +45,6 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.num_indexes_);
 
-    candidate_indexes = top_candidate_indexes;
     GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
                                candidate_indexes);
   }
@@ -65,21 +64,25 @@ void IndexSelection::GenerateCandidateIndexes(
       GetAdmissibleIndexes(query, ai);
       admissible_config.Merge(ai);
 
-      PruneUselessIndexes(ai, wi);
-      candidate_config.Merge(ai);
+      IndexConfiguration pruned_ai;
+      PruneUselessIndexes(ai, wi, pruned_ai);
+
+      candidate_config.Merge(pruned_ai);
     }
   } else {
-    PruneUselessIndexes(candidate_config, workload);
+    IndexConfiguration pruned_ai;
+    PruneUselessIndexes(candidate_config, workload, pruned_ai);
+    candidate_config.Merge(pruned_ai);
   }
 }
 
 void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
-                                         Workload &workload) {
+                                         Workload &workload,
+                                         IndexConfiguration &pruned_config) {
   IndexConfiguration empty_config;
   auto indexes = config.GetIndexes();
-  auto it = indexes.begin();
 
-  while (it != indexes.end()) {
+  for (auto it = indexes.begin(); it != indexes.end(); it++) {
     bool is_useful = false;
 
     for (auto query : workload.GetQueries()) {
@@ -88,16 +91,14 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       Workload w(query);
 
-      if (GetCost(c, w) > GetCost(empty_config, w)) {
+      if (ComputeCost(c, w) < ComputeCost(empty_config, w)) {
         is_useful = true;
         break;
       }
     }
     // Index is useful if it benefits any query.
-    if (!is_useful) {
-      it = indexes.erase(it);
-    } else {
-      it++;
+    if (is_useful) {
+      pruned_config.AddIndexObject(*it);
     }
   }
 }
@@ -144,7 +145,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
     for (auto index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
       indexes.AddIndexObject(index);
-      cur_cost = GetCost(indexes, workload);
+      cur_cost = ComputeCost(indexes, workload);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -206,10 +207,10 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
         result_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       } else {
         running_index_config.insert(
-            {new_element, GetCost(new_element, workload)});
+            {new_element, ComputeCost(new_element, workload)});
       }
     }
   }
@@ -281,7 +282,7 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
       break;
 
     default:
-      LOG_WARN("Cannot handle DDL statements");
+      LOG_ERROR("Cannot handle DDL statements");
       PELOTON_ASSERT(false);
   }
 }
@@ -290,7 +291,7 @@ void IndexSelection::IndexColsParseWhereHelper(
     const expression::AbstractExpression *where_expr,
     IndexConfiguration &config) {
   if (where_expr == nullptr) {
-    LOG_INFO("No Where Clause Found");
+    LOG_DEBUG("No Where Clause Found");
     return;
   }
   auto expr_type = where_expr->GetExpressionType();
@@ -331,7 +332,7 @@ void IndexSelection::IndexColsParseWhereHelper(
       }
 
       if (!tuple_child->GetIsBound()) {
-        LOG_INFO("Query is not bound");
+        LOG_ERROR("Query is not bound");
         assert(false);
       }
       IndexObjectPoolInsertHelper(tuple_child->GetBoundOid(), config);
@@ -357,7 +358,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
     std::unique_ptr<parser::GroupByDescription> &group_expr,
     IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
-    LOG_INFO("Group by expression not present");
+    LOG_DEBUG("Group by expression not present");
     return;
   }
   auto &columns = group_expr->columns;
@@ -369,9 +370,10 @@ void IndexSelection::IndexColsParseGroupByHelper(
 }
 
 void IndexSelection::IndexColsParseOrderByHelper(
-    std::unique_ptr<parser::OrderDescription> &order_expr, IndexConfiguration &config) {
+    std::unique_ptr<parser::OrderDescription> &order_expr,
+    IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
-    LOG_INFO("Order by expression not present");
+    LOG_DEBUG("Order by expression not present");
     return;
   }
   auto &exprs = order_expr->exprs;
@@ -391,14 +393,28 @@ void IndexSelection::IndexObjectPoolInsertHelper(
 
   // Add the object to the pool.
   IndexObject iobj(db_oid, table_oid, col_oid);
-  auto pool_index_obj = context_.pool_.GetIndexObject(iobj);
+  auto pool_index_obj = context_.pool.GetIndexObject(iobj);
   if (!pool_index_obj) {
-    pool_index_obj = context_.pool_.PutIndexObject(iobj);
+    pool_index_obj = context_.pool.PutIndexObject(iobj);
   }
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::GetCost(IndexConfiguration &config,
+                               Workload &workload) const {
+  double cost = 0.0;
+  auto queries = workload.GetQueries();
+  for (auto query : queries) {
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
+                                                                   query};
+    PELOTON_ASSERT(context_.memo_.find(state) != context_.memo_.end());
+    cost += context_.memo_.find(state)->second;
+  }
+  return cost;
+}
+
+double IndexSelection::ComputeCost(IndexConfiguration &config,
+                                   Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
@@ -408,7 +424,7 @@ double IndexSelection::GetCost(IndexConfiguration &config, Workload &workload) {
       cost += context_.memo_[state];
     } else {
       auto result =
-          WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+          WhatIfIndex::GetCostAndBestPlanTree(query, config, DEFAULT_DB_NAME);
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }
@@ -426,7 +442,7 @@ void IndexSelection::CrossProduct(
     for (auto column : columns) {
       if (!index->IsCompatible(column)) continue;
       auto merged_index = (index->Merge(column));
-      result.AddIndexObject(context_.pool_.PutIndexObject(merged_index));
+      result.AddIndexObject(context_.pool.PutIndexObject(merged_index));
     }
   }
 }
@@ -435,11 +451,6 @@ void IndexSelection::GenerateMultiColumnIndexes(
     IndexConfiguration &config, IndexConfiguration &single_column_indexes,
     IndexConfiguration &result) {
   CrossProduct(config, single_column_indexes, result);
-}
-
-std::shared_ptr<IndexObject> IndexSelection::AddConfigurationToPool(
-    IndexObject object) {
-  return context_.pool_.PutIndexObject(object);
 }
 
 }  // namespace brain

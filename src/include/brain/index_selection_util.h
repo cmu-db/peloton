@@ -16,8 +16,12 @@
 #include <set>
 #include <sstream>
 #include <vector>
+
+#include "binder/bind_node_visitor.h"
 #include "catalog/index_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "parser/sql_statement.h"
+#include "parser/postgresparser.h"
 
 namespace peloton {
 namespace brain {
@@ -137,6 +141,8 @@ class IndexConfiguration {
 
   const std::string ToString() const;
 
+  void Clear();
+
  private:
   // The set of hypothetical indexes in the configuration
   std::set<std::shared_ptr<IndexObject>> indexes_;
@@ -187,6 +193,41 @@ class Workload {
    * @brief - Constructor
    */
   Workload() {}
+
+  /**
+   * @brief - Initialize a workload with the given query strings. Parse, bind and
+   * add SQLStatements.
+   */
+  Workload(std::vector<std::string> &queries, std::string database_name) {
+
+    LOG_DEBUG("Initializing workload with %ld queries", queries.size());
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto parser = parser::PostgresParser::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, database_name));
+
+    // Parse and bind every query. Store the results in the workload vector.
+    for (auto it = queries.begin(); it != queries.end(); it++) {
+      auto query = *it;
+      LOG_INFO("Query: %s", query.c_str());
+
+      auto stmt_list = parser::PostgresParser::ParseSQLString(query);
+      PELOTON_ASSERT(stmt_list->is_valid);
+
+      auto stmt = stmt_list->GetStatement(0);
+      PELOTON_ASSERT(stmt->GetType() != StatementType::INVALID);
+
+      // Bind the query
+      binder->BindNameToNode(stmt);
+
+      AddQuery(stmt);
+    }
+
+    txn_manager.CommitTransaction(txn);
+  }
 
   /**
    * @brief - Constructor
