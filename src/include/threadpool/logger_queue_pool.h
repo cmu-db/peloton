@@ -55,6 +55,15 @@ class LoggerQueuePool {
       return next_token_++;
     }
 
+
+    void Startup() {
+      is_running_ = true;
+
+      for (size_t i = 0; i < num_workers_; i++) {
+        loggers_.emplace_back(LoggerFunc, &is_running_, &logger_queue_);
+      }
+    }
+
     void Shutdown() {
       is_running_ = false;
 
