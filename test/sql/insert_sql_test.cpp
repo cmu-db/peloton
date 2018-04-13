@@ -627,6 +627,7 @@ TEST_F(InsertSQLTests, NonExistentTable) {
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
