@@ -47,9 +47,9 @@ message(STATUS "Tensorflow models being generated")
 execute_process(COMMAND ${MODEL_GEN_COMMAND}
         RESULT_VARIABLE RETURN_VALUE)
 
-#if (NOT RETURN_VALUE EQUAL 0)
-#    message(FATAL_ERROR "Failed to generate tensorflow models.")
-#endif()
+if (NOT RETURN_VALUE EQUAL 0)
+    message(FATAL_ERROR "Failed to generate tensorflow models.")
+endif()
 
 ##################################################################################
 
