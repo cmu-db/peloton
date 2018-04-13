@@ -407,7 +407,9 @@ void Tuple::MoveToTuple(const void *address) {
 }
 
 size_t Tuple::HashCode() const {
-  size_t seed = 0;
+  // TODO Pooja: This is a hack to try and see if the seed helps.
+  // Move the constant to internal_types.h if it works. Revert otherwise.
+  size_t seed = 0x9ddfea08eb382d69ULL;
   return HashCode(seed);
 }
 
