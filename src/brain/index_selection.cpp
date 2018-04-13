@@ -64,21 +64,25 @@ void IndexSelection::GenerateCandidateIndexes(
       GetAdmissibleIndexes(query, ai);
       admissible_config.Merge(ai);
 
-      PruneUselessIndexes(ai, wi);
-      candidate_config.Merge(ai);
+      IndexConfiguration pruned_ai;
+      PruneUselessIndexes(ai, wi, pruned_ai);
+
+      candidate_config.Merge(pruned_ai);
     }
   } else {
-    PruneUselessIndexes(candidate_config, workload);
+    IndexConfiguration pruned_ai;
+    PruneUselessIndexes(candidate_config, workload, pruned_ai);
+    candidate_config.Merge(pruned_ai);
   }
 }
 
 void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
-                                         Workload &workload) {
+                                         Workload &workload,
+                                         IndexConfiguration &pruned_config) {
   IndexConfiguration empty_config;
   auto indexes = config.GetIndexes();
-  auto it = indexes.begin();
 
-  while (it != indexes.end()) {
+  for (auto it = indexes.begin(); it != indexes.end(); it++) {
     bool is_useful = false;
 
     for (auto query : workload.GetQueries()) {
@@ -87,16 +91,14 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       Workload w(query);
 
-      if (ComputeCost(c, w) > ComputeCost(empty_config, w)) {
+      if (ComputeCost(c, w) < ComputeCost(empty_config, w)) {
         is_useful = true;
         break;
       }
     }
     // Index is useful if it benefits any query.
-    if (!is_useful) {
-      it = indexes.erase(it);
-    } else {
-      it++;
+    if (is_useful) {
+      pruned_config.AddIndexObject(*it);
     }
   }
 }
@@ -280,7 +282,7 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
       break;
 
     default:
-      LOG_WARN("Cannot handle DDL statements");
+      LOG_ERROR("Cannot handle DDL statements");
       PELOTON_ASSERT(false);
   }
 }
@@ -289,7 +291,7 @@ void IndexSelection::IndexColsParseWhereHelper(
     const expression::AbstractExpression *where_expr,
     IndexConfiguration &config) {
   if (where_expr == nullptr) {
-    LOG_INFO("No Where Clause Found");
+    LOG_DEBUG("No Where Clause Found");
     return;
   }
   auto expr_type = where_expr->GetExpressionType();
@@ -330,7 +332,7 @@ void IndexSelection::IndexColsParseWhereHelper(
       }
 
       if (!tuple_child->GetIsBound()) {
-        LOG_INFO("Query is not bound");
+        LOG_ERROR("Query is not bound");
         assert(false);
       }
       IndexObjectPoolInsertHelper(tuple_child->GetBoundOid(), config);
@@ -356,7 +358,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
     std::unique_ptr<parser::GroupByDescription> &group_expr,
     IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
-    LOG_INFO("Group by expression not present");
+    LOG_DEBUG("Group by expression not present");
     return;
   }
   auto &columns = group_expr->columns;
@@ -371,7 +373,7 @@ void IndexSelection::IndexColsParseOrderByHelper(
     std::unique_ptr<parser::OrderDescription> &order_expr,
     IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
-    LOG_INFO("Order by expression not present");
+    LOG_DEBUG("Order by expression not present");
     return;
   }
   auto &exprs = order_expr->exprs;
@@ -422,7 +424,7 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
       cost += context_.memo_[state];
     } else {
       auto result =
-          WhatIfIndex::GetCostAndPlanTree(query, config, DEFAULT_DB_NAME);
+          WhatIfIndex::GetCostAndBestPlanTree(query, config, DEFAULT_DB_NAME);
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }

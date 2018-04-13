@@ -11,16 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/what_if_index.h"
-#include "binder/bind_node_visitor.h"
-#include "catalog/table_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "optimizer/operators.h"
-#include "optimizer/optimizer.h"
-#include "parser/delete_statement.h"
-#include "parser/insert_statement.h"
-#include "parser/select_statement.h"
-#include "parser/table_ref.h"
-#include "parser/update_statement.h"
 #include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
@@ -28,27 +19,17 @@ namespace brain {
 
 unsigned long WhatIfIndex::index_seq_no = 0;
 
-// GetCostAndPlanTree()
-// Perform the cost computation for the query.
-// This interfaces with the optimizer to get the cost & physical plan of the
-// query.
-// @parsed_sql_query: SQL statement
-// @index_set: set of indexes to be examined
-std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
-    parser::SQLStatement *parsed_sql_query, IndexConfiguration &config,
+std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndBestPlanTree(
+    parser::SQLStatement *query, IndexConfiguration &config,
     std::string database_name) {
+
   // Need transaction for fetching catalog information.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  // Run binder
-  auto bind_node_visitor = std::unique_ptr<binder::BindNodeVisitor>(
-      new binder::BindNodeVisitor(txn, database_name));
-  bind_node_visitor->BindNameToNode(parsed_sql_query);
-
   // Find all the tables that are referenced in the parsed query.
   std::vector<std::string> tables_used;
-  GetTablesUsed(parsed_sql_query, tables_used);
+  GetTablesReferenced(query, tables_used);
   LOG_DEBUG("Tables referenced count: %ld", tables_used.size());
 
   // TODO [vamshi]: Improve this loop.
@@ -67,22 +48,27 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndPlanTree(
       if (index->table_oid == table_object->GetTableOid()) {
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
-        LOG_DEBUG("Created a new hypothetical index %d on table: %d",
+        LOG_DEBUG("Created a new hypothetical index %d on table: %d, Col id: %d",
                   index_catalog_obj->GetIndexOid(),
-                  index_catalog_obj->GetTableOid());
+                  index_catalog_obj->GetTableOid(), index_catalog_obj->GetKeyAttrs()[0]);
       }
     }
+    LOG_DEBUG("Index Catalog Objects inserted: %ld", table_object->GetIndexObjects().size());
   }
 
   // Perform query optimization with the hypothetical indexes
   optimizer::Optimizer optimizer;
-  auto opt_info_obj = optimizer.GetOptimizedPlanInfo(parsed_sql_query, txn);
+  auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query, txn);
+
+  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
+  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
+  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
 
   txn_manager.CommitTransaction(txn);
   return opt_info_obj;
 }
 
-void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
+void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
                                 std::vector<std::string> &table_names) {
   // Only support the DML statements.
   union {
@@ -95,30 +81,30 @@ void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
-  switch (parsed_statement->GetType()) {
+  switch (query->GetType()) {
     case StatementType::INSERT:
       sql_statement.insert_stmt =
-          dynamic_cast<parser::InsertStatement *>(parsed_statement);
+          dynamic_cast<parser::InsertStatement *>(query);
       table_names.push_back(
           sql_statement.insert_stmt->table_ref_->GetTableName());
       break;
 
     case StatementType::DELETE:
       sql_statement.delete_stmt =
-          dynamic_cast<parser::DeleteStatement *>(parsed_statement);
+          dynamic_cast<parser::DeleteStatement *>(query);
       table_names.push_back(
           sql_statement.delete_stmt->table_ref->GetTableName());
       break;
 
     case StatementType::UPDATE:
       sql_statement.update_stmt =
-          dynamic_cast<parser::UpdateStatement *>(parsed_statement);
+          dynamic_cast<parser::UpdateStatement *>(query);
       table_names.push_back(sql_statement.update_stmt->table->GetTableName());
       break;
 
     case StatementType::SELECT:
       sql_statement.select_stmt =
-          dynamic_cast<parser::SelectStatement *>(parsed_statement);
+          dynamic_cast<parser::SelectStatement *>(query);
       // Select can operate on more than 1 table.
       switch (sql_statement.select_stmt->from_table->type) {
         case TableReferenceType::NAME:
@@ -151,7 +137,7 @@ void WhatIfIndex::GetTablesUsed(parser::SQLStatement *parsed_statement,
       break;
 
     default:
-      LOG_WARN("Cannot handle DDL statements");
+      LOG_ERROR("Cannot handle DDL statements");
       PELOTON_ASSERT(false);
   }
 }
@@ -167,6 +153,7 @@ WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
        it != index_obj->column_oids.end(); it++) {
     index_name_oss << (*it) << "_";
   }
+  // TODO: For now, we assume BW-TREE and DEFAULT index constraint type for the hypothetical indexes
   // Create a dummy catalog object.
   auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
       new catalog::IndexCatalogObject(index_seq_no++, index_name_oss.str(),

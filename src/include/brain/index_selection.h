@@ -106,8 +106,9 @@ class IndexSelection {
    *
    * @param config - index set
    * @param workload - queries
+   * @param pruned_config - result configuration
    */
-  void PruneUselessIndexes(IndexConfiguration &config, Workload &workload);
+  void PruneUselessIndexes(IndexConfiguration &config, Workload &workload, IndexConfiguration &pruned_config);
 
   /**
    * @brief Gets the cost of an index configuration for a given workload

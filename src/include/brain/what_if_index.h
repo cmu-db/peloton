@@ -27,36 +27,64 @@
 #include "parser/postgresparser.h"
 
 namespace parser {
-class SQLStatementList;
+  class SQLStatementList;
 }
 
 namespace catalog {
-class IndexCatalogObject;
+  class IndexCatalogObject;
 }
 
 namespace optimizer {
-class QueryInfo;
-class OptimizerContextInfo;
+  class QueryInfo;
+  class OptimizerContextInfo;
 }  // namespace optimizer
 
 namespace peloton {
 namespace brain {
 
-// Static class to query what-if cost of an index set.
+/**
+ * @brief Static class to query what-if cost of an index set.
+ */
 class WhatIfIndex {
  public:
-  static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndPlanTree(
-      parser::SQLStatement *parsed_query, IndexConfiguration &config,
+  /**
+   * @brief GetCostAndBestPlanTree
+   * Perform optimization on the given parsed & bound SQL statement and
+   * return the best physical plan tree and the cost associated with it.
+   *
+   * @param query - parsed and bound query
+   * @param config - a hypothetical index configuration
+   * @param database_name - database name string
+   * @return physical plan info
+   */
+  static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndBestPlanTree(
+      parser::SQLStatement *query, IndexConfiguration &config,
       std::string database_name);
 
  private:
-  static void FindIndexesUsed(optimizer::GroupID root_id,
-                              optimizer::QueryInfo &query_info,
-                              optimizer::OptimizerMetadata &md);
-  static void GetTablesUsed(parser::SQLStatement *statement,
+  /**
+   * @brief GetTablesUsed
+   * Given a parsed & bound query, this function updates all the tables
+   * referenced.
+   *
+   * @param query - a parsed and bound SQL statement
+   * @param table_names - where the table names will be stored.
+   */
+  static void GetTablesReferenced(parser::SQLStatement *query,
                             std::vector<std::string> &table_names);
+  /**
+   * @brief Creates a hypothetical index catalog object, that would be used
+   * to fill the catalog cache.
+   *
+   * @param obj - Index object
+   * @return index catalog object
+   */
   static std::shared_ptr<catalog::IndexCatalogObject> CreateIndexCatalogObject(
       IndexObject *obj);
+  /**
+   * @brief a monotonically increasing sequence number for creating dummy oids
+   * for the given hypothetical indexes.
+   */
   static unsigned long index_seq_no;
 };
 

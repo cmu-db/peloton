@@ -135,11 +135,21 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser::PostgresParser::ParseSQLString(query_str_oss.str()));
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+    new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+
   // Get the first statement.
   auto sql_statement = stmt_list.get()->GetStatement(0);
 
+  binder->BindNameToNode(sql_statement);
+  txn_manager.CommitTransaction(txn);
+
   // 1. Get the optimized plan tree without the indexes (sequential scan)
-  auto result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                        DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
@@ -147,7 +157,7 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 1));
 
-  result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                   DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
   LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
@@ -155,7 +165,7 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 2));
 
-  result = brain::WhatIfIndex::GetCostAndPlanTree(sql_statement, config,
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                   DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
   LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);

@@ -22,9 +22,9 @@ namespace brain {
 
 const std::string IndexObject::ToString() const {
   std::stringstream str_stream;
-  str_stream << db_oid << table_oid;
+  str_stream << db_oid << ":" << table_oid;
   for (auto col : column_oids) {
-    str_stream << col;
+    str_stream << "-" << col;
   }
   return str_stream.str();
 }
@@ -104,6 +104,10 @@ IndexConfiguration IndexConfiguration::operator-(
                       config_indexes.end(),
                       std::inserter(result, result.end()));
   return IndexConfiguration(result);
+}
+
+void IndexConfiguration::Clear() {
+  indexes_.clear();
 }
 
 //===--------------------------------------------------------------------===//
