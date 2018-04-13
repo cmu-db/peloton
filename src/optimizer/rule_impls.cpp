@@ -96,10 +96,41 @@ JoinAssociativity::JoinAssociativity() {
 bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
                               OptimizeContext *context) const {
   (void)context;
+  // Associativity rules taken from
+  // http://15721.courses.cs.cmu.edu/spring2017/papers/14-optimizer1/p539-moerkotte.pdf
+  /*
+   * (A inner B) inner C = A inner (B inner C)
+   * (A right B) inner C = A right (B inner C)
+   * (A inner B) left  C = A inner (B left  C)
+   * (A left  B) left  C = A left  (B left  C) with Strong Predicates PBC
+   * (A full  B) left  C = A full  (B left  C) with Strong Predicate PBC
+   * (A right B) right C = A right (B right C) with Strong Predicate PAB
+   * (A right B) full  C = A right (B full  C) with Strong Predicate PAB
+   * (A full  B) full  C = A full  (B full  C) with Strong Predicate PAB & PBC
+   */
   auto parent_join = expr->Op().As<LogicalJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = expr->Children();
   auto child_join = children[0]->Op().As<LogicalJoin>();
-  return (parent_join->type == child_join->type);
+  if (parent_join->type == JoinType::INNER) {
+    if (child_join->type == JoinType::INNER || child_join->type == JoinType::RIGHT) {
+      return true;
+    }
+  } else if (parent_join->type == JoinType::LEFT) {
+    if (child_join->type == JoinType::INNER) {
+      return true;
+    } else if (child_join->type == JoinType::LEFT || child_join->type == JoinType::OUTER) {
+      return StrongPredicate(expr, context);
+    }
+  } else if (parent_join->type == JoinType::RIGHT) {
+    if (child_join->type == JoinType::RIGHT) {
+      return StrongPredicate(expr, context);
+    }
+  } else if (parent_join->type == JoinType::OUTER) {
+    if (child_join->type == JoinType::RIGHT || child_join->type == JoinType::OUTER) {
+      return StrongPredicate(expr, context);
+    }
+  }
+  return false;
 }
 
 void JoinAssociativity::Transform(
@@ -164,8 +195,8 @@ void JoinAssociativity::Transform(
 
   JoinType new_parent_join_type;
   JoinType new_child_join_type;
-  new_parent_join_type = parent_join->type;
-  new_child_join_type = child_join->type;
+  new_parent_join_type = child_join->type;
+  new_child_join_type = parent_join->type;
   // Construct new child join operator
   std::shared_ptr<OperatorExpression> new_child_join =
       std::make_shared<OperatorExpression>(
@@ -181,6 +212,15 @@ void JoinAssociativity::Transform(
   new_parent_join->PushChild(new_child_join);
 
   transformed.push_back(new_parent_join);
+}
+
+// TODO: some associativity rules can only be applied when the predicate is strong
+// To check if the predicate is strong or not is non-trivial
+bool JoinAssociativity::StrongPredicate(std::shared_ptr<OperatorExpression> expr,
+                                        OptimizeContext *context) const {
+  (void)context;
+  (void)expr;
+  return false;
 }
 
 //===--------------------------------------------------------------------===//
