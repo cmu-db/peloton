@@ -42,7 +42,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(concurrency::TransactionContext *txn)
                       "inserts  INT NOT NULL, "
                       "latency  INT NOT NULL, "
                       "cpu_time INT NOT NULL, "
-                      "time_stamp INT NOT NULL);",
+                      "time_stamp BIGINT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(

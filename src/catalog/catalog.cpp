@@ -62,8 +62,8 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   storage_manager->AddDatabaseToStorageManager(pg_catalog);
 
   // Create catalog tables
-  catalogs_.push_back(ColumnCatalog::GetInstance());
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  catalogs_.push_back(ColumnCatalog::GetInstance());
   catalogs_.push_back(pg_database);
   auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(), txn);
   catalogs_.push_back(pg_table);

@@ -41,7 +41,8 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
                       "most_common_freqs VARCHAR, "
                       "histogram_bounds  VARCHAR, "
                       "column_name       VARCHAR, "
-                      "has_index         BOOLEAN);",
+                      "has_index         BOOLEAN,"
+                      "PRIMARY KEY(database_id, table_id, column_id));",
                       txn) {
   // unique key: (database_id, table_id, column_id)
   Catalog::GetInstance()->CreateIndex(
