@@ -28,7 +28,7 @@ SettingsCatalog::SettingsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." SETTINGS_CATALOG_NAME
                       " ("
-                      "name   VARCHAR NOT NULL, "
+                      "name   VARCHAR NOT NULL PRIMARY KEY, "
                       "value  VARCHAR NOT NULL, "
                       "value_type   VARCHAR NOT NULL, "
                       "description  VARCHAR, "

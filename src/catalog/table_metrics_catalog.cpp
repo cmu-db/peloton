@@ -37,7 +37,8 @@ TableMetricsCatalog::TableMetricsCatalog(concurrency::TransactionContext *txn)
                       "inserts        INT NOT NULL, "
                       "memory_alloc     INT NOT NULL, "
                       "memory_usage     INT NOT NULL, "
-                      "time_stamp     INT NOT NULL);",
+                      "time_stamp     INT NOT NULL,"
+                      "PRIMARY KEY(database_oid, table_oid));",
                       txn) {
   // Add secondary index here if necessary
 }

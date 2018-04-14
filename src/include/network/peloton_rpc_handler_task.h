@@ -33,7 +33,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
 
 class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
-  explicit PelotonRpcHandlerTask(const char *address) : address_(address) {}
+  explicit PelotonRpcHandlerTask(std::string address) : address_(address) {}
 
   void Terminate() override {
     // TODO(tianyu): Not implemented. See:
@@ -41,13 +41,13 @@ class PelotonRpcHandlerTask : public DedicatedThreadTask {
   }
 
   void RunTask() override {
-    capnp::EzRpcServer server(kj::heap<PelotonRpcServerImpl>(), address_);
-    LOG_DEBUG("Server listening on %s", address_);
+    capnp::EzRpcServer server(kj::heap<PelotonRpcServerImpl>(), address_.c_str());
+    LOG_DEBUG("Server listening on %s", address_.c_str());
     kj::NEVER_DONE.wait(server.getWaitScope());
   }
 
  private:
-  const char *address_;
+  std::string address_;
 };
 }  // namespace network
 }  // namespace peloton
