@@ -72,7 +72,7 @@ class PlanUtil {
   * @param DBName
   * @return vector of affected column ids with triplet format
   */
-  static const std::vector<col_triplet> GetAffectedColumns(
+  static const std::vector<col_triplet> GetIndexableColumns(
       catalog::CatalogCache &catalog_cache,
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
       const std::string &db_name);

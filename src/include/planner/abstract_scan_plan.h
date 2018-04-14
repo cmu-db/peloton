@@ -43,10 +43,6 @@ class AbstractScan : public AbstractPlan {
     return predicate_.get();
   }
 
-  expression::AbstractExpression *GetPredicateUnsafe() const {
-    return predicate_.get();
-  }
-
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   void GetOutputColumns(std::vector<oid_t> &columns) const override {
