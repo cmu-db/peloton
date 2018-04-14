@@ -181,7 +181,7 @@ DatabaseCatalogObject::GetTableObjects(const std::string &schema_name) {
     pg_table->GetTableObjects(txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PL_ASSERT(valid_table_objects);
+  PELOTON_ASSERT(valid_table_objects);
   std::vector<std::shared_ptr<TableCatalogObject>> result;
   for (auto it : table_objects_cache) {
     if (it.second->GetSchemaName() == schema_name) {

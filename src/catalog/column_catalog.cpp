@@ -228,7 +228,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
                       ->GetSystemCatalogs(database_oid)
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
-  PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);
   if (column_objects.size() != 0) return column_objects;
 

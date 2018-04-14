@@ -458,7 +458,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // insert into cache
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-    PL_ASSERT(database_object);
+    PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;
@@ -511,7 +511,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     // insert into cache
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-    PL_ASSERT(database_object);
+    PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;

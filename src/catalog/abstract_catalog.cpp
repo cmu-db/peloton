@@ -82,7 +82,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto catalog_table_name = create_plan->GetTableName();
   auto catalog_schema_name = create_plan->GetSchemaName();
   auto catalog_database_name = create_plan->GetDatabaseName();
-  PL_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
+  PELOTON_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
   // create catalog table
   Catalog::GetInstance()->CreateTable(
       catalog_database_name, catalog_schema_name, catalog_table_name,
@@ -330,7 +330,7 @@ bool AbstractCatalog::UpdateWithIndexScan(
   auto index = catalog_table_->GetIndex(index_offset);
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
-  PL_ASSERT(scan_values.size() == key_column_offsets.size());
+  PELOTON_ASSERT(scan_values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(scan_values.size(),
                                          ExpressionType::COMPARE_EQUAL);
   std::vector<expression::AbstractExpression *> runtime_keys;
@@ -356,7 +356,7 @@ bool AbstractCatalog::UpdateWithIndexScan(
     }
   }
 
-  PL_ASSERT(update_columns.size() == update_values.size());
+  PELOTON_ASSERT(update_columns.size() == update_values.size());
   for (size_t i = 0; i < update_values.size(); i++) {
     planner::DerivedAttribute update_attribute{
         new expression::ConstantValueExpression(update_values[i])};
