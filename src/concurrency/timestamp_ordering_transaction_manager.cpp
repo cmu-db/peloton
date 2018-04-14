@@ -13,6 +13,7 @@
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 #include <cinttypes>
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -764,7 +765,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
       database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
-      if (database_id != DEFAULT_DB_ID) {
+      if (database_id != CATALOG_DATABASE_OID) {
         break;
       }
     }
@@ -943,7 +944,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
       database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
-      if (database_id != DEFAULT_DB_ID) {
+      if (database_id != CATALOG_DATABASE_OID) {
         break;
       }
     }

@@ -23,10 +23,9 @@ namespace catalog {
 QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
                                          concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." QUERY_METRICS_CATALOG_NAME
+                          "." CATALOG_SCHEMA_NAME "." QUERY_METRICS_CATALOG_NAME
                           " ("
                           "query_name   VARCHAR NOT NULL PRIMARY KEY, "
-                          "database_oid INT NOT NULL, "
                           "num_params   INT NOT NULL, "
                           "param_types    VARBINARY, "
                           "param_formats  VARBINARY, "

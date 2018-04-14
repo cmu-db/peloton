@@ -47,11 +47,12 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
                                  std::string catalog_table_name,
                                  catalog::Schema *catalog_table_schema,
                                  storage::Database *pg_catalog) {
+  // set database_oid
+  database_oid = pg_catalog->GetOid();
   // Create catalog_table_
   catalog_table_ = storage::TableFactory::GetDataTable(
-      pg_catalog->GetOid(), catalog_table_oid, catalog_table_schema,
-      catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true);
-
+      database_oid, catalog_table_oid, catalog_table_schema, catalog_table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, true, false, true);
   // Add catalog_table_ into pg_catalog database
   pg_catalog->AddTable(catalog_table_, true);
 }
@@ -79,16 +80,17 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       optimizer::Optimizer().BuildPelotonPlanTree(parse_tree_list, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
+  auto catalog_schema_name = create_plan->GetSchemaName();
   auto catalog_database_name = create_plan->GetDatabaseName();
-
-  // Create catalog table
+  PL_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
+  // create catalog table
   Catalog::GetInstance()->CreateTable(
-      catalog_database_name, catalog_table_name,
+      catalog_database_name, catalog_schema_name, catalog_table_name,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
   // Get catalog table oid
   auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
-      catalog_database_name, catalog_table_name, txn);
+      catalog_database_name, catalog_schema_name, catalog_table_name, txn);
 
   // Set catalog_table_
   try {
@@ -128,11 +130,11 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
       std::make_shared<planner::InsertPlan>(catalog_table_, &columns, &values);
 
   executor::ExecutionResult this_p_status;
-  auto on_complete =
-      [&this_p_status](executor::ExecutionResult p_status,
-                       std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
-        this_p_status = p_status;
-      };
+  auto on_complete = [&this_p_status](
+                         executor::ExecutionResult p_status,
+                         std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
+    this_p_status = p_status;
+  };
 
   executor::PlanExecutor::ExecutePlan(node, txn, params, result_format,
                                       on_complete);

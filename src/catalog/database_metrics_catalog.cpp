@@ -28,7 +28,7 @@ DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
 DatabaseMetricsCatalog::DatabaseMetricsCatalog(
     concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." DATABASE_METRICS_CATALOG_NAME
+                      "." CATALOG_SCHEMA_NAME "." DATABASE_METRICS_CATALOG_NAME
                       " ("
                       "database_oid  INT NOT NULL, "
                       "txn_committed INT NOT NULL, "

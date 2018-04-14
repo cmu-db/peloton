@@ -16,8 +16,6 @@
 
 #include "catalog/catalog.h"
 #include "catalog/system_catalogs.h"
-#include "catalog/column_catalog.h"
-#include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
@@ -55,8 +53,9 @@ bool DatabaseCatalogObject::InsertTableObject(
     return false;
   }
 
-  if (table_name_cache.find(table_object->GetTableName()) !=
-      table_name_cache.end()) {
+  std::string key =
+      table_object->GetSchemaName() + "." + table_object->GetTableName();
+  if (table_name_cache.find(key) != table_name_cache.end()) {
     LOG_DEBUG("Table %s already exists in cache!",
               table_object->GetTableName().c_str());
     return false;
@@ -64,8 +63,7 @@ bool DatabaseCatalogObject::InsertTableObject(
 
   table_objects_cache.insert(
       std::make_pair(table_object->GetTableOid(), table_object));
-  table_name_cache.insert(
-      std::make_pair(table_object->GetTableName(), table_object));
+  table_name_cache.insert(std::make_pair(key, table_object));
   return true;
 }
 
@@ -83,7 +81,10 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
   auto table_object = it->second;
   PELOTON_ASSERT(table_object);
   table_objects_cache.erase(it);
-  table_name_cache.erase(table_object->GetTableName());
+  // erase from table name cache
+  std::string key =
+      table_object->GetSchemaName() + "." + table_object->GetTableName();
+  table_name_cache.erase(key);
   return true;
 }
 
@@ -91,11 +92,13 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
  * @param   table_name
  * @return  true if table_name is found and evicted; false if not found
  */
-bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
+bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name,
+                                             const std::string &schema_name) {
+  std::string key = schema_name + "." + table_name;
   // find table name from table name cache
-  auto it = table_name_cache.find(table_name);
+  auto it = table_name_cache.find(key);
   if (it == table_name_cache.end()) {
-    return false;  // table oid not found in cache
+    return false;  // table name not found in cache
   }
 
   auto table_object = it->second;
@@ -136,14 +139,19 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
 
 /* @brief   Get table catalog object from cache (cached_only == true),
             or all the way from storage (cached_only == false)
- * @param   table_oid     table oid of the requested table catalog object
+ * @param   table_name     table name of the requested table catalog object
+ * @param   schema_name    schema name of the requested table catalog object
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
-    const std::string &table_name, bool cached_only) {
-  auto it = table_name_cache.find(table_name);
-  if (it != table_name_cache.end()) return it->second;
+    const std::string &table_name, const std::string &schema_name,
+    bool cached_only) {
+  std::string key = schema_name + "." + table_name;
+  auto it = table_name_cache.find(key);
+  if (it != table_name_cache.end()) {
+    return it->second;
+  }
 
   if (cached_only) {
     // cache miss return empty object
@@ -153,8 +161,35 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
-    return pg_table->GetTableObject(table_name, txn);
+    return pg_table->GetTableObject(table_name, schema_name, txn);
   }
+}
+
+/*@brief    Get table catalog object from cache (cached_only == true),
+            or all the way from storage (cached_only == false)
+ * @param   schema_name
+ * @return  table catalog objects
+ */
+std::vector<std::shared_ptr<TableCatalogObject>>
+DatabaseCatalogObject::GetTableObjects(const std::string &schema_name) {
+  // read directly from pg_table
+  if (!valid_table_objects) {
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalogs(database_oid)
+                        ->GetTableCatalog();
+    // insert every table object into cache
+    pg_table->GetTableObjects(txn);
+  }
+  // make sure to check IsValidTableObjects() before getting table objects
+  PL_ASSERT(valid_table_objects);
+  std::vector<std::shared_ptr<TableCatalogObject>> result;
+  for (auto it : table_objects_cache) {
+    if (it.second->GetSchemaName() == schema_name) {
+      result.push_back(it.second);
+    }
+  }
+
+  return result;
 }
 
 /* @brief   Get table catalog object from cache (cached_only == true),
@@ -169,7 +204,7 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
-    return pg_table->GetTableObjects(database_oid, txn);
+    return pg_table->GetTableObjects(txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
   PELOTON_ASSERT(valid_table_objects);
@@ -196,12 +231,15 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
  * @return  index catalog object; if not found return null
  */
 std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
-    const std::string &index_name) {
+    const std::string &index_name, const std::string &schema_name) {
   for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
        ++it) {
     auto table_object = it->second;
-    auto index_object = table_object->GetIndexObject(index_name, true);
-    if (index_object) return index_object;
+    if (table_object != nullptr &&
+        table_object->GetSchemaName() == schema_name) {
+      auto index_object = table_object->GetIndexObject(index_name, true);
+      if (index_object) return index_object;
+    }
   }
   return nullptr;
 }

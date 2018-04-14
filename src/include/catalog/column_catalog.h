@@ -91,8 +91,6 @@ class ColumnCatalog : public AbstractCatalog {
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
 
  private:
-  oid_t database_oid;
-
   //===--------------------------------------------------------------------===//
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//

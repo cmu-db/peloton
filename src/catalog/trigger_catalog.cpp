@@ -25,7 +25,7 @@ namespace catalog {
 TriggerCatalog::TriggerCatalog(const std::string &database_name,
                                concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." TRIGGER_CATALOG_NAME
+                          "." CATALOG_SCHEMA_NAME "." TRIGGER_CATALOG_NAME
                           " ("
                           "oid          INT NOT NULL PRIMARY KEY, "
                           "tgrelid      INT NOT NULL, "
@@ -38,16 +38,17 @@ TriggerCatalog::TriggerCatalog(const std::string &database_name,
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      database_name, TRIGGER_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
       {ColumnId::TABLE_OID, ColumnId::TRIGGER_TYPE},
       TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      database_name, TRIGGER_CATALOG_NAME, {ColumnId::TABLE_OID},
-      TRIGGER_CATALOG_NAME "_skey1", false, IndexType::BWTREE, txn);
+      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
+      {ColumnId::TABLE_OID}, TRIGGER_CATALOG_NAME "_skey1", false,
+      IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      database_name, TRIGGER_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
       {ColumnId::TRIGGER_NAME, ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
 }
@@ -88,34 +89,6 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
-                                       const std::string &table_name,
-                                       const std::string &trigger_name,
-                                       concurrency::TransactionContext *txn) {
-  if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to drop trigger: %s",
-              table_name.c_str());
-    return ResultType::FAILURE;
-  }
-
-  // Checking if statement is valid
-  auto table_object =
-      Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
-  if (table_object == nullptr)
-    throw CatalogException("Drop Trigger: table " + table_name +
-                           " does not exist");
-
-  oid_t trigger_oid =
-      GetTriggerOid(trigger_name, table_object->GetTableOid(), txn);
-  if (trigger_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
-    return ResultType::FAILURE;
-  }
-
-  return DropTrigger(table_object->GetDatabaseOid(),
-                     table_object->GetTableOid(), trigger_name, txn);
-}
-
 ResultType TriggerCatalog::DropTrigger(const oid_t database_oid,
                                        const oid_t table_oid,
                                        const std::string &trigger_name,
@@ -147,9 +120,9 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
 
   oid_t trigger_oid = INVALID_OID;
   if (result_tiles->size() == 0) {
-    LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
+    // LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
   } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+    // LOG_INFO("size of the result tiles = %lu", result_tiles->size());
     PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
@@ -229,11 +202,11 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
-  if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
-  } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
-  }
+  // if (result_tiles == nullptr) {
+  //   LOG_INFO("no trigger on table %d", table_oid);
+  // } else {
+  //   LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+  // }
 
   // create the trigger list
   std::unique_ptr<trigger::TriggerList> new_trigger_list{

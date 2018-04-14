@@ -16,11 +16,13 @@
 // Schema: (column position: column_name)
 // 0: table_oid (pkey)
 // 1: table_name,
-// 2: database_oid(the database oid that this table belongs to)
+// 2: schema_name (the namespace name that this table belongs to)
+// 3: database_oid
+// 4: version_id: for fast ddl(alter table)
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid (unique & primary key)
-// 1: table_name (unique)
+// 1: table_name & schema_name(unique)
 // 2: database_oid (non-unique)
 //
 //===----------------------------------------------------------------------===//
@@ -73,6 +75,7 @@ class TableCatalogObject {
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
+  inline const std::string &GetSchemaName() { return schema_name; }
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
 
@@ -80,6 +83,7 @@ class TableCatalogObject {
   // member variables
   oid_t table_oid;
   std::string table_name;
+  std::string schema_name;
   oid_t database_oid;
   uint32_t version_id;
 
@@ -129,7 +133,8 @@ class TableCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertTable(oid_t table_oid, const std::string &table_name,
-                   oid_t database_oid, type::AbstractPool *pool,
+                   const std::string &schema_name, oid_t database_oid,
+                   type::AbstractPool *pool,
                    concurrency::TransactionContext *txn);
   bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
 
@@ -143,23 +148,22 @@ class TableCatalog : public AbstractCatalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, concurrency::TransactionContext *txn);
+      const std::string &table_name, const std::string &schema_name,
+      concurrency::TransactionContext *txn);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
-  GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
-
- private:
-  oid_t database_oid;
+  GetTableObjects(concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
   enum ColumnId {
     TABLE_OID = 0,
     TABLE_NAME = 1,
-    DATABASE_OID = 2,
-    VERSION_ID = 3,
+    SCHEMA_NAME = 2,
+    DATABASE_OID = 3,
+    VERSION_ID = 4,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4};
 
   enum IndexId {
     PRIMARY_KEY = 0,

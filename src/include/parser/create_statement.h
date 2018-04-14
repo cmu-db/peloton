@@ -13,11 +13,11 @@
 #pragma once
 
 #include <memory>
+#include "common/internal_types.h"
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
-#include "parser/sql_statement.h"
 #include "parser/select_statement.h"
-#include "common/internal_types.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -239,8 +239,6 @@ class CreateStatement : public TableRefStatement {
   std::vector<std::string> index_attrs;
   IndexType index_type;
   std::string index_name;
-
-  std::string schema_name;
 
   std::string view_name;
   std::unique_ptr<SelectStatement> view_query;

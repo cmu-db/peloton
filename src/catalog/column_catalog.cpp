@@ -16,8 +16,8 @@
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
-#include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -49,8 +49,6 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              concurrency::TransactionContext *txn)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
-  database_oid = pg_catalog->GetOid();
-
   // Add indexes for pg_attribute
   AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
            COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
@@ -191,8 +189,9 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
   // delete column from cache
-  auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
@@ -212,8 +211,9 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // delete columns from cache
-  auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllColumnObjects();
 
@@ -224,8 +224,9 @@ const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::TransactionContext *txn) {
   // try get from cache
-  auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);

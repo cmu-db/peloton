@@ -15,7 +15,7 @@
 //
 // Schema: (column offset: column_name)
 // 0: oid (pkey)
-// 1: tgrelid   : table_name
+// 1: tgrelid   : table_oid
 // 2: tgname    : trigger_name
 // 3: tgfoid    : function_oid
 // 4: tgtype    : trigger_type
@@ -60,12 +60,7 @@ class TriggerCatalog : public AbstractCatalog {
                      type::Value timestamp, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
-  ResultType DropTrigger(const std::string &database_name,
-                         const std::string &table_name,
-                         const std::string &trigger_name,
-                         concurrency::TransactionContext *txn);
-
-  ResultType DropTrigger(const oid_t oid_tdatabase_oid, const oid_t table_oid,
+  ResultType DropTrigger(const oid_t database_oid, const oid_t table_oid,
                          const std::string &trigger_name,
                          concurrency::TransactionContext *txn);
 

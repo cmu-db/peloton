@@ -15,11 +15,12 @@
 #include <mutex>
 
 #include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/trigger_catalog.h"
-#include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/schema_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/table_metrics_catalog.h"
+#include "catalog/trigger_catalog.h"
 
 namespace peloton {
 
@@ -28,8 +29,8 @@ class Database;
 }  // namespace storage
 
 namespace catalog {
-
 class DatabaseCatalog;
+class SchemaCatalog;
 class TableCatalog;
 class IndexCatalog;
 class ColumnCatalog;
@@ -52,36 +53,49 @@ class SystemCatalogs {
     }
     return pg_attribute;
   }
+
+  SchemaCatalog *GetSchemaCatalog() {
+    if (!pg_namespace) {
+      throw CatalogException("schema catalog has not been initialized");
+    }
+    return pg_namespace;
+  }
+
   TableCatalog *GetTableCatalog() {
     if (!pg_table) {
       throw CatalogException("Table catalog has not been initialized");
     }
     return pg_table;
   }
+
   IndexCatalog *GetIndexCatalog() {
     if (!pg_index) {
       throw CatalogException("Index catalog has not been initialized");
     }
     return pg_index;
   }
+
   TriggerCatalog *GetTriggerCatalog() {
     if (!pg_trigger) {
       throw CatalogException("Trigger catalog has not been initialized");
     }
     return pg_trigger;
   }
+
   TableMetricsCatalog *GetTableMetricsCatalog() {
     if (!pg_table_metrics) {
       throw CatalogException("Table metrics catalog has not been initialized");
     }
     return pg_table_metrics;
   }
+
   IndexMetricsCatalog *GetIndexMetricsCatalog() {
     if (!pg_index_metrics) {
       throw CatalogException("Index metrics catalog has not been initialized");
     }
     return pg_index_metrics;
   }
+
   QueryMetricsCatalog *GetQueryMetricsCatalog() {
     if (!pg_query_metrics) {
       throw CatalogException("Query metrics catalog has not been initialized");
@@ -91,6 +105,7 @@ class SystemCatalogs {
 
  private:
   ColumnCatalog *pg_attribute;
+  SchemaCatalog *pg_namespace;
   TableCatalog *pg_table;
   IndexCatalog *pg_index;
 

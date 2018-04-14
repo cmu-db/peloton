@@ -34,6 +34,8 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                     .GetAs<oid_t>()),
       table_name(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAME)
                      .ToString()),
+      schema_name(tile->GetValue(tupleId, TableCatalog::ColumnId::SCHEMA_NAME)
+                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       version_id(tile->GetValue(tupleId, TableCatalog::ColumnId::VERSION_ID)
@@ -315,11 +317,17 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
 }
 
 TableCatalog::TableCatalog(
-    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    storage::Database *database, UNUSED_ATTRIBUTE type::AbstractPool *pool,
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {
-  database_oid = pg_catalog->GetOid();
+                      InitializeSchema().release(), database) {
+  // Add indexes for pg_namespace
+  AddIndex({0}, TABLE_CATALOG_PKEY_OID, TABLE_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({1, 2}, TABLE_CATALOG_SKEY0_OID, TABLE_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({3}, TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1",
+           IndexConstraintType::DEFAULT);
 }
 
 TableCatalog::~TableCatalog() {}
@@ -344,6 +352,11 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
+  auto schema_name_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "schema_name", false);
+  schema_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto database_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
@@ -356,9 +369,9 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   version_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_catalog_schema(
-      new catalog::Schema({table_id_column, table_name_column,
-                           database_id_column, version_id_column}));
+  std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
+      {table_id_column, table_name_column, schema_name_column,
+       database_id_column, version_id_column}));
 
   return table_catalog_schema;
 }
@@ -371,6 +384,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  * @return  Whether insertion is Successful
  */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
+                               const std::string &schema_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
   // Create the tuple first
@@ -379,13 +393,15 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
-  auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
-  auto val3 = type::ValueFactory::GetIntegerValue(0);
+  auto val2 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
+  auto val3 = type::ValueFactory::GetIntegerValue(database_oid);
+  auto val4 = type::ValueFactory::GetIntegerValue(0);
 
   tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
-  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
-  tuple->SetValue(TableCatalog::ColumnId::VERSION_ID, val3, pool);
+  tuple->SetValue(TableCatalog::ColumnId::SCHEMA_NAME, val2, pool);
+  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val3, pool);
+  tuple->SetValue(TableCatalog::ColumnId::VERSION_ID, val4, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -458,19 +474,22 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 /*@brief   read table catalog object from pg_table using table name + database
  * oid
  * @param   table_name
+ * @param   schema_name
  * @param   database_oid
  * @param   txn     TransactionContext
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, concurrency::TransactionContext *txn) {
+    const std::string &table_name, const std::string &schema_name,
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, true);
+    auto table_object =
+        database_object->GetTableObject(table_name, schema_name, true);
     if (table_object) return table_object;
   }
 
@@ -480,6 +499,8 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -507,8 +528,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * @return  table catalog objects
  */
 std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
-TableCatalog::GetTableObjects(oid_t database_oid,
-                              concurrency::TransactionContext *txn) {
+TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

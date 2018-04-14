@@ -49,6 +49,10 @@ bool DropExecutor::DExecute() {
       result = DropDatabase(node, current_txn);
       break;
     }
+    case DropType::SCHEMA: {
+      result = DropSchema(node, current_txn);
+      break;
+    }
     case DropType::TABLE: {
       result = DropTable(node, current_txn);
       break;
@@ -72,7 +76,7 @@ bool DropExecutor::DExecute() {
 
 bool DropExecutor::DropDatabase(const planner::DropPlan &node,
                                 concurrency::TransactionContext *txn) {
-  auto database_name = node.GetDatabaseName();
+  std::string database_name = node.GetDatabaseName();
 
   if (node.IsMissing()) {
     try {
@@ -109,15 +113,45 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
   return false;
 }
 
+bool DropExecutor::DropSchema(const planner::DropPlan &node,
+                              concurrency::TransactionContext *txn) {
+  std::string database_name = node.GetDatabaseName();
+  std::string schema_name = node.GetSchemaName();
+
+  ResultType result = catalog::Catalog::GetInstance()->DropSchema(
+      database_name, schema_name, txn);
+  txn->SetResult(result);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_DEBUG("Dropping schema succeeded!");
+    // add dropped table into StatementCacheManager
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      std::set<oid_t> table_ids;
+      auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
+          database_name, txn);
+      auto table_objects = database_object->GetTableObjects(schema_name);
+      for (int i = 0; i < (int)table_objects.size(); i++) {
+        table_ids.insert(table_objects[i]->GetTableOid());
+      }
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOids(
+          table_ids);
+    }
+  } else {
+    LOG_DEBUG("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
+  return false;
+}
+
 bool DropExecutor::DropTable(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
-  auto database_name = node.GetDatabaseName();
-  auto table_name = node.GetTableName();
+  std::string database_name = node.GetDatabaseName();
+  std::string schema_name = node.GetSchemaName();
+  std::string table_name = node.GetTableName();
 
   if (node.IsMissing()) {
     try {
       auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-          database_name, table_name, txn);
+          database_name, schema_name, table_name, txn);
     } catch (CatalogException &e) {
       LOG_TRACE("Table %s does not exist.", table_name.c_str());
       return false;
@@ -125,16 +159,17 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   }
 
   ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      database_name, table_name, txn);
+      database_name, schema_name, table_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
-      oid_t table_id = catalog::Catalog::GetInstance()
-                           ->GetTableObject(database_name, table_name, txn)
-                           ->GetTableOid();
+      oid_t table_id =
+          catalog::Catalog::GetInstance()
+              ->GetTableObject(database_name, schema_name, table_name, txn)
+              ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
     }
@@ -146,28 +181,26 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
 bool DropExecutor::DropTrigger(const planner::DropPlan &node,
                                concurrency::TransactionContext *txn) {
-  auto database_name = node.GetDatabaseName();
-  auto table_name = node.GetTableName();
-  LOG_DEBUG("database name: %s", database_name.c_str());
-  LOG_DEBUG("table name: %s", table_name.c_str());
+  std::string database_name = node.GetDatabaseName();
+  std::string schema_name = node.GetSchemaName();
+  std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, table_name, txn);
-
+      database_name, schema_name, table_name, txn);
+  // drop trigger
   ResultType result =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())
           ->GetTriggerCatalog()
-          ->DropTrigger(database_name, table_name, trigger_name, txn);
+          ->DropTrigger(table_object->GetDatabaseOid(),
+                        table_object->GetTableOid(), trigger_name, txn);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping trigger succeeded!");
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
-      oid_t table_id = catalog::Catalog::GetInstance()
-                           ->GetTableObject(database_name, table_name, txn)
-                           ->GetTableOid();
+      oid_t table_id = table_object->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
     }
@@ -184,27 +217,34 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
+  std::string index_name = node.GetIndexName();
+  std::string schema_name = node.GetSchemaName();
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       node.GetDatabaseName(), txn);
+  if (database_object == nullptr) {
+    throw CatalogException("Index name " + index_name + " cannot be found");
+  }
 
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
-  std::string index_name = node.GetIndexName();
-  auto index_object = pg_index->GetIndexObject(index_name, txn);
-
+  auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
+  if (index_object == nullptr) {
+    throw CatalogException("Can't find index " + schema_name + "." +
+                           index_name + " to drop");
+  }
+  // invoke directly using oid
   ResultType result = catalog::Catalog::GetInstance()->DropIndex(
       database_object->GetDatabaseOid(), index_object->GetIndexOid(), txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping Index Succeeded! Index name: %s", index_name.c_str());
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id = index_object->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
     }
-    LOG_TRACE("Dropping Index Succeeded! Index name: %s",
-              node.GetIndexName().c_str());
   } else {
     LOG_TRACE("Dropping Index Failed!");
   }

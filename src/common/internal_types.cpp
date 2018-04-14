@@ -329,6 +329,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::TRIGGER: {
       return "TRIGGER";
     }
+    case CreateType::SCHEMA: {
+      return "SCHEMA";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for CreateType value '%d'",
@@ -352,6 +355,8 @@ CreateType StringToCreateType(const std::string &str) {
     return CreateType::CONSTRAINT;
   } else if (upper_str == "TRIGGER") {
     return CreateType::TRIGGER;
+  } else if (upper_str == "SCHEMA") {
+    return CreateType::SCHEMA;
   } else {
     throw ConversionException(StringUtil::Format(
         "No CreateType conversion from string '%s'", upper_str.c_str()));
@@ -383,6 +388,9 @@ std::string DropTypeToString(DropType type) {
     case DropType::TRIGGER: {
       return "TRIGGER";
     }
+    case DropType::SCHEMA: {
+      return "SCHEMA";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for DropType value '%d'",
@@ -406,6 +414,8 @@ DropType StringToDropType(const std::string &str) {
     return DropType::CONSTRAINT;
   } else if (upper_str == "TRIGGER") {
     return DropType::TRIGGER;
+  } else if (upper_str == "SCHEMA") {
+    return DropType::SCHEMA;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DropType conversion from string '%s'", upper_str.c_str()));

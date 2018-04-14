@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
 #include "common/sql_node_visitor.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -40,13 +40,6 @@ class DropStatement : public TableRefStatement {
         missing_(false),
         cascade_(false) {}
 
-  DropStatement(EntityType type, std::string table_name_of_trigger,
-                std::string trigger_name)
-      : TableRefStatement(StatementType::DROP),
-        type_(type),
-        table_name_of_trigger_(table_name_of_trigger),
-        trigger_name_(trigger_name) {}
-
   EntityType GetDropType() { return type_; }
 
   bool GetMissing() { return missing_; }
@@ -69,12 +62,6 @@ class DropStatement : public TableRefStatement {
 
   void SetPrepStmt(char *prep_stmt) { prep_stmt_ = prep_stmt; }
 
-  std::string &GetSchemaName() { return schema_name_; }
-
-  void SetSchemaName(std::string &schema_name) { schema_name_ = schema_name; }
-
-  void SetSchemaName(char *schema_name) { schema_name_ = schema_name; }
-
   std::string &GetTriggerName() { return trigger_name_; }
 
   void SetTriggerName(std::string &trigger_name) {
@@ -83,15 +70,7 @@ class DropStatement : public TableRefStatement {
 
   void SetTriggerName(char *trigger_name) { trigger_name_ = trigger_name; }
 
-  std::string &GetTriggerTableName() { return table_name_of_trigger_; }
-
-  void SetTriggerTableName(std::string &table_name_of_trigger) {
-    table_name_of_trigger_ = table_name_of_trigger;
-  }
-
-  void SetTriggerTableName(char *table_name_of_trigger) {
-    table_name_of_trigger_ = table_name_of_trigger;
-  }
+  std::string GetTriggerTableName() { return GetTableName(); }
 
   virtual ~DropStatement() {}
 
@@ -116,11 +95,7 @@ class DropStatement : public TableRefStatement {
   std::string prep_stmt_;
 
   // drop trigger
-  std::string table_name_of_trigger_;
   std::string trigger_name_;
-
-  // drop schema
-  std::string schema_name_;
 };
 
 }  // namespace parser
