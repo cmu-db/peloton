@@ -68,6 +68,10 @@ class OldEngineStringFunctions {
   // Upper, Lower
   static type::Value Upper(const std::vector<type::Value> &args);
   static type::Value Lower(const std::vector<type::Value> &args);
+
+  // Sequence-related
+  static type::Value Nextval(const std::vector<type::Value> &args);
+  static type::Value Currval(const std::vector<type::Value> &args);
 };
 
 }  // namespace function

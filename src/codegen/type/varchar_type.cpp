@@ -187,6 +187,46 @@ struct Trim : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Nextval
+struct Nextval : public TypeSystem::UnaryOperatorHandleNull {
+    bool SupportsType(const Type &type) const override {
+      return type.GetSqlType() == Varchar::Instance();
+    }
+
+    Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+      return Integer::Instance();
+    }
+
+    Value Impl(CodeGen &codegen, const Value &val,
+               const TypeSystem::InvocationContext &ctx) const override {
+      llvm::Value *executor_ctx = ctx.executor_context;
+      llvm::Value *raw_ret =
+              codegen.Call(StringFunctionsProxy::Nextval,
+                           {executor_ctx, val.GetValue()});
+      return Value{Integer::Instance(), raw_ret};
+    }
+};
+
+// Currval
+struct Currval : public TypeSystem::UnaryOperatorHandleNull {
+    bool SupportsType(const Type &type) const override {
+      return type.GetSqlType() == Varchar::Instance();
+    }
+
+    Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+      return Integer::Instance();
+    }
+
+    Value Impl(CodeGen &codegen, const Value &val,
+               const TypeSystem::InvocationContext &ctx) const override {
+      llvm::Value *executor_ctx = ctx.executor_context;
+      llvm::Value *raw_ret =
+              codegen.Call(StringFunctionsProxy::Currval,
+                           {executor_ctx, val.GetValue()});
+      return Value{Integer::Instance(), raw_ret};
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Binary operators
@@ -536,10 +576,14 @@ std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareVarchar}};
 Ascii kAscii;
 Length kLength;
 Trim kTrim;
+Nextval kNextval;
+Currval kCurrval;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Ascii, kAscii},
     {OperatorId::Length, kLength},
-    {OperatorId::Trim, kTrim}};
+    {OperatorId::Trim, kTrim},
+    {OperatorId::Nextval, kNextval},
+    {OperatorId::Currval, kCurrval}};
 
 // Binary operations
 Like kLike;

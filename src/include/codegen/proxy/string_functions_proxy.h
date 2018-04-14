@@ -31,6 +31,10 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(RTrim);
   DECLARE_METHOD(Substr);
   DECLARE_METHOD(Repeat);
+
+  // Sequence-related functions
+  DECLARE_METHOD(Nextval);
+  DECLARE_METHOD(Currval);
 };
 
 PROXY(StrWithLen) {
