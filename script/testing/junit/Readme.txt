@@ -1,39 +1,72 @@
 
-
 This directory contains tests using Junit4 and JDBC.
-
-Note:
-- These tests are not yet integrated into the continuous integration
-  process (i.e. Travis or Jenkins). They will be integrated as soon
-  as feasible.
-
-  In the meantime, run the tests manually. Instructions follow.
 
 Installation and pre-requisites
 -------------------------------
 You'll need
 - java JDK or JRE
-
-Other than that, no explicit installation is required.
+- ant
 
 The necessary Java libraries supporting these tests are included in the
 lib directory.
 
+Installing ant
+--------------
+
+On Ubuntu:
+sudo apt-get install ant
+
 Running the tests
 -----------------
 
+The tests are integrated into Travis and Jenkins. They may also be run
+manually. There are several different ways in which the tests may
+be run.
+
+One step run
+------------
+
+Run using the python script. This will compile the tests, run peloton
+(provided it has been built in this development tree), and run the tests.
+
+./run_junit.py
+
+
+Manual run with the ant junit runner
+------------------------------------
+
 1. Compile the tests.
-   make
+   ant compile
 
 2. To run the tests, first start Peloton manually in a separate shell, e.g. 
    ./peloton
 
 3. Run the tests, (from this directory):
-   make test
+   ant test
+
+Manual run with the JUnit console runner
+----------------------------------------
+This method provides clearer, human friendly output.
+
+This requires Java 8 or later.
+This is not installed as default on Ubuntu 14.04. It is on Ubuntu 16.04 and
+later.
+
+1. Compile the tests.
+   ant compile
+
+2. To run the tests, first start Peloton manually in a separate shell, e.g. 
+   ./peloton
+
+3. Run the tests, (from this directory):
+   ant testconsole
 
 Adding new tests
 ----------------
-Add the tests to the Makefile for compilation and execution.
+
+No changes are necessary to the antfile (build.xml). Ant compiles all
+java files present in this directory. The test runners find all compiled
+tests and run them.
 
 Code structure for tests
 ------------------------
@@ -62,17 +95,8 @@ Code structure for tests
   //@Test.
 
 
-Alternatives
-------------
+Other tips
+----------
+ant -p
 
-If the JUnit console output style is not to your taste when running the
-tests, they can be run more directly using the Junit runner. Copy the following
-code into a file, and invoke it from this directory, e.g.
-   bash run_tests.sh
-
-# construct the class path
-CP=".:lib/hamcrest-core-1.3.jar:lib/postgresql-9.4.1209.jre6.jar:lib/junit-4.12.jar"
-
-# execute the InsertPSTest class. More than one test class may be
-# supplied on the command line
-java -cp $CP org.junit.runner.JUnitCore InsertPSTest
+will show available targets

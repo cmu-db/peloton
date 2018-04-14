@@ -161,8 +161,9 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libtool \
         make \
         g++ \
-        unzip \
-        libeigen3-dev
+        libeigen3-dev \
+    	ant \
+        unzip
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
