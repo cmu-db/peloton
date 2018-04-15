@@ -39,7 +39,7 @@ bool HybridScanExecutor::DInit() {
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
 
   table_ = node.GetTable();
-  index_ = node.GetDataIndex();
+  index_ = node.GetIndexId();
   type_ = node.GetHybridType();
   PELOTON_ASSERT(table_ != nullptr);
 
@@ -57,7 +57,7 @@ bool HybridScanExecutor::DInit() {
   // INDEX SCAN
   else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
-    index_ = node.GetIndex();
+    index_ = node.GetIndexId();
 
     result_itr_ = START_OID;
     index_done_ = false;

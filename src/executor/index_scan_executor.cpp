@@ -58,7 +58,7 @@ bool IndexScanExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
-  index_ = node.GetIndex();
+  index_ = node.GetIndexId();
   PELOTON_ASSERT(index_ != nullptr);
 
   index_predicate_ = node.GetIndexPredicate();
