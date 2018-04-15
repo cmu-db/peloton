@@ -209,8 +209,8 @@ class Pipeline {
 
  private:
   /// Initialize the state for this pipeline
-  void InitializePipeline(PipelineContext &pipeline_context);
-  void CompletePipeline(PipelineContext &pipeline_context);
+  void InitializePipeline(PipelineContext &pipeline_ctx);
+  void CompletePipeline(PipelineContext &pipeline_ctx);
   void Run(llvm::Function *dispatch_func,
            const std::vector<llvm::Value *> &dispatch_args,
            const std::vector<llvm::Type *> &pipeline_arg_types,

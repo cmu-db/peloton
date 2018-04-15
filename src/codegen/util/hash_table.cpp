@@ -101,9 +101,11 @@ HashTable::HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
   // twice the number of elements.
   directory_size_ = capacity_ * 2;
   directory_mask_ = directory_size_ - 1;
-  directory_ = static_cast<Entry **>(
-      memory_.Allocate(sizeof(Entry *) * directory_size_));
-  PELOTON_MEMSET(directory_, 0, directory_size_);
+
+  uint64_t alloc_size = sizeof(Entry *) * directory_size_;
+  directory_ = static_cast<Entry **>(memory_.Allocate(alloc_size));
+
+  PELOTON_MEMSET(directory_, 0, alloc_size);
 }
 
 HashTable::~HashTable() {
@@ -181,16 +183,14 @@ void HashTable::BuildLazy() {
 
   directory_size_ = NextPowerOf2(num_elems_) * 2;
   directory_mask_ = directory_size_ - 1;
-  directory_ = static_cast<Entry **>(
-      memory_.Allocate(sizeof(Entry *) * directory_size_));
-  PELOTON_MEMSET(directory_, 0, directory_size_);
+
+  uint64_t alloc_size = sizeof(Entry *) * directory_size_;
+  directory_ = static_cast<Entry **>(memory_.Allocate(alloc_size));
+
+  PELOTON_MEMSET(directory_, 0, alloc_size);
 
   // Now insert all elements into the directory
   while (head != nullptr) {
-    // Compute the target index
-    // Stash the next linked-list entry into a temporary variable
-    // Connect the current entry into the bucket chain
-    // Move along
     uint64_t index = head->hash & directory_mask_;
     Entry *next = head->next;
     head->next = directory_[index];

@@ -109,7 +109,7 @@ const std::string SettingsManager::GetInfo() const {
   info.append(StringUtil::Format("%28s:   %-28s\n", "Code-generation", GetBool(SettingId::codegen) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Print IR Statistics", GetBool(SettingId::print_ir_stats) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Dump IR", GetBool(SettingId::dump_ir) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Optimization Timeout", GetInt(SettingId::task_execution_timeout)));
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Optimization Timeout", GetInt(SettingId::task_execution_timeout)));
   info.append(StringUtil::Format("%28s:   %-28i\n", "Number of GC threads", GetInt(SettingId::gc_num_threads)));
   // clang-format on
 

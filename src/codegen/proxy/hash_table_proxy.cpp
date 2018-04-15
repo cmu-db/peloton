@@ -38,6 +38,8 @@ llvm::Type *EntryProxy::GetType(CodeGen &codegen) {
   entry_type->setBody(elements, /*is_packed*/ false);
   return entry_type;
 }
+DEFINE_MEMBER(dummy, Entry, hash);
+DEFINE_MEMBER(dummy, Entry, next);
 
 DEFINE_TYPE(HashTable, "peloton::HashTable", memory, directory, size, mask,
             entry_buffer, num_elems, capacity, stats);

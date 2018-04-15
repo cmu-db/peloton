@@ -20,7 +20,7 @@ namespace codegen {
 
 /// The proxy for HashTable::Entry
 PROXY(Entry) {
-  DECLARE_MEMBER(0, uint64_t, hash_val);
+  DECLARE_MEMBER(0, uint64_t, hash);
   DECLARE_MEMBER(1, util::HashTable::Entry *, next);
   DECLARE_TYPE;
 };

@@ -16,6 +16,7 @@
 #include "codegen/lang/if.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
+#include "codegen/proxy/hash_table_proxy.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
@@ -25,16 +26,103 @@ namespace codegen {
 
 std::atomic<bool> HashJoinTranslator::kUsePrefetch{false};
 
-//===----------------------------------------------------------------------===//
-// HASH JOIN TRANSLATOR
-//===----------------------------------------------------------------------===//
+/**
+ * The callback used when we probe the hash table with right-side tuples during
+ * the probe phase of the join.
+ */
+class HashJoinTranslator::ProbeRight : public HashTable::IterateCallback {
+ public:
+  /**
+   * Constructor.
+   *
+   * @param join_translator The translator reference
+   * @param context The context reference
+   * @param row A reference to the row from the right side of the join
+   * @param right_key A reference to the key from the right side of the join
+   */
+  ProbeRight(const HashJoinTranslator &join_translator,
+             ConsumerContext &context, RowBatch::Row &row,
+             const std::vector<codegen::Value> &right_key);
 
-// Constructor
+  /**
+   * The callback function called to process each matching tuple found in the
+   * built hash table. The key is provided directly; the memory area where the
+   * value is serialized is also provided.
+   *
+   * @param codegen The codegen instance
+   * @param key The key stored in the tabble
+   * @param data_area Memory space where the value is stored
+   */
+  void ProcessEntry(CodeGen &codegen, const std::vector<codegen::Value> &key,
+                    llvm::Value *data_area) const override;
+
+ private:
+  // The translator (we need lots of its state)
+  const HashJoinTranslator &join_translator_;
+
+  // The context and row
+  ConsumerContext &context_;
+  RowBatch::Row &row_;
+
+  // The value of the key used during the probe
+  const std::vector<codegen::Value> &right_key_;
+};
+
+/**
+ * The callback functor used when inserting tuples into the hashtable during
+ * the build phase of the join.
+ */
+class HashJoinTranslator::InsertLeft : public HashTable::InsertCallback {
+ public:
+  /**
+   * Constructor
+   *
+   * @param storage The storage format to serialize values into the table
+   * @param values The actual values to store in the table
+   */
+  InsertLeft(const CompactStorage &storage,
+             const std::vector<codegen::Value> &values)
+      : storage_(storage), values_(values) {}
+
+  /**
+   * Callback used to serialize a set of values into the table.
+   *
+   * @param codegen The codegen instance
+   * @param data_space Memory space where the value can be stored.
+   */
+  void StoreValue(CodeGen &codegen, llvm::Value *space) const override {
+    storage_.StoreValues(codegen, space, values_);
+  }
+
+  /**
+   * Return the size of the value to store in the table.
+   *
+   * @param codegen The codegen instance
+   * @return The number of bytes needed to store the value
+   */
+  llvm::Value *GetValueSize(CodeGen &codegen) const override {
+    return codegen.Const32(storage_.MaxStorageSize());
+  }
+
+ private:
+  // The storage format of the values in the hash table
+  const CompactStorage &storage_;
+
+  // The attribute values from the left side
+  const std::vector<codegen::Value> &values_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Hash Join Translator
+///
+////////////////////////////////////////////////////////////////////////////////
+
 HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
                                        CompilationContext &context,
                                        Pipeline &pipeline)
     : OperatorTranslator(join, context, pipeline),
-      left_pipeline_(this, Pipeline::Parallelism::Serial) {
+      left_pipeline_(this, Pipeline::Parallelism::Flexible) {
   CodeGen &codegen = GetCodeGen();
   QueryState &query_state = context.GetQueryState();
 
@@ -48,7 +136,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 
   // Allocate state for our hash table and bloom filter
   hash_table_id_ =
-      query_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
+      query_state.RegisterState("join", HashTableProxy::GetType(codegen));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     LOG_DEBUG("Building HashJoin using BloomFilter ...");
     bloom_filter_id_ = query_state.RegisterState(
@@ -92,7 +180,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Make sure the key types are equal
   PELOTON_ASSERT(left_key_type.size() == right_key_type.size());
   PELOTON_ASSERT(std::equal(left_key_type.begin(), left_key_type.end(),
-                       right_key_type.begin()));
+                            right_key_type.begin()));
 
   // Collect (unique) attributes that are stored in hash-table
   std::unordered_set<const planner::AttributeInfo *> left_key_ais;
@@ -127,12 +215,13 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 
   // Create the hash table
   hash_table_ =
-      OAHashTable{codegen, left_key_type, left_value_storage_.MaxStorageSize()};
+      HashTable{codegen, left_key_type, left_value_storage_.MaxStorageSize()};
 }
 
 // Initialize the hash-table instance
 void HashJoinTranslator::InitializeQueryState() {
-  hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  hash_table_.Init(GetCodeGen(), GetExecutorContextPtr(),
+                   LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_),
                        EstimateCardinalityLeft());
@@ -152,6 +241,8 @@ void HashJoinTranslator::Produce() const {
 
 void HashJoinTranslator::Consume(ConsumerContext &context,
                                  RowBatch &batch) const {
+  OperatorTranslator::Consume(context, batch);
+#if 0
   if (!UsePrefetching()) {
     OperatorTranslator::Consume(context, batch);
     return;
@@ -239,6 +330,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
 
   batch.VectorizedIterate(codegen, OAHashTable::kDefaultGroupPrefetchSize,
                           group_prefetch);
+#endif
 }
 
 // Consume the tuples produced by a child operator
@@ -265,19 +357,69 @@ void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
 
   // If the hash value is available, use it
   llvm::Value *hash = nullptr;
+#if 0
   if (row.HasAttribute(&OAHashTable::kHashAI)) {
     codegen::Value hash_val = row.DeriveValue(codegen, &OAHashTable::kHashAI);
     hash = hash_val.GetValue();
   }
+#endif
 
   // Insert tuples from the left side into the hash table
   InsertLeft insert_left{left_value_storage_, vals};
-  hash_table_.Insert(codegen, LoadStatePtr(hash_table_id_), hash, key,
-                     insert_left);
+  hash_table_.InsertLazy(codegen, LoadStatePtr(hash_table_id_), hash, key,
+                         insert_left);
 
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     // Insert tuples into the bloom filter if enabled
     bloom_filter_.Add(codegen, LoadStatePtr(bloom_filter_id_), key);
+  }
+}
+
+void HashJoinTranslator::RegisterPipelineState(PipelineContext &context) {
+  if (context.IsParallel()) {
+    hash_table_tl_id_ =
+        context.RegisterState("localHT", HashTableProxy::GetType(GetCodeGen()));
+  }
+}
+
+void HashJoinTranslator::InitializePipelineState(PipelineContext &context) {
+  if (context.IsParallel() && IsLeftPipeline(context.GetPipeline())) {
+    CodeGen &codegen = GetCodeGen();
+    hash_table_.Init(codegen, GetExecutorContextPtr(),
+                     context.LoadStatePtr(codegen, hash_table_tl_id_));
+  }
+}
+
+void HashJoinTranslator::FinishPipeline(PipelineContext &context) {
+  // We only need to do post-pipeline processing work in the left pipeline
+  if (context.GetPipeline() != left_pipeline_) {
+    return;
+  }
+
+  llvm::Value *global_ht_ptr = LoadStatePtr(hash_table_id_);
+
+  if (!context.IsParallel()) {
+    // Build the hash table over the lazily inserted tuples
+    hash_table_.BuildLazy(GetCodeGen(), global_ht_ptr);
+  } else {
+    CodeGen &codegen = GetCodeGen();
+
+    llvm::Value *local_ht_ptr =
+        context.LoadStatePtr(codegen, hash_table_tl_id_);
+
+    // First size the global hash table
+    hash_table_.ReserveLazy(codegen, global_ht_ptr, GetThreadStatesPtr());
+
+    // Then merge each local table in parallel
+    hash_table_.MergeLazyUnfinished(codegen, global_ht_ptr, local_ht_ptr);
+  }
+}
+
+void HashJoinTranslator::TearDownPipelineState(PipelineContext &context) {
+  if (context.IsParallel() && IsLeftPipeline(context.GetPipeline())) {
+    CodeGen &codegen = GetCodeGen();
+    auto *local_ht_ptr = context.LoadStatePtr(codegen, hash_table_tl_id_);
+    hash_table_.Destroy(codegen, local_ht_ptr);
   }
 }
 
@@ -367,9 +509,11 @@ const planner::HashJoinPlan &HashJoinTranslator::GetJoinPlan() const {
   return GetPlanAs<planner::HashJoinPlan>();
 }
 
-//===----------------------------------------------------------------------===//
-// PROBE RIGHT
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// ProbeRight
+///
+////////////////////////////////////////////////////////////////////////////////
 
 HashJoinTranslator::ProbeRight::ProbeRight(
     const HashJoinTranslator &join_translator, ConsumerContext &context,
@@ -379,9 +523,6 @@ HashJoinTranslator::ProbeRight::ProbeRight(
       row_(row),
       right_key_(right_key) {}
 
-// The callback invoked when iterating the hash table.  The key and value of
-// the current hash table entry are provided as parameters.  We add these to
-// the context and pass it up the tree.
 void HashJoinTranslator::ProbeRight::ProcessEntry(
     CodeGen &codegen, const std::vector<codegen::Value> &key,
     llvm::Value *data_area) const {
@@ -419,7 +560,7 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
     auto valid_row = row_.DeriveValue(codegen, *predicate);
-    lang::If is_valid_row(codegen, valid_row);
+    lang::If is_valid_row{codegen, valid_row};
     {
       // Send row up to the parent
       context_.Consume(row_);
@@ -429,25 +570,6 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
     // Send the row up to the parent
     context_.Consume(row_);
   }
-}
-
-//===----------------------------------------------------------------------===//
-// INSERT LEFT
-//===----------------------------------------------------------------------===//
-
-HashJoinTranslator::InsertLeft::InsertLeft(
-    const CompactStorage &storage, const std::vector<codegen::Value> &values)
-    : storage_(storage), values_(values) {}
-
-// Store the attributes from the left-side input into the provided storage space
-void HashJoinTranslator::InsertLeft::StoreValue(CodeGen &codegen,
-                                                llvm::Value *space) const {
-  storage_.StoreValues(codegen, space, values_);
-}
-
-llvm::Value *HashJoinTranslator::InsertLeft::GetValueSize(
-    CodeGen &codegen) const {
-  return codegen.Const32(storage_.MaxStorageSize());
 }
 
 }  // namespace codegen

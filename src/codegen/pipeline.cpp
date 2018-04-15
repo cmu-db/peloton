@@ -310,11 +310,11 @@ std::string Pipeline::ConstructPipelineName() const {
   return StringUtil::Join(parts, "_");
 }
 
-void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
-  if (!pipeline_context.IsParallel()) {
+void Pipeline::InitializePipeline(PipelineContext &pipeline_ctx) {
+  if (!pipeline_ctx.IsParallel()) {
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
-      (*riter)->InitializePipelineState(pipeline_context);
+      (*riter)->InitializePipelineState(pipeline_ctx);
     }
     // That's it
     return;
@@ -323,20 +323,20 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
   // Let each operator in the pipeline declare state it needs
   for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend(); riter != rend;
        ++riter) {
-    (*riter)->RegisterPipelineState(pipeline_context);
+    (*riter)->RegisterPipelineState(pipeline_ctx);
   }
 
   // If we're the last pipeline, let the consumer know
   ExecutionConsumer &consumer = compilation_ctx_.GetExecutionConsumer();
   if (GetCompilationContext().IsLastPipeline(*this)) {
-    consumer.RegisterPipelineState(pipeline_context);
+    consumer.RegisterPipelineState(pipeline_ctx);
   }
 
   // Finalize thread state type
   CodeGen &codegen = compilation_ctx_.GetCodeGen();
-  pipeline_context.FinalizeState(codegen);
-  auto thread_state_size = static_cast<uint32_t>(
-      codegen.SizeOf(pipeline_context.GetThreadStateType()));
+  pipeline_ctx.FinalizeState(codegen);
+  auto thread_state_size =
+      static_cast<uint32_t>(codegen.SizeOf(pipeline_ctx.GetThreadStateType()));
 
   // Setup thread states
   llvm::Value *thread_states = consumer.GetThreadStatesPtr(compilation_ctx_);
@@ -352,31 +352,34 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
   auto *ret_type = codegen.VoidType();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state.GetType()->getPointerTo()},
-      {"threadState", pipeline_context.GetThreadStateType()->getPointerTo()}};
+      {"threadState", pipeline_ctx.GetThreadStateType()->getPointerTo()}};
 
   FunctionDeclaration init_decl(cc, func_name, visibility, ret_type, args);
   FunctionBuilder init_func(cc, init_decl);
   {
-    PipelineContext::ScopedStateAccess state_access(
-        pipeline_context, init_func.GetArgumentByPosition(1));
+    PipelineContext::ScopedStateAccess state_access{
+        pipeline_ctx, init_func.GetArgumentByPosition(1)};
+
     // Set initialized flag
-    pipeline_context.MarkInitialized(codegen);
+    pipeline_ctx.MarkInitialized(codegen);
+
     // Let each translator initialize
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
-      (*riter)->InitializePipelineState(pipeline_context);
+      (*riter)->InitializePipelineState(pipeline_ctx);
     }
+
     // That's it
     init_func.ReturnAndFinish();
   }
-  pipeline_context.thread_init_func_ = init_func.GetFunction();
+  pipeline_ctx.thread_init_func_ = init_func.GetFunction();
 }
 
-void Pipeline::CompletePipeline(PipelineContext &pipeline_context) {
+void Pipeline::CompletePipeline(PipelineContext &pipeline_ctx) {
   // Let operators in the pipeline do some post-pipeline work
   for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend(); riter != rend;
        ++riter) {
-    (*riter)->FinishPipeline(pipeline_context);
+    (*riter)->FinishPipeline(pipeline_ctx);
   }
 
   if (!IsParallel()) {
@@ -384,14 +387,13 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_context) {
   }
 
   // Loop over all states
-  PipelineContext::LoopOverStates loop_state(pipeline_context);
-  loop_state.Do([this, &pipeline_context](llvm::Value *thread_state) {
-    PipelineContext::ScopedStateAccess state_access(pipeline_context,
-                                                    thread_state);
+  PipelineContext::LoopOverStates loop_state{pipeline_ctx};
+  loop_state.Do([this, &pipeline_ctx](llvm::Value *thread_state) {
+    PipelineContext::ScopedStateAccess state_access{pipeline_ctx, thread_state};
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
-      (*riter)->TearDownPipelineState(pipeline_context);
+      (*riter)->TearDownPipelineState(pipeline_ctx);
     }
   });
 }
@@ -421,17 +423,17 @@ void Pipeline::Run(
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
   // Create context
-  PipelineContext pipeline_context{*this};
+  PipelineContext pipeline_ctx{*this};
 
   // Initialize the pipeline
-  InitializePipeline(pipeline_context);
+  InitializePipeline(pipeline_ctx);
 
   // Generate pipeline
-  DoRun(pipeline_context, dispatch_func, dispatch_args, pipeline_arg_types,
+  DoRun(pipeline_ctx, dispatch_func, dispatch_args, pipeline_arg_types,
         body);
 
   // Finish
-  CompletePipeline(pipeline_context);
+  CompletePipeline(pipeline_ctx);
 }
 
 void Pipeline::DoRun(

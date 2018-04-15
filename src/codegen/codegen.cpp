@@ -298,10 +298,9 @@ uint64_t CodeGen::ElementOffset(llvm::Type *type, uint32_t element_idx) const {
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-llvm::Value *CppProxyMember::Load(CodeGen &codegen,
-                                          llvm::Value *ptr) const {
-  llvm::SmallVector<llvm::Value *, 2> indexes{codegen.Const32(0),
-                                              codegen.Const32(slot)};
+llvm::Value *CppProxyMember::Load(CodeGen &codegen, llvm::Value *ptr) const {
+  llvm::SmallVector<llvm::Value *, 2> indexes = {codegen.Const32(0),
+                                                 codegen.Const32(slot)};
   llvm::Value *addr = codegen->CreateInBoundsGEP(ptr, indexes);
   return codegen->CreateLoad(addr);
 }
