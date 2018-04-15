@@ -56,14 +56,16 @@ class TfSessionEntity {
    * Provides a set of options to evaluate an Op either with
    * 1. No input/outputs eg. Global variable initialization
    * 2. Inputs, but no outputs eg. Backpropagation
-   * 3. Inputs and Outputs eg. Loss calculation, Predictions.
+   * 3. Inputs and 1 Output eg. Loss calculation, Predictions.
+   * 3 with multiple outputs is easy to setup and can be done if need arises
+   * based on (3) itself
    */
   void Eval(const std::string &opName);
-  void Eval(const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
+  void Eval(const std::vector<TfSessionEntityInput<InputType> *> &helper_inputs,
             const std::string &op_name);
   OutputType *Eval(
-      const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
-      const std::vector<TfSessionEntityOutput<OutputType>> &helper_outputs);
+      const std::vector<TfSessionEntityInput<InputType> *> &helper_inputs,
+      TfSessionEntityOutput<OutputType> *helper_outputs);
 
   /** Helpers **/
   // Print the name of all operations(`ops`) in this graph
@@ -86,9 +88,6 @@ class TfSessionEntity {
   TF_Status *status_;
   TF_SessionOptions *session_options_;
   TF_Session *session_;
-  // GC queue for the content of the output tensors which can be cleaned
-  // during class destruction
-  std::vector<TF_Tensor *> tensor_gc_;
 
   // For Graph IO handling
   TF_Buffer *ReadFile(const std::string &filename);

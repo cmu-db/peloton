@@ -68,12 +68,14 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
   int LOG_INTERVAL = 20;
   int epochs = 100;
   auto model = std::unique_ptr<brain::TimeSeriesLSTM>(new brain::TimeSeriesLSTM(
-      brain::WorkloadDefaults::NFEATS, brain::WorkloadDefaults::NENCODED,
-      brain::WorkloadDefaults::NHID, brain::WorkloadDefaults::NLAYERS,
-      brain::WorkloadDefaults::LR, brain::WorkloadDefaults::DROPOUT_RATE,
-      brain::WorkloadDefaults::CLIP_NORM, brain::WorkloadDefaults::BATCH_SIZE,
-      brain::WorkloadDefaults::HORIZON, brain::WorkloadDefaults::BPTT,
-      brain::WorkloadDefaults::SEGMENT));
+      brain::LSTMWorkloadDefaults::NFEATS,
+      brain::LSTMWorkloadDefaults::NENCODED, brain::LSTMWorkloadDefaults::NHID,
+      brain::LSTMWorkloadDefaults::NLAYERS, brain::LSTMWorkloadDefaults::LR,
+      brain::LSTMWorkloadDefaults::DROPOUT_RATE,
+      brain::LSTMWorkloadDefaults::CLIP_NORM,
+      brain::LSTMWorkloadDefaults::BATCH_SIZE,
+      brain::LSTMWorkloadDefaults::HORIZON, brain::LSTMWorkloadDefaults::BPTT,
+      brain::LSTMWorkloadDefaults::SEGMENT));
 
   // Check that model file has indeed generated
   EXPECT_TRUE(FileUtil::Exists(
@@ -89,7 +91,7 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
 
   Eigen::VectorXf train_loss_avg = Eigen::VectorXf::Zero(LOG_INTERVAL);
   float prev_train_loss = 10.0;
-  const float VAL_LOSS_THRESH = 0.05;
+  const float VAL_LOSS_THRESH = 0.06;
   float val_loss = VAL_LOSS_THRESH * 2;
   for (int epoch = 1; epoch <= epochs; epoch++) {
     auto train_loss = model->TrainEpoch(train_data);

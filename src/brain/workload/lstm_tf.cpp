@@ -106,24 +106,23 @@ float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
     GetBatch(data, batch_offset, bsz, data_batch, target_batch);
     int seq_len = data_batch.size() / (bsz * num_feats);
     std::vector<int64_t> dims{bsz, seq_len, num_feats};
-    std::vector<TfFloatIn> inputs_optimize{
-        TfFloatIn(data_batch.data(), dims, "data_"),
-        TfFloatIn(target_batch.data(), dims, "target_"),
-        TfFloatIn(dropout_ratio_, "dropout_ratio_"),
-        TfFloatIn(learn_rate_, "learn_rate_"),
-        TfFloatIn(clip_norm_, "clip_norm_")};
-    std::vector<TfFloatIn> inputs_loss{
-        TfFloatIn(data_batch.data(), dims, "data_"),
-        TfFloatIn(target_batch.data(), dims, "target_"),
-        TfFloatIn(1.0, "dropout_ratio_")};
-    auto loss_out = TfFloatOut("lossOp_");
-    std::vector<TfFloatOut> outputs{loss_out};
-    auto out = this->tf_session_entity_->Eval(inputs_loss, outputs);
+    std::vector<TfFloatIn *> inputs_optimize{
+        new TfFloatIn(data_batch.data(), dims, "data_"),
+        new TfFloatIn(target_batch.data(), dims, "target_"),
+        new TfFloatIn(dropout_ratio_, "dropout_ratio_"),
+        new TfFloatIn(learn_rate_, "learn_rate_"),
+        new TfFloatIn(clip_norm_, "clip_norm_")};
+    std::vector<TfFloatIn *> inputs_loss{
+        new TfFloatIn(data_batch.data(), dims, "data_"),
+        new TfFloatIn(target_batch.data(), dims, "target_"),
+        new TfFloatIn(1.0, "dropout_ratio_")};
+    auto output_loss = new TfFloatOut("lossOp_");
+    auto out = this->tf_session_entity_->Eval(inputs_loss, output_loss);
     this->tf_session_entity_->Eval(inputs_optimize, "optimizeOp_");
     losses.push_back(out[0]);
-    // TODO(saatvik): Unsure why the tf_session_entity gc isnt able to catch
-    // this
-    TF_DeleteTensor(loss_out.GetTensor());
+    std::for_each(inputs_optimize.begin(), inputs_optimize.end(), TFIO_Delete);
+    std::for_each(inputs_loss.begin(), inputs_loss.end(), TFIO_Delete);
+    TFIO_Delete(output_loss);
   }
   return std::accumulate(losses.begin(), losses.end(), 0.0) / losses.size();
 }
@@ -151,22 +150,21 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
     GetBatch(data, batch_offset, bsz, data_batch, target_batch);
     int seq_len = data_batch.size() / (bsz * num_feats);
     std::vector<int64_t> dims{bsz, seq_len, num_feats};
-    std::vector<TfFloatIn> inputs_predict{
-        TfFloatIn(data_batch.data(), dims, "data_"),
-        TfFloatIn(1.0, "dropout_ratio_")};
-    auto pred_out = TfFloatOut("pred_");
-    std::vector<TfFloatOut> outputs{pred_out};
+    std::vector<TfFloatIn *> inputs_predict{
+        new TfFloatIn(data_batch.data(), dims, "data_"),
+        new TfFloatIn(1.0, "dropout_ratio_")};
+    auto output_predict = new TfFloatOut("pred_");
 
     // Obtain predicted values
-    auto out = this->tf_session_entity_->Eval(inputs_predict, outputs);
+    auto out = this->tf_session_entity_->Eval(inputs_predict, output_predict);
 
     // Flattened predicted/true values
     for (size_t i = 0; i < data_batch.size(); i++) {
       y_hat.push_back(out[i]);
     }
-    // Clean up the tensor
-    TF_DeleteTensor(pred_out.GetTensor());
     y.insert(y.end(), target_batch.begin(), target_batch.end());
+    std::for_each(inputs_predict.begin(), inputs_predict.end(), TFIO_Delete);
+    TFIO_Delete(output_predict);
   }
 
   // Select the correct time window for the true values(fn of horizon and

@@ -65,6 +65,9 @@ class BaseTFModel {
   void GenerateModel(const std::string &args_str);
   // Child classes should set the name of the python model and
   // corresponding protobuf graph path in this function
+  // Lambda function for deleting input/output objects
+  std::function<void(TfSessionEntityIOBase<float> *)> TFIO_Delete =
+      [&](TfSessionEntityIOBase<float> *ptr) { delete ptr; };
   virtual void SetModelInfo() = 0;
 };
 }  // namespace brain

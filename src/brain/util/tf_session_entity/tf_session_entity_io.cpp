@@ -16,6 +16,9 @@ namespace peloton {
 namespace brain {
 
 TFSEIO_BASE_TEMPLATE_ARGUMENTS
+TFSEIO_BASE_TYPE::~TfSessionEntityIOBase() { TF_DeleteTensor(this->tensor_); }
+
+TFSEIO_BASE_TEMPLATE_ARGUMENTS
 void TFSEIO_BASE_TYPE::DetermineDataType() {
   if (std::is_same<N, int64_t>::value) {
     data_type_ = TF_INT64;
@@ -38,7 +41,7 @@ TFSEIO_BASE_TEMPLATE_ARGUMENTS
 std::string TFSEIO_BASE_TYPE::GetPlaceholderName() { return placeholder_name_; }
 
 TFSEIO_BASE_TEMPLATE_ARGUMENTS
-TF_Tensor *TFSEIO_BASE_TYPE::GetTensor() { return tensor_; }
+TF_Tensor *&TFSEIO_BASE_TYPE::GetTensor() { return tensor_; }
 
 // Explicit template Initialization
 template class TfSessionEntityIOBase<float>;

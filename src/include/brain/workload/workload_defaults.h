@@ -20,7 +20,7 @@
 namespace peloton {
 namespace brain {
 
-struct WorkloadDefaults {
+struct LSTMWorkloadDefaults {
   static const int NFEATS;
   static const int NENCODED;
   static const int NHID;

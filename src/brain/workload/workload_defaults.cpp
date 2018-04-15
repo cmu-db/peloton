@@ -15,18 +15,18 @@
 namespace peloton {
 namespace brain {
 
-const int WorkloadDefaults::NFEATS = 3;
-const int WorkloadDefaults::NENCODED = 20;
-const int WorkloadDefaults::NHID = 20;
-const int WorkloadDefaults::NLAYERS = 2;
-const float WorkloadDefaults::LR = 0.001f;
-const float WorkloadDefaults::DROPOUT_RATE = 0.5f;
-const float WorkloadDefaults::CLIP_NORM = 0.5f;
-const int WorkloadDefaults::BATCH_SIZE = 12;
-const int WorkloadDefaults::HORIZON = 216;
-const int WorkloadDefaults::SEGMENT = 72;
-const int WorkloadDefaults::INTERVAL = 20;
-const int WorkloadDefaults::PADDLING_DAYS = 7;
-const int WorkloadDefaults::BPTT = 90;
+const int LSTMWorkloadDefaults::NFEATS = 3;
+const int LSTMWorkloadDefaults::NENCODED = 20;
+const int LSTMWorkloadDefaults::NHID = 20;
+const int LSTMWorkloadDefaults::NLAYERS = 2;
+const float LSTMWorkloadDefaults::LR = 0.001f;
+const float LSTMWorkloadDefaults::DROPOUT_RATE = 0.5f;
+const float LSTMWorkloadDefaults::CLIP_NORM = 0.5f;
+const int LSTMWorkloadDefaults::BATCH_SIZE = 12;
+const int LSTMWorkloadDefaults::HORIZON = 216;
+const int LSTMWorkloadDefaults::SEGMENT = 72;
+const int LSTMWorkloadDefaults::INTERVAL = 20;
+const int LSTMWorkloadDefaults::PADDLING_DAYS = 7;
+const int LSTMWorkloadDefaults::BPTT = 90;
 }
 }

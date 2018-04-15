@@ -48,10 +48,10 @@ function install_protobuf3.4.0() {
  if [ "$DISTRIB" == "ubuntu" ]
  then
     sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
- elif [ "$DISTRIB" == "fedora" ] 
+ elif [ "$DISTRIB" == "fedora" ]
  then
     sudo dnf -q remove -y protobuf protobuf-devel protobuf-compiler
- else 
+ else
     echo "Only Ubuntu and Fedora is supported currently!"
     return 0
  fi
@@ -72,7 +72,8 @@ function install_tf() {
  TARGET_DIRECTORY="/usr/local"
  # Install Tensorflow Python Binary
  sudo -E pip3 install --upgrade pip
- sudo -E pip3 install --upgrade tensorflow==${TF_VERSION}
+ # Related issue: https://github.com/pypa/pip/issues/3165
+ sudo -E pip3 install tensorflow==${TF_VERSION} --upgrade --ignore-installed six
 
  # Install C-API
  TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
@@ -241,7 +242,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         automake \
         libtool
     # Install version of protobuf needed by C-API
-    install_protobuf3.4.0 "fedora"        
+    install_protobuf3.4.0 "fedora"
     # Install tensorflow
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 

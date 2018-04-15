@@ -33,9 +33,6 @@ TFSE_TYPE::TfSessionEntity() {
 // Tensorflow https://github.com/tensorflow/tensorflow/issues/17739
 TFSE_TEMPLATE_ARGUMENTS
 TFSE_TYPE::~TfSessionEntity() {
-  for (TF_Tensor *tensor : tensor_gc_) {
-    TF_DeleteTensor(tensor);
-  }
   TF_CloseSession(session_, status_);
   TF_DeleteSession(session_, status_);
   TF_DeleteGraph(graph_);
@@ -99,52 +96,49 @@ void TFSE_TYPE::Eval(const std::string &opName) {
                 nullptr, status_);
 }
 
-// Evaluate op with inputs and outputs
+// Evaluate op with inputs and output
 TFSE_TEMPLATE_ARGUMENTS
 OutputType *TFSE_TYPE::Eval(
-    const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
-    const std::vector<TfSessionEntityOutput<OutputType>> &helper_outputs) {
-  std::vector<TF_Tensor *> in_vals, out_vals;
-  std::vector<TF_Output> ins, outs;
+    const std::vector<TfSessionEntityInput<InputType> *> &helper_inputs,
+    TfSessionEntityOutput<OutputType> *helper_output) {
+  std::vector<TF_Tensor *> in_vals;
+  std::vector<TF_Output> ins;
   for (auto helperIn : helper_inputs) {
-    ins.push_back(
-        {TF_GraphOperationByName(graph_, helperIn.GetPlaceholderName().c_str()),
-         0});
-    in_vals.push_back(helperIn.GetTensor());
+    ins.push_back({TF_GraphOperationByName(
+                       graph_, helperIn->GetPlaceholderName().c_str()),
+                   0});
+    in_vals.push_back(helperIn->GetTensor());
   }
-  for (auto helperOut : helper_outputs) {
-    outs.push_back({TF_GraphOperationByName(
-                        graph_, helperOut.GetPlaceholderName().c_str()),
-                    0});
-    out_vals.push_back(helperOut.GetTensor());
-  }
+  TF_Tensor *tensor_val = helper_output->GetTensor();
+  TF_Tensor **tensor_loc = &helper_output->GetTensor();
+  TF_Output out = {TF_GraphOperationByName(
+                       graph_, helper_output->GetPlaceholderName().c_str()),
+                   0};
   TF_SessionRun(session_, nullptr, &(ins.at(0)), &(in_vals.at(0)),
-                ins.size(),                                     // Inputs
-                &(outs.at(0)), &(out_vals.at(0)), outs.size(),  // Outputs
-                nullptr, 0,                                     // Operations
+                ins.size(),           // Inputs
+                &out, tensor_loc, 1,  // Outputs
+                nullptr, 0,           // Operations
                 nullptr, status_);
   PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
-  for (TF_Tensor *in_val : in_vals) {
-    TF_DeleteTensor(in_val);
-  }
-  for (TF_Tensor *out_val : out_vals) {
-    tensor_gc_.push_back(out_val);
-  }
-  return static_cast<OutputType *>(TF_TensorData(out_vals.at(0)));
+  // For some smart reason TF chooses to make 'tensor_loc' point
+  // to a new location with actual output tensors instead of using the
+  // already allocated tensors
+  TF_DeleteTensor(tensor_val);
+  return static_cast<OutputType *>(TF_TensorData(helper_output->GetTensor()));
 }
 
 // Evaluate op with only inputs(where nothing is output eg. Backprop)
 TFSE_TEMPLATE_ARGUMENTS
 void TFSE_TYPE::Eval(
-    const std::vector<TfSessionEntityInput<InputType>> &helper_inputs,
+    const std::vector<TfSessionEntityInput<InputType> *> &helper_inputs,
     const std::string &op_name) {
   std::vector<TF_Tensor *> in_vals;
   std::vector<TF_Output> ins;
   for (auto helperIn : helper_inputs) {
-    ins.push_back(
-        {TF_GraphOperationByName(graph_, helperIn.GetPlaceholderName().c_str()),
-         0});
-    in_vals.push_back(helperIn.GetTensor());
+    ins.push_back({TF_GraphOperationByName(
+                       graph_, helperIn->GetPlaceholderName().c_str()),
+                   0});
+    in_vals.push_back(helperIn->GetTensor());
   }
   TF_Operation *op = TF_GraphOperationByName(graph_, op_name.c_str());
   TF_SessionRun(session_, nullptr, &(ins.at(0)), &(in_vals.at(0)),
@@ -152,9 +146,6 @@ void TFSE_TYPE::Eval(
                 nullptr, nullptr, 0,  // Outputs
                 &op, 1,               // Operations
                 nullptr, status_);
-  for (TF_Tensor *in_val : in_vals) {
-    TF_DeleteTensor(in_val);
-  }
   PELOTON_ASSERT(TF_GetCode(status_) == TF_OK);
 }
 
