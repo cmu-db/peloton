@@ -76,10 +76,6 @@ bool HybridScanExecutor::DInit() {
     predicate_ = node.GetPredicate();
     key_ready_ = false;
 
-    // If the hybrid scan is used only for seq scan which does not require
-    // an index, where the index pointer will be set to nullptr by the default
-    // initializer of the scan descriptor, then we do not try to add predicate
-    // since it causes memory fault
     index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
                                                  key_column_ids_, expr_types_);
 
@@ -156,6 +152,9 @@ bool HybridScanExecutor::DInit() {
         key_ready_ = true;
       }
     }
+
+    index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
+                                                 key_column_ids_, expr_types_);
 
     if (table_ != nullptr) {
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
