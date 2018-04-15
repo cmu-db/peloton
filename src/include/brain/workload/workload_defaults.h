@@ -35,5 +35,5 @@ struct LSTMWorkloadDefaults {
   static const int PADDLING_DAYS;
   static const int BPTT;
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton
