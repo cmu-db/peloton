@@ -55,8 +55,8 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   //
   // Values that are left blank will be recorded for future binding
   // and their offset inside the value array will be remembered
-  index_predicate_.AddConjunctionScanPredicate(index_id_.get(), values_,
-                                               key_column_ids_, expr_types_);
+  //index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
+  //                                             key_column_ids_, expr_types_);
 
   // Check whether the scan range is left/right open. Because the index itself
   // is not able to handle that exactly, we must have extra logic in
@@ -103,7 +103,7 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   // Also bind values to index scan predicate object
   //
   // NOTE: This could only be called by one thread at a time
-  index_predicate_.LateBindValues(index_id_.get(), *values);
+  //index_predicate_.LateBindValues(index_id_.get(), *values);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

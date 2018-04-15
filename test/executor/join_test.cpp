@@ -12,13 +12,13 @@
 
 #include <memory>
 
+#include "common/harness.h"
 #include "executor/testing_executor_util.h"
 #include "executor/testing_join_util.h"
-#include "common/harness.h"
 
+#include "common/internal_types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "common/internal_types.h"
 
 #include "executor/hash_executor.h"
 #include "executor/hash_join_executor.h"
@@ -96,13 +96,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -332,7 +332,7 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
     LOG_INFO("Construct Left Index Scan Node");
     // Create index scan desc
     planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-        index, key_column_ids, expr_types, values, runtime_keys);
+        index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 
     // Create plan node.
     left_table_node.reset(new planner::IndexScanPlan(
@@ -374,8 +374,8 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
     LOG_INFO("Construct Right Index Scan Node");
     // Create index scan desc
     planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
-        index_right, key_column_ids_right, expr_types_right, values_right,
-        runtime_keys_right);
+        index_right->GetOid(), key_column_ids_right, expr_types_right,
+        values_right, runtime_keys_right);
 
     // Create plan node.
     right_table_node.reset(
@@ -992,18 +992,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
