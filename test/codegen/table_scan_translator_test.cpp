@@ -18,6 +18,7 @@
 #include "expression/operator_expression.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/storage_manager.h"
+#include "storage/table_factory.h"
 
 #include "codegen/testing_codegen_util.h"
 
@@ -27,12 +28,128 @@ namespace test {
 class TableScanTranslatorTest : public PelotonCodeGenTest {
   std::string all_cols_table_name = "crazy_table";
 
- public:
+public:
   TableScanTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 
     CreateAndLoadAllColsTable();
+  }
+
+  void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
+
+    const int tuples_per_tilegroup= 100;
+    const int tile_group_count = 5;
+    const int tuple_count = tuples_per_tilegroup * tile_group_count;
+    const oid_t col_count = 128;
+    const bool is_inlined = true;
+
+
+    /////////////////////////////////////////////////////////
+    // Define the schema.
+    /////////////////////////////////////////////////////////
+
+    std::vector<catalog::Column> columns;
+
+    for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
+      auto column =
+              catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+                              "FIELD" + std::to_string(col_itr), is_inlined);
+
+      columns.push_back(column);
+    }
+
+    std::unique_ptr<catalog::Schema> table_schema = std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+    std::string table_name("TEST_TABLE");
+
+    /////////////////////////////////////////////////////////
+    // Create table.
+    /////////////////////////////////////////////////////////
+
+    // bool own_schema = true;
+    // bool adapt_table = true;
+    bool is_catalog = false;
+    auto *catalog = catalog::Catalog::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    const bool allocate = true;
+    auto txn = txn_manager.BeginTransaction();
+
+    // Insert table in catalog
+    catalog->CreateTable(test_db_name, table_name, std::move(table_schema),
+                         txn, is_catalog, tuples_per_tilegroup, layout_type);
+    txn_manager.EndTransaction(txn);
+
+    auto table = GetDatabase().GetTableWithName(table_name);
+
+    /////////////////////////////////////////////////////////
+    // Load in the data
+    /////////////////////////////////////////////////////////
+
+    // Insert tuples into tile_group.
+
+    txn = txn_manager.BeginTransaction();
+    auto table_schema_ptr = table->GetSchema();
+    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+    for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
+      int populate_value = row_id;
+
+      storage::Tuple tuple(table_schema_ptr, allocate);
+
+      for (oid_t col_id = 0; col_id <= col_count; col_id++) {
+        auto value = type::ValueFactory::GetIntegerValue(populate_value + col_id);
+        tuple.SetValue(col_id, value, testing_pool);
+      }
+
+      ItemPointer *index_entry_ptr = nullptr;
+      ItemPointer tuple_slot_id =
+              table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
+      EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+      EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+
+      txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+    }
+
+    txn_manager.CommitTransaction(txn);
+
+    /////////////////////////////////////////////////////////
+    // Do a seq scan with predicate on top of the table
+    /////////////////////////////////////////////////////////
+
+    // Column ids to be scanned.
+    std::vector<oid_t> column_ids;
+    for(oid_t col_id = 0 ; col_id < col_count; col_id++) {
+      column_ids.push_back(col_id);
+    }
+
+
+    // Setup the scan plan node
+    planner::SeqScanPlan scan(table, nullptr, column_ids);
+
+    // Do binding
+    planner::BindingContext context;
+    scan.PerformBinding(context);
+
+    // Printing consumer
+    codegen::BufferingConsumer buffer{column_ids, context};
+
+
+    // COMPILE and execute
+    CompileAndExecute(scan, buffer);
+
+    // Check that we got all the results
+    const auto &results = buffer.GetOutputTuples();
+    EXPECT_EQ(results.size(), tuple_count);
+
+    for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
+      auto &tuple = results[tuple_id];
+      int tuple_id_value = tuple_id;
+      for (oid_t col_id = 0; col_id < col_count; col_id++) {
+        auto value = type::ValueFactory::GetIntegerValue(tuple_id_value + col_id);
+        EXPECT_EQ(CmpBool::CmpTrue, tuple.GetValue(col_id).CompareEquals(value));
+      }
+    }
   }
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
@@ -582,6 +699,22 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
                                   type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
                                   type::ValueFactory::GetIntegerValue(1)));
+}
+
+TEST_F(TableScanTranslatorTest, ScanRowLayout) {
+  //
+  // Creates a table with LayoutType::ROW and
+  // invokes the TableScanTranslator
+  //
+  ExecuteTileGroupTest(LayoutType::ROW);
+}
+
+TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
+  //
+  // Creates a table with LayoutType::COLUMN and
+  // invokes the TableScanTranslator
+  //
+  ExecuteTileGroupTest(LayoutType::COLUMN);
 }
 
 }  // namespace test

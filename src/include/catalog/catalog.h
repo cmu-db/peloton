@@ -99,7 +99,8 @@ class Catalog {
       const std::string &database_name, const std::string &schema_name,
       const std::string &table_name, std::unique_ptr<catalog::Schema>,
       concurrency::TransactionContext *txn, bool is_catalog = false,
-      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
+      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
+      peloton::LayoutType layout_type = LayoutType::ROW);
 
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
