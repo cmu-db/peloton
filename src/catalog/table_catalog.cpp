@@ -257,6 +257,22 @@ TableCatalogObject::GetColumnObjects(bool cached_only) {
   return column_objects;
 }
 
+/* @brief   get all column objects of this table into cache
+ * @return  map from column name to cached column object
+ */
+std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
+TableCatalogObject::GetColumnNames(bool cached_only) {
+  if (!valid_column_objects && !cached_only) {
+    auto column_objects = GetColumnObjects();
+    std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject> > column_names;
+    for (auto& pair : column_objects) {
+      auto column = pair.second;
+      column_names[column->GetColumnName()] = column;
+    }
+  }
+  return column_names;
+}
+
 /* @brief   get column object with column id from cache
  * @param   column_id
  * @param   cached_only   if cached only, return nullptr on a cache miss
