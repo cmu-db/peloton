@@ -149,7 +149,10 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   switch (stmt_type) {
     case StatementType::ALTER: {
       // TODO (shilun) adding support of Alter
-      LOG_TRACE("TO BE Implemented...");
+      LOG_TRACE("Adding Alter Plan");
+      unique_ptr<planner::AbstractPlan> alter_plan(
+          new planner::AlterPlan((parser::AlterTableStatement *)tree));
+      ddl_plan = move(alter_plan);
       break;
     }
     case StatementType::RENAME: {

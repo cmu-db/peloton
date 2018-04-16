@@ -1776,13 +1776,13 @@ parser::TransactionStatement *PostgresParser::TransactionTransform(
 parser::AlterTableStatement *PostgresParser::AlterTransform(
     AlterTableStmt *root) {
   // TODO (shilun) adding alter type check
-  parser::AlterTableStatement *result = new AlterTableStatement(
-      parser::AlterTableStatement::AlterTableType::INVALID);
+  // Currently we only support add/drop column type
+  parser::AlterTableStatement* result =
+      new AlterTableStatement(AlterTableStatement::AlterTableType::INVALID);
 
   // Get database and table name
-  RangeVar *relation = root->relation;
-  result->table_info_ =
-      std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
+  RangeVar* relation = root->relation;
+  result->table_info_ = std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
   if (relation->relname) {
     result->table_info_->table_name = strdup(relation->relname);
   }
@@ -1791,22 +1791,22 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(
   }
 
   for (auto cell = root->cmds->head; cell != NULL; cell = cell->next) {
-    auto cmd = reinterpret_cast<AlterTableCmd *>(cell->data.ptr_value);
+    auto cmd = reinterpret_cast<AlterTableCmd*>(cell->data.ptr_value);
     switch (cmd->subtype) {
-      /*case AT_AddColumn: {
-        auto column =
-            ColumnDefTransform(reinterpret_cast<ColumnDef*>(cmd->def));
-        result->columns->push_back(column);
-        break;
-      }
-      case AT_DropColumn:
-        result->names->push_back(strdup(cmd->name));
-        break;
-      case AT_AlterColumnGenericOptions:*/
-      default: {
-        throw NotImplementedException(StringUtil::Format(
-            "Alter Table type %d not supported yet...\n", cmd->subtype));
-      }
+    /*case AT_AddColumn: {
+      auto column =
+          ColumnDefTransform(reinterpret_cast<ColumnDef*>(cmd->def));
+      result->columns->push_back(column);
+      break;
+    }*/
+    case AT_DropColumn:
+      result->names->push_back(strdup(cmd->name));
+      result->type = AlterTableStatement::AlterTableType::DROP;
+      break;
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+          "Alter Table type %d not supported yet...\n", cmd->subtype));
+    }
     }
   }
   return result;
