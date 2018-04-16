@@ -183,6 +183,33 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
     // Get the cost.
     auto group = GetMetadata().memo.GetGroupByID(root_id);
     auto best_expr = group->GetBestExpression(query_info.physical_props);
+
+    // TODO[vamshi]: Comment this code out. Only for debugging.
+    // Find out the index scan plan cols.
+    std::deque<GroupID> queue;
+    queue.push_back(root_id);
+    while (queue.size() != 0) {
+      auto front = queue.front();
+      queue.pop_front();
+      auto group = GetMetadata().memo.GetGroupByID(front);
+      auto best_expr = group->GetBestExpression(query_info.physical_props);
+
+      PELOTON_ASSERT(best_expr->Op().IsPhysical());
+      if (best_expr->Op().GetType() == OpType::IndexScan) {
+        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
+        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
+        LOG_DEBUG("Index Scan on %s",
+                  index_scan_op->table_->GetTableName().c_str());
+        for (auto col : index_scan_op->key_column_id_list) {
+          LOG_DEBUG("Col: %d", col);
+        }
+      }
+
+      for (auto child_grp : best_expr->GetChildGroupIDs()) {
+        queue.push_back(child_grp);
+      }
+    }
+
     info_obj->cost = best_expr->GetCost(query_info.physical_props);
     info_obj->plan = std::move(best_plan);
 
@@ -296,29 +323,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper =
-      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-         std::unique_ptr<parser::OrderDescription> &order_info,
-         std::vector<expression::AbstractExpression *> &output_exprs,
-         std::shared_ptr<PropertySet> &physical_props) {
-        // Extract output column
-        for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper = [](
+      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+      std::unique_ptr<parser::OrderDescription> &order_info,
+      std::vector<expression::AbstractExpression *> &output_exprs,
+      std::shared_ptr<PropertySet> &physical_props) {
+    // Extract output column
+    for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-        // Extract sort property
-        if (order_info != nullptr) {
-          std::vector<expression::AbstractExpression *> sort_exprs;
-          std::vector<bool> sort_ascending;
-          for (auto &expr : order_info->exprs) {
-            sort_exprs.push_back(expr.get());
-          }
-          for (auto &type : order_info->types) {
-            sort_ascending.push_back(type == parser::kOrderAsc);
-          }
-          if (!sort_exprs.empty())
-            physical_props->AddProperty(
-                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-        }
-      };
+    // Extract sort property
+    if (order_info != nullptr) {
+      std::vector<expression::AbstractExpression *> sort_exprs;
+      std::vector<bool> sort_ascending;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
+      if (!sort_exprs.empty())
+        physical_props->AddProperty(
+            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+    }
+  };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();

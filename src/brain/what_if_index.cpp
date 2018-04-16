@@ -19,10 +19,10 @@ namespace brain {
 
 unsigned long WhatIfIndex::index_seq_no = 0;
 
-std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndBestPlanTree(
-    parser::SQLStatement *query, IndexConfiguration &config,
-    std::string database_name) {
-
+std::unique_ptr<optimizer::OptimizerPlanInfo>
+WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
+                                    IndexConfiguration &config,
+                                    std::string database_name) {
   // Need transaction for fetching catalog information.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -48,12 +48,16 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndBestPlanTre
       if (index->table_oid == table_object->GetTableOid()) {
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
-        LOG_DEBUG("Created a new hypothetical index %d on table: %d, Col id: %d",
+        LOG_DEBUG("Created a new hypothetical index %d on table: %d",
                   index_catalog_obj->GetIndexOid(),
-                  index_catalog_obj->GetTableOid(), index_catalog_obj->GetKeyAttrs()[0]);
+                  index_catalog_obj->GetTableOid());
+        for (auto col : index_catalog_obj->GetKeyAttrs()) {
+          LOG_DEBUG("Cols: %d", col);
+        }
       }
     }
-    LOG_DEBUG("Index Catalog Objects inserted: %ld", table_object->GetIndexObjects().size());
+    LOG_DEBUG("Index Catalog Objects inserted: %ld",
+              table_object->GetIndexObjects().size());
   }
 
   // Perform query optimization with the hypothetical indexes
@@ -69,7 +73,7 @@ std::unique_ptr<optimizer::OptimizerPlanInfo> WhatIfIndex::GetCostAndBestPlanTre
 }
 
 void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
-                                std::vector<std::string> &table_names) {
+                                      std::vector<std::string> &table_names) {
   // Only support the DML statements.
   union {
     parser::SelectStatement *select_stmt;
@@ -153,7 +157,8 @@ WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
        it != index_obj->column_oids.end(); it++) {
     index_name_oss << (*it) << "_";
   }
-  // TODO: For now, we assume BW-TREE and DEFAULT index constraint type for the hypothetical indexes
+  // TODO: For now, we assume BW-TREE and DEFAULT index constraint type for the
+  // hypothetical indexes
   // Create a dummy catalog object.
   auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
       new catalog::IndexCatalogObject(index_seq_no++, index_name_oss.str(),

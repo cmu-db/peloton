@@ -45,7 +45,13 @@ struct IndexConfigComparator {
 class IndexSelection {
  public:
   /**
-   * @brief Constructor
+   * IndexSelection
+   *
+   * @param query_set set of queries as a workload
+   * @param max_index_cols maximum number of columns to consider in multi-column
+   * index
+   * @param enumeration_threshold exhaustive enumeration threshold
+   * @param num_indexes number of best indexes to return
    */
   IndexSelection(Workload &query_set, size_t max_index_cols,
                  size_t enumeration_threshold, size_t num_indexes);
@@ -120,7 +126,8 @@ class IndexSelection {
    * @param workload - queries
    * @param pruned_config - result configuration
    */
-  void PruneUselessIndexes(IndexConfiguration &config, Workload &workload, IndexConfiguration &pruned_config);
+  void PruneUselessIndexes(IndexConfiguration &config, Workload &workload,
+                           IndexConfiguration &pruned_config);
 
   /**
    * @brief Gets the cost of an index configuration for a given workload. It

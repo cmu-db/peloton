@@ -66,6 +66,14 @@ void IndexConfiguration::Merge(IndexConfiguration &config) {
   }
 }
 
+void IndexConfiguration::Set(IndexConfiguration &config) {
+  indexes_.clear();
+  auto indexes = config.GetIndexes();
+  for (auto it = indexes.begin(); it != indexes.end(); it++) {
+    indexes_.insert(*it);
+  }
+}
+
 void IndexConfiguration::RemoveIndexObject(
     std::shared_ptr<IndexObject> index_info) {
   indexes_.erase(index_info);
@@ -77,6 +85,8 @@ void IndexConfiguration::AddIndexObject(
 }
 
 size_t IndexConfiguration::GetIndexCount() const { return indexes_.size(); }
+
+bool IndexConfiguration::IsEmpty() const { return indexes_.size() == 0; }
 
 const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
     const {
@@ -108,9 +118,7 @@ IndexConfiguration IndexConfiguration::operator-(
   return IndexConfiguration(result);
 }
 
-void IndexConfiguration::Clear() {
-  indexes_.clear();
-}
+void IndexConfiguration::Clear() { indexes_.clear(); }
 
 //===--------------------------------------------------------------------===//
 // IndexObjectPool
@@ -126,8 +134,7 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
 
 std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
   auto index_s_ptr = GetIndexObject(obj);
-  if(index_s_ptr != nullptr)
-    return index_s_ptr;
+  if (index_s_ptr != nullptr) return index_s_ptr;
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
   index_s_ptr = std::shared_ptr<IndexObject>(index_copy);

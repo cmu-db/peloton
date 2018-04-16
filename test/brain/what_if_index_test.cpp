@@ -46,7 +46,7 @@ class WhatIfIndexTests : public PelotonTest {
   // Create a new table with schema (a INT, b INT, c INT).
   void CreateTable(std::string table_name) {
     std::string create_str =
-        "CREATE TABLE " + table_name + "(a INT, b INT, c INT);";
+        "CREATE TABLE " + table_name + "(a INT, b INT, c INT, d INT, e INT);";
     TestingSQLUtil::ExecuteSQLQuery(create_str);
   }
 
@@ -56,7 +56,7 @@ class WhatIfIndexTests : public PelotonTest {
     for (int i = 0; i < no_of_tuples; i++) {
       std::ostringstream oss;
       oss << "INSERT INTO " << table_name << " VALUES (" << i << "," << i + 1
-          << "," << i + 2 << ");";
+          << "," << i + 2 << "," << i + 3 << "," << i + 4 << ");";
       TestingSQLUtil::ExecuteSQLQuery(oss.str());
     }
   }
@@ -69,14 +69,14 @@ class WhatIfIndexTests : public PelotonTest {
         optimizer::StatsStorage::GetInstance();
     ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
     PELOTON_ASSERT(result == ResultType::SUCCESS);
-    (void) result;
+    (void)result;
     txn_manager.CommitTransaction(txn);
   }
 
-  // Create a what-if single column index on a column at the given
+  // Create a what-if index on the columns at the given
   // offset of the table.
-  std::shared_ptr<brain::IndexObject> CreateHypotheticalSingleIndex(
-      std::string table_name, oid_t col_offset) {
+  std::shared_ptr<brain::IndexObject> CreateHypotheticalIndex(
+      std::string table_name, std::vector<oid_t> col_offsets) {
     // We need transaction to get table object.
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -84,28 +84,25 @@ class WhatIfIndexTests : public PelotonTest {
     // Get the existing table so that we can find its oid and the cols oids.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, table_name, txn);
+    auto col_obj_pairs = table_object->GetColumnObjects();
 
     std::vector<oid_t> cols;
-    auto col_obj_pairs = table_object->GetColumnObjects();
     auto database_oid = table_object->GetDatabaseOid();
     auto table_oid = table_object->GetTableOid();
 
-    // Find the column oid.
+    // Find the column oids.
     for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
       LOG_DEBUG("Table id: %d, Column id: %d, Offset: %d, Name: %s",
                 it->second->GetTableOid(), it->second->GetColumnId(),
                 it->second->GetColumnOffset(),
                 it->second->GetColumnName().c_str());
-      if (it->second->GetColumnId() == col_offset) {
-        cols.push_back(it->second->GetColumnId());  // we just need the oid
-        break;
+      for (auto given_col : col_offsets) {
+        if (given_col == it->second->GetColumnId()) {
+          cols.push_back(it->second->GetColumnId());
+        }
       }
     }
-    assert(cols.size() == 1);
-
-    // Give dummy index oid and name.
-    std::ostringstream index_name_oss;
-    index_name_oss << "index_" << col_offset;
+    PELOTON_ASSERT(cols.size() == col_offsets.size());
 
     auto obj_ptr = new brain::IndexObject(database_oid, table_oid, cols);
     auto index_obj = std::shared_ptr<brain::IndexObject>(obj_ptr);
@@ -115,7 +112,7 @@ class WhatIfIndexTests : public PelotonTest {
   }
 };
 
-TEST_F(WhatIfIndexTests, BasicTest) {
+TEST_F(WhatIfIndexTests, SingleColTest) {
   std::string table_name = "dummy_table_whatif";
 
   CreateDatabase();
@@ -127,21 +124,20 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   GenerateTableStats();
 
   // Form the query.
-  std::ostringstream query_str_oss;
-  query_str_oss << "SELECT a from " << table_name << " WHERE "
-                << "b < 100 and c < 5;";
+  std::string query("SELECT a from " + table_name +
+                    " WHERE b < 100 and c < 5;");
 
   brain::IndexConfiguration config;
 
   std::unique_ptr<parser::SQLStatementList> stmt_list(
-      parser::PostgresParser::ParseSQLString(query_str_oss.str()));
+      parser::PostgresParser::ParseSQLString(query));
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<binder::BindNodeVisitor> binder(
-    new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   // Get the first statement.
   auto sql_statement = stmt_list.get()->GetStatement(0);
@@ -150,29 +146,176 @@ TEST_F(WhatIfIndexTests, BasicTest) {
   txn_manager.CommitTransaction(txn);
 
   // 1. Get the optimized plan tree without the indexes (sequential scan)
-  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                       DEFAULT_DB_NAME);
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement, config, DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
-  LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
+  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
-  config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 1));
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                  DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
-  LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
+  LOG_DEBUG("Cost of the query with 1 index: %lf", cost_with_index_1);
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
-  config.AddIndexObject(CreateHypotheticalSingleIndex(table_name, 2));
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {2}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                  DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
   LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
 
   EXPECT_LT(cost_with_index_1, cost_without_index);
   EXPECT_LT(cost_with_index_2, cost_without_index);
+}
+
+TEST_F(WhatIfIndexTests, MultiColumnTest1) {
+  std::string table_name = "dummy_table_whatif";
+
+  CreateDatabase();
+
+  CreateTable(table_name);
+
+  InsertIntoTable(table_name, 1000);
+
+  GenerateTableStats();
+
+  // Form the query.
+  std::string query("SELECT a from " + table_name +
+                    " WHERE b < 100 and c < 100;");
+
+  brain::IndexConfiguration config;
+
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+
+  // Get the first statement.
+  auto sql_statement = stmt_list.get()->GetStatement(0);
+
+  binder->BindNameToNode(sql_statement);
+  txn_manager.CommitTransaction(txn);
+
+  // Get the optimized plan tree without the indexes (sequential scan)
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement, config, DEFAULT_DB_NAME);
+  auto cost_without_index = result->cost;
+  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
+
+  // Insert hypothetical catalog objects
+  // Index on cols a, c.
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 2}));
+
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_1 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  EXPECT_EQ(cost_without_index, cost_with_index_1);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 1}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_2 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  EXPECT_EQ(cost_without_index, cost_with_index_2);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 2}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_3 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  EXPECT_GT(cost_without_index, cost_with_index_3);
+}
+
+TEST_F(WhatIfIndexTests, MultiColumnTest2) {
+  std::string table_name = "dummy_table_whatif";
+
+  CreateDatabase();
+
+  CreateTable(table_name);
+
+  InsertIntoTable(table_name, 1000);
+
+  GenerateTableStats();
+
+  // Form the query.
+  std::string query("SELECT a from " + table_name + " WHERE e > 100;");
+
+  brain::IndexConfiguration config;
+
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+
+  // Get the first statement.
+  auto sql_statement = stmt_list.get()->GetStatement(0);
+
+  binder->BindNameToNode(sql_statement);
+  txn_manager.CommitTransaction(txn);
+
+  // Get the optimized plan tree without the indexes (sequential scan)
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement, config, DEFAULT_DB_NAME);
+  auto cost_without_index = result->cost;
+  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
+
+  // Insert hypothetical catalog objects
+  // Index on cols a, c.
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 1, 2, 3, 4}));
+
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_1 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  EXPECT_EQ(cost_without_index, cost_with_index_1);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 2, 3, 5}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_2 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_2);
+  EXPECT_EQ(cost_without_index, cost_with_index_2);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 1, 3, 4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_3 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_3);
+  EXPECT_EQ(cost_without_index, cost_with_index_3);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 3, 4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_4 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_4);
+  EXPECT_GT(cost_without_index, cost_with_index_4);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 2, 3, 4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_5 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_5);
+  EXPECT_GT(cost_without_index, cost_with_index_3);
 }
 
 }  // namespace test
