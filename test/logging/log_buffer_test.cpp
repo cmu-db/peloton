@@ -26,9 +26,9 @@ namespace test {
 class LogBufferTests : public PelotonTest {};
 
 TEST_F(LogBufferTests, LogBufferTest) {
-  oid_t block = 1;
+  oid_t block = 1, offset = 16;
   ItemPointer old_location(block, 8);
-  ItemPointer location(block, 16);
+  ItemPointer location(block, offset);
   ItemPointer new_location(block, 24);
   eid_t epoch_id = 3;
   txn_id_t txn_id = 99;
@@ -36,11 +36,12 @@ TEST_F(LogBufferTests, LogBufferTest) {
   oid_t database_id = 10;
   oid_t table_id = 20;
   oid_t tile_group_id = 30;
+  double value1 = 9.1, value2 = 9.2, value3 = 9.3;
 
   logging::LogBuffer *log_buffer;
   log_buffer = new logging::LogBuffer(logging::LogManager::GetInstance().GetTransactionBufferSize());
 
-  // TILES
+// TILES
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
 
@@ -50,7 +51,7 @@ TEST_F(LogBufferTests, LogBufferTest) {
   std::vector<catalog::Schema> schemas;
   std::vector<catalog::Column> columns;
 
-  // SCHEMA
+// SCHEMA
   catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
                           "A", true);
   columns.push_back(column1);
@@ -62,22 +63,44 @@ TEST_F(LogBufferTests, LogBufferTest) {
   column_map[0] = std::make_pair(0, 0);
 
   std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-          database_id, table_id, tile_group_id, nullptr, schemas, column_map, 3));
+        database_id, table_id, tile_group_id, nullptr, schemas, column_map, 3));
   catalog::Manager::GetInstance().AddTileGroup(block, tile_group);
 
   logging::LogRecord insert_record = logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_INSERT, location, epoch_id, txn_id, commit_id);
+                                       LogRecordType::TUPLE_INSERT, location, epoch_id, txn_id, commit_id);
   logging::LogRecord update_record = logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_UPDATE, location, new_location, epoch_id, txn_id,
-          commit_id);
+                                       LogRecordType::TUPLE_UPDATE, location, new_location, epoch_id, txn_id,
+                                       commit_id);
   logging::LogRecord delete_record = logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_DELETE, old_location, epoch_id, txn_id, commit_id);
+                                       LogRecordType::TUPLE_DELETE, old_location, epoch_id, txn_id, commit_id);
 
   EXPECT_EQ(log_buffer->GetThreshold(), logging::LogManager::GetInstance().GetTransactionBufferSize());
-  log_buffer->WriteRecord(insert_record);
 
-//  std::cout << log_buffer->GetSize() << std::endl;
-//  std::cout << log_buffer->GetData() << std::endl;
+  type::Value val1 = type::ValueFactory::GetDecimalValue(value1);
+  type::Value val2 = type::ValueFactory::GetDecimalValue(value2);
+  type::Value val3 = type::ValueFactory::GetDecimalValue(value3);
+  std::vector<type::Value> values;
+  values.push_back(val1);
+  values.push_back(val2);
+  values.push_back(val3);
+  insert_record.SetValuesArray(reinterpret_cast<char *>(values.data()), static_cast<uint32_t>(values.size()));
+  log_buffer->WriteRecord(insert_record);
+  size_t buffer_size = sizeof(int32_t) + sizeof(int8_t) + sizeof(int64_t) * 3 + sizeof(int64_t) * 4 +
+                       sizeof(double) * 3;
+  EXPECT_EQ(buffer_size, log_buffer->GetSize());
+  ReferenceSerializeInput log_buffer_input(log_buffer->GetData(), log_buffer->GetSize());
+  EXPECT_EQ(log_buffer->GetSize() - sizeof(int32_t), log_buffer_input.ReadInt());
+  EXPECT_EQ(static_cast<int>(LogRecordType::TUPLE_INSERT), log_buffer_input.ReadEnumInSingleByte());
+  EXPECT_EQ(epoch_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(txn_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(commit_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(database_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(table_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(block, log_buffer_input.ReadLong());
+  EXPECT_EQ(offset, log_buffer_input.ReadLong());
+  EXPECT_EQ(value1, log_buffer_input.ReadDouble());
+  EXPECT_EQ(value2, log_buffer_input.ReadDouble());
+  EXPECT_EQ(value3, log_buffer_input.ReadDouble());
 
 //  log_buffer->WriteRecord(update_record);
 //  std::cout << log_buffer->GetSize() << std::endl;
