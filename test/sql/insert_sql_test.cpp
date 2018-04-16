@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "catalog/catalog.h"
+#include "common/exception.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -101,6 +102,12 @@ void CreateAndLoadTable7() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (88, 6, 777);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (77, 7, 666);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
+}
+
+void CreateAndLoadTable8() {
+  // Create a table with some defaults
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test8(num1 int, num2 int, num3 int not null);");
 }
 
 TEST_F(InsertSQLTests, InsertOneValue) {
@@ -204,7 +211,7 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  CreateAndLoadTable();
+  CreateAndLoadTable8();
 
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -214,7 +221,8 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
       new optimizer::Optimizer());
 
   // INSERT a tuple with columns specified
-  std::string query("INSERT INTO test (b, a, c) VALUES (99, 8, 111);");
+  std::string query(
+      "INSERT INTO test8 (num3, num2, num1) VALUES (99, 8, 111);");
 
   txn = txn_manager.BeginTransaction();
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
@@ -228,12 +236,12 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
 
   // SELECT to find out if the tuple is correctly inserted
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test WHERE a=8", result, tuple_descriptor,
+      optimizer, "SELECT * FROM test8 WHERE num2=8", result, tuple_descriptor,
       rows_changed, error_message);
   EXPECT_EQ(3, result.size());
-  EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("99", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("111", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("111", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("99", TestingSQLUtil::GetResultValueAsString(result, 2));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -619,6 +627,87 @@ TEST_F(InsertSQLTests, NonExistentTable) {
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
                peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(InsertSQLTests, BadInserts) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  CreateAndLoadTable8();
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+  // Insert a tuple with more values than target columns
+  std::string query("INSERT INTO test8 VALUES(1, 2, 3, 4);");
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with more target columns (implicit) than values, violating
+  // not null constraint for num3
+  query = "INSERT INTO test VALUES(3, 4);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with more target columns than values
+  query = "INSERT INTO test8(num1, num3) VALUES(3);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with more values than target columns (multiple tuples)
+  query = "INSERT INTO test8(num1, num3) VALUES (1, 2), (3, 4), (3, 4, 5);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with more target columns than values (multiple tuples)
+  query = "INSERT INTO test8(num1, num3) VALUES (6, 7), (5);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with a nonexistent target column
+  query = "INSERT INTO test8(numx) VALUES(3);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple with a nonexistent target column (non-singleton tuple)
+  query = "INSERT INTO test8(num1, num4) VALUES(3, 4);";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // Insert a tuple row with not-null field (num3) unspecified
+  query = "INSERT INTO test8 VALUES(1, 2)";
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
+  txn_manager.CommitTransaction(txn);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
