@@ -63,18 +63,8 @@ int64_t SequenceCatalogObject::get_next_val() {
   // AbstractCatalog::UpdateWithIndexScan.
   // Link for the function:
   // https://github.com/camellyx/peloton/blob/master/src/catalog/abstract_catalog.cpp#L305
-
-  // std::vector<oid_t> update_columns({ColumnId::SEQUENCE_VALUE});
-  // std::vector<oid_t> update_values;
-  // update_values.push_back(type::ValueFactory::GetBigIntValue(seq_curr_val).Copy());
-  // std::vector<type::Value> scan_values;
-  // scan_values.push_back(type::ValueFactory::GetIntegerValue(seq_oid).Copy());
-  // oid_t index_offset = IndexId::PRIMARY_KEY;
-
-  // bool status =
-  // catalog::SequenceCatalog::GetInstance().UpdateWithIndexScan(update_columns,
-  // update_values, scan_values, index_offset, txn_);
-  // LOG_DEBUG("status of update pg_sequence: %d", status);
+  bool status = catalog::SequenceCatalog::GetInstance().UpdateNextVal(seq_oid, seq_curr_val, txn_);
+  LOG_DEBUG("status of update pg_sequence: %d", status);
 
   return result;
 }
@@ -258,6 +248,18 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
       (*result_tiles)[0]->GetValue(0, 7).GetAs<int64_t>(), txn);
 
   return new_sequence;
+}
+
+bool SequenceCatalog::UpdateNextVal(oid_t sequence_oid, int64_t nextval,
+    concurrency::TransactionContext *txn){
+  std::vector<oid_t> update_columns({SequenceCatalog::ColumnId::SEQUENCE_VALUE});
+  std::vector<type::Value> update_values;
+  update_values.push_back(type::ValueFactory::GetBigIntValue(nextval).Copy());
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(sequence_oid).Copy());
+  oid_t index_offset = SequenceCatalog::IndexId::PRIMARY_KEY;
+
+  return UpdateWithIndexScan(update_columns, update_values, scan_values, index_offset, txn);
 }
 
 /* @brief   get sequence oid from pg_sequence table given sequence_name and

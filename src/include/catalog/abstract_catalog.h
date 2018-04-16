@@ -72,6 +72,11 @@ class AbstractCatalog {
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);
 
+  bool UpdateWithIndexScan(
+    std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
+    std::vector<type::Value> scan_values, oid_t index_offset,
+    concurrency::TransactionContext *txn);
+
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
                 IndexConstraintType index_constraint);

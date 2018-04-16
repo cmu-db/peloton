@@ -78,12 +78,12 @@ class SequenceCatalogObject {
 
   std::mutex sequence_mutex;  // mutex for all operations
   int64_t GetNextVal() {
-    //std::lock_guard<std::mutex> lock(sequence_mutex);
+    std::lock_guard<std::mutex> lock(sequence_mutex);
     return get_next_val();
   };
 
   int64_t GetCurrVal() {
-    //std::lock_guard<std::mutex> lock(sequence_mutex);
+    std::lock_guard<std::mutex> lock(sequence_mutex);
     return seq_curr_val;
   };
 
@@ -129,6 +129,9 @@ class SequenceCatalog : public AbstractCatalog {
   oid_t GetSequenceOid(std::string sequence_name, oid_t database_oid,
                        concurrency::TransactionContext *txn);
 
+  bool UpdateNextVal(oid_t sequence_oid, int64_t nextval,
+    concurrency::TransactionContext *txn);
+
   enum ColumnId {
     SEQUENCE_OID = 0,
     DATABSE_OID = 1,
@@ -141,12 +144,12 @@ class SequenceCatalog : public AbstractCatalog {
     SEQUENCE_VALUE = 8
   };
 
+  enum IndexId { PRIMARY_KEY = 0, DBOID_SEQNAME_KEY = 1 };
+
  private:
   SequenceCatalog(concurrency::TransactionContext *txn);
 
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
-
-  enum IndexId { PRIMARY_KEY = 0, DBOID_SEQNAME_KEY = 1 };
 };
 
 }  // namespace catalog
