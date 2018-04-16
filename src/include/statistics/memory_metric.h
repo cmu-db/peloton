@@ -36,7 +36,7 @@ class MemoryMetric : public AbstractMetric {
 
   inline void IncreaseUsage(int64_t bytes) { usage_.Increment(bytes); }
 
-  inline void DecreaseAllocation(int64_t bytes) { alloc_.Increment(bytes); }
+  inline void DecreaseAllocation(int64_t bytes) { alloc_.Decrement(bytes); }
 
   inline void DecreaseUsage(int64_t bytes) { usage_.Decrement(bytes); }
 
