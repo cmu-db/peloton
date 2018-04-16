@@ -15,7 +15,6 @@
 
 #include "brain/index_selection.h"
 #include "brain/what_if_index.h"
-#include "common/logger.h"
 
 namespace peloton {
 namespace brain {
@@ -38,26 +37,40 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
   // Start the index selection.
   for (unsigned long i = 0; i < context_.num_iterations_; i++) {
+    LOG_DEBUG("******* Iteration %ld **********", i);
+    LOG_DEBUG("Candidate Indexes Before: %s",
+              candidate_indexes.ToString().c_str());
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
+    LOG_DEBUG("Admissible Indexes: %s", admissible_indexes.ToString().c_str());
+    LOG_DEBUG("Candidate Indexes After: %s",
+              candidate_indexes.ToString().c_str());
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.num_indexes_);
+    LOG_DEBUG("Top Candidate Indexes: %s",
+              candidate_indexes.ToString().c_str());
 
     candidate_indexes = top_candidate_indexes;
-    GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
-                               candidate_indexes);
+
+    // Generate multi-column indexes before starting the next iteration.
+    // Only do this if there is next iteration.
+    if (i < (context_.num_iterations_ - 1)) {
+      GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
+                                 candidate_indexes);
+    }
   }
+
   final_indexes = candidate_indexes;
 }
 
 void IndexSelection::GenerateCandidateIndexes(
     IndexConfiguration &candidate_config, IndexConfiguration &admissible_config,
     Workload &workload) {
-  if (admissible_config.GetIndexCount() == 0) {
-    // If there are no admissible indexes, then this is the first iteration.
-    // Candidate indexes will be a union of admissible index set of each query.
+  // If there are no admissible indexes, then this is the first iteration.
+  // Candidate indexes will be a union of admissible index set of each query.
+  if (admissible_config.IsEmpty() && candidate_config.IsEmpty()) {
     for (auto query : workload.GetQueries()) {
       Workload wi(query);
 
@@ -67,13 +80,16 @@ void IndexSelection::GenerateCandidateIndexes(
 
       IndexConfiguration pruned_ai;
       PruneUselessIndexes(ai, wi, pruned_ai);
-
+      // Candidate config for the single-column indexes is the union of
+      // candidates for each
+      // query.
       candidate_config.Merge(pruned_ai);
     }
   } else {
+    LOG_DEBUG("Pruning multi-column indexes");
     IndexConfiguration pruned_ai;
     PruneUselessIndexes(candidate_config, workload, pruned_ai);
-    candidate_config.Merge(pruned_ai);
+    candidate_config.Set(pruned_ai);
   }
 }
 
@@ -92,7 +108,13 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       Workload w(query);
 
-      if (ComputeCost(c, w) < ComputeCost(empty_config, w)) {
+      auto c1 = ComputeCost(c, w);
+      auto c2 = ComputeCost(empty_config, w);
+      LOG_DEBUG("Cost with index %s is %lf", c.ToString().c_str(), c1);
+      LOG_DEBUG("Cost without is %lf", c2);
+
+      if (c1 < c2) {
+        LOG_TRACE("Useful");
         is_useful = true;
         break;
       }
@@ -401,7 +423,8 @@ void IndexSelection::IndexObjectPoolInsertHelper(
   config.AddIndexObject(pool_index_obj);
 }
 
-double IndexSelection::ComputeCost(IndexConfiguration &config, Workload &workload) {
+double IndexSelection::ComputeCost(IndexConfiguration &config,
+                                   Workload &workload) {
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {

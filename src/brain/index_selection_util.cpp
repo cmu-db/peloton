@@ -22,10 +22,13 @@ namespace brain {
 
 const std::string IndexObject::ToString() const {
   std::stringstream str_stream;
-  str_stream << db_oid << ":" << table_oid;
+  str_stream << "Database: " << db_oid << "\n";
+  str_stream << "Table: " << table_oid << "\n";
+  str_stream << "Columns: ";
   for (auto col : column_oids) {
-    str_stream << "-" << col;
+    str_stream << col << ", ";
   }
+  str_stream << "\n";
   return str_stream.str();
 }
 
@@ -56,9 +59,15 @@ IndexObject IndexObject::Merge(std::shared_ptr<IndexObject> index) {
 // IndexConfiguration
 //===--------------------------------------------------------------------===//
 
-IndexConfiguration::IndexConfiguration() {}
-
 void IndexConfiguration::Merge(IndexConfiguration &config) {
+  auto indexes = config.GetIndexes();
+  for (auto it = indexes.begin(); it != indexes.end(); it++) {
+    indexes_.insert(*it);
+  }
+}
+
+void IndexConfiguration::Set(IndexConfiguration &config) {
+  indexes_.clear();
   auto indexes = config.GetIndexes();
   for (auto it = indexes.begin(); it != indexes.end(); it++) {
     indexes_.insert(*it);
@@ -77,6 +86,8 @@ void IndexConfiguration::AddIndexObject(
 
 size_t IndexConfiguration::GetIndexCount() const { return indexes_.size(); }
 
+bool IndexConfiguration::IsEmpty() const { return indexes_.size() == 0; }
+
 const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
     const {
   return indexes_;
@@ -84,6 +95,7 @@ const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
 
 const std::string IndexConfiguration::ToString() const {
   std::stringstream str_stream;
+  str_stream << "Num of indexes: " << GetIndexCount() << "\n";
   for (auto index : indexes_) {
     str_stream << index->ToString() << " ";
   }
@@ -106,15 +118,11 @@ IndexConfiguration IndexConfiguration::operator-(
   return IndexConfiguration(result);
 }
 
-void IndexConfiguration::Clear() {
-  indexes_.clear();
-}
+void IndexConfiguration::Clear() { indexes_.clear(); }
 
 //===--------------------------------------------------------------------===//
 // IndexObjectPool
 //===--------------------------------------------------------------------===//
-
-IndexObjectPool::IndexObjectPool() {}
 
 std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
   auto ret = map_.find(obj);
@@ -125,9 +133,11 @@ std::shared_ptr<IndexObject> IndexObjectPool::GetIndexObject(IndexObject &obj) {
 }
 
 std::shared_ptr<IndexObject> IndexObjectPool::PutIndexObject(IndexObject &obj) {
+  auto index_s_ptr = GetIndexObject(obj);
+  if (index_s_ptr != nullptr) return index_s_ptr;
   IndexObject *index_copy = new IndexObject();
   *index_copy = obj;
-  auto index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
+  index_s_ptr = std::shared_ptr<IndexObject>(index_copy);
   map_[*index_copy] = index_s_ptr;
   return index_s_ptr;
 }

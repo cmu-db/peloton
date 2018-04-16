@@ -42,7 +42,7 @@ struct IndexObject {
   /**
    * @brief - Constructor
    */
-  IndexObject() {};
+  IndexObject(){};
 
   /**
    * @brief - Constructor
@@ -110,6 +110,11 @@ class IndexConfiguration {
   void Merge(IndexConfiguration &config);
 
   /**
+   * @brief replace config
+   */
+  void Set(IndexConfiguration &config);
+
+  /**
    * @brief - Adds an index into the configuration
    */
   void AddIndexObject(std::shared_ptr<IndexObject> index_info);
@@ -123,6 +128,12 @@ class IndexConfiguration {
    * @brief - Returns the number of indexes in the configuration
    */
   size_t GetIndexCount() const;
+
+  /**
+   * @brief is empty
+   * @return bool
+   */
+  bool IsEmpty() const;
 
   /**
    * @brief - Returns the indexes in the configuration
@@ -170,7 +181,7 @@ class IndexObjectPool {
 
   /**
    * @brief - Add the object to the pool of index objects
-   * if the object already exists, return the shared pointer 
+   * if the object already exists, return the shared pointer
    * else create the object, add it to the pool and return the shared pointer
    */
   std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
@@ -178,8 +189,7 @@ class IndexObjectPool {
  private:
   // The mapping from the object to the shared pointer
   std::unordered_map<IndexObject, std::shared_ptr<IndexObject>,
-                     IndexObjectHasher>
-      map_;
+                     IndexObjectHasher> map_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -195,11 +205,11 @@ class Workload {
   Workload() {}
 
   /**
-   * @brief - Initialize a workload with the given query strings. Parse, bind and
+   * @brief - Initialize a workload with the given query strings. Parse, bind
+   * and
    * add SQLStatements.
    */
   Workload(std::vector<std::string> &queries, std::string database_name) {
-
     LOG_DEBUG("Initializing workload with %ld queries", queries.size());
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -207,7 +217,7 @@ class Workload {
     auto txn = txn_manager.BeginTransaction();
 
     std::unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, database_name));
+        new binder::BindNodeVisitor(txn, database_name));
 
     // Parse and bind every query. Store the results in the workload vector.
     for (auto it = queries.begin(); it != queries.end(); it++) {
