@@ -63,6 +63,7 @@ class PipelineContext {
   llvm::Value *LoadStatePtr(CodeGen &codegen, Id) const;
   llvm::Value *LoadState(CodeGen &codegen, Id state_id) const;
   uint32_t GetEntryOffset(CodeGen &codegen, Id state_id) const;
+  bool HasState() const;
 
   /// Is the pipeline associated with this context parallel?
   bool IsParallel() const;
@@ -92,8 +93,10 @@ class PipelineContext {
    */
   class LoopOverStates {
    public:
-    LoopOverStates(PipelineContext &pipeline_ctx);
+    explicit LoopOverStates(PipelineContext &pipeline_ctx);
     void Do(const std::function<void(llvm::Value *)> &body) const;
+    void DoParallel(
+        const std::function<void(llvm::Value *)> &body) const;
    private:
     PipelineContext &ctx_;
   };

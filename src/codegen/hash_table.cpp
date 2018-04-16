@@ -163,8 +163,10 @@ void HashTable::BuildLazy(CodeGen &codegen, llvm::Value *ht_ptr) const {
 }
 
 void HashTable::ReserveLazy(CodeGen &codegen, llvm::Value *ht_ptr,
-                            llvm::Value *thread_states) const {
-  codegen.Call(HashTableProxy::BuildLazy, {ht_ptr, thread_states});
+                            llvm::Value *thread_states,
+                            uint32_t ht_state_offset) const {
+  codegen.Call(HashTableProxy::ReserveLazy,
+               {ht_ptr, thread_states, codegen.Const32(ht_state_offset)});
 }
 
 void HashTable::MergeLazyUnfinished(CodeGen &codegen, llvm::Value *global_ht,

@@ -156,7 +156,7 @@ codegen::Value UpdateableStorage::GetValue(
 
   codegen::Value null_val, read_val;
 
-  lang::If val_is_null(codegen, null_bitmap.IsNull(codegen, index));
+  lang::If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
   {
     // If the index has its null-bit set, return NULL
     const auto &type = schema_[index];
@@ -216,7 +216,7 @@ void UpdateableStorage::SetValue(
   llvm::Value *null = value.IsNull(codegen);
   null_bitmap.SetNull(codegen, index, null);
 
-  lang::If val_not_null(codegen, codegen->CreateNot(null));
+  lang::If val_not_null{codegen, codegen->CreateNot(null)};
   {
     // If the value isn't NULL, write it into storage
     SetValueSkipNull(codegen, space, index, value);

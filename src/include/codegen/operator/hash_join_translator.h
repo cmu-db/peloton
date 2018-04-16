@@ -47,10 +47,10 @@ class HashJoinTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch &batch) const override;
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
-  void RegisterPipelineState(PipelineContext &context) override;
-  void InitializePipelineState(PipelineContext &context) override;
-  void TearDownPipelineState(PipelineContext &context) override;
-  void FinishPipeline(PipelineContext &context) override;
+  void RegisterPipelineState(PipelineContext &pipeline_ctx) override;
+  void InitializePipelineState(PipelineContext &pipeline_ctx) override;
+  void TearDownPipelineState(PipelineContext &pipeline_ctx) override;
+  void FinishPipeline(PipelineContext &pipeline_ctx) override;
 
   // Codegen any cleanup work for this translator
   void TearDownQueryState() override;

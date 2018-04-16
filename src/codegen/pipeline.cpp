@@ -18,10 +18,24 @@
 #include "codegen/consumer_context.h"
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/executor_context_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
+
+namespace {
+
+std::string CreateUniqueFunctionName(Pipeline &pipeline,
+                                     const std::string &prefix) {
+  CompilationContext &compilation_ctx = pipeline.GetCompilationContext();
+  CodeContext &cc = compilation_ctx.GetCodeGen().GetCodeContext();
+  return StringUtil::Format("_%" PRId64 "_pipeline_%u_%s_%s", cc.GetID(),
+                            pipeline.GetId(), prefix.c_str(),
+                            pipeline.ConstructPipelineName().c_str());
+}
+
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
@@ -36,30 +50,83 @@ void PipelineContext::LoopOverStates::Do(
     const std::function<void(llvm::Value *)> &body) const {
   auto &compilation_ctx = ctx_.GetPipeline().GetCompilationContext();
   auto &exec_consumer = compilation_ctx.GetExecutionConsumer();
-  auto *thread_states = exec_consumer.GetThreadStatesPtr(compilation_ctx);
+  auto &codegen = compilation_ctx.GetCodeGen();
 
-  CodeGen &codegen = compilation_ctx.GetCodeGen();
+  llvm::Value *thread_states =
+      exec_consumer.GetThreadStatesPtr(compilation_ctx);
 
   llvm::Value *num_threads =
       codegen.Load(ThreadStatesProxy::num_threads, thread_states);
   llvm::Value *state_size =
       codegen.Load(ThreadStatesProxy::state_size, thread_states);
+
   llvm::Value *states = codegen.Load(ThreadStatesProxy::states, thread_states);
+  states = codegen->CreatePointerCast(states, codegen.CharPtrType());
 
-  llvm::Value *state_end = codegen->CreateInBoundsGEP(
-      states, {codegen->CreateMul(num_threads, state_size)});
-
-  llvm::Value *loop_cond = codegen->CreateICmpNE(states, state_end);
-  lang::Loop state_loop{codegen, loop_cond, {{"threadState", states}}};
+  llvm::Value *tid = codegen.Const32(0);
+  llvm::Value *loop_cond = codegen->CreateICmpNE(tid, num_threads);
+  lang::Loop state_loop{codegen, loop_cond, {{"tid", tid}}};
   {
-    // Pull out state in this iteration
-    llvm::Value *curr_state = state_loop.GetLoopVar(0);
+    // Pull out state for current TID
+    tid = state_loop.GetLoopVar(0);
+    llvm::Value *offset = codegen->CreateMul(tid, state_size);
+
+    llvm::Value *raw_ptr = codegen->CreateInBoundsGEP(states, {offset});
+    llvm::Value *state = codegen->CreatePointerCast(
+        raw_ptr, ctx_.GetThreadStateType()->getPointerTo());
+
     // Invoke caller
-    body(curr_state);
+    body(state);
+
     // Wrap up
-    states = codegen->CreateInBoundsGEP(states, {state_size});
-    state_loop.LoopEnd(codegen->CreateICmpNE(states, state_end), {states});
+    tid = codegen->CreateAdd(tid, codegen.Const32(1));
+    state_loop.LoopEnd(codegen->CreateICmpNE(tid, num_threads), {tid});
   }
+}
+
+void PipelineContext::LoopOverStates::DoParallel(
+    const std::function<void(llvm::Value *)> &body) const {
+  Pipeline &pipeline = ctx_.GetPipeline();
+  CompilationContext &comp_ctx = pipeline.GetCompilationContext();
+  QueryState &query_state = comp_ctx.GetQueryState();
+  CodeGen &codegen = comp_ctx.GetCodeGen();
+
+  auto name = CreateUniqueFunctionName(pipeline, "loopThreadState");
+
+  std::vector<FunctionDeclaration::ArgumentInfo> args = {
+      {"queryState", query_state.GetType()->getPointerTo()},
+      {"threadState", ctx_.GetThreadStateType()->getPointerTo()}};
+  FunctionDeclaration decl{codegen.GetCodeContext(), name,
+                           FunctionDeclaration::Visibility::Internal,
+                           codegen.VoidType(), args};
+  FunctionBuilder func{codegen.GetCodeContext(), decl};
+  {
+    // Pull out arguments
+    auto *thread_state_ptr = func.GetArgumentByPosition(1);
+
+    // Setup access to the thread state
+    PipelineContext::ScopedStateAccess state_access{
+        ctx_, func.GetArgumentByPosition(1)};
+
+    // Execute function body
+    body(thread_state_ptr);
+
+    // Finish
+    func.ReturnAndFinish();
+  }
+
+  // Invoke the per-state dispatch function
+
+  std::vector<llvm::Value *> dispatch_args = {
+      // The (void*) query state
+      codegen->CreatePointerCast(codegen.GetState(), codegen.VoidPtrType()),
+      // The (ThreadStates &) thread states
+      comp_ctx.GetExecutionConsumer().GetThreadStatesPtr(comp_ctx),
+      // The function
+      codegen->CreatePointerCast(
+          func.GetFunction(),
+          proxy::TypeBuilder<void (*)(void *, void *)>::GetType(codegen))};
+  codegen.Call(RuntimeFunctionsProxy::ExecutePerState, dispatch_args);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -148,6 +215,12 @@ uint32_t PipelineContext::GetEntryOffset(CodeGen &codegen,
                                          PipelineContext::Id state_id) const {
   auto *state_type = GetThreadStateType();
   return static_cast<uint32_t>(codegen.ElementOffset(state_type, state_id));
+}
+
+bool PipelineContext::HasState() const {
+  PELOTON_ASSERT(thread_state_type_ != nullptr &&
+                 "Cannot query state components until it has been finalized");
+  return state_components_.size() > 1;
 }
 
 bool PipelineContext::IsParallel() const { return pipeline_.IsParallel(); }
@@ -283,19 +356,6 @@ uint32_t Pipeline::GetTranslatorStage(
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace {
-
-std::string CreateUniqueFunctionName(Pipeline &pipeline,
-                                     const std::string &prefix) {
-  CompilationContext &compilation_ctx = pipeline.GetCompilationContext();
-  CodeContext &cc = compilation_ctx.GetCodeGen().GetCodeContext();
-  return StringUtil::Format("_%" PRId64 "_pipeline_%u_%s_%s", cc.GetID(),
-                            pipeline.GetId(), prefix.c_str(),
-                            pipeline.ConstructPipelineName().c_str());
-}
-
-}  // namespace
-
 std::string Pipeline::ConstructPipelineName() const {
   std::vector<std::string> parts;
   for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend(); riter != rend;
@@ -354,8 +414,8 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_ctx) {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", pipeline_ctx.GetThreadStateType()->getPointerTo()}};
 
-  FunctionDeclaration init_decl(cc, func_name, visibility, ret_type, args);
-  FunctionBuilder init_func(cc, init_decl);
+  FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
+  FunctionBuilder init_func{cc, init_decl};
   {
     PipelineContext::ScopedStateAccess state_access{
         pipeline_ctx, init_func.GetArgumentByPosition(1)};
@@ -386,7 +446,11 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_ctx) {
     return;
   }
 
-  // Loop over all states
+  if (!pipeline_ctx.HasState()) {
+    return;
+  }
+
+  // Loop over all states to allow operators to clean up components
   PipelineContext::LoopOverStates loop_state{pipeline_ctx};
   loop_state.Do([this, &pipeline_ctx](llvm::Value *thread_state) {
     PipelineContext::ScopedStateAccess state_access{pipeline_ctx, thread_state};
@@ -429,8 +493,7 @@ void Pipeline::Run(
   InitializePipeline(pipeline_ctx);
 
   // Generate pipeline
-  DoRun(pipeline_ctx, dispatch_func, dispatch_args, pipeline_arg_types,
-        body);
+  DoRun(pipeline_ctx, dispatch_func, dispatch_args, pipeline_arg_types, body);
 
   // Finish
   CompletePipeline(pipeline_ctx);
@@ -460,8 +523,8 @@ void Pipeline::DoRun(
   }
 
   // The main function
-  FunctionDeclaration declaration(cc, func_name, visibility, ret_type, args);
-  FunctionBuilder func(cc, declaration);
+  FunctionDeclaration declaration{cc, func_name, visibility, ret_type, args};
+  FunctionBuilder func{cc, declaration};
   {
     auto *query_state = func.GetArgumentByPosition(0);
     auto *thread_state = func.GetArgumentByPosition(1);

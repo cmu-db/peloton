@@ -157,8 +157,8 @@ void RuntimeFunctions::ExecuteTableScan(
 
   // Pull out the data table
   auto *sm = storage::StorageManager::GetInstance();
-  storage::DataTable *table = sm->GetTableWithOid(db_oid, table_oid);
-  uint32_t num_tilegroups = static_cast<uint32_t>(table->GetTileGroupCount());
+  auto *table = sm->GetTableWithOid(db_oid, table_oid);
+  auto num_tilegroups = static_cast<uint32_t>(table->GetTileGroupCount());
 
   // Determine the number of tasks to generate. In this case, we use:
   // num_tasks := num_tile_groups / num_workers
@@ -205,6 +205,35 @@ void RuntimeFunctions::ExecuteTableScan(
 
   // Wait for everything to finish
   // TODO(pmenon): Loop await, checking for query error or cancellation
+  latch.Await(0);
+}
+
+void RuntimeFunctions::ExecutePerState(
+    void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
+    void (*work_func)(void *, void *)) {
+  // The worker pool
+  auto &worker_pool = threadpool::MonoQueuePool::GetExecutionInstance();
+
+  // Create count down latch
+  uint32_t num_tasks = thread_states.NumThreads();
+  common::synchronization::CountDownLatch latch(num_tasks);
+
+  // Loop over states
+  for (uint32_t tid = 0; tid < num_tasks; tid++) {
+    worker_pool.SubmitTask(
+        [&query_state, &work_func, &thread_states, &latch, tid]() {
+          // Pull out the thread state
+          auto *thread_state = thread_states.AccessThreadState(tid);
+
+          // Invoke work function on this thread state
+          work_func(query_state, thread_state);
+
+          // Count down the latch
+          latch.CountDown();
+        });
+  }
+
+  // Wait for all tasks to complete
   latch.Await(0);
 }
 

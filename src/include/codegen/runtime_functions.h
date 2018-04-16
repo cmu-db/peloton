@@ -74,9 +74,12 @@ class RuntimeFunctions {
   // the provided scan function.
   static void ExecuteTableScan(
       void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
-      uint32_t db_oid, uint32_t table_oid,
-      void *f);
-//      void (*scanner)(void *, void *, uint64_t, uint64_t));
+      uint32_t db_oid, uint32_t table_oid, void *f);
+  //      void (*scanner)(void *, void *, uint64_t, uint64_t));
+
+  static void ExecutePerState(
+      void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
+      void (*work_func)(void *, void *));
 
   static void ThrowDivideByZeroException();
 

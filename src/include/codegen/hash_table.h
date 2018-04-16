@@ -206,7 +206,7 @@ class HashTable {
   void BuildLazy(CodeGen &codegen, llvm::Value *ht_ptr) const;
 
   void ReserveLazy(CodeGen &codegen, llvm::Value *ht_ptr,
-                   llvm::Value *thread_states) const;
+                   llvm::Value *thread_states, uint32_t ht_state_offset) const;
 
   void MergeLazyUnfinished(CodeGen &codegen, llvm::Value *global_ht,
                            llvm::Value *local_ht) const;

@@ -76,6 +76,8 @@ inline bool CountDownLatch::Await(uint64_t nanos) {
 
 inline void CountDownLatch::CountDown() {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  // If the count is already zero, nothing to do, no one to notify
   if (count_ == 0) {
     return;
   }
