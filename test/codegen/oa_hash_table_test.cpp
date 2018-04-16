@@ -179,8 +179,9 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
       std::vector<Key> shuffled = keys;
       std::random_shuffle(shuffled.begin(), shuffled.end());
       for (uint32_t i = 0; i < num_keys; i++) {
-        Value probe_val;
-        EXPECT_TRUE(ht.Probe(Hash(shuffled[i]), shuffled[i], probe_val));
+        std::function<void(const Value &v)> f =
+            [](UNUSED_ATTRIBUTE const Value &vv) {};
+        EXPECT_TRUE(ht.Probe(Hash(shuffled[i]), shuffled[i], f));
       }
       // End Probe
 
@@ -215,8 +216,9 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
       std::vector<Key> shuffled = keys;
       std::random_shuffle(shuffled.begin(), shuffled.end());
       for (uint32_t i = 0; i < num_keys; i++) {
-        Value probe_val;
-        EXPECT_TRUE(ht.TypedProbe(Hash(shuffled[i]), shuffled[i], probe_val));
+        std::function<void(const Value &v)> f =
+            [](UNUSED_ATTRIBUTE const Value &vv) {};
+        EXPECT_TRUE(ht.TypedProbe(Hash(shuffled[i]), shuffled[i], f));
       }
       // End Probe
 

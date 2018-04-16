@@ -17,7 +17,6 @@
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
 #include "codegen/proxy/hash_table_proxy.h"
-#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
 

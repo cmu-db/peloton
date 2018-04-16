@@ -20,6 +20,9 @@
 namespace peloton {
 namespace codegen {
 
+/**
+ * The main hash table access class for util::HashTable.
+ */
 class HashTable {
  public:
   /**
@@ -44,20 +47,29 @@ class HashTable {
   };
 
   /**
-   * A callback used when inserting insert a new entry into the hash table. The
-   * caller implements the StoreValue() method to perform the insertion.  The
-   * argument provided to StoreValue() is the address where the contents can be
-   * stored.  The size of this space is equal to the value returned by
-   * GetValueSize().
+   * A callback used when inserting a new entry into the hash table. The caller
+   * implements StoreValue() to perform the insertion, and GetValueSize() to
+   * indicate the number of bytes needed to store the value associated with the
+   * inserted key.
    */
   struct InsertCallback {
     /** Virtual destructor */
     virtual ~InsertCallback() = default;
 
-    // Called to store the value associated with the key used for insertion.
+    /**
+     * Serialize the value into a provided memory space in the hash table.
+     *
+     * @param codegen The codegen instance
+     * @param space The memory space for the value
+     */
     virtual void StoreValue(CodeGen &codegen, llvm::Value *space) const = 0;
 
-    // Called to determine the size of the payload the caller wants to store
+    /**
+     * Return the number of bytes for the value
+     *
+     * @param codegen The codegen instance
+     * @return The number of bytes needed to store the value
+     */
     virtual llvm::Value *GetValueSize(CodeGen &codegen) const = 0;
   };
 
@@ -71,18 +83,23 @@ class HashTable {
     }
   };
 
-  //===--------------------------------------------------------------------===//
-  // This callback is used to iterate over all (or a subset) of the entries in
-  // the hash table that match a provided key.  The ProcessEntry() method is
-  // called for every match and we provide a pointer to the actual HashEntry,
-  // and a vector of codegen::Value for every value stored in the HashEntry.
-  //===--------------------------------------------------------------------===//
+  /**
+   * A callback used when iterating over the entries in the hash table.
+   * ProcessEntry() is invoked for each entry in the table, or only those
+   * entries that match a provided key if a search key is provided.
+   */
   struct IterateCallback {
     /** Virtual destructor */
     virtual ~IterateCallback() = default;
 
-    // Callback to process an entry in the hash table. The key and opaque set of
-    // bytes (representing the value space) are provided as arguments.
+    /**
+     * The primary callback function for each entry in the table, or for each
+     * matching key-value pair when provided a search key.
+     *
+     * @param codegen The codegen instance
+     * @param keys The key stored in the hash table
+     * @param values A pointer to a set of bytes where the value is stored
+     */
     virtual void ProcessEntry(CodeGen &codegen,
                               const std::vector<codegen::Value> &keys,
                               llvm::Value *values) const = 0;
@@ -90,41 +107,63 @@ class HashTable {
 
   class HashTableAccess;
 
-  //===--------------------------------------------------------------------===//
-  // This callback is used when performing a vectorized iteration over all
-  // entries in the hash table that match a provided key. For each vector of
-  // entries, ProcessEntries() is called indicating the range of entries in the
-  // hash-table to cover, and a selection vector indicating which entries in
-  // this range are occupied.
-  //===--------------------------------------------------------------------===//
+  /**
+   * A callback used when performing a batched/vectorized iteration over the
+   * entries in the hash table. Iteration may be over the entire table, or a
+   * subset of the table if a matching probing key was provided.
+   */
   struct VectorizedIterateCallback {
     /** Virtual destructor */
     virtual ~VectorizedIterateCallback() = default;
 
-    // Process a vector of entries in this hash-table
+    /**
+     * Process a vector of entries in the hash table.
+     *
+     * @param codegen The codegen instance
+     * @param start
+     * @param end
+     * @param selection_vector A vector containing indexes of valid entries
+     * @param access A hash-table random-access helper
+     */
     virtual void ProcessEntries(CodeGen &codegen, llvm::Value *start,
                                 llvm::Value *end, Vector &selection_vector,
                                 HashTableAccess &access) const = 0;
   };
 
-  //===--------------------------------------------------------------------===//
-  // Convenience class proving a random access interface over the hash-table
-  //===--------------------------------------------------------------------===//
+  /**
+   * Convenience class proving a random access interface over the hash-table
+   */
   class HashTableAccess {
    public:
     /** Virtual destructor */
     virtual ~HashTableAccess() = default;
 
+    /**
+     * Extracts the key of an entry at a given index into the hash table storing
+     * results into the output 'keys' vector.
+     *
+     * @param codegen The codegen instance
+     * @param index The index in the directory
+     * @param[out] keys Where each column of the key is stored
+     */
     // Extract the keys for the bucket at the given index
     virtual void ExtractBucketKeys(CodeGen &codegen, llvm::Value *index,
                                    std::vector<codegen::Value> &keys) const = 0;
+
+    /**
+     * Returns a pointer to a value stored at the entry at the given index.
+     *
+     * @param codegen The codegen instance
+     * @param index An index in the directory
+     * @return A pointer to where the value is serialized
+     */
     virtual llvm::Value *BucketValue(CodeGen &codegen,
                                      llvm::Value *index) const = 0;
   };
 
-  //===--------------------------------------------------------------------===//
-  // Return type for ProbeOrInsert
-  //===--------------------------------------------------------------------===//
+  /**
+   * A struct storing the result of a probe into the hash table
+   */
   struct ProbeResult {
     // Actual probe result (bool), if the key already exists in the hast table
     llvm::Value *key_exists;
@@ -142,26 +181,20 @@ class HashTable {
   // Destructor
   virtual ~HashTable() = default;
 
-  // Initialize the hash-table instance
   virtual void Init(CodeGen &codegen, llvm::Value *ht_ptr) const;
   virtual void Init(CodeGen &codegen, llvm::Value *exec_ctx,
                     llvm::Value *ht_ptr) const;
 
-  // Generate code to handle the insertion of a new tuple
   virtual void ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
                              llvm::Value *hash,
                              const std::vector<codegen::Value> &key,
                              ProbeCallback &probe_callback,
                              InsertCallback &insert_callback) const;
 
-  // Probe the hash table and insert a new slot if needed, returning both the
-  // result and the data pointer
   virtual ProbeResult ProbeOrInsert(
       CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
       const std::vector<codegen::Value> &key) const;
 
-  // Insert a new entry into the hash table with the given keys, but don't
-  // perform any key matching or merging
   virtual void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
                       const std::vector<codegen::Value> &keys,
                       InsertCallback &callback) const;
@@ -178,21 +211,17 @@ class HashTable {
   void MergeLazyUnfinished(CodeGen &codegen, llvm::Value *global_ht,
                            llvm::Value *local_ht) const;
 
-  // Generate code to iterate over the entire hash table
   virtual void Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
                        IterateCallback &callback) const;
 
-  // Generate code to iterate over the entire hash table in vectorized fashion
   virtual void VectorizedIterate(CodeGen &codegen, llvm::Value *ht_ptr,
                                  Vector &selection_vector,
                                  VectorizedIterateCallback &callback) const;
 
-  // Generate code that iterates all the matches
   virtual void FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
                        const std::vector<codegen::Value> &key,
                        IterateCallback &callback) const;
 
-  // Destroy/cleanup the hash table
   virtual void Destroy(CodeGen &codegen, llvm::Value *ht_ptr) const;
 
  private:

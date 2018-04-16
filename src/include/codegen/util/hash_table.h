@@ -52,8 +52,14 @@ class HashTable {
   static void Destroy(HashTable &table);
 
   /**
-   * Make room in the hash-table to store a new key-value pair with the provided
-   * hash value
+   * Make room in the hash table's storage space to store a new key-value pair
+   * with the provided hash value, but defer insertion into the directory to a
+   * later pointer.
+   *
+   * This is mainly used for two-phase hash-joins, where all insertions into
+   * the table happen in one phase, and all probes into the hash table happen
+   * in a separate phase. In such cases, BuildLazy() must be called to properly
+   * construct the hash table.
    *
    * @param hash The hash value of the tuple that will be inserted
    * @return A memory region where the key and value can be stored
@@ -61,7 +67,7 @@ class HashTable {
   char *InsertLazy(uint64_t hash);
 
   /**
-   * Make room in the hash-table to store the new key-value pair.
+   * Make room in the hash table to store the new key-value pair.
    *
    * @param hash
    * @return
@@ -75,7 +81,7 @@ class HashTable {
    * followed by a series of probes.
    *
    * After this call, the hash table will not accept any more insertions. The
-   * hash-table will be frozen.
+   * hash table will be frozen.
    */
   void BuildLazy();
 
@@ -116,6 +122,7 @@ class HashTable {
 
   uint64_t NumElements() const { return num_elems_; }
   uint64_t Capacity() const { return capacity_; }
+  double LoadFactor() const { return num_elems_ / 1.0 / directory_size_; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -124,8 +131,8 @@ class HashTable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Insert a key-value pair into the hash-table. This function is used mostly
-   * for testing since we specialize insertions in generated code.
+   * Insert a key-value pair lazily into the hash table. This function is used
+   * mostly for testing since we specialize insertions in generated code.
    *
    * @param hash The hash value of the key
    * @param key The key to store in the table
@@ -133,6 +140,17 @@ class HashTable {
    */
   template <typename Key, typename Value>
   void TypedInsertLazy(uint64_t hash, const Key &key, const Value &value);
+
+  /**
+   * Insert a key-value pair into the hash table. This function is used mostly
+   * for testing since we specialize insertions in generated code.
+   *
+   * @param hash The hash value of the key
+   * @param key The key to store in the table
+   * @param value The value to store in the value
+   */
+  template <typename Key, typename Value>
+  void TypedInsert(uint64_t hash, const Key &key, const Value &value);
 
   /**
    * Probe a key in the hash table. This function is used mostly for testing.
@@ -144,7 +162,8 @@ class HashTable {
    * @return True if a value was found. False otherwise.
    */
   template <typename Key, typename Value>
-  bool TypedProbe(uint64_t hash, const Key &key, Value &value);
+  bool TypedProbe(uint64_t hash, const Key &key,
+                  std::function<void(const Value &)> &consumer);
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -153,7 +172,13 @@ class HashTable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * An entry in the hash table that stores a key and value
+   * An entry in the hash table that stores a key and value. Entries are
+   * variable-sized structs. In memory, the key and value bytes are stored
+   * contiguously after the next pointer. The layout is thus:
+   *
+   * +--------------+---------------+-------------------+--------------------+
+   * |  hash value  | next pointer  | sizeof(Key) bytes | sizeof(Val) bytes) |
+   * +--------------+---------------+-------------------+--------------------+
    */
   struct Entry {
     uint64_t hash;
@@ -253,7 +278,15 @@ void HashTable::TypedInsertLazy(uint64_t hash, const Key &key,
 }
 
 template <typename Key, typename Value>
-bool HashTable::TypedProbe(uint64_t hash, const Key &key, Value &value) {
+void HashTable::TypedInsert(uint64_t hash, const Key &key, const Value &value) {
+  auto *data = Insert(hash);
+  *reinterpret_cast<Key *>(data) = key;
+  *reinterpret_cast<Value *>(data + sizeof(Key)) = value;
+}
+
+template <typename Key, typename Value>
+bool HashTable::TypedProbe(uint64_t hash, const Key &key,
+                           std::function<void(const Value &)> &consumer) {
   // Initial index in the directory
   uint64_t index = hash & directory_mask_;
 
@@ -261,16 +294,19 @@ bool HashTable::TypedProbe(uint64_t hash, const Key &key, Value &value) {
   if (entry == nullptr) {
     return false;
   }
+
+  bool found = false;
   while (entry != nullptr) {
     if (entry->hash == hash && *reinterpret_cast<Key *>(entry->data) == key) {
-      value = *reinterpret_cast<Value *>(entry->data + sizeof(Key));
-      return true;
+      auto *value = reinterpret_cast<Value *>(entry->data + sizeof(Key));
+      consumer(*value);
+      found = true;
     }
     entry = entry->next;
   }
 
   // Not found
-  return false;
+  return found;
 }
 
 }  // namespace util

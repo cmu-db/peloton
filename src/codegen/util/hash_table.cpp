@@ -218,8 +218,10 @@ void HashTable::ReserveLazy(
 
   directory_size_ = capacity_ * 2;
   directory_mask_ = directory_size_ - 1;
-  directory_ = static_cast<Entry **>(
-      memory_.Allocate(sizeof(Entry *) * directory_size_));
+
+  uint64_t alloc_size = sizeof(Entry *) * directory_size_;
+  directory_ = static_cast<Entry **>(memory_.Allocate(alloc_size));
+  PELOTON_MEMSET(directory_, 0, alloc_size);
 }
 
 void HashTable::MergeLazyUnfinished(const HashTable &other) {
@@ -238,11 +240,14 @@ void HashTable::MergeLazyUnfinished(const HashTable &other) {
     do {
       curr = directory_[index];
       head->next = curr;
-    } while (!atomic_cas(directory_ + index, curr, head));
+    } while (!::peloton::atomic_cas(directory_ + index, curr, head));
 
     // Success, move along
     head = next;
   }
+
+  // Increment number of elements
+  ::peloton::atomic_add(&num_elems_, other.NumElements());
 }
 
 void HashTable::Resize() {
@@ -255,9 +260,10 @@ void HashTable::Resize() {
   // Allocate the new directory with 50% fill factor
   uint64_t new_dir_size = capacity_ * 2;
   uint64_t new_dir_mask = new_dir_size - 1;
-  auto *new_dir =
-      static_cast<Entry **>(memory_.Allocate(sizeof(Entry *) * new_dir_size));
-  PELOTON_MEMSET(new_dir, 0, new_dir_size);
+
+  uint64_t alloc_size = sizeof(Entry *) * new_dir_size;
+  auto *new_dir = static_cast<Entry **>(memory_.Allocate(alloc_size));
+  PELOTON_MEMSET(new_dir, 0, alloc_size);
 
   // Insert all old directory entries into new directory
   for (uint32_t i = 0; i < directory_size_; i++) {
@@ -269,8 +275,8 @@ void HashTable::Resize() {
     while (entry != nullptr) {
       uint64_t index = entry->hash & new_dir_mask;
       Entry *next = entry->next;
-      entry->next = directory_[index];
-      directory_[index] = entry;
+      entry->next = new_dir[index];
+      new_dir[index] = entry;
       entry = next;
     }
   }

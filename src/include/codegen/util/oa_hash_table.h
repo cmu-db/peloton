@@ -125,7 +125,8 @@ class OAHashTable {
    * @return
    */
   template <typename Key, typename Value>
-  bool Probe(uint64_t hash, const Key &key, Value &value);
+  bool Probe(uint64_t hash, const Key &key,
+             std::function<void(const Value &)> &consumer);
 
   /**
    * Make room in the hash-table to store a new key-value pair. The provided
@@ -314,7 +315,8 @@ void OAHashTable::Insert(uint64_t hash, const Key &key, const Value &value) {
 }
 
 template <typename Key, typename Value>
-bool OAHashTable::Probe(uint64_t hash, const Key &key, Value &value) {
+bool OAHashTable::Probe(uint64_t hash, const Key &key,
+                        std::function<void(const Value &)> &consumer) {
   uint64_t steps = 0;
 
   uint64_t bucket = hash & bucket_mask_;
@@ -329,7 +331,18 @@ bool OAHashTable::Probe(uint64_t hash, const Key &key, Value &value) {
       // hashes match, check key
       auto *entry_key = reinterpret_cast<Key *>(entry->data);
       if (*entry_key == key) {
-        value = *reinterpret_cast<Value *>(entry->data + sizeof(Key));
+        if (entry->HasKeyValueList()) {
+          auto *kv_list = entry->kv_list;
+          for (uint64_t pos = 0,
+                        end = GetCurrentKeyValueListSize(kv_list->size);
+               pos != end; pos += value_size_) {
+            auto *value = reinterpret_cast<Value *>(kv_list->data + pos);
+            consumer(*value);
+          }
+        } else {
+          auto *value = reinterpret_cast<Value *>(entry->data + sizeof(Key));
+          consumer(*value);
+        }
         return true;
       }
     }
