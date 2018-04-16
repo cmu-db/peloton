@@ -21,30 +21,65 @@ namespace storage {
 
 // Constructor for the layout class with column_count
 // The default layout is always a ROW_STORE
-Layout::Layout(const oid_t num_columns)
-        : layout_id_(ROW_STORE_OID),
-          num_columns_(num_columns) {}
+Layout::Layout(const oid_t num_columns, LayoutType layout_type)
+        : num_columns_(num_columns),
+          layout_type_(layout_type){}
 
 // Constructor for the Layout class with column_map
 Layout::Layout(const column_map_type& column_map)
         : layout_id_(ROW_STORE_OID),
           num_columns_(column_map.size()),
           column_layout_(column_map) {
+  // Figure out the layout type if not present
+  bool row_layout = true, column_layout = true;
   for (oid_t column_id = 0; column_id < num_columns_; column_id++) {
     if (column_layout_[column_id].first != 0) {
-      layout_id_ = INVALID_OID;
-      return;
+      row_layout = false;
+    }
+    if (column_layout_[column_id].first != column_id) {
+      column_layout = false;
     }
   }
-  // Since this is a row store, we don't need the map
-  column_layout_.clear();
+
+  // Assign the layout_type_
+  // If a table has one column, it would be LayoutType::Row
+  if (row_layout) {
+    layout_type_ = LayoutType::ROW;
+    layout_id_ = ROW_STORE_OID;
+  } else if (column_layout) {
+    layout_type_  = LayoutType::COLUMN;
+    layout_id_ = COLUMN_STORE_OID;
+  } else {
+    // TODO Pooja - Handle this by making an entry into the catalog
+    layout_type_ = LayoutType::HYBRID;
+    layout_id_ = INVALID_OID;
+  }
+
+  if (layout_type_ != LayoutType::HYBRID) {
+    // Since this is a predefined layout, we don't need the map
+    column_layout_.clear();
+  }
 }
 
 // Constructor for Layout class with predefined layout_id
 Layout::Layout(const column_map_type &column_map, oid_t layout_id)
         : layout_id_(layout_id),
           num_columns_(column_map.size()),
-          column_layout_(column_map) {}
+          column_layout_(column_map) {
+
+  if (layout_id_ == ROW_STORE_OID) {
+    layout_type_ = LayoutType::ROW;
+  } else if (layout_id == COLUMN_STORE_OID) {
+    layout_type_ = LayoutType::COLUMN;
+  } else {
+    layout_type_ = LayoutType::HYBRID;
+  }
+
+  if (layout_type_ != LayoutType::HYBRID) {
+    // Since this is a predefined layout, we don't need the map
+    column_layout_.clear();
+  }
+}
 
 
 // Sets the tile id and column id w.r.t that tile corresponding to
@@ -56,12 +91,20 @@ void Layout::LocateTileAndColumn(oid_t column_offset,
 	PELOTON_ASSERT(num_columns_ > column_offset);
 
 	// For row store layout, tile id is always 0 and the tile
-	// column_id and tile_group column_id is the same.
-	if (layout_id_ == ROW_STORE_OID) {
+	// column_id and tile column_id is the same.
+	if (layout_type_ == LayoutType::ROW) {
 		tile_offset = 0;
 		tile_column_offset = column_offset;
 		return;
 	}
+
+  // For column store layout, tile_id is always same as column_id
+  // and the tile column_id is always 0.
+  if (layout_type_ == LayoutType::COLUMN) {
+    tile_offset = column_offset;
+    tile_column_offset = 0;
+    return;
+  }
 
 	// For other layouts, fetch the layout and
 	// get the entry in the column map
@@ -75,8 +118,7 @@ double Layout::GetLayoutDifference(const storage::Layout &other) const {
   double diff = 0;
 
   // Calculate theta only for TileGroups with the same schema.
-  // TODO Pooja: Handle the case where two Layouts with same
-  // number of columns have a different schema.
+  // Check the schema before invoking this function.
   PELOTON_ASSERT(this->num_columns_ == other.num_columns_);
 
   if ((this->layout_id_ != other.layout_id_)) {
@@ -155,6 +197,11 @@ const std::string Layout::GetInfo() const {
 }
 
 bool operator==(const Layout& lhs, const Layout& rhs) {
+
+  // Check the equality of layout_type_
+  if (lhs.layout_type_ != rhs.layout_type_) {
+    return false;
+  }
 
   // Check the equality of layout_oid_
   if (lhs.GetLayoutId() != rhs.GetLayoutId()) {

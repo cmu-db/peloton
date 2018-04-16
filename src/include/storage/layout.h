@@ -18,6 +18,7 @@
 #include "common/printable.h"
 
 #define ROW_STORE_OID 0
+#define COLUMN_STORE_OID 1
 
 namespace peloton {
 namespace storage {
@@ -25,14 +26,17 @@ namespace storage {
 class Layout : public Printable {
  public:
 
-  Layout (const oid_t num_columns);
+  Layout (const oid_t num_columns, LayoutType layout_type = LayoutType::ROW);
 
   Layout(const column_map_type& column_map);
 
   Layout(const column_map_type& column_map, oid_t layout_id);
 
   // Check whether the Layout is a RowStore.
-  inline bool IsRowStore() const { return (layout_id_ == ROW_STORE_OID); }
+  inline bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
+
+  // Check whether the Layout is ColumnStore.
+  inline bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
 
   oid_t  GetLayoutId() const { return layout_id_; }
 
@@ -67,6 +71,8 @@ class Layout : public Printable {
 
   // Layout of the columns.
   column_map_type column_layout_;
+
+  LayoutType layout_type_;
 
 };
 

@@ -70,9 +70,16 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       default_layout_(schema->GetColumnCount()),
       trigger_list_(new trigger::TriggerList()) {
   // Init default partition
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    default_partition_[col_itr] = std::make_pair(0, col_itr);
+  if (layout_type == LayoutType::ROW) {
+    auto col_count = schema->GetColumnCount();
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      default_partition_[col_itr] = std::make_pair(0, col_itr);
+    }
+  } else if (layout_type == LayoutType::COLUMN) {
+    auto col_count = schema->GetColumnCount();
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      default_partition_[col_itr] = std::make_pair(col_itr, 0);
+    }
   }
 
   if (is_catalog == true) {

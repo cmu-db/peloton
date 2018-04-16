@@ -106,7 +106,7 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
                                           ColumnLayoutInfo *infos,
                                           uint32_t num_cols) {
   const auto& layout = tile_group->GetLayout();
-  // For ROW_STORE_OID, the tile group contains a single tile
+  // For LayoutType::ROW, the tile group contains a single tile
   // and all the columns are in the same order as the table schema.
   if (layout.IsRowStore()) {
     auto tuple_location = tile_group->GetTile(0)->GetTupleLocation(0);
