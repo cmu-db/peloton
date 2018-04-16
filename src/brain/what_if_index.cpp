@@ -52,6 +52,7 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
                   index_catalog_obj->GetIndexOid(),
                   index_catalog_obj->GetTableOid());
         for (auto col : index_catalog_obj->GetKeyAttrs()) {
+          (void)col;  // for debug mode.
           LOG_DEBUG("Cols: %d", col);
         }
       }
@@ -74,75 +75,69 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
 
 void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
                                       std::vector<std::string> &table_names) {
-  // Only support the DML statements.
-  union {
-    parser::SelectStatement *select_stmt;
-    parser::UpdateStatement *update_stmt;
-    parser::DeleteStatement *delete_stmt;
-    parser::InsertStatement *insert_stmt;
-  } sql_statement;
-
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
   switch (query->GetType()) {
-    case StatementType::INSERT:
-      sql_statement.insert_stmt =
-          dynamic_cast<parser::InsertStatement *>(query);
-      table_names.push_back(
-          sql_statement.insert_stmt->table_ref_->GetTableName());
+    case StatementType::INSERT: {
+      auto sql_statement = dynamic_cast<parser::InsertStatement *>(query);
+      table_names.push_back(sql_statement->table_ref_->GetTableName());
       break;
+    }
 
-    case StatementType::DELETE:
-      sql_statement.delete_stmt =
-          dynamic_cast<parser::DeleteStatement *>(query);
-      table_names.push_back(
-          sql_statement.delete_stmt->table_ref->GetTableName());
+    case StatementType::DELETE: {
+      auto sql_statement = dynamic_cast<parser::DeleteStatement *>(query);
+      table_names.push_back(sql_statement->table_ref->GetTableName());
       break;
+    }
 
-    case StatementType::UPDATE:
-      sql_statement.update_stmt =
-          dynamic_cast<parser::UpdateStatement *>(query);
-      table_names.push_back(sql_statement.update_stmt->table->GetTableName());
+    case StatementType::UPDATE: {
+      auto sql_statement = dynamic_cast<parser::UpdateStatement *>(query);
+      table_names.push_back(sql_statement->table->GetTableName());
       break;
+    }
 
-    case StatementType::SELECT:
-      sql_statement.select_stmt =
-          dynamic_cast<parser::SelectStatement *>(query);
+    case StatementType::SELECT: {
+      auto sql_statement = dynamic_cast<parser::SelectStatement *>(query);
       // Select can operate on more than 1 table.
-      switch (sql_statement.select_stmt->from_table->type) {
-        case TableReferenceType::NAME:
+      switch (sql_statement->from_table->type) {
+        case TableReferenceType::NAME: {
           LOG_DEBUG("Table name is %s",
                     sql_statement.select_stmt->from_table.get()
                         ->GetTableName()
                         .c_str());
           table_names.push_back(
-              sql_statement.select_stmt->from_table.get()->GetTableName());
+              sql_statement->from_table.get()->GetTableName());
           break;
-        case TableReferenceType::JOIN:
-          table_names.push_back(
-              sql_statement.select_stmt->from_table->join->left.get()
-                  ->GetTableName()
-                  .c_str());
+        }
+        case TableReferenceType::JOIN: {
+          table_names.push_back(sql_statement->from_table->join->left.get()
+                                    ->GetTableName()
+                                    .c_str());
           break;
-        case TableReferenceType::SELECT:
+        }
+        case TableReferenceType::SELECT: {
           // TODO[vamshi]: Find out what has to be done here?
           break;
-        case TableReferenceType::CROSS_PRODUCT:
-          table_cp_list = &(sql_statement.select_stmt->from_table->list);
+        }
+        case TableReferenceType::CROSS_PRODUCT: {
+          table_cp_list = &(sql_statement->from_table->list);
           for (auto it = table_cp_list->begin(); it != table_cp_list->end();
                it++) {
             table_names.push_back((*it)->GetTableName().c_str());
           }
-        default:
+        }
+        default: {
           LOG_ERROR("Invalid select statement type");
           PELOTON_ASSERT(false);
+        }
       }
       break;
-
-    default:
+    }
+    default: {
       LOG_ERROR("Cannot handle DDL statements");
       PELOTON_ASSERT(false);
+    }
   }
 }
 

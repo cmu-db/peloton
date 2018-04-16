@@ -31,16 +31,17 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class IndexSelectionTest : public PelotonTest {
+ private:
+  std::string database_name;
+
  public:
   IndexSelectionTest() {}
 
   // Create a new database
   void CreateDatabase(std::string db_name) {
-    // Create a new database.
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(db_name, txn);
-    txn_manager.CommitTransaction(txn);
+    database_name = db_name;
+    std::string create_db_str = "CREATE DATABASE " + db_name + ";";
+    TestingSQLUtil::ExecuteSQLQuery(create_db_str);
   }
 
   // Create a new table with schema (a INT, b INT, c INT).
@@ -121,7 +122,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   // Verify the admissible indexes.
   auto queries = workload.GetQueries();
   for (unsigned long i = 0; i < queries.size(); i++) {
-    brain::Workload w(queries[i]);
+    brain::Workload w(queries[i], workload.GetDatabaseName());
     brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
 
     brain::IndexConfiguration ic;
@@ -147,6 +148,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   size_t max_cols = 1;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 10;
+  int num_rows = 2000;
 
   CreateDatabase(database_name);
   CreateTable(table_name);
@@ -183,7 +185,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
 
   // Insert some tuples into the table.
-  InsertIntoTable(table_name, 2000);
+  InsertIntoTable(table_name, num_rows);
   GenerateTableStats();
 
   candidate_config.Clear();
@@ -206,15 +208,13 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
 }
 
 TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
-  void GenMultiColumnIndexes(brain::IndexConfiguration & config,
-                             brain::IndexConfiguration & single_column_indexes,
-                             brain::IndexConfiguration & result);
+  std::string database_name = DEFAULT_DB_NAME;
 
   brain::IndexConfiguration candidates;
   brain::IndexConfiguration single_column_indexes;
   brain::IndexConfiguration result;
   brain::IndexConfiguration expected;
-  brain::Workload workload;
+  brain::Workload workload(database_name);
   brain::IndexSelection index_selection(workload, 5, 2, 10);
 
   std::vector<oid_t> cols;
@@ -335,6 +335,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   size_t max_index_cols = 2;         // multi-column index limit, 2 cols for now
   size_t enumeration_threshold = 2;  // naive enumeration threshold
   size_t num_indexes = 10;           // top num_indexes will be returned.
+  int num_rows = 2000;               // number of rows to be inserted.
 
   CreateDatabase(database_name);
   CreateTable(table_name);
@@ -356,7 +357,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   EXPECT_EQ(workload.Size(), query_strs.size());
 
   // Insert some dummy tuples into the table.
-  InsertIntoTable(table_name, 2000);
+  InsertIntoTable(table_name, num_rows);
   GenerateTableStats();
 
   brain::IndexConfiguration best_config;

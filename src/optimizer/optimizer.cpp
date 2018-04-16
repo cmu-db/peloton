@@ -196,6 +196,7 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
         LOG_DEBUG("Index Scan on %s",
                   index_scan_op->table_->GetTableName().c_str());
         for (auto col : index_scan_op->key_column_id_list) {
+          (void)col;  // for debug mode
           LOG_DEBUG("Col: %d", col);
         }
       }

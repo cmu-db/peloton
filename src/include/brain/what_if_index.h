@@ -26,19 +26,6 @@
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 
-namespace parser {
-  class SQLStatementList;
-}
-
-namespace catalog {
-  class IndexCatalogObject;
-}
-
-namespace optimizer {
-  class QueryInfo;
-  class OptimizerContextInfo;
-}  // namespace optimizer
-
 namespace peloton {
 namespace brain {
 
@@ -71,7 +58,7 @@ class WhatIfIndex {
    * @param table_names - where the table names will be stored.
    */
   static void GetTablesReferenced(parser::SQLStatement *query,
-                            std::vector<std::string> &table_names);
+                                  std::vector<std::string> &table_names);
   /**
    * @brief Creates a hypothetical index catalog object, that would be used
    * to fill the catalog cache.
