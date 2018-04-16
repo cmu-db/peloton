@@ -11,21 +11,18 @@
 //===----------------------------------------------------------------------===//
 
 #include <cmath>
-#include "settings/settings_manager.h"
 
+#include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "expression/expression_util.h"
 #include "expression/subquery_expression.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/query_node_visitor.h"
 #include "optimizer/query_to_operator_transformer.h"
-
-#include "planner/seq_scan_plan.h"
-
 #include "parser/statements.h"
-
-#include "catalog/manager.h"
+#include "settings/settings_manager.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -245,11 +242,71 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
     op->select->Accept(this);
     insert_expr->PushChild(output_expr_);
     output_expr_ = insert_expr;
-  } else {
-    auto insert_expr = std::make_shared<OperatorExpression>(
-        LogicalInsert::make(target_table, &op->columns, &op->insert_values));
-    output_expr_ = insert_expr;
+    return;
   }
+  // column_objects represents the columns for the current table as defined in
+  // its schema
+  auto column_objects = target_table->GetColumnObjects();
+  // INSERT INTO table_name VALUES (val1, val2, ...), (val_a, val_b, ...), ...
+  if (op->columns.empty()) {
+    for (const auto &values : op->insert_values) {
+      if (values.size() > column_objects.size()) {
+        throw CatalogException(
+            "ERROR:  INSERT has more expressions than target columns");
+      } else if (values.size() < column_objects.size()) {
+        for (oid_t i = values.size(); i != column_objects.size(); ++i) {
+          // check whether null values are allowed in the rest of the columns
+          if (column_objects[i]->IsNotNull()) {
+            // TODO: Add check for default value's existence for the current
+            // column
+            throw CatalogException(
+                StringUtil::Format("ERROR:  null value in column \"%s\" "
+                                   "violates not-null constraint",
+                                   column_objects[i]->GetColumnName().c_str()));
+          }
+        }
+      }
+    }
+  } else {
+    // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...), ...
+    auto num_columns = op->columns.size();
+    for (const auto &tuple : op->insert_values) {  // check size of each tuple
+      if (tuple.size() > num_columns) {
+        throw CatalogException(
+            "ERROR:  INSERT has more expressions than target columns");
+      } else if (tuple.size() < num_columns) {
+        throw CatalogException(
+            "ERROR:  INSERT has more target columns than expressions");
+      }
+    }
+
+    // set below contains names of columns mentioned in the insert statement
+    std::unordered_set<std::string> specified;
+    auto column_names = target_table->GetColumnNames();
+
+    for (const auto col : op->columns) {
+      if (column_names.find(col) == column_names.end()) {
+        throw CatalogException(StringUtil::Format(
+            "ERROR:  column \"%s\" of relation \"%s\" does not exist",
+            col.c_str(), target_table->GetTableName().c_str()));
+      }
+      specified.insert(col);
+    }
+
+    for (auto column : column_names) {
+      // this loop checks not null constraint for unspecified columns
+      if (specified.find(column.first) == specified.end() &&
+          column.second->IsNotNull()) {
+        // TODO: Add check for default value's existence for the current column
+        throw CatalogException(StringUtil::Format(
+            "ERROR:  null value in column \"%s\" violates not-null constraint",
+            column.first.c_str()));
+      }
+    }
+  }
+  auto insert_expr = std::make_shared<OperatorExpression>(
+      LogicalInsert::make(target_table, &op->columns, &op->insert_values));
+  output_expr_ = insert_expr;
 }
 
 void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
