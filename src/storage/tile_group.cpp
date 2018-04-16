@@ -31,10 +31,11 @@ namespace storage {
 TileGroup::TileGroup(BackendType backend_type,
                      TileGroupHeader *tile_group_header, AbstractTable *table,
                      const std::vector<catalog::Schema> &schemas,
-                     const column_map_type &column_map, int tuple_count)
-    : database_id(INVALID_OID),
-      table_id(INVALID_OID),
-      tile_group_id(INVALID_OID),
+                     const column_map_type &column_map, int tuple_count,
+                     oid_t database_id, oid_t table_id, oid_t tile_group_id)
+    : database_id(database_id),
+      table_id(table_id),
+      tile_group_id(tile_group_id),
       backend_type(backend_type),
       tile_schemas(schemas),
       tile_group_header(tile_group_header),
@@ -57,19 +58,17 @@ TileGroup::TileGroup(BackendType backend_type,
 }
 
 TileGroup::~TileGroup() {
-  // Drop references on all tiles
-
-  // clean up tile group header
-  delete tile_group_header;
-
   // Record memory deallocation for tile group header
   if (table_id != INVALID_OID &&
       static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncreaseTableMemoryAlloc(
+    stats::BackendStatsContext::GetInstance()->DecreaseTableMemoryAlloc(
         database_id, table_id, tile_group_header->GetHeaderSize());
   }
 
+  // Drop references on all tiles
+  // clean up tile group header
+  delete tile_group_header;
 }
 
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
