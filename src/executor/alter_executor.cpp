@@ -21,8 +21,8 @@ namespace executor {
 
 // Constructor for alter table executor
 AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
-                             ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+                             ExecutorContext *executor_context, bool isAlter)
+    : AbstractExecutor(node, executor_context), isAlter_(isAlter) {}
 
 // Initialize executor
 // Nothing to initialize for now
@@ -36,17 +36,22 @@ bool AlterExecutor::DInit() {
 bool AlterExecutor::DExecute() {
   LOG_TRACE("Executing Alter...");
   bool result = false;
-  const planner::RenamePlan &node = GetPlanNode<planner::RenamePlan>();
-  auto current_txn = executor_context_->GetTransaction();
-  PlanNodeType plan_node_type = node.GetPlanNodeType();
-  if (plan_node_type == PlanNodeType::RENAME) {
+  if (!isAlter_) {
+    const planner::RenamePlan &node = GetPlanNode<planner::RenamePlan>();
+    auto current_txn = executor_context_->GetTransaction();
     result = RenameColumn(node, current_txn);
-  } else if (plan_node_type == PlanNodeType::ALTER) {
-    LOG_TRACE("Will perform alter table operations");
   } else {
-    throw NotImplementedException(
-        StringUtil::Format("Plan node type not supported, %s",
-                           PlanNodeTypeToString(plan_node_type).c_str()));
+    const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
+    auto current_txn = executor_context_->GetTransaction();
+    AlterType type = node.GetAlterTableType();
+    switch (type) {
+      case AlterType::DROP:
+        result = DropColumn(node, current_txn);
+        break;
+      default:
+        throw NotImplementedException(StringUtil::Format(
+            "Alter Type not supported, %s", AlterTypeToString(type).c_str()));
+    }
   }
 
   return result;

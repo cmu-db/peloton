@@ -33,7 +33,7 @@ class AlterExecutor : public AbstractExecutor {
   AlterExecutor &operator=(AlterExecutor &&) = delete;
 
   AlterExecutor(const planner::AbstractPlan *node,
-                ExecutorContext *executor_context);
+                ExecutorContext *executor_context, bool isAlter);
 
   ~AlterExecutor() {}
 
@@ -44,6 +44,12 @@ class AlterExecutor : public AbstractExecutor {
 
   bool RenameColumn(const planner::RenamePlan &node,
                     concurrency::TransactionContext *txn);
+
+  bool DropColumn(const planner::AlterPlan &node,
+                  concurrency::TransactionContext *txn);
+
+ private:
+  bool isAlter_;
 };
 
 }  // executor
