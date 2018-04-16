@@ -161,6 +161,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libtool \
         make \
         g++ \
+	ant \
         unzip
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"

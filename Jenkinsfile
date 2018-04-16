@@ -23,6 +23,7 @@ pipeline {
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && python ../script/testing/junit/run_junit.py'
                     }
                 }
 
@@ -38,6 +39,7 @@ pipeline {
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && python ../script/testing/junit/run_junit.py'
                     }
                 }
 
@@ -53,6 +55,7 @@ pipeline {
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && python ../script/testing/junit/run_junit.py'
                     }
                 }
 
@@ -68,6 +71,7 @@ pipeline {
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && python ../script/testing/junit/run_junit.py'
                     }
                 }
 
@@ -93,6 +97,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -108,6 +113,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -123,6 +129,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -138,6 +145,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -153,6 +161,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -168,6 +177,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo dnf -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -183,6 +193,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo yum -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
 
@@ -198,6 +209,7 @@ pipeline {
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                 //         sh 'sudo yum -q install -y wget java-devel' // prerequisites for jdbc_validator
                 //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+		//         sh 'cd build && python ../script/testing/junit/run_junit.py'
                 //     }
                 // }
                 // end gcc builds

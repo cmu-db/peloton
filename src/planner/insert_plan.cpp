@@ -66,6 +66,11 @@ InsertPlan::InsertPlan(
           is_prepared_stmt = true;
         }
       }
+      // for remaining columns, insert defaults
+      for (uint32_t column_id = values.size(); column_id != schema_col_count;
+           ++column_id) {
+        SetDefaultValue(column_id);
+      }
     }
   } else {
     // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
