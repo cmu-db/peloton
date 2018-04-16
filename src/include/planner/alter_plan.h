@@ -27,9 +27,11 @@ class AlterPlan : public AbstractPlan {
   }
   virtual ~AlterPlan() {}
 
-  virtual PlanNodeType GetPlanNodeType() { return PlanNodeType::ALTER; }
+  virtual PlanNodeType GetPlanNodeType() const override {
+      return PlanNodeType::ALTER;
+  }
 
-  virtual std::unique_ptr<AbstractPlan> Copy() { return nullptr; }
+  virtual std::unique_ptr<AbstractPlan> Copy() const override { return nullptr; }
 };
 }
 }

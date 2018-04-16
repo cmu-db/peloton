@@ -52,7 +52,9 @@ class RenamePlan : public AbstractPlan {
 
   virtual ~RenamePlan() {}
 
-  virtual PlanNodeType GetPlanNodeType() const { return PlanNodeType::RENAME; }
+  virtual PlanNodeType GetPlanNodeType() const override {
+      return PlanNodeType::RENAME;
+  }
 
   const std::string GetInfo() const override {
     return StringUtil::Format(
@@ -63,12 +65,12 @@ class RenamePlan : public AbstractPlan {
         const_cast<char *>(this->db_name_.c_str()));
   }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     return std::unique_ptr<AbstractPlan>(
         new RenamePlan(this->obj_type, this->table_name_, this->db_name_,
                        this->old_names_, this->new_names_));
   }
-  
+
   std::string GetOldName() const { return this->old_names_[0]; }
 
   std::string GetNewName() const { return this->new_names_[0]; }
