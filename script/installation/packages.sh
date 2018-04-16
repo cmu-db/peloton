@@ -71,6 +71,10 @@ function install_tf() {
  LinkerConfigCmd=$3
  TARGET_DIRECTORY="/usr/local"
  # Install Tensorflow Python Binary
+ # sudo apt-get remove python-six
+ if [ "$DISTRO" = "ubuntu" ] && [ "$MAJOR_VER" -eq 14 ]; then
+     sudo apt-get remove python-six
+ fi
  sudo -E pip3 install --upgrade pip
  sudo -E pip3 install --upgrade tensorflow==${TF_VERSION}
 
