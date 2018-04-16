@@ -76,6 +76,30 @@ HashTable::Entry *HashTable::EntryBuffer::NextFree() {
   return entry;
 }
 
+void HashTable::EntryBuffer::TransferMemoryBlocks(
+    HashTable::EntryBuffer &target) {
+  // Find end of our memory block chain
+  MemoryBlock *tail = block_;
+
+  // Check if there is anything to transfer
+  if (tail == nullptr) {
+    return;
+  }
+
+  // Move to the end
+  while (tail->next != nullptr) {
+    tail = tail->next;
+  }
+
+  // Transfer everything to the target entry buffer
+  do {
+    tail->next = target.block_;
+  } while (!::peloton::atomic_cas(&target.block_, target.block_, block_));
+
+  // Success
+  block_ = nullptr;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Hash Table
@@ -224,7 +248,7 @@ void HashTable::ReserveLazy(
   PELOTON_MEMSET(directory_, 0, alloc_size);
 }
 
-void HashTable::MergeLazyUnfinished(const HashTable &other) {
+void HashTable::MergeLazyUnfinished(HashTable &other) {
   // Begin with the head of the linked list of entries, stored in the first
   // directory entry
   PELOTON_ASSERT(other.directory_[0] != nullptr);
@@ -248,6 +272,10 @@ void HashTable::MergeLazyUnfinished(const HashTable &other) {
 
   // Increment number of elements
   ::peloton::atomic_add(&num_elems_, other.NumElements());
+
+  // Transfer all allocated memory blocks in the other table into this one
+  other.num_elems_ = other.capacity_ = 0;
+  other.entry_buffer_.TransferMemoryBlocks(entry_buffer_);
 }
 
 void HashTable::Resize() {

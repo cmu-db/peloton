@@ -195,21 +195,23 @@ TEST_F(HashTableTest, CanInsertLazilyWithDups) {
 }
 
 TEST_F(HashTableTest, ParallelMerge) {
-  codegen::util::HashTable global_table{GetMemPool(), sizeof(Key),
-                                        sizeof(Value)};
-
   constexpr uint32_t num_threads = 4;
   constexpr uint32_t to_insert = 20000;
 
-  std::mutex keys_mutex;
-  std::vector<Key> keys;
-
+  // Allocate hash tables for each thread
   executor::ExecutorContext exec_ctx{nullptr};
 
-  // Allocate hash tables for each thread
   auto &thread_states = exec_ctx.GetThreadStates();
   thread_states.Reset(sizeof(codegen::util::HashTable));
   thread_states.Allocate(num_threads);
+
+  // The keys we insert
+  std::mutex keys_mutex;
+  std::vector<Key> keys;
+
+  // The global hash table
+  codegen::util::HashTable global_table{*exec_ctx.GetPool(), sizeof(Key),
+                                        sizeof(Value)};
 
   auto add_key = [&keys_mutex, &keys](const Key &k) {
     std::lock_guard<std::mutex> lock{keys_mutex};
@@ -259,6 +261,13 @@ TEST_F(HashTableTest, ParallelMerge) {
 
   // Now merge thread-local tables into global table in parallel
   LaunchParallelTest(num_threads, merge_fn);
+
+  // Clean up local tables
+  for (uint32_t tid = 0; tid < num_threads; tid++) {
+    auto *table = reinterpret_cast<codegen::util::HashTable *>(
+        thread_states.AccessThreadState(tid));
+    codegen::util::HashTable::Destroy(*table);
+  }
 
   // Now probe global
   EXPECT_EQ(to_insert * num_threads, global_table.NumElements());

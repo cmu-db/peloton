@@ -112,7 +112,7 @@ class HashTable {
    *
    * @param The hash table whose contents we will merge into this one..
    */
-  void MergeLazyUnfinished(const HashTable &other);
+  void MergeLazyUnfinished(HashTable &other);
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -216,8 +216,17 @@ class HashTable {
      */
     Entry *NextFree();
 
+    /**
+     * Transfer all allocated memory blocks in this entry buffer into the target
+     * buffer.
+     *
+     * @param target Buffer where all blocks are transferred to
+     */
+    void TransferMemoryBlocks(EntryBuffer &target);
+
    private:
-    // This struct allows us to chain together chunks of memory
+    // This struct represents a chunk of heap memory. We chain together these
+    // chunks to avoid the need for a std::vector.
     struct MemoryBlock {
       MemoryBlock *next;
       char data[0];
@@ -225,12 +234,16 @@ class HashTable {
 
     // The memory pool where block allocations are sourced
     ::peloton::type::AbstractPool &memory_;
+
     // The sizes of each entry
     uint32_t entry_size_;
+
     // The current active block
     MemoryBlock *block_;
+
     // A pointer into the block where the next position is
     char *next_entry_;
+
     // The number of available bytes left in the block
     uint64_t available_bytes_;
   };
