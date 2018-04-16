@@ -164,15 +164,9 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
   }
 
   try {
-    // Choosing the best plan requires the presence of the
-    // physical index (BwTree)
-    // Commenting this code for now to avoid segfault.
 
-    // auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
-    //                                query_info.output_exprs);
-
-    std::unique_ptr<planner::AbstractPlan> best_plan(nullptr);
-
+    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+                                    query_info.output_exprs);
     auto info_obj = std::unique_ptr<OptimizerPlanInfo>(new OptimizerPlanInfo());
 
     // Get the cost.

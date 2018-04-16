@@ -150,6 +150,8 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       sql_statement, config, DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
   LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
+  EXPECT_NE(result->plan, nullptr);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalIndex(table_name, {1}));
@@ -158,6 +160,8 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
   LOG_DEBUG("Cost of the query with 1 index: %lf", cost_with_index_1);
+  EXPECT_NE(result->plan, nullptr);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
   config.AddIndexObject(CreateHypotheticalIndex(table_name, {2}));
@@ -169,6 +173,8 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
 
   EXPECT_LT(cost_with_index_1, cost_without_index);
   EXPECT_LT(cost_with_index_2, cost_without_index);
+  EXPECT_NE(result->plan, nullptr);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 }
 
 TEST_F(WhatIfIndexTests, MultiColumnTest1) {
