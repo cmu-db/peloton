@@ -55,15 +55,14 @@ IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
                                        bool unique_keys,
-                                       std::set<oid_t> key_attrs) {
-  this->index_oid = index_oid;
-  this->index_name = index_name;
-  this->table_oid = table_oid;
-  this->index_type = index_type;
-  this->index_constraint = index_constraint;
-  this->unique_keys = unique_keys;
-  this->key_attrs = std::vector<oid_t>(key_attrs.begin(), key_attrs.end());
-}
+                                       std::set<oid_t> key_attrs)
+    : index_oid(index_oid),
+      index_name(index_name),
+      table_oid(table_oid),
+      index_type(index_type),
+      index_constraint(index_constraint),
+      unique_keys(unique_keys),
+      key_attrs(std::vector<oid_t>(key_attrs.begin(), key_attrs.end())) {}
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
@@ -232,7 +231,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
     PELOTON_ASSERT(table_object &&
-              table_object->GetTableOid() == index_object->GetTableOid());
+                   table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
   } else {
     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
@@ -270,7 +269,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto table_object = TableCatalog::GetInstance()->GetTableObject(
         index_object->GetTableOid(), txn);
     PELOTON_ASSERT(table_object &&
-              table_object->GetTableOid() == index_object->GetTableOid());
+                   table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
   } else {
     LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),

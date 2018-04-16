@@ -32,15 +32,13 @@ class WhatIfIndexTests : public PelotonTest {
   std::string database_name;
 
  public:
-  WhatIfIndexTests() { database_name = DEFAULT_DB_NAME; }
+  WhatIfIndexTests() {}
 
   // Create a new database
-  void CreateDatabase() {
-    // Create a new database.
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
-    txn_manager.CommitTransaction(txn);
+  void CreateDatabase(std::string db_name) {
+    database_name = db_name;
+    std::string create_db_str = "CREATE DATABASE " + db_name + ";";
+    TestingSQLUtil::ExecuteSQLQuery(create_db_str);
   }
 
   // Create a new table with schema (a INT, b INT, c INT).
@@ -114,12 +112,14 @@ class WhatIfIndexTests : public PelotonTest {
 
 TEST_F(WhatIfIndexTests, SingleColTest) {
   std::string table_name = "dummy_table_whatif";
+  std::string db_name = DEFAULT_DB_NAME;
+  int num_rows = 1000;
 
-  CreateDatabase();
+  CreateDatabase(db_name);
 
   CreateTable(table_name);
 
-  InsertIntoTable(table_name, 1000);
+  InsertIntoTable(table_name, num_rows);
 
   GenerateTableStats();
 
@@ -173,12 +173,14 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
 
 TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   std::string table_name = "dummy_table_whatif";
+  std::string db_name = DEFAULT_DB_NAME;
+  int num_rows = 1000;
 
-  CreateDatabase();
+  CreateDatabase(db_name);
 
   CreateTable(table_name);
 
-  InsertIntoTable(table_name, 1000);
+  InsertIntoTable(table_name, num_rows);
 
   GenerateTableStats();
 
@@ -239,12 +241,14 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
 
 TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   std::string table_name = "dummy_table_whatif";
+  std::string db_name = DEFAULT_DB_NAME;
+  int num_rows = 1000;
 
-  CreateDatabase();
+  CreateDatabase(db_name);
 
   CreateTable(table_name);
 
-  InsertIntoTable(table_name, 1000);
+  InsertIntoTable(table_name, num_rows);
 
   GenerateTableStats();
 
@@ -315,7 +319,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_5 = result->cost;
   LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_5);
-  EXPECT_GT(cost_without_index, cost_with_index_3);
+  EXPECT_GT(cost_without_index, cost_with_index_5);
 }
 
 }  // namespace test

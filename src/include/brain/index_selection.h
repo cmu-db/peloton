@@ -85,7 +85,8 @@ class IndexSelection {
                                 Workload &workload);
 
   /**
-   * @brief gets the top k cheapest indexes for the workload
+   * @brief gets the top k indexes for the workload which would reduce the cost
+   * of executing them
    *
    * @param indexes - the indexes in the workload
    * @param top_indexes - the top k cheapest indexes in the workload are

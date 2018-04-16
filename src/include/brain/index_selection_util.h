@@ -202,14 +202,15 @@ class Workload {
   /**
    * @brief - Constructor
    */
-  Workload() {}
+  Workload(std::string database_name) : database_name(database_name) {}
 
   /**
    * @brief - Initialize a workload with the given query strings. Parse, bind
    * and
    * add SQLStatements.
    */
-  Workload(std::vector<std::string> &queries, std::string database_name) {
+  Workload(std::vector<std::string> &queries, std::string database_name)
+      : database_name(database_name) {
     LOG_DEBUG("Initializing workload with %ld queries", queries.size());
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -222,7 +223,7 @@ class Workload {
     // Parse and bind every query. Store the results in the workload vector.
     for (auto it = queries.begin(); it != queries.end(); it++) {
       auto query = *it;
-      LOG_INFO("Query: %s", query.c_str());
+      LOG_DEBUG("Query: %s", query.c_str());
 
       auto stmt_list = parser::PostgresParser::ParseSQLString(query);
       PELOTON_ASSERT(stmt_list->is_valid);
@@ -242,28 +243,40 @@ class Workload {
   /**
    * @brief - Constructor
    */
-  Workload(parser::SQLStatement *query) : sql_queries_({query}) {}
+  Workload(parser::SQLStatement *query, std::string database_name)
+      : sql_queries_({query}), database_name(database_name) {}
 
   /**
    * @brief - Add a query into the workload
    */
-  void AddQuery(parser::SQLStatement *query) { sql_queries_.push_back(query); }
+  inline void AddQuery(parser::SQLStatement *query) {
+    sql_queries_.push_back(query);
+  }
 
   /**
    * @brief - Return the queries
    */
-  const std::vector<parser::SQLStatement *> &GetQueries() {
+  inline const std::vector<parser::SQLStatement *> &GetQueries() {
     return sql_queries_;
   }
 
   /**
    * @brief - Return the parsed SQLstatements
    */
-  size_t Size() { return sql_queries_.size(); }
+  inline size_t Size() { return sql_queries_.size(); }
+
+  /**
+   * @brief Return the database name
+   */
+  inline std::string GetDatabaseName() {
+    PELOTON_ASSERT(database_name != "");
+    return database_name;
+  };
 
  private:
   // A vertor of the parsed SQLStatements of the queries
   std::vector<parser::SQLStatement *> sql_queries_;
+  std::string database_name;
 };
 
 }  // namespace brain

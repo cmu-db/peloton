@@ -25,6 +25,7 @@ IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
       context_(max_index_cols, enum_threshold, num_indexes) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
+  // http://www.vldb.org/conf/1997/P146.PDF
   // Figure 4 of the "Index Selection Tool" paper.
   // Split the workload 'W' into small workloads 'Wi', with each
   // containing one query, and find out the candidate indexes
@@ -72,7 +73,7 @@ void IndexSelection::GenerateCandidateIndexes(
   // Candidate indexes will be a union of admissible index set of each query.
   if (admissible_config.IsEmpty() && candidate_config.IsEmpty()) {
     for (auto query : workload.GetQueries()) {
-      Workload wi(query);
+      Workload wi(query, workload.GetDatabaseName());
 
       IndexConfiguration ai;
       GetAdmissibleIndexes(query, ai);
@@ -106,7 +107,7 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
       IndexConfiguration c;
       c.AddIndexObject(*it);
 
-      Workload w(query);
+      Workload w(query, workload.GetDatabaseName());
 
       auto c1 = ComputeCost(c, w);
       auto c2 = ComputeCost(empty_config, w);
@@ -199,16 +200,15 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // Get the best m index configurations using the naive enumeration algorithm
   // The naive algorithm gets all the possible subsets of size <= m and then
   // returns the cheapest m indexes
-  assert(context_.naive_enumeration_threshold_ <= indexes.GetIndexCount());
+  PELOTON_ASSERT(context_.naive_enumeration_threshold_ <=
+                 indexes.GetIndexCount());
 
   // Define a set ordering of (index config, cost) and define the ordering in
   // the set
   std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
-      running_index_config(workload);
-  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
-      temp_index_config(workload);
-  std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
+      running_index_config(workload), temp_index_config(workload),
       result_index_config(workload);
+
   IndexConfiguration new_element;
 
   // Add an empty configuration as initialization
@@ -324,45 +324,38 @@ void IndexSelection::IndexColsParseWhereHelper(
 
   switch (expr_type) {
     case ExpressionType::COMPARE_EQUAL:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_NOTEQUAL:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_GREATERTHAN:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_LESSTHAN:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_LIKE:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_NOTLIKE:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::COMPARE_IN:
       // Get left and right child and extract the column name.
       left_child = where_expr->GetChild(0);
       right_child = where_expr->GetChild(1);
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        assert(right_child->GetExpressionType() != ExpressionType::VALUE_TUPLE);
+        PELOTON_ASSERT(right_child->GetExpressionType() !=
+                       ExpressionType::VALUE_TUPLE);
         tuple_child =
             dynamic_cast<const expression::TupleValueExpression *>(left_child);
       } else {
-        assert(right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+        PELOTON_ASSERT(right_child->GetExpressionType() ==
+                       ExpressionType::VALUE_TUPLE);
         tuple_child =
             dynamic_cast<const expression::TupleValueExpression *>(right_child);
       }
 
       if (!tuple_child->GetIsBound()) {
         LOG_ERROR("Query is not bound");
-        assert(false);
+        PELOTON_ASSERT(false);
       }
       IndexObjectPoolInsertHelper(tuple_child->GetBoundOid(), config);
 
       break;
     case ExpressionType::CONJUNCTION_AND:
-      PELOTON_FALLTHROUGH;
     case ExpressionType::CONJUNCTION_OR:
       left_child = where_expr->GetChild(0);
       right_child = where_expr->GetChild(1);
@@ -372,7 +365,7 @@ void IndexSelection::IndexColsParseWhereHelper(
     default:
       LOG_ERROR("Index selection doesn't allow %s in where clause",
                 where_expr->GetInfo().c_str());
-      assert(false);
+      PELOTON_ASSERT(false);
   }
   (void)config;
 }
@@ -386,7 +379,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
   }
   auto &columns = group_expr->columns;
   for (auto it = columns.begin(); it != columns.end(); it++) {
-    assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression *)((*it).get());
     IndexObjectPoolInsertHelper(tuple_value->GetBoundOid(), config);
   }
@@ -401,7 +394,7 @@ void IndexSelection::IndexColsParseOrderByHelper(
   }
   auto &exprs = order_expr->exprs;
   for (auto it = exprs.begin(); it != exprs.end(); it++) {
-    assert((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT((*it)->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tuple_value = (expression::TupleValueExpression *)((*it).get());
     IndexObjectPoolInsertHelper(tuple_value->GetBoundOid(), config);
   }
@@ -433,8 +426,8 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
     if (context_.memo_.find(state) != context_.memo_.end()) {
       cost += context_.memo_[state];
     } else {
-      auto result =
-          WhatIfIndex::GetCostAndBestPlanTree(query, config, DEFAULT_DB_NAME);
+      auto result = WhatIfIndex::GetCostAndBestPlanTree(
+          query, config, workload.GetDatabaseName());
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }
