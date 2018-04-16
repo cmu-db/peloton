@@ -57,16 +57,16 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
-  // Create pg_catalog database
-  auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
-  pg_catalog->setDBName(CATALOG_DATABASE_NAME);
-  storage_manager->AddDatabaseToStorageManager(pg_catalog);
+  // Create peloton database
+  auto peloton = new storage::Database(CATALOG_DATABASE_OID);
+  peloton->setDBName(CATALOG_DATABASE_NAME);
+  storage_manager->AddDatabaseToStorageManager(peloton);
 
   // Create catalog tables
-  DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  BootstrapSystemCatalogs(pg_catalog, txn);
+  DatabaseCatalog::GetInstance(peloton, pool_.get(), txn);
+  BootstrapSystemCatalogs(peloton, txn);
 
-  // Insert pg_catalog database into pg_database
+  // Insert peloton database into pg_database
   DatabaseCatalog::GetInstance()->InsertDatabase(
       CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_.get(), txn);
 
@@ -162,7 +162,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       DEFUALT_SCHEMA_OID, DEFUALT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
-  // pg_database is shared across different databases
+  // pg_database record is shared across different databases
   system_catalogs->GetTableCatalog()->InsertTable(
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       CATALOG_DATABASE_OID, pool_.get(), txn);
@@ -227,7 +227,6 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 
   // TODO: This should be deprecated, dbname should only exists in pg_db
   database->setDBName(database_name);
-
   {
     std::lock_guard<std::mutex> lock(catalog_mutex);
     storage_manager->AddDatabaseToStorageManager(database);
