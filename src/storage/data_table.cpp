@@ -1201,7 +1201,7 @@ catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
-    storage::TileGroup *tile_group, const column_map_type &column_map) {
+    storage::TileGroup *tile_group, const Layout& layout) {
   std::vector<catalog::Schema> new_schema;
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
@@ -1209,13 +1209,15 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 
   // First, get info from the original tile group's schema
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
-  for (auto column_map_entry : column_map) {
-    new_tile_offset = column_map_entry.second.first;
-    new_tile_column_offset = column_map_entry.second.second;
-    oid_t column_offset = column_map_entry.first;
 
-    tile_group_layout.LocateTileAndColumn(column_offset, orig_tile_offset,
+  oid_t column_count = layout.GetColumnCount();
+  for (oid_t col_id = 0; col_id < column_count; col_id++) {
+    // Get TileGroup layout's tile and offset for col_id.
+    tile_group_layout.LocateTileAndColumn(col_id, orig_tile_offset,
                                           orig_tile_column_offset);
+    // Get new layout's tile and offset for col_id.
+    layout.LocateTileAndColumn(col_id, new_tile_offset,
+                               new_tile_column_offset);
 
     // Get the column info from original tile
     auto tile = tile_group->GetTile(orig_tile_offset);
@@ -1308,7 +1310,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Get the schema for the new transformed tile group
   auto new_schema =
-      TransformTileGroupSchema(tile_group.get(), default_partition_);
+      TransformTileGroupSchema(tile_group.get(), *default_layout_);
 
   // Allocate space for the transformed tile group
   std::shared_ptr<storage::TileGroup> new_tile_group(
@@ -1377,7 +1379,6 @@ void DataTable::ClearIndexSamples() {
 void DataTable::SetDefaultLayout(const column_map_type &column_map) {
   default_layout_ = std::shared_ptr<const Layout>(
           new const Layout(column_map));
-  default_partition_ = column_map;
 }
 
 const Layout& DataTable::GetDefaultLayout() const {

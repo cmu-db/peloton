@@ -420,9 +420,6 @@ class DataTable : public AbstractTable {
   // adapt table
   bool adapt_table_ = true;
 
-  // default partition map for table
-  column_map_type default_partition_;
-
   // samples for layout tuning
   std::vector<tuning::Sample> layout_samples_;
 
