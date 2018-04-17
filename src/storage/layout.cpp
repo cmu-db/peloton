@@ -29,8 +29,7 @@ Layout::Layout(const oid_t num_columns, LayoutType layout_type)
 
 // Constructor for the Layout class with column_map
 Layout::Layout(const column_map_type& column_map)
-        : layout_id_(ROW_STORE_OID),
-          num_columns_(column_map.size()),
+        : num_columns_(column_map.size()),
           column_layout_(column_map) {
   // Figure out the layout type if not present
   bool row_layout = true, column_layout = true;
@@ -52,7 +51,9 @@ Layout::Layout(const column_map_type& column_map)
     layout_type_  = LayoutType::COLUMN;
     layout_id_ = COLUMN_STORE_OID;
   } else {
-    // TODO Pooja - Handle this by making an entry into the catalog
+    // layout_id_ is set to INVALID_OID, indicating that this
+    // layout is not stored in the catalog and thus not persistent.
+    // To be used only in TempTable or Tests. 
     layout_type_ = LayoutType::HYBRID;
     layout_id_ = INVALID_OID;
   }
@@ -254,8 +255,17 @@ bool operator==(const Layout& lhs, const Layout& rhs) {
     return false;
   }
 
-  // Check for the equality of the column_layout_
-  return (lhs.column_layout_ == rhs.column_layout_);
+  // Check for the equality of the column_layout_ for
+  // LayoutType::HYBRID
+  if (lhs.layout_type_ == LayoutType::HYBRID)
+  {
+    return (lhs.column_layout_ == rhs.column_layout_);
+  }
+  // In case of LayoutType::ROW or LayoutType::COLUMN,
+  // there is no need to check for column_layout_ equality
+
+  return true;
+
 }
 
 bool operator!=(const Layout& lhs, const Layout& rhs) {
