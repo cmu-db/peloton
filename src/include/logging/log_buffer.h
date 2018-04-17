@@ -4,61 +4,56 @@
 //
 // log_buffer.h
 //
-// Identification: src/backend/logging/log_buffer.h
+// Identification: src/include/logging/log_buffer.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#include "type/serializeio.h"
+#include "logging/log_record.h"
 
-#include "common/macros.h"
-#include "common/internal_types.h"
+namespace peloton{
+namespace logging{
 
-namespace peloton {
-namespace logging {
+using LoggerCallback = std::function<void()>;
 
-class LogBuffer {
-  LogBuffer(const LogBuffer &) = delete;
-  LogBuffer &operator=(const LogBuffer &) = delete;
-  LogBuffer(LogBuffer &&) = delete;
-  LogBuffer &operator=(LogBuffer &&) = delete;
-
-  friend class LogBufferPool;
-private:
-  // constant
-  const static size_t log_buffer_capacity_ = 1024 * 1024 * 32; // 32 MB
+class LogBuffer{
 
 public:
-  LogBuffer(const size_t thread_id, const size_t eid) : 
-      thread_id_(thread_id), eid_(eid), size_(0){
-    data_ = new char[log_buffer_capacity_];
-    PELOTON_MEMSET(data_, 0, log_buffer_capacity_);
+
+  LogBuffer(size_t threshold)
+          : log_buffer_threshold_(threshold),
+            on_flush_(nullptr) {}
+
+  ~LogBuffer() {}
+
+  void WriteRecord(LogRecord &record);
+
+  inline const char *GetData() { return log_buffer_.Data(); }
+  inline size_t GetSize() { return log_buffer_.Size(); }
+
+
+  inline CopySerializeOutput &GetCopySerializedOutput() { return log_buffer_; }
+
+  inline bool HasThresholdExceeded() { return log_buffer_.Size() >= log_buffer_threshold_; }
+  inline size_t GetThreshold() { return log_buffer_threshold_; }
+
+
+  inline void SetLoggerCallback(const LoggerCallback &on_flush) {
+    on_flush_ = std::move(on_flush);
   }
-  ~LogBuffer() {
-    delete[] data_;
-    data_ = nullptr;
+
+  inline LoggerCallback &GetLoggerCallback() {
+    return on_flush_;
   }
-
-  inline void Reset() { size_ = 0; eid_ = INVALID_EID; }
-
-  inline char *GetData() { return data_; }
-
-  inline size_t GetSize() { return size_; }
-
-  inline size_t GetEpochId() { return eid_; }
-
-  inline size_t GetThreadId() { return thread_id_; }
-
-  inline bool Empty() { return size_ == 0; }
-
-  bool WriteData(const char *data, size_t len);
 
 private:
-  size_t thread_id_;
-  size_t eid_;
-  size_t size_;
-  char* data_;
+  CopySerializeOutput log_buffer_;
+  size_t log_buffer_threshold_;
+  // The current callback to be invoked after logging completes.
+  LoggerCallback on_flush_;
 };
 
 }

@@ -52,10 +52,10 @@ class Updater {
   peloton::type::AbstractPool *GetPool();
 
   // Update a tuple
-  void Update();
+  void Update(char *diff_array, uint32_t diff_size);
 
   // Update a tuple with primary key
-  void UpdatePK();
+  void UpdatePK(char *diff_array, uint32_t diff_size);
 
   // Finalize the instance
   void TearDown();

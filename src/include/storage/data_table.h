@@ -76,7 +76,6 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
-  friend class logging::LogManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;
@@ -194,7 +193,7 @@ class DataTable : public AbstractTable {
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
-  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
                                     storage::Tuple *new_tuple,
                                     concurrency::TransactionContext *transaction,
                                     executor::ExecutorContext *context,

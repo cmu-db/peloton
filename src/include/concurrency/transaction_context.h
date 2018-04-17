@@ -23,6 +23,9 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
+#include "logging/log_buffer.h"
+#include "logging/wal_log_manager.h"
+#include "threadpool/logger_queue_pool.h"
 
 #define INTITIAL_RW_SET_SIZE 64
 
@@ -116,6 +119,14 @@ class TransactionContext : public Printable {
    * @return     The timestamp.
    */
   inline uint64_t GetTimestamp() const { return timestamp_; }
+
+  inline int GetLogToken() const { return log_token_; }
+
+  inline logging::LogBuffer* GetLogBuffer() const { return log_buffer_; }
+
+  inline void ResetLogBuffer() {
+    log_buffer_ = new logging::LogBuffer(logging::LogManager::GetInstance().GetTransactionBufferSize());
+  }
 
   /**
    * @brief      Gets the query strings.
@@ -281,6 +292,14 @@ class TransactionContext : public Printable {
     return isolation_level_;
   }
 
+  inline bool IsSingleStatementTxn(){
+    return single_statement_txn_;
+  }
+
+  inline void SetSingleStatementTxn(bool single_statement_txn){
+    single_statement_txn_ = single_statement_txn;
+  }
+
   /** cache for table catalog objects */
   catalog::CatalogCache catalog_cache;
 
@@ -288,6 +307,9 @@ class TransactionContext : public Printable {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+
+  //single statement txn
+  bool single_statement_txn_;
 
   /** transaction id */
   txn_id_t txn_id_;
@@ -341,6 +363,9 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  int log_token_;
+  logging::LogBuffer *log_buffer_;
 };
 
 }  // namespace concurrency

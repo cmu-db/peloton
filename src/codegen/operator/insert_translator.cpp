@@ -10,11 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/buffering_consumer.h"
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/query_parameters_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
+#include "codegen/proxy/value_proxy.h"
+#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/operator/insert_translator.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
@@ -79,15 +82,23 @@ void InsertTranslator::Produce() const {
 
       // Transform into the codegen values and store values in the tuple storage
       std::vector<codegen::Value> values;
-      for (uint32_t column_id = 0; column_id < num_columns; column_id++) {
+      auto *values_buf = codegen.AllocateBuffer(
+          ValueProxy::GetType(codegen), num_columns,
+          "values");
+      values_buf =
+          codegen->CreatePointerCast(values_buf, codegen.CharPtrType());
+      llvm::Value *values_size = codegen.Const32((int32_t)num_columns);
+      for (size_t column_id = 0; column_id < num_columns; column_id++) {
         auto value =
             parameter_cache.GetValue(column_id + tuple_idx * num_columns);
         values.push_back(value);
+        peloton::codegen::BufferingConsumer::AddToTupleBuffer(value, codegen, values_buf, column_id);
       }
       table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
 
+      std::vector<llvm::Value *> insert_args = {inserter, values_buf, values_size};
       // Complete the insertion
-      codegen.Call(InserterProxy::Insert, {inserter});
+      codegen.Call(InserterProxy::Insert, insert_args);
     }
   }
 }
@@ -103,14 +114,25 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   // Generate/Materialize tuple data from row and attribute information
   std::vector<codegen::Value> values;
   auto &ais = insert_plan_.GetAttributeInfos();
+  auto *values_buf = codegen.AllocateBuffer(
+      ValueProxy::GetType(codegen), static_cast<uint32_t>(ais.size()),
+      "values");
+  values_buf =
+      codegen->CreatePointerCast(values_buf, codegen.CharPtrType());
+  llvm::Value *values_size = codegen.Const32((int32_t)ais.size());
+  size_t i = 0;
   for (const auto *ai : ais) {
     codegen::Value v = row.DeriveValue(codegen, ai);
     values.push_back(v);
+    peloton::codegen::BufferingConsumer::AddToTupleBuffer(v, codegen, values_buf, i);
+    i++;
   }
   table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
 
+  std::vector<llvm::Value *> insert_args = {inserter, values_buf, values_size};
+
   // Call Inserter to insert the reserved tuple storage area
-  codegen.Call(InserterProxy::Insert, {inserter});
+  codegen.Call(InserterProxy::Insert, insert_args);
 }
 
 void InsertTranslator::TearDownState() {

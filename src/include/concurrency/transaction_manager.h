@@ -187,7 +187,9 @@ class TransactionManager {
    */
   virtual void PerformInsert(TransactionContext *const current_txn,
                              const ItemPointer &location, 
-                             ItemPointer *index_entry_ptr = nullptr) = 0;
+                             ItemPointer *index_entry_ptr = nullptr,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0) = 0;
 
   virtual bool PerformRead(TransactionContext *const current_txn,
                            const ItemPointer &location,
@@ -196,14 +198,20 @@ class TransactionManager {
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
-                             const ItemPointer &new_location) = 0;
+                             const ItemPointer &new_location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr) = 0;
 
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
-                             const ItemPointer &location) = 0;
+                             const ItemPointer &location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr) = 0;
 
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &location) = 0;
@@ -232,9 +240,16 @@ class TransactionManager {
    */
   void EndTransaction(TransactionContext *current_txn);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn) = 0;
 
-  virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
+  virtual ResultType CommitTransaction(
+            TransactionContext *const current_txn,
+            std::function<void(ResultType)> task_callback = nullptr) = 0;
+
+
+  virtual ResultType AbortTransaction(
+          TransactionContext *const current_txn,
+          std::function<void(ResultType)> task_callback = nullptr) = 0;
+
 
   /**
    * This function generates the maximum commit id of committed transactions.

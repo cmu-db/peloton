@@ -9,7 +9,7 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include "codegen/buffering_consumer.h"
 #include "codegen/updater.h"
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
@@ -23,6 +23,13 @@
 #include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
+#include "threadpool/mono_queue_pool.h"
+#include "logging/log_record.h"
+#include "logging/log_buffer.h"
+#include "logging/wal_logger.h"
+#include "threadpool/logger_queue_pool.h"
+#include "../include/type/value.h"
+#include "../include/codegen/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -125,7 +132,7 @@ peloton::type::AbstractPool *Updater::GetPool() {
   return tile_->GetPool();
 }
 
-void Updater::Update() {
+void Updater::Update(char *diff_array, uint32_t diff_size) {
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
@@ -137,7 +144,7 @@ void Updater::Update() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // Either update in-place
   if (is_owner_ == true) {
-    txn_manager.PerformUpdate(txn, old_location_);
+    txn_manager.PerformUpdate(txn, old_location_, diff_array, diff_size, target_list_);
     executor_context_->num_processed++;
     return;
   }
@@ -154,12 +161,13 @@ void Updater::Update() {
                                        old_location_.offset);
     return;
   }
-  txn_manager.PerformUpdate(txn, old_location_, new_location_);
-  AddToStatementWriteSet(new_location_);
+  txn_manager.PerformUpdate(txn, old_location_, new_location_, diff_array, diff_size, target_list_);
+
   executor_context_->num_processed++;
+  AddToStatementWriteSet(new_location_);
 }
 
-void Updater::UpdatePK() {
+void Updater::UpdatePK(char *diff_array, uint32_t diff_size) {
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
@@ -178,7 +186,7 @@ void Updater::UpdatePK() {
     txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
+  txn_manager.PerformInsert(txn, new_location_, index_entry_ptr, diff_array, diff_size);
   AddToStatementWriteSet(new_location_);
   executor_context_->num_processed++;
 }

@@ -32,6 +32,7 @@
 #include "common/macros.h"
 #include "container/cuckoo_map.h"
 
+
 namespace peloton {
 
 class ItemPointer;
@@ -936,6 +937,7 @@ enum class LogRecordType {
   // TransactionContext-related records
   TRANSACTION_BEGIN = 1,
   TRANSACTION_COMMIT = 2,
+  TRANSACTION_ABORT = 3,
 
   // Generic dml records
   TUPLE_INSERT = 11,
@@ -1288,7 +1290,6 @@ struct DerivedAttribute;
 }
 
 typedef std::pair<oid_t, const planner::DerivedAttribute> Target;
-
 typedef std::vector<Target> TargetList;
 
 /**

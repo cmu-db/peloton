@@ -14,12 +14,10 @@
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "storage/data_table.h"
-#include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "threadpool/logger_queue_pool.h"
 
 namespace peloton {
 namespace codegen {
@@ -48,7 +46,7 @@ peloton::type::AbstractPool *Inserter::GetPool() {
   return tile_->GetPool();
 }
 
-void Inserter::Insert() {
+void Inserter::Insert(char *values_buf, uint32_t values_size) {
   PELOTON_ASSERT(table_ && executor_context_ && tile_);
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -61,7 +59,7 @@ void Inserter::Insert() {
     txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn, location_, index_entry_ptr);
+  txn_manager.PerformInsert(txn, location_, index_entry_ptr, values_buf, values_size);
   executor_context_->num_processed++;
 }
 

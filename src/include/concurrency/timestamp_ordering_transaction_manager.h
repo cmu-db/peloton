@@ -19,6 +19,9 @@
 #include "common/synchronization/spin_latch.h"
 
 namespace peloton {
+
+namespace logging {}
+
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
@@ -163,7 +166,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   virtual void PerformInsert(TransactionContext *const current_txn,
                              const ItemPointer &location,
-                             ItemPointer *index_entry_ptr = nullptr);
+                             ItemPointer *index_entry_ptr = nullptr,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0);
 
   /**
    * @brief      Perform a read operation
@@ -185,7 +190,10 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   virtual void PerformUpdate(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
-                             const ItemPointer &new_location);
+                             const ItemPointer &new_location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr);
 
   /**
    * @brief      Perform a delete operation. Used when the transaction is the
@@ -206,7 +214,10 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    * @param[in]  location     The location
    */
   virtual void PerformUpdate(TransactionContext *const current_txn,
-                             const ItemPointer &location);
+                             const ItemPointer &location,
+                             char *values_buf = nullptr,
+                             uint32_t values_size = 0,
+                             TargetList *offsets = nullptr);
 
   /**
    * @brief      Perform a delete operation. Used when the transaction is not 
@@ -218,23 +229,11 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual void PerformDelete(TransactionContext *const current_txn,
                              const ItemPointer &location);
 
-  /**
-   * @brief      Commits a transaction.
-   *
-   * @param      current_txn  The current transaction
-   *
-   * @return     The result type
-   */
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn);
+  virtual ResultType CommitTransaction(TransactionContext *const current_txn,
+                                       std::function<void(ResultType)> task_callback = nullptr);
 
-  /**
-   * @brief      Abort a transaction
-   *
-   * @param      current_txn  The current transaction
-   *
-   * @return     The result type
-   */
-  virtual ResultType AbortTransaction(TransactionContext *const current_txn);
+  virtual ResultType AbortTransaction(TransactionContext *const current_txn,
+                                      std::function<void(ResultType)> task_callback = nullptr);
 
 
 private:

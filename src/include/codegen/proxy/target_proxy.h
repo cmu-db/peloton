@@ -16,6 +16,7 @@
 #include "codegen/proxy/type_builder.h"
 #include "common/internal_types.h"
 #include "planner/project_info.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -26,6 +27,5 @@ PROXY(Target) {
 };
 
 TYPE_BUILDER(Target, peloton::Target);
-
 }  // namespace codegen
 }  // namespace peloton

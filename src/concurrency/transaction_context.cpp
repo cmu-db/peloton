@@ -18,6 +18,7 @@
 #include "common/platform.h"
 #include "common/macros.h"
 #include "trigger/trigger.h"
+#include "logging/log_buffer.h"
 
 #include <chrono>
 #include <thread>
@@ -95,11 +96,16 @@ void TransactionContext::Init(const size_t thread_id,
 
   insert_count_ = 0;
 
+  single_statement_txn_ = true;
+
   rw_set_.Clear();
   gc_set_.reset(new GCSet());
   gc_object_set_.reset(new GCObjectSet());
 
   on_commit_triggers_.reset();
+
+  log_token_ =  threadpool::LoggerQueuePool::GetInstance().GetLogToken();
+  ResetLogBuffer();
 }
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
