@@ -1374,22 +1374,6 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
-  std::map<oid_t, oid_t> column_map_stats;
-
-  // Cluster per-tile column count
-  for (auto entry : default_partition_) {
-    auto tile_id = entry.second.first;
-    auto column_map_itr = column_map_stats.find(tile_id);
-    if (column_map_itr == column_map_stats.end())
-      column_map_stats[tile_id] = 1;
-    else
-      column_map_stats[tile_id]++;
-  }
-
-  return column_map_stats;
-}
-
 void DataTable::SetDefaultLayout(const column_map_type &column_map) {
   default_layout_ = std::shared_ptr<const Layout>(
           new const Layout(column_map));

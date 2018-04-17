@@ -278,8 +278,6 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() const { return (foreign_keys_.empty() == false); }
 
-  std::map<oid_t, oid_t> GetColumnMapStats();
-
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
   // tuple.

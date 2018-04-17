@@ -60,6 +60,8 @@ class Layout : public Printable {
 
   std::vector<catalog::Schema> GetLayoutSchemas(catalog::Schema* const schema) const;
 
+  std::map<oid_t, oid_t> GetColumnLayoutStats() const;
+
   std::string GetColumnMapInfo() const;
 
   // Get a string representation for debugging
