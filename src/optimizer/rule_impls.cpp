@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/rule_impls.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -387,12 +387,14 @@ void GetToIndexScan::Transform(
       std::vector<ExpressionType> index_expr_type_list;
       std::vector<type::Value> index_value_list;
 
-      // Only pick the index if the query columns match the index's columns in order.
+      // Only pick the index if the query columns match the index's columns in
+      // the same order.
       auto index_id_list = index_object->GetKeyAttrs();
-      for (size_t offset = 0; (offset < key_column_id_list.size()) && (offset < index_id_list.size()); offset++) {
-        auto col_id = key_column_id_list[offset];
-        if (index_id_list[offset] == col_id) {
-          index_key_column_id_list.push_back(col_id);
+      for (size_t offset = 0; (offset < key_column_id_list.size()) &&
+                              (offset < index_id_list.size());
+           offset++) {
+        if (index_id_list[offset] == key_column_id_list[offset]) {
+          index_key_column_id_list.push_back(key_column_id_list[offset]);
           index_expr_type_list.push_back(expr_type_list[offset]);
           index_value_list.push_back(value_list[offset]);
         } else {
