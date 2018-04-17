@@ -61,7 +61,7 @@ class PlanUtil {
   * @param SQLStatement
   * @return set of affected index object ids
   */
-  static const std::set<oid_t> GetAffectedIndexes(
+  static const std::vector<col_triplet> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
       const parser::SQLStatement &sql_stmt);
 

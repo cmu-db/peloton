@@ -61,6 +61,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   txn = txn_manager.BeginTransaction();
   auto source_table = db->GetTableWithName("test_table");
+  oid_t db_oid = db->GetOid();
+  oid_t table_oid = source_table->GetOid();
   oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
@@ -95,68 +97,78 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // An update query affecting both indexes
   std::string query_string = "UPDATE test_table SET id = 0;";
-  std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
       TEST_DB_NAME);
-  std::set<oid_t> affected_indexes =
+  std::vector<planner::col_triplet> affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+  std::set<planner::col_triplet> affected_indexes_set(affected_indexes.begin(),
+                                                      affected_indexes.end());
 
   // id and first_name are affected
-  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
-  std::set<oid_t> expected_oids{id_idx_oid, fname_idx_oid};
-  EXPECT_EQ(expected_oids, affected_indexes);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes_set.size()));
+  std::set<planner::col_triplet> expected_oids;
+  expected_oids.emplace(db_oid, table_oid, id_idx_oid);
+  expected_oids.emplace(db_oid, table_oid, fname_idx_oid);
+  EXPECT_EQ(expected_oids, affected_indexes_set);
 
   // Update query affecting only one index
   query_string = "UPDATE test_table SET first_name = '';";
-  stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
       TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+  affected_indexes_set = std::set<planner::col_triplet>(
+      affected_indexes.begin(), affected_indexes.end());
 
   // only first_name is affected
-  EXPECT_EQ(1, static_cast<int>(affected_indexes.size()));
-  expected_oids = std::set<oid_t>({fname_idx_oid});
-  EXPECT_EQ(expected_oids, affected_indexes);
+  EXPECT_EQ(1, static_cast<int>(affected_indexes_set.size()));
+  expected_oids.clear();
+  expected_oids.emplace(db_oid, table_oid, fname_idx_oid);
+  EXPECT_EQ(expected_oids, affected_indexes_set);
 
   // ====== DELETE statements check ===
   query_string = "DELETE FROM test_table;";
-  stmt.reset(new Statement("DELETE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::DeleteStatement *>(sql_stmt)->TryBindDatabaseName(
       TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+  affected_indexes_set = std::set<planner::col_triplet>(
+      affected_indexes.begin(), affected_indexes.end());
 
   // all indexes are affected
-  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
-  expected_oids = std::set<oid_t>({id_idx_oid, fname_idx_oid});
-  EXPECT_EQ(expected_oids, affected_indexes);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes_set.size()));
+  expected_oids.clear();
+  expected_oids.emplace(db_oid, table_oid, fname_idx_oid);
+  expected_oids.emplace(db_oid, table_oid, id_idx_oid);
+  EXPECT_EQ(expected_oids, affected_indexes_set);
 
   // ========= INSERT statements check ==
   query_string = "INSERT INTO test_table VALUES (1, 'pel', 'ton');";
-  stmt.reset(new Statement("INSERT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::InsertStatement *>(sql_stmt)->TryBindDatabaseName(
       TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+  affected_indexes_set = std::set<planner::col_triplet>(
+      affected_indexes.begin(), affected_indexes.end());
 
   // all indexes are affected
-  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
-  expected_oids = std::set<oid_t>({id_idx_oid, fname_idx_oid});
-  EXPECT_EQ(expected_oids, affected_indexes);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes_set.size()));
+  expected_oids.clear();
+  expected_oids.emplace(db_oid, table_oid, fname_idx_oid);
+  expected_oids.emplace(db_oid, table_oid, id_idx_oid);
+  EXPECT_EQ(expected_oids, affected_indexes_set);
 
   // ========= SELECT statement check ==
   query_string = "SELECT * FROM test_table;";
-  stmt.reset(new Statement("SELECT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   affected_indexes =

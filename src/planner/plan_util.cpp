@@ -33,11 +33,12 @@
 namespace peloton {
 namespace planner {
 
-const std::set<oid_t> PlanUtil::GetAffectedIndexes(
+const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
     catalog::CatalogCache &catalog_cache,
     const parser::SQLStatement &sql_stmt) {
-  std::set<oid_t> index_oids;
+  std::vector<col_triplet> index_triplets;
   std::string db_name, table_name;
+  oid_t db_oid, table_oid;
   switch (sql_stmt.GetType()) {
     // For INSERT, DELETE, all indexes are affected
     case StatementType::INSERT: {
@@ -45,6 +46,9 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
           static_cast<const parser::InsertStatement &>(sql_stmt);
       db_name = insert_stmt.GetDatabaseName();
       table_name = insert_stmt.GetTableName();
+      auto db_object = catalog_cache.GetDatabaseObject(db_name);
+      db_oid = db_object->GetDatabaseOid();
+      table_oid = db_object->GetTableObject(table_name)->GetTableOid();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
@@ -53,12 +57,15 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
         table_name = delete_stmt.GetTableName();
+        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        db_oid = db_object->GetDatabaseOid();
+        table_oid = db_object->GetTableObject(table_name)->GetTableOid();
       }
       auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
                              ->GetTableObject(table_name)
                              ->GetIndexObjects();
       for (auto &index : indexes_map) {
-        index_oids.insert(index.first);
+        index_triplets.emplace_back(db_oid, table_oid, index.first);
       }
     } break;
     case StatementType::UPDATE: {
@@ -68,6 +75,8 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       table_name = update_stmt.table->GetTableName();
       auto db_object = catalog_cache.GetDatabaseObject(db_name);
       auto table_object = db_object->GetTableObject(table_name);
+      db_oid = db_object->GetDatabaseOid();
+      table_oid = table_object->GetTableOid();
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -88,7 +97,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
         if (!SetUtil::IsDisjoint(key_attrs_set, update_oids)) {
           LOG_TRACE("Index (%s) is affected",
                     index.second->GetIndexName().c_str());
-          index_oids.insert(index.first);
+          index_triplets.emplace_back(db_oid, table_oid, index.first);
         }
       }
     } break;
@@ -98,7 +107,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       LOG_TRACE("Does not support finding affected indexes for query type: %d",
                 static_cast<int>(sql_stmt.GetType()));
   }
-  return (index_oids);
+  return (index_triplets);
 }
 
 const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
@@ -183,7 +192,6 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
         LOG_ERROR("Error in BuildPelotonPlanTree: %s", e.what());
       }
 
-      // TODO: should transaction commit or not?
       txn_manager.AbortTransaction(txn);
     } break;
     default:
