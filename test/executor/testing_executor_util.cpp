@@ -170,11 +170,14 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
+  std::shared_ptr<const storage::Layout> layout =
+          std::make_shared<const storage::Layout>(column_map);
+
   std::shared_ptr<storage::TileGroup> tile_group_ptr(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-          column_map, tuple_count));
+          layout, tuple_count));
 
   catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(),
                                                tile_group_ptr);
