@@ -107,6 +107,10 @@ TEST_F(LogBufferTests, LogBufferTest) {
                          (sizeof(int32_t) + sizeof(double)) * 3;
   EXPECT_EQ(buffer_size2, log_buffer->GetSize() - buffer_size1);
 
+  log_buffer->WriteRecord(delete_record);
+  size_t buffer_size3 = sizeof(int32_t) + sizeof(int8_t) + sizeof(int64_t) * 3 + sizeof(int64_t) * 4;
+  EXPECT_EQ(buffer_size3, log_buffer->GetSize() - buffer_size1 - buffer_size2);
+
   ReferenceSerializeInput log_buffer_input(log_buffer->GetData(), log_buffer->GetSize());
   // Insert record
   EXPECT_EQ(buffer_size1 - sizeof(int32_t), log_buffer_input.ReadInt());
@@ -142,13 +146,16 @@ TEST_F(LogBufferTests, LogBufferTest) {
   EXPECT_EQ(target_oid3, log_buffer_input.ReadInt());
   EXPECT_EQ(value3, log_buffer_input.ReadDouble());
 
-//  log_buffer->WriteRecord(update_record);
-//  std::cout << log_buffer->GetSize() << std::endl;
-//  std::cout << log_buffer->GetData() << std::endl;
-
-//  log_buffer->WriteRecord(delete_record);
-//  std::cout << log_buffer->GetSize() << std::endl;
-//  std::cout << log_buffer->GetData() << std::endl;
+  // Delete record
+  EXPECT_EQ(buffer_size3 - sizeof(int32_t), log_buffer_input.ReadInt());
+  EXPECT_EQ(static_cast<int>(LogRecordType::TUPLE_DELETE), log_buffer_input.ReadEnumInSingleByte());
+  EXPECT_EQ(epoch_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(txn_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(commit_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(database_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(table_id, log_buffer_input.ReadLong());
+  EXPECT_EQ(old_block, log_buffer_input.ReadLong());
+  EXPECT_EQ(old_offset, log_buffer_input.ReadLong());
 }
 }
 }
