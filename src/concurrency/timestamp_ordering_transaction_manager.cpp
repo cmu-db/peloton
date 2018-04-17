@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cinttypes>
-#include <include/threadpool/mono_queue_pool.h>
+#include "include/threadpool/mono_queue_pool.h"
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 
 #include "catalog/manager.h"
