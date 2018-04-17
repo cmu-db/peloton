@@ -5,7 +5,7 @@
 // tf_session_entity_output.h
 //
 // Identification:
-// src/include/brain/tf_session_entity/tf_session_entity_output.h
+// src/include/brain/util/tf_session_entity/tf_session_entity_output.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "brain/tf_session_entity/tf_session_entity_io.h"
+#include "tf_session_entity_io.h"
 
 #define TFSEOUT_TEMPLATE_ARGUMENTS template <typename OutputType>
 #define TFSEOUT_TYPE TfSessionEntityOutput<OutputType>
@@ -46,7 +46,7 @@ class TfSessionEntityOutput : public TfSessionEntityIOBase<OutputType> {
   // const output
   explicit TfSessionEntityOutput(const std::string &op);
   // n-d output
-  explicit TfSessionEntityOutput(const std::vector<int64_t>& dims,
+  explicit TfSessionEntityOutput(const std::vector<int64_t> &dims,
                                  const std::string &op);
 };
 }  // namespace brain
