@@ -9,6 +9,8 @@
 *~
 # Merge files created by git.
 *.orig
+# Java bytecode
+*.class
 # Byte compiled python modules.
 *.pyc
 # vim swap files
@@ -306,6 +308,7 @@ docs/dev
 # Protobuf files
 *.pb.cc
 *.pb.h
+*.pb
 
 # Third party
 third_party/gflags/

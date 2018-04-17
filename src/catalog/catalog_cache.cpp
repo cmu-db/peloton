@@ -62,7 +62,7 @@ bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
   }
 
   auto database_object = it->second;
-  PL_ASSERT(database_object);
+  PELOTON_ASSERT(database_object);
   database_objects_cache.erase(it);
   database_name_cache.erase(database_object->GetDatabaseName());
   return true;
@@ -79,7 +79,7 @@ bool CatalogCache::EvictDatabaseObject(const std::string &database_name) {
   }
 
   auto database_object = it->second;
-  PL_ASSERT(database_object);
+  PELOTON_ASSERT(database_object);
   database_name_cache.erase(it);
   database_objects_cache.erase(database_object->GetDatabaseOid());
   return true;

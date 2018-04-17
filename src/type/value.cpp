@@ -36,7 +36,7 @@ Value::Value(const Value &other) {
       } else {
         if (manage_data_) {
           value_.varlen = new char[size_.len];
-          PL_MEMCPY(value_.varlen, other.value_.varlen, size_.len);
+          PELOTON_MEMCPY(value_.varlen, other.value_.varlen, size_.len);
         } else {
           value_ = other.value_;
         }
@@ -300,11 +300,11 @@ Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data)
       } else {
         manage_data_ = manage_data;
         if (manage_data_) {
-          PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
+          PELOTON_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
           value_.varlen = new char[len];
-          PL_ASSERT(value_.varlen != nullptr);
+          PELOTON_ASSERT(value_.varlen != nullptr);
           size_.len = len;
-          PL_MEMCPY(value_.varlen, data, len);
+          PELOTON_MEMCPY(value_.varlen, data, len);
         } else {
           // FUCK YOU GCC I do what I want.
           value_.const_varlen = data;
@@ -329,9 +329,9 @@ Value::Value(TypeId type, const std::string &data) : Value(type) {
       // TODO: How to represent a null string here?
       uint32_t len = data.length() + (type == TypeId::VARCHAR);
       value_.varlen = new char[len];
-      PL_ASSERT(value_.varlen != nullptr);
+      PELOTON_ASSERT(value_.varlen != nullptr);
       size_.len = len;
-      PL_MEMCPY(value_.varlen, data.c_str(), len);
+      PELOTON_MEMCPY(value_.varlen, data.c_str(), len);
       break;
     }
     default: {

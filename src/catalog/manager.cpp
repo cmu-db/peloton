@@ -36,51 +36,39 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
-
   // add/update the catalog reference to the tile group
-  tile_group_locator_.Update(oid, location);
+  tile_group_locator_[oid] = location;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
-  
   // drop the catalog reference to the tile group
-  tile_group_locator_.Erase(oid, empty_tile_group_);
+  tile_group_locator_[oid] = empty_tile_group_;
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  std::shared_ptr<storage::TileGroup> location;
-  
-  location = tile_group_locator_.Find(oid);
-
-  return location;
+  auto iter = tile_group_locator_.find(oid);
+  if (iter == tile_group_locator_.end()) {
+    return empty_tile_group_;
+  }
+  return iter->second;
 }
 
 // used for logging test
-void Manager::ClearTileGroup() {
+void Manager::ClearTileGroup() { tile_group_locator_.clear(); }
 
-  tile_group_locator_.Clear(empty_tile_group_);
-}
-
-
-void Manager::AddIndirectionArray(const oid_t oid,
-                                  std::shared_ptr<storage::IndirectionArray> location) {
-
+void Manager::AddIndirectionArray(
+    const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
   // add/update the catalog reference to the indirection array
-  indirection_array_locator_.Update(oid, location);
+  auto ret = indirection_array_locator_[oid] = location;
 }
 
 void Manager::DropIndirectionArray(const oid_t oid) {
-  
   // drop the catalog reference to the tile group
-  indirection_array_locator_.Erase(oid, empty_indirection_array_);
+  indirection_array_locator_[oid] = empty_indirection_array_;
 }
-
 
 // used for logging test
-void Manager::ClearIndirectionArray() {
-
-  indirection_array_locator_.Clear(empty_indirection_array_);
-}
+void Manager::ClearIndirectionArray() { indirection_array_locator_.clear(); }
 
 }  // namespace catalog
 }  // namespace peloton

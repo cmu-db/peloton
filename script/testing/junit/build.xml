@@ -1,0 +1,55 @@
+<project name="test" basedir=".">
+<property name="src" value="." />
+<property name="lib" value="./lib" />
+
+<target name="compile">
+  <javac srcdir="${src}"
+         destdir="."
+         includeantruntime="false"
+         debug="true">
+    <classpath refid="test.jars"/>
+    </javac>
+</target>
+
+<target name="clean">
+  <delete failonerror="false">
+    <fileset dir="${src}" >
+      <include name="*.class"/>
+    </fileset>
+  </delete>
+</target>
+
+<path id="test.jars">
+  <fileset dir="${lib}">
+    <include name="**/*.jar"/>
+    <exclude name="junit-platform-console-standalone-1.1.0.jar" />
+  </fileset>
+</path>
+
+<path id="test.classpath">
+  <path refid="test.jars"/>
+  <pathelement location="${src}" />
+</path>
+
+<target name="testconsole" depends="compile">
+  <java jar="lib/junit-platform-console-standalone-1.1.0.jar"
+        dir="."
+        fork="yes"
+        failonerror="true">
+    <arg value="--class-path" />
+    <arg value="${toString:test.classpath}" />
+    <arg value="--scan-class-path" />
+  </java>
+</target>
+
+<target name="test" depends="compile">
+  <junit fork="yes" haltonfailure="true" logfailedtests="true">
+    <formatter type="plain" usefile="false" />
+    <classpath refid="test.classpath" />
+    <batchtest skipNonTests="true">
+      <fileset dir="${src}" includes="*.class"/>
+    </batchtest>
+  </junit>
+</target>
+</project>
+

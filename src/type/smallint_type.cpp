@@ -74,8 +74,8 @@ bool SmallintType::IsZero(const Value& val) const {
 }
 
 Value SmallintType::Add(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -85,8 +85,8 @@ Value SmallintType::Add(const Value& left, const Value &right) const {
 }
 
 Value SmallintType::Subtract(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -96,8 +96,8 @@ Value SmallintType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value SmallintType::Multiply(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -107,8 +107,8 @@ Value SmallintType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value SmallintType::Divide(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -123,8 +123,8 @@ Value SmallintType::Divide(const Value& left, const Value &right) const {
 }
 
 Value SmallintType::Modulo(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -158,7 +158,7 @@ Value SmallintType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value SmallintType::Sqrt(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   if (val.IsNull())
     return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
@@ -194,8 +194,8 @@ Value SmallintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value 
 
 CmpBool SmallintType::CompareEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
@@ -207,8 +207,8 @@ CmpBool SmallintType::CompareEquals(const Value& left,
 
 CmpBool SmallintType::CompareNotEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -219,8 +219,8 @@ CmpBool SmallintType::CompareNotEquals(const Value& left,
 
 CmpBool SmallintType::CompareLessThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -231,8 +231,8 @@ CmpBool SmallintType::CompareLessThan(const Value& left,
 
 CmpBool SmallintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -243,8 +243,8 @@ CmpBool SmallintType::CompareLessThanEquals(const Value& left,
 
 CmpBool SmallintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -255,8 +255,8 @@ CmpBool SmallintType::CompareGreaterThan(const Value& left,
 
 CmpBool SmallintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -266,7 +266,7 @@ CmpBool SmallintType::CompareGreaterThanEquals(const Value& left,
 }
 
 std::string SmallintType::ToString(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   switch (val.GetTypeId()) {
   case TypeId::TINYINT:
     if (val.IsNull())
@@ -292,7 +292,7 @@ std::string SmallintType::ToString(const Value& val) const {
 }
 
 size_t SmallintType::Hash(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
 
   return std::hash<int16_t> { }(val.value_.smallint);
 
@@ -331,7 +331,7 @@ Value SmallintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 }
 
 Value SmallintType::Copy(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
 
   return ValueFactory::GetSmallIntValue(val.value_.smallint);
 

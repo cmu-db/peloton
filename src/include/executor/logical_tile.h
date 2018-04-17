@@ -195,7 +195,7 @@ class LogicalTile : public Printable {
     }
 
     inline void AddRow(size_t left_itr, size_t right_itr) {
-      PL_ASSERT(!invalid_);
+      PELOTON_ASSERT(!invalid_);
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
            output_tile_column_itr < left_source_->size();
@@ -214,7 +214,7 @@ class LogicalTile : public Printable {
     }
 
     inline void AddLeftNullRow(size_t right_itr) {
-      PL_ASSERT(!invalid_);
+      PELOTON_ASSERT(!invalid_);
       // Determine the number of null position list on the left
       oid_t left_pos_list_size;
       if (left_source_ == nullptr) {
@@ -240,7 +240,7 @@ class LogicalTile : public Printable {
     }
 
     inline void AddRightNullRow(size_t left_itr) {
-      PL_ASSERT(!invalid_);
+      PELOTON_ASSERT(!invalid_);
       // Determine the number of null position list on the right
       oid_t right_pos_list_size;
       if (right_source_ == nullptr) {

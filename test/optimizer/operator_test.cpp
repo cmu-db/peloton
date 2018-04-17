@@ -1,7 +1,17 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// operator_test.cpp
+//
+// Identification: test/optimizer/operator_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <algorithm>
 #include "common/harness.h"
-
-#define private public
 
 #include "optimizer/operators.h"
 #include "expression/comparison_expression.h"

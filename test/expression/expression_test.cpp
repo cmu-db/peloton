@@ -213,7 +213,7 @@ TEST_F(ExpressionTests, ExtractDateTests) {
   //    type::Value expected = type::ValueFactory::GetDecimalValue(x.second);
   //    type::Value result = extract_expr->Evaluate(nullptr, nullptr, nullptr);
   //    EXPECT_FALSE(result.IsNull());
-  //    EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  //    EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
   //  }
 }
 
@@ -264,14 +264,14 @@ TEST_F(ExpressionTests, SimpleCase) {
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 }
 
 TEST_F(ExpressionTests, SimpleCaseCopyTest) {
@@ -323,14 +323,14 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 }
 
 TEST_F(ExpressionTests, SimpleCaseWithDefault) {
@@ -377,14 +377,14 @@ TEST_F(ExpressionTests, SimpleCaseWithDefault) {
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   type::Value result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   type::Value expected = type::ValueFactory::GetIntegerValue(2);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 
   // Test with A = 2, should get 3
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1), nullptr);
   result = case_expression->Evaluate(tuple.get(), nullptr, nullptr);
   expected = type::ValueFactory::GetIntegerValue(3);
-  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 }
 
 }  // namespace test

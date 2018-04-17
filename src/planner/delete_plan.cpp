@@ -44,7 +44,7 @@ bool DeletePlan::operator==(const AbstractPlan &rhs) const {
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
-  PL_ASSERT(table && other_table);
+  PELOTON_ASSERT(table && other_table);
   if (*table != *other_table)
     return false;
 
