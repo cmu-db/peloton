@@ -948,7 +948,8 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   if (default_layout_->IsRowStore()) {
     layout = default_layout_;
   } else {
-    layout = std::make_shared<const Layout>((schema->GetColumnCount());
+    layout = std::shared_ptr<const Layout>(
+            new const Layout(schema->GetColumnCount()));
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
@@ -1376,7 +1377,7 @@ void DataTable::ClearIndexSamples() {
 }
 
 void DataTable::SetDefaultLayout(const column_map_type &column_map) {
-  default_layout_ = std::make_shared<const Layout>(column_map);
+  default_layout_ = std::shared_ptr<const Layout>(new const Layout(column_map));
 }
 
 const Layout& DataTable::GetDefaultLayout() const {

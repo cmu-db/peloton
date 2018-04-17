@@ -41,8 +41,8 @@ TileGroup::TileGroup(BackendType backend_type,
       table(table),
       num_tuple_slots(tuple_count),
       tile_group_layout_(layout){
-  tile_count = schemas.size();
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  tile_count_ = schemas.size();
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
 
@@ -107,7 +107,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
     const catalog::Schema *schema = tile->GetSchema();
@@ -188,7 +188,7 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
     const catalog::Schema *schema = tile->GetSchema();
@@ -287,7 +287,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
 
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
@@ -336,7 +336,7 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
-  PELOTON_ASSERT(tile_offset < tile_count);
+  PELOTON_ASSERT(tile_offset < tile_count_);
   return tiles[tile_offset];
 }
 
@@ -360,7 +360,7 @@ const std::string TileGroup::GetInfo() const {
   os << "Table[" << table_id << "] " << std::endl;
   os << (*tile_group_header) << std::endl;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
       os << std::endl << (*tile);

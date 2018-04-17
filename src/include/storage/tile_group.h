@@ -130,7 +130,7 @@ class TileGroup : public Printable {
 
   // Get the tile at given offset in the tile group
   inline Tile *GetTile(const oid_t tile_offset) const {
-    PELOTON_ASSERT(tile_offset < tile_count);
+    PELOTON_ASSERT(tile_offset < tile_count_);
     Tile *tile = tiles[tile_offset].get();
     return tile;
   }
@@ -152,7 +152,7 @@ class TileGroup : public Printable {
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
-  size_t GetTileCount() const { return tile_count; }
+  size_t GetTileCount() const { return tile_count_; }
 
   type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
@@ -189,7 +189,7 @@ class TileGroup : public Printable {
   oid_t num_tuple_slots;
 
   // number of tiles
-  oid_t tile_count;
+  oid_t tile_count_;
 
   std::mutex tile_group_mutex;
 

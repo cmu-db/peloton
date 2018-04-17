@@ -29,6 +29,7 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
+#include "storage/layout.h"
 #include "storage/table_factory.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
@@ -171,7 +172,7 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
   column_map[3] = std::make_pair(1, 1);
 
   std::shared_ptr<const storage::Layout> layout =
-          std::make_shared<const storage::Layout>(column_map);
+          std::shared_ptr<const storage::Layout>(new const storage::Layout(column_map));
 
   std::shared_ptr<storage::TileGroup> tile_group_ptr(
       storage::TileGroupFactory::GetTileGroup(

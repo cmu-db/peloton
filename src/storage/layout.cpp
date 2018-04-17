@@ -160,16 +160,27 @@ std::vector<catalog::Schema> Layout::GetLayoutSchemas(
   // Build the schema tile at a time
   std::map<oid_t, std::vector<catalog::Column>> tile_schemas;
 
-  // This only works if the order of columns in the tile are the same
-  // as the schema. This snipet was initially in abstract_table.cpp.
-  for (auto column_info : column_layout_) {
-    tile_schemas[column_info.second.first].push_back(
-            schema->GetColumn(column_info.first));
-  }
+  // Handle schemas population based on the layout type
+  if (layout_type_ == LayoutType::ROW) {
+    schemas.push_back(*schema);
+  } else if (layout_type_ == LayoutType::COLUMN) {
+    for (oid_t col_id = 0; col_id < num_columns_; col_id++) {
+      std::vector<catalog::Column> tile_schema({schema->GetColumn(col_id)});
+      schemas.push_back(tile_schema);
+    }
+  } else {
+    // For LayoutType::HYBRID, use the old technique.
+    // This only works if the order of columns in the tile are the same
+    // as the schema. This snipet was initially in abstract_table.cpp.
+    for (auto column_info : column_layout_) {
+      tile_schemas[column_info.second.first].push_back(
+              schema->GetColumn(column_info.first));
+    }
 
-  for (auto entry : tile_schemas) {
-    catalog::Schema tile_schema(entry.second);
-    schemas.push_back(tile_schema);
+    for (auto entry : tile_schemas) {
+      catalog::Schema tile_schema(entry.second);
+      schemas.push_back(tile_schema);
+    }
   }
 
   return schemas;

@@ -30,7 +30,8 @@ AbstractTable::AbstractTable(oid_t table_oid, catalog::Schema *schema,
 
   // The default Layout should always be ROW or COLUMN
   PELOTON_ASSERT((layout_type == LayoutType::ROW) || (layout_type == LayoutType::COLUMN));
-  default_layout_ = std::make_shared<const Layout>(schema->GetColumnCount(), layout_type);
+  default_layout_ = std::shared_ptr<const Layout>(
+          new Layout(schema->GetColumnCount(), layout_type));
 }
 
 AbstractTable::~AbstractTable() {

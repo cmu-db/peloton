@@ -91,7 +91,8 @@ storage::DataTable *CreateTable() {
   column_map1[3] = std::make_pair(1, 1);
 
   std::shared_ptr<const storage::Layout> layout1 =
-          std::make_shared<const storage::Layout>(column_map1);
+          std::shared_ptr<const storage::Layout>(
+                  new const storage::Layout(column_map1));
 
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map2;
   column_map2[0] = std::make_pair(0, 0);
@@ -100,7 +101,8 @@ storage::DataTable *CreateTable() {
   column_map2[3] = std::make_pair(1, 2);
 
   std::shared_ptr<const storage::Layout> layout2 =
-          std::make_shared<const storage::Layout>(column_map2);
+          std::shared_ptr<const storage::Layout>(
+                  new const storage::Layout(column_map1));
 
   // Create tile groups.
   table->AddTileGroup(std::shared_ptr<storage::TileGroup>(

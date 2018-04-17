@@ -24,7 +24,7 @@ namespace gc {
 
 // Check a tuple and reclaim all varlen field
 void GCManager::CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group, oid_t tuple_id) {
-    oid_t tile_count = tile_group->tile_count;
+    oid_t tile_count = tile_group->tile_count_;
     oid_t tile_col_count;
     type::TypeId type_id;
     char *tuple_location;
