@@ -119,7 +119,13 @@ SETTING_int(gc_num_threads,
 SETTING_bool(parallel_execution,
              "Enable parallel execution of queries (default: true)",
              true,
-             false, false)
+             true, true)
+
+SETTING_int(min_parallel_table_scan_size,
+            "Minimum number of tuples a table must have before we consider performing parallel scans (default: 10K)",
+            10 * 1000,
+            1, std::numeric_limits<int32_t>::max(),
+            true, true)
 
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG

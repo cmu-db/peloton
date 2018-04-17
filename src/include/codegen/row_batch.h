@@ -20,7 +20,7 @@
 namespace peloton {
 
 namespace planner {
-class AttributeInfo;
+struct AttributeInfo;
 }  // namespace planner
 
 namespace codegen {

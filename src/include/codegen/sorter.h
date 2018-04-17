@@ -133,7 +133,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   // Callback to process one entry when doing a tuple-at-a-time scan
   //===--------------------------------------------------------------------===//
-  struct IterateCallback {
+  class IterateCallback {
+   public:
     // Destructor
     virtual ~IterateCallback() = default;
 
@@ -145,7 +146,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   // Callback to process a vector of entries when doing a vectorized scan
   //===--------------------------------------------------------------------===//
-  struct VectorizedIterateCallback {
+  class VectorizedIterateCallback {
+   public:
     // Destructor
     virtual ~VectorizedIterateCallback() = default;
 

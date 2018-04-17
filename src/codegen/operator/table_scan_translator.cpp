@@ -136,7 +136,10 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
                                          Pipeline &pipeline)
     : OperatorTranslator(scan, context, pipeline), table_(*scan.GetTable()) {
   // Set ourselves as the source of the pipeline
-  pipeline.MarkSource(this, Pipeline::Parallelism::Serial);
+  auto parallelism = scan.IsParallel() ? Pipeline::Parallelism::Parallel
+                                       : Pipeline::Parallelism::Serial;
+  pipeline.MarkSource(this, parallelism);
+
   // If there is a predicate, prepare a translator for it
   const auto *predicate = scan.GetPredicate();
   if (predicate != nullptr) {

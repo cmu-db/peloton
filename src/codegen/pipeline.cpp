@@ -105,8 +105,7 @@ void PipelineContext::LoopOverStates::DoParallel(
     auto *thread_state_ptr = func.GetArgumentByPosition(1);
 
     // Setup access to the thread state
-    PipelineContext::ScopedStateAccess state_access{
-        ctx_, func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access{ctx_, func.GetArgumentByPosition(1)};
 
     // Execute function body
     body(thread_state_ptr);
@@ -417,8 +416,8 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_ctx) {
   FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
   FunctionBuilder init_func{cc, init_decl};
   {
-    PipelineContext::ScopedStateAccess state_access{
-        pipeline_ctx, init_func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access{pipeline_ctx,
+                                           init_func.GetArgumentByPosition(1)};
 
     // Set initialized flag
     pipeline_ctx.MarkInitialized(codegen);
@@ -453,7 +452,7 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_ctx) {
   // Loop over all states to allow operators to clean up components
   PipelineContext::LoopOverStates loop_state{pipeline_ctx};
   loop_state.Do([this, &pipeline_ctx](llvm::Value *thread_state) {
-    PipelineContext::ScopedStateAccess state_access{pipeline_ctx, thread_state};
+    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
@@ -500,7 +499,7 @@ void Pipeline::Run(
 }
 
 void Pipeline::DoRun(
-    PipelineContext &pipeline_context, llvm::Function *dispatch_func,
+    PipelineContext &pipeline_ctx, llvm::Function *dispatch_func,
     const std::vector<llvm::Value *> &dispatch_args,
     const std::vector<llvm::Type *> &pipeline_args_types,
     const std::function<void(ConsumerContext &,
@@ -532,19 +531,18 @@ void Pipeline::DoRun(
     // If the pipeline is parallel, we need to call the generated init function
     if (IsParallel()) {
       thread_state = codegen->CreatePointerCast(
-          thread_state, pipeline_context.GetThreadStateType()->getPointerTo());
+          thread_state, pipeline_ctx.GetThreadStateType()->getPointerTo());
 
-      auto *init_func = pipeline_context.thread_init_func_;
+      auto *init_func = pipeline_ctx.thread_init_func_;
       codegen.CallFunc(init_func, {query_state, thread_state});
     }
 
     // Setup the thread state access for the pipeline context
-    PipelineContext::ScopedStateAccess state_access(pipeline_context,
-                                                    thread_state);
+    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
 
     // First initialize the execution consumer
     auto &execution_consumer = compilation_ctx_.GetExecutionConsumer();
-    execution_consumer.InitializePipelineState(pipeline_context);
+    execution_consumer.InitializePipelineState(pipeline_ctx);
 
     // Pull out the input parameters
     std::vector<llvm::Value *> pipeline_args;
@@ -553,13 +551,13 @@ void Pipeline::DoRun(
     }
 
     // Generate pipeline body
-    ConsumerContext ctx(compilation_ctx_, *this, &pipeline_context);
+    ConsumerContext ctx{compilation_ctx_, *this, &pipeline_ctx};
     body(ctx, pipeline_args);
 
     // Finish
     func.ReturnAndFinish();
   }
-  pipeline_context.pipeline_func_ = func.GetFunction();
+  pipeline_ctx.pipeline_func_ = func.GetFunction();
 
   // The pipeline function we generated above encapsulates the logic for all
   // operators in the pipeline. If we're executing it serially then we directly

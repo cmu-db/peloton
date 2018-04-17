@@ -281,7 +281,7 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
         LoadHashEntryField(codegen, entry_ptr, 0, 1);
     llvm::Value *is_hash_match =
         codegen->CreateICmpEQ(entry_hash_value, hash_value);
-    lang::If hash_match_branch(codegen, is_hash_match, "hashMatch");
+    lang::If hash_match_branch{codegen, is_hash_match, "hashMatch"};
     {
       // Load the key from the HashEntry *
       std::vector<codegen::Value> entry_key{};
@@ -291,7 +291,7 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
       // Check if the provided key matches what's in the HashEntry
       llvm::Value *is_key_match =
           Value::TestEquality(codegen, key, entry_key).GetValue();
-      lang::If key_match_branch(codegen, is_key_match, "keyMatch");
+      lang::If key_match_branch{codegen, is_key_match, "keyMatch"};
       {
         // Set result value to true if key was found
         probe_result.key_exists = codegen.ConstBool(true);
@@ -565,7 +565,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
     llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
     // If the bucket is not free
-    lang::If bucket_occupied(codegen, status_neq_zero, "bucketIsOccupied");
+    lang::If bucket_occupied{codegen, status_neq_zero, "bucketIsOccupied"};
     {
       // Read keys and return the pointer to value
       std::vector<codegen::Value> entry_key{};

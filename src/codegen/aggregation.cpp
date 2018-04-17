@@ -199,7 +199,7 @@ void Aggregation::TearDownQueryState(CodeGen &codegen) {
 void Aggregation::CreateInitialGlobalValues(CodeGen &codegen,
                                             llvm::Value *space) const {
   PELOTON_ASSERT(IsGlobal());
-  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_, space);
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
   null_bitmap.InitAllNull(codegen);
   null_bitmap.WriteBack(codegen);
 }
@@ -213,7 +213,7 @@ void Aggregation::CreateInitialValues(
   PELOTON_ASSERT(!IsGlobal());
 
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_, space);
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
 
   // Initialize bitmap to all NULLs
   null_bitmap.InitAllNull(codegen);
@@ -247,7 +247,7 @@ void Aggregation::CreateInitialValues(
             "Unexpected aggregate type [%s] when creating initial values",
             ExpressionTypeToString(agg_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
-        throw Exception(ExceptionType::UNKNOWN_TYPE, message);
+        throw Exception{ExceptionType::UNKNOWN_TYPE, message};
       }
     }
 
@@ -295,13 +295,13 @@ void Aggregation::DoInitializeValue(
       } else {
         raw_initial = codegen.Const64(1);
       }
-      codegen::Value initial_val(type::BigInt::Instance(), raw_initial);
+      codegen::Value initial_val{type::BigInt::Instance(), raw_initial};
       storage_.SetValueSkipNull(codegen, space, storage_index, initial_val);
       break;
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       // The initial value for COUNT(*) is 1
-      codegen::Value one(type::BigInt::Instance(), codegen.Const64(1));
+      codegen::Value one{type::BigInt::Instance(), codegen.Const64(1)};
       storage_.SetValueSkipNull(codegen, space, storage_index, one);
       break;
     }
@@ -343,11 +343,11 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
       if (update.IsNullable()) {
         llvm::Value *not_null = update.IsNotNull(codegen);
         raw_update =
-            codegen::Value(type::BigInt::Instance(),
-                           codegen->CreateZExt(not_null, codegen.Int64Type()));
+            codegen::Value{type::BigInt::Instance(),
+                           codegen->CreateZExt(not_null, codegen.Int64Type())};
       } else {
         raw_update =
-            codegen::Value(type::BigInt::Instance(), codegen.Const64(1));
+            codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
       }
 
       // Add to aggregate
@@ -356,7 +356,7 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
-      auto delta = codegen::Value(type::BigInt::Instance(), codegen.Const64(1));
+      auto delta = codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
@@ -397,9 +397,9 @@ void Aggregation::DoNullCheck(
   // Fetch null byte so we can phi-resolve it after all the branches
   llvm::Value *null_byte_snapshot = null_bitmap.ByteFor(codegen, storage_index);
 
-  lang::If valid_update(codegen, update_not_null, "Agg.IfValidUpdate");
+  lang::If valid_update{codegen, update_not_null, "Agg.IfValidUpdate"};
   {
-    lang::If agg_is_null(codegen, agg_null, "Agg.IfAggIsNull");
+    lang::If agg_is_null{codegen, agg_null, "Agg.IfAggIsNull"};
     {
       // (2)
       switch (type) {
@@ -410,7 +410,7 @@ void Aggregation::DoNullCheck(
           break;
         }
         case ExpressionType::AGGREGATE_COUNT: {
-          codegen::Value one(type::BigInt::Instance(), codegen.Const64(1));
+          codegen::Value one{type::BigInt::Instance(), codegen.Const64(1)};
           storage_.SetValue(codegen, space, storage_index, one, null_bitmap);
           break;
         }
@@ -484,7 +484,7 @@ void Aggregation::AdvanceValue(
           "Unexpected aggregate type [%s] when advancing aggregator",
           ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
       LOG_ERROR("%s", message.c_str());
-      throw Exception(ExceptionType::UNKNOWN_TYPE, message);
+      throw Exception{ExceptionType::UNKNOWN_TYPE, message};
     }
   }
 }
@@ -546,7 +546,7 @@ void Aggregation::AdvanceValues(
     // table)
     auto name = "agg" + std::to_string(aggregate_info.source_index) +
                 ".advanceValues.ifAggValueIsDistinct";
-    lang::If agg_is_distinct(codegen, condition, name);
+    lang::If agg_is_distinct{codegen, condition, name};
     {
       // Advance value
       AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
@@ -631,7 +631,7 @@ void Aggregation::FinalizeValues(
             "Unexpected aggregate type [%s] when finalizing aggregator",
             ExpressionTypeToString(agg_type).c_str());
         LOG_ERROR("%s", message.c_str());
-        throw Exception(ExceptionType::UNKNOWN_TYPE, message);
+        throw Exception{ExceptionType::UNKNOWN_TYPE, message};
       }
     }
   }

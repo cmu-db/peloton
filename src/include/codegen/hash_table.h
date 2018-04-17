@@ -30,7 +30,8 @@ class HashTable {
    * key. It is invoked when a matching key-value pair is found in the hash
    * table.
    */
-  struct ProbeCallback {
+  class ProbeCallback {
+   public:
     /** Virtual destructor */
     virtual ~ProbeCallback() = default;
 
@@ -52,7 +53,8 @@ class HashTable {
    * indicate the number of bytes needed to store the value associated with the
    * inserted key.
    */
-  struct InsertCallback {
+  class InsertCallback {
+   public:
     /** Virtual destructor */
     virtual ~InsertCallback() = default;
 
@@ -74,7 +76,8 @@ class HashTable {
   };
 
   // No-op InsertCallback
-  struct NoOpInsertCallback : InsertCallback {
+  class NoOpInsertCallback : public InsertCallback {
+   public:
     void StoreValue(UNUSED_ATTRIBUTE CodeGen &codegen,
                     UNUSED_ATTRIBUTE llvm::Value *space) const override {}
     llvm::Value *GetValueSize(
@@ -88,7 +91,8 @@ class HashTable {
    * ProcessEntry() is invoked for each entry in the table, or only those
    * entries that match a provided key if a search key is provided.
    */
-  struct IterateCallback {
+  class IterateCallback {
+   public:
     /** Virtual destructor */
     virtual ~IterateCallback() = default;
 
@@ -112,7 +116,8 @@ class HashTable {
    * entries in the hash table. Iteration may be over the entire table, or a
    * subset of the table if a matching probing key was provided.
    */
-  struct VectorizedIterateCallback {
+  class VectorizedIterateCallback {
+   public:
     /** Virtual destructor */
     virtual ~VectorizedIterateCallback() = default;
 
@@ -162,7 +167,7 @@ class HashTable {
   };
 
   /**
-   * A struct storing the result of a probe into the hash table
+   * A class storing the result of a probe into the hash table
    */
   struct ProbeResult {
     // Actual probe result (bool), if the key already exists in the hast table

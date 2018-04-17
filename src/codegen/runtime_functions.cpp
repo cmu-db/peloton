@@ -183,7 +183,7 @@ void RuntimeFunctions::ExecuteTableScan(
                tilegroup_stop);
 
       // Time this
-      Timer<std::ratio<1, 1000> > timer;
+      Timer<std::ratio<1, 1000>> timer;
       timer.Start();
 
       // Pull out this task's thread state
@@ -222,6 +222,12 @@ void RuntimeFunctions::ExecutePerState(
   for (uint32_t tid = 0; tid < num_tasks; tid++) {
     worker_pool.SubmitTask(
         [&query_state, &work_func, &thread_states, &latch, tid]() {
+          LOG_INFO("Processing thread state %u ...", tid);
+
+          // Time this
+          Timer<std::ratio<1, 1000>> timer;
+          timer.Start();
+
           // Pull out the thread state
           auto *thread_state = thread_states.AccessThreadState(tid);
 
@@ -230,6 +236,10 @@ void RuntimeFunctions::ExecutePerState(
 
           // Count down the latch
           latch.CountDown();
+
+          timer.Stop();
+          LOG_INFO("Finished processing thread state %u (%.2lf ms) ...", tid,
+                   timer.GetDuration());
         });
   }
 

@@ -27,6 +27,9 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
                                    Pipeline &pipeline)
     : OperatorTranslator(update_plan, context, pipeline),
       table_storage_(*update_plan.GetTable()->GetSchema()) {
+  // Updates happen serially
+  pipeline.SetSerial();
+
   // Create the translator for our child and derived attributes
   context.Prepare(*update_plan.GetChild(0), pipeline);
 

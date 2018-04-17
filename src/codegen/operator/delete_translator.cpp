@@ -26,6 +26,8 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
                                    Pipeline &pipeline)
     : OperatorTranslator(delete_plan, context, pipeline),
       table_(*delete_plan.GetTable()) {
+  pipeline.SetSerial();
+
   // Also create the translator for our child.
   context.Prepare(*delete_plan.GetChild(0), pipeline);
 

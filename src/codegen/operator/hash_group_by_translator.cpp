@@ -360,7 +360,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      lang::If is_valid_row(codegen, valid_row);
+      lang::If is_valid_row{codegen, valid_row};
       {
         // The row is valid, send along the pipeline
         ctx_.Consume(row);

@@ -30,6 +30,9 @@ namespace codegen {
 HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
                                CompilationContext &context, Pipeline &pipeline)
     : OperatorTranslator(hash_plan, context, pipeline) {
+  // Distincts are serial (for now ...)
+  pipeline.SetSerial();
+
   CodeGen &codegen = GetCodeGen();
   QueryState &query_state = context.GetQueryState();
 

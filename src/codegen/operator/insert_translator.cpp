@@ -27,6 +27,9 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
                                    Pipeline &pipeline)
     : OperatorTranslator(insert_plan, context, pipeline),
       table_storage_(*insert_plan.GetTable()->GetSchema()) {
+  // Inserts happen serially
+  pipeline.SetSerial();
+
   // Create the translator for its child only when there is a child
   if (insert_plan.GetChildrenSize() != 0) {
     context.Prepare(*insert_plan.GetChild(0), pipeline);

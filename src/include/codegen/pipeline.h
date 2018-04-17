@@ -31,13 +31,15 @@ class CompilationContext;
 class ConsumerContext;
 class OperatorTranslator;
 
-namespace lang {
-class Loop;
-}  // namespace lang
-
 /// Forward declare Pipeline that's declared at the end of this file
 class Pipeline;
 
+/**
+ * A PipelineContext contains all state required within a pipeline. Similar to
+ * QueryState, callers can register state whose duration is only within a
+ * pipeline. A new PipelineContext is created for each pipeline in the query
+ * plan.
+ */
 class PipelineContext {
   friend class Pipeline;
 
@@ -72,16 +74,16 @@ class PipelineContext {
   Pipeline &GetPipeline();
 
   /**
-   * A handy class to temporarily set a thread state
+   * A handy class to temporarily set thread state in the pipeline
    */
-  class ScopedStateAccess {
+  class SetState {
    public:
-    ScopedStateAccess(PipelineContext &pipeline_ctx, llvm::Value *thread_state)
+    SetState(PipelineContext &pipeline_ctx, llvm::Value *thread_state)
         : pipeline_ctx_(pipeline_ctx),
           prev_thread_state_(pipeline_ctx.thread_state_) {
       pipeline_ctx.thread_state_ = thread_state;
     }
-    ~ScopedStateAccess() { pipeline_ctx_.thread_state_ = prev_thread_state_; }
+    ~SetState() { pipeline_ctx_.thread_state_ = prev_thread_state_; }
 
    private:
     PipelineContext &pipeline_ctx_;
@@ -89,14 +91,16 @@ class PipelineContext {
   };
 
   /**
-   * A handy class to loop over all thread states
+   * A handy class to loop over all thread states registered in this pipeline.
+   * Loops can either happen serially or in parallel using a dispatch function.
    */
   class LoopOverStates {
    public:
     explicit LoopOverStates(PipelineContext &pipeline_ctx);
+
     void Do(const std::function<void(llvm::Value *)> &body) const;
-    void DoParallel(
-        const std::function<void(llvm::Value *)> &body) const;
+    void DoParallel(const std::function<void(llvm::Value *)> &body) const;
+
    private:
     PipelineContext &ctx_;
   };
@@ -154,6 +158,8 @@ class Pipeline {
   Pipeline(OperatorTranslator *translator, Parallelism parallelism);
 
   void Add(OperatorTranslator *translator, Parallelism parallelism);
+
+  void SetSerial() { parallelism_ = Pipeline::Parallelism::Serial; }
 
   void MarkSource(OperatorTranslator *translator, Parallelism parallelism);
 
@@ -219,7 +225,7 @@ class Pipeline {
            const std::vector<llvm::Type *> &pipeline_arg_types,
            const std::function<void(ConsumerContext &,
                                     const std::vector<llvm::Value *> &)> &body);
-  void DoRun(PipelineContext &pipeline_context, llvm::Function *dispatch_func,
+  void DoRun(PipelineContext &pipeline_ctx, llvm::Function *dispatch_func,
              const std::vector<llvm::Value *> &dispatch_args,
              const std::vector<llvm::Type *> &pipeline_args_types,
              const std::function<void(
