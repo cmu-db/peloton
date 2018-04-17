@@ -386,17 +386,20 @@ void GetToIndexScan::Transform(
       std::vector<oid_t> index_key_column_id_list;
       std::vector<ExpressionType> index_expr_type_list;
       std::vector<type::Value> index_value_list;
-      std::unordered_set<oid_t> index_col_set(
-          index_object->GetKeyAttrs().begin(),
-          index_object->GetKeyAttrs().end());
-      for (size_t offset = 0; offset < key_column_id_list.size(); offset++) {
+
+      // Only pick the index if the query columns match the index's columns in order.
+      auto index_id_list = index_object->GetKeyAttrs();
+      for (size_t offset = 0; (offset < key_column_id_list.size()) && (offset < index_id_list.size()); offset++) {
         auto col_id = key_column_id_list[offset];
-        if (index_col_set.find(col_id) != index_col_set.end()) {
+        if (index_id_list[offset] == col_id) {
           index_key_column_id_list.push_back(col_id);
           index_expr_type_list.push_back(expr_type_list[offset]);
           index_value_list.push_back(value_list[offset]);
+        } else {
+          break;
         }
       }
+
       // Add transformed plan
       if (!index_key_column_id_list.empty()) {
         auto index_scan_op = PhysicalIndexScan::make(
