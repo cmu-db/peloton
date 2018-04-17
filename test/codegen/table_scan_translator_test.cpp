@@ -41,7 +41,7 @@ public:
     const int tuples_per_tilegroup= 100;
     const int tile_group_count = 5;
     const int tuple_count = tuples_per_tilegroup * tile_group_count;
-    const oid_t col_count = 128;
+    const oid_t col_count = 100;
     const bool is_inlined = true;
 
 
@@ -66,8 +66,6 @@ public:
     // Create table.
     /////////////////////////////////////////////////////////
 
-    // bool own_schema = true;
-    // bool adapt_table = true;
     bool is_catalog = false;
     auto *catalog = catalog::Catalog::GetInstance();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -114,7 +112,7 @@ public:
     txn_manager.CommitTransaction(txn);
 
     /////////////////////////////////////////////////////////
-    // Do a seq scan with predicate on top of the table
+    // Do a seq scan on the table with the given layout
     /////////////////////////////////////////////////////////
 
     // Column ids to be scanned.
