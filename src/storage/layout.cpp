@@ -13,6 +13,8 @@
 #include <string>
 #include <sstream>
 
+#include "catalog/column.h"
+#include "catalog/schema.h"
 #include "storage/layout.h"
 #include "util/stringbox_util.h"
 
@@ -147,6 +149,29 @@ oid_t Layout::GetTileColumnId(oid_t column_id) const {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return tile_column_id;
+}
+
+std::vector<catalog::Schema> Layout::GetLayoutSchemas(
+        catalog::Schema* const schema) const {
+
+  std::vector<catalog::Schema> schemas;
+
+  // Build the schema tile at a time
+  std::map<oid_t, std::vector<catalog::Column>> tile_schemas;
+
+  // This only works if the order of columns in the tile are the same
+  // as the schema. This snipet was initially in abstract_table.cpp.
+  for (auto column_info : column_layout_) {
+    tile_schemas[column_info.second.first].push_back(
+            schema->GetColumn(column_info.first));
+  }
+
+  for (auto entry : tile_schemas) {
+    catalog::Schema tile_schema(entry.second);
+    schemas.push_back(tile_schema);
+  }
+
+  return schemas;
 }
 
 std::string Layout::GetColumnMapInfo() const {

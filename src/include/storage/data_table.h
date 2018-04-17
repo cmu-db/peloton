@@ -149,7 +149,7 @@ class DataTable : public AbstractTable {
   size_t GetTileGroupCount() const;
 
   // Get a tile group with given layout
-  TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
+  TileGroup *GetTileGroupWithLayout(std::shared_ptr<const Layout> layout);
 
   //===--------------------------------------------------------------------===//
   // TRIGGER
@@ -248,9 +248,9 @@ class DataTable : public AbstractTable {
 
   void ClearLayoutSamples();
 
-  void SetDefaultLayout(const column_map_type &layout);
+  void SetDefaultLayout(const column_map_type &column_map);
 
-  Layout GetDefaultLayout() const;
+  const Layout& GetDefaultLayout() const;
 
   //===--------------------------------------------------------------------===//
   // INDEX TUNER
@@ -421,9 +421,6 @@ class DataTable : public AbstractTable {
 
   // adapt table
   bool adapt_table_ = true;
-
-  // default layout for the table
-  Layout default_layout_;
 
   // default partition map for table
   column_map_type default_partition_;

@@ -21,6 +21,11 @@
 #define COLUMN_STORE_OID 1
 
 namespace peloton {
+
+namespace catalog {
+class Schema;
+}
+
 namespace storage {
 
 class Layout : public Printable {
@@ -52,6 +57,8 @@ class Layout : public Printable {
   oid_t GetTileColumnId(oid_t column_id) const;
 
   oid_t GetColumnCount() const { return num_columns_;}
+
+  std::vector<catalog::Schema> GetLayoutSchemas(catalog::Schema* const schema) const;
 
   std::string GetColumnMapInfo() const;
 

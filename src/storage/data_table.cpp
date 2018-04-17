@@ -67,7 +67,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
-      default_layout_(schema->GetColumnCount()),
       trigger_list_(new trigger::TriggerList()) {
   // Init default partition
   if (layout_type == LayoutType::ROW) {
@@ -882,10 +881,10 @@ void DataTable::ResetDirty() { dirty_ = false; }
 //===--------------------------------------------------------------------===//
 
 TileGroup *DataTable::GetTileGroupWithLayout(
-    const column_map_type &partitioning) {
+    std::shared_ptr<const Layout> layout) {
   oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
   return (AbstractTable::GetTileGroupWithLayout(
-      database_oid, tile_group_id, partitioning, tuples_per_tilegroup_));
+      database_oid, tile_group_id, layout, tuples_per_tilegroup_));
 }
 
 oid_t DataTable::AddDefaultIndirectionArray(
@@ -910,14 +909,10 @@ oid_t DataTable::AddDefaultTileGroup() {
 }
 
 oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
-  column_map_type column_map;
   oid_t tile_group_id = INVALID_OID;
 
-  // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout();
-
   // Create a tile group with that partitioning
-  std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
+  std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(default_layout_));
   PELOTON_ASSERT(tile_group.get());
 
   tile_group_id = tile_group->GetTileGroupId();
@@ -948,16 +943,17 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
   std::vector<catalog::Schema> schemas;
   schemas.push_back(*schema);
+  std::shared_ptr<const Layout> layout = nullptr;
 
-  column_map_type column_map;
-  // default column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(0, col_itr);
+  if (default_layout_->IsRowStore()) {
+    layout = default_layout_;
+  } else {
+    layout = std::shared_ptr<const Layout>(
+            new const Layout(schema->GetColumnCount()));
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, schemas, column_map,
+      database_oid, table_oid, tile_group_id, this, schemas, layout,
       tuples_per_tilegroup_));
 
   auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
@@ -1301,7 +1297,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetLayout().GetLayoutDifference(default_layout_);
+  auto diff = tile_group->GetLayout().GetLayoutDifference(*default_layout_);
 
   // Check threshold for transformation
   if (diff < theta) {
@@ -1319,7 +1315,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
       TileGroupFactory::GetTileGroup(
           tile_group->GetDatabaseId(), tile_group->GetTableId(),
           tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-          new_schema, default_partition_,
+          new_schema, default_layout_,
           tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
@@ -1394,13 +1390,14 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
   return column_map_stats;
 }
 
-void DataTable::SetDefaultLayout(const column_map_type &layout) {
-  default_layout_ = Layout(layout);
-  default_partition_ = layout;
+void DataTable::SetDefaultLayout(const column_map_type &column_map) {
+  default_layout_ = std::shared_ptr<const Layout>(
+          new const Layout(column_map));
+  default_partition_ = column_map;
 }
 
-Layout DataTable::GetDefaultLayout() const {
-  return default_layout_;
+const Layout& DataTable::GetDefaultLayout() const {
+  return *default_layout_;
 }
 
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {

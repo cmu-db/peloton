@@ -75,7 +75,7 @@ class TileGroup : public Printable {
   // Tile group constructor
   TileGroup(BackendType backend_type, TileGroupHeader *tile_group_header,
             AbstractTable *table, const std::vector<catalog::Schema> &schemas,
-            const column_map_type &column_map, int tuple_count);
+            std::shared_ptr<const Layout> layout, int tuple_count);
 
   ~TileGroup();
 
@@ -161,7 +161,7 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
-  const storage::Layout& GetLayout() const { return tile_group_layout_; }
+  const storage::Layout& GetLayout() const { return *tile_group_layout_; }
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -193,7 +193,8 @@ class TileGroup : public Printable {
 
   std::mutex tile_group_mutex;
 
-  Layout tile_group_layout_;
+  // Refernce to the layout of the TileGroup
+  std::shared_ptr<const Layout> tile_group_layout_;
 };
 
 }  // namespace storage

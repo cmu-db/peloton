@@ -32,7 +32,7 @@ namespace storage {
 TileGroup::TileGroup(BackendType backend_type,
                      TileGroupHeader *tile_group_header, AbstractTable *table,
                      const std::vector<catalog::Schema> &schemas,
-                     const column_map_type &column_map, int tuple_count)
+                     std::shared_ptr<const Layout> layout, int tuple_count)
     : database_id(INVALID_OID),
       table_id(INVALID_OID),
       tile_group_id(INVALID_OID),
@@ -40,7 +40,7 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      tile_group_layout_(column_map){
+      tile_group_layout_(layout){
   tile_count = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
@@ -319,7 +319,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  tile_group_layout_.LocateTileAndColumn(column_id,
+  tile_group_layout_->LocateTileAndColumn(column_id,
     tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
@@ -328,7 +328,7 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
                          oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  tile_group_layout_.LocateTileAndColumn(column_id,
+  tile_group_layout_->LocateTileAndColumn(column_id,
     tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
