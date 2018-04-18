@@ -115,7 +115,7 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
   RWType rw_type;
 
   if (rw_set_.Find(location, rw_type)) {
-    PL_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
+    PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     return;
   } else {
     rw_set_.Insert(location, RWType::READ);
@@ -126,7 +126,7 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
   RWType rw_type;
 
   if (rw_set_.Find(location, rw_type)) {
-    PL_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
+    PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     if (rw_type == RWType::READ) {
       rw_set_.Update(location, RWType::READ_OWN);
     } 
@@ -151,10 +151,10 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
       return;
     }
     if (rw_type == RWType::DELETE) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
       return;
     }
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     rw_set_.Insert(location, RWType::UPDATE);
   }
@@ -162,7 +162,7 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
   if (IsInRWSet(location)) {
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     rw_set_.Insert(location, RWType::INSERT);
     ++insert_count_;
@@ -189,10 +189,10 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
       return true;
     }
     if(rw_type == RWType::DELETE) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
       return false;
     }
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     rw_set_.Insert(location, RWType::DELETE);
   }

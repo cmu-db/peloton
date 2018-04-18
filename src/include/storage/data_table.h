@@ -284,8 +284,16 @@ class DataTable : public AbstractTable {
                        concurrency::TransactionContext *transaction,
                        ItemPointer **index_entry_ptr);
 
+  inline static size_t GetActiveTileGroupCount() {
+    return default_active_tilegroup_count_;
+  }
+
   static void SetActiveTileGroupCount(const size_t active_tile_group_count) {
     default_active_tilegroup_count_ = active_tile_group_count;
+  }
+
+  inline static size_t GetActiveIndirectionArrayCount() {
+    return default_active_indirection_array_count_;
   }
 
   static void SetActiveIndirectionArrayCount(
@@ -343,9 +351,8 @@ class DataTable : public AbstractTable {
   bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                   concurrency::TransactionContext *transaction);
 
- public:
+ private:
   static size_t default_active_tilegroup_count_;
-
   static size_t default_active_indirection_array_count_;
 
  private:

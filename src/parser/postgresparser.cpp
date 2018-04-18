@@ -20,8 +20,8 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/star_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/subquery_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "parser/pg_list.h"
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
@@ -286,10 +286,12 @@ expression::AbstractExpression *PostgresParser::ColumnRefTransform(
                 ->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string((reinterpret_cast<value *>(
-                             fields->head->next->data.ptr_value))->val.str),
-            std::string((reinterpret_cast<value *>(
-                             fields->head->data.ptr_value))->val.str));
+            std::string(
+                (reinterpret_cast<value *>(fields->head->next->data.ptr_value))
+                    ->val.str),
+            std::string(
+                (reinterpret_cast<value *>(fields->head->data.ptr_value))
+                    ->val.str));
       }
       break;
     }
@@ -659,11 +661,15 @@ expression::AbstractExpression *PostgresParser::ExprTransform(Node *node) {
       break;
     }
     case T_SubLink: {
-      expr = SubqueryExprTransform(reinterpret_cast<SubLink*>(node));
+      expr = SubqueryExprTransform(reinterpret_cast<SubLink *>(node));
       break;
     }
     case T_NullTest: {
       expr = NullTestTransform(reinterpret_cast<NullTest *>(node));
+      break;
+    }
+    case T_TypeCast: {
+      expr = TypeCastTransform(reinterpret_cast<TypeCast *>(node));
       break;
     }
     default: {
@@ -732,24 +738,28 @@ expression::AbstractExpression *PostgresParser::AExprTransform(A_Expr *root) {
   return result;
 }
 
-expression::AbstractExpression* PostgresParser::SubqueryExprTransform(SubLink *node) {
+expression::AbstractExpression *PostgresParser::SubqueryExprTransform(
+    SubLink *node) {
   if (node == nullptr) {
     return nullptr;
   }
 
-  expression::AbstractExpression* expr = nullptr;
-  auto select_stmt = SelectTransform(reinterpret_cast<SelectStmt*>(node->subselect));
+  expression::AbstractExpression *expr = nullptr;
+  auto select_stmt =
+      SelectTransform(reinterpret_cast<SelectStmt *>(node->subselect));
   auto subquery_expr = new expression::SubqueryExpression();
-  subquery_expr->SetSubSelect(reinterpret_cast<SelectStatement*>(select_stmt));
+  subquery_expr->SetSubSelect(reinterpret_cast<SelectStatement *>(select_stmt));
   switch (node->subLinkType) {
     case ANY_SUBLINK: {
       auto col_expr = ExprTransform(node->testexpr);
-      expr = new expression::ComparisonExpression(ExpressionType::COMPARE_IN, col_expr, subquery_expr);
+      expr = new expression::ComparisonExpression(ExpressionType::COMPARE_IN,
+                                                  col_expr, subquery_expr);
       break;
     }
     case EXISTS_SUBLINK: {
-      expr = new expression::OperatorExpression(ExpressionType::OPERATOR_EXISTS, type::TypeId::BOOLEAN, subquery_expr,
-                                                nullptr);
+      expr = new expression::OperatorExpression(ExpressionType::OPERATOR_EXISTS,
+                                                type::TypeId::BOOLEAN,
+                                                subquery_expr, nullptr);
       break;
     }
     case EXPR_SUBLINK: {
@@ -852,7 +862,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object. The result of the transformation
 // is also stored into the provided statement
-void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement* stmt) {
+void PostgresParser::ColumnDefTransform(ColumnDef *root,
+                                        parser::CreateStatement *stmt) {
   TypeName *type_name = root->typeName;
   char *name =
       (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
@@ -901,20 +912,17 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
         auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 
         col->foreign_key_source.emplace_back(root->colname);
-        if (constraint->pk_attrs != nullptr)
-        {
+        if (constraint->pk_attrs != nullptr) {
           auto attr_cell = constraint->pk_attrs->head;
-          value* attr_val =
-                reinterpret_cast<value*>(attr_cell->data.ptr_value);
+          value *attr_val =
+              reinterpret_cast<value *>(attr_cell->data.ptr_value);
           col->foreign_key_sink.emplace_back(attr_val->val.str);
-        }
-        else
-        {
+        } else {
           // Must specify the referenced columns
           delete result;
           delete col;
-          throw NotImplementedException(StringUtil::Format(
-              "Foreign key columns not specified."));
+          throw NotImplementedException(
+              StringUtil::Format("Foreign key columns not specified."));
         }
 
         // Update Reference Table
@@ -975,7 +983,7 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
     if ((node->type) == T_ColumnDef) {
       // Transform Regular Column
       try {
-        ColumnDefTransform(reinterpret_cast<ColumnDef*>(node), result);
+        ColumnDefTransform(reinterpret_cast<ColumnDef *>(node), result);
       } catch (NotImplementedException e) {
         delete result;
         throw e;
@@ -1411,7 +1419,7 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
   result->SetIndexName(
-          reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
+      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
   return result;
 }
 
@@ -1484,8 +1492,9 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
-  VariableSetStatement* res = new VariableSetStatement();
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(
+    UNUSED_ATTRIBUTE VariableSetStmt *root) {
+  VariableSetStatement *res = new VariableSetStatement();
   return res;
 }
 
@@ -1601,7 +1610,7 @@ PostgresParser::ParamListTransform(List *root) {
 parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
   // selectStmt must exist. It would either select from table or directly select
   // some values
-  PL_ASSERT(root->selectStmt != NULL);
+  PELOTON_ASSERT(root->selectStmt != NULL);
 
   auto select_stmt = reinterpret_cast<SelectStmt *>(root->selectStmt);
 
@@ -1617,7 +1626,7 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     // Directly insert some values
     result = new parser::InsertStatement(InsertType::VALUES);
 
-    PL_ASSERT(select_stmt->valuesLists != NULL);
+    PELOTON_ASSERT(select_stmt->valuesLists != NULL);
     std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
         *insert_values = nullptr;
     try {
@@ -1683,6 +1692,12 @@ parser::SelectStatement *PostgresParser::SelectTransform(SelectStmt *root) {
           "Set operation %d not supported yet...\n", root->op));
   }
 
+  return result;
+}
+
+parser::SQLStatement *PostgresParser::ExplainTransform(ExplainStmt *root) {
+  parser::ExplainStatement *result = new parser::ExplainStatement();
+  result->real_sql_stmt.reset(NodeTransform(root->query));
   return result;
 }
 
@@ -1785,7 +1800,10 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = VacuumTransform((VacuumStmt *)stmt);
       break;
     case T_VariableSetStmt:
-      result = VariableSetTransform((VariableSetStmt*)stmt);
+      result = VariableSetTransform((VariableSetStmt *)stmt);
+      break;
+    case T_ExplainStmt:
+      result = ExplainTransform(reinterpret_cast<ExplainStmt *>(stmt));
       break;
     default: {
       throw NotImplementedException(StringUtil::Format(
@@ -1798,7 +1816,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
+parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }

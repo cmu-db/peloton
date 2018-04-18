@@ -153,7 +153,7 @@ Schema *Schema::CopySchema(const Schema *schema,
   // For each column index, push the column
   for (oid_t column_index : index_list) {
     // Make sure the index does not refer to invalid element
-    PL_ASSERT(column_index < schema->columns.size());
+    PELOTON_ASSERT(column_index < schema->columns.size());
 
     column_list.push_back(schema->columns[column_index]);
   }
@@ -248,7 +248,7 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
     const std::vector<std::vector<oid_t>> &subsets) {
-  PL_ASSERT(schema_list.size() == subsets.size());
+  PELOTON_ASSERT(schema_list.size() == subsets.size());
 
   std::vector<Column> columns;
   for (unsigned int i = 0; i < schema_list.size(); i++) {

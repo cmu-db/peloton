@@ -37,9 +37,9 @@ TEST_F(BwTreeIndexTests, UniqueKeyInsertTest) {
   TestingIndexUtil::UniqueKeyInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(BwTreeIndexTests, UniqueKeyDeleteTest) {
-//  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
-//}
+TEST_F(BwTreeIndexTests, UniqueKeyDeleteTest) {
+  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
+}
 
 TEST_F(BwTreeIndexTests, NonUniqueKeyDeleteTest) {
   TestingIndexUtil::NonUniqueKeyDeleteTest(IndexType::BWTREE);

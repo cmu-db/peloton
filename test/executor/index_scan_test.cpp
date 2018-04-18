@@ -12,13 +12,11 @@
 
 #include <memory>
 
-#include "executor/testing_executor_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "common/internal_types.h"
-#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/delete_executor.h"
@@ -28,13 +26,14 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/plan_executor.h"
+#include "executor/testing_executor_util.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 #include "traffic_cop/traffic_cop.h"
-
+#include "type/value_factory.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -64,14 +63,13 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::COMPARE_LESSTHANOREQUALTO);
+  expr_types.push_back(ExpressionType::COMPARE_LESSTHANOREQUALTO);
   values.push_back(type::ValueFactory::GetIntegerValue(110).Copy());
 
   // Create index scan desc
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
@@ -136,7 +134,7 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   // Create index scan desc
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 

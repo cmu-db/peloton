@@ -62,6 +62,10 @@ EMAILS_TO_IGNORE = [
     "vagrant.vm",
 ]
 
+LABELS_TO_IGNORE = [
+    "class-project",
+]
+
 # ==============================================
 # pr_format
 # ==============================================
@@ -328,6 +332,14 @@ if __name__ == '__main__':
         # Get labels for this PR
         issue = gh.issues.get(pr.number, user=GITHUB_USER, repo=GITHUB_REPO)
         labels = [ i.name for i in issue.labels ]
+        
+        # Skip any PRs with labels we should ignore
+        should_ignore = set(labels).intersection(set(LABELS_TO_IGNORE))
+        if should_ignore:
+            LOG.debug("PR %d has labels that we need to ignore: %s" % (pr.number, list(should_ignore)))
+            continue
+        ## IF
+        
 
         # Get events for this PR
         #events = gh.issues.events.list_by_issue(pr.number, user='cmu-db', repo=GITHUB_REPO).all()
@@ -470,7 +482,7 @@ if __name__ == '__main__':
             send_to = args["override"]
         subject = "%s PR Status Report (%s)" % (GITHUB_REPO.title(), datetime.now().strftime("%Y-%m-%d"))
         
-        send_email(args, subject, contents, EMAIL_FROM, send_to)
+        send_email(args, subject, content, EMAIL_FROM, send_to)
         LOG.info("Sent status email to '%s'" % send_to)
     else:
         print content
@@ -498,11 +510,11 @@ if __name__ == '__main__':
                     send_to = ",".join(user_emails[reviewer])
                 send_cc = [ master_sender ] 
                 
-                contents = "Please add your review for the following PR:\n\n" + \
-                            pr_format(open_pulls[pr_num][0])
+                content = "Please add your review for the following PR:\n\n" + \
+                          pr_format(open_pulls[pr_num][0])
                             
-                send_email(args, subject, contents, EMAIL_FROM, send_to, send_cc)
-                LOG.debug("Sent reminder email to '%s'" % send_to)
+                send_email(args, subject, content, EMAIL_FROM, send_to, send_cc)
+                LOG.info("Sent reminder email to '%s'" % send_to)
             ## FOR
         ## FOR
     ## IF

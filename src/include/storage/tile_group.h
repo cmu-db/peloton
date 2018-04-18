@@ -131,7 +131,7 @@ class TileGroup : public Printable {
 
   // Get the tile at given offset in the tile group
   inline Tile *GetTile(const oid_t tile_offset) const {
-    PL_ASSERT(tile_offset < tile_count);
+    PELOTON_ASSERT(tile_offset < tile_count);
     Tile *tile = tiles[tile_offset].get();
     return tile;
   }
@@ -165,7 +165,7 @@ class TileGroup : public Printable {
   // the specified tile group column id.
   inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                                   oid_t &tile_column_offset) const {
-    PL_ASSERT(column_map.count(column_offset) != 0);
+    PELOTON_ASSERT(column_map.count(column_offset) != 0);
     // get the entry in the column map
     auto entry = column_map.at(column_offset);
     tile_offset = entry.first;

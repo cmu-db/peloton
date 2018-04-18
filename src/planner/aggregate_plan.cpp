@@ -43,7 +43,7 @@ void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
       // AVG() must have an input expression (that has been bound earlier).
       // The return type of the AVG() aggregate is always a SQL DECIMAL that
       // may or may not be NULL depending on the input expression.
-      PL_ASSERT(expression != nullptr);
+      PELOTON_ASSERT(expression != nullptr);
       // TODO: Move this logic into the SQL type
       const auto &input_type = expression->ResultType();
       agg_ai.type = codegen::type::Type{codegen::type::Decimal::Instance(),
@@ -55,7 +55,7 @@ void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
     case ExpressionType::AGGREGATE_SUM: {
       // These aggregates must have an input expression and takes on the same
       // return type as its input expression.
-      PL_ASSERT(expression != nullptr);
+      PELOTON_ASSERT(expression != nullptr);
       agg_ai.type = expression->ResultType();
       break;
     }
@@ -74,17 +74,17 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   BindingContext input_context;
 
   const auto &children = GetChildren();
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
 
   children[0]->PerformBinding(input_context);
 
-  PL_ASSERT(groupby_ais_.empty());
+  PELOTON_ASSERT(groupby_ais_.empty());
 
   // First get bindings for the grouping keys
   for (oid_t gb_col_id : GetGroupbyColIds()) {
     auto *ai = input_context.Find(gb_col_id);
     LOG_DEBUG("Grouping col %u binds to AI %p", gb_col_id, ai);
-    PL_ASSERT(ai != nullptr);
+    PELOTON_ASSERT(ai != nullptr);
     groupby_ais_.push_back(ai);
   }
 
