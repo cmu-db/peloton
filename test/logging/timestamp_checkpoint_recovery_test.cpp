@@ -156,12 +156,12 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
 				LOG_DEBUG("multi constraint: %s", multi_constraint.GetInfo().c_str());
 			}
 
-		  /* disable foreign key recovery until a mutual reference problem is resolved
 			// foreign key constraint
 			auto fk_count = table->GetForeignKeyCount();
 			EXPECT_EQ(2, fk_count);
 			for(oid_t fk_id = 0; fk_id < fk_count; fk_id++) {
 				auto foreign_key = table->GetForeignKey(fk_id);
+				LOG_DEBUG("Check foreign key constraint: %s", foreign_key->GetConstraintName().c_str());
 				// value3 => checkpoint_table_test.pid
 				if (foreign_key->GetConstraintName() == "FK_checkpoint_constraint_test->checkpoint_table_test") {
 					auto sink_table_catalog = default_db_catalog->GetTableObject("checkpoint_table_test", txn);
@@ -192,7 +192,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
 					LOG_ERROR("Unexpected foreign key is found: %s", foreign_key->GetConstraintName().c_str());
 				}
 			}
-			*/
 
 			// single attribute constraint
   		for (auto column_pair : table_catalog->GetColumnObjects()) {
@@ -260,8 +259,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   			else if (column_catalog->GetColumnName() == "value3") {
   				EXPECT_FALSE(column_catalog->IsNotNull());
   				EXPECT_FALSE(column_catalog->IsPrimary());
-  				EXPECT_EQ(0, column.GetConstraints().size());
-  			  /* disable foreign key recovery until a mutual reference problem is resolved
   				EXPECT_EQ(1, column.GetConstraints().size());
   				for(auto constraint : column.GetConstraints()) {
   					if(constraint.GetName() == "FK_checkpoint_constraint_test->checkpoint_table_test") {
@@ -272,14 +269,11 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   						LOG_ERROR("Unexpected constraint is found: %s", constraint.GetName().c_str());
   					}
   				}
-  				*/
   			}
   			// foreign keys in attribute 'value4'&'value5' to attribute 'upid1'&'upid2' in table 'checkpoint_index_test'
     		else if (column_catalog->GetColumnName() == "value4" || column_catalog->GetColumnName() == "value5") {
   				EXPECT_FALSE(column_catalog->IsNotNull());
   				EXPECT_FALSE(column_catalog->IsPrimary());
-  				EXPECT_EQ(0, column.GetConstraints().size());
-  			  /* disable foreign key recovery until a mutual reference problem is resolved
   				EXPECT_EQ(1, column.GetConstraints().size());
   				for(auto constraint : column.GetConstraints()) {
   					if(constraint.GetName() == "FK_checkpoint_constraint_test->checkpoint_index_test") {
@@ -290,7 +284,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   						LOG_ERROR("Unexpected constraint is found: %s", constraint.GetName().c_str());
   					}
   				}
-  				*/
     		}
   			else {
   				LOG_ERROR("Unexpected column is found: %s", column_catalog->GetColumnName().c_str());
@@ -382,7 +375,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   //EXPECT_EQ(ResultType::FAILURE, check_result);
   EXPECT_EQ(ResultType::SUCCESS, check_result);  // check doesn't work correctly
 
-  /* disable foreign key recovery until a mutual reference problem is resolved
   // FOREIGN KEY (1 column: value3 => pid)
   LOG_DEBUG("FOREIGN KEY (1 column) check");
   std::string foreign_key_dml1 = "INSERT INTO checkpoint_constraint_test VALUES (21, 22, 23, 24, 10, 6 ,7);";
@@ -395,7 +387,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   ResultType foreign_key_result2 = TestingSQLUtil::ExecuteSQLQuery(foreign_key_dml2);
   //EXPECT_EQ(ResultType::ABORTED, foreign_key_result2);
   EXPECT_EQ(ResultType::TO_ABORT, foreign_key_result2);
-  */
 
   /*
   auto sm = storage::StorageManager::GetInstance();

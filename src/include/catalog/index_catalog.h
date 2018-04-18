@@ -68,6 +68,7 @@ class IndexCatalog : public AbstractCatalog {
   friend class IndexCatalogObject;
   friend class TableCatalogObject;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   ~IndexCatalog();

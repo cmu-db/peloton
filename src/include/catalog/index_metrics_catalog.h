@@ -38,6 +38,8 @@ namespace peloton {
 namespace catalog {
 
 class IndexMetricsCatalog : public AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   ~IndexMetricsCatalog();
 

@@ -35,6 +35,7 @@ class IndexCatalogObject;
 
 class CatalogCache {
   friend class concurrency::TransactionContext;
+  friend class Catalog;
   friend class DatabaseCatalog;
   friend class TableCatalog;
   friend class IndexCatalog;

@@ -165,6 +165,8 @@ class Catalog {
       const std::string &database_name, concurrency::TransactionContext *txn);
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       oid_t database_oid, concurrency::TransactionContext *txn);
+  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
+  GetDatabaseObjects(concurrency::TransactionContext *txn, bool cached_only = false);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
@@ -176,6 +178,7 @@ class Catalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
+
   //===--------------------------------------------------------------------===//
   // CHECK EXISTENCE WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
@@ -230,23 +233,6 @@ class Catalog {
 
   const FunctionData GetFunction(
       const std::string &name, const std::vector<type::TypeId> &argument_types);
-
-
-  //===--------------------------------------------------------------------===//
-  // SERIALIZATION FUNCTION FOR CHECKPOINTS
-  //===--------------------------------------------------------------------===//
-
-  /* TODO: If all catalog data consisting data schema and constraints is stored in catalog table,
-   * then below functions will be modified for using catalog database and creating only storage objects.
-   * */
-  void SerializeTo(concurrency::TransactionContext *txn, SerializeOutput &out);
-  void SerializeDatabaseTo(oid_t db_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
-  void SerializeTableTo(oid_t table_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
-  void SerializeIndexTo(oid_t index_oid, concurrency::TransactionContext *txn, SerializeOutput &out);
-  bool DeserializeFrom(concurrency::TransactionContext *txn, SerializeInput &in);
-  oid_t DeserializeDatabaseFrom(concurrency::TransactionContext *txn, SerializeInput &in);
-  oid_t DeserializeTableFrom(oid_t db_oid, concurrency::TransactionContext *txn, SerializeInput &in);
-  oid_t DeserializeIndexFrom(oid_t table_oid, concurrency::TransactionContext *txn, SerializeInput &in);
 
  private:
   Catalog();

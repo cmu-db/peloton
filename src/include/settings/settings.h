@@ -121,7 +121,7 @@ SETTING_int(checkpoint_interval,
 
 SETTING_string(checkpoint_dir,
 				 	  "Direcotry for checkpoints (default: ./checkpoints)",
-				 	  "./checkpoints",
+				 	  "./data/checkpoints",
 				 	  false, false)
 
 //===----------------------------------------------------------------------===//

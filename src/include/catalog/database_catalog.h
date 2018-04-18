@@ -94,6 +94,7 @@ class DatabaseCatalog : public AbstractCatalog {
   friend class TableCatalog;
   friend class CatalogCache;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   ~DatabaseCatalog();

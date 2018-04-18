@@ -105,7 +105,9 @@ void PelotonInit::Initialize() {
 
 void PelotonInit::Shutdown() {
 	// shut down checkpoint managere
-	logging::CheckpointManagerFactory::GetInstance().StopCheckpointing();
+  if (settings::SettingsManager::GetBool(settings::SettingId::checkpointing)) {
+  	logging::CheckpointManagerFactory::GetInstance().StopCheckpointing();
+  }
 
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {

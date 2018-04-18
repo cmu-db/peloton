@@ -46,6 +46,8 @@ class TriggerList;
 namespace catalog {
 
 class TriggerCatalog : public AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   ~TriggerCatalog();
 

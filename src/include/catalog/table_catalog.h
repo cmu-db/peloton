@@ -114,6 +114,7 @@ class TableCatalog : public AbstractCatalog {
   friend class ColumnCatalog;
   friend class IndexCatalog;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   ~TableCatalog();

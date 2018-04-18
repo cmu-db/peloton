@@ -359,7 +359,7 @@ DatabaseCatalog::GetDatabaseObjects(concurrency::TransactionContext *txn) {
     throw CatalogException("Transaction is invalid!");
   }
 
-  // TODO: try get from cache
+  // try get from cache
   if (txn->catalog_cache.IsValidDatabaseObjects()) {
     return txn->catalog_cache.GetDatabaseObjects();
   }
@@ -374,9 +374,7 @@ DatabaseCatalog::GetDatabaseObjects(concurrency::TransactionContext *txn) {
   				std::make_shared<DatabaseCatalogObject>(tile.get(), txn, tuple_id);
   		if (database_object) {
   			// insert into cache
-  			bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-  			PL_ASSERT(success == true);
-  			(void)success;
+  			txn->catalog_cache.InsertDatabaseObject(database_object);
   		}
     }
   }
