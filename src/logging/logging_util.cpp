@@ -84,7 +84,7 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
 
 void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   // First, flush
-  PL_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR);
+	PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR);
   if (file_handle.fd == INVALID_FILE_DESCRIPTOR) return;
   int ret = fflush(file_handle.file);
   if (ret != 0) {
@@ -188,7 +188,7 @@ bool LoggingUtil::MoveFile(const char *oldname, const char *newname) {
 }
 
 bool LoggingUtil::CloseFile(FileHandle &file_handle) {
-  PL_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
+	PELOTON_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
   int ret = fclose(file_handle.file);
 
   if (ret == 0) {
@@ -223,7 +223,7 @@ size_t LoggingUtil::GetFileSize(FileHandle &file_handle) {
 }
 
 bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read, size_t n) {
-  PL_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR && file_handle.file != nullptr);
+	PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR && file_handle.file != nullptr);
   int res = fread(bytes_read, n, 1, file_handle.file);
   return res == 1;
 }

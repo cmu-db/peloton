@@ -735,7 +735,7 @@ Catalog::GetDatabaseObjects(concurrency::TransactionContext *txn, bool cached_on
     return DatabaseCatalog::GetInstance()->GetDatabaseObjects(txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PL_ASSERT(txn->catalog_cache.valid_database_objects);
+  PELOTON_ASSERT(txn->catalog_cache.valid_database_objects);
   return txn->catalog_cache.database_objects_cache;
 }
 

@@ -664,7 +664,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 	for (oid_t db_idx = 0; db_idx < db_size; db_idx++) {
 		oid_t db_oid = metadata_buffer.ReadInt();
 		auto db_catalog = catalog->GetDatabaseObject(db_oid, txn);
-		PL_ASSERT(db_catalog != nullptr);
+		PELOTON_ASSERT(db_catalog != nullptr);
 
 	  // Check if a database object with the same oid exists
 		storage::Database *database;
@@ -691,7 +691,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 		for (oid_t table_idx = 0; table_idx < table_size; table_idx++) {
 			oid_t table_oid = metadata_buffer.ReadInt();;
 			auto table_catalog = db_catalog->GetTableObject(table_oid);
-			PL_ASSERT(table_catalog != nullptr);
+			PELOTON_ASSERT(table_catalog != nullptr);
 
 		  LOG_DEBUG("Create table object %d '%s'", table_oid, table_catalog->GetTableName().c_str());
 

@@ -132,6 +132,7 @@ SETTING_bool(checkpointing,
 SETTING_int(checkpoint_interval,
 					  "Checkpoint interval in seconds (default: 30 second)",
 					  30,
+					  0, 31536000,
 					  false, false)
 
 SETTING_string(checkpoint_dir,
