@@ -12,8 +12,10 @@
 
 #include "executor/index_scan_executor.h"
 
+#include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
@@ -26,7 +28,6 @@
 #include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -57,11 +58,6 @@ bool IndexScanExecutor::DInit() {
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
-
-  index_ = node.GetIndex();
-  PELOTON_ASSERT(index_ != nullptr);
-
-  index_predicate_ = node.GetIndexPredicate();
 
   result_itr_ = START_OID;
   result_.clear();
@@ -106,6 +102,18 @@ bool IndexScanExecutor::DInit() {
     full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
     std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
   }
+
+  oid_t index_id = node.GetIndexId();
+  index_ = table_->GetIndexWithOid(index_id);
+  PELOTON_ASSERT(index_ != nullptr);
+
+  // Then add the only conjunction predicate into the index predicate list
+  // (at least for now we only supports single conjunction)
+  //
+  // Values that are left blank will be recorded for future binding
+  // and their offset inside the value array will be remembered
+  index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
+                                               key_column_ids_, expr_types_);
 
   return true;
 }
@@ -371,7 +379,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     result_.push_back(logical_tile.release());
   }
 
-
   done_ = true;
 
   LOG_TRACE("Result tiles : %lu", result_.size());
@@ -486,8 +493,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                   tuple_location.offset);
 
         // Further check if the version has the secondary key
-        ContainerTuple<storage::TileGroup> candidate_tuple(tile_group.get(),
-            tuple_location.offset);
+        ContainerTuple<storage::TileGroup> candidate_tuple(
+            tile_group.get(), tuple_location.offset);
 
         LOG_TRACE("candidate_tuple size: %s",
                   candidate_tuple.GetInfo().c_str());
@@ -506,8 +513,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
-                                      executor_context_).IsTrue();
+          eval =
+              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
+                  .IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -845,8 +853,8 @@ void IndexScanExecutor::UpdatePredicate(
   }
 
   // Update the new value
-  index_predicate_.GetConjunctionListToSetup()[0]
-      .SetTupleColumnValue(index_.get(), key_column_ids, values);
+  index_predicate_.GetConjunctionListToSetup()[0].SetTupleColumnValue(
+      index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {
