@@ -278,7 +278,7 @@ void TimestampCheckpointManager::CheckpointingTableData(
 		const storage::DataTable *table, const cid_t &begin_cid, FileHandle &file_handle) {
 	CopySerializeOutput output_buffer;
 
-	LOG_DEBUG("Do checkpointing to table %d in database %d",
+	LOG_TRACE("Do checkpointing to table %d in database %d",
 			table->GetOid(), table->GetDatabaseOid());
 
 	// load all table data
@@ -334,7 +334,7 @@ void TimestampCheckpointManager::CheckpointingTableDataWithoutTileGroup(
 		const storage::DataTable *table, const cid_t &begin_cid, FileHandle &file_handle) {
 	CopySerializeOutput output_buffer;
 
-	LOG_DEBUG("Do checkpointing without tile group to table %d in database %d",
+	LOG_TRACE("Do checkpointing without tile group to table %d in database %d",
 			table->GetOid(), table->GetDatabaseOid());
 
 	// load all table data without tile group information
@@ -419,7 +419,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
 		FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	CopySerializeOutput metadata_buffer;
 	auto catalog = catalog::Catalog::GetInstance();
-	LOG_DEBUG("Do checkpointing to metadata object");
+	LOG_TRACE("Do checkpointing to metadata object");
 	/*
 	catalog->SerializeTo(txn, metadata_buffer);
 	 */
@@ -434,7 +434,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
 		// except for catalog database
 		if (db_oid == CATALOG_DATABASE_OID) continue;
 
-		LOG_DEBUG("Write database catalog %d '%s'", db_oid,
+		LOG_TRACE("Write database catalog %d '%s'", db_oid,
 				db_catalog->GetDatabaseName().c_str());
 
 		// write database information
@@ -449,7 +449,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
 			auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
 			auto schema = table->GetSchema();
 
-			LOG_DEBUG("Write table catalog %d '%s': %lu columns",
+			LOG_TRACE("Write table catalog %d '%s': %lu columns",
 					table_oid, table_catalog->GetTableName().c_str(), schema->GetColumnCount());
 
 			// write table information
@@ -647,7 +647,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 	size_t metadata_size = LoggingUtil::GetFileSize(file_handle);
 	char metadata_data[metadata_size];
 
-	LOG_DEBUG("Recover storage object (%lu byte)", metadata_size);
+	LOG_TRACE("Recover storage object (%lu byte)", metadata_size);
 
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, metadata_data, metadata_size) == false) {
 		LOG_ERROR("Checkpoint metadata file read error");
@@ -670,10 +670,10 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 		storage::Database *database;
 	  try {
 	  	database = storage_manager->GetDatabaseWithOid(db_oid);
-			LOG_DEBUG("Use existed database storage object %d '%s'", db_oid,
+			LOG_TRACE("Use existed database storage object %d '%s'", db_oid,
 					db_catalog->GetDatabaseName().c_str());
 	  } catch (Exception &e){
-			LOG_DEBUG("Create database storage object %d '%s'", db_oid,
+			LOG_TRACE("Create database storage object %d '%s'", db_oid,
 					db_catalog->GetDatabaseName().c_str());
 
 			// create database storage object
@@ -693,7 +693,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 			auto table_catalog = db_catalog->GetTableObject(table_oid);
 			PELOTON_ASSERT(table_catalog != nullptr);
 
-		  LOG_DEBUG("Create table object %d '%s'", table_oid, table_catalog->GetTableName().c_str());
+		  LOG_TRACE("Create table object %d '%s'", table_oid, table_catalog->GetTableName().c_str());
 
 			// recover column information
 		  std::vector<catalog::Column> columns;
@@ -769,7 +769,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(FileHandle &file_handle, c
 				auto index_oid = index_catalog_pair.first;
 				auto index_catalog = index_catalog_pair.second;
 
-				LOG_DEBUG("|- Index %d '%s':  Index type %s, Index constraint %s, unique keys %d",
+				LOG_TRACE("|- Index %d '%s':  Index type %s, Index constraint %s, unique keys %d",
 						index_oid, index_catalog->GetIndexName().c_str(),
 						IndexTypeToString(index_catalog->GetIndexType()).c_str(),
 						IndexConstraintTypeToString(index_catalog->GetIndexConstraint()).c_str(),
@@ -813,7 +813,7 @@ void TimestampCheckpointManager::RecoverTableData(storage::DataTable *table,
 	}
 	CopySerializeInput input_buffer(data, sizeof(data));
 
-	LOG_DEBUG("Recover table %d data (%lu byte)", table->GetOid(), table_size);
+	LOG_TRACE("Recover table %d data (%lu byte)", table->GetOid(), table_size);
 
 	// Drop a default tile group created by table catalog recovery
 	table->DropTileGroups();
@@ -873,7 +873,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(storage::Data
 	}
 	CopySerializeInput input_buffer(data, sizeof(data));
 
-	LOG_DEBUG("Recover table %d data without tile group (%lu byte)", table->GetOid(), table_size);
+	LOG_TRACE("Recover table %d data without tile group (%lu byte)", table->GetOid(), table_size);
 
 	// recover table tuples
 	oid_t insert_tuple_count = 0;
@@ -913,7 +913,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(storage::Da
 	}
 	CopySerializeInput input_buffer(data, sizeof(data));
 
-	LOG_DEBUG("Recover table %d data with duplicate check (%lu byte)", table->GetOid(), table_size);
+	LOG_TRACE("Recover table %d data with duplicate check (%lu byte)", table->GetOid(), table_size);
 
 	// look for all primary key columns
 	std::vector<oid_t> pk_columns;
@@ -936,8 +936,6 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(storage::Da
 			tuple->SetValue(column_id, value);
 		}
 
-		LOG_DEBUG("%s", tuple->GetInfo().c_str());
-
 		// duplicate check
 		// if all primary key values are existed, the tuple is not stored in the table
 		bool duplicated = false;
@@ -956,7 +954,6 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(storage::Da
 				}
 				if (check_all_pk_values_same) {
 					duplicated = true;
-					LOG_DEBUG("found duplicated tuple");
 					break;
 				}
 			}
