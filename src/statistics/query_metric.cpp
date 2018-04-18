@@ -23,9 +23,9 @@ QueryMetric::QueryMetric(MetricType type, const std::string& query_name,
                          std::shared_ptr<QueryParams> query_params,
                          const oid_t database_id)
     : AbstractMetric(type),
-      database_id_(database_id),
       query_name_(query_name),
-      query_params_(query_params) {
+      query_params_(query_params),
+      database_id_(database_id) {
   latency_metric_.StartTimer();
   processor_metric_.StartTimer();
   LOG_TRACE("Query metric initialized");
