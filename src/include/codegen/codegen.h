@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/codegen.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,16 +20,42 @@
 namespace peloton {
 namespace codegen {
 
-/// A proxy to a member of a class. Users must provide both the physical
-/// position of the member in the class, and the C++ type of the member.
+// Forward declare
 class CodeGen;
 
-struct CppProxyMember {
-  uint32_t slot;
+/**
+ * A CppProxyMember defines an access proxy to a member defined in a C++ class.
+ * Users can use this class to generate code to load values from and store
+ * values into member variables of C++ classes/structs available at runtime.
+ * Each member is defined by a slot position in the C++ struct. Slots are
+ * zero-based ordinal numbers assigned to fields increasing order of appearance
+ * in the struct/class.
+ */
+class CppProxyMember {
+ public:
+  explicit CppProxyMember(uint32_t slot) noexcept : slot_(slot) {}
 
-  explicit CppProxyMember(uint32_t _slot) noexcept : slot(_slot) {}
+  /**
+   * Load this member field from the provided struct pointer.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @return The value of the field
+   */
+  llvm::Value *Load(CodeGen &codegen, llvm::Value *obj_ptr) const;
 
-  llvm::Value *Load(CodeGen &codegen, llvm::Value *ptr) const;
+  /**
+   * Store the provided value into this member field of the provided struct.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @param val The value of the field
+   */
+  void Store(CodeGen &codegen, llvm::Value *obj_ptr, llvm::Value *val) const;
+
+ private:
+  // The slot position
+  uint32_t slot_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -90,8 +116,13 @@ class CodeGen {
   }
 
   template <typename T>
-  llvm::Value *Load(const T &loader, llvm::Value *ptr) {
-    return loader.Load(*this, ptr);
+  llvm::Value *Load(const T &loader, llvm::Value *obj_ptr) {
+    return loader.Load(*this, obj_ptr);
+  }
+
+  template <typename T>
+  void Store(const T &storer, llvm::Value *obj_ptr, llvm::Value *val) {
+    storer.Store(*this, obj_ptr, val);
   }
 
   //===--------------------------------------------------------------------===//

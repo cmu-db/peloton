@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/codegen.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -294,15 +294,25 @@ uint64_t CodeGen::ElementOffset(llvm::Type *type, uint32_t element_idx) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// CPP Proxy Compiled Member
+/// Proxy Member
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-llvm::Value *CppProxyMember::Load(CodeGen &codegen, llvm::Value *ptr) const {
+llvm::Value *CppProxyMember::Load(CodeGen &codegen,
+                                  llvm::Value *obj_ptr) const {
   llvm::SmallVector<llvm::Value *, 2> indexes = {codegen.Const32(0),
-                                                 codegen.Const32(slot)};
-  llvm::Value *addr = codegen->CreateInBoundsGEP(ptr, indexes);
+                                                 codegen.Const32(slot_)};
+  // TODO(pmenon): Use CreateStructGEP()
+  llvm::Value *addr = codegen->CreateInBoundsGEP(obj_ptr, indexes);
   return codegen->CreateLoad(addr);
+}
+
+void CppProxyMember::Store(CodeGen &codegen, llvm::Value *obj_ptr,
+                           llvm::Value *val) const {
+  llvm::SmallVector<llvm::Value *, 2> indexes = {codegen.Const32(0),
+                                                 codegen.Const32(slot_)};
+  llvm::Value *addr = codegen->CreateInBoundsGEP(obj_ptr, indexes);
+  codegen->CreateStore(val, addr);
 }
 
 }  // namespace codegen

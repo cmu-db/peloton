@@ -12,7 +12,10 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
+#include <string>
+#include <thread>
 #include <vector>
 
 #include "common/container/lock_free_queue.h"
