@@ -33,7 +33,7 @@ ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
   CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
-          settings::SettingId::connection_thread_count);
+      settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
@@ -58,7 +58,8 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
   // start GC.
-  gc::GCManagerFactory::Configure(settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
+  gc::GCManagerFactory::Configure(
+      settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
@@ -83,12 +84,13 @@ void PelotonInit::Initialize() {
   // Recover the latest checkpoint and start checkpointing
   bool recovered_default_db = false;
   if (settings::SettingsManager::GetBool(settings::SettingId::checkpointing)) {
-  	logging::CheckpointManagerFactory::Configure(CHECKPOINTING_THREAD_COUNT, CheckpointingType::TIMESTAMP);
+    logging::CheckpointManagerFactory::Configure(CHECKPOINTING_THREAD_COUNT,
+                                                 CheckpointingType::TIMESTAMP);
     auto &checkpoint_manager = logging::CheckpointManagerFactory::GetInstance();
-  	recovered_default_db = checkpoint_manager.DoCheckpointRecovery();
-  	checkpoint_manager.StartCheckpointing();
+    recovered_default_db = checkpoint_manager.DoCheckpointRecovery();
+    checkpoint_manager.StartCheckpointing();
   } else {
-  	logging::CheckpointManagerFactory::Configure(0);
+    logging::CheckpointManagerFactory::Configure(0);
   }
 
   // initialize the catalog and add the default database, so we don't do this on
@@ -105,9 +107,9 @@ void PelotonInit::Initialize() {
 }
 
 void PelotonInit::Shutdown() {
-	// shut down checkpoint managere
+  // shut down checkpoint managere
   if (settings::SettingsManager::GetBool(settings::SettingId::checkpointing)) {
-  	logging::CheckpointManagerFactory::GetInstance().StopCheckpointing();
+    logging::CheckpointManagerFactory::GetInstance().StopCheckpointing();
   }
 
   // shut down index tuner

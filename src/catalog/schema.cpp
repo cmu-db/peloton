@@ -21,11 +21,10 @@ namespace peloton {
 namespace catalog {
 
 // Helper function for creating TupleSchema
-void Schema::CreateTupleSchema(
-    const std::vector<type::TypeId> &column_types,
-    const std::vector<oid_t> &column_lengths,
-    const std::vector<std::string> &column_names,
-    const std::vector<bool> &is_inlined) {
+void Schema::CreateTupleSchema(const std::vector<type::TypeId> &column_types,
+                               const std::vector<oid_t> &column_lengths,
+                               const std::vector<std::string> &column_names,
+                               const std::vector<bool> &is_inlined) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
@@ -271,38 +270,40 @@ Schema *Schema::AppendSchemaPtrList(
 
 // Serialize this schema
 void Schema::SerializeTo(SerializeOutput &out) {
-	// Write each column information (column name, length, offset, type and constraints)
-	out.WriteLong(column_count);
-	for(auto column : columns) {
-		column.SerializeTo(out);
-	}
+  // Write each column information (column name, length, offset, type and
+  // constraints)
+  out.WriteLong(column_count);
+  for (auto column : columns) {
+    column.SerializeTo(out);
+  }
 
-	// Write schema information (multi-column constraints)
-	out.WriteLong(multi_constraints.size());
-	for (auto multi_constraint : multi_constraints) {
-		multi_constraint.SerializeTo(out);
-	}
+  // Write schema information (multi-column constraints)
+  out.WriteLong(multi_constraints.size());
+  for (auto multi_constraint : multi_constraints) {
+    multi_constraint.SerializeTo(out);
+  }
 }
 
 // Deserialize this schema
 std::unique_ptr<Schema> Schema::DeserializeFrom(SerializeInput &in) {
-	std::vector<catalog::Column> columns;
+  std::vector<catalog::Column> columns;
 
-	// recover column information
-	size_t column_count = in.ReadLong();
-	for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
-		columns.push_back(catalog::Column::DeserializeFrom(in));
-	}
+  // recover column information
+  size_t column_count = in.ReadLong();
+  for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
+    columns.push_back(catalog::Column::DeserializeFrom(in));
+  }
 
-	std::unique_ptr<Schema> schema(new Schema(columns));
+  std::unique_ptr<Schema> schema(new Schema(columns));
 
-	// read schema information (multi-column constraints)
-	size_t multi_constraint_count = in.ReadLong();
-	for (oid_t multi_constraint_idx = 0; multi_constraint_idx < multi_constraint_count; multi_constraint_idx++) {
-		schema->AddMultiConstraints(MultiConstraint::DeserializeFrom(in));
-	}
+  // read schema information (multi-column constraints)
+  size_t multi_constraint_count = in.ReadLong();
+  for (oid_t multi_constraint_idx = 0;
+       multi_constraint_idx < multi_constraint_count; multi_constraint_idx++) {
+    schema->AddMultiConstraints(MultiConstraint::DeserializeFrom(in));
+  }
 
-	return schema;
+  return schema;
 }
 
 const std::string Schema::GetInfo() const {

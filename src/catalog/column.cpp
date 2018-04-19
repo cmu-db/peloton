@@ -44,42 +44,44 @@ void Column::SetInlined() {
 
 // Serialize this column
 void Column::SerializeTo(SerializeOutput &out) {
-	// Column basic information
-	out.WriteTextString(column_name);
-	out.WriteInt((int)column_type);
-	out.WriteInt(GetLength());
-	out.WriteInt(column_offset);
-	out.WriteBool(is_inlined);
+  // Column basic information
+  out.WriteTextString(column_name);
+  out.WriteInt((int)column_type);
+  out.WriteInt(GetLength());
+  out.WriteInt(column_offset);
+  out.WriteBool(is_inlined);
 
-	// Column constraints
-	out.WriteLong(constraints.size());
-	for (auto constraint : constraints) {
-		constraint.SerializeTo(out);
-	}
+  // Column constraints
+  out.WriteLong(constraints.size());
+  for (auto constraint : constraints) {
+    constraint.SerializeTo(out);
+  }
 }
 
 // Deserialize this column
 Column Column::DeserializeFrom(SerializeInput &in) {
-	// read basic column information
-	std::string column_name = in.ReadTextString();
-	type::TypeId column_type = (type::TypeId)in.ReadInt();
-	size_t column_length = in.ReadInt();
-	oid_t column_offset = in.ReadInt();
-	bool is_inlined = in.ReadBool();
+  // read basic column information
+  std::string column_name = in.ReadTextString();
+  type::TypeId column_type = (type::TypeId)in.ReadInt();
+  size_t column_length = in.ReadInt();
+  oid_t column_offset = in.ReadInt();
+  bool is_inlined = in.ReadBool();
 
-	auto column = catalog::Column(column_type, column_length, column_name, is_inlined, column_offset);
+  auto column = catalog::Column(column_type, column_length, column_name,
+                                is_inlined, column_offset);
 
-	// recover column constraints
-	size_t column_constraint_count = in.ReadLong();
-	for (oid_t constraint_idx = 0; constraint_idx < column_constraint_count; constraint_idx++) {
-		auto column_constraint = Constraint::DeserializeFrom(in, column_type);
-		// Foreign key constraint will be stored by DataTable deserializer
-		if (column_constraint.GetType() != ConstraintType::FOREIGN) {
-			column.AddConstraint(column_constraint);
-		}
-	}
+  // recover column constraints
+  size_t column_constraint_count = in.ReadLong();
+  for (oid_t constraint_idx = 0; constraint_idx < column_constraint_count;
+       constraint_idx++) {
+    auto column_constraint = Constraint::DeserializeFrom(in, column_type);
+    // Foreign key constraint will be stored by DataTable deserializer
+    if (column_constraint.GetType() != ConstraintType::FOREIGN) {
+      column.AddConstraint(column_constraint);
+    }
+  }
 
-	return column;
+  return column;
 }
 
 const std::string Column::GetInfo() const {

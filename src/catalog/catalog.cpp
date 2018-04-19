@@ -149,12 +149,12 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);  
+  QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
-  
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
@@ -615,18 +615,18 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 
 ResultType Catalog::DropIndex(const std::string &index_name,
                               concurrency::TransactionContext *txn) {
-    if(txn == nullptr) {
-        throw CatalogException("Do not have transaction to drop index " +
-                               index_name);
-    }
-    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
-                index_name, txn);
-    if(index_object == nullptr) {
-        throw CatalogException("Index name " + index_name + " cannot be found");
-    }
-    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to drop index " +
+                           index_name);
+  }
+  auto index_object =
+      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  if (index_object == nullptr) {
+    throw CatalogException("Index name " + index_name + " cannot be found");
+  }
+  ResultType result = DropIndex(index_object->GetIndexOid(), txn);
 
-    return result;
+  return result;
 }
 
 //===--------------------------------------------------------------------===//
@@ -725,7 +725,8 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * throw exception and abort txn if not exists/invisible
  * */
 std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
-Catalog::GetDatabaseObjects(concurrency::TransactionContext *txn, bool cached_only) {
+Catalog::GetDatabaseObjects(concurrency::TransactionContext *txn,
+                            bool cached_only) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get database objects");
   }
@@ -813,24 +814,24 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 
 // check existence of database with database_name using txn.
 bool Catalog::ExistDatabaseByName(const std::string &database_name,
-											 concurrency::TransactionContext *txn) {
+                                  concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check database " +
                            database_name);
 
   auto database_object =
-  		DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
   if (database_object == nullptr) {
-  	return false;
+    return false;
   } else {
-  	return true;
+    return true;
   }
 }
 
 // check existence of table with table_name using txn.
 bool Catalog::ExistTableByName(const std::string &database_name,
-											 const std::string &table_name,
-											 concurrency::TransactionContext *txn){
+                               const std::string &table_name,
+                               concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check table " +
                            table_name);
@@ -838,22 +839,22 @@ bool Catalog::ExistTableByName(const std::string &database_name,
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
   if (database_object == nullptr) {
-  	return false;
+    return false;
   } else {
     auto table_object = database_object->GetTableObject(table_name);
     if (table_object == nullptr) {
-    	return false;
+      return false;
     } else {
-    	return true;
+      return true;
     }
   }
 }
 
 // check existence of index with index_name using txn.
 bool Catalog::ExistIndexByName(const std::string &database_name,
-											 const std::string &table_name,
-											 const std::string &index_name,
-											 concurrency::TransactionContext *txn) {
+                               const std::string &table_name,
+                               const std::string &index_name,
+                               concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check index " +
                            index_name);
@@ -861,18 +862,18 @@ bool Catalog::ExistIndexByName(const std::string &database_name,
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
   if (database_object == nullptr) {
-  	return false;
+    return false;
   } else {
     auto table_object = database_object->GetTableObject(table_name);
     if (table_object == nullptr) {
-    	return false;
+      return false;
     } else {
-    	auto index_object = table_object->GetIndexObject(index_name);
-    	if (index_object == nullptr) {
-    		return false;
-    	} else {
-    		return true;
-    	}
+      auto index_object = table_object->GetIndexObject(index_name);
+      if (index_object == nullptr) {
+        return false;
+      } else {
+        return true;
+      }
     }
   }
 }
@@ -1154,11 +1155,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Abs", function::BuiltInFuncType{OperatorId::Abs,
-                                            function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
@@ -1195,33 +1196,29 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
+                         type::TypeId::SMALLINT, internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,

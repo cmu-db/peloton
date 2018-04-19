@@ -25,13 +25,15 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn,
-                                             int tupleId)
-    : database_oid(tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      database_name(tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_NAME)
-                        .ToString()),
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn,
+    int tupleId)
+    : database_oid(
+          tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_OID)
+              .GetAs<oid_t>()),
+      database_name(
+          tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_NAME)
+              .ToString()),
       table_objects_cache(),
       table_name_cache(),
       valid_table_objects(false),
@@ -197,9 +199,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }
@@ -369,13 +371,13 @@ DatabaseCatalog::GetDatabaseObjects(concurrency::TransactionContext *txn) {
   auto result_tiles = this->GetResultWithSeqScan(column_ids, nullptr, txn);
 
   for (auto &tile : (*result_tiles)) {
-  	for (auto tuple_id : *tile) {
-  		auto database_object =
-  				std::make_shared<DatabaseCatalogObject>(tile.get(), txn, tuple_id);
-  		if (database_object) {
-  			// insert into cache
-  			txn->catalog_cache.InsertDatabaseObject(database_object);
-  		}
+    for (auto tuple_id : *tile) {
+      auto database_object =
+          std::make_shared<DatabaseCatalogObject>(tile.get(), txn, tuple_id);
+      if (database_object) {
+        // insert into cache
+        txn->catalog_cache.InsertDatabaseObject(database_object);
+      }
     }
   }
 

@@ -67,7 +67,9 @@ class CatalogCache {
   bool EvictDatabaseObject(oid_t database_oid);
   bool EvictDatabaseObject(const std::string &database_name);
 
-  void SetValidDatabaseObjects(bool valid = true) { valid_database_objects = valid; }
+  void SetValidDatabaseObjects(bool valid = true) {
+    valid_database_objects = valid;
+  }
   bool IsValidDatabaseObjects() {
     // return true if this catalog cache contains all database
     // objects within the database

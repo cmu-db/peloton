@@ -84,7 +84,7 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
 
 void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   // First, flush
-	PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR);
+  PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR);
   if (file_handle.fd == INVALID_FILE_DESCRIPTOR) return;
   int ret = fflush(file_handle.file);
   if (ret != 0) {
@@ -97,65 +97,68 @@ void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   }
 }
 
-bool LoggingUtil::GetDirectoryList(const char *dir_name, std::vector<std::string> &dir_name_list) {
-	 int dir_elements;
-	 struct dirent **element_list;
+bool LoggingUtil::GetDirectoryList(const char *dir_name,
+                                   std::vector<std::string> &dir_name_list) {
+  int dir_elements;
+  struct dirent **element_list;
 
-	 // get a list of elements in the directory
-	 dir_elements = scandir(dir_name, &element_list, NULL, NULL);
-	 if (dir_elements < 0) {
-		 LOG_ERROR("Error occured in scandir(%d)", dir_elements);
-		 return false;
-	 }
+  // get a list of elements in the directory
+  dir_elements = scandir(dir_name, &element_list, NULL, NULL);
+  if (dir_elements < 0) {
+    LOG_ERROR("Error occured in scandir(%d)", dir_elements);
+    return false;
+  }
 
-	 // check directory and remove files
-	 for (int i=0; i < dir_elements; i++) {
-		 char *element_name = element_list[i]->d_name;
+  // check directory and remove files
+  for (int i = 0; i < dir_elements; i++) {
+    char *element_name = element_list[i]->d_name;
 
-		 // remove '.' and '..'
-		 if ((std::strcmp(element_name, ".\0") != 0) && (std::strcmp(element_name, "..\0") != 0)) {
-			 std::string target_dir = std::string(dir_name) + '/' + element_name;
+    // remove '.' and '..'
+    if ((std::strcmp(element_name, ".\0") != 0) &&
+        (std::strcmp(element_name, "..\0") != 0)) {
+      std::string target_dir = std::string(dir_name) + '/' + element_name;
 
-			 // check directory or not
-			 if (CheckDirectoryExistence(target_dir.c_str())) {
-				 dir_name_list.push_back(element_name);
-			 }
-		 }
-	 }
+      // check directory or not
+      if (CheckDirectoryExistence(target_dir.c_str())) {
+        dir_name_list.push_back(element_name);
+      }
+    }
+  }
 
-	 return true;
+  return true;
 }
 
-bool LoggingUtil::GetFileList(const char *dir_name, std::vector<std::string> &file_name_list) {
-	 int dir_elements;
-	 struct dirent **element_list;
+bool LoggingUtil::GetFileList(const char *dir_name,
+                              std::vector<std::string> &file_name_list) {
+  int dir_elements;
+  struct dirent **element_list;
 
-	 // get a list of elements in the directory
-	 dir_elements = scandir(dir_name, &element_list, NULL, NULL);
-	 if (dir_elements < 0) {
-		 LOG_ERROR("Error occured in scandir(%d)", dir_elements);
-		 return false;
-	 }
+  // get a list of elements in the directory
+  dir_elements = scandir(dir_name, &element_list, NULL, NULL);
+  if (dir_elements < 0) {
+    LOG_ERROR("Error occured in scandir(%d)", dir_elements);
+    return false;
+  }
 
-	 // check file and remove directories
-	 for (int i=0; i < dir_elements; i++) {
-		 char *element_name = element_list[i]->d_name;
+  // check file and remove directories
+  for (int i = 0; i < dir_elements; i++) {
+    char *element_name = element_list[i]->d_name;
 
-		 // remove '.' and '..'
-		 if ((std::strcmp(element_name, ".\0") != 0) && (std::strcmp(element_name, "..\0") != 0)) {
-			 std::string target_dir = std::string(dir_name) + '/' + element_name;
-			 if (CheckDirectoryExistence(target_dir.c_str()) == false) {
-				 file_name_list.push_back(element_name);
-			 }
-		 }
-	 }
+    // remove '.' and '..'
+    if ((std::strcmp(element_name, ".\0") != 0) &&
+        (std::strcmp(element_name, "..\0") != 0)) {
+      std::string target_dir = std::string(dir_name) + '/' + element_name;
+      if (CheckDirectoryExistence(target_dir.c_str()) == false) {
+        file_name_list.push_back(element_name);
+      }
+    }
+  }
 
-	 return true;
+  return true;
 }
 
-
-
-bool LoggingUtil::OpenFile(const char *name, const char *mode, FileHandle &file_handle) {
+bool LoggingUtil::OpenFile(const char *name, const char *mode,
+                           FileHandle &file_handle) {
   auto file = fopen(name, mode);
   if (file == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
@@ -178,17 +181,18 @@ bool LoggingUtil::OpenFile(const char *name, const char *mode, FileHandle &file_
 }
 
 bool LoggingUtil::MoveFile(const char *oldname, const char *newname) {
-	int ret;
-	ret = rename(oldname, newname);
-	if (ret != 0) {
-		LOG_ERROR("Error occured in rename");
-		return false;
-	}
-	return true;
+  int ret;
+  ret = rename(oldname, newname);
+  if (ret != 0) {
+    LOG_ERROR("Error occured in rename");
+    return false;
+  }
+  return true;
 }
 
 bool LoggingUtil::CloseFile(FileHandle &file_handle) {
-	PELOTON_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
+  PELOTON_ASSERT(file_handle.file != nullptr &&
+                 file_handle.fd != INVALID_FILE_DESCRIPTOR);
   int ret = fclose(file_handle.file);
 
   if (ret == 0) {
@@ -222,12 +226,13 @@ size_t LoggingUtil::GetFileSize(FileHandle &file_handle) {
   return file_stats.st_size;
 }
 
-bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read, size_t n) {
-	PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR && file_handle.file != nullptr);
+bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read,
+                                     size_t n) {
+  PELOTON_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR &&
+                 file_handle.file != nullptr);
   int res = fread(bytes_read, n, 1, file_handle.file);
   return res == 1;
 }
-
 
 }  // namespace logging
 }  // namespace peloton

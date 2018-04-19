@@ -21,22 +21,24 @@ namespace logging {
 
 class CheckpointManagerFactory {
  public:
-
-  static CheckpointManager& GetInstance() {
+  static CheckpointManager &GetInstance() {
     switch (checkpointing_type_) {
-
       case CheckpointingType::LOGICAL:
-        return LogicalCheckpointManager::GetInstance(checkpointing_thread_count_);
-      
+        return LogicalCheckpointManager::GetInstance(
+            checkpointing_thread_count_);
+
       case CheckpointingType::TIMESTAMP:
-        return TimestampCheckpointManager::GetInstance(checkpointing_thread_count_);
+        return TimestampCheckpointManager::GetInstance(
+            checkpointing_thread_count_);
 
       default:
         return CheckpointManager::GetInstance();
     }
   }
 
-  static void Configure(const int thread_count = 1, const CheckpointingType type = CheckpointingType::TIMESTAMP) {
+  static void Configure(
+      const int thread_count = 1,
+      const CheckpointingType type = CheckpointingType::TIMESTAMP) {
     if (thread_count == 0) {
       checkpointing_type_ = CheckpointingType::OFF;
     } else {
@@ -45,16 +47,20 @@ class CheckpointManagerFactory {
     }
   }
 
-  inline static CheckpointingType GetCheckpointingType() { return checkpointing_type_; }
+  inline static CheckpointingType GetCheckpointingType() {
+    return checkpointing_type_;
+  }
 
-  inline static int GetCheckpointingThreadCount() { return checkpointing_thread_count_; }
+  inline static int GetCheckpointingThreadCount() {
+    return checkpointing_thread_count_;
+  }
 
-private:
+ private:
   // checkpointing type
   static CheckpointingType checkpointing_type_;
 
   static int checkpointing_thread_count_;
 };
 
-} // namespace logging
-} // namespace peloton
+}  // namespace logging
+}  // namespace peloton

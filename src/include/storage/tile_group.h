@@ -189,7 +189,9 @@ class TileGroup : public Printable {
   void SerializeTo(SerializeOutput &out);
 
   // Deserialize this tile group
-  static std::shared_ptr<TileGroup> DeserializeFrom(SerializeInput &in, const oid_t database_oid, AbstractTable *table);
+  static std::shared_ptr<TileGroup> DeserializeFrom(SerializeInput &in,
+                                                    const oid_t database_oid,
+                                                    AbstractTable *table);
 
  protected:
   //===--------------------------------------------------------------------===//

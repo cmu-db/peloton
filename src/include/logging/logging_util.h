@@ -33,24 +33,27 @@ class LoggingUtil {
 
   static bool RemoveDirectory(const char *dir_name, bool only_remove_file);
 
-  static bool GetDirectoryList(const char *dir_name, std::vector<std::string> &dir_name_list);
+  static bool GetDirectoryList(const char *dir_name,
+                               std::vector<std::string> &dir_name_list);
 
-  static bool GetFileList(const char *dir_name, std::vector<std::string> &file_name_list);
+  static bool GetFileList(const char *dir_name,
+                          std::vector<std::string> &file_name_list);
 
   static void FFlushFsync(FileHandle &file_handle);
 
-  static bool OpenFile(const char *name, const char *mode, FileHandle &file_handle);
+  static bool OpenFile(const char *name, const char *mode,
+                       FileHandle &file_handle);
 
   static bool MoveFile(const char *oldname, const char *newname);
 
   static bool CloseFile(FileHandle &file_handle);
 
   static bool IsFileTruncated(FileHandle &file_handle, size_t size_to_read);
-  
+
   static size_t GetFileSize(FileHandle &file_handle);
 
-  static bool ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read, size_t n);
-
+  static bool ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read,
+                                 size_t n);
 };
 
 }  // namespace logging

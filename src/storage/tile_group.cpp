@@ -79,9 +79,7 @@ type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
-oid_t TileGroup::GetTileGroupId() const {
-  return tile_group_id;
-}
+oid_t TileGroup::GetTileGroupId() const { return tile_group_id; }
 
 // TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
@@ -93,7 +91,6 @@ oid_t TileGroup::GetNextTupleSlot() const {
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
-
 
 //===--------------------------------------------------------------------===//
 // Operations
@@ -159,7 +156,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
   // Set MVCC info
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
-            INVALID_TXN_ID);
+                 INVALID_TXN_ID);
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
   return tuple_slot_id;
@@ -339,14 +336,12 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
-                         oid_t column_id) {
+void TileGroup::SetValue(type::Value &value, oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
@@ -383,51 +378,54 @@ void TileGroup::Sync() {
 
 // Serialize this tile group
 void TileGroup::SerializeTo(SerializeOutput &out) {
-	out.WriteInt(num_tuple_slots);
-	out.WriteLong(tile_schemas.size());
+  out.WriteInt(num_tuple_slots);
+  out.WriteLong(tile_schemas.size());
 
-	for (auto tile_schema : tile_schemas) {
-		tile_schema.SerializeTo(out);
-	}
-	out.WriteLong(column_map.size());
-	for (auto column_info : column_map) {
-		oid_t column_offset = column_info.first;
-		oid_t tile_offset = column_info.second.first;
-		oid_t tile_column_offset = column_info.second.second;
-		out.WriteInt(column_offset);
-		out.WriteInt(tile_offset);
-		out.WriteInt(tile_column_offset);
-	}
+  for (auto tile_schema : tile_schemas) {
+    tile_schema.SerializeTo(out);
+  }
+  out.WriteLong(column_map.size());
+  for (auto column_info : column_map) {
+    oid_t column_offset = column_info.first;
+    oid_t tile_offset = column_info.second.first;
+    oid_t tile_column_offset = column_info.second.second;
+    out.WriteInt(column_offset);
+    out.WriteInt(tile_offset);
+    out.WriteInt(tile_column_offset);
+  }
 }
 
 // Deserialize this tile group
-std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in, const oid_t database_oid, AbstractTable *table) {
-	oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
-	oid_t allocated_tuple_count = in.ReadInt();
+std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
+                                                      const oid_t database_oid,
+                                                      AbstractTable *table) {
+  oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
+  oid_t allocated_tuple_count = in.ReadInt();
 
-	size_t tile_schema_count = in.ReadLong();
-	std::vector<catalog::Schema> schemas;
-	for (oid_t schema_idx = 0; schema_idx < tile_schema_count; schema_idx++) {
-		auto tile_schema = catalog::Schema::DeserializeFrom(in);
-		schemas.push_back(*(tile_schema.release()));
-	}
+  size_t tile_schema_count = in.ReadLong();
+  std::vector<catalog::Schema> schemas;
+  for (oid_t schema_idx = 0; schema_idx < tile_schema_count; schema_idx++) {
+    auto tile_schema = catalog::Schema::DeserializeFrom(in);
+    schemas.push_back(*(tile_schema.release()));
+  }
 
-	column_map_type column_map;
-	size_t column_map_count = in.ReadLong();
-	for (oid_t column_idx = 0; column_idx < column_map_count; column_idx++) {
-		oid_t column_offset = in.ReadInt();
-		oid_t tile_offset = in.ReadInt();
-		oid_t tile_column_offset = in.ReadInt();
-		std::pair<oid_t, oid_t> tile_info = std::make_pair(tile_offset, tile_column_offset);
-		column_map[column_offset] = tile_info;
-	}
+  column_map_type column_map;
+  size_t column_map_count = in.ReadLong();
+  for (oid_t column_idx = 0; column_idx < column_map_count; column_idx++) {
+    oid_t column_offset = in.ReadInt();
+    oid_t tile_offset = in.ReadInt();
+    oid_t tile_column_offset = in.ReadInt();
+    std::pair<oid_t, oid_t> tile_info =
+        std::make_pair(tile_offset, tile_column_offset);
+    column_map[column_offset] = tile_info;
+  }
 
-	std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-			database_oid, table->GetOid(), tile_group_id, table, schemas, column_map, allocated_tuple_count));
+  std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
+      database_oid, table->GetOid(), tile_group_id, table, schemas, column_map,
+      allocated_tuple_count));
 
-	return tile_group;
+  return tile_group;
 }
-
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -445,7 +443,8 @@ const std::string TileGroup::GetInfo() const {
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
-      os << std::endl << (*tile);
+      os << std::endl
+         << (*tile);
     }
   }
 

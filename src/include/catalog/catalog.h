@@ -166,7 +166,8 @@ class Catalog {
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       oid_t database_oid, concurrency::TransactionContext *txn);
   std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
-  GetDatabaseObjects(concurrency::TransactionContext *txn, bool cached_only = false);
+  GetDatabaseObjects(concurrency::TransactionContext *txn,
+                     bool cached_only = false);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
@@ -185,18 +186,18 @@ class Catalog {
 
   // check existence of database with database_name using txn.
   bool ExistDatabaseByName(const std::string &database_name,
-  											 concurrency::TransactionContext *txn);
+                           concurrency::TransactionContext *txn);
 
   // check existence of table with table_name using txn.
   bool ExistTableByName(const std::string &database_name,
-  											 const std::string &table_name,
-  											 concurrency::TransactionContext *txn);
+                        const std::string &table_name,
+                        concurrency::TransactionContext *txn);
 
   // check existence of index with index_name using txn.
   bool ExistIndexByName(const std::string &database_name,
-  											 const std::string &table_name,
-  											 const std::string &index_name,
-  											 concurrency::TransactionContext *txn);
+                        const std::string &table_name,
+                        const std::string &index_name,
+                        concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
