@@ -28,6 +28,7 @@
 #include "planner/update_plan.h"
 #include "sql/testing_sql_util.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/abstract_join_plan.h"
 #include "planner/hash_join_plan.h"
 #include "binder/bind_node_visitor.h"
@@ -492,6 +493,91 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
   optimizer.TestExecuteTaskStack(*task_stack, root_group_id, root_context);
   ASSERT_EQ(timer.GetInvocations(), num_tasks);
   ASSERT_GT(timer.GetDuration(), start_time);
+}
+
+TEST_F(OptimizerTests, MultiColumnIndexScanPlanTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  auto tuple_count = 100;
+
+  // Create table and insert tuples.
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT, b INT, c INT, d INT, e INT);");
+
+  for (auto i = 0; i < tuple_count; i++) {
+    std::stringstream oss;
+    oss << "INSERT into test VALUES(" << i << "," << i + 1 << "," << i + 2
+        << "," << i + 3 << "," << i + 4 << ");";
+    TestingSQLUtil::ExecuteSQLQuery(oss.str());
+  }
+
+  // Create a multi-column index
+  TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX Index1 on test(a, c, d, e);");
+
+  txn = txn_manager.BeginTransaction();
+  optimizer::Optimizer optimizer;
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+
+  auto create_stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM test where e = 8");
+  auto plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
+
+  create_stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM test where c = 4 and e = 6");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
+
+  create_stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM test where a = 4 and e = 8");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  auto index_scan_plan = static_cast<planner::IndexScanPlan *>(plan.get());
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds().size(), 1);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[0], 0);
+
+  create_stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM test where a = 4 and c = 6");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  index_scan_plan = static_cast<planner::IndexScanPlan *>(plan.get());
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds().size(), 2);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[0], 0);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[1], 2);
+
+  create_stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test where a = 4 and c = 6 and d = 7");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  index_scan_plan = static_cast<planner::IndexScanPlan *>(plan.get());
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds().size(), 3);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[0], 0);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[1], 2);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[2], 3);
+
+  create_stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test where a = 4 and b = 5 and c = 6 and d = 7");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  index_scan_plan = static_cast<planner::IndexScanPlan *>(plan.get());
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds().size(), 1);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[0], 0);
+
+  create_stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test where a = 4 and c = 6 and d = 7 and e = 8");
+  plan = optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  index_scan_plan = static_cast<planner::IndexScanPlan *>(plan.get());
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds().size(), 4);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[0], 0);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[1], 2);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[2], 3);
+  EXPECT_EQ(index_scan_plan->GetKeyColumnIds()[3], 4);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test
