@@ -214,6 +214,12 @@ std::string Layout::GetColumnMapInfo() const {
     for (oid_t col_id = 0; col_id < num_columns_; col_id++) {
       tile_column_map[tile_id].push_back(col_id);
     }
+  } else if (layout_type_ == COLUMN_STORE_OID) {
+    // Column store always contains 1 column per tile.
+    oid_t tile_col_id = 0;
+    for (oid_t col_id = 0; col_id < num_columns_; col_id++) {
+      tile_column_map[col_id].push_back(tile_col_id);
+    }
   } else {
     for (auto column_info : column_layout_) {
       oid_t col_id = column_info.first;
@@ -243,7 +249,7 @@ const std::string Layout::GetInfo() const {
   os << peloton::GETINFO_DOUBLE_STAR << " Layout[#" << layout_id_ << "] "
      << peloton::GETINFO_DOUBLE_STAR << std::endl;
   os << "Number of columns[" << num_columns_ << "] " << std::endl;
-
+  os << "LayoutType[" << LayoutTypeToString(layout_type_) << std::endl;
   os << "ColumnMap[ " << GetColumnMapInfo() << "] " << std::endl;
 
   return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
