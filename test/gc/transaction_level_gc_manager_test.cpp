@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sql/testing_sql_util.h>
-#include <com_err.h>
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
@@ -112,6 +110,16 @@ ResultType SelectTuple(storage::DataTable *table, const int key,
   results = scheduler.schedules[0].results;
 
   return scheduler.schedules[0].txn_result;
+}
+
+int GetNumRecycledTuples(storage::DataTable *table) {
+  int count = 0;
+  auto table_id = table->GetOid();
+  while (!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
+    count++;
+
+  LOG_INFO("recycled version num = %d", count);
+  return count;
 }
 
 int GetNumRecycledTuples(storage::DataTable *table) {
@@ -1646,5 +1654,82 @@ TEST_F(TransactionLevelGCManagerTests, InsertDeleteInsertX2) {
   txn_manager.CommitTransaction(txn);
 }
 
+  // Deleting a tuple from the 2nd tilegroup which is mutable.
+  ret = DeleteTuple(table.get(), 6);
+
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+  epoch_manager.SetCurrentEpochId(4);
+  expired_eid = epoch_manager.GetExpiredEpochId();
+  EXPECT_EQ(3, expired_eid);
+  current_eid = epoch_manager.GetCurrentEpochId();
+  EXPECT_EQ(4, current_eid);
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+  EXPECT_EQ(0, reclaimed_count);
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(5);
+  expired_eid = epoch_manager.GetExpiredEpochId();
+  EXPECT_EQ(4, expired_eid);
+  current_eid = epoch_manager.GetCurrentEpochId();
+  EXPECT_EQ(5, current_eid);
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+  EXPECT_EQ(1, reclaimed_count);
+  EXPECT_EQ(0, unlinked_count);
+
+  // ReturnFreeSlot() should not return null because deleted tuple was from
+  // mutable tilegroup.
+  location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
+  EXPECT_EQ(location.IsNull(), false);
+
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
+  table.release();
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("ImmutabilityDB");
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("ImmutabilityDB", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+}
+
+
+//// Insert a tuple, delete that tuple. This should create 2 free slots in the recycle queue
+TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
+  // set up
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  storage::StorageManager::GetInstance();
+  TestingExecutorUtil::InitializeDatabase("CommitDeleteTest");
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable());
+
+  // expect no garbage initially
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(2);
+  auto delete_result = DeleteTuple(table.get(), 1);
+  EXPECT_EQ(ResultType::SUCCESS, delete_result);
+
+  epoch_manager.SetCurrentEpochId(3);
+  gc_manager.ClearGarbage(0);
+
+  // expect 2 slots reclaimed
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+
+  // clean up
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+  table.release();
+  TestingExecutorUtil::DeleteDatabase("CommitDeleteTest");
+}
 }  // namespace test
 }  // namespace peloton
