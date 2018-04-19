@@ -95,11 +95,8 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      storage::StorageManager::GetInstance()
-          ->GetTableWithOid(op->table_->GetDatabaseOid(),
-                            op->table_->GetTableOid())
-          ->GetIndexWithOid(op->index_id),
-      op->key_column_id_list, op->expr_type_list, op->value_list, runtime_keys);
+      op->index_id, op->key_column_id_list, op->expr_type_list, op->value_list,
+      runtime_keys);
   output_plan_.reset(new planner::IndexScanPlan(
       storage::StorageManager::GetInstance()->GetTableWithOid(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
@@ -107,7 +104,7 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {
-  PL_ASSERT(children_plans_.size() == 1);
+  PELOTON_ASSERT(children_plans_.size() == 1);
   output_plan_ = move(children_plans_[0]);
 }
 
@@ -120,7 +117,7 @@ void PlanGenerator::Visit(const PhysicalLimit *op) {
 
 void PlanGenerator::Visit(const PhysicalOrderBy *) {
   vector<oid_t> column_ids;
-  PL_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
   auto &child_cols_map = children_expr_map_[0];
   for (size_t i = 0; i < output_cols_.size(); ++i) {
     column_ids.push_back(child_cols_map[output_cols_[i]]);
@@ -162,12 +159,12 @@ void PlanGenerator::Visit(const PhysicalAggregate *) {
 void PlanGenerator::Visit(const PhysicalDistinct *) {
   // Now distinct is a flag in the parser, so we only support
   // distinct on all output columns
-  PL_ASSERT(children_expr_map_.size() == 1);
-  PL_ASSERT(children_plans_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_plans_.size() == 1);
   auto &child_expr_map = children_expr_map_[0];
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   for (auto &col : output_cols_) {
-    PL_ASSERT(child_expr_map.count(col) > 0);
+    PELOTON_ASSERT(child_expr_map.count(col) > 0);
     auto &column_offset = child_expr_map[col];
     hash_keys.emplace_back(new expression::TupleValueExpression(
         col->GetValueType(), 0, column_offset));
@@ -192,13 +189,13 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
   vector<oid_t> left_keys;
   vector<oid_t> right_keys;
   for (auto &expr : op->left_keys) {
-    PL_ASSERT(children_expr_map_[0].find(expr.get()) !=
-              children_expr_map_[0].end());
+    PELOTON_ASSERT(children_expr_map_[0].find(expr.get()) !=
+                   children_expr_map_[0].end());
     left_keys.push_back(children_expr_map_[0][expr.get()]);
   }
   for (auto &expr : op->right_keys) {
-    PL_ASSERT(children_expr_map_[1].find(expr.get()) !=
-              children_expr_map_[1].end());
+    PELOTON_ASSERT(children_expr_map_[1].find(expr.get()) !=
+                   children_expr_map_[1].end());
     right_keys.emplace_back(children_expr_map_[1][expr.get()]);
   }
 
@@ -372,12 +369,13 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
   vector<oid_t> column_ids;
   for (oid_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto &output_expr = output_cols_[idx];
-    PL_ASSERT(output_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(output_expr->GetExpressionType() ==
+                   ExpressionType::VALUE_TUPLE);
     auto output_tvexpr =
         reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 
     // Set column offset
-    PL_ASSERT(output_tvexpr->GetIsBound() == true);
+    PELOTON_ASSERT(output_tvexpr->GetIsBound() == true);
     auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
     column_ids.push_back(col_id);
   }
@@ -462,7 +460,7 @@ void PlanGenerator::BuildAggregatePlan(
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;
   TargetList tl;
-  PL_ASSERT(children_expr_map_.size() == 1);
+  PELOTON_ASSERT(children_expr_map_.size() == 1);
   auto &child_expr_map = children_expr_map_[0];
 
   auto agg_id = 0;
@@ -524,8 +522,8 @@ void PlanGenerator::BuildAggregatePlan(
 void PlanGenerator::GenerateProjectionForJoin(
     std::unique_ptr<const planner::ProjectInfo> &proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema) {
-  PL_ASSERT(children_expr_map_.size() == 2);
-  PL_ASSERT(children_plans_.size() == 2);
+  PELOTON_ASSERT(children_expr_map_.size() == 2);
+  PELOTON_ASSERT(children_plans_.size() == 2);
 
   TargetList tl = TargetList();
   // columns which can be returned directly

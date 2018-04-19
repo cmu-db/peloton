@@ -21,6 +21,7 @@ class CreateFunctionStatement;
 class InsertStatement;
 class DeleteStatement;
 class DropStatement;
+class ExplainStatement;
 class PrepareStatement;
 class ExecuteStatement;
 class TransactionStatement;
@@ -81,6 +82,7 @@ class SqlNodeVisitor {
   virtual void Visit(parser::UpdateStatement *) {}
   virtual void Visit(parser::CopyStatement *) {}
   virtual void Visit(parser::AnalyzeStatement *){};
+  virtual void Visit(parser::ExplainStatement *){};
 
   virtual void Visit(expression::ComparisonExpression *expr);
   virtual void Visit(expression::AggregateExpression *expr);
@@ -95,8 +97,6 @@ class SqlNodeVisitor {
   virtual void Visit(expression::TupleValueExpression *expr);
   virtual void Visit(expression::SubqueryExpression *expr);
   virtual void Visit(expression::ArrayExpression *expr);
-
-
 };
 
 }  // namespace peloton

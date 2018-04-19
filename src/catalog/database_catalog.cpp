@@ -79,7 +79,7 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
   }
 
   auto table_object = it->second;
-  PL_ASSERT(table_object);
+  PELOTON_ASSERT(table_object);
   table_objects_cache.erase(it);
   table_name_cache.erase(table_object->GetTableName());
   return true;
@@ -97,7 +97,7 @@ bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   }
 
   auto table_object = it->second;
-  PL_ASSERT(table_object);
+  PELOTON_ASSERT(table_object);
   table_name_cache.erase(it);
   table_objects_cache.erase(table_object->GetTableOid());
   return true;
@@ -162,7 +162,7 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
     return TableCatalog::GetInstance()->GetTableObjects(database_oid, txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PL_ASSERT(valid_table_objects);
+  PELOTON_ASSERT(valid_table_objects);
   return table_objects_cache;
 }
 
@@ -301,7 +301,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
     bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-    PL_ASSERT(success == true);
+    PELOTON_ASSERT(success == true);
     (void)success;
     return database_object;
   } else {
@@ -342,7 +342,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     if (database_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
-      PL_ASSERT(success == true);
+      PELOTON_ASSERT(success == true);
       (void)success;
     }
     return database_object;

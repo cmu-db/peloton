@@ -44,8 +44,8 @@ TEST_F(LockFreeArrayTests, BasicTest) {
 
 }
 
-// Test shared pointers
-TEST_F(LockFreeArrayTests, SharedPointerTest) {
+//// Test shared pointers
+TEST_F(LockFreeArrayTests, SharedPointerTest1) {
 
   typedef std::shared_ptr<oid_t> value_type;
 
@@ -63,6 +63,40 @@ TEST_F(LockFreeArrayTests, SharedPointerTest) {
     EXPECT_EQ(array_size, element_count);
   }
 
+}
+
+TEST_F(LockFreeArrayTests, SharedPointerTest2) {
+
+  typedef std::shared_ptr<oid_t> value_type;
+
+  {
+    LockFreeArray<value_type> array;
+
+
+    std::thread t0([&] {
+      size_t const element_count = 10000;
+      for (size_t element = 0; element < element_count; ++element ) {
+        std::shared_ptr<oid_t> entry(new oid_t);
+        auto status = array.Append(entry);
+        EXPECT_TRUE(status);
+      }
+    });
+
+
+    size_t const element_count = 10000;
+    for (size_t element = 0; element < element_count; ++element ) {
+      std::shared_ptr<oid_t> entry(new oid_t);
+      auto status = array.Append(entry);
+      EXPECT_TRUE(status);
+    }
+    t0.join();
+
+    auto array_size = array.GetSize();
+    EXPECT_EQ(array_size, element_count*2);
+
+
+
+  }
 }
 
 }  // namespace test

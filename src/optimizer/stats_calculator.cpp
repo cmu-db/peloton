@@ -27,10 +27,12 @@ namespace peloton {
 namespace optimizer {
 
 void StatsCalculator::CalculateStats(GroupExpression *gexpr,
-                                     ExprSet required_cols, Memo *memo) {
+                                     ExprSet required_cols, Memo *memo,
+                                     concurrency::TransactionContext *txn) {
   gexpr_ = gexpr;
   memo_ = memo;
   required_cols_ = required_cols;
+  txn_ = txn;
   gexpr->Op().Accept(this);
 }
 
@@ -41,7 +43,7 @@ void StatsCalculator::Visit(const LogicalGet *op) {
   }
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
       StatsStorage::GetInstance()->GetTableStats(op->table->GetDatabaseOid(),
-                                                 op->table->GetTableOid()));
+                                                 op->table->GetTableOid(), txn_));
   // First, get the required stats of the base table
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>> required_stats;
   for (auto &col : required_cols_) {
@@ -82,7 +84,7 @@ void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
   auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
   root_group->SetNumRows(0);
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
     auto bound_ids = tv_expr->GetBoundOid();
     root_group->AddStats(tv_expr->GetColFullName(),
@@ -96,7 +98,7 @@ void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
 
 void StatsCalculator::Visit(const LogicalInnerJoin *op) {
   // Check if there's join condition
-  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
+  PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
   auto left_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(0));
   auto right_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
   auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
@@ -133,7 +135,7 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
   }
   size_t num_rows = root_group->GetNumRows();
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
     std::shared_ptr<ColumnStats> column_stats;
     // Make a copy from the child stats
@@ -141,7 +143,7 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
       column_stats = std::make_shared<ColumnStats>(
           *left_child_group->GetStats(tv_expr->GetColFullName()));
     } else {
-      PL_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      PELOTON_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
       column_stats = std::make_shared<ColumnStats>(
           *right_child_group->GetStats(tv_expr->GetColFullName()));
     }
@@ -160,13 +162,13 @@ void StatsCalculator::Visit(const LogicalAggregateAndGroupBy *) {
   // TODO(boweic): For now we just pass the stats needed without any
   // computation,
   // We need to implement stats computation for aggregation
-  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
+  PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
   // First, set num rows
   memo_->GetGroupByID(gexpr_->GetGroupID())
       ->SetNumRows(
           memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows());
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto column_name = reinterpret_cast<expression::TupleValueExpression *>(col)
                            ->GetColFullName();
     memo_->GetGroupByID(gexpr_->GetGroupID())
@@ -176,13 +178,13 @@ void StatsCalculator::Visit(const LogicalAggregateAndGroupBy *) {
 }
 
 void StatsCalculator::Visit(const LogicalLimit *op) {
-  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
+  PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
   auto group = memo_->GetGroupByID(gexpr_->GetGroupID());
   group->SetNumRows(std::min(
       (size_t)op->limit,
       (size_t)memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows()));
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto column_name = reinterpret_cast<expression::TupleValueExpression *>(col)
                            ->GetColFullName();
     std::shared_ptr<ColumnStats> column_stats = std::make_shared<ColumnStats>(
@@ -198,9 +200,9 @@ void StatsCalculator::Visit(const LogicalDistinct *) {
   memo_->GetGroupByID(gexpr_->GetGroupID())
       ->SetNumRows(
           memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows());
-  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
+  PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
   for (auto &col : required_cols_) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto column_name = reinterpret_cast<expression::TupleValueExpression *>(col)
                            ->GetColFullName();
     memo_->GetGroupByID(gexpr_->GetGroupID())
@@ -214,7 +216,7 @@ void StatsCalculator::AddBaseTableStats(
     std::shared_ptr<TableStats> table_stats,
     std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &stats,
     bool copy) {
-  PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
   auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
   auto bound_ids = tv_expr->GetBoundOid();
   if (table_stats->GetColumnCount() == 0) {
@@ -283,7 +285,7 @@ double StatsCalculator::CalculateSelectivityForPredicate(
             : 0;
 
     auto left_expr = expr->GetChild(1 - right_index);
-    PL_ASSERT(left_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(left_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto col_name =
         reinterpret_cast<const expression::TupleValueExpression *>(left_expr)
             ->GetColFullName();

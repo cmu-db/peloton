@@ -21,6 +21,11 @@ include("cmake/External/gflags.cmake")
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${GFLAGS_LIBRARIES})
 
+# ---[ intel tbb
+find_package(TBB REQUIRED)
+include_directories(SYSTEM ${TBB_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${TBB_LIBRARIES})
+
 # ---[ Cap'nProto
 include("cmake/External/capnproto.cmake")
 include_directories(SYSTEM ${CAPNP_INCLUDE_DIRS})
@@ -36,6 +41,10 @@ find_library(TFlowC
         NAMES tensorflow
         PATHS "/usr/local/lib")
 list(APPEND Peloton_LINKER_LIBS ${TFlowC})
+
+# --[ Eigen3
+find_package(Eigen3 REQUIRED)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 # ---[ Libevent
 find_package(Libevent REQUIRED)

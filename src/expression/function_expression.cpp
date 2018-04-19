@@ -45,7 +45,7 @@ type::Value FunctionExpression::Evaluate(
     UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
   std::vector<type::Value> child_values;
 
-  PL_ASSERT(func_.impl != nullptr);
+  PELOTON_ASSERT(func_.impl != nullptr);
   for (auto &child : children_) {
     child_values.push_back(child->Evaluate(tuple1, tuple2, context));
   }

@@ -132,7 +132,7 @@ bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
   // unless it is an insertion/select for update.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      PL_ASSERT(tuple_end_cid == MAX_CID);
+      PELOTON_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
     } else if (current_txn->GetRWType(position) == RWType::READ_OWN) {
@@ -191,7 +191,7 @@ VisibilityType TransactionManager::IsVisible(
   if (type == VisibilityIdType::READ_ID) {
     txn_vis_id = current_txn->GetReadId();
   } else {
-    PL_ASSERT(type == VisibilityIdType::COMMIT_ID);
+    PELOTON_ASSERT(type == VisibilityIdType::COMMIT_ID);
     txn_vis_id = current_txn->GetCommitId();
   }
 
@@ -215,7 +215,7 @@ VisibilityType TransactionManager::IsVisible(
   // unless it is an insertion/select-for-update
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      PL_ASSERT(tuple_end_cid == MAX_CID);
+      PELOTON_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted/updated one.
       return VisibilityType::OK;
     } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) ==

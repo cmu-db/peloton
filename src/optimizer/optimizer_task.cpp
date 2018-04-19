@@ -218,7 +218,7 @@ void DeriveStats::execute() {
   bool derive_children = false;
   // If we haven't got enough stats to compute the current stats, derive them
   // from the child first
-  PL_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
+  PELOTON_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
   for (size_t idx = 0; idx < children_required_stats.size(); ++idx) {
     auto &child_required_stats = children_required_stats[idx];
     auto child_group_id = gexpr_->GetChildGroupId(idx);
@@ -249,7 +249,8 @@ void DeriveStats::execute() {
   }
 
   StatsCalculator calculator;
-  calculator.CalculateStats(gexpr_, required_cols_, &context_->metadata->memo);
+  calculator.CalculateStats(gexpr_, required_cols_, &context_->metadata->memo,
+                            context_->metadata->txn);
   gexpr_->SetDerivedStats();
 }
 //===--------------------------------------------------------------------===//
@@ -291,8 +292,8 @@ void OptimizeInputs::execute() {
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
       CostCalculator cost_calculator;
-      cur_total_cost_ +=
-          cost_calculator.CalculateCost(group_expr_, &context_->metadata->memo);
+      cur_total_cost_ += cost_calculator.CalculateCost(
+          group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
 
     for (; cur_child_idx_ < (int)group_expr_->GetChildrenGroupsSize();
@@ -367,7 +368,8 @@ void OptimizeInputs::execute() {
               std::make_shared<PropertySet>(extended_output_properties);
           CostCalculator cost_calculator;
           cur_total_cost_ += cost_calculator.CalculateCost(
-              memo_enforced_expr, &context_->metadata->memo);
+              memo_enforced_expr, &context_->metadata->memo,
+              context_->metadata->txn);
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(
@@ -421,12 +423,12 @@ void TopDownRewrite::execute() {
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
-      PL_ASSERT(!iterator.HasNext());
+      PELOTON_ASSERT(!iterator.HasNext());
       std::vector<std::shared_ptr<OperatorExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
-      PL_ASSERT(after.size() <= 1);
+      PELOTON_ASSERT(after.size() <= 1);
       // If a rule is applied, we replace the old expression and optimize this
       // group again, this will ensure that we apply rule for this level until
       // saturated
@@ -482,12 +484,12 @@ void BottomUpRewrite::execute() {
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
-      PL_ASSERT(!iterator.HasNext());
+      PELOTON_ASSERT(!iterator.HasNext());
       std::vector<std::shared_ptr<OperatorExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
-      PL_ASSERT(after.size() <= 1);
+      PELOTON_ASSERT(after.size() <= 1);
       // If a rule is applied, we replace the old expression and optimize this
       // group again, this will ensure that we apply rule for this level until
       // saturated, also childs are already been rewritten

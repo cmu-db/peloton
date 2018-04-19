@@ -147,7 +147,7 @@ class ExpressionUtil {
     // ConstantValueExpression/ParameterValueExpression, then it's removable.
     // Right now I couldn't think of other cases, so otherwise it's not handled.
     if (children_size == 0) {
-      PL_ASSERT(
+      PELOTON_ASSERT(
           expression->GetExpressionType() == ExpressionType::VALUE_TUPLE ||
           expression->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
           expression->GetExpressionType() == ExpressionType::VALUE_PARAMETER);
@@ -356,8 +356,8 @@ class ExpressionUtil {
   //  static std::vector<catalog::Column> GetReferencedColumns(
   //		  catalog::Catalog *catalog,
   //		  AbstractExpression *expr) {
-  //	  PL_ASSERT(catalog != nullptr);
-  //	  PL_ASSERT(expr != nullptr);
+  //	  PELOTON_ASSERT(catalog != nullptr);
+  //	  PELOTON_ASSERT(expr != nullptr);
   //	  std::vector<catalog::Column> columns;
   //
   //	  GetReferencedColumns(catalog, expr, columns);

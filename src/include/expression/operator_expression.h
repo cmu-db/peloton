@@ -39,7 +39,7 @@ class OperatorExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (exp_type_ == ExpressionType::OPERATOR_NOT) {
-      PL_ASSERT(children_.size() == 1);
+      PELOTON_ASSERT(children_.size() == 1);
       type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsTrue())
         return (type::ValueFactory::GetBooleanValue(false));
@@ -50,7 +50,7 @@ class OperatorExpression : public AbstractExpression {
             type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
     }
     if (exp_type_ == ExpressionType::OPERATOR_EXISTS) {
-      PL_ASSERT(children_.size() == 1);
+      PELOTON_ASSERT(children_.size() == 1);
       type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsNull())
         return (type::ValueFactory::GetBooleanValue(false));
@@ -59,7 +59,7 @@ class OperatorExpression : public AbstractExpression {
     }
     if (exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
         exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
-      PL_ASSERT(children_.size() == 1);
+      PELOTON_ASSERT(children_.size() == 1);
       type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (exp_type_ == ExpressionType::OPERATOR_IS_NULL) {
         return type::ValueFactory::GetBooleanValue(vl.IsNull());
@@ -67,7 +67,7 @@ class OperatorExpression : public AbstractExpression {
         return type::ValueFactory::GetBooleanValue(!vl.IsNull());
       }
     }
-    PL_ASSERT(children_.size() == 2);
+    PELOTON_ASSERT(children_.size() == 2);
     type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
     type::Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
 
@@ -100,7 +100,7 @@ class OperatorExpression : public AbstractExpression {
     }
     auto type =
         std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
-    PL_ASSERT(type <= type::TypeId::DECIMAL);
+    PELOTON_ASSERT(type <= type::TypeId::DECIMAL);
     return_value_type_ = type;
   }
 
@@ -127,7 +127,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
 
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                        executor::ExecutorContext *context) const override {
-    PL_ASSERT(children_.size() == 1);
+    PELOTON_ASSERT(children_.size() == 1);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     type::Value zero(type::ValueFactory::GetIntegerValue(0));
     return zero.Subtract(vl);

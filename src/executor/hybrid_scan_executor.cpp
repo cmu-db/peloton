@@ -10,18 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/hybrid_scan_executor.h"
 #include "common/container_tuple.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
-#include "executor/hybrid_scan_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "planner/hybrid_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 namespace executor {
@@ -39,9 +39,14 @@ bool HybridScanExecutor::DInit() {
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
 
   table_ = node.GetTable();
-  index_ = node.GetDataIndex();
   type_ = node.GetHybridType();
-  PL_ASSERT(table_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr);
+
+  // Get the index object from the index id
+  oid_t index_id = node.GetIndexId();
+  if (index_id != INVALID_OID) {
+    index_ = table_->GetIndexWithOid(index_id);
+  }
 
   // SEQUENTIAL SCAN
   if (type_ == HybridScanType::SEQUENTIAL) {
@@ -57,13 +62,12 @@ bool HybridScanExecutor::DInit() {
   // INDEX SCAN
   else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
-    index_ = node.GetIndex();
 
     result_itr_ = START_OID;
     index_done_ = false;
     result_.clear();
 
-    PL_ASSERT(index_ != nullptr);
+    PELOTON_ASSERT(index_ != nullptr);
     column_ids_ = node.GetColumnIds();
     auto key_column_ids_ = node.GetKeyColumnIds();
     auto expr_types_ = node.GetExprTypes();
@@ -71,6 +75,9 @@ bool HybridScanExecutor::DInit() {
     auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
     key_ready_ = false;
+
+    index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
+                                                 key_column_ids_, expr_types_);
 
     if (runtime_keys_.size() != 0) {
       assert(runtime_keys_.size() == values_.size());
@@ -146,6 +153,9 @@ bool HybridScanExecutor::DInit() {
       }
     }
 
+    index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
+                                                 key_column_ids_, expr_types_);
+
     if (table_ != nullptr) {
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
@@ -153,7 +163,8 @@ bool HybridScanExecutor::DInit() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
+    throw Exception("Invalid hybrid scan type : " +
+                    HybridScanTypeToString(type_));
   }
 
   return true;
@@ -276,7 +287,7 @@ bool HybridScanExecutor::DExecute() {
   // INDEX SCAN
   else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
-    PL_ASSERT(children_.size() == 0);
+    PELOTON_ASSERT(children_.size() == 0);
 
     if (index_done_ == false) {
       if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
@@ -313,12 +324,13 @@ bool HybridScanExecutor::DExecute() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
+    throw Exception("Invalid hybrid scan type : " +
+                    HybridScanTypeToString(type_));
   }
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
-  PL_ASSERT(index_done_ == false);
+  PELOTON_ASSERT(index_done_ == false);
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
@@ -328,7 +340,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
+  PELOTON_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     LOG_TRACE("Scan all keys");
@@ -337,7 +349,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     LOG_TRACE("Scan");
     index_->Scan(values_, key_column_ids_, expr_type_,
                  ScanDirectionType::FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
   }
 
   LOG_TRACE("Result tuple count: %lu", tuple_location_ptrs.size());

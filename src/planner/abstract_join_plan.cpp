@@ -24,7 +24,7 @@ void AbstractJoinPlan::GetOutputColumns(std::vector<oid_t> &columns) const {
 
 void AbstractJoinPlan::PerformBinding(BindingContext &context) {
   const auto &children = GetChildren();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
 
   // Let the left and right child populate bind their attributes
   BindingContext left_context, right_context;

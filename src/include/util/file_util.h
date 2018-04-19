@@ -4,9 +4,9 @@
 //
 // file_util.h
 //
-// Identification: /src/include/common/file_util.h
+// Identification: src/include/util/file_util.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,6 +45,19 @@ class FileUtil {
   }
 
   /**
+   * Gets the absolute path given a relative path
+   * @param relative_path: the path **must** be relative to the root "peloton"
+   * directory
+   * @return absolute path as a string
+   */
+  static std::string GetRelativeToRootPath(const std::string &relative_path) {
+    boost::filesystem::path root_path(
+        boost::filesystem::current_path().branch_path().branch_path());
+    root_path /= relative_path;
+    return root_path.string();
+  }
+
+  /**
    * Write the contents of the provided string to a new temp file and return
    * the path to that file.
    * @param the string to write to the file
@@ -77,6 +90,8 @@ class FileUtil {
     struct stat buffer;
     return (stat(path.c_str(), &buffer) == 0);
   }
+
+
 };
 
 }  // namespace peloton
