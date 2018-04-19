@@ -62,6 +62,11 @@ class Layout : public Printable {
 
   std::map<oid_t, oid_t> GetColumnLayoutStats() const;
 
+  std::string SerializeColumnMap() const;
+
+  static column_map_type DeserializeColumnMap(oid_t num_columns,
+                                              std::string column_map_str);
+
   std::string GetColumnMapInfo() const;
 
   // Get a string representation for debugging

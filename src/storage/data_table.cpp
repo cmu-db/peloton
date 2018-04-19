@@ -1436,5 +1436,17 @@ bool DataTable::operator==(const DataTable &rhs) const {
   return true;
 }
 
-}  // namespace storage
-}  // namespace peloton
+bool DataTable::SetCurrentLayoutOid(oid_t new_layout_oid) {
+  oid_t old_oid = current_layout_oid_;
+  while (old_oid <= new_layout_oid) {
+    if (current_layout_oid_.compare_exchange_strong(
+            old_oid, new_layout_oid)) {
+      return true;
+    }
+    old_oid = current_layout_oid_;
+  }
+  return false;
+}
+
+}  // End storage namespace
+}  // End peloton namespace

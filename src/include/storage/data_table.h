@@ -352,11 +352,27 @@ class DataTable : public AbstractTable {
   bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                   concurrency::TransactionContext *transaction);
 
+  //===--------------------------------------------------------------------===//
+  // LAYOUT HELPERS
+  //===--------------------------------------------------------------------===//
+
+  // Set the current_layout_oid_ to the given value if the current value
+  // is less than new_layout_oid. Return true on success.
+  // To be used for recovery.
+  bool SetCurrentLayoutOid(oid_t new_layout_oid);
+
+  // Performs an atomic increment on the current_layout_oid_
+  // and returns the incremented value.
+  oid_t GetNextLayoutOid() { return ++current_layout_oid_; }
+
  private:
+
+  //===--------------------------------------------------------------------===//
+  // STATIC MEMBERS
+  //===--------------------------------------------------------------------===//
   static size_t default_active_tilegroup_count_;
   static size_t default_active_indirection_array_count_;
 
- private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -412,6 +428,10 @@ class DataTable : public AbstractTable {
 
   // dirty flag. for detecting whether the tile group has been used.
   bool dirty_ = false;
+
+  // Last used layout_oid. Used while creating new layouts
+  // Initialized to COLUMN_STORE_OID since its the highest predfeined value.
+  std::atomic<oid_t> current_layout_oid_ = ATOMIC_VAR_INIT(COLUMN_STORE_OID);
 
   //===--------------------------------------------------------------------===//
   // TUNING MEMBERS

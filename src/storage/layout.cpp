@@ -202,19 +202,62 @@ std::map<oid_t, oid_t> Layout::GetColumnLayoutStats() const {
   return column_map_stats;
 }
 
+std::string Layout::SerializeColumnMap() const {
+  std::stringstream ss;
+
+  for (auto column_info : column_layout_) {
+    ss << column_info.first << ":";
+    ss << column_info.second.first << ":";
+    ss << column_info.second.second << ",";
+  }
+
+  return ss.str();
+}
+
+column_map_type Layout::DeserializeColumnMap(oid_t num_columns,
+                                             std::string column_map_str) {
+  column_map_type column_map;
+  std::stringstream ss(column_map_str);
+
+  for (oid_t col_id = 0; col_id < num_columns; col_id++) {
+    oid_t str_col_id, tile_id, tile_col_id;
+    // Read col_id from column_map_str
+    ss >> str_col_id;
+    PELOTON_ASSERT(str_col_id == col_id);
+
+    PELOTON_ASSERT(ss.peek() == ':');
+    ss.ignore();
+    // Read tile_id from column_map_str
+    ss >> tile_id;
+
+    PELOTON_ASSERT(ss.peek() == ':');
+    ss.ignore();
+    // Read tile_col_id from column_map_str
+    ss >> tile_col_id;
+
+    // Insert the column info into column_map
+    column_map[col_id] = std::make_pair(tile_id, tile_col_id);
+
+    if (ss.peek() == ',') {
+      ss.ignore();
+    }
+  }
+
+  return column_map;
+}
 
 std::string Layout::GetColumnMapInfo() const {
   std::stringstream ss;
   std::map<oid_t, std::vector<oid_t>> tile_column_map;
 
-  if (layout_id_ == ROW_STORE_OID) {
+  if (layout_type_ == LayoutType::ROW) {
     // Row store always contains only 1 tile. The tile_id is always 0.
     oid_t tile_id = 0;
     tile_column_map[tile_id] = {};
     for (oid_t col_id = 0; col_id < num_columns_; col_id++) {
       tile_column_map[tile_id].push_back(col_id);
     }
-  } else if (layout_type_ == COLUMN_STORE_OID) {
+  } else if (layout_type_ == LayoutType::COLUMN) {
     // Column store always contains 1 column per tile.
     oid_t tile_col_id = 0;
     for (oid_t col_id = 0; col_id < num_columns_; col_id++) {
@@ -233,7 +276,7 @@ std::string Layout::GetColumnMapInfo() const {
 
   // Construct a string from tile_col_map
   for (auto tile_info : tile_column_map) {
-    ss << tile_info.first << ": ";
+    ss << tile_info.first << " : ";
     for (auto col_id : tile_info.second) {
       ss << col_id << " ";
     }

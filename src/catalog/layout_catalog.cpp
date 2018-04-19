@@ -1,0 +1,183 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// column_catalog.h
+//
+// Identification: src/include/catalog/layout_catalog.cpp
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include "catalog/layout_catalog.h"
+
+#include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
+#include "storage/data_table.h"
+#include "storage/layout.h"
+
+namespace peloton {
+namespace catalog {
+
+LayoutCatalog *LayoutCatalog::GetInstance(storage::Database *pg_catalog,
+                                          type::AbstractPool *pool,
+                                          concurrency::TransactionContext *txn) {
+  static LayoutCatalog layout_catalog{pg_catalog, pool, txn};
+  return &layout_catalog;
+}
+
+LayoutCatalog::LayoutCatalog(storage::Database *pg_catalog,
+                             type::AbstractPool *pool,
+                             concurrency::TransactionContext *txn)
+        : AbstractCatalog(LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME,
+                          InitializeSchema().release(), pg_catalog) {
+  // Add indexes for pg_attribute
+  AddIndex({ColumnId::TABLE_OID, ColumnId::LAYOUT_OID},
+           LAYOUT_CATALOG_PKEY_OID, LAYOUT_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({ColumnId::TABLE_OID}, LAYOUT_CATALOG_SKEY0_OID,
+           LAYOUT_CATALOG_NAME "_skey0", IndexConstraintType::DEFAULT);
+
+  // Insert columns into pg_attribute
+  ColumnCatalog *pg_attribute =
+          ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+
+  oid_t column_id = 0;
+  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
+    pg_attribute->InsertColumn(LAYOUT_CATALOG_OID, column.GetName(), column_id,
+                               column.GetOffset(), column.GetType(),
+                               column.IsInlined(), column.GetConstraints(),
+                               pool, txn);
+    column_id++;
+  }
+}
+
+LayoutCatalog::~LayoutCatalog() {}
+
+std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
+  const std::string primary_key_constraint_name = "primary_key";
+  const std::string not_null_constraint_name = "not_null";
+
+  auto table_id_column = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "table_oid", true);
+  table_id_column.AddConstraint(catalog::Constraint(
+          ConstraintType::PRIMARY, primary_key_constraint_name));
+  table_id_column.AddConstraint(
+          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  auto layout_oid_column = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "layout_oid", true);
+  layout_oid_column.AddConstraint(catalog::Constraint(
+          ConstraintType::PRIMARY, primary_key_constraint_name));
+  layout_oid_column.AddConstraint(
+          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  auto num_columns_column = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "num_columns", true);
+  num_columns_column.AddConstraint(
+          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  auto column_map_column = catalog::Column(
+          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+          "column_map", false);
+  column_map_column.AddConstraint(
+          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> column_catalog_schema(new catalog::Schema(
+          {table_id_column, layout_oid_column, num_columns_column, column_map_column}));
+
+  return column_catalog_schema;
+}
+
+bool LayoutCatalog::InsertLayout(oid_t table_oid,
+                                 std::shared_ptr<const storage::Layout> layout,
+                                 type::AbstractPool *pool,
+                                 concurrency::TransactionContext *txn) {
+  // Create the tuple first
+  std::unique_ptr<storage::Tuple> tuple(
+          new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
+  auto val1 = type::ValueFactory::GetIntegerValue(layout->GetLayoutId());
+  auto val2 = type::ValueFactory::GetIntegerValue(layout->GetColumnCount());
+  auto val3 = type::ValueFactory::GetVarcharValue(layout->SerializeColumnMap(),
+                                                  nullptr);
+
+  tuple->SetValue(ColumnId::TABLE_OID, val0);
+  tuple->SetValue(ColumnId::LAYOUT_OID, val1);
+  tuple->SetValue(ColumnId::NUM_COLUMNS, val2);
+  tuple->SetValue(ColumnId::COLUMN_MAP, val3);
+
+  // Insert the tuple
+  return InsertTuple(std::move(tuple), txn);
+}
+
+bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
+                                 concurrency::TransactionContext *txn) {
+  oid_t index_offset =
+          IndexId::PRIMARY_KEY;  // Index of table_oid & layout_oid
+
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(layout_id).Copy());
+
+  // delete column from cache
+  auto table_object =
+          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  table_object->EvictLayout(layout_id);
+
+  return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
+LayoutCatalog::GetLayouts(oid_t table_oid, oid_t layout_id,
+                                concurrency::TransactionContext *txn) {
+  // Try to find the layouts in the cache
+  auto table_object =
+          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+  auto layout_objects = table_object->GetLayouts(true);
+  if (layout_objects.size() != 0) {
+    return layout_objects;
+  }
+
+  // Cache miss, get from pg_catalog
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  auto result_tiles =
+          GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      oid_t layout_oid = tile->GetValue(tuple_id, ColumnId::LAYOUT_OID)
+              .GetAs<oid_t>();
+      oid_t num_coulmns = tile->GetValue(tuple_id, ColumnId::NUM_COLUMNS)
+              .GetAs<oid_t>();
+
+      std::string column_map_str = tile->GetValue(
+              tuple_id, ColumnId::COLUMN_MAP).GetAs<std::string>();
+      auto column_map = storage::Layout::DeserializeColumnMap(num_coulmns,
+                                                              column_map_str);
+      auto layout_object =
+              std::make_shared<const storage::Layout>(column_map, layout_oid);
+      table_object->InsertLayout(layout_object);
+    }
+  }
+
+  return table_object->GetLayouts();
+}
+
+
+
+
+
+}  // namespace catalog
+}  // namespace peloton
