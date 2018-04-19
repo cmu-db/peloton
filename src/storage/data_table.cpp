@@ -945,6 +945,9 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   schemas.push_back(*schema);
   std::shared_ptr<const Layout> layout = nullptr;
 
+  // The TileGroup for recovery is always added in ROW layout,
+  // This was a part of the previous design. If you are planning
+  // to change this, make sure the layout is added to the catalog
   if (default_layout_->IsRowStore()) {
     layout = default_layout_;
   } else {
@@ -1377,7 +1380,9 @@ void DataTable::ClearIndexSamples() {
 }
 
 void DataTable::SetDefaultLayout(const column_map_type &column_map) {
-  default_layout_ = std::shared_ptr<const Layout>(new const Layout(column_map));
+  // TODO Pooja: Generate layout_oid_ and add it to the catalog
+  default_layout_ = std::shared_ptr<const Layout>(
+          new const Layout(column_map));
 }
 
 const Layout& DataTable::GetDefaultLayout() const {

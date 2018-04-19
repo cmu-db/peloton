@@ -113,6 +113,7 @@ oid_t TempTable::AddDefaultTileGroup() {
       TEMPTABLE_TILEGROUP_ID + static_cast<int>(tile_groups_.size());
 
   // Create a tile group with that partitioning
+  // Its a TempTable, so we don't need to make the Layout persistent
   std::shared_ptr<storage::TileGroup> tile_group(
       AbstractTable::GetTileGroupWithLayout(
           INVALID_OID, tile_group_id, default_layout_, TEMPTABLE_DEFAULT_SIZE));
