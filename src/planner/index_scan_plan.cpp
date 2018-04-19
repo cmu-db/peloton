@@ -24,7 +24,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
                              const std::vector<oid_t> &column_ids,
                              const IndexScanDesc &index_scan_desc,
                              bool for_update_flag)
-    : index_(index_scan_desc.index_obj),
+    : index_id_(index_scan_desc.index_id),
       column_ids_(column_ids),
       key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
       expr_types_(std::move(index_scan_desc.expr_list)),
@@ -49,14 +49,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   for (auto val : values_with_params_) {
     values_.push_back(val.Copy());
   }
-
-  // Then add the only conjunction predicate into the index predicate list
-  // (at least for now we only supports single conjunction)
-  //
-  // Values that are left blank will be recorded for future binding
-  // and their offset inside the value array will be remembered
-  index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
-                                               key_column_ids_, expr_types_);
 
   // Check whether the scan range is left/right open. Because the index itself
   // is not able to handle that exactly, we must have extra logic in
@@ -99,11 +91,6 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
               .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
-
-  // Also bind values to index scan predicate object
-  //
-  // NOTE: This could only be called by one thread at a time
-  index_predicate_.LateBindValues(index_.get(), *values);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

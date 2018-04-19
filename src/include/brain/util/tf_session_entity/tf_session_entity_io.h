@@ -4,7 +4,8 @@
 //
 // tf_session_entity_io.h
 //
-// Identification: src/include/brain/tf_session_entity/tf_session_entity_io.h
+// Identification:
+// src/include/brain/util/tf_session_entity/tf_session_entity_io.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -37,7 +38,8 @@ TFSEIO_BASE_TEMPLATE_ARGUMENTS
 class TfSessionEntityIOBase {
  public:
   std::string GetPlaceholderName();
-  TF_Tensor *GetTensor();
+  TF_Tensor *&GetTensor();
+  ~TfSessionEntityIOBase();
 
  protected:
   // name of io placeholder
