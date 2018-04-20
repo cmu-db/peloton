@@ -91,7 +91,7 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     }
     txn_manager.CommitTransaction(txn);
 
-    LOG_INFO("Complete checkpoint recovery in epoch %lu", epoch_id);
+    LOG_INFO("Complete checkpoint recovery in epoch %" PRIu64, epoch_id);
 
     recovery_timer.Stop();
     LOG_INFO("Checkpoint recovery time: %lf ms", recovery_timer.GetDuration());
@@ -130,7 +130,7 @@ eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
     }
     max_epoch = (epoch_id > max_epoch) ? epoch_id : max_epoch;
   }
-  LOG_DEBUG("max epoch : %lu", max_epoch);
+  LOG_DEBUG("max epoch : %" PRIu64, max_epoch);
   return max_epoch;
 }
 
@@ -178,7 +178,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 
       checkpoint_timer.Stop();
       LOG_INFO(
-          "Complete Checkpointing in epoch %lu (cid = %lu)",
+          "Complete Checkpointing in epoch %" PRIu64 " (cid = %" PRIu64 ")",
           concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId(),
           begin_cid);
       LOG_INFO("Checkpointing time: %lf ms", checkpoint_timer.GetDuration());
