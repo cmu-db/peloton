@@ -185,9 +185,9 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
     values_.push_back(value);
 
     return false;
-  } else if (exp->GetExpressionType() == ExpressionType::ARRAY) {
+  } else if (expr->GetExpressionType() == ExpressionType::ARRAY) {
     auto *array_exp =
-        dynamic_cast<expression::ArrayExpression *>(exp.get());
+        dynamic_cast<expression::ArrayExpression *>(expr);
     type::Value value = array_exp->GetValue();
 
     schema_to_insert_[schema_idx].set_value = true;
