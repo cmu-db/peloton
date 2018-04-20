@@ -207,9 +207,20 @@ class Sorter<Cfg>::Classifier {
     }
 
     // Filled from 1 to num_buckets_
+#if __cplusplus==201402L
     std::aligned_storage_t<sizeof(value_type), alignof(value_type)> storage_[Cfg::kMaxBuckets / 2];
+#else
+    // pmenon: Modified for C++11
+    typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type storage_[Cfg::kMaxBuckets / 2];
+#endif
     // Filled from 0 to num_buckets_, last one is duplicated
+#if __cplusplus==201402L
     std::aligned_storage_t<sizeof(value_type), alignof(value_type)> sorted_storage_[Cfg::kMaxBuckets / 2];
+#else
+    // pmenon: Modified for C++11
+    typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type sorted_storage_[Cfg::kMaxBuckets / 2];
+#endif
+
     int log_buckets_ = 0;
     bucket_type num_buckets_ = 0;
     less comp_;

@@ -160,8 +160,15 @@ struct Config {
      * The oversampling factor to be used for input of size n.
      */
     static constexpr double oversamplingFactor(std::ptrdiff_t n) {
-        const double f = OversampleF_ / 100.0 * detail::log2(n);
+#if __cplusplus==201402L
+        constexpr double f = OversampleF_ / 100.0 * detail::log2(n);
         return f < 1.0 ? 1.0 : f;
+#else
+        // pmenon: Modified for C++11
+#define f (OversampleF_ / 100.0 * detail::log2(n))
+        return f < 1.0 ? 1.0 : f;
+#undef f
+#endif
     }
 
     /**

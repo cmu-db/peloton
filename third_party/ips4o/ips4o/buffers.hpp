@@ -128,8 +128,14 @@ class Sorter<Cfg>::Block {
     }
 
  private:
+#if __cplusplus==201402L
     using storage_type = std::conditional_t<kInitializedStorage, value_type,
                                             std::aligned_storage_t<sizeof(value_type), alignof(value_type)>>;
+#else
+    // pmenon: Modified for C++11
+    using storage_type = typename std::conditional<kInitializedStorage, value_type,
+                                                   typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type>::type;
+#endif
     storage_type storage_[Cfg::kBlockSize];
 };
 

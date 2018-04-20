@@ -51,7 +51,12 @@ namespace ips4o {
 /**
  * Helper function for creating a reusable sequential sorter.
  */
+#if __cplusplus==201402L
 template <class It, class Cfg = Config<>, class Comp = std::less<>>
+#else
+// pmenon: Modified for C++11
+template <class It, class Cfg = Config<>, class Comp>
+#endif
 SequentialSorter<ExtendedConfig<It, Comp, Cfg>> make_sorter(Comp comp = Comp()) {
     return SequentialSorter<ExtendedConfig<It, Comp, Cfg>>{std::move(comp)};
 }
@@ -59,7 +64,12 @@ SequentialSorter<ExtendedConfig<It, Comp, Cfg>> make_sorter(Comp comp = Comp()) 
 /**
  * Configurable interface.
  */
+#if __cplusplus==201402L
 template <class Cfg, class It, class Comp = std::less<>>
+#else
+// pmenon: Modified for C++11
+template <class Cfg, class It, class Comp>
+#endif
 void sort(It begin, It end, Comp comp = Comp()) {
     if ((end - begin) <= Cfg::kBaseCaseMultiplier * Cfg::kBaseCaseSize)
         detail::baseCaseSort(std::move(begin), std::move(end), std::move(comp));
@@ -75,10 +85,12 @@ void sort(It begin, It end, Comp comp) {
     ips4o::sort<Config<>>(std::move(begin), std::move(end), std::move(comp));
 }
 
+#if 0
 template <class It>
 void sort(It begin, It end) {
     ips4o::sort<Config<>>(std::move(begin), std::move(end), std::less<>());
 }
+#endif
 
 #if defined(_REENTRANT) || defined(_OPENMP)
 namespace parallel {

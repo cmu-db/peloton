@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unordered_map>
+#include <random>
 
 #include "common/harness.h"
 
