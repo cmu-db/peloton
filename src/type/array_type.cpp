@@ -591,10 +591,10 @@ void ArrayType::SerializeTo(const Value &val, char *storage,
       len = int32_vec->size();
       size = len * sizeof(int32_t) + sizeof(uint32_t) + sizeof(TypeId);
       data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
-      PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
-      PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
+      PELOTON_MEMCPY(data, &elem_type_id, sizeof(TypeId));
+      PELOTON_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
       if (len > 0) {
-        PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), int32_vec->data(),
+        PELOTON_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), int32_vec->data(),
                   size - sizeof(TypeId) - sizeof(uint32_t));
       }
       break;
@@ -605,10 +605,10 @@ void ArrayType::SerializeTo(const Value &val, char *storage,
       len = double_vec->size();
       size = len * sizeof(double) + sizeof(uint32_t);
       data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
-      PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
-      PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
+      PELOTON_MEMCPY(data, &elem_type_id, sizeof(TypeId));
+      PELOTON_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
       if (len > 0) {
-        PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), double_vec->data(),
+        PELOTON_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), double_vec->data(),
                   size - sizeof(TypeId) - sizeof(uint32_t));
       }
       break;
