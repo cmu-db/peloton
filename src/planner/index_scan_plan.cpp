@@ -50,14 +50,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     values_.push_back(val.Copy());
   }
 
-  // Then add the only conjunction predicate into the index predicate list
-  // (at least for now we only supports single conjunction)
-  //
-  // Values that are left blank will be recorded for future binding
-  // and their offset inside the value array will be remembered
-  //index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
-  //                                             key_column_ids_, expr_types_);
-
   // Check whether the scan range is left/right open. Because the index itself
   // is not able to handle that exactly, we must have extra logic in
   // IndexScanExecutor to handle that case.
@@ -99,11 +91,6 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
               .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
-
-  // Also bind values to index scan predicate object
-  //
-  // NOTE: This could only be called by one thread at a time
-  //index_predicate_.LateBindValues(index_id_.get(), *values);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
