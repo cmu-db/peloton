@@ -1343,38 +1343,5 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
-//// Insert a tuple, delete that tuple. This should create 2 free slots in the recycle queue
-TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
-  // set up
-  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  epoch_manager.Reset(1);
-  std::vector<std::unique_ptr<std::thread>> gc_threads;
-  gc::GCManagerFactory::Configure(1);
-  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-  gc_manager.Reset();
-  storage::StorageManager::GetInstance();
-  TestingExecutorUtil::InitializeDatabase("CommitDeleteTest");
-  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable());
-
-  // expect no garbage initially
-  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-
-  epoch_manager.SetCurrentEpochId(2);
-  auto delete_result = DeleteTuple(table.get(), 1);
-  EXPECT_EQ(ResultType::SUCCESS, delete_result);
-
-  epoch_manager.SetCurrentEpochId(3);
-  gc_manager.ClearGarbage(0);
-
-  // expect 2 slots reclaimed
-  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-
-  // clean up
-  gc_manager.StopGC();
-  gc::GCManagerFactory::Configure(0);
-  table.release();
-  TestingExecutorUtil::DeleteDatabase("CommitDeleteTest");
-}
 }  // namespace test
 }  // namespace peloton
