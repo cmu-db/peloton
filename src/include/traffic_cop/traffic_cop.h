@@ -93,7 +93,7 @@ class TrafficCop {
 
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type,
-                                       type::Type *column_elem_type);
+                                       type::Type *column_elem_type = nullptr);
 
   void SetTcopTxnState(concurrency::TransactionContext *txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
