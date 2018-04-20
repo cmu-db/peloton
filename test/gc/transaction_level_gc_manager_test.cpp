@@ -93,6 +93,47 @@ int GetNumRecycledTuples(storage::DataTable *table) {
   return count;
 }
 
+//// Insert a tuple, delete that tuple. This should create 2 free slots in the recycle queue
+TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
+  // set up
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase("MyTestDB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      2, "MyTestTable", db_id, INVALID_OID, 1234, true));
+
+  // expect no garbage initially
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  auto delete_result = DeleteTuple(table.get(), 1);
+  EXPECT_EQ(ResultType::SUCCESS, delete_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  // expect 2 slots reclaimed
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+
+  // delete database,
+  table.release();
+  TestingExecutorUtil::DeleteDatabase("MyTestDB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // clean up garbage after database deleted
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
 // update -> delete
 TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
@@ -112,7 +153,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
       num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
 
-  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+  EXPECT_EQ(1, gc_manager.GetTableCount());
 
   //===========================
   // update a version here.
@@ -496,38 +537,5 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
-//// Insert a tuple, delete that tuple. This should create 2 free slots in the recycle queue
-TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
-  // set up
-  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  epoch_manager.Reset(1);
-  std::vector<std::unique_ptr<std::thread>> gc_threads;
-  gc::GCManagerFactory::Configure(1);
-  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-  gc_manager.Reset();
-  storage::StorageManager::GetInstance();
-  TestingExecutorUtil::InitializeDatabase("CommitDeleteTest");
-  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable());
-
-  // expect no garbage initially
-  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-
-  epoch_manager.SetCurrentEpochId(2);
-  auto delete_result = DeleteTuple(table.get(), 1);
-  EXPECT_EQ(ResultType::SUCCESS, delete_result);
-
-  epoch_manager.SetCurrentEpochId(3);
-  gc_manager.ClearGarbage(0);
-
-  // expect 2 slots reclaimed
-  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-
-  // clean up
-  gc_manager.StopGC();
-  gc::GCManagerFactory::Configure(0);
-  table.release();
-  TestingExecutorUtil::DeleteDatabase("CommitDeleteTest");
-}
 }  // namespace test
 }  // namespace peloton
