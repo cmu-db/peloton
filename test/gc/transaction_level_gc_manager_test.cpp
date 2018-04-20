@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sql/testing_sql_util.h>
-#include <com_err.h>
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
@@ -59,6 +57,7 @@ ResultType InsertTuple(storage::DataTable *table, const int key) {
 }
 
 ResultType DeleteTuple(storage::DataTable *table, const int key) {
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Delete(key);
@@ -70,6 +69,7 @@ ResultType DeleteTuple(storage::DataTable *table, const int key) {
 
 ResultType SelectTuple(storage::DataTable *table, const int key,
                        std::vector<int> &results) {
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Read(key);

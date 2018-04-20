@@ -580,8 +580,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   current_txn->RecordDelete(old_location);
 }
 
-// Performs Delete on a tuple that was created by the current transaction, and
-// never
+// Performs Delete on a tuple that was created by the current transaction, and never
 // installed into the database
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
