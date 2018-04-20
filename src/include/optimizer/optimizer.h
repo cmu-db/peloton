@@ -15,15 +15,15 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
+#include "optimizer/property_set.h"
 
 namespace peloton {
 
 namespace parser {
 class SQLStatementList;
 class SQLStatement;
-}
+}  // namespace parser
 
 namespace planner {
 class AbstractPlan;
@@ -38,9 +38,9 @@ class TransactionContext;
 }
 
 namespace test {
-  class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-} 
+class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
+}  // namespace test
 
 namespace optimizer {
 
@@ -53,6 +53,12 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
+struct OptimizerPlanInfo {
+  OptimizerPlanInfo(){};
+  std::unique_ptr<planner::AbstractPlan> plan;
+  double cost;
+};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -60,8 +66,10 @@ class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
 
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
  public:
   Optimizer(const Optimizer &) = delete;
@@ -76,6 +84,10 @@ class Optimizer : public AbstractOptimizer {
       const std::string default_database_name,
       concurrency::TransactionContext *txn) override;
 
+  std::unique_ptr<OptimizerPlanInfo> GetOptimizedPlanInfo(
+      parser::SQLStatement *parsed_statement,
+      concurrency::TransactionContext *txn);
+
   void OptimizeLoop(int root_group_id,
                     std::shared_ptr<PropertySet> required_props);
 
@@ -84,13 +96,13 @@ class Optimizer : public AbstractOptimizer {
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
   /* For test purposes only */
-  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
-  concurrency::TransactionContext *txn) {
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(
+      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */
   void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                        std::shared_ptr<OptimizeContext> root_context) {
+                            std::shared_ptr<OptimizeContext> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
 

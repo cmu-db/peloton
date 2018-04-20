@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,16 +21,16 @@
 #include "common/exception.h"
 
 #include "optimizer/binding.h"
+#include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/optimize_context.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/plan_generator.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_to_operator_transformer.h"
-#include "optimizer/input_column_deriver.h"
-#include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/optimizer_task_pool.h"
-#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -46,13 +46,13 @@
 
 #include "binder/bind_node_visitor.h"
 
-using std::vector;
-using std::unordered_map;
-using std::shared_ptr;
-using std::unique_ptr;
+using std::make_shared;
 using std::move;
 using std::pair;
-using std::make_shared;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::unordered_map;
+using std::vector;
 
 namespace peloton {
 namespace optimizer {
@@ -118,7 +118,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
-  // Get the physical properties the final plan must output
+
+  // Get the physical properties and projected columns the final plan must have
   auto query_info = GetQueryInfo(parse_tree);
 
   try {
@@ -135,6 +136,82 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     Reset();
     //  return shared_ptr<planner::AbstractPlan>(best_plan.release());
     return move(best_plan);
+  } catch (Exception &e) {
+    Reset();
+    throw e;
+  }
+}
+
+// GetOptimizedQueryTree()
+// Return an optimized physical query tree for the given parse tree along
+// with the cost.
+std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
+    parser::SQLStatement *parsed_statement,
+    concurrency::TransactionContext *txn) {
+  metadata_.txn = txn;
+
+  // Generate initial operator tree to work with from the parsed
+  // statement object.
+  std::shared_ptr<GroupExpression> g_expr =
+      InsertQueryTree(parsed_statement, txn);
+  GroupID root_id = g_expr->GetGroupID();
+
+  // Get the physical properties of the final plan that must be enforced
+  auto query_info = GetQueryInfo(parsed_statement);
+
+  // Start with the base expression and explore all the possible transformations
+  // and add them to the local context.
+  try {
+    OptimizeLoop(root_id, query_info.physical_props);
+  } catch (OptimizerException &e) {
+    LOG_WARN("Optimize Loop ended prematurely: %s", e.what());
+    PELOTON_ASSERT(false);
+  }
+
+  try {
+
+    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+                                    query_info.output_exprs);
+    auto info_obj = std::unique_ptr<OptimizerPlanInfo>(new OptimizerPlanInfo());
+
+    // Get the cost.
+    auto group = GetMetadata().memo.GetGroupByID(root_id);
+    auto best_expr = group->GetBestExpression(query_info.physical_props);
+
+    // TODO[vamshi]: Comment this code out. Only for debugging.
+    // Find out the index scan plan cols.
+    std::deque<GroupID> queue;
+    queue.push_back(root_id);
+    while (queue.size() != 0) {
+      auto front = queue.front();
+      queue.pop_front();
+      auto group = GetMetadata().memo.GetGroupByID(front);
+      auto best_expr = group->GetBestExpression(query_info.physical_props);
+
+      PELOTON_ASSERT(best_expr->Op().IsPhysical());
+      if (best_expr->Op().GetType() == OpType::IndexScan) {
+        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
+        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
+        LOG_DEBUG("Index Scan on %s",
+                  index_scan_op->table_->GetTableName().c_str());
+        for (auto col : index_scan_op->key_column_id_list) {
+          (void)col;  // for debug mode
+          LOG_DEBUG("Col: %d", col);
+        }
+      }
+
+      for (auto child_grp : best_expr->GetChildGroupIDs()) {
+        queue.push_back(child_grp);
+      }
+    }
+
+    info_obj->cost = best_expr->GetCost(query_info.physical_props);
+    info_obj->plan = std::move(best_plan);
+
+    // Reset memo after finishing the optimization
+    Reset();
+
+    return info_obj;
   } catch (Exception &e) {
     Reset();
     throw e;
@@ -241,29 +318,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper =
-      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-         std::unique_ptr<parser::OrderDescription> &order_info,
-         std::vector<expression::AbstractExpression *> &output_exprs,
-         std::shared_ptr<PropertySet> &physical_props) {
-        // Extract output column
-        for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper = [](
+      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+      std::unique_ptr<parser::OrderDescription> &order_info,
+      std::vector<expression::AbstractExpression *> &output_exprs,
+      std::shared_ptr<PropertySet> &physical_props) {
+    // Extract output column
+    for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-        // Extract sort property
-        if (order_info != nullptr) {
-          std::vector<expression::AbstractExpression *> sort_exprs;
-          std::vector<bool> sort_ascending;
-          for (auto &expr : order_info->exprs) {
-            sort_exprs.push_back(expr.get());
-          }
-          for (auto &type : order_info->types) {
-            sort_ascending.push_back(type == parser::kOrderAsc);
-          }
-          if (!sort_exprs.empty())
-            physical_props->AddProperty(
-                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-        }
-      };
+    // Extract sort property
+    if (order_info != nullptr) {
+      std::vector<expression::AbstractExpression *> sort_exprs;
+      std::vector<bool> sort_ascending;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
+      if (!sort_exprs.empty())
+        physical_props->AddProperty(
+            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+    }
+  };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
@@ -281,8 +358,7 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:
-      ;
+    default:;
   }
 
   return QueryInfo(output_exprs, physical_props);
