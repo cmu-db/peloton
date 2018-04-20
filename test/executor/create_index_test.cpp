@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// delete_test.cpp
+// create_index_test.cpp
 //
 // Identification: test/executor/create_index_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
