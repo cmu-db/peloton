@@ -222,7 +222,7 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(
           // insert data to checkpoint file
           CheckpointingTableData(table, begin_cid, file_handle);
 
-          fclose(file_handle.file);
+          LoggingUtil::CloseFile(file_handle);
         }
       }  // end table loop
 
@@ -242,7 +242,7 @@ void TimestampCheckpointManager::CreateUserTableCheckpoint(
     return;
   }
   CheckpointingStorageObject(metadata_file, txn);
-  fclose(metadata_file.file);
+  LoggingUtil::CloseFile(metadata_file);
 }
 
 // TODO: Integrate this function to CreateUserTableCheckpoint, after all catalog
@@ -277,7 +277,7 @@ void TimestampCheckpointManager::CreateCatalogTableCheckpoint(
     // insert data to checkpoint
     CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
 
-    fclose(file_handle.file);
+    LoggingUtil::CloseFile(file_handle);
   }
 }
 
@@ -554,7 +554,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
     // catalogs out of recovery
     if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
         table_name == "zone_map") {
-      // nothing to do (keep the default values, and other data isn't recovered)
+      // nothing to do (keep the default values, and not recover other data)
     } else {
       // read a checkpoint file for the catalog
       oid_t oid_align;
@@ -563,9 +563,13 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
           db_catalog->GetDatabaseName(), table_name, epoch_id);
       if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
           false) {
-        LOG_ERROR("Checkpoint file for table %s is not existed",
-                  table_name.c_str());
+        LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
+                  table_oid, table_name.c_str());
+        continue;
       }
+
+      LOG_DEBUG("Recover checkpoint file for table %d '%s'", table_oid,
+      		table_name.c_str());
 
       // catalogs with duplicate check
       // keep the default values, but other data is recovered
@@ -579,7 +583,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
         oid_align = RecoverTableDataWithoutTileGroup(table, table_file, txn);
       }
 
-      fclose(table_file.file);
+      LoggingUtil::CloseFile(table_file);
 
       // modify next OID of each catalog
       if (table_name == "pg_database") {
@@ -587,7 +591,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
       } else if (table_name == "pg_table") {
         catalog::TableCatalog::GetInstance()->oid_ += oid_align;
       } else if (table_name == "pg_attribute") {
-        // no oid_t is used
+        // no OID is used
       } else if (table_name == "pg_index") {
         catalog::IndexCatalog::GetInstance()->oid_ += oid_align;
       } else if (table_name == "pg_language") {
@@ -602,6 +606,8 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
         catalog::IndexMetricsCatalog::GetInstance()->oid_ += oid_align;
       } else if (table_name == "pg_query_metrics") {
         catalog::QueryMetricsCatalog::GetInstance()->oid_ += oid_align;
+      } else if (table_name == "pg_query_history") {
+      	// no OID is used
       } else if (table_name == "pg_trigger") {
         catalog::TriggerCatalog::GetInstance().oid_ += oid_align;
       }
@@ -616,16 +622,16 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
   // Recover storage object
   FileHandle metadata_file;
   std::string metadata_filename = GetMetadataFileFullPath(epoch_id);
-  if (LoggingUtil::OpenFile(metadata_filename.c_str(), "rb", metadata_file) !=
-      true) {
-    LOG_ERROR("Create checkpoint file failed!");
+  if (LoggingUtil::OpenFile(metadata_filename.c_str(), "rb", metadata_file) ==
+      false) {
+    LOG_ERROR("Open checkpoint metadata file failed!");
     return false;
   }
   if (RecoverStorageObject(metadata_file, txn) == false) {
     LOG_ERROR("Storage object recovery failed");
     return false;
   }
-  fclose(metadata_file.file);
+  LoggingUtil::CloseFile(metadata_file);
 
   // Recover table
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -648,14 +654,20 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
             GetCheckpointFileFullPath(db_catalog->GetDatabaseName(),
                                       table_catalog->GetTableName(), epoch_id);
         if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
-            true) {
-          // recover the table from the checkpoint file
-          RecoverTableData(table, table_file, txn);
-          fclose(table_file.file);
-        } else {
-          LOG_ERROR("Checkpoint file for table %s is not existed",
-                    table_catalog->GetTableName().c_str());
+            false) {
+          LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
+                    table_oid, table_catalog->GetTableName().c_str());
+          continue;
         }
+
+        LOG_DEBUG("Recover checkpoint file for table %d '%s'",
+                  table_oid, table_catalog->GetTableName().c_str());
+
+        // recover the table from the checkpoint file
+        RecoverTableData(table, table_file, txn);
+
+        LoggingUtil::CloseFile(table_file);
+
       }  // table loop end
     }
   }  // database loop end

@@ -34,13 +34,13 @@ bool CatalogCache::InsertDatabaseObject(
   // check if already in cache
   if (database_objects_cache.find(database_object->GetDatabaseOid()) !=
       database_objects_cache.end()) {
-    LOG_DEBUG("Database %u already exists in cache!",
+    LOG_TRACE("Database %u already exists in cache!",
               database_object->GetDatabaseOid());
     return false;
   }
   if (database_name_cache.find(database_object->GetDatabaseName()) !=
       database_name_cache.end()) {
-    LOG_DEBUG("Database %s already exists in cache!",
+    LOG_TRACE("Database %s already exists in cache!",
               database_object->GetDatabaseName().c_str());
     return false;
   }

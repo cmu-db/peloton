@@ -26,7 +26,6 @@ namespace test {
 class TimestampCheckpointingTests : public PelotonTest {};
 
 TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
-  settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
   PelotonInit::Initialize();
 
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();

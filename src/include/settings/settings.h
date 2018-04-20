@@ -101,7 +101,7 @@ SETTING_int(port, "Peloton port (default: 15721)", 15721, 1024, 65535, false,
     //===----------------------------------------------------------------------===//
 
     SETTING_bool(checkpointing,
-                 "Enable Checkpointing and recovery (default: true)", true,
+                 "Enable Checkpointing and recovery (default: false)", false,
                  false, false)
 
     SETTING_int(checkpoint_interval,
@@ -179,16 +179,15 @@ SETTING_int(port, "Peloton port (default: 15721)", 15721, 1024, 65535, false,
                  "Enable predicate push-down optimization (default: true)",
                  true, true, true)
 
-        SETTING_bool(
-            hash_join_bloom_filter,
-            "Enable bloom filter for hash join in codegen (default: true)",
-            true, true, true)
+    SETTING_bool(hash_join_bloom_filter,
+                 "Enable bloom filter for hash join in codegen (default: true)",
+                 true, true, true)
 
-            SETTING_int(task_execution_timeout,
-                        "Maximum allowed length of time (in ms) for task "
-                        "execution step of optimizer, "
-                        "assuming one plan has been found (default 5000)",
-                        5000, 1000, 60000, true, true)
+    SETTING_int(task_execution_timeout,
+                "Maximum allowed length of time (in ms) for task "
+                "execution step of optimizer, "
+                "assuming one plan has been found (default 5000)",
+                5000, 1000, 60000, true, true)
 
     //===----------------------------------------------------------------------===//
     // GENERAL

@@ -67,7 +67,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  LOG_INFO("type of trigger inserted:%d", trigger_type);
+  LOG_TRACE("type of trigger inserted:%d", trigger_type);
 
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
@@ -96,7 +96,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
                                        const std::string &trigger_name,
                                        concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to drop trigger: %s",
+  	LOG_ERROR("Do not have transaction to drop trigger: %s",
               table_name.c_str());
     return ResultType::FAILURE;
   }
@@ -108,16 +108,16 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
   oid_t trigger_oid = TriggerCatalog::GetInstance().GetTriggerOid(
       trigger_name, table_object->GetTableOid(), txn);
   if (trigger_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
+  	LOG_ERROR("Cannot find trigger %s to drop!", trigger_name.c_str());
     return ResultType::FAILURE;
   }
 
-  LOG_INFO("trigger %d will be deleted!", trigger_oid);
+  LOG_TRACE("trigger %d will be deleted!", trigger_oid);
 
   bool delete_success =
       DeleteTriggerByName(trigger_name, table_object->GetTableOid(), txn);
   if (delete_success) {
-    LOG_DEBUG("Delete trigger successfully");
+  	LOG_TRACE("Delete trigger successfully");
     // ask target table to update its trigger list variable
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(database_name,
@@ -125,7 +125,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
     target_table->UpdateTriggerListFromCatalog(txn);
     return ResultType::SUCCESS;
   }
-  LOG_DEBUG("Failed to delete trigger");
+  LOG_ERROR("Failed to delete trigger");
   return ResultType::FAILURE;
 }
 
@@ -142,9 +142,9 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
 
   oid_t trigger_oid = INVALID_OID;
   if (result_tiles->size() == 0) {
-    LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
+  	LOG_TRACE("trigger %s doesn't exist", trigger_name.c_str());
   } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+  	LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
     PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       trigger_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
@@ -166,7 +166,7 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
     oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
-  LOG_INFO("Get triggers for table %d", table_oid);
+	LOG_TRACE("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
@@ -181,9 +181,9 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
+  	LOG_TRACE("no trigger on table %d", table_oid);
   } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+  	LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
   }
 
   // create the trigger list
@@ -208,7 +208,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
     oid_t table_oid, concurrency::TransactionContext *txn) {
-  LOG_DEBUG("Get triggers for table %d", table_oid);
+  LOG_TRACE("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
       {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
@@ -224,9 +224,9 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
+    LOG_TRACE("no trigger on table %d", table_oid);
   } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+    LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
   }
 
   // create the trigger list
