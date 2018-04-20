@@ -671,6 +671,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 }
 
+// Performs Delete on a tuple that was created by the current transaction, and never
+// installed into the database
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
   PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
