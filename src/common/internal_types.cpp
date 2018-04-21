@@ -2392,9 +2392,6 @@ std::string IsolationLevelTypeToString(IsolationLevelType type) {
     case IsolationLevelType::READ_COMMITTED: {
       return "READ_COMMITTED";
     }
-    case IsolationLevelType::READ_ONLY: {
-      return "READ_ONLY";
-    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for IsolationLevelType value '%d'",
@@ -2416,8 +2413,6 @@ IsolationLevelType StringToIsolationLevelType(const std::string &str) {
     return IsolationLevelType::REPEATABLE_READS;
   } else if (upper_str == "READ_COMMITTED") {
     return IsolationLevelType::READ_COMMITTED;
-  } else if (upper_str == "READ_ONLY") {
-    return IsolationLevelType::READ_ONLY;
   } else {
     throw ConversionException(
         StringUtil::Format("No IsolationLevelType conversion from string '%s'",

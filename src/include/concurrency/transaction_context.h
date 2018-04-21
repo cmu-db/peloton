@@ -269,7 +269,15 @@ class TransactionContext : public Printable {
    * @return     True if read only, False otherwise.
    */
   inline bool IsReadOnly() const {
-    return is_written_ == false && insert_count_ == 0;
+    return read_only_;
+  }
+
+  /**
+   * @brief      mark this context as read only
+   *
+   */
+  inline void setReadOnly() {
+    read_only_ = true;
   }
 
   /**
@@ -341,6 +349,8 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  bool read_only_ = false;
 };
 
 }  // namespace concurrency

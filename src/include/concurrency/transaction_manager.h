@@ -222,8 +222,13 @@ class TransactionManager {
     return BeginTransaction(0, type);
   }
 
+  TransactionContext *BeginTransactionReadOnly() {
+    return BeginTransaction(0, type, true);
+  }
+
   TransactionContext *BeginTransaction(const size_t thread_id = 0,
-                                const IsolationLevelType type = isolation_level_);
+                                const IsolationLevelType type = isolation_level_,
+                                bool read_only = false);
 
   /**
    * @brief      Ends a transaction.
