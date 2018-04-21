@@ -219,10 +219,10 @@ class TransactionManager {
   }
 
   TransactionContext *BeginTransaction(const IsolationLevelType type) {
-    return BeginTransaction(0, type);
+    return BeginTransaction(0, type, false);
   }
 
-  TransactionContext *BeginTransactionReadOnly() {
+  TransactionContext *BeginTransactionReadOnly(const IsolationLevelType type) {
     return BeginTransaction(0, type, true);
   }
 
