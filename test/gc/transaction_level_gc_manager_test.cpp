@@ -345,6 +345,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
 
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
@@ -404,6 +406,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
 
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
@@ -418,6 +422,55 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   scheduler.Run();
   EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
   EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+
+
+  // old version should be present in 2 indexes
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  // new version should be present in primary index
+  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+
+  // delete database,
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // clean up garbage after database deleted
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
+  // set up
+  std::string test_name= "CommitUpdatePrimaryKey";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+
+  // expect no garbage initially
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // update, commit
+  auto update_result = UpdateTuple(table.get(), 1);
+  EXPECT_EQ(ResultType::SUCCESS, update_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
