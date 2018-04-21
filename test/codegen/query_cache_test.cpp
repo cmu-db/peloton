@@ -288,13 +288,15 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
   planner::BindingContext context_2;
   scan_b->PerformBinding(context_2);
 
-  // check if the two plans are the same
+  // Check if the two plans are the same
+  // Since they are not bound, the two plans are the same
   auto hash_equal = (scan_a->Hash() == scan_b->Hash());
   EXPECT_TRUE(hash_equal);
 
   auto is_equal = (*scan_a.get() == *scan_b.get());
   EXPECT_TRUE(is_equal);
 
+  // Create two plans with bound tuple value expression
   std::shared_ptr<planner::SeqScanPlan> plan_a = GetSeqScanPlanA(true);
 
   std::shared_ptr<planner::SeqScanPlan> plan_b = GetSeqScanPlanB(true);
@@ -313,7 +315,7 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
   EXPECT_EQ(1, results_1.size());
   EXPECT_FALSE(cached);
 
-  // clear the cache for plan_b
+  // clear the cache
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
@@ -332,7 +334,7 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
   codegen::BufferingConsumer buffer_3{{0, 1}, context_a};
   CompileAndExecuteCache(plan_a, buffer_3, cached);
 
-  // cache should hit because two plans are the same
+  // cache should not hit
   EXPECT_FALSE(cached);
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(1, results_3.size());
