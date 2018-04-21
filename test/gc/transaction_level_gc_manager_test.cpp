@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sql/testing_sql_util.h>
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
@@ -96,12 +97,12 @@ int GetNumRecycledTuples(storage::DataTable *table) {
 size_t CountNumIndexOccurrences(storage::DataTable *table, int first_val, int second_val) {
 
   size_t num_occurrences = 0;
-  std::unique_ptr<storage::Tuple> aborted_tuple(new storage::Tuple(table->GetSchema(), true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
-  aborted_tuple->SetValue(0, primary_key, nullptr);
-  aborted_tuple->SetValue(1, value, nullptr);
+  tuple->SetValue(0, primary_key, nullptr);
+  tuple->SetValue(1, value, nullptr);
 
   // check that tuple was removed from indexes
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -112,8 +113,7 @@ size_t CountNumIndexOccurrences(storage::DataTable *table, int first_val, int se
 
     // build key.
     std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
-    current_key->SetFromTuple(aborted_tuple.get(), indexed_columns,
-                              index->GetPool());
+    current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
 
     std::vector<ItemPointer *> index_entries;
     index->ScanKey(current_key.get(), index_entries);
@@ -429,48 +429,6 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
-  // set up
-  std::string test_name= "CommitUpdatePrimaryKey";
-  uint64_t current_epoch = 0;
-  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  epoch_manager.Reset(++current_epoch);
-  std::vector<std::unique_ptr<std::thread>> gc_threads;
-  gc::GCManagerFactory::Configure(1);
-  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-  gc_manager.Reset();
-  auto storage_manager = storage::StorageManager::GetInstance();
-  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-  oid_t db_id = database->GetOid();
-  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-
-  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
-
-  // expect no garbage initially
-  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-
-  epoch_manager.SetCurrentEpochId(++current_epoch);
-
-  // update, commit
-  auto update_result = UpdateTuple(table.get(), 1);
-  EXPECT_EQ(ResultType::SUCCESS, update_result);
-
-  epoch_manager.SetCurrentEpochId(++current_epoch);
-  gc_manager.ClearGarbage(0);
-
-  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-
-  // delete database,
-  table.release();
-  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-  epoch_manager.SetCurrentEpochId(++current_epoch);
-
-  // clean up garbage after database deleted
-  gc_manager.StopGC();
-  gc::GCManagerFactory::Configure(0);
-}
-
 // Scenario: COMMIT_INS_UPDATE (not a GC type)
 // Insert tuple
 // Update tuple
@@ -492,7 +450,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -502,8 +461,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
   // insert, update, commit
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(3, 1);
-  scheduler.Txn(0).Update(3, 2);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Update(0, 2);
   scheduler.Txn(0).Commit();
   scheduler.Run();
 
@@ -514,6 +473,12 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  // old tuple version should match on primary key index only
+  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  // new tuple version should match on primary & secondary indexes
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 2));
 
   // delete database,
   table.release();
@@ -546,7 +511,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -556,8 +522,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
   // insert, update, abort
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(3, 1);
-  scheduler.Txn(0).Update(3, 2);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Update(0, 2);
   scheduler.Txn(0).Abort();
   scheduler.Run();
 
@@ -569,6 +535,12 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
+  // inserted tuple version should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  // updated tuple version should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
+
   // delete database,
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -579,7 +551,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-// Scenario:  COMMIT_DELETE
+// Scenario: COMMIT_DELETE
 // Insert tuple
 // Commit
 // Delete tuple
@@ -601,47 +573,33 @@ TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
 
-  // delete, commit
-  auto delete_result = DeleteTuple(table.get(), 1);
-  EXPECT_EQ(ResultType::SUCCESS, delete_result);
+  // insert, commit, delete, commit
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Commit();
+  scheduler.Run();
+  auto delete_result = scheduler.schedules[1].txn_result;
 
+  EXPECT_EQ(ResultType::SUCCESS, delete_result);
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   // expect 2 slots reclaimed
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
 
-  // create tuple (2, 1);
-  std::unique_ptr<storage::Tuple> aborted_tuple(new storage::Tuple(table->GetSchema(), true));
-  auto primary_key = type::ValueFactory::GetIntegerValue(1);
-  auto value = type::ValueFactory::GetIntegerValue(1);
-
-  aborted_tuple->SetValue(0, primary_key, nullptr);
-  aborted_tuple->SetValue(1, value, nullptr);
-
-  // check that tuple was removed from indexes
-  for (size_t idx = 0; idx < table.get()->GetIndexCount(); ++idx) {
-    auto index = table->GetIndex(idx);
-    if (index == nullptr) continue;
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    // build key.
-    std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
-    current_key->SetFromTuple(aborted_tuple.get(), indexed_columns,
-                              index->GetPool());
-
-    std::vector<ItemPointer *> result;
-    index->ScanKey(current_key.get(), result);
-    EXPECT_EQ(0, result.size());
-  }
+  // deleted tuple version should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
 
   // delete database,
   table.release();
@@ -675,7 +633,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -684,18 +643,22 @@ TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
 
   // delete, abort
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Delete(1);
-  scheduler.Txn(0).Abort();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Abort();
   scheduler.Run();
-  auto delete_result = scheduler.schedules[0].txn_result;
-
-  EXPECT_EQ(ResultType::ABORTED, delete_result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+
+  // tuple should be found in both indexes because delete was aborted
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
 
   // delete database,
   table.release();
@@ -728,7 +691,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -738,18 +702,19 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
   // insert, delete, commit
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(3, 1);
-  scheduler.Txn(0).Delete(3);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Delete(0);
   scheduler.Txn(0).Commit();
   scheduler.Run();
-  auto result = scheduler.schedules[0].txn_result;
-
-  EXPECT_EQ(ResultType::SUCCESS, result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+
+  // tuple should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
 
   // delete database,
   table.release();
@@ -782,7 +747,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -792,18 +758,19 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
   // insert, delete, abort
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(3, 1);
-  scheduler.Txn(0).Delete(3);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Delete(0);
   scheduler.Txn(0).Abort();
   scheduler.Run();
-  auto result = scheduler.schedules[0].txn_result;
-
-  EXPECT_EQ(ResultType::ABORTED, result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+
+  // tuple should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
 
   // delete database,
   table.release();
@@ -838,7 +805,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -847,19 +815,25 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
 
   // update, delete, commit
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Update(1, 3);
-  scheduler.Txn(0).Delete(1);
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
   scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Update(0, 2);
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Commit();
   scheduler.Run();
-  auto result = scheduler.schedules[0].txn_result;
-
-  EXPECT_EQ(ResultType::SUCCESS, result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+
+  // old tuple should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  // new (deleted) tuple should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
 
   // delete database,
   table.release();
@@ -894,7 +868,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   // expect no garbage initially
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -903,19 +878,26 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
 
   // update, delete, then abort
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Update(1, 3);
-  scheduler.Txn(0).Delete(1);
-  scheduler.Txn(0).Abort();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Update(0, 2);
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Abort();
   scheduler.Run();
-  auto result = scheduler.schedules[0].txn_result;
-
-  EXPECT_EQ(ResultType::ABORTED, result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+
+  // old tuple should be found in both indexes
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  // new (aborted) tuple should only be found in primary index
+  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
 
   // delete database
   table.release();
@@ -1353,6 +1335,90 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
       catalog::Catalog::GetInstance()->GetDatabaseObject("ImmutabilityDB", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
+}
+
+// Scenario: Update Primary Key Test
+// Insert tuple
+// Commit
+// Update primary key
+// Commit
+TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
+  // set up
+  std::string test_name= "CommitUpdatePrimaryKey";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  // expect no garbage initially
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // insert, commit
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 0);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+
+  // old tuple should be found in both indexes initially
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 0));
+
+  std::vector<int> results;
+  SelectTuple(table.get(), 0, results);
+  EXPECT_EQ(1, results.size());
+
+  results.clear();
+  SelectTuple(table.get(), 1, results);
+  EXPECT_EQ(0, results.size());
+
+//  TestingSQLUtil::ShowTable(test_name + "DB", test_name + "Table");
+  // update primary key, commit
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE CommitUpdatePrimaryKeyTable SET id = 1 WHERE id = 0;");
+
+//  TestingSQLUtil::ShowTable(test_name + "DB", test_name + "Table");
+
+  results.clear();
+  SelectTuple(table.get(), 0, results);
+  EXPECT_EQ(0, results.size());
+
+  results.clear();
+  SelectTuple(table.get(), 1, results);
+  EXPECT_EQ(1, results.size());
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  // updating primary key causes a delete and an insert, so 2 garbage slots
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+
+  // old tuple should not be found in either index
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 0));
+
+  // new tuple should be found in both indexes
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 1, 0));
+
+  // delete database
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // clean up garbage after database deleted
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
 }
 
 }  // namespace test
