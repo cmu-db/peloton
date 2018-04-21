@@ -16,11 +16,11 @@
 #include <string>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 #include "index/scan_optimizer.h"
 #include "planner/abstract_scan_plan.h"
 #include "storage/tuple.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -56,8 +56,7 @@ class IndexScanPlan : public AbstractScan {
      * be called to notify later procedures of the absense of an index
      */
     IndexScanDesc(
-        oid_t p_index_id,
-        const std::vector<oid_t> &p_tuple_column_id_list,
+        oid_t p_index_id, const std::vector<oid_t> &p_tuple_column_id_list,
         const std::vector<ExpressionType> &expr_list_p,
         const std::vector<type::Value> &p_value_list,
         const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
@@ -121,10 +120,6 @@ class IndexScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
-  }
-
-  const index::IndexScanPredicate &GetIndexPredicate() const {
-    return index_predicate_;
   }
 
   const std::vector<type::Value> &GetValues() const { return values_; }
@@ -203,12 +198,6 @@ class IndexScanPlan : public AbstractScan {
   std::vector<type::Value> values_with_params_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
-
-  // Currently we just support single conjunction predicate
-  //
-  // In the future this might be extended into an array of conjunctive
-  // predicates connected by disjunction
-  index::IndexScanPredicate index_predicate_;
 
   // whether the index scan range is left open
   bool left_open_ = false;
