@@ -39,7 +39,7 @@ TransactionContext *TransactionManager::BeginTransaction(
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::SNAPSHOT_READ);
     txn = new TransactionContext(thread_id, type, read_id);
-
+    txn->setReadOnly();
   }
 
   if (type == IsolationLevelType::SNAPSHOT) {
