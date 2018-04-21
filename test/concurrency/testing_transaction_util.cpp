@@ -212,6 +212,24 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   return table;
 }
 
+void TestingTransactionUtil::AddSecondaryIndex(storage::DataTable *table) {
+  // Create unique index on the value column
+  std::vector<oid_t> key_attrs = {1};
+  auto tuple_schema = table->GetSchema();
+  bool unique = false;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  auto index_metadata2 = new index::IndexMetadata(
+      "unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
+      key_schema, key_attrs, unique);
+
+  std::shared_ptr<index::Index> secondary_key_index(
+      index::IndexFactory::GetIndex(index_metadata2));
+
+  table->AddIndex(secondary_key_index);
+}
+
 std::unique_ptr<const planner::ProjectInfo>
 TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   TargetList target_list;
