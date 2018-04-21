@@ -153,6 +153,8 @@ class TestingTransactionUtil {
   static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
   static expression::ComparisonExpression *MakePredicate(int id);
+
+  static void AddSecondaryIndex(storage::DataTable *table);
 };
 
 struct TransactionOperation {
