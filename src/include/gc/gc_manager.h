@@ -66,13 +66,11 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id
-                                               UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RecycleUnusedTupleSlot(const ItemPointer &location
-                                          UNUSED_ATTRIBUTE) {}
+  virtual void RecycleUnusedTupleSlot(const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
   virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE,
                              storage::DataTable *table UNUSED_ATTRIBUTE) {}

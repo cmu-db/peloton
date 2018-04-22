@@ -117,7 +117,7 @@ ResultType SelectTuple(storage::DataTable *table, const int key,
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
+  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table_id).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -207,11 +207,11 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
 
 
 
-// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
-// Fail to insert a tuple
-// Abort
-// Assert RQ size = 1
-// Assert 1 copy in indexes
+//// Fail to insert a tuple
+//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
+//// Abort
+//// Assert RQ size = 1
+//// Assert 1 copy in indexes
 TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   std::string test_name= "FailedInsertPrimaryKey";
   uint64_t current_epoch = 0;
@@ -255,12 +255,12 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
-// Fail to insert a tuple
-// Abort
-// Assert RQ size = 1
-// Assert old tuple in 2 indexes
-// Assert new tuple in 0 indexes
+//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
+//// Fail to insert a tuple
+//// Abort
+//// Assert RQ size = 1
+//// Assert old tuple in 2 indexes
+//// Assert new tuple in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
   std::string test_name= "FailedInsertSecondaryKey";
   uint64_t current_epoch = 0;
