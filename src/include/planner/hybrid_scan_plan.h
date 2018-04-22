@@ -38,15 +38,13 @@ class HybridScanPlan : public AbstractScan {
 
   ~HybridScanPlan() {}
 
-  std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
-
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
   PlanNodeType GetPlanNodeType() const { return PlanNodeType::SEQSCAN; }
 
-  std::shared_ptr<index::Index> GetIndex() const { return index_; }
+  oid_t GetIndexId() const { return index_id_; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -81,7 +79,7 @@ class HybridScanPlan : public AbstractScan {
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 
-  std::shared_ptr<index::Index> index_;
+  oid_t index_id_;
 
   index::IndexScanPredicate index_predicate_;
 

@@ -42,12 +42,12 @@ include(cmake/Dependencies.cmake)
 
 # ---[ C++11 Flags
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++1y" COMPILER_SUPPORTS_CXX1Y)
+check_cxx_compiler_flag("-std=c++11" COMPILER_SUPPORTS_CXX11)
 
-if(COMPILER_SUPPORTS_CXX1Y)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-c++14-compat")
 else()
-    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++1Y support. Please use a different C++ compiler.")
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 # Create a new pre-processor macro __PELOTONFILE__ that has a truncated
@@ -76,6 +76,10 @@ if(UNIX OR APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror -mcx16 -Wno-invalid-offsetof -march=native")
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-undefined-compare -Wno-unused-private-field -Wno-braced-scalar-init -Wno-constant-conversion -Wno-potentially-evaluated-expression -Wno-infinite-recursion -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -I/usr/local/opt/openssl/include")
+    endif()
+# ---[ close$NOCANCEL for Mac OS
+    if(APPLE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-dollar-in-identifier-extension")
     endif()
 endif()
 
