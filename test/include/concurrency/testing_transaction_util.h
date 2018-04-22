@@ -241,7 +241,7 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        txn = txn_manager->BeginTransactionReadOnly(IsolationLevelType::READ_COMMITTED);
+        txn = txn_manager->BeginTransactionReadOnly(IsolationLevelType::SNAPSHOT);
       } else {
         txn = txn_manager->BeginTransaction();
       }

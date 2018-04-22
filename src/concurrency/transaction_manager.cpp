@@ -34,14 +34,6 @@ TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type, bool read_only) {
   TransactionContext *txn = nullptr;
 
-  if (read_only) {
-    // transaction processing with decentralized epoch manager
-    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
-        thread_id, TimestampType::SNAPSHOT_READ);
-    txn = new TransactionContext(thread_id, type, read_id);
-    txn->setReadOnly();
-  }
-
   if (type == IsolationLevelType::SNAPSHOT) {
     // transaction processing with decentralized epoch manager
     // the DBMS must acquire
@@ -66,6 +58,10 @@ TransactionContext *TransactionManager::BeginTransaction(
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::READ);
     txn = new TransactionContext(thread_id, type, read_id);
+  }
+
+  if(read_only){
+    txn->setReadOnly();
   }
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
