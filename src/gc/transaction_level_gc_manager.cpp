@@ -133,13 +133,13 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // Log the query into query_history_catalog
     if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-      if (query_strings.size() != 0) {
+      if(query_strings.size() != 0) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
-        for (auto query_string : query_strings) {
+        for(auto query_string: query_strings) {
           pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
-          });
+          });        
         }
       }
     }
@@ -402,25 +402,20 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // if the version differs from the previous one in some columns where
     // secondary indexes are built on, then we need to unlink the previous
     // version from the secondary index.
-  } else if (type == GCVersionType::COMMIT_DELETE) {
-    // the gc'd version is an old version.
-    // need to recycle this version as well as its newer (empty) version.
-    // we also need to delete the tuple from the primary and secondary
-    // indexes.
   } else if (type == GCVersionType::ABORT_UPDATE) {
     // the gc'd version is a newly created version.
     // if the version differs from the previous one in some columns where
     // secondary indexes are built on, then we need to unlink this version
     // from the secondary index.
-
-  } else if (type == GCVersionType::ABORT_DELETE) {
+  } else if (type == GCVersionType::TOMBSTONE) {
     // the gc'd version is a newly created empty version.
     // need to recycle this version.
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-                   type == GCVersionType::COMMIT_INS_DEL ||
-                   type == GCVersionType::ABORT_INS_DEL);
+              type == GCVersionType::COMMIT_INS_DEL ||
+              type == GCVersionType::ABORT_INS_DEL ||
+              type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {

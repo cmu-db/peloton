@@ -858,6 +858,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_DELETE;
 
+      gc_set->operator[](new_version.block)[new_version.offset] =
+          GCVersionType::TOMBSTONE;
+
       log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
     } else if (tuple_entry.second == RWType::INSERT) {
@@ -1059,7 +1062,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
       // add the version to gc set.
       gc_set->operator[](new_version.block)[new_version.offset] =
-          GCVersionType::ABORT_DELETE;
+          GCVersionType::TOMBSTONE;
 
     } else if (tuple_entry.second == RWType::INSERT) {
       tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
