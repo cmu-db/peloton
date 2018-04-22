@@ -281,9 +281,42 @@ void TransactionLevelGCManager::AddToRecycleMap(
   delete txn_ctx;
 }
 
+
+void TransactionLevelGCManager::RecycleUnusedTupleSlot(const ItemPointer &location) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(location.block);
+
+    // During the resetting, a table may be deconstructed because of the DROP
+    // TABLE request
+    if (tile_group == nullptr) {
+      return;
+    }
+
+    storage::DataTable *table =
+        dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+    PELOTON_ASSERT(table != nullptr);
+
+    oid_t table_id = table->GetOid();
+    auto tile_group_header = tile_group->GetHeader();
+    PELOTON_ASSERT(tile_group_header != nullptr);
+    bool immutable = tile_group_header->GetImmutability();
+
+
+    // If the tuple being reset no longer exists, just skip it
+    if (ResetTuple(location) == false) {
+      return;
+    }
+
+    // if immutable is false and the entry for table_id exists,
+    //then add back to recycle map
+    if ((!immutable) &&
+        recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      recycle_queue_map_[table_id]->Enqueue(location);
+    }
+}
 // this function returns a free tuple slot, if one exists
 // called by data_table.
-ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
+ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(const oid_t &table_id) {
   // for catalog tables, we directly return invalid item pointer.
   if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
     return INVALID_ITEMPOINTER;

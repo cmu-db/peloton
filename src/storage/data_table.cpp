@@ -232,7 +232,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  auto free_item_pointer = gc_manager.GetRecycledTupleSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
@@ -341,6 +341,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   auto result =
       InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RecycleUnusedTupleSlot(location);
+
     return INVALID_ITEMPOINTER;
   }
   return location;
