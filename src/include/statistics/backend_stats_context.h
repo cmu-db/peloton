@@ -6,7 +6,7 @@
 //
 // Identification: src/statistics/backend_stats_context.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,10 +24,13 @@
 #include "statistics/database_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
+#include "statistics/oid_aggr_reducer.h"
 #include "statistics/query_metric.h"
+#include "statistics/stats_channel.h"
 #include "statistics/table_metric.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
+#define TILE_GROUP_CHANNEL_SIZE 10000
 
 namespace peloton {
 
@@ -58,15 +61,15 @@ class BackendStatsContext {
   inline std::thread::id GetThreadId() { return thread_id_; }
 
   // Returns the table metric with the given database ID and table ID
-  TableMetricOld *GetTableMetric(oid_t database_id, oid_t table_id);
+  TableMetric *GetTableMetric(oid_t database_id, oid_t table_id);
 
   // Returns the database metric with the given database ID
-  DatabaseMetricOld *GetDatabaseMetric(oid_t database_id);
+  DatabaseMetric *GetDatabaseMetric(oid_t database_id);
 
   // Returns the index metric with the given database ID, table ID, and
   // index ID
-  IndexMetricOld *GetIndexMetric(oid_t database_id, oid_t table_id,
-                                 oid_t index_id);
+  IndexMetric *GetIndexMetric(oid_t database_id, oid_t table_id,
+                              oid_t index_id);
 
   // Returns the metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> &GetCompletedQueryMetrics() {
@@ -77,7 +80,7 @@ class BackendStatsContext {
   QueryMetric *GetOnGoingQueryMetric() { return ongoing_query_metric_.get(); }
 
   // Returns the latency metric
-  LatencyMetricOld &GetQueryLatencyMetric();
+  LatencyMetric &GetQueryLatencyMetric();
 
   // Increment the read stat for given tile group
   void IncrementTableReads(oid_t tile_group_id);
@@ -150,6 +153,10 @@ class BackendStatsContext {
   void DecreaseTableMemoryUsage(oid_t database_id, oid_t table_id,
                                 int64_t bytes);
 
+  void AddTileGroup(oid_t tile_group);
+
+  StatsChannel<oid_t, OidAggrReducer>& GetTileGroupChannel();
+
   // Initialize the query stat
   void InitQueryMetric(const std::shared_ptr<Statement> statement,
                        const std::shared_ptr<QueryMetric::QueryParams> params);
@@ -180,14 +187,14 @@ class BackendStatsContext {
   //===--------------------------------------------------------------------===//
 
   // Database metrics
-  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetricOld>>
+  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>>
       database_metrics_{};
 
   // Table metrics
-  std::unordered_map<oid_t, std::unique_ptr<TableMetricOld>> table_metrics_{};
+  std::unordered_map<oid_t, std::unique_ptr<TableMetric>> table_metrics_{};
 
   // Index metrics
-  CuckooMap<oid_t, std::shared_ptr<IndexMetricOld>> index_metrics_{};
+  CuckooMap<oid_t, std::shared_ptr<IndexMetric>> index_metrics_{};
 
   // Index oids
   std::unordered_set<oid_t> index_ids_;
@@ -208,7 +215,7 @@ class BackendStatsContext {
   std::thread::id thread_id_;
 
   // Latencies recorded by this worker
-  LatencyMetricOld txn_latencies_;
+  LatencyMetric txn_latencies_;
 
   // Whether this context is registered to the global aggregator
   bool is_registered_to_aggregator_;
@@ -219,6 +226,9 @@ class BackendStatsContext {
   // Index oid spin lock
   common::synchronization::SpinLatch index_id_lock;
 
+  // Channel collecting oid of newly created TileGroups
+  StatsChannel<oid_t, OidAggrReducer> tile_group_channel_{TILE_GROUP_CHANNEL_SIZE};
+
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -227,8 +237,8 @@ class BackendStatsContext {
   void CompleteQueryMetric();
 
   // Get the mapping table of backend stat context for each thread
-  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
-  GetBackendContextMap(void);
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
+      &GetBackendContextMap(void);
 };
 
 }  // namespace stats

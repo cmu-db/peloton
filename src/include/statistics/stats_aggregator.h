@@ -161,6 +161,9 @@ class StatsAggregatorOld {
   // Stores all aggregated stats
   BackendStatsContext aggregated_stats_;
 
+  // Set of tile groups
+  std::unordered_set<oid_t> tile_group_ids_;
+
   // Protect register and unregister of BackendStatsContext*
   std::mutex stats_mutex_{};
 
@@ -215,6 +218,11 @@ class StatsAggregatorOld {
 
   // Aggregate stats periodically
   void RunAggregator();
+
+  /**
+   * @brief Actively collect stats
+   */
+  void ActiveCollect();
 };
 
 }  // namespace stats
