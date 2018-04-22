@@ -326,6 +326,24 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(const oid_t &table_i
   auto recycle_queue = recycle_queue_map_[table_id];
 
   if (recycle_queue->Dequeue(location) == true) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(location.block);
+
+    // During the resetting, a table may be deconstructed because of the DROP
+    // TABLE request
+    if (tile_group == nullptr) {
+      return INVALID_ITEMPOINTER;
+    }
+
+    auto tile_group_header = tile_group->GetHeader();
+    PELOTON_ASSERT(tile_group_header != nullptr);
+    bool immutable = tile_group_header->GetImmutability();
+
+    if (immutable) {
+      recycle_queue->Enqueue(location);
+      return INVALID_ITEMPOINTER;
+    }
+
     LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
               location.offset, table_id);
     return location;
