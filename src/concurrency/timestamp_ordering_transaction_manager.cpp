@@ -665,7 +665,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     if (values_buf != nullptr) {
       logging::LogRecord record =
               logging::LogRecordFactory::CreateTupleRecord(
-                      LogRecordType::TUPLE_UPDATE, location, INVALID_ITEMPOINTER,
+                      LogRecordType::TUPLE_UPDATE, location, location,
                       current_txn->GetEpochId(), current_txn->GetTransactionId(),
                       current_txn->GetCommitId());
 
