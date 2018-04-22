@@ -554,750 +554,639 @@ TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-//// Scenario:  ABORT_DELETE
-//// Insert tuple
-//// Commit
-//// Delete tuple
-//// Abort
-//// Assert RQ size = 1
-//// Assert tuple found in 2 indexes
-//TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
-//  std::string test_name= "AbortDelete";
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
-//  TestingTransactionUtil::AddSecondaryIndex(table.get());
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  // delete, abort
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  TransactionScheduler scheduler(2, table.get(), &txn_manager);
-//  scheduler.Txn(0).Insert(0, 1);
-//  scheduler.Txn(0).Commit();
-//  scheduler.Txn(1).Delete(0);
-//  scheduler.Txn(1).Abort();
-//  scheduler.Run();
-//  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
-//  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-//  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-//
-//  table.release();
-//  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
-//// Scenario: COMMIT_INS_DEL
-//// Insert tuple
-//// Delete tuple
-//// Commit
-//// Assert RQ.size = 1
-//// Assert tuple found in 0 indexes
-//TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
-//  std::string test_name= "CommitInsertDelete";
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
-//  TestingTransactionUtil::AddSecondaryIndex(table.get());
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  // insert, delete, commit
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-//  scheduler.Txn(0).Insert(0, 1);
-//  scheduler.Txn(0).Delete(0);
-//  scheduler.Txn(0).Commit();
-//  scheduler.Run();
-//  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-//  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
-//
-//  table.release();
-//  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
-//// Scenario:  ABORT_INS_DEL
-//// Insert tuple
-//// Delete tuple
-//// Abort
-//// Assert RQ size = 1
-//// Assert tuple found in 0 indexes
-//TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
-//  std::string test_name= "AbortInsertDelete";
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
-//  TestingTransactionUtil::AddSecondaryIndex(table.get());
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  // insert, delete, abort
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-//  scheduler.Txn(0).Insert(0, 1);
-//  scheduler.Txn(0).Delete(0);
-//  scheduler.Txn(0).Abort();
-//  scheduler.Run();
-//  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-//  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
-//
-//  table.release();
-//  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
-////Scenario: COMMIT_UPDATE_DEL
-//// Insert tuple
-//// Commit
-//// Update tuple
-//// Delete tuple
-//// Commit
-//// Assert RQ.size = 2
-//// Assert old tuple in 0 indexes
-//// Assert new tuple in 0 indexes
-//TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
-//  std::string test_name= "CommitUpdateDelete";
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
-//  TestingTransactionUtil::AddSecondaryIndex(table.get());
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  // update, delete, commit
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  TransactionScheduler scheduler(2, table.get(), &txn_manager);
-//  scheduler.Txn(0).Insert(0, 1);
-//  scheduler.Txn(0).Commit();
-//  scheduler.Txn(1).Update(0, 2);
-//  scheduler.Txn(1).Delete(0);
-//  scheduler.Txn(1).Commit();
-//  scheduler.Run();
-//  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-//  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
-//  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
-//
-//  table.release();
-//  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
-//// Scenario: ABORT_UPDATE_DEL
-//// Insert tuple
-//// Commit
-//// Update tuple
-//// Delete tuple
-//// Abort
-//// Assert RQ size = 2
-//// Assert old tuple in 2 indexes
-//// Assert new tuple in 1 index (primary key)
-//TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
-//  std::string test_name= "AbortUpdateDelete";
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
-//  TestingTransactionUtil::AddSecondaryIndex(table.get());
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  // update, delete, then abort
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  TransactionScheduler scheduler(2, table.get(), &txn_manager);
-//  scheduler.Txn(0).Insert(0, 1);
-//  scheduler.Txn(0).Commit();
-//  scheduler.Txn(1).Update(0, 2);
-//  scheduler.Txn(1).Delete(0);
-//  scheduler.Txn(1).Abort();
-//  scheduler.Run();
-//  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
-//  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-//  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-//  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
-//
-//  table.release();
-//  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
-//// Scenario: Update Primary Key Test
-//// Insert tuple
-//// Commit
-//// Update primary key and value
-//// Commit
-//// Assert RQ.size = 2 (primary key update causes delete and insert)
-//// Assert old tuple in 0 indexes
-//// Assert new tuple in 2 indexes
-//TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
-//  uint64_t current_epoch = 0;
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(++current_epoch);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  auto catalog = catalog::Catalog::GetInstance();
-//  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-//  txn_manager.CommitTransaction(txn);
-//  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-//
-//  TestingSQLUtil::ExecuteSQLQuery(
-//      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
-//  auto table = database->GetTableWithName("test");
-//  TestingTransactionUtil::AddSecondaryIndex(table);
-//
-//  EXPECT_EQ(0, GetNumRecycledTuples(table));
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//
-//  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 30);");
-//
-//  std::vector<ResultValue> result;
-//  std::vector<FieldInfo> tuple_descriptor;
-//  std::string error_message;
-//  int rows_affected;
-//
-//  // confirm setup
-//  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test WHERE b=30", result,
-//                                  tuple_descriptor, rows_affected,
-//                                  error_message);
-//  EXPECT_EQ('3', result[0][0]);
-//  EXPECT_EQ(2, CountNumIndexOccurrences(table, 3, 30));
-//
-//  // Perform primary key and value update
-//  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5, b=40", result,
-//                                  tuple_descriptor, rows_affected,
-//                                  error_message);
-//
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.ClearGarbage(0);
-//
-//  // confirm update
-//  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test WHERE b=40", result,
-//                                  tuple_descriptor, rows_affected,
-//                                  error_message);
-//  EXPECT_EQ('5', result[0][0]);
-//
-//  EXPECT_EQ(2, GetNumRecycledTuples(table));
-//  EXPECT_EQ(0, CountNumIndexOccurrences(table, 3, 30));
-//  EXPECT_EQ(2, CountNumIndexOccurrences(table, 5, 40));
-//
-//  txn = txn_manager.BeginTransaction();
-//  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-//  txn_manager.CommitTransaction(txn);
-//  epoch_manager.SetCurrentEpochId(++current_epoch);
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//}
-//
+// Scenario:  ABORT_DELETE
+// Insert tuple
+// Commit
+// Delete tuple
+// Abort
+// Assert RQ size = 1
+// Assert tuple found in 2 indexes
+TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
+  std::string test_name= "AbortDelete";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // delete, abort
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Abort();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+// Scenario: COMMIT_INS_DEL
+// Insert tuple
+// Delete tuple
+// Commit
+// Assert RQ.size = 1
+// Assert tuple found in 0 indexes
+TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
+  std::string test_name= "CommitInsertDelete";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // insert, delete, commit
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Delete(0);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+// Scenario:  ABORT_INS_DEL
+// Insert tuple
+// Delete tuple
+// Abort
+// Assert RQ size = 1
+// Assert tuple found in 0 indexes
+TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
+  std::string test_name= "AbortInsertDelete";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // insert, delete, abort
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Delete(0);
+  scheduler.Txn(0).Abort();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+//Scenario: COMMIT_UPDATE_DEL
+// Insert tuple
+// Commit
+// Update tuple
+// Delete tuple
+// Commit
+// Assert RQ.size = 2
+// Assert old tuple in 0 indexes
+// Assert new tuple in 0 indexes
+TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
+  std::string test_name= "CommitUpdateDelete";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // update, delete, commit
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Update(0, 2);
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Commit();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+// Scenario: ABORT_UPDATE_DEL
+// Insert tuple
+// Commit
+// Update tuple
+// Delete tuple
+// Abort
+// Assert RQ size = 2
+// Assert old tuple in 2 indexes
+// Assert new tuple in 1 index (primary key)
+TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
+  std::string test_name= "AbortUpdateDelete";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "DB");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  // update, delete, then abort
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 1);
+  scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Update(0, 2);
+  scheduler.Txn(1).Delete(0);
+  scheduler.Txn(1).Abort();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "DB");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+// Scenario: Update Primary Key Test
+// Insert tuple
+// Commit
+// Update primary key and value
+// Commit
+// Assert RQ.size = 2 (primary key update causes delete and insert)
+// Assert old tuple in 0 indexes
+// Assert new tuple in 2 indexes
+TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  auto table = database->GetTableWithName("test");
+  TestingTransactionUtil::AddSecondaryIndex(table);
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 30);");
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  // confirm setup
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test WHERE b=30", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ('3', result[0][0]);
+  EXPECT_EQ(2, CountNumIndexOccurrences(table, 3, 30));
+
+  // Perform primary key and value update
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5, b=40", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  // confirm update
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test WHERE b=40", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ('5', result[0][0]);
+
+  EXPECT_EQ(2, GetNumRecycledTuples(table));
+  EXPECT_EQ(0, CountNumIndexOccurrences(table, 3, 30));
+  EXPECT_EQ(2, CountNumIndexOccurrences(table, 5, 40));
+
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
 ////////////////////////////////////////////////////////
 //// OLD TESTS
 ///////////////////////////////////////////////////////
-//
-//// update -> delete
-//TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(1);
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  // create database
-//  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE0");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  // create a table with only one key
-//  const int num_key = 1;
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
-//
-//  EXPECT_EQ(1, gc_manager.GetTableCount());
-//
-//  //===========================
-//  // update a version here.
-//  //===========================
-//  auto ret = UpdateTuple(table.get(), 0);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//
-//  epoch_manager.SetCurrentEpochId(2);
-//
-//  // get expired epoch id.
-//  // as the current epoch id is set to 2,
-//  // the expected expired epoch id should be 1.
-//  auto expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(1, expired_eid);
-//
-//  auto current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(2, current_eid);
-//
-//  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(0, reclaimed_count);
-//
-//  EXPECT_EQ(1, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(3);
-//
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(2, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(3, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(1, reclaimed_count);
-//
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  //===========================
-//  // delete a version here.
-//  //===========================
-//  ret = DeleteTuple(table.get(), 0);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//
-//  epoch_manager.SetCurrentEpochId(4);
-//
-//  // get expired epoch id.
-//  // as the current epoch id is set to 4,
-//  // the expected expired epoch id should be 3.
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(3, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(4, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(0, reclaimed_count);
-//
-//  EXPECT_EQ(1, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(5);
-//
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(4, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(5, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(1, reclaimed_count);
-//
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//
-//  table.release();
-//
-//  // DROP!
-//  TestingExecutorUtil::DeleteDatabase("DATABASE0");
-//
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  EXPECT_THROW(
-//      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
-//      CatalogException);
-//  txn_manager.CommitTransaction(txn);
-//  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
-//}
-//
-//// insert -> delete -> insert
-//TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(1);
-//
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  // create database
-//  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE1");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  // create a table with only one key
-//  const int num_key = 1;
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
-//
-//  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
-//
-//  //===========================
-//  // insert a tuple here.
-//  //===========================
-//  auto ret = InsertTuple(table.get(), 100);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//
-//  epoch_manager.SetCurrentEpochId(2);
-//
-//  // get expired epoch id.
-//  // as the current epoch id is set to 2,
-//  // the expected expired epoch id should be 1.
-//  auto expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(1, expired_eid);
-//
-//  auto current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(2, current_eid);
-//
-//  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(0, reclaimed_count);
-//
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(3);
-//
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(2, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(3, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(0, reclaimed_count);
-//
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  //===========================
-//  // select the tuple.
-//  //===========================
-//  std::vector<int> results;
-//
-//  results.clear();
-//  ret = SelectTuple(table.get(), 100, results);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//  EXPECT_TRUE(results[0] != -1);
-//
-//  //===========================
-//  // delete the tuple.
-//  //===========================
-//  ret = DeleteTuple(table.get(), 100);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//
-//  epoch_manager.SetCurrentEpochId(4);
-//
-//  // get expired epoch id.
-//  // as the current epoch id is set to 4,
-//  // the expected expired epoch id should be 3.
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(3, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(4, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(0, reclaimed_count);
-//
-//  EXPECT_EQ(1, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(5);
-//
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//
-//  EXPECT_EQ(4, expired_eid);
-//
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//
-//  EXPECT_EQ(5, current_eid);
-//
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//
-//  EXPECT_EQ(1, reclaimed_count);
-//
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  //===========================
-//  // select the tuple.
-//  //===========================
-//  results.clear();
-//  ret = SelectTuple(table.get(), 100, results);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//  EXPECT_TRUE(results[0] == -1);
-//
-//  //===========================
-//  // insert the tuple again.
-//  //===========================
-//  ret = InsertTuple(table.get(), 100);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//
-//  //===========================
-//  // select the tuple.
-//  //===========================
-//  results.clear();
-//  ret = SelectTuple(table.get(), 100, results);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//  EXPECT_TRUE(results[0] != -1);
-//
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//
-//  table.release();
-//
-//  // DROP!
-//  TestingExecutorUtil::DeleteDatabase("DATABASE1");
-//
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  EXPECT_THROW(
-//      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE1", txn),
-//      CatalogException);
-//  txn_manager.CommitTransaction(txn);
-//  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
-//}
-//
-///*
-//Brief Summary : This tests tries to check immutability of a tile group.
-//Once a tile group is set immutable, gc should not recycle slots from the
-//tile group. We will first insert into a tile group and then delete tuples
-//from the tile group. After setting immutability further inserts or updates
-//should not use slots from the tile group where delete happened.
-//*/
-//TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
-//  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-//  epoch_manager.Reset(1);
-//
-//  std::vector<std::unique_ptr<std::thread>> gc_threads;
-//
-//  gc::GCManagerFactory::Configure(1);
-//  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-//  gc_manager.Reset();
-//
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//  // create database
-//  auto database = TestingExecutorUtil::InitializeDatabase("ImmutabilityDB");
-//  oid_t db_id = database->GetOid();
-//  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
-//
-//  // create a table with only one key
-//  const int num_key = 25;
-//  const size_t tuples_per_tilegroup = 5;
-//  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-//      num_key, "TABLE1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
-//
-//  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
-//
-//  oid_t num_tile_groups = (table.get())->GetTileGroupCount();
-//  EXPECT_EQ(num_tile_groups, (num_key / tuples_per_tilegroup) + 1);
-//
-//  // Making the 1st tile group immutable
-//  auto tile_group = (table.get())->GetTileGroup(0);
-//  auto tile_group_ptr = tile_group.get();
-//  auto tile_group_header = tile_group_ptr->GetHeader();
-//  tile_group_header->SetImmutability();
-//
-//  // Deleting a tuple from the 1st tilegroup
-//  auto ret = DeleteTuple(table.get(), 2);
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//  epoch_manager.SetCurrentEpochId(2);
-//  auto expired_eid = epoch_manager.GetExpiredEpochId();
-//  EXPECT_EQ(1, expired_eid);
-//  auto current_eid = epoch_manager.GetCurrentEpochId();
-//  EXPECT_EQ(2, current_eid);
-//  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
-//  EXPECT_EQ(0, reclaimed_count);
-//  EXPECT_EQ(1, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(3);
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//  EXPECT_EQ(2, expired_eid);
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//  EXPECT_EQ(3, current_eid);
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//  EXPECT_EQ(1, reclaimed_count);
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  // GetRecycledTupleSlot() should return null because deleted tuple was from
-//  // immutable tilegroup.
-//  auto location = gc_manager.GetRecycledTupleSlot((table.get())->GetOid());
-//  EXPECT_EQ(location.IsNull(), true);
-//
-//  // Deleting a tuple from the 2nd tilegroup which is mutable.
-//  ret = DeleteTuple(table.get(), 6);
-//
-//  EXPECT_TRUE(ret == ResultType::SUCCESS);
-//  epoch_manager.SetCurrentEpochId(4);
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//  EXPECT_EQ(3, expired_eid);
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//  EXPECT_EQ(4, current_eid);
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//  EXPECT_EQ(0, reclaimed_count);
-//  EXPECT_EQ(1, unlinked_count);
-//
-//  epoch_manager.SetCurrentEpochId(5);
-//  expired_eid = epoch_manager.GetExpiredEpochId();
-//  EXPECT_EQ(4, expired_eid);
-//  current_eid = epoch_manager.GetCurrentEpochId();
-//  EXPECT_EQ(5, current_eid);
-//  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
-//  unlinked_count = gc_manager.Unlink(0, expired_eid);
-//  EXPECT_EQ(1, reclaimed_count);
-//  EXPECT_EQ(0, unlinked_count);
-//
-//  // GetRecycledTupleSlot() should not return null because deleted tuple was from
-//  // mutable tilegroup.
-//  location = gc_manager.GetRecycledTupleSlot((table.get())->GetOid());
-//  EXPECT_EQ(location.IsNull(), false);
-//
-//  gc_manager.StopGC();
-//  gc::GCManagerFactory::Configure(0);
-//
-//  table.release();
-//  // DROP!
-//  TestingExecutorUtil::DeleteDatabase("ImmutabilityDB");
-//
-//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  EXPECT_THROW(
-//      catalog::Catalog::GetInstance()->GetDatabaseObject("ImmutabilityDB", txn),
-//      CatalogException);
-//  txn_manager.CommitTransaction(txn);
-//}
+
+// update -> delete
+TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  // create database
+  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE0");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  // create a table with only one key
+  const int num_key = 1;
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
+
+  EXPECT_EQ(1, gc_manager.GetTableCount());
+
+  //===========================
+  // update a version here.
+  //===========================
+  auto ret = UpdateTuple(table.get(), 0);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+
+  epoch_manager.SetCurrentEpochId(2);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 2,
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(3);
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(2, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(3, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(1, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  //===========================
+  // delete a version here.
+  //===========================
+  ret = DeleteTuple(table.get(), 0);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+
+  epoch_manager.SetCurrentEpochId(4);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 4,
+  // the expected expired epoch id should be 3.
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(3, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(4, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(5);
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(4, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(5, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(1, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
+  table.release();
+
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("DATABASE0");
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+}
+
+// insert -> delete -> insert
+TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  // create database
+  auto database = TestingExecutorUtil::InitializeDatabase("DATABASE1");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  // create a table with only one key
+  const int num_key = 1;
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
+
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+
+  //===========================
+  // insert a tuple here.
+  //===========================
+  auto ret = InsertTuple(table.get(), 100);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+
+  epoch_manager.SetCurrentEpochId(2);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 2,
+  // the expected expired epoch id should be 1.
+  auto expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(1, expired_eid);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(2, current_eid);
+
+  auto reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  auto unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(3);
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(2, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(3, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  //===========================
+  // select the tuple.
+  //===========================
+  std::vector<int> results;
+
+  results.clear();
+  ret = SelectTuple(table.get(), 100, results);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+  EXPECT_TRUE(results[0] != -1);
+
+  //===========================
+  // delete the tuple.
+  //===========================
+  ret = DeleteTuple(table.get(), 100);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+
+  epoch_manager.SetCurrentEpochId(4);
+
+  // get expired epoch id.
+  // as the current epoch id is set to 4,
+  // the expected expired epoch id should be 3.
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(3, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(4, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(0, reclaimed_count);
+
+  EXPECT_EQ(1, unlinked_count);
+
+  epoch_manager.SetCurrentEpochId(5);
+
+  expired_eid = epoch_manager.GetExpiredEpochId();
+
+  EXPECT_EQ(4, expired_eid);
+
+  current_eid = epoch_manager.GetCurrentEpochId();
+
+  EXPECT_EQ(5, current_eid);
+
+  reclaimed_count = gc_manager.Reclaim(0, expired_eid);
+
+  unlinked_count = gc_manager.Unlink(0, expired_eid);
+
+  EXPECT_EQ(1, reclaimed_count);
+
+  EXPECT_EQ(0, unlinked_count);
+
+  //===========================
+  // select the tuple.
+  //===========================
+  results.clear();
+  ret = SelectTuple(table.get(), 100, results);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+  EXPECT_TRUE(results[0] == -1);
+
+  //===========================
+  // insert the tuple again.
+  //===========================
+  ret = InsertTuple(table.get(), 100);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+
+  //===========================
+  // select the tuple.
+  //===========================
+  results.clear();
+  ret = SelectTuple(table.get(), 100, results);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+  EXPECT_TRUE(results[0] != -1);
+
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
+  table.release();
+
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("DATABASE1");
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE1", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+}
+
 
 }  // namespace test
 }  // namespace peloton
