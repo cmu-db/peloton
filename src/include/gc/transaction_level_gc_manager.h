@@ -105,7 +105,10 @@ class TransactionLevelGCManager : public GCManager {
   virtual void RecycleTransaction(
       concurrency::TransactionContext *txn) override;
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
+  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
+
+  virtual void RecycleUnusedTupleSlot(const ItemPointer &location) override;
+
 
   virtual void RegisterTable(const oid_t &table_id) override {
     // Insert a new entry for the table
