@@ -838,7 +838,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
-  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
   EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
   EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
 
