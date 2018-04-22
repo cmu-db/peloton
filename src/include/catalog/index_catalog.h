@@ -6,33 +6,13 @@
 //
 // Identification: src/include/catalog/index_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Index Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_index
-//
-// Schema: (column: column_name)
-// 0: index_oid (pkey)
-// 1: index_name
-// 2: table_oid (which table this index belongs to)
-// 3: index_type (default value is BWTREE)
-// 4: index_constraint
-// 5: unique_keys (is this index supports duplicate keys)
-// 6: indexed_attributes (indicate which table columns this index indexes. For
-// example a value of 0 2 would mean that the first and the third table columns
-// make up the index.)
-//
-// Indexes: (index offset: indexed columns)
-// 0: index_oid (unique & primary key)
-// 1: index_name (unique)
-// 2: table_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <set>
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
 
@@ -44,6 +24,11 @@ class IndexCatalogObject {
 
  public:
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+
+  // This constructor should only be used for what-if index API.
+  IndexCatalogObject(oid_t index_oid, std::string index_name, oid_t table_oid,
+                     IndexType index_type, IndexConstraintType index_constraint,
+                     bool unique_keys, std::set<oid_t> key_attrs);
 
   inline oid_t GetIndexOid() { return index_oid; }
   inline const std::string &GetIndexName() { return index_name; }

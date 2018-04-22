@@ -36,23 +36,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/libpg_query/ libpg_query.a)
 
 ##################################################################################
 
-# --[ tensorflow
-# Generate essential model files
-set(MODEL_GEN_DIR ${CMAKE_CURRENT_LIST_DIR}/brain/modelgen)
-set(MODEL_GEN_PY ${MODEL_GEN_DIR}/model_generator.py)
-set(MODEL_GEN_SETTINGS ${MODEL_GEN_DIR}/settings.json)
-set(MODEL_GEN_COMMAND python3 ${MODEL_GEN_PY} ${MODEL_GEN_SETTINGS} ${MODEL_GEN_DIR})
-
-message(STATUS "Tensorflow models being generated")
-execute_process(COMMAND ${MODEL_GEN_COMMAND}
-        RESULT_VARIABLE RETURN_VALUE)
-
-if (NOT RETURN_VALUE EQUAL 0)
-    message(FATAL_ERROR "Failed to generate tensorflow models.")
-endif()
-
-##################################################################################
-
 # --[ Peloton library
 
 # creates 'srcs' lists

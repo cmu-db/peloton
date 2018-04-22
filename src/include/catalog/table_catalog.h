@@ -60,6 +60,11 @@ class TableCatalogObject {
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, bool cached_only = false);
 
+  // Get index objects
+  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
+  bool EvictIndexObject(oid_t index_oid);
+  bool EvictIndexObject(const std::string &index_name);
+
   // Get columns
   void EvictAllColumnObjects();
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
@@ -80,11 +85,6 @@ class TableCatalogObject {
   oid_t table_oid;
   std::string table_name;
   oid_t database_oid;
-
-  // Get index objects
-  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
-  bool EvictIndexObject(oid_t index_oid);
-  bool EvictIndexObject(const std::string &index_name);
 
   // Get column objects
   bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);

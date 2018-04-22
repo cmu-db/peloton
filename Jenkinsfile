@@ -43,10 +43,15 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-4.8.4/llvm-3.7.1 (Debug)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Debug)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'sudo apt-get -y install software-properties-common'
+                        sh 'sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test'
+                        sh 'sudo apt-get update'
+                        sh 'sudo apt-get -y install gcc-5 g++-5'
+                        sh 'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 1 --slave /usr/bin/g++ g++ /usr/bin/g++-5'
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
@@ -59,10 +64,15 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-4.8.4/llvm-3.7.1 (Release)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Release)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'sudo apt-get -y install software-properties-common'
+                        sh 'sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test'
+                        sh 'sudo apt-get update'
+                        sh 'sudo apt-get -y install gcc-5 g++-5'
+                        sh 'sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 1 --slave /usr/bin/g++ g++ /usr/bin/g++-5'
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
