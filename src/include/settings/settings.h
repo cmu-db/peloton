@@ -171,10 +171,11 @@ SETTING_bool(brain,
             false,
             true, true)
 
-SETTING_string(peloton_address,
-               "ip and port of the peloton rpc service, address:port",
-               "127.0.0.1:15445",
-               false, false)
+// Enable or disable data collection
+SETTING_bool(brain_data_collection,
+             "Enable data collection for the brain (default true)",
+             true,
+             true, true)
 
 // Size of the brain task queue
 SETTING_int(brain_task_queue_size,
@@ -189,6 +190,16 @@ SETTING_int(brain_worker_pool_size,
             1,
             1, 16,
             false, false)
+
+SETTING_string(peloton_rpc_address,
+               "ip and port of the peloton rpc service, address:port",
+               "127.0.0.1:15445",
+               false, false)
+
+SETTING_string(peloton_address,
+               "dbstring to peloton",
+               "host=127.0.0.1 port=15721 user=default_database sslmode=disable application_name=psql",
+               false, false)
 
 //===----------------------------------------------------------------------===//
 // CODEGEN

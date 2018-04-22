@@ -45,6 +45,8 @@ class IndexMetricsCatalog : public AbstractCatalog {
   static IndexMetricsCatalog *GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return INDEX_METRICS_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // Write Related API
   //===--------------------------------------------------------------------===//

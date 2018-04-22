@@ -15,8 +15,6 @@
 #include <gflags/gflags.h>
 #include <google/protobuf/stubs/common.h>
 
-#include "tuning/index_tuner.h"
-#include "tuning/layout_tuner.h"
 #include "catalog/catalog.h"
 #include "common/statement_cache_manager.h"
 #include "common/thread_pool.h"
@@ -25,6 +23,8 @@
 #include "index/index.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
+#include "tuning/index_tuner.h"
+#include "tuning/layout_tuner.h"
 
 namespace peloton {
 
@@ -32,7 +32,7 @@ ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
   CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
-          settings::SettingId::connection_thread_count);
+      settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
@@ -56,7 +56,8 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
   // start GC.
-  gc::GCManagerFactory::Configure(settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
+  gc::GCManagerFactory::Configure(
+      settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
@@ -91,14 +92,19 @@ void PelotonInit::Initialize() {
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 
-  // TODO(Tianyi) Make this configurable in settings manager
   // Start Statistic Aggregator
-  stats::StatsAggregator::GetInstance().LaunchAggregator();
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::StatsAggregator::GetInstance().LaunchAggregator();
+  }
 }
 
 void PelotonInit::Shutdown() {
-  stats::StatsAggregator::GetInstance().ShutdownAggregator();
-
+  // Start Statistic Aggregator
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::StatsAggregator::GetInstance().ShutdownAggregator();
+  }
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto &index_tuner = tuning::IndexTuner::GetInstance();

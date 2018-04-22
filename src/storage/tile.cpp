@@ -15,16 +15,16 @@
 
 #include "catalog/schema.h"
 #include "common/exception.h"
-#include "common/macros.h"
-#include "type/serializer.h"
 #include "common/internal_types.h"
-#include "type/ephemeral_pool.h"
+#include "common/macros.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/backend_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "storage/tuple_iterator.h"
+#include "type/ephemeral_pool.h"
+#include "type/serializer.h"
 
 namespace peloton {
 namespace storage {
@@ -67,9 +67,17 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   // if (schema.IsInlined() == false) {
   pool = new type::EphemeralPool();
   //}
+
 }
 
 Tile::~Tile() {
+  // Record memory deallocation
+  if (table_id != INVALID_OID &&
+      static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->DecreaseTableMemoryAlloc(
+        database_id, table_id, this->tile_size);
+  }
   // reclaim the tile memory (INLINED data)
   // auto &storage_manager = storage::StorageManager::GetInstance();
   // storage_manager.Release(backend_type, data);
@@ -198,7 +206,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       new_header, *schema, tile_group, allocated_tuple_count);
 
   PELOTON_MEMCPY(static_cast<void *>(new_tile->data), static_cast<void *>(data),
-            tile_size);
+                 tile_size);
 
   // Do a deep copy if some column is uninlined, so that
   // the values in that column point to the new pool
@@ -350,8 +358,9 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Cache the column header
   column_header = new char[column_header_size];
-  PELOTON_MEMCPY(column_header, static_cast<const char *>(output.Data()) + start,
-            column_header_size);
+  PELOTON_MEMCPY(column_header,
+                 static_cast<const char *>(output.Data()) + start,
+                 column_header_size);
 
   return true;
 }
@@ -434,7 +443,8 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input,
 
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       message << "column " << column_itr << ": " << names[column_itr]
-              << ", type = " << static_cast<int>(types[column_itr]) << std::endl;
+              << ", type = " << static_cast<int>(types[column_itr])
+              << std::endl;
     }
 
     throw SerializationException(message.str());

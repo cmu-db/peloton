@@ -18,6 +18,10 @@
 
 namespace peloton {
 namespace stats {
+
+/**
+ * Metric for the memory usage and allocation
+ */
 class MemoryMetric : public AbstractMetric {
  public:
   MemoryMetric(MetricType type)
@@ -28,11 +32,11 @@ class MemoryMetric : public AbstractMetric {
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
-  inline void IncrementAllocation(int64_t bytes) { alloc_.Increment(bytes); }
+  inline void IncreaseAllocation(int64_t bytes) { alloc_.Increment(bytes); }
 
-  inline void IncrementUsage(int64_t bytes) { usage_.Increment(bytes); }
+  inline void IncreaseUsage(int64_t bytes) { usage_.Increment(bytes); }
 
-  inline void DecreaseAllocation(int64_t bytes) { alloc_.Increment(bytes); }
+  inline void DecreaseAllocation(int64_t bytes) { alloc_.Decrement(bytes); }
 
   inline void DecreaseUsage(int64_t bytes) { usage_.Decrement(bytes); }
 

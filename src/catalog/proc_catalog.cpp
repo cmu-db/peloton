@@ -21,8 +21,6 @@
 namespace peloton {
 namespace catalog {
 
-#define PROC_CATALOG_NAME "pg_proc"
-
 ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
                                      concurrency::TransactionContext *txn)
     : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
