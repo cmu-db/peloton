@@ -165,7 +165,6 @@ TEST_F(CatalogTests, IndexObject) {
   }
 
   auto index_oid = index_objects.begin()->second->GetIndexOid();
-  LOG_INFO("index oid %u", index_oid);
   auto index_obj = catalog::IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
   EXPECT_NE(nullptr, index_obj);
   // LOG_INFO("Found index oid %u, %s, %u", index_obj->GetIndexOid(), index_obj->GetIndexName().c_str(), index_obj->GetTableOid());

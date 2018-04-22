@@ -233,9 +233,10 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *idx_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *idx_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::INDEX_OID);
+ idx_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::INDEX_OID);
   expression::AbstractExpression *idx_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -258,7 +259,6 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     LOG_DEBUG("Found %lu index with oid %u", result_tuples.size(), index_oid);
   }
 
-  LOG_INFO("index catalog not found");
   // return empty object if not found
   return nullptr;
 }
@@ -324,9 +324,11 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::TABLE_OID);
+      oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_oid).Copy());

@@ -34,7 +34,6 @@ codegen::Value ComparisonTranslator::DeriveValue(CodeGen &codegen,
   codegen::Value left = row.DeriveValue(codegen, *comparison.GetChild(0));
   codegen::Value right = row.DeriveValue(codegen, *comparison.GetChild(1));
 
-  codegen.CallPrintf("left: %u, right: %u\n", {left.GetValue(), right.GetValue()});
 
   switch (comparison.GetExpressionType()) {
     case ExpressionType::COMPARE_EQUAL:
