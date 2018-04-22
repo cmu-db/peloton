@@ -408,8 +408,6 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   EXPECT_EQ(ResultType::SUCCESS, result0);
   EXPECT_EQ(ResultType::ABORTED, result1);
 
-  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
-
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
