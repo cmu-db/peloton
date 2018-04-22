@@ -103,7 +103,7 @@ void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
           LOG_DEBUG("Table name is %s",
-                    sql_statement.select_stmt->from_table.get()
+                    sql_statement->from_table.get()
                         ->GetTableName()
                         .c_str());
           table_names.push_back(
