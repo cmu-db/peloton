@@ -4,13 +4,13 @@
 //
 // tf_session_entity_output.cpp
 //
-// Identification: src/brain/tf_session_entity/tf_session_entity_output.cpp
+// Identification: src/brain/util/tf_session_entity/tf_session_entity_output.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/tf_session_entity/tf_session_entity_output.h"
+#include "brain/util/tf_session_entity/tf_session_entity_output.h"
 
 namespace peloton {
 namespace brain {
@@ -24,7 +24,7 @@ TFSEOUT_TYPE::TfSessionEntityOutput(const std::string &op) {
 }
 
 TFSEOUT_TEMPLATE_ARGUMENTS
-TFSEOUT_TYPE::TfSessionEntityOutput(const std::vector<int64_t>& dims,
+TFSEOUT_TYPE::TfSessionEntityOutput(const std::vector<int64_t> &dims,
                                     const std::string &op) {
   this->placeholder_name_ = op;
   this->DetermineDataType();

@@ -59,7 +59,7 @@ static inline uint64_t CountLeadingZeroes(uint64_t i) {
 //===--------------------------------------------------------------------===//
 static inline uint64_t NextPowerOf2(uint64_t n) {
 #if defined __GNUC__ || defined __clang__
-  PL_ASSERT(n > 0);
+  PELOTON_ASSERT(n > 0);
   return 1ul << (64 - CountLeadingZeroes(n - 1));
 #else
   n--;

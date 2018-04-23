@@ -46,7 +46,7 @@ class IndexScanPlan : public AbstractScan {
      * We need to do this since this might be created even when an index
      * is not required, e.g. inside hybrid scan
      */
-    IndexScanDesc() : index_obj{nullptr} {}
+    IndexScanDesc() : index_id{INVALID_OID} {}
 
     /*
      * Constructor
@@ -56,12 +56,12 @@ class IndexScanPlan : public AbstractScan {
      * be called to notify later procedures of the absense of an index
      */
     IndexScanDesc(
-        std::shared_ptr<index::Index> p_index_obj,
+        oid_t p_index_id,
         const std::vector<oid_t> &p_tuple_column_id_list,
         const std::vector<ExpressionType> &expr_list_p,
         const std::vector<type::Value> &p_value_list,
         const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
-        : index_obj(p_index_obj),
+        : index_id(p_index_id),
           tuple_column_id_list(p_tuple_column_id_list),
           expr_list(expr_list_p),
           value_list(p_value_list),
@@ -79,8 +79,8 @@ class IndexScanPlan : public AbstractScan {
     // argument. This is a bad design but currently we have to live with it
     // In order to prevent the scan predicate optimizer from trying to
     // optimizing the index scan while the index pointer is not valid
-    // this should be set to 0 for an empty initialization
-    std::shared_ptr<index::Index> index_obj;
+    // this should be set to INVALID_OID for an empty initialization
+    oid_t index_id;
 
     // A list of columns id in the base table that has a scan predicate
     // (only for indexed column in the base table)
@@ -113,7 +113,7 @@ class IndexScanPlan : public AbstractScan {
     LOG_TRACE("Destroyed a index scan plan!");
   }
 
-  std::shared_ptr<index::Index> GetIndex() const { return index_; }
+  oid_t GetIndexId() const { return index_id_; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -167,7 +167,7 @@ class IndexScanPlan : public AbstractScan {
       new_runtime_keys.push_back(key->Copy());
     }
 
-    IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
+    IndexScanDesc desc(index_id_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
         GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc, false);
@@ -176,7 +176,7 @@ class IndexScanPlan : public AbstractScan {
 
  private:
   /** @brief index associated with index scan. */
-  std::shared_ptr<index::Index> index_;
+  oid_t index_id_;
 
   // A list of column IDs involved in the index scan no matter whether
   // it is indexed or not (i.e. select statement)

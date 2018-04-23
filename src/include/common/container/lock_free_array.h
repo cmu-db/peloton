@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
-
+#include "tbb/concurrent_vector.h"
+#include "tbb/tbb_allocator.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -22,18 +22,16 @@
 
 namespace peloton {
 
-#define LOCK_FREE_ARRAY_MAX_SIZE 1024 * 1024
+static const size_t kLockfreeArrayInitSize = 256;
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
-#define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>
 
 // LOCK_FREE_ARRAY_TYPE
 #define LOCK_FREE_ARRAY_TYPE LockFreeArray<ValueType>
 
-LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
+template <typename ValueType>
 class LockFreeArray {
  public:
-
   LockFreeArray();
   ~LockFreeArray();
 
@@ -47,10 +45,11 @@ class LockFreeArray {
   ValueType Find(const std::size_t &offset) const;
 
   // Get a valid item
-  ValueType FindValid(const std::size_t &offset, const ValueType& invalid_value) const;
+  ValueType FindValid(const std::size_t &offset,
+                      const ValueType &invalid_value) const;
 
   // Delete key from the lock_free_array
-  bool Erase(const std::size_t &offset, const ValueType& invalid_value);
+  bool Erase(const std::size_t &offset, const ValueType &invalid_value);
 
   // Returns item count in the lock_free_array
   size_t GetSize() const;
@@ -59,20 +58,15 @@ class LockFreeArray {
   bool IsEmpty() const;
 
   // Clear all elements and reset them to default value
-  void Clear(const ValueType& invalid_value);
+  void Clear();
 
   // Exists ?
-  bool Contains(const ValueType& value);
+  bool Contains(const ValueType &value);
 
  private:
-
-  // lock free array type
-  typedef std::array<ValueType, LOCK_FREE_ARRAY_MAX_SIZE> lock_free_array_t;
-
-  std::atomic<std::size_t> lock_free_array_offset {0};
-
   // lock free array
-  std::unique_ptr<lock_free_array_t> lock_free_array;
+  tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>>
+      lock_free_array;
 };
 
 }  // namespace peloton

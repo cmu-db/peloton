@@ -111,8 +111,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in different order from schema.
      */
-
-    // Currently fails. See #1197
     @Test
     public void testPS_1Tuple_CS_2() throws SQLException {
 	
@@ -135,8 +133,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in different order from schema, with one constant column.
      */
-
-    // Currently fails. See #1197
     @Test
     public void testPS_1Tuple_CS_3() throws SQLException {
 
@@ -182,8 +178,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 1 tuple insert, with columns inserted
      * in schema order, one constant column
      */
-    // Works, due to use of insert rather than push back
-
     @Test
     public void testPS_1Tuple_CS_5() throws SQLException {
 	
@@ -205,8 +199,6 @@ public class InsertPSTest extends PLTestBase {
     /**
      * Prepared statement, 1 tuple insert, all constants
      */
-    // Works, due to use of insert rather than push back
-
     @Test
     public void testPS_1Tuple_CS_6() throws SQLException {
 	
@@ -295,7 +287,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in different order from schema.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_2() throws SQLException {
 	
@@ -325,7 +316,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in different order from schema, with one constant column.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_3() throws SQLException {
 
@@ -355,7 +345,6 @@ public class InsertPSTest extends PLTestBase {
      * in different order from schema, with one constant column.
      * Variant of above, with constant column last.
      */
-    // Currently fails. See #1197
     @Test
     public void testPS_2Tuple_CS_3a() throws SQLException {
 
@@ -384,7 +373,6 @@ public class InsertPSTest extends PLTestBase {
      * Prepared statement, 2 tuple insert, with columns inserted
      * in schema order, with 2nd column missing.
      */
-    // Currently failing. See comments in #1197
     @Test
     public void testPS_2Tuple_CS_4() throws SQLException {
 
@@ -407,104 +395,6 @@ public class InsertPSTest extends PLTestBase {
 	checkRow(rs,
 		 new String [] {"c1", "c2", "c3"},
 		 new int [] {11, 0, 13});
-        assertNoMoreRows(rs);
-    }
-    
-
-    /* --------------------------------------------
-     * simple (non-prepared) insert statement tests
-    * ---------------------------------------------
-    */
-    
-    /**
-     * 1 tuple insert, with no column specification.
-     */
-    //@Test
-    public void test_1Tuple_NCS() throws SQLException {
-	
-        String sql = "INSERT INTO tbl VALUES (1, 2, 3);";
-        Statement stmt = conn.createStatement();
-        stmt.execute(sql);
-
-        String s_sql = "SELECT * FROM tbl;";
-        Statement s_stmt = conn.createStatement();
-        ResultSet rs = s_stmt.executeQuery(s_sql);
-	
-        rs.next();
-        assertEquals(rs.getInt("c1"), 1);
-        assertEquals(rs.getInt("c2"), 2);
-        assertEquals(rs.getInt("c3"), 3);
-        assertNoMoreRows(rs);
-    }
-
-    /**
-     * 1 tuple insert, with columns inserted in schema order.
-     */
-    //@Test
-    public void test_1Tuple_CS_1() throws SQLException {
-	
-        String sql = "INSERT INTO tbl (c1, c2, c3) VALUES (1, 2, 3);";
-        Statement stmt = conn.createStatement();
-        stmt.execute(sql);
-
-        String s_sql = "SELECT * FROM tbl;";
-        Statement s_stmt = conn.createStatement();
-        ResultSet rs = s_stmt.executeQuery(s_sql);
-
-        rs.next();
-        assertEquals(rs.getInt("c1"), 1);
-        assertEquals(rs.getInt("c2"), 2);
-        assertEquals(rs.getInt("c3"), 3);
-        assertNoMoreRows(rs);
-    }
-
-    /**
-     * 1 tuple insert, with columns inserted in different order from schema.
-     */
-    //@Test
-    public void test_1Tuple_CS_2() throws SQLException {
-	
-        String sql = "INSERT INTO tbl (c3, c1, c2) VALUES (3, 1, 2);";
-        Statement stmt = conn.createStatement();
-        stmt.execute(sql);
-
-        String s_sql = "SELECT * FROM tbl;";
-        Statement s_stmt = conn.createStatement();
-        ResultSet rs = s_stmt.executeQuery(s_sql);
-
-        rs.next();
-        assertEquals(rs.getInt("c1"), 1);
-        assertEquals(rs.getInt("c2"), 2);
-        assertEquals(rs.getInt("c3"), 3);
-        assertNoMoreRows(rs);
-    }
-
-    /* 2 tuple (non-prepared statement) inserts */
-    
-    /**
-     * 2 tuple insert, with no column specification.
-     */
-    //@Test
-    public void test_2Tuple_NCS() throws SQLException {
-	
-        String sql = "INSERT INTO tbl VALUES (1, 2, 3), (11, 12, 13);";
-        Statement stmt = conn.createStatement();
-        stmt.execute(sql);
-
-        String s_sql = "SELECT * FROM tbl;";
-        Statement s_stmt = conn.createStatement();
-        ResultSet rs = s_stmt.executeQuery(s_sql);
-
-        rs.next();
-        assertEquals(rs.getInt("c1"), 1);
-        assertEquals(rs.getInt("c2"), 2);
-        assertEquals(rs.getInt("c3"), 3);
-
-        rs.next();
-        assertEquals(rs.getInt("c1"), 11);
-        assertEquals(rs.getInt("c2"), 12);
-        assertEquals(rs.getInt("c3"), 13);
-	
         assertNoMoreRows(rs);
     }
 }

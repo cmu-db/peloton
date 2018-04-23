@@ -79,7 +79,7 @@
 //   //===--------------------------------------------------------------------===//
 //   else if (logging::LoggingUtil::IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
 //     LOG_ERROR("currently, we do not support write behind logging.");
-//     PL_ASSERT(false);
+//     PELOTON_ASSERT(false);
 //     // Test a simple log process
 //     PrepareLogFile();
 

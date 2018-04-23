@@ -24,12 +24,17 @@
 #include <unistd.h>
 
 #include "tbb/concurrent_vector.h"
+#include "tbb/concurrent_unordered_set.h"
 
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "container/cuckoo_map.h"
+
+// Impose Row-major to avoid confusion
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#include "eigen3/Eigen/Dense"
 
 namespace peloton {
 
@@ -671,6 +676,7 @@ enum class StatementType {
   ANALYZE = 15,               // analyze type
   VARIABLE_SET = 16,          // variable set statement type
   CREATE_FUNC = 17,           // create func statement type
+  EXPLAIN = 18                // explain statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -704,7 +710,8 @@ enum class QueryType {
   QUERY_INVALID = 20,
   QUERY_CREATE_TRIGGER = 21,
   QUERY_CREATE_SCHEMA = 22,
-  QUERY_CREATE_VIEW = 23
+  QUERY_CREATE_VIEW = 23,
+  QUERY_EXPLAIN = 24
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
@@ -1207,6 +1214,8 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
+typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
+
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
   INVALID,
@@ -1415,5 +1424,11 @@ enum class SSLLevel {
   SSL_PREFER = 1,
   SSL_VERIIFY = 2,
 };
+
+// Eigen/Matrix types used in brain
+// TODO(saatvik): Generalize Eigen utilities across all types
+typedef std::vector<std::vector<float>> matrix_t;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+    matrix_eig;
 
 }  // namespace peloton

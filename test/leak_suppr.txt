@@ -4,4 +4,6 @@
 # 
 leak:src_backend_utils_mmgr_mcxt.c
 # suppress the tensorflow background thread problem(#1232)
-leak:tf_session_entity.cpp
+leak:tensorflow::thread::EigenEnvironment::CreateThread
+leak:tensorflow::thread::ThreadPool::ThreadPool
+leak:__cxa_thread_atexit_impl

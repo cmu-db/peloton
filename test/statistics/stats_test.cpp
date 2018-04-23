@@ -213,7 +213,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //
 //  // Ensure that the tile group is as expected.
 //  const catalog::Schema *schema = data_table->GetSchema();
-//  PL_ASSERT(schema->GetColumnCount() == 4);
+//  PELOTON_ASSERT(schema->GetColumnCount() == 4);
 //
 //  // Insert tuples into tile_group.
 //  std::vector<ItemPointer> tuple_slot_ids;

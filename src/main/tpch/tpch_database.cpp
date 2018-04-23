@@ -64,7 +64,7 @@ void ForEachLine(const std::string fname, std::function<void(char *)> cb) {
 
     size_t tail_size = end - line_start;
     if (tail_size > 0) {
-      PL_MEMCPY(buffer, line_start, tail_size);
+      PELOTON_MEMCPY(buffer, line_start, tail_size);
       buf_pos = buffer + tail_size;
       bytes_to_read -= tail_size;
     }
@@ -75,7 +75,7 @@ void ForEachLine(const std::string fname, std::function<void(char *)> cb) {
 // Convert the given string into a i32 date
 uint32_t ConvertDate(char *p) {
   std::tm t_shipdate;
-  PL_MEMSET(&t_shipdate, 0, sizeof(std::tm));
+  PELOTON_MEMSET(&t_shipdate, 0, sizeof(std::tm));
   strptime(p, "%Y-%m-%d", &t_shipdate);
   t_shipdate.tm_isdst = -1;
   return static_cast<uint32_t>(mktime(&t_shipdate));
@@ -442,8 +442,8 @@ void TPCHDatabase::LoadPartTable() {
 
     // Insert into table
     ItemPointer tuple_slot_id = table.InsertTuple(&tuple);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn_manager.PerformInsert(txn, tuple_slot_id);
 
     num_tuples++;
@@ -451,7 +451,7 @@ void TPCHDatabase::LoadPartTable() {
   });
 
   // Commit
-  PL_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
 
   timer.Stop();
   LOG_INFO("Loading Part finished: %.2f ms (%lu tuples)\n",
@@ -542,15 +542,15 @@ void TPCHDatabase::LoadCustomerTable() {
 
     // Insert into table
     ItemPointer tuple_slot_id = table.InsertTuple(&tuple);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn_manager.PerformInsert(txn, tuple_slot_id);
 
     num_tuples++;
   });
 
   // Commit
-  PL_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
+  PELOTON_ASSERT(txn_manager.CommitTransaction(txn) == ResultType::SUCCESS);
 
   timer.Stop();
   LOG_INFO("Loading Customer finished: %.2f ms (%lu tuples)\n",
@@ -659,8 +659,8 @@ void TPCHDatabase::LoadLineitemTable() {
 
     // Insert into table
     ItemPointer tuple_slot_id = table.InsertTuple(&tuple);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn_manager.PerformInsert(txn, tuple_slot_id);
 
     num_tuples++;
@@ -668,7 +668,7 @@ void TPCHDatabase::LoadLineitemTable() {
 
   // Commit
   auto res = txn_manager.CommitTransaction(txn);
-  PL_ASSERT(res == ResultType::SUCCESS);
+  PELOTON_ASSERT(res == ResultType::SUCCESS);
   if (res != ResultType::SUCCESS) {
     LOG_ERROR("Could not commit transaction during load!");
   }

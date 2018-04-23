@@ -1,38 +1,102 @@
 
+This directory contains tests using Junit4 and JDBC.
 
-This directory contains tests using Junit4 and JDBC and prepared statements.
+Installation and pre-requisites
+-------------------------------
+You'll need
+- java JDK or JRE
+- ant
 
-To compile:
-make
+The necessary Java libraries supporting these tests are included in the
+lib directory.
 
-To run, using the Junit console:
-1. Start up the database server, manually, e.g.
+Installing ant
+--------------
+
+On Ubuntu:
+sudo apt-get install ant
+
+Running the tests
+-----------------
+
+The tests are integrated into Travis and Jenkins. They may also be run
+manually. There are several different ways in which the tests may
+be run.
+
+One step run
+------------
+
+Run using the python script. This will compile the tests, run peloton
+(provided it has been built in this development tree), and run the tests.
+
+./run_junit.py
+
+
+Manual run with the ant junit runner
+------------------------------------
+
+1. Compile the tests.
+   ant compile
+
+2. To run the tests, first start Peloton manually in a separate shell, e.g. 
    ./peloton
 
-2. Run the tests, (from this directory):
-   make test
+3. Run the tests, (from this directory):
+   ant test
+
+Manual run with the JUnit console runner
+----------------------------------------
+This method provides clearer, human friendly output.
+
+This requires Java 8 or later.
+This is not installed as default on Ubuntu 14.04. It is on Ubuntu 16.04 and
+later.
+
+1. Compile the tests.
+   ant compile
+
+2. To run the tests, first start Peloton manually in a separate shell, e.g. 
+   ./peloton
+
+3. Run the tests, (from this directory):
+   ant testconsole
+
+Adding new tests
+----------------
+
+No changes are necessary to the antfile (build.xml). Ant compiles all
+java files present in this directory. The test runners find all compiled
+tests and run them.
+
+Code structure for tests
+------------------------
+- PLTestBase contains supporting functions shared across tests. Supplement
+  as needed. Avoid duplicating code in tests.
+
+- Add a new XXX.java file for each new test class. Each class may
+  contain as many tests as desired. The current tests use
+  one schema for the class.
+
+- See UpdateTest.java for an example of a simple test.
+  - Each test will need a Connection variable and SQL statements
+    to setup the tables.
+
+- See InsertPSTest.java for additional examples, including use
+  of prepared statements. Most likely you'll want to implement
+  using normal statements rather than prepared statements.
+
+- Setup() is called prior to each test
+- Teardown() is called after each test
+  If you need different granularity, see the JUnit4 documentation. Class
+  level setup / teardown is possible.
+
+- Functions annotated with @Test are the actual tests.
+  Tests may be temporarily disabled by commented out the annotation, e.g.
+  //@Test.
 
 
-If the JUnit console output style is not to your taste,
-they can be run more directly using the Junit runner. Copy the following
-code into a file, and invoke it from this directory, e.g.
-   bash run_tests.sh
-
-# construct the class path
-CP=".:lib/hamcrest-core-1.3.jar:lib/postgresql-9.4.1209.jre6.jar:lib/junit-4.12.jar"
-
-# execute the InsertPSTest class. More than one test class may be
-# supplied on the command line
-java -cp $CP org.junit.runner.JUnitCore InsertPSTest
-
-
-Test notes
+Other tips
 ----------
+ant -p
 
-1. The InsertTPCCTest uses a table schema and insert statment from the
-   TPPC benchmark.
-   Peloton fails this test. It will be enabled once fixed.
-
-2. InsertPSTest contains a set of prepared statement tests. The tests that
-   currently do not pass on Peloton are disabled.
-   	     
+will show available targets

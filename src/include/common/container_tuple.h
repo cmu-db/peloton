@@ -56,7 +56,7 @@ class ContainerTuple : public AbstractTuple {
                 UNUSED_ATTRIBUTE const type::Value &value) override {}
 
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(container_ != nullptr);
     return container_->GetValue(tuple_id_, column_id);
   }
 
@@ -188,8 +188,8 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   ContainerTuple(std::vector<type::Value> *container) : container_(container) {}
 
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
-    PL_ASSERT(column_id < container_->size());
+    PELOTON_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(column_id < container_->size());
 
     return (*container_)[column_id];
   }
@@ -214,7 +214,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
 
   bool EqualsNoSchemaCheck(
       const ContainerTuple<std::vector<type::Value>> &other) const {
-    PL_ASSERT(container_->size() == other.container_->size());
+    PELOTON_ASSERT(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       type::Value lhs = GetValue(column_itr);
@@ -258,14 +258,14 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
       : container_(container), tuple_id_(tuple_id), column_ids_(column_ids) {}
 
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(container_ != nullptr);
     auto col_id =
         (column_ids_ != nullptr ? column_ids_->at(column_id) : column_id);
     return container_->GetValue(tuple_id_, col_id);
   }
 
   void SetValue(oid_t column_id, const type::Value &value) override {
-    PL_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(container_ != nullptr);
     type::Value val = value.Copy();
     auto col_id =
         (column_ids_ != nullptr ? column_ids_->at(column_id) : column_id);

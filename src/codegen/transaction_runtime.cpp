@@ -73,7 +73,7 @@ bool TransactionRuntime::IsOwner(concurrency::TransactionContext &txn,
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   bool is_written = txn_manager.IsWritten(&txn, tile_group_header,
                                           tuple_offset);
-  PL_ASSERT((is_owner == false && is_written == true) == false);
+  PELOTON_ASSERT((is_owner == false && is_written == true) == false);
   if (is_owner == true && is_written == true)
     return true;
   return false;

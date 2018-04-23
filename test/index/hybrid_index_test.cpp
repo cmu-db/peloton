@@ -77,9 +77,9 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    auto column = catalog::Column(type::TypeId::INTEGER,
-                                  type::Type::GetTypeSize(type::TypeId::INTEGER),
-                                  std::to_string(col_itr), is_inlined);
+    auto column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
 
@@ -144,8 +144,8 @@ void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
         hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
-    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
-    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
@@ -158,7 +158,8 @@ expression::AbstractExpression *GetPredicate() {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    0);
 
   // Second, create constant value expression.
   auto constant_value_left =
@@ -174,7 +175,8 @@ expression::AbstractExpression *GetPredicate() {
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    0);
 
   auto constant_value_right =
       type::ValueFactory::GetIntegerValue(tuple_end_offset);
@@ -198,8 +200,7 @@ void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
                               std::vector<ExpressionType> &expr_types,
                               std::vector<type::Value> &values) {
   key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+  expr_types.push_back(ExpressionType::COMPARE_GREATERTHANOREQUALTO);
   values.push_back(
       type::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
 
@@ -303,7 +304,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 
   auto predicate = GetPredicate();
 
@@ -349,7 +350,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 
   auto predicate = GetPredicate();
 
@@ -374,7 +375,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
 void CopyTuple(const oid_t &tuple_slot_id, storage::Tuple *tuple,
                storage::TileGroup *tile_group, const size_t column_count) {
-  PL_ASSERT(tuple->GetColumnCount() == column_count);
+  PELOTON_ASSERT(tuple->GetColumnCount() == column_count);
   for (oid_t col_id = 0; col_id < column_count; ++col_id) {
     type::Value val = tile_group->GetValue(tuple_slot_id, col_id);
     tuple->SetValue(col_id, val, nullptr);

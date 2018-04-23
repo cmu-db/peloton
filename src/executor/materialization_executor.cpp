@@ -52,7 +52,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(children_.size() == 1);
 
   return true;
 }
@@ -168,7 +168,7 @@ void MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      PL_ASSERT(it != old_to_new_cols.end());
+      PELOTON_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -182,7 +182,7 @@ void MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    PL_ASSERT(new_column_offsets.size() == old_column_ids.size());
+    PELOTON_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -254,7 +254,7 @@ void MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      PL_ASSERT(it != old_to_new_cols.end());
+      PELOTON_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
