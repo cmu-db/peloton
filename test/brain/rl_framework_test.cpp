@@ -31,11 +31,17 @@ class RLFrameworkTest : public PelotonTest {
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
+  std::unordered_map<std::string, oid_t> column_id_map_;
+  std::unordered_map<std::string, oid_t> configuration_id_map_;
+  oid_t next_column_id_;
+  oid_t next_config_id_;
 
  public:
   RLFrameworkTest()
       : catalog_{catalog::Catalog::GetInstance()},
-        txn_manager_(&concurrency::TransactionManagerFactory::GetInstance()) {
+        txn_manager_(&concurrency::TransactionManagerFactory::GetInstance()),
+        next_column_id_(0),
+        next_config_id_(0) {
     catalog_->Bootstrap();
   }
 
@@ -127,6 +133,83 @@ class RLFrameworkTest : public PelotonTest {
 
     return result;
   }
+
+  std::string GetStringFromTriplet(oid_t a, oid_t b, oid_t c) {
+    std::ostringstream str_stream;
+    str_stream << a << ":" << b << ":" << c;
+    return str_stream.str();
+  }
+
+  std::string GetStringFromIndexConfig(
+      const brain::IndexConfiguration &config) {
+    std::ostringstream str_stream;
+    auto config_indexes = config.GetIndexes();
+    for (const auto &index_obj : config_indexes) {
+      str_stream << index_obj->db_oid << ":" << index_obj->table_oid;
+      for (auto column_oid : index_obj->column_oids) {
+        str_stream << "-" << column_oid;
+      }
+    }
+    return str_stream.str();
+  }
+
+  void InsertNextColumnToMap(const std::tuple<oid_t, oid_t, oid_t> &col) {
+    auto col_str = GetStringFromTriplet(std::get<0>(col), std::get<1>(col),
+                                        std::get<2>(col));
+    column_id_map_[col_str] = next_column_id_++;
+  }
+
+  void InsertNextConfigToMap(const brain::IndexConfiguration &config) {
+    auto config_str = GetStringFromIndexConfig(config);
+    configuration_id_map_[config_str] = next_config_id_++;
+  }
+
+  void GenerateColumnIdMap() {
+    auto all_columns = GetAllColumns();
+    for (const auto &it : all_columns) {
+      InsertNextColumnToMap(it);
+    }
+  }
+
+  std::vector<std::vector<oid_t>> EnumerateNColumns(std::vector<oid_t> col_oids,
+                                                    size_t n) {
+    std::vector<std::vector<oid_t>> enumeration;
+
+    // TODO: enumerate the col oids
+    col_oids.push_back((oid_t)n);
+
+    return enumeration;
+  }
+
+  void GenerateConfigIdMap() {
+    // TODO: Generate all possible index configurations
+  }
+
+  bool GetColumnMapId(const std::tuple<oid_t, oid_t, oid_t> &col,
+                      oid_t &col_id) {
+    auto col_str = GetStringFromTriplet(std::get<0>(col), std::get<1>(col),
+                                        std::get<2>(col));
+    auto it = column_id_map_.find(col_str);
+    if (it == column_id_map_.end()) {
+      return false;
+    }
+    col_id = it->second;
+    return true;
+  }
+
+  bool GetConfigMapId(const brain::IndexConfiguration &config,
+                      oid_t &config_id) {
+    auto config_str = GetStringFromIndexConfig(config);
+    auto it = configuration_id_map_.find(config_str);
+    if (it == configuration_id_map_.end()) {
+      return false;
+    }
+    config_id = it->second;
+    return true;
+  }
+
+  oid_t GetNextColumnId() { return next_column_id_; }
+  oid_t GetNextConfigId() { return next_config_id_; }
 };
 
 TEST_F(RLFrameworkTest, BasicTest) {
@@ -141,14 +224,18 @@ TEST_F(RLFrameworkTest, BasicTest) {
   auto all_columns = GetAllColumns();
   LOG_DEBUG("All columns:");
   for (const auto &it : all_columns) {
-    LOG_DEBUG("column [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it), (int)std::get<2>(it));
+    LOG_DEBUG("column [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it),
+              (int)std::get<2>(it));
   }
 
   auto all_indexes = GetAllIndexes();
   LOG_DEBUG("All indexes:");
   for (const auto &it : all_indexes) {
-    LOG_DEBUG("index [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it), (int)std::get<2>(it));
+    LOG_DEBUG("index [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it),
+              (int)std::get<2>(it));
   }
+
+  GenerateColumnIdMap();
 }
 
 }  // namespace test
