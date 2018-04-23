@@ -50,8 +50,7 @@ class AbstractOptimizer {
   virtual ~AbstractOptimizer();
 
   virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree, 
-      const std::string default_database_name,
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       concurrency::TransactionContext *txn) = 0;
 
   virtual void Reset(){};
