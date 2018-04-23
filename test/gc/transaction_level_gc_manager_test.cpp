@@ -501,8 +501,10 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 1));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -598,11 +600,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-
-
   EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1,0, 1));
-
-
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0,2));
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1,0, 2));
 
@@ -968,13 +966,8 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortUpdateDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-
-
   EXPECT_EQ(2, CountOccurrencesInAllIndexes(table.get(), 0, 1));
-
-
   EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1,0, 2));
-
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
