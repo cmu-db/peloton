@@ -294,7 +294,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
 }
 
 //// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert
-///or FK constraints) violated)
+/// or FK constraints) violated)
 //// Fail to insert a tuple
 //// Abort
 //// Assert RQ size = 1
