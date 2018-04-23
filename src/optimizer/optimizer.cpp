@@ -44,8 +44,6 @@
 
 #include "storage/data_table.h"
 
-#include "binder/bind_node_visitor.h"
-
 using std::vector;
 using std::unordered_map;
 using std::shared_ptr;
@@ -92,20 +90,17 @@ void Optimizer::OptimizeLoop(int root_group_id,
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
-    const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name,
+    const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
     concurrency::TransactionContext *txn) {
-  // Base Case
-  if (parse_tree_list->GetStatements().size() == 0) return nullptr;
+  if (parse_tree_list->GetStatements().empty()) {
+    // TODO: create optimizer exception
+    throw CatalogException(
+        "Parse tree list has no parse trees. Cannot build plan");
+  }
+  // TODO: support multi-statement queries
+  auto parse_tree = parse_tree_list->GetStatement(0);
 
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
-
-  auto parse_tree = parse_tree_list->GetStatements().at(0).get();
-
-  // Run binder
-  auto bind_node_visitor =
-      make_shared<binder::BindNodeVisitor>(txn, default_database_name);
-  bind_node_visitor->BindNameToNode(parse_tree);
 
   // Handle ddl statement
   bool is_ddl_stmt;
