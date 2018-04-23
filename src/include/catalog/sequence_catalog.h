@@ -78,12 +78,10 @@ class SequenceCatalogObject {
 
   std::mutex sequence_mutex;  // mutex for all operations
   int64_t GetNextVal() {
-    std::lock_guard<std::mutex> lock(sequence_mutex);
     return get_next_val();
   };
 
   int64_t GetCurrVal() {
-    std::lock_guard<std::mutex> lock(sequence_mutex);
     return seq_curr_val;
   };
 

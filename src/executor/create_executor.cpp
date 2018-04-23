@@ -279,7 +279,6 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
 bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
   auto txn = context_->GetTransaction();
   std::string database_name = node.GetDatabaseName();
-  std::string table_name = node.GetTableName();
   std::string sequence_name = node.GetSequenceName();
 
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(

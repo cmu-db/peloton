@@ -120,7 +120,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
   LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
   if (GetSequence(database_oid, sequence_name, txn) != nullptr) {
     throw SequenceException(
-        StringUtil::Format("Insert Sequence with Duplicate Sequence Name: %s",
+        StringUtil::Format("Cannot insert Sequence with Duplicate Sequence Name: %s",
                            sequence_name.c_str()));
   }
 
