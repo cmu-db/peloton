@@ -80,12 +80,13 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
-  std::vector<std::tuple<oid_t, oid_t>> GetAllColumns() {
-    std::vector<std::tuple<oid_t, oid_t>> result;
+  std::vector<std::tuple<oid_t, oid_t, oid_t>> GetAllColumns() {
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> result;
 
     auto txn = txn_manager_->BeginTransaction();
 
     const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
+    oid_t db_oid = db_object->GetDatabaseOid();
     const auto table_objects = db_object->GetTableObjects();
 
     for (const auto &it : table_objects) {
@@ -94,7 +95,31 @@ class RLFrameworkTest : public PelotonTest {
       const auto column_objects = table_obj->GetColumnObjects();
       for (const auto &col_it : column_objects) {
         oid_t col_oid = col_it.first;
-        result.emplace_back(table_oid, col_oid);
+        result.emplace_back(db_oid, table_oid, col_oid);
+      }
+    }
+
+    txn_manager_->CommitTransaction(txn);
+
+    return result;
+  }
+
+  std::vector<std::tuple<oid_t, oid_t, oid_t>> GetAllIndexes() {
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> result;
+
+    auto txn = txn_manager_->BeginTransaction();
+
+    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
+    oid_t db_oid = db_object->GetDatabaseOid();
+    const auto table_objects = db_object->GetTableObjects();
+
+    for (const auto &it : table_objects) {
+      oid_t table_oid = it.first;
+      const auto table_obj = it.second;
+      const auto index_objects = table_obj->GetIndexObjects();
+      for (const auto &idx_it : index_objects) {
+        oid_t idx_oid = idx_it.first;
+        result.emplace_back(db_oid, table_oid, idx_oid);
       }
     }
 
@@ -114,8 +139,15 @@ TEST_F(RLFrameworkTest, BasicTest) {
   CreateTable(table_name_2);
 
   auto all_columns = GetAllColumns();
+  LOG_DEBUG("All columns:");
   for (const auto &it : all_columns) {
-    LOG_DEBUG("%d -- %d", (int)std::get<0>(it), (int)std::get<1>(it));
+    LOG_DEBUG("column [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it), (int)std::get<2>(it));
+  }
+
+  auto all_indexes = GetAllIndexes();
+  LOG_DEBUG("All indexes:");
+  for (const auto &it : all_indexes) {
+    LOG_DEBUG("index [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it), (int)std::get<2>(it));
   }
 }
 
