@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -62,10 +63,13 @@ class PlannerEqualityTest : public PelotonTest {
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
       const std::string query, concurrency::TransactionContext *txn) {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-
     auto parsed_stmt = peloton_parser.BuildParseTree(query);
-    auto return_value =
-        optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
+
+    auto parse_tree = parsed_stmt->GetStatement(0);
+    auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+    bind_node_visitor.BindNameToNode(parse_tree);
+
+    auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
     return return_value;
   }
 
