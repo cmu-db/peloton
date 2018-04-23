@@ -63,8 +63,7 @@ public:
   // Read Related API
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
-  GetLayouts(oid_t table_oid, oid_t layout_id,
-                   concurrency::TransactionContext *txn);
+  GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
 
 private:
 

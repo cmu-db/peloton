@@ -56,7 +56,7 @@ LayoutCatalog::LayoutCatalog(storage::Database *pg_catalog,
 
 LayoutCatalog::~LayoutCatalog() {}
 
-std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
+std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
 
@@ -108,10 +108,10 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
   auto val3 = type::ValueFactory::GetVarcharValue(layout->SerializeColumnMap(),
                                                   nullptr);
 
-  tuple->SetValue(ColumnId::TABLE_OID, val0);
-  tuple->SetValue(ColumnId::LAYOUT_OID, val1);
-  tuple->SetValue(ColumnId::NUM_COLUMNS, val2);
-  tuple->SetValue(ColumnId::COLUMN_MAP, val3);
+  tuple->SetValue(ColumnId::TABLE_OID, val0, pool);
+  tuple->SetValue(ColumnId::LAYOUT_OID, val1, pool);
+  tuple->SetValue(ColumnId::NUM_COLUMNS, val2, pool);
+  tuple->SetValue(ColumnId::COLUMN_MAP, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -135,8 +135,8 @@ bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
 }
 
 const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
-LayoutCatalog::GetLayouts(oid_t table_oid, oid_t layout_id,
-                                concurrency::TransactionContext *txn) {
+LayoutCatalog::GetLayouts(oid_t table_oid,
+                          concurrency::TransactionContext *txn) {
   // Try to find the layouts in the cache
   auto table_object =
           TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
@@ -174,10 +174,6 @@ LayoutCatalog::GetLayouts(oid_t table_oid, oid_t layout_id,
 
   return table_object->GetLayouts();
 }
-
-
-
-
 
 }  // namespace catalog
 }  // namespace peloton

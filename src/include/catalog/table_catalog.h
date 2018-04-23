@@ -34,9 +34,13 @@
 
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
-#include "storage/layout.h"
 
 namespace peloton {
+
+namespace storage {
+class Layout;
+}
+
 namespace catalog {
 
 class IndexCatalogObject;
@@ -76,7 +80,7 @@ class TableCatalogObject {
       const std::string &column_name, bool cached_only = false);
 
   // Evict all layouts from the cache
-  void EvictAllLayoutObjects();
+  void EvictAllLayouts();
 
   // Get layouts
   std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
