@@ -344,7 +344,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
       InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
     // Insertion failed due to some constraint (indexes, etc.) but tuple
-    // is in the table already, need to give the ItemPointer back to the GCManager
+    // is in the table already, need to give the ItemPointer back to the
+    // GCManager
     auto &gc_manager = gc::GCManagerFactory::GetInstance();
     gc_manager.RecycleUnusedTupleSlot(location);
 
@@ -616,7 +617,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
   for (size_t iter = 0; iter < fk_count; iter++) {
     catalog::ForeignKey *fk = GetForeignKeySrc(iter);
-
+    
     // Check if any row in the source table references the current tuple
     oid_t source_table_id = fk->GetSourceTableOid();
     storage::DataTable *src_table = nullptr;
@@ -793,8 +794,7 @@ bool DataTable::CheckForeignKeyConstraints(
             catalog::Schema::CopySchema(ref_table->schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
-        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(),
-                          index->GetPool());
+        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
         std::vector<ItemPointer *> location_ptrs;
@@ -803,7 +803,8 @@ bool DataTable::CheckForeignKeyConstraints(
         // if this key doesn't exist in the referred column
         if (location_ptrs.size() == 0) {
           LOG_DEBUG("The key: %s does not exist in table %s\n",
-                    key->GetInfo().c_str(), ref_table->GetInfo().c_str());
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str());
           return false;
         }
 
@@ -812,17 +813,17 @@ bool DataTable::CheckForeignKeyConstraints(
         auto tile_group_header = tile_group->GetHeader();
 
         auto &transaction_manager =
-            concurrency::TransactionManagerFactory::GetInstance();
+          concurrency::TransactionManagerFactory::GetInstance();
         auto visibility = transaction_manager.IsVisible(
-            transaction, tile_group_header, location_ptrs[0]->offset,
-            VisibilityIdType::READ_ID);
+          transaction, tile_group_header, location_ptrs[0]->offset,
+          VisibilityIdType::READ_ID);
 
         if (visibility != VisibilityType::OK) {
-          LOG_DEBUG(
-              "The key: %s is not yet visible in table %s, visibility "
-              "type: %s.\n",
-              key->GetInfo().c_str(), ref_table->GetInfo().c_str(),
-              VisibilityTypeToString(visibility).c_str());
+          LOG_DEBUG("The key: %s is not yet visible in table %s, visibility "
+                    "type: %s.\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str(),
+                    VisibilityTypeToString(visibility).c_str());
           return false;
         }
 

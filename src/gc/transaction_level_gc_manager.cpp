@@ -110,8 +110,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid,
-       this](concurrency::TransactionContext *txn_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid, this](
+          concurrency::TransactionContext *txn_ctx) -> bool {
         bool res = txn_ctx->GetEpochId() <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
@@ -133,13 +133,13 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // Log the query into query_history_catalog
     if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-      if(query_strings.size() != 0) {
+      if (query_strings.size() != 0) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
-        for(auto query_string: query_strings) {
+        for (auto query_string : query_strings) {
           pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
-          });        
+          });
         }
       }
     }
@@ -281,42 +281,42 @@ void TransactionLevelGCManager::AddToRecycleMap(
   delete txn_ctx;
 }
 
+void TransactionLevelGCManager::RecycleUnusedTupleSlot(
+    const ItemPointer &location) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(location.block);
 
-void TransactionLevelGCManager::RecycleUnusedTupleSlot(const ItemPointer &location) {
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(location.block);
+  // During the resetting, a table may be deconstructed because of the DROP
+  // TABLE request
+  if (tile_group == nullptr) {
+    return;
+  }
 
-    // During the resetting, a table may be deconstructed because of the DROP
-    // TABLE request
-    if (tile_group == nullptr) {
-      return;
-    }
+  storage::DataTable *table =
+      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+  PELOTON_ASSERT(table != nullptr);
 
-    storage::DataTable *table =
-        dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
-    PELOTON_ASSERT(table != nullptr);
+  oid_t table_id = table->GetOid();
+  auto tile_group_header = tile_group->GetHeader();
+  PELOTON_ASSERT(tile_group_header != nullptr);
+  bool immutable = tile_group_header->GetImmutability();
 
-    oid_t table_id = table->GetOid();
-    auto tile_group_header = tile_group->GetHeader();
-    PELOTON_ASSERT(tile_group_header != nullptr);
-    bool immutable = tile_group_header->GetImmutability();
+  // If the tuple being reset no longer exists, just skip it
+  if (ResetTuple(location) == false) {
+    return;
+  }
 
-
-    // If the tuple being reset no longer exists, just skip it
-    if (ResetTuple(location) == false) {
-      return;
-    }
-
-    // if immutable is false and the entry for table_id exists,
-    //then add back to recycle map
-    if ((!immutable) &&
-        recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
-      recycle_queue_map_[table_id]->Enqueue(location);
-    }
+  // if immutable is false and the entry for table_id exists,
+  // then add back to recycle map
+  if ((!immutable) &&
+      recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+    recycle_queue_map_[table_id]->Enqueue(location);
+  }
 }
 // this function returns a free tuple slot, if one exists
 // called by data_table.
-ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(const oid_t &table_id) {
+ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
+    const oid_t &table_id) {
   // for catalog tables, we directly return invalid item pointer.
   if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
     return INVALID_ITEMPOINTER;
@@ -405,7 +405,8 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     return;
   }
 
-  ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(), location.offset);
+  ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(),
+                                                   location.offset);
 
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
@@ -419,16 +420,19 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // from those secondary indexes
 
     ContainerTuple<storage::TileGroup> older_tuple(tile_group.get(),
-                                                     location.offset);
+                                                   location.offset);
 
-    ItemPointer newer_location = tile_group_header->GetPrevItemPointer(location.offset);
+    ItemPointer newer_location =
+        tile_group_header->GetPrevItemPointer(location.offset);
 
     if (newer_location == INVALID_ITEMPOINTER) {
       return;
     }
 
-    auto newer_tile_group = catalog::Manager::GetInstance().GetTileGroup(newer_location.block);
-    ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(), newer_location.offset);
+    auto newer_tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(newer_location.block);
+    ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(),
+                                                   newer_location.offset);
     // remove the older version from all the indexes
     // where it no longer matches the newer version
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -438,10 +442,12 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       auto indexed_columns = index_schema->GetIndexedColumns();
 
       // build keys
-      std::unique_ptr<storage::Tuple> older_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> older_key(
+          new storage::Tuple(index_schema, true));
       older_key->SetFromTuple(&older_tuple, indexed_columns, index->GetPool());
-      std::unique_ptr<storage::Tuple> newer_key(new storage::Tuple(index_schema, true));
-      newer_key->SetFromTuple(&newer_tuple, indexed_columns,index->GetPool());
+      std::unique_ptr<storage::Tuple> newer_key(
+          new storage::Tuple(index_schema, true));
+      newer_key->SetFromTuple(&newer_tuple, indexed_columns, index->GetPool());
 
       // if older_key is different, delete it from index
       if (newer_key->Compare(*older_key) != 0) {
@@ -455,7 +461,8 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // secondary indexes are built on, then we need to unlink this version
     // from the secondary index.
 
-    ContainerTuple<storage::TileGroup> newer_tuple(tile_group.get(), location.offset);
+    ContainerTuple<storage::TileGroup> newer_tuple(tile_group.get(),
+                                                   location.offset);
 
     ItemPointer older_location =
         tile_group_header->GetNextItemPointer(location.offset);
@@ -464,8 +471,10 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       return;
     }
 
-    auto older_tile_group = catalog::Manager::GetInstance().GetTileGroup(older_location.block);
-    ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(), older_location.offset);
+    auto older_tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(older_location.block);
+    ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(),
+                                                   older_location.offset);
     // remove the newer version from all the indexes
     // where it no longer matches the older version
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -475,9 +484,11 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       auto indexed_columns = index_schema->GetIndexedColumns();
 
       // build keys
-      std::unique_ptr<storage::Tuple> older_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> older_key(
+          new storage::Tuple(index_schema, true));
       older_key->SetFromTuple(&older_tuple, indexed_columns, index->GetPool());
-      std::unique_ptr<storage::Tuple> newer_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> newer_key(
+          new storage::Tuple(index_schema, true));
       newer_key->SetFromTuple(&newer_tuple, indexed_columns, index->GetPool());
 
       // if newer_key is different, delete it from index
@@ -492,9 +503,9 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-              type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL ||
-              type == GCVersionType::COMMIT_DELETE);
+                   type == GCVersionType::COMMIT_INS_DEL ||
+                   type == GCVersionType::ABORT_INS_DEL ||
+                   type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
