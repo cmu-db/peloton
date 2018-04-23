@@ -46,8 +46,8 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   // using transaction to optimize
   auto txn = txn_manager.BeginTransaction();
   auto select_stmt = peloton_parser.BuildParseTree(sql);
-  statement->SetPlanTree(optimizer::Optimizer().BuildPelotonPlanTree(
-      select_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
@@ -172,8 +172,8 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto txn = txn_manager.BeginTransaction();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
-  statement->SetPlanTree(optimizer::Optimizer().BuildPelotonPlanTree(
-      update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, txn));
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
   txn_manager.CommitTransaction(txn);
