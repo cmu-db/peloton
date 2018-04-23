@@ -22,7 +22,6 @@ namespace storage {
 DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile_header,
      const catalog::Schema &tuple_schema, TileGroup *tile_group,
      int tuple_count) : Tile(backend_type, tile_header, tuple_schema, tile_group, tuple_count),
-     is_dict_encoded(false),
      original_schema(tuple_schema) {
 	std::vector<catalog::Column> columns;
 	size_t offset = 0;
@@ -60,6 +59,8 @@ DictEncodedTile::~DictEncodedTile(){}
 type::Value DictEncodedTile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
 	if (dict_encoded_columns.count(column_id) > 0) {
 		// encoded
+		LOG_INFO("DictEncodedTile::GetValue called for tuple_offset: %d, column_id: %d",
+			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
 		auto idx = idx_val.GetAs<uint8_t>();
     return type::Value(element_array[idx]);
@@ -76,6 +77,8 @@ type::Value DictEncodedTile::GetValueFast(const oid_t tuple_offset, const size_t
 	auto curr_val = Tile::GetValueFast(tuple_offset, schema.GetOffset(column_id),
 	  column_type, is_inlined);
 	if (dict_encoded_columns.count(column_id) > 0) {
+		LOG_INFO("DictEncodedTile::GetValueFast called for tuple_offset: %d, column_id: %d",
+			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
 		auto idx = idx_val.GetAs<uint8_t>();
     return type::Value(element_array[idx]);
@@ -91,6 +94,8 @@ type::Value DictEncodedTile::GetValueFast(const oid_t tuple_offset, const size_t
 
 void DictEncodedTile::DictEncode(Tile *tile) {
 	if (is_dict_encoded) return;
+	SetAttributes(tile);
+
 	LOG_INFO("dictionary encode, database_id: %d, table_id: %d, tile_group_id: %d"
 				", tile_id: %d", database_id, table_id, tile_group_id, tile_id);
 
@@ -112,7 +117,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 					curr_val = type::ValueFactory::GetVarcharValue(curr_old_val.GetData(), curr_old_val.GetLength(),
 							true);
 				}
-				LOG_INFO("%s", curr_val.GetInfo().c_str());
+//				LOG_INFO("%s", curr_val.GetInfo().c_str());
 				// assume the idx take 1 byte
 				char idx_data[1];
 				if (dict.count(curr_val) == 0) {
@@ -121,7 +126,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 					idx_data[0] = element_array.size() - 1;
 					dict.emplace(curr_val, idx_data[0]);
 				} else {
-					LOG_INFO("Already encoded!!!");
+//					LOG_INFO("Already encoded!!!");
 					idx_data[0] = dict[curr_val];
 				}
 				// many constructor of Value is private, so use
@@ -177,6 +182,15 @@ Tile* DictEncodedTile::DictDecode() {
 					type::Type::GetTypeSize(original_schema.GetType(i)));
 		}
 	}
+
+//	new_tile->database_id = database_id;
+//	new_tile->table_id = table_id;
+//	new_tile->tile_group_id = tile_group_id;
+//	new_tile->tile_id = tile_id;
+//	new_tile->tile_group_header = tile_group_header;
+//	new_tile->tile_group = tile_group;
+//	new_tile->backend_type = backend_type;
+	new_tile->SetAttributes(this);
 	LOG_INFO("END of decoding");
 	is_dict_encoded = false;
 	return new_tile;

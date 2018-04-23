@@ -185,6 +185,11 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
+  // add for data compression debugging
+  void SetTile(oid_t tile_offset, std::shared_ptr<Tile> tile_to_add) {
+    tiles[tile_offset].swap(tile_to_add);
+  }
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members

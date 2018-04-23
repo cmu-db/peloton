@@ -140,6 +140,14 @@ class Tile : public Printable {
 
   virtual const catalog::Schema *GetSchema() const { return &schema; };
 
+  virtual void DictEncode(UNUSED_ATTRIBUTE Tile* tile) {}
+
+  virtual Tile* DictDecode() { return nullptr; }
+
+  inline bool IsDictEncoded() const { return is_dict_encoded; }
+
+  void SetAttributes(Tile* tile);
+
   const std::string GetColumnName(const oid_t column_index) const {
     return schema.GetColumn(column_index).GetName();
   }
@@ -233,6 +241,9 @@ class Tile : public Printable {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
+
+  // is dictionary encoded
+  bool is_dict_encoded;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index

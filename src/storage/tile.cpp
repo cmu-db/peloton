@@ -225,6 +225,16 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 // Utilities
 //===--------------------------------------------------------------------===//
 
+void Tile::SetAttributes(Tile* tile) {
+	database_id = tile->database_id;
+	table_id = tile->table_id;
+	tile_group_id = tile->tile_group_id;
+	tile_id = tile->tile_id;
+	tile_group_header = tile->tile_group_header;
+	tile_group = tile->tile_group;
+	backend_type = tile->backend_type;
+}
+
 const std::string Tile::GetInfo() const {
   std::ostringstream os;
 

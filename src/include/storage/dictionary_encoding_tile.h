@@ -119,18 +119,16 @@ class DictEncodedTile : public Tile {
   // Dictionary Encoding
   //===--------------------------------------------------------------------===//
 
-	inline bool GetDictEncoded() const { return is_dict_encoded; }
+//	inline bool IsDictEncoded() const { return is_dict_encoded; }
 
 	// given a tile, encode this tile in current tile
 	// when initializing this encoded tile, use original tile's schema
-	void DictEncode(Tile *tile);
+	void DictEncode(Tile *tile) override ;
 
 	// decode tile and return a new tile that contain the decoded data
-  Tile* DictDecode();
+  Tile* DictDecode() override ;
 
  protected:
-  // is dictionary encoded
-  bool is_dict_encoded;
 
 	// the idx-string mapping
   std::vector<type::Value> element_array;
