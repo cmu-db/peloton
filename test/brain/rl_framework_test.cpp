@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <boost/dynamic_bitset.hpp>
 #include "brain/index_selection.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
@@ -31,19 +32,18 @@ class RLFrameworkTest : public PelotonTest {
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
-  std::unordered_map<std::string, oid_t> column_id_map_;
-  std::unordered_map<oid_t, std::string> id_column_map_;
-  std::unordered_map<std::string, oid_t> config_id_map_;
-  std::unordered_map<oid_t, std::string> id_config_map_;
-  oid_t next_column_id_;
-  oid_t next_config_id_;
+
+  std::unordered_map<oid_t, std::unordered_map<oid_t, size_t>> table_id_map_;
+  std::unordered_map<oid_t, std::unordered_map<size_t, oid_t>> id_table_map_;
+  std::unordered_map<oid_t, size_t> table_offset_map_;
+
+  size_t next_table_offset_;
 
  public:
   RLFrameworkTest()
       : catalog_{catalog::Catalog::GetInstance()},
         txn_manager_(&concurrency::TransactionManagerFactory::GetInstance()),
-        next_column_id_(0),
-        next_config_id_(0) {
+        next_table_offset_(0) {
     catalog_->Bootstrap();
   }
 
@@ -74,6 +74,71 @@ class RLFrameworkTest : public PelotonTest {
     catalog_->CreateTable(database_name_, table_name, std::move(table_schema),
                           txn);
     txn_manager_->CommitTransaction(txn);
+
+    std::vector<oid_t> col_oids;
+    txn = txn_manager_->BeginTransaction();
+    const auto table_obj =
+        catalog_->GetTableObject(database_name_, table_name, txn);
+    const oid_t table_oid = table_obj->GetTableOid();
+    const auto col_objs = table_obj->GetColumnObjects();
+    for (const auto &col_it : col_objs) {
+      col_oids.push_back(col_it.first);
+    }
+    txn_manager_->CommitTransaction(txn);
+
+    table_id_map_[table_oid] = {};
+    id_table_map_[table_oid] = {};
+    auto &col_id_map = table_id_map_[table_oid];
+    auto &id_col_map = id_table_map_[table_oid];
+
+    size_t next_id = 0;
+    for (const auto col_oid : col_oids) {
+      col_id_map[col_oid] = next_id;
+      id_col_map[next_id] = col_oid;
+      next_id++;
+    }
+
+    table_offset_map_[table_oid] = next_table_offset_;
+    next_table_offset_ += ((size_t)1 << col_oids.size());
+  }
+
+  void CreateIndex_A(const std::string &table_name) {
+    // create index on (a, b) and (b, c)
+    // (a, b) -> 110 -> 6
+    // (b, c) -> 011 -> 3
+    auto txn = txn_manager_->BeginTransaction();
+    const auto db_obj = catalog_->GetDatabaseWithName(database_name_, txn);
+    const auto table_obj = db_obj->GetTableWithName(table_name);
+
+    auto col_a = table_obj->GetSchema()->GetColumnID("a");
+    auto col_b = table_obj->GetSchema()->GetColumnID("b");
+    auto col_c = table_obj->GetSchema()->GetColumnID("c");
+    std::vector<oid_t> index_a_b = {col_a, col_b};
+    std::vector<oid_t> index_b_c = {col_b, col_c};
+
+    catalog_->CreateIndex(database_name_, table_name, index_a_b, "index_a_b",
+                          false, IndexType::BWTREE, txn);
+    catalog_->CreateIndex(database_name_, table_name, index_b_c, "index_b_c",
+                          false, IndexType::BWTREE, txn);
+
+    txn_manager_->CommitTransaction(txn);
+  }
+
+  void CreateIndex_B(const std::string &table_name) {
+    // create index on (a, c)
+    // (a, c) -> 101 -> 5
+    auto txn = txn_manager_->BeginTransaction();
+    const auto db_obj = catalog_->GetDatabaseWithName(database_name_, txn);
+    const auto table_obj = db_obj->GetTableWithName(table_name);
+
+    auto col_a = table_obj->GetSchema()->GetColumnID("a");
+    auto col_c = table_obj->GetSchema()->GetColumnID("c");
+    std::vector<oid_t> index_a_c = {col_a, col_c};
+
+    catalog_->CreateIndex(database_name_, table_name, index_a_c, "index_a_c",
+                          false, IndexType::BWTREE, txn);
+
+    txn_manager_->CommitTransaction(txn);
   }
 
   void DropTable(const std::string &table_name) {
@@ -88,22 +153,64 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
-  std::vector<std::tuple<oid_t, oid_t, oid_t>> GetAllColumns() {
-    std::vector<std::tuple<oid_t, oid_t, oid_t>> result;
+  size_t GetLocalOffset(const oid_t table_oid,
+                        const std::set<oid_t> &column_oids) {
+    std::set<size_t> offsets;
+    const auto &col_id_map = table_id_map_[table_oid];
+    for (const auto col_oid : column_oids) {
+      size_t offset = col_id_map.find(col_oid)->second;
+      offsets.insert(offset);
+    }
+
+    size_t map_size = col_id_map.size();
+    size_t final_offset = 0;
+    size_t step = (((size_t)1) << map_size) / 2;
+    for (size_t i = 0; i < map_size; ++i) {
+      if (offsets.find(i) != offsets.end()) {
+        final_offset += step;
+      }
+      step /= 2;
+    }
+
+    return final_offset;
+  }
+
+  size_t GetGlobalOffset(const std::shared_ptr<brain::IndexObject> &index_obj) {
+    oid_t table_oid = index_obj->table_oid;
+    const auto local_offset = GetLocalOffset(table_oid, index_obj->column_oids);
+    const auto table_offset = table_offset_map_.find(table_oid)->second;
+    return table_offset + local_offset;
+  }
+
+  bool IsSet(const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+             const std::shared_ptr<brain::IndexObject> &index_obj) {
+    size_t offset = GetGlobalOffset(index_obj);
+    return bitset->test(offset);
+  }
+
+  void Set(const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+           const std::shared_ptr<brain::IndexObject> &index_obj) {
+    size_t offset = GetGlobalOffset(index_obj);
+    bitset->set(offset);
+  }
+
+  std::shared_ptr<boost::dynamic_bitset<>> GenerateCurrentBitSet() {
+    auto result = std::make_shared<boost::dynamic_bitset<>>(next_table_offset_);
 
     auto txn = txn_manager_->BeginTransaction();
 
-    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
-    oid_t db_oid = db_object->GetDatabaseOid();
-    const auto table_objects = db_object->GetTableObjects();
-
-    for (const auto &it : table_objects) {
-      oid_t table_oid = it.first;
-      const auto table_obj = it.second;
-      const auto column_objects = table_obj->GetColumnObjects();
-      for (const auto &col_it : column_objects) {
-        oid_t col_oid = col_it.first;
-        result.emplace_back(db_oid, table_oid, col_oid);
+    const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
+    const auto db_oid = db_obj->GetDatabaseOid();
+    const auto table_objs = db_obj->GetTableObjects();
+    for (const auto &table_obj : table_objs) {
+      const auto table_oid = table_obj.first;
+      const auto index_objs = table_obj.second->GetIndexObjects();
+      for (const auto &index_obj : index_objs) {
+        const auto &indexed_cols = index_obj.second->GetKeyAttrs();
+        std::vector<oid_t> col_oids(indexed_cols);
+        auto idx_obj =
+            std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+        Set(result, idx_obj);
       }
     }
 
@@ -111,225 +218,6 @@ class RLFrameworkTest : public PelotonTest {
 
     return result;
   }
-
-  std::vector<std::tuple<oid_t, oid_t, oid_t>> GetAllIndexes() {
-    std::vector<std::tuple<oid_t, oid_t, oid_t>> result;
-
-    auto txn = txn_manager_->BeginTransaction();
-
-    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
-    oid_t db_oid = db_object->GetDatabaseOid();
-    const auto table_objects = db_object->GetTableObjects();
-
-    for (const auto &it : table_objects) {
-      oid_t table_oid = it.first;
-      const auto table_obj = it.second;
-      const auto index_objects = table_obj->GetIndexObjects();
-      for (const auto &idx_it : index_objects) {
-        oid_t idx_oid = idx_it.first;
-        result.emplace_back(db_oid, table_oid, idx_oid);
-      }
-    }
-
-    txn_manager_->CommitTransaction(txn);
-
-    return result;
-  }
-
-  std::string GetStringFromTriplet(oid_t a, oid_t b, oid_t c) {
-    std::ostringstream str_stream;
-    str_stream << a << ":" << b << ":" << c;
-    return str_stream.str();
-  }
-
-  std::tuple<oid_t, oid_t, oid_t> GetTripletFromString(
-      const std::string &str_to_split) {
-    std::vector<oid_t> store;
-    std::size_t pos = 0, found;
-    while ((found = str_to_split.find_first_of(':', pos)) !=
-           std::string::npos) {
-      store.push_back((oid_t)std::stoul(str_to_split.substr(pos, found - pos)));
-      pos = found + 1;
-    }
-    return std::make_tuple(store.at(0), store.at(1), store.at(2));
-  }
-
-  std::string GetStringFromIndexConfig(
-      const brain::IndexConfiguration &config) {
-    std::ostringstream str_stream;
-    auto config_indexes = config.GetIndexes();
-    for (const auto &index_obj : config_indexes) {
-      str_stream << index_obj->db_oid << ":" << index_obj->table_oid;
-      for (auto column_oid : index_obj->column_oids) {
-        str_stream << ":" << column_oid;
-      }
-      str_stream << ";";
-    }
-    return str_stream.str();
-  }
-
-  std::shared_ptr<brain::IndexObject> GetIndexObjectFromString(
-      const std::string &str_to_split) {
-    std::vector<oid_t> store;
-    std::size_t pos = 0, found;
-    while ((found = str_to_split.find_first_of(':', pos)) !=
-           std::string::npos) {
-      store.push_back((oid_t)std::stoul(str_to_split.substr(pos, found - pos)));
-      pos = found + 1;
-    }
-    oid_t db_oid = store.at(0);
-    oid_t table_oid = store.at(1);
-    store.erase(store.begin(), store.begin() + 2);
-    return std::make_shared<brain::IndexObject>(db_oid, table_oid, store);
-  }
-
-  std::shared_ptr<brain::IndexConfiguration> GetIndexConfigFromString(
-      const std::string &str_to_split) {
-    std::set<std::shared_ptr<brain::IndexObject>> index_obj_set;
-    std::size_t pos = 0, found;
-    while ((found = str_to_split.find_first_of(';', pos)) !=
-           std::string::npos) {
-      index_obj_set.insert(
-          GetIndexObjectFromString(str_to_split.substr(pos, found - pos)));
-      pos = found + 1;
-    }
-    return std::make_shared<brain::IndexConfiguration>(index_obj_set);
-  }
-
-  void InsertNextColumnToMap(const std::tuple<oid_t, oid_t, oid_t> &col) {
-    auto col_str = GetStringFromTriplet(std::get<0>(col), std::get<1>(col),
-                                        std::get<2>(col));
-    column_id_map_[col_str] = next_column_id_;
-    id_column_map_[next_column_id_++] = col_str;
-  }
-
-  void InsertNextConfigToMap(const brain::IndexConfiguration &config) {
-    auto config_str = GetStringFromIndexConfig(config);
-    config_id_map_[config_str] = next_config_id_;
-    id_config_map_[next_config_id_++] = config_str;
-  }
-
-  void GenerateColumnIdMap() {
-    column_id_map_.clear();
-    id_column_map_.clear();
-    auto all_columns = GetAllColumns();
-    for (const auto &it : all_columns) {
-      InsertNextColumnToMap(it);
-    }
-  }
-
-  void EnumerateNColumns(const std::vector<oid_t> &col_oids,
-                         std::vector<std::vector<oid_t>> &enumeration,
-                         std::vector<oid_t> &store, size_t start, size_t end,
-                         size_t idx, size_t n) {
-    if (idx == n) {
-      enumeration.emplace_back(store);
-      return;
-    }
-
-    for (size_t i = start; i <= end && end - i + 1 >= n - idx; ++i) {
-      store.push_back(col_oids.at(i));
-      EnumerateNColumns(col_oids, enumeration, store, i + 1, end, idx + 1, n);
-      store.pop_back();
-    }
-  }
-
-  std::vector<std::vector<oid_t>> EnumerateAllColumns(
-      const std::vector<oid_t> &col_oids) {
-    std::vector<oid_t> store;
-    std::vector<std::vector<oid_t>> enumeration;
-    enumeration.emplace_back();
-
-    for (size_t i = 1; i <= col_oids.size(); ++i) {
-      EnumerateNColumns(col_oids, enumeration, store, 0, col_oids.size() - 1, 0,
-                        i);
-    }
-
-    return enumeration;
-  }
-
-  void GenerateConfigIdMap() {
-    // TODO: Generate all possible index configurations
-    config_id_map_.clear();
-    id_config_map_.clear();
-
-    auto txn = txn_manager_->BeginTransaction();
-
-    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
-    oid_t db_oid = db_object->GetDatabaseOid();
-    const auto table_objects = db_object->GetTableObjects();
-
-    LOG_DEBUG("db:%d", (int)db_oid);
-
-    for (const auto &it : table_objects) {
-      oid_t table_oid = it.first;
-      LOG_DEBUG("table:%d", (int)table_oid);
-      const auto table_obj = it.second;
-      const auto column_objects = table_obj->GetColumnObjects();
-      std::vector<oid_t> col_oids;
-      for (const auto &col_it : column_objects) {
-        oid_t col_oid = col_it.first;
-        col_oids.push_back(col_oid);
-      }
-      const auto enumeration = EnumerateAllColumns(col_oids);
-      for (const auto &each : enumeration) {
-        std::ostringstream str_stream;
-        for (const auto cur : each) {
-          str_stream << cur << " ";
-        }
-        LOG_DEBUG("--%s", str_stream.str().c_str());
-      }
-    }
-
-    txn_manager_->CommitTransaction(txn);
-  }
-
-  bool GetColumnMapId(const std::tuple<oid_t, oid_t, oid_t> &col,
-                      oid_t &col_id) {
-    auto col_str = GetStringFromTriplet(std::get<0>(col), std::get<1>(col),
-                                        std::get<2>(col));
-    auto it = column_id_map_.find(col_str);
-    if (it == column_id_map_.end()) {
-      return false;
-    }
-    col_id = it->second;
-    return true;
-  }
-
-  bool GetIdMapColumn(const oid_t col_id,
-                      std::tuple<oid_t, oid_t, oid_t> &col) {
-    auto it = id_column_map_.find(col_id);
-    if (it == id_column_map_.end()) {
-      return false;
-    }
-    col = GetTripletFromString(it->second);
-    return true;
-  }
-
-  bool GetConfigMapId(const brain::IndexConfiguration &config,
-                      oid_t &config_id) {
-    auto config_str = GetStringFromIndexConfig(config);
-    auto it = config_id_map_.find(config_str);
-    if (it == config_id_map_.end()) {
-      return false;
-    }
-    config_id = it->second;
-    return true;
-  }
-
-  bool GetIdMapConfig(
-      const oid_t config_id,
-      std::shared_ptr<brain::IndexConfiguration> &index_config) {
-    auto it = id_config_map_.find(config_id);
-    if (it == id_config_map_.end()) {
-      return false;
-    }
-    index_config = GetIndexConfigFromString(it->second);
-    return true;
-  }
-
-  oid_t GetNextColumnId() { return next_column_id_; }
-  oid_t GetNextConfigId() { return next_config_id_; }
 };
 
 TEST_F(RLFrameworkTest, BasicTest) {
@@ -341,23 +229,18 @@ TEST_F(RLFrameworkTest, BasicTest) {
   CreateTable(table_name_1);
   CreateTable(table_name_2);
 
-  auto all_columns = GetAllColumns();
-  LOG_DEBUG("All columns:");
-  for (const auto &it : all_columns) {
-    LOG_DEBUG("column [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it),
-              (int)std::get<2>(it));
-  }
+  // create index on (a, b) and (b, c)
+  // (a, b) -> 110 -> 6 -> 6
+  // (b, c) -> 011 -> 3 -> 3
+  CreateIndex_A(table_name_1);
+  // create index on (a, c)
+  // (a, c) -> 101 -> 5 -> 13
+  CreateIndex_B(table_name_2);
 
-  auto all_indexes = GetAllIndexes();
-  LOG_DEBUG("All indexes:");
-  for (const auto &it : all_indexes) {
-    LOG_DEBUG("index [%d, %d, %d]", (int)std::get<0>(it), (int)std::get<1>(it),
-              (int)std::get<2>(it));
-  }
-
-  GenerateColumnIdMap();
-
-  GenerateConfigIdMap();
+  auto cur_bit_set = GenerateCurrentBitSet();
+  std::string output;
+  boost::to_string(*cur_bit_set, output);
+  LOG_DEBUG("bitset: %s", output.c_str());
 }
 
 }  // namespace test
