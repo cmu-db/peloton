@@ -61,7 +61,7 @@ TriggerCatalog::TriggerCatalog(concurrency::TransactionContext *txn)
 TriggerCatalog::~TriggerCatalog() {}
 
 bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
-                                   int16_t trigger_type, std::string proc_oid,
+                                   int16_t trigger_type, std::string proc_name,
                                    std::string function_arguments,
                                    type::Value fire_condition,
                                    type::Value timestamp,
@@ -75,7 +75,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val2 = type::ValueFactory::GetVarcharValue(trigger_name);
-  auto val3 = type::ValueFactory::GetVarcharValue(proc_oid);
+  auto val3 = type::ValueFactory::GetVarcharValue(proc_name);
   auto val4 = type::ValueFactory::GetIntegerValue(trigger_type);
   auto val5 = type::ValueFactory::GetVarcharValue(function_arguments);
   auto val6 = fire_condition;
@@ -84,7 +84,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   tuple->SetValue(ColumnId::TRIGGER_OID, val0, pool);
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
   tuple->SetValue(ColumnId::TRIGGER_NAME, val2, pool);
-  tuple->SetValue(ColumnId::FUNCTION_OID, val3, pool);
+  tuple->SetValue(ColumnId::FUNCTION_NAME, val3, pool);
   tuple->SetValue(ColumnId::TRIGGER_TYPE, val4, pool);
   tuple->SetValue(ColumnId::FUNCTION_ARGS, val5, pool);
   tuple->SetValue(ColumnId::FIRE_CONDITION, val6, pool);
@@ -194,9 +194,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
     concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
-  std::vector<oid_t> column_ids(
-      {ColumnId::TRIGGER_NAME, ColumnId::FIRE_CONDITION, ColumnId::FUNCTION_OID,
-       ColumnId::FUNCTION_ARGS});
+  std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *type_expr =
       expression::ExpressionUtil::TupleValueFactory(type::TypeId::SMALLINT, 0,
@@ -235,11 +233,11 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 
   for (unsigned int i = 0; i < result_tuples.size(); i++) {
     // create a new trigger instance
-    trigger::Trigger new_trigger(result_tuples[i].GetValue(0).ToString(),
+    trigger::Trigger new_trigger(result_tuples[i].GetValue(ColumnId::TRIGGER_NAME).ToString(),
                                  trigger_type,
-                                 result_tuples[i].GetValue(2).ToString(),
-                                 result_tuples[i].GetValue(3).ToString(),
-                                 result_tuples[i].GetValue(1).GetData());
+                                 result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
+                                 result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
+                                 result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
     new_trigger_list->AddTrigger(new_trigger);
   }
 
@@ -250,9 +248,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
     oid_t table_oid, concurrency::TransactionContext *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
-  std::vector<oid_t> column_ids(
-      {ColumnId::TRIGGER_NAME, ColumnId::TRIGGER_TYPE, ColumnId::FIRE_CONDITION,
-       ColumnId::FUNCTION_OID, ColumnId::FUNCTION_ARGS});
+  std::vector<oid_t> column_ids(all_column_ids);
   expression::AbstractExpression *oid_expr =
       expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
                                                     ColumnId::TABLE_OID);
@@ -275,11 +271,11 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
 
   for (unsigned int i = 0; i < result_tuples.size(); i++) {
     // create a new trigger instance
-    trigger::Trigger new_trigger(result_tuples[i].GetValue(0).ToString(),
-                                 result_tuples[i].GetValue(1).GetAs<int16_t>(),
-                                 result_tuples[i].GetValue(3).ToString(),
-                                 result_tuples[i].GetValue(4).ToString(),
-                                 result_tuples[i].GetValue(2).GetData());
+    trigger::Trigger new_trigger(result_tuples[i].GetValue(ColumnId::TRIGGER_NAME).ToString(),
+                                 result_tuples[i].GetValue(ColumnId::TRIGGER_TYPE).GetAs<int16_t>(),
+                                 result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
+                                 result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
+                                 result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
     new_trigger_list->AddTrigger(new_trigger);
   }
 
