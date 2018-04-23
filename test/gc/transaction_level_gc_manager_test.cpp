@@ -121,10 +121,8 @@ size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
   return num_occurrences;
 }
 
-size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
-                               int first_val, int second_val) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
+size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val, int second_val) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -137,8 +135,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
   auto indexed_columns = index_schema->GetIndexedColumns();
 
   // build key.
-  std::unique_ptr<storage::Tuple> current_key(
-      new storage::Tuple(index_schema, true));
+  std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
   current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
 
   std::vector<ItemPointer *> index_entries;
@@ -146,6 +143,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
 
   return index_entries.size();
 }
+
 
 ////////////////////////////////////////////
 // NEW TESTS
@@ -426,8 +424,10 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 1));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
