@@ -134,7 +134,7 @@ bool AbstractCatalog::DeleteWithIndexScan(
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_offsets, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_offsets, expr_types, values, runtime_keys);
 
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
       new planner::IndexScanPlan(catalog_table_, nullptr, column_offsets,
@@ -179,7 +179,7 @@ AbstractCatalog::GetResultWithIndexScan(
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_offsets, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_offsets, expr_types, values, runtime_keys);
 
   planner::IndexScanPlan index_scan_node(catalog_table_, nullptr,
                                          column_offsets, index_scan_desc);
