@@ -342,7 +342,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
       InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
     // Insertion failed due to some constraint (indexes, etc.) but tuple
-    // is in the table already, need to give the ItemPointer back to the GCManager
+    // is in the table already, need to give the ItemPointer back to the
+    // GCManager
     auto &gc_manager = gc::GCManagerFactory::GetInstance();
     gc_manager.RecycleUnusedTupleSlot(location);
 
@@ -392,7 +393,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -497,9 +498,11 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
         if (index == nullptr) continue;
         index_schema = index->GetKeySchema();
         indexed_columns = index_schema->GetIndexedColumns();
-        std::unique_ptr<storage::Tuple> delete_key(new storage::Tuple(index_schema, true));
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
         delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-        bool delete_res = index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
         PELOTON_ASSERT(delete_res == true);
       }
       *index_entry_ptr = nullptr;
