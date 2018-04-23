@@ -65,8 +65,17 @@ class AbstractCatalog {
   bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::TransactionContext *txn);
 
+    bool InsertTupleWithCompiledPlan(const std::vector<std::vector<
+      std::unique_ptr<expression::AbstractExpression>>> *insert_values,
+                                     concurrency::TransactionContext *txn);
+
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::TransactionContext *txn);
+
+    bool DeleteWithCompiledSeqScan(
+      std::vector<oid_t> column_offsets,
+      expression::AbstractExpression *predicate,
+      concurrency::TransactionContext *txn);
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,

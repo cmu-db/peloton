@@ -28,7 +28,7 @@
 
 namespace peloton {
 namespace catalog {
-
+    using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                                        concurrency::TransactionContext *txn,
                                        int tupleId)
@@ -378,20 +378,38 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
+      (void) pool;
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+//  std::unique_ptr<storage::Tuple> tuple(
+//      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+      std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
 
-  tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
-  tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
-  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
+      auto constant_expr_0 = new expression::ConstantValueExpression(
+        val0);
+      auto constant_expr_1 = new expression::ConstantValueExpression(
+        val1);
+      auto constant_expr_2 = new expression::ConstantValueExpression(
+        val2);
+
+
+      tuples.push_back(std::vector<ExpressionPtr>());
+      auto &values = tuples[0];
+      values.push_back(ExpressionPtr(constant_expr_0));
+      values.push_back(ExpressionPtr(constant_expr_1));
+      values.push_back(ExpressionPtr(constant_expr_2));
+//
+//  tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
+//  tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
+//  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+//  return InsertTuple(std::move(tuple), txn);
+      return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 /*@brief   delete a tuple about table info from pg_table(using index scan)
@@ -401,19 +419,36 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  */
 bool TableCatalog::DeleteTable(oid_t table_oid,
                                concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+//  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
 
-  // evict from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
-  if (table_object) {
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
-    database_object->EvictTableObject(table_oid);
-  }
+      std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+
+     auto *table_oid_expr =
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                      ColumnId::TABLE_OID);
+      table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+
+      expression::AbstractExpression *table_oid_const_expr =
+        expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+      expression::AbstractExpression *table_oid_equality_expr =
+        expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+      bool result =  DeleteWithCompiledSeqScan(column_ids, table_oid_equality_expr, txn);
+
+     if(result){
+      // evict from cache
+      auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
+      if (table_object) {
+       auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+         table_object->GetDatabaseOid(), txn);
+       database_object->EvictTableObject(table_oid);
+      }
+     }
+     return result;
 }
 
 /*@brief   read table catalog object from pg_table using table oid
