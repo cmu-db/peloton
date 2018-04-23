@@ -316,16 +316,20 @@ TEST_F(InternalTypesTests, JoinTypeTest) {
 
 TEST_F(InternalTypesTests, PlanNodeTypeTest) {
   std::vector<PlanNodeType> list = {
-      PlanNodeType::INVALID, PlanNodeType::SEQSCAN, PlanNodeType::INDEXSCAN,
-      PlanNodeType::NESTLOOP, PlanNodeType::NESTLOOPINDEX,
-      PlanNodeType::MERGEJOIN, PlanNodeType::HASHJOIN, PlanNodeType::UPDATE,
-      PlanNodeType::INSERT, PlanNodeType::DELETE, PlanNodeType::DROP,
-      PlanNodeType::CREATE, PlanNodeType::SEND, PlanNodeType::RECEIVE,
-      PlanNodeType::PRINT, PlanNodeType::AGGREGATE, PlanNodeType::UNION,
-      PlanNodeType::ORDERBY, PlanNodeType::PROJECTION,
-      PlanNodeType::MATERIALIZE, PlanNodeType::LIMIT, PlanNodeType::DISTINCT,
-      PlanNodeType::SETOP, PlanNodeType::APPEND, PlanNodeType::AGGREGATE_V2,
-      PlanNodeType::HASH, PlanNodeType::RESULT, PlanNodeType::COPY,
+      PlanNodeType::INVALID,       PlanNodeType::SEQSCAN,
+      PlanNodeType::INDEXSCAN,     PlanNodeType::NESTLOOP,
+      PlanNodeType::NESTLOOPINDEX, PlanNodeType::MERGEJOIN,
+      PlanNodeType::HASHJOIN,      PlanNodeType::UPDATE,
+      PlanNodeType::INSERT,        PlanNodeType::DELETE,
+      PlanNodeType::DROP,          PlanNodeType::CREATE,
+      PlanNodeType::SEND,          PlanNodeType::RECEIVE,
+      PlanNodeType::PRINT,         PlanNodeType::AGGREGATE,
+      PlanNodeType::UNION,         PlanNodeType::ORDERBY,
+      PlanNodeType::PROJECTION,    PlanNodeType::MATERIALIZE,
+      PlanNodeType::LIMIT,         PlanNodeType::DISTINCT,
+      PlanNodeType::SETOP,         PlanNodeType::APPEND,
+      PlanNodeType::AGGREGATE_V2,  PlanNodeType::HASH,
+      PlanNodeType::RESULT,        PlanNodeType::COPY,
       PlanNodeType::MOCK};
 
   // Make sure that ToString and FromString work
@@ -433,9 +437,8 @@ TEST_F(InternalTypesTests, ConstraintTypeTest) {
 }
 
 TEST_F(InternalTypesTests, LoggingTypeTest) {
-  std::vector<LoggingType> list = {
-      LoggingType::INVALID, LoggingType::OFF, LoggingType::ON
-  };
+  std::vector<LoggingType> list = {LoggingType::INVALID, LoggingType::OFF,
+                                   LoggingType::ON};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -458,9 +461,9 @@ TEST_F(InternalTypesTests, LoggingTypeTest) {
 }
 
 TEST_F(InternalTypesTests, CheckpointingTypeTest) {
-  std::vector<CheckpointingType> list = {
-      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::ON
-  };
+  std::vector<CheckpointingType> list = {CheckpointingType::INVALID,
+                                         CheckpointingType::OFF,
+                                         CheckpointingType::ON};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -484,9 +487,9 @@ TEST_F(InternalTypesTests, CheckpointingTypeTest) {
 }
 
 TEST_F(InternalTypesTests, GarbageCollectionTypeTest) {
-  std::vector<GarbageCollectionType> list = {
-      GarbageCollectionType::INVALID, GarbageCollectionType::OFF, GarbageCollectionType::ON
-  };
+  std::vector<GarbageCollectionType> list = {GarbageCollectionType::INVALID,
+                                             GarbageCollectionType::OFF,
+                                             GarbageCollectionType::ON};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -511,10 +514,8 @@ TEST_F(InternalTypesTests, GarbageCollectionTypeTest) {
 }
 
 TEST_F(InternalTypesTests, ProtocolTypeTest) {
-  std::vector<ProtocolType> list = {
-      ProtocolType::INVALID, 
-      ProtocolType::TIMESTAMP_ORDERING
-  };
+  std::vector<ProtocolType> list = {ProtocolType::INVALID,
+                                    ProtocolType::TIMESTAMP_ORDERING};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -537,10 +538,8 @@ TEST_F(InternalTypesTests, ProtocolTypeTest) {
 }
 
 TEST_F(InternalTypesTests, EpochTypeTest) {
-  std::vector<EpochType> list = {
-      EpochType::INVALID, 
-      EpochType::DECENTRALIZED_EPOCH
-  };
+  std::vector<EpochType> list = {EpochType::INVALID,
+                                 EpochType::DECENTRALIZED_EPOCH};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -615,11 +614,9 @@ TEST_F(InternalTypesTests, VisibilityTypeTest) {
 }
 
 TEST_F(InternalTypesTests, VisibilityIdTypeTest) {
-  std::vector<VisibilityIdType> list = {
-      VisibilityIdType::INVALID, 
-      VisibilityIdType::READ_ID, 
-      VisibilityIdType::COMMIT_ID
-  };
+  std::vector<VisibilityIdType> list = {VisibilityIdType::INVALID,
+                                        VisibilityIdType::READ_ID,
+                                        VisibilityIdType::COMMIT_ID};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -1102,28 +1099,17 @@ TEST_F(InternalTypesTests, PostgresValueTypeTest) {
   // Note that we are not testing BOOLEAN here because it is an alias
   // for TINYINT. So we won't get back the correct string representation.
   std::vector<PostgresValueType> list = {
-      PostgresValueType::INVALID,
-      PostgresValueType::TINYINT,
-      PostgresValueType::SMALLINT,
-      PostgresValueType::INTEGER,
-      PostgresValueType::VARBINARY,
-      PostgresValueType::BIGINT,
-      PostgresValueType::REAL,
-      PostgresValueType::DOUBLE,
-      PostgresValueType::TEXT,
-      PostgresValueType::BPCHAR,
-      PostgresValueType::BPCHAR2,
-      PostgresValueType::VARCHAR,
-      PostgresValueType::VARCHAR2,
-      PostgresValueType::DATE,
-      PostgresValueType::TIMESTAMPS,
-      PostgresValueType::TIMESTAMPS2,
-      PostgresValueType::TEXT_ARRAY,
-      PostgresValueType::INT2_ARRAY,
-      PostgresValueType::INT4_ARRAY,
-      PostgresValueType::OID_ARRAY,
-      PostgresValueType::FLOADT4_ARRAY,
-      PostgresValueType::DECIMAL,
+      PostgresValueType::INVALID,       PostgresValueType::TINYINT,
+      PostgresValueType::SMALLINT,      PostgresValueType::INTEGER,
+      PostgresValueType::VARBINARY,     PostgresValueType::BIGINT,
+      PostgresValueType::REAL,          PostgresValueType::DOUBLE,
+      PostgresValueType::TEXT,          PostgresValueType::BPCHAR,
+      PostgresValueType::BPCHAR2,       PostgresValueType::VARCHAR,
+      PostgresValueType::VARCHAR2,      PostgresValueType::DATE,
+      PostgresValueType::TIMESTAMPS,    PostgresValueType::TIMESTAMPS2,
+      PostgresValueType::TEXT_ARRAY,    PostgresValueType::INT2_ARRAY,
+      PostgresValueType::INT4_ARRAY,    PostgresValueType::OID_ARRAY,
+      PostgresValueType::FLOADT4_ARRAY, PostgresValueType::DECIMAL,
   };
 
   // Make sure that ToString and FromString work
@@ -1142,7 +1128,8 @@ TEST_F(InternalTypesTests, PostgresValueTypeTest) {
   // Then make sure that we can't cast garbage
   std::string invalid("Never Trust The Terrier");
   EXPECT_THROW(peloton::StringToPostgresValueType(invalid), peloton::Exception);
-  EXPECT_THROW(peloton::PostgresValueTypeToString(static_cast<PostgresValueType>(-99999)),
+  EXPECT_THROW(peloton::PostgresValueTypeToString(
+                   static_cast<PostgresValueType>(-99999)),
                peloton::Exception);
 }
 
