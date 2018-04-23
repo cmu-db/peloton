@@ -59,6 +59,16 @@ class WhatIfIndexTests : public PelotonTest {
     }
   }
 
+  void DropTable(std::string table_name) {
+    std::string create_str = "DROP TABLE " + table_name + ";";
+    TestingSQLUtil::ExecuteSQLQuery(create_str);
+  }
+
+  void DropDatabase(std::string db_name) {
+    std::string create_str = "DROP DATABASE " + db_name + ";";
+    TestingSQLUtil::ExecuteSQLQuery(create_str);
+  }
+
   // Generates table stats to perform what-if index queries.
   void GenerateTableStats() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -159,7 +169,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
-  LOG_DEBUG("Cost of the query with 1 index: %lf", cost_with_index_1);
+  LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
   EXPECT_NE(result->plan, nullptr);
   LOG_INFO("%s", result->plan->GetInfo().c_str());
 
@@ -175,8 +185,15 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   EXPECT_LT(cost_with_index_2, cost_without_index);
   EXPECT_NE(result->plan, nullptr);
   LOG_INFO("%s", result->plan->GetInfo().c_str());
+
+  DropTable(table_name);
+  DropDatabase(db_name);
 }
 
+/**
+ * @brief This test checks if a hypothetical index on multiple columns
+ * helps a particular query.
+ */
 TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   std::string table_name = "dummy_table_whatif";
   std::string db_name = DEFAULT_DB_NAME;
@@ -192,7 +209,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
 
   // Form the query.
   std::string query("SELECT a from " + table_name +
-                    " WHERE b < 100 and c < 100;");
+                    " WHERE b < 200 and c < 100;");
 
   brain::IndexConfiguration config;
 
@@ -216,33 +233,51 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
       sql_statement, config, DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
-  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
+  LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 
   // Insert hypothetical catalog objects
-  // Index on cols a, c.
   config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 2}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_1 = result->cost;
-  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_1);
   EXPECT_EQ(cost_without_index, cost_with_index_1);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
   config.AddIndexObject(CreateHypotheticalIndex(table_name, {0, 1}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
-  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_2);
   EXPECT_EQ(cost_without_index, cost_with_index_2);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
   config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 2}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_3 = result->cost;
-  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_1);
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_3);
   EXPECT_GT(cost_without_index, cost_with_index_3);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_4 = result->cost;
+
+  // The cost of using one index {1} should be greater than the cost
+  // of using both the indexes {1, 2} for the query.
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_4);
+  EXPECT_GT(cost_with_index_4, cost_with_index_3);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
+
+  DropTable(table_name);
+  DropDatabase(db_name);
 }
 
 TEST_F(WhatIfIndexTests, MultiColumnTest2) {
@@ -259,7 +294,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   GenerateTableStats();
 
   // Form the query.
-  std::string query("SELECT a from " + table_name + " WHERE e > 100;");
+  std::string query("SELECT a from " + table_name + " WHERE b > 500 AND e > 100;");
 
   brain::IndexConfiguration config;
 
@@ -326,6 +361,97 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_5 = result->cost;
   LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_5);
   EXPECT_GT(cost_without_index, cost_with_index_5);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_6 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_6);
+  EXPECT_GT(cost_without_index, cost_with_index_6);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_7 = result->cost;
+  LOG_DEBUG("Cost of the query with index: %lf", cost_with_index_7);
+  EXPECT_EQ(cost_without_index, cost_with_index_7);
+
+  DropTable(table_name);
+  DropDatabase(db_name);
+}
+
+
+/**
+ * @brief This code checks if an index on the subset of the query columns
+ * has a greater cost than an index on all of the query columns. (in order)
+ */
+TEST_F(WhatIfIndexTests, MultiColumnTest3) {
+  std::string table_name = "dummy_table_whatif";
+  std::string db_name = DEFAULT_DB_NAME;
+  int num_rows = 5000;
+
+  CreateDatabase(db_name);
+
+  CreateTable(table_name);
+
+  InsertIntoTable(table_name, num_rows);
+
+  GenerateTableStats();
+
+  // Form the query.
+  std::string query("SELECT a from " + table_name + " WHERE b = 500 AND d = 100 AND e = 100;");
+
+  brain::IndexConfiguration config;
+
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+    parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+    new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+
+  // Get the first statement.
+  auto sql_statement = stmt_list.get()->GetStatement(0);
+
+  binder->BindNameToNode(sql_statement);
+  txn_manager.CommitTransaction(txn);
+
+  // Get the optimized plan tree without the indexes (sequential scan)
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+    sql_statement, config, DEFAULT_DB_NAME);
+  auto cost_without_index = result->cost;
+  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
+
+  // Insert hypothetical catalog objects
+  // Index on cols a, c.
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 3, 4}));
+
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_1 = result->cost;
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_1);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
+  EXPECT_GT(cost_without_index, cost_with_index_1);
+
+  config.Clear();
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 3}));
+  config.AddIndexObject(CreateHypotheticalIndex(table_name, {1, 3, 4}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_2 = result->cost;
+  LOG_INFO("Cost of the query with index: %lf", cost_with_index_2);
+  LOG_INFO("%s", result->plan->GetInfo().c_str());
+  EXPECT_GT(cost_without_index, cost_with_index_2);
+  EXPECT_GT(cost_with_index_2, cost_with_index_1);
+
+  DropTable(table_name);
+  DropDatabase(db_name);
 }
 
 }  // namespace test
