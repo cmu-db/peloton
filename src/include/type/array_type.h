@@ -33,7 +33,7 @@ class ArrayType : public Type {
   // Get the element at a given index in this array
   Value GetElementAt(const Value &val, uint64_t idx) const override;
 
-  Type *GetElementType(const Value &val UNUSED_ATTRIBUTE) const override;
+  Type *GetElemType(const Value &val UNUSED_ATTRIBUTE) const;
 
   // Does this value exist in this array?
   Value InList(const Value &list, const Value &object) const override;
