@@ -643,9 +643,9 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-              type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL ||
-              type == GCVersionType::COMMIT_DELETE);
+                   type == GCVersionType::COMMIT_INS_DEL ||
+                   type == GCVersionType::ABORT_INS_DEL ||
+                   type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
