@@ -156,7 +156,7 @@ class Type {
   // Get the element at a given index in this array
   virtual Value GetElementAt(const Value &val, uint64_t idx) const;
 
-  virtual Type *GetElementType(const Value &val) const;
+  virtual const Type *GetElementType(const Value &val) const;
 
   // Does this value exist in this array?
   virtual Value InList(const Value &list, const Value &object) const;

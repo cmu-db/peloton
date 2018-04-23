@@ -281,7 +281,7 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->GetElementAt(*this, idx);
   }
 
-  inline Type *GetElementType() const {
+  inline const Type *GetElementType() const {
     return Type::GetInstance(type_id_)->GetElementType(*this);
   }
 

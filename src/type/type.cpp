@@ -393,8 +393,8 @@ Value Type::GetElementAt(const Value &val UNUSED_ATTRIBUTE,
   throw peloton::NotImplementedException(msg);
 }
 
-Type *Type::GetElementType(const Value &val UNUSED_ATTRIBUTE) const {
-  return elem_type_;
+const Type *Type::GetElementType(const Value &val UNUSED_ATTRIBUTE) const {
+  return this;
 }
 
 // Does this value exist in this array?
