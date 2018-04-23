@@ -503,7 +503,7 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
         std::unique_ptr<storage::Tuple> delete_key(
             new storage::Tuple(index_schema, true));
         delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-        bool delete_res =
+        UNUSED_ATTRIBUTE bool delete_res =
             index->DeleteEntry(delete_key.get(), *index_entry_ptr);
         PELOTON_ASSERT(delete_res == true);
       }
