@@ -107,7 +107,8 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
 
-  // Returns an unused TupleSlot to GCManager (in the case of an insertion failure)
+  // Returns an unused TupleSlot to GCManager (in the case of an insertion
+  // failure)
   virtual void RecycleUnusedTupleSlot(const ItemPointer &location) override;
 
   virtual void RegisterTable(const oid_t &table_id) override {
@@ -148,8 +149,6 @@ class TransactionLevelGCManager : public GCManager {
   void Running(const int &thread_id);
 
   void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
-
-
 
   bool ResetTuple(const ItemPointer &);
 

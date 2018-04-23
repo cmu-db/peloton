@@ -59,7 +59,6 @@ ResultType InsertTuple(storage::DataTable *table, const int key) {
 }
 
 ResultType DeleteTuple(storage::DataTable *table, const int key) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Delete(key);
@@ -71,7 +70,6 @@ ResultType DeleteTuple(storage::DataTable *table, const int key) {
 
 ResultType SelectTuple(storage::DataTable *table, const int key,
                        std::vector<int> &results) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Read(key);
@@ -86,7 +84,9 @@ ResultType SelectTuple(storage::DataTable *table, const int key,
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table_id).IsNull())
+  while (!gc::GCManagerFactory::GetInstance()
+              .GetRecycledTupleSlot(table_id)
+              .IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -96,7 +96,8 @@ int GetNumRecycledTuples(storage::DataTable *table) {
 size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
                                     int second_val) {
   size_t num_occurrences = 0;
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -121,8 +122,10 @@ size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
   return num_occurrences;
 }
 
-size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val, int second_val) {
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
+                               int first_val, int second_val) {
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -135,7 +138,8 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val
   auto indexed_columns = index_schema->GetIndexedColumns();
 
   // build key.
-  std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
+  std::unique_ptr<storage::Tuple> current_key(
+      new storage::Tuple(index_schema, true));
   current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
 
   std::vector<ItemPointer *> index_entries;
@@ -143,7 +147,6 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val
 
   return index_entries.size();
 }
-
 
 ////////////////////////////////////////////
 // NEW TESTS

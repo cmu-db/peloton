@@ -498,9 +498,11 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
         if (index == nullptr) continue;
         index_schema = index->GetKeySchema();
         indexed_columns = index_schema->GetIndexedColumns();
-        std::unique_ptr<storage::Tuple> delete_key(new storage::Tuple(index_schema, true));
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
         delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-        bool delete_res = index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
         PELOTON_ASSERT(delete_res == true);
       }
       *index_entry_ptr = nullptr;
