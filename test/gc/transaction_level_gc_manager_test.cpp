@@ -124,7 +124,7 @@ int GetNumRecycledTuples(storage::DataTable *table) {
   return count;
 }
 
-size_t CountNumIndexOccurrences(storage::DataTable *table, int first_val, int second_val) {
+size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val, int second_val) {
 
   size_t num_occurrences = 0;
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
@@ -134,7 +134,6 @@ size_t CountNumIndexOccurrences(storage::DataTable *table, int first_val, int se
   tuple->SetValue(0, primary_key, nullptr);
   tuple->SetValue(1, value, nullptr);
 
-  // check that tuple was removed from indexes
   for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
     auto index = table->GetIndex(idx);
     if (index == nullptr) continue;
@@ -151,6 +150,30 @@ size_t CountNumIndexOccurrences(storage::DataTable *table, int first_val, int se
   }
   return num_occurrences;
 }
+
+size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val, int second_val) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+  auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
+  auto value = type::ValueFactory::GetIntegerValue(second_val);
+
+  tuple->SetValue(0, primary_key, nullptr);
+  tuple->SetValue(1, value, nullptr);
+
+  auto index = table->GetIndex(idx);
+  if (index == nullptr) return 0;
+  auto index_schema = index->GetKeySchema();
+  auto indexed_columns = index_schema->GetIndexedColumns();
+
+  // build key.
+  std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
+  current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
+
+  std::vector<ItemPointer *> index_entries;
+  index->ScanKey(current_key.get(), index_entries);
+
+  return index_entries.size();
+}
+
 
 ////////////////////////////////////////////
 // NEW TESTS
@@ -178,6 +201,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
       0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
@@ -196,7 +221,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 2, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 2, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -227,7 +252,8 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      2, test_name + "Table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "Table", db_id, INVALID_OID, 1234, true));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
@@ -235,18 +261,25 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
 
   // insert duplicate key (failure), try to commit
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(0, 1); // key already exists in table
+  TransactionScheduler scheduler(2, table.get(), &txn_manager);
+  scheduler.Txn(0).Insert(0, 0);
   scheduler.Txn(0).Commit();
+  scheduler.Txn(1).Insert(0, 1); // primary key already exists in table
+  scheduler.Txn(1).Commit();
   scheduler.Run();
 
-  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 1));
+
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 0));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 0));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -299,8 +332,11 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 1, 1));
+
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 1));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 0, 1, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -349,13 +385,17 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
   scheduler.Txn(1).Commit();
   scheduler.Run();
   EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 5, 1));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 5, 2));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 5, 1));
+
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 5, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 5, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -400,21 +440,21 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
   TransactionScheduler scheduler(2, table.get(), &txn_manager);
   scheduler.Txn(0).Insert(0, 1); // succeeds
   scheduler.Txn(0).Commit();
-  scheduler.Txn(1).Update(0, 2); // fails, dup value
+  scheduler.Txn(1).Update(0, 2);
   scheduler.Txn(1).Abort();
   scheduler.Run();
-  auto result0 = scheduler.schedules[0].txn_result;
-  auto result1 = scheduler.schedules[1].txn_result;
-  EXPECT_EQ(ResultType::SUCCESS, result0);
-  EXPECT_EQ(ResultType::ABORTED, result1);
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 1));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -466,8 +506,11 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 2));
+
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -512,16 +555,14 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
   scheduler.Txn(0).Update(0, 2);
   scheduler.Txn(0).Abort();
   scheduler.Run();
-
-  auto result = scheduler.schedules[0].txn_result;
-  EXPECT_EQ(ResultType::ABORTED, result);
+  EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -574,7 +615,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -627,7 +668,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table.get(), 0, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -677,7 +718,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -727,7 +768,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -782,8 +823,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table.get(), 0, 2));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -839,8 +880,10 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table.get(), 0, 1));
-  EXPECT_EQ(1, CountNumIndexOccurrences(table.get(), 0, 2));
+
+
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -893,7 +936,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ('3', result[0][0]);
-  EXPECT_EQ(2, CountNumIndexOccurrences(table, 3, 30));
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table, 3, 30));
 
   // Perform primary key and value update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5, b=40", result,
@@ -910,8 +953,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
   EXPECT_EQ('5', result[0][0]);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table));
-  EXPECT_EQ(0, CountNumIndexOccurrences(table, 3, 30));
-  EXPECT_EQ(2, CountNumIndexOccurrences(table, 5, 40));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table, 3, 30));
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table, 5, 40));
 
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
