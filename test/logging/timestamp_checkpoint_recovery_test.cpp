@@ -105,10 +105,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
-          EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs[1])
+          	EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs[1])
                                  ->GetColumnName());
+          }
         }
         // unique primary key for attribute "upid" (unique)
         else if (index_catalog->GetIndexName() ==
@@ -119,8 +121,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
+          }
         }
         // ART index for attribute "value1"
         else if (index_catalog->GetIndexName() == "index_test1") {
@@ -130,8 +134,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
                                   ->GetColumnName());
+          }
         }
         // SKIPLIST index for attributes "value2" and "value3"
         else if (index_catalog->GetIndexName() == "index_test2") {
@@ -141,10 +147,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
                                   ->GetColumnName());
-          EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[1])
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[1])
                                   ->GetColumnName());
+          }
         }
         // unique index for attribute "value2"
         else if (index_catalog->GetIndexName() == "unique_index_test") {
@@ -154,8 +162,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
                                   ->GetColumnName());
+          }
         } else {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
@@ -188,12 +198,16 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(1, source_columns.size());
-          EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns[0])
+          if (1 == source_columns.size()) {
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns[0])
                                   ->GetColumnName());
+          }
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(1, sink_columns.size());
-          EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns[0])
+          if (1 == sink_columns.size()) {
+          	EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns[0])
                               ->GetColumnName());
+          }
         }
         // (value4, value5) => (checkpoint_index_test.upid1,
         // checkpoint_index_test.upid2)
@@ -206,18 +220,22 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(2, source_columns.size());
-          EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns[0])
+          if (2 == source_columns.size()) {
+          	EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns[0])
                                   ->GetColumnName());
-          EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns[1])
+          	EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns[1])
                                   ->GetColumnName());
+          }
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(2, sink_columns.size());
-          EXPECT_EQ("upid1",
-                    sink_table_catalog->GetColumnObject(sink_columns[0])
+          if (2 == sink_columns.size()) {
+          	EXPECT_EQ("upid1",
+                      sink_table_catalog->GetColumnObject(sink_columns[0])
                         ->GetColumnName());
-          EXPECT_EQ("upid2",
-                    sink_table_catalog->GetColumnObject(sink_columns[1])
+          	EXPECT_EQ("upid2",
+                      sink_table_catalog->GetColumnObject(sink_columns[1])
                         ->GetColumnName());
+          }
         } else {
           LOG_ERROR("Unexpected foreign key is found: %s",
                     foreign_key->GetConstraintName().c_str());
@@ -238,10 +256,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
-          EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
+          	EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
                                  ->GetColumnName());
+          }
         }
         // UNIQUE constraint index for an attribute "value1"
         else if (index_catalog->GetIndexName() ==
@@ -252,8 +272,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
+          }
         }
         // foreign key index for an attribute "value3"
         else if (index_catalog->GetIndexName() ==
@@ -263,9 +285,11 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     index_catalog->GetIndexConstraint());
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
-          EXPECT_EQ(1, key_attrs.size());
-          EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
+        	EXPECT_EQ(1, key_attrs.size());
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
+          }
         }
         // foreign key index for an attributes "value4" and "value5"
         else if (index_catalog->GetIndexName() ==
@@ -276,10 +300,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
                                  ->GetColumnName());
-          EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
+          	EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
                                  ->GetColumnName());
+          }
         } else {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
