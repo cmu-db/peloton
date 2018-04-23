@@ -164,12 +164,12 @@ class RLFrameworkTest : public PelotonTest {
 
     size_t map_size = col_id_map.size();
     size_t final_offset = 0;
-    size_t step = (((size_t)1) << map_size) / 2;
+    size_t step = (((size_t)1) << map_size) >> 1;
     for (size_t i = 0; i < map_size; ++i) {
       if (offsets.find(i) != offsets.end()) {
         final_offset += step;
       }
-      step /= 2;
+      step >>= 1;
     }
 
     return final_offset;
