@@ -117,7 +117,9 @@ ResultType SelectTuple(storage::DataTable *table, const int key,
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table_id).IsNull())
+  while (!gc::GCManagerFactory::GetInstance()
+              .GetRecycledTupleSlot(table_id)
+              .IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -127,7 +129,8 @@ int GetNumRecycledTuples(storage::DataTable *table) {
 size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
                                     int second_val) {
   size_t num_occurrences = 0;
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -289,7 +292,8 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
+//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert
+///or FK constraints) violated)
 //// Fail to insert a tuple
 //// Abort
 //// Assert RQ size = 1
@@ -415,7 +419,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
 // Assert old version is in 2 indexes
 // Assert new version is in 1 index (primary key)
 TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
-  std::string test_name= "AbortUpdateSecondaryKey";
+  std::string test_name = "AbortUpdateSecondaryKey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);

@@ -623,7 +623,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
 
   for (size_t iter = 0; iter < fk_count; iter++) {
     catalog::ForeignKey *fk = GetForeignKeySrc(iter);
-
+    
     // Check if any row in the source table references the current tuple
     oid_t source_table_id = fk->GetSourceTableOid();
     storage::DataTable *src_table = nullptr;
