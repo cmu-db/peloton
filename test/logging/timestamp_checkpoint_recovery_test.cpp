@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// new_checkpointing_test.cpp
+// timestamp_checkpoint_recovery_test.cpp
 //
-// Identification: test/logging/new_checkpointing_test.cpp
+// Identification: test/logging/timestamp_checkpoint_recovery_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,6 +18,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "logging/timestamp_checkpoint_manager.h"
+#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "sql/testing_sql_util.h"
 
@@ -25,12 +26,12 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Checkpointing Tests
+// Checkpoint Recovery Tests
 //===--------------------------------------------------------------------===//
 
-class TimestampCheckpointingTests : public PelotonTest {};
+class TimestampCheckpointRecoveryTests : public PelotonTest {};
 
-TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
+TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
   PelotonInit::Initialize();
 
@@ -223,6 +224,68 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
         }
       }
 
+      // index for constraints
+      for (auto index_pair : table_catalog->GetIndexObjects()) {
+        auto index_catalog = index_pair.second;
+        LOG_DEBUG("check index for constraints: %s",
+        		index_catalog->GetIndexName().c_str());
+
+        // primary key for attributes "pid1" and "pid2"
+        if (index_catalog->GetIndexName() == "checkpoint_constraint_test_pkey") {
+          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexConstraintType::PRIMARY_KEY,
+                    index_catalog->GetIndexConstraint());
+          EXPECT_TRUE(index_catalog->HasUniqueKeys());
+          auto key_attrs = index_catalog->GetKeyAttrs();
+          EXPECT_EQ(2, key_attrs.size());
+          EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
+                                 ->GetColumnName());
+        }
+        // UNIQUE constraint index for an attribute "value1"
+        else if (index_catalog->GetIndexName() ==
+        		"checkpoint_constraint_test_value1_UNIQ") {
+          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexConstraintType::UNIQUE,
+                    index_catalog->GetIndexConstraint());
+          EXPECT_TRUE(index_catalog->HasUniqueKeys());
+          auto key_attrs = index_catalog->GetKeyAttrs();
+          EXPECT_EQ(1, key_attrs.size());
+          EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+        }
+        // foreign key index for an attribute "value3"
+        else if (index_catalog->GetIndexName() ==
+        		"checkpoint_constraint_test_FK_checkpoint_table_test_1") {
+          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexConstraintType::DEFAULT,
+                    index_catalog->GetIndexConstraint());
+          EXPECT_FALSE(index_catalog->HasUniqueKeys());
+          auto key_attrs = index_catalog->GetKeyAttrs();
+          EXPECT_EQ(1, key_attrs.size());
+          EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+        }
+        // foreign key index for an attributes "value4" and "value5"
+        else if (index_catalog->GetIndexName() ==
+        		"checkpoint_constraint_test_FK_checkpoint_index_test_2") {
+          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexConstraintType::DEFAULT,
+                    index_catalog->GetIndexConstraint());
+          EXPECT_FALSE(index_catalog->HasUniqueKeys());
+          auto key_attrs = index_catalog->GetKeyAttrs();
+          EXPECT_EQ(2, key_attrs.size());
+          EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
+                                 ->GetColumnName());
+        } else {
+          LOG_ERROR("Unexpected index is found: %s",
+                    index_catalog->GetIndexName().c_str());
+        }
+      }
+
       // single attribute constraint
       for (auto column_pair : table_catalog->GetColumnObjects()) {
         auto column_catalog = column_pair.second;
@@ -332,11 +395,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
           LOG_ERROR("Unexpected column is found: %s",
                     column_catalog->GetColumnName().c_str());
         }
-      }
-
-      for (auto index_pair : table_catalog->GetIndexObjects()) {
-        auto index_catalog = index_pair.second;
-        LOG_DEBUG("INDEX check: %s", index_catalog->GetIndexName().c_str());
       }
 
     } else {
@@ -453,17 +511,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
       TestingSQLUtil::ExecuteSQLQuery(foreign_key_dml2);
   // EXPECT_EQ(ResultType::ABORTED, foreign_key_result2);
   EXPECT_EQ(ResultType::TO_ABORT, foreign_key_result2);
-
-  /*
-  auto sm = storage::StorageManager::GetInstance();
-  auto db = sm->GetDatabaseWithOffset(1);
-  for (oid_t t = 0; t < db->GetTableCount(); t++) {
-    auto table = db->GetTable(t);
-    for (oid_t tg = 0; tg < table->GetTileGroupCount(); tg++) {
-      LOG_DEBUG("%s", table->GetTileGroup(tg)->GetInfo().c_str());
-    }
-  }
-  */
 
   PelotonInit::Shutdown();
 }

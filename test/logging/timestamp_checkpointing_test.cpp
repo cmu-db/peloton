@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// new_checkpointing_test.cpp
+// timestamp_checkpointing_test.cpp
 //
-// Identification: test/logging/new_checkpointing_test.cpp
+// Identification: test/logging/timestamp_checkpointing_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,6 +26,7 @@ namespace test {
 class TimestampCheckpointingTests : public PelotonTest {};
 
 TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
+  settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
   PelotonInit::Initialize();
 
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
