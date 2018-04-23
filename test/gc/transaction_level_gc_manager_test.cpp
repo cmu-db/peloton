@@ -232,12 +232,12 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
 }
 
 // Fail to insert a tuple
-//// Fail to insert a tuple
-//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or
+// Fail to insert a tuple
+// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or
 // FK constraints) violated)
-//// Abort
-//// Assert RQ size = 1
-//// Assert old copy in 2 indexes
+// Abort
+// Assert RQ size = 1
+// Assert old copy in 2 indexes
 // Assert new copy in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   std::string test_name = "FailedInsertPrimaryKey";

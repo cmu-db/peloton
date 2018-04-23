@@ -200,6 +200,8 @@ class TransactionLevelGCManager : public GCManager {
 
   void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
 
+
+
   bool ResetTuple(const ItemPointer &);
 
   // this function iterates the gc context and unlinks every version
