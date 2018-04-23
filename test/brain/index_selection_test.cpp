@@ -326,7 +326,6 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * @brief end-to-end test which takes in a workload of queries
  * and spits out the set of indexes that are the best ones for the
  * workload.
- * TODO: currently hard coding the database name.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest) {
   std::string table_name = "dummy_table";
@@ -334,7 +333,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   size_t max_index_cols = 2;         // multi-column index limit, 2 cols for now
   size_t enumeration_threshold = 2;  // naive enumeration threshold
-  size_t num_indexes = 10;           // top num_indexes will be returned.
+  size_t num_indexes = 4;            // top num_indexes will be returned.
   int num_rows = 2000;               // number of rows to be inserted.
 
   CreateDatabase(database_name);
@@ -367,7 +366,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
   LOG_INFO("Best Index Count: %ld", best_config.GetIndexCount());
-  EXPECT_EQ(best_config.GetIndexCount(), 5);
+  LOG_INFO("Best indexes: %s", best_config.ToString().c_str());
+  EXPECT_EQ(best_config.GetIndexCount(), 4);
 
   DropTable(table_name);
   DropDatabase(database_name);
