@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -65,16 +64,15 @@ class Constraint : public Printable {
   // Todo: default union data structure,
   // For default constraint
   void addDefaultValue(const type::Value &value) {
-    if (constraint_type != ConstraintType::DEFAULT || default_value.get() != nullptr) {
+    if (constraint_type != ConstraintType::DEFAULT ||
+        default_value.get() != nullptr) {
       return;
     }
 
     default_value.reset(new peloton::type::Value(value));
   }
 
-  type::Value* getDefaultValue() {
-    return default_value.get();
-  }
+  type::Value *getDefaultValue() { return default_value.get(); }
 
   // Add check constrain
   void AddCheck(ExpressionType op, peloton::type::Value val) {

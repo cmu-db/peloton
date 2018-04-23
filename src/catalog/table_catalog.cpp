@@ -19,11 +19,16 @@
 #include "catalog/column_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
+#include "codegen/buffering_consumer.h"
 #include "type/value_factory.h"
+
+#include "common/internal_types.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
-
+    using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                                        concurrency::TransactionContext *txn,
                                        int tupleId)
@@ -32,6 +37,22 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       table_name(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAME)
                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
+                       .GetAs<oid_t>()),
+      index_objects(),
+      index_names(),
+      valid_index_objects(false),
+      column_objects(),
+      column_names(),
+      valid_column_objects(false),
+      txn(txn) {}
+
+TableCatalogObject::TableCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                       concurrency::TransactionContext *txn)
+    : table_oid(wrapped_tuple.GetValue(TableCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      table_name(wrapped_tuple.GetValue(TableCatalog::ColumnId::TABLE_NAME)
+                     .ToString()),
+      database_oid(wrapped_tuple.GetValue(TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       index_objects(),
       index_names(),
@@ -373,20 +394,29 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
+  (void) pool;
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
 
-  tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
-  tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
-  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 /*@brief   delete a tuple about table info from pg_table(using index scan)
@@ -394,20 +424,37 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+bool TableCatalog::DeleteTable(oid_t table_oid,
+                               concurrency::TransactionContext *txn) {
 
-  // evict from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
-  if (table_object) {
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
-    database_object->EvictTableObject(table_oid);
+  std::vector<oid_t> column_ids(all_column_ids);
+
+
+  auto *table_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                  ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+
+  expression::AbstractExpression *table_oid_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+  bool result =  DeleteWithCompiledSeqScan(column_ids, table_oid_equality_expr, txn);
+
+  if(result) {
+    // evict from cache
+    auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
+    if (table_object) {
+      auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+       table_object->GetDatabaseOid(), txn);
+      database_object->EvictTableObject(table_oid);
+    }
   }
-
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return result;
 }
 
 /*@brief   read table catalog object from pg_table using table oid
@@ -426,16 +473,25 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *table_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+  expression::AbstractExpression *table_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, table_oid_equality_expr, txn);
+
+  if (result_tuples.size() == 1) {
     auto table_object =
-        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<TableCatalogObject>(result_tuples[0], txn);
+
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
         table_object->GetDatabaseOid(), txn);
@@ -443,9 +499,10 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;
+
     return table_object;
   } else {
-    LOG_DEBUG("Found %lu table with oid %u", result_tiles->size(), table_oid);
+    LOG_DEBUG("Found %lu table with oid %u", result_tuples.size(), table_oid);
   }
 
   // return empty object if not found
@@ -474,19 +531,46 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  // need the predicate for the seq scan (conjunction)
+  // table_name == table_name and database_oid need to be same
+  // only need to get the logical tiles that wrap oid, name, db_oid
+  expression::AbstractExpression *table_name_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::TABLE_NAME);
+  expression::AbstractExpression *table_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  expression::AbstractExpression *table_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_name_expr,
+          table_name_const_expr);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, table_name_equality_expr,
+          db_oid_equality_expr);
+
+  //  LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
+  //   change this to seq plan
+  // ceate predicate refering to seq_scan_test.cpp
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+  // LOG_DEBUG("Result size: %lu", result_tuples.size());
+  if (result_tuples.size() == 1) {
     auto table_object =
-        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<TableCatalogObject>(result_tuples[0], txn);
+
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
         table_object->GetDatabaseOid(), txn);
@@ -494,6 +578,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;
+
     return table_object;
   }
 
@@ -522,19 +607,24 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_DATABASE_OID;  // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto table_object =
-          std::make_shared<TableCatalogObject>(tile.get(), txn, tuple_id);
-      database_object->InsertTableObject(table_object);
-    }
+  expression::AbstractExpression *predicate = db_oid_equality_expr;
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  for (auto tuple : result_tuples) {
+    auto table_object = std::make_shared<TableCatalogObject>(tuple, txn);
+    database_object->InsertTableObject(table_object);
   }
 
   database_object->SetValidTableObjects(true);

@@ -52,7 +52,8 @@ class TableMetricsCatalog : public AbstractCatalog {
                           int64_t updates, int64_t deletes, int64_t inserts,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteTableMetrics(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool DeleteTableMetrics(oid_t table_oid,
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API

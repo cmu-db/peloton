@@ -45,8 +45,10 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
-                     int tupleId = 0);
+  TableCatalogObject(executor::LogicalTile *tile,
+                     concurrency::TransactionContext *txn, int tupleId = 0);
+  TableCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                     concurrency::TransactionContext *txn);
 
  public:
   // Get indexes
@@ -119,9 +121,10 @@ class TableCatalog : public AbstractCatalog {
   ~TableCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                   type::AbstractPool *pool = nullptr,
-                                   concurrency::TransactionContext *txn = nullptr);
+  static TableCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 

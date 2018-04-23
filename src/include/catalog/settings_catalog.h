@@ -22,7 +22,8 @@ class SettingsCatalog : public AbstractCatalog {
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static SettingsCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -34,7 +35,8 @@ class SettingsCatalog : public AbstractCatalog {
                      bool is_persistent, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
-  bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
+  bool DeleteSetting(const std::string &name,
+                     concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -45,7 +47,7 @@ class SettingsCatalog : public AbstractCatalog {
   std::string GetDefaultValue(const std::string &name,
                               concurrency::TransactionContext *txn);
 
-  enum class ColumnId {
+  enum ColumnId {
     NAME = 0,
     VALUE = 1,
     VALUE_TYPE = 2,

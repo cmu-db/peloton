@@ -51,6 +51,29 @@ class QueryCacheTest : public PelotonCodeGenTest {
         &GetTestTable(TestTableId()), a_gt_40, {0, 1}));
   }
 
+  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanA() {
+    auto *a_col_exp =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+   a_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 0);
+    auto *const_40_exp = PelotonCodeGenTest::ConstIntExpr(40).release();
+    auto *a_eq_40 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_col_exp, const_40_exp);
+    return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), a_eq_40, {0, 1}));
+  }
+
+
+  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanB() {
+    auto *b_col_exp =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
+   b_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 1);
+    auto *const_41_exp = PelotonCodeGenTest::ConstIntExpr(41).release();
+    auto *b_eq_41 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp, const_41_exp);
+    return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), b_eq_41, {0, 1}));
+  }
+
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanWithPredicate() {
     auto *a_col_exp =
@@ -209,6 +232,62 @@ class QueryCacheTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
+
+
+    TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
+      std::shared_ptr<planner::SeqScanPlan> plan_a = GetSeqScanPlanA();
+
+      std::shared_ptr<planner::SeqScanPlan> plan_b = GetSeqScanPlanB();
+      // Do binding
+      planner::BindingContext context_1;
+      plan_a->PerformBinding(context_1);
+      planner::BindingContext context_2;
+      plan_b->PerformBinding(context_2);
+
+      // check if the two plans are the same
+      auto hash_equal = (plan_a->Hash() == plan_b->Hash());
+      EXPECT_FALSE(hash_equal);
+
+      auto is_equal = (*plan_a.get() == *plan_b.get());
+     EXPECT_FALSE(is_equal);
+
+      // execute SELECT a FROM table where a == 40;
+      codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
+      bool cached;
+      CompileAndExecuteCache(plan_a, buffer_1, cached);
+      auto &results_1 = buffer_1.GetOutputTuples();
+      EXPECT_EQ(1, results_1.size());
+      EXPECT_FALSE(cached);
+
+      // clear the cache for plan_b
+      codegen::QueryCache::Instance().Clear();
+      EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+      // execute SELECT b FROM table where b == 41;
+      codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
+      CompileAndExecuteCache(plan_b, buffer_2, cached);
+
+      const auto &results_2 = buffer_2.GetOutputTuples();
+      EXPECT_EQ(1, results_2.size());
+      EXPECT_FALSE(cached);
+
+      // cache has plan_b
+      EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+
+      // re-execute SELECT a FROM table where a == 40;
+      codegen::BufferingConsumer buffer_3{{0, 1}, context_1};
+      CompileAndExecuteCache(plan_a, buffer_3, cached);
+
+      // cache should hit because two plans are the same
+     EXPECT_FALSE(cached);
+
+      const auto &results_3 = buffer_3.GetOutputTuples();
+      EXPECT_EQ(1, results_3.size()); // fails here
+
+      codegen::QueryCache::Instance().Clear();
+      EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+    }
+
 TEST_F(QueryCacheTest, SimpleCache) {
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> scan1 = GetSeqScanPlan();
@@ -227,6 +306,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
   auto is_equal = (*scan1.get() == *scan2.get());
   EXPECT_TRUE(is_equal);
 
+     int init_count = codegen::QueryCache::Instance().GetCount();
+
   // Execute a new query
   codegen::BufferingConsumer buffer_1{{0}, context_1};
   bool cached;
@@ -234,7 +315,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results_1.size());
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // Execute a query cached
   codegen::BufferingConsumer buffer_2{{0}, context_2};
@@ -243,7 +324,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
   EXPECT_TRUE(cached);
   EXPECT_EQ(NumRowsInTestTable() - 4, results_2.size());
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -267,6 +348,8 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
 
   auto is_equal = (*scan1.get() == *scan2.get());
   EXPECT_TRUE(is_equal);
+
+     int init_count = codegen::QueryCache::Instance().GetCount();
 
   codegen::BufferingConsumer buffer_1{{0, 1, 2}, context_1};
 
@@ -292,7 +375,7 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   EXPECT_EQ(CmpBool::CmpTrue, results_2[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(21)));
   EXPECT_TRUE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -314,6 +397,8 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
 
   bool is_equal = (*hj_plan1.get() == *hj_plan_2.get());
   EXPECT_TRUE(is_equal);
+
+     int init_count = codegen::QueryCache::Instance().GetCount();
 
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
@@ -350,7 +435,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
               CmpBool::CmpTrue);
   }
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -398,6 +483,8 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   is_equal = (*order_by_plan_1.get() == *order_by_plan_3.get());
   EXPECT_FALSE(is_equal);
 
+     int init_count = codegen::QueryCache::Instance().GetCount();
+
   codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
 
@@ -428,7 +515,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
                     std::move(order_by_plan_3)) == nullptr);
   EXPECT_EQ(found, 1);
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -449,7 +536,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   auto is_equal = (*agg_plan1.get() == *agg_plan_2.get());
   EXPECT_TRUE(is_equal);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+     int init_count = codegen::QueryCache::Instance().GetCount();
 
   codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
@@ -461,7 +549,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(results_1.size(), 59);
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(agg_plan_2, buffer_2, cached);
@@ -471,7 +559,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_TRUE(cached);
 
   // Clean the query cache and leaves only one query
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
@@ -496,7 +584,8 @@ TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
 
   auto is_equal = (*nlj_plan_1.get() == *nlj_plan_2.get());
   EXPECT_TRUE(is_equal);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+     int init_count = codegen::QueryCache::Instance().GetCount();
 
   codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
@@ -505,14 +594,14 @@ TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
   bool cached;
   CompileAndExecuteCache(nlj_plan_1, buffer_1, cached);
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(nlj_plan_2, buffer_2, cached);
   EXPECT_TRUE(cached);
 
   // Clean the query cache and leaves only one query
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(init_count+1, codegen::QueryCache::Instance().GetCount());
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 

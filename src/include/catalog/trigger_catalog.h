@@ -17,7 +17,7 @@
 // 0: oid (pkey)
 // 1: tgrelid   : table_name
 // 2: tgname    : trigger_name
-// 3: tgfoid    : function_oid
+// 3: tgfoid    : function_name
 // 4: tgtype    : trigger_type
 // 5: tgargs    : function_arguemnts
 // 6: tgqual    : fire_condition
@@ -50,7 +50,8 @@ class TriggerCatalog : public AbstractCatalog {
   ~TriggerCatalog();
 
   // Global Singleton
-  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static TriggerCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -74,7 +75,8 @@ class TriggerCatalog : public AbstractCatalog {
   // of the same type
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggersByType(
-      oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn);
+      oid_t table_oid, int16_t trigger_type,
+      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
@@ -89,7 +91,7 @@ class TriggerCatalog : public AbstractCatalog {
     TRIGGER_OID = 0,
     TABLE_OID = 1,
     TRIGGER_NAME = 2,
-    FUNCTION_OID = 3,
+    FUNCTION_NAME = 3,
     TRIGGER_TYPE = 4,
     FUNCTION_ARGS = 5,
     FIRE_CONDITION = 6,
@@ -100,6 +102,8 @@ class TriggerCatalog : public AbstractCatalog {
   TriggerCatalog(concurrency::TransactionContext *txn);
 
   oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
+
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7};
 
   enum IndexId {
     PRIMARY_KEY = 0,

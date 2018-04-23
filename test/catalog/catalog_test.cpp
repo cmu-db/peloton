@@ -22,6 +22,7 @@
 #include "common/logger.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
+#include "common/timer.h"
 
 namespace peloton {
 namespace test {
@@ -150,6 +151,26 @@ TEST_F(CatalogTests, CreatingTable) {
   //               ->GetLength(),
   //           72);
 }
+TEST_F(CatalogTests, IndexObject) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      "EMP_DB", "department_table", txn);
+  LOG_INFO("table name: %u", table_object->GetTableOid());
+  auto index_objects = table_object->GetIndexObjects();
+  for (auto it=index_objects.begin();it != index_objects.end();it++) {
+    auto index_obj = it->second;
+    LOG_INFO("index oid %u, %s, %u", index_obj->GetIndexOid(), index_obj->GetIndexName().c_str(), index_obj->GetTableOid());
+  }
+
+  auto index_oid = index_objects.begin()->second->GetIndexOid();
+  auto index_obj = catalog::IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
+  EXPECT_NE(nullptr, index_obj);
+  // LOG_INFO("Found index oid %u, %s, %u", index_obj->GetIndexOid(), index_obj->GetIndexName().c_str(), index_obj->GetTableOid());
+
+  txn_manager.CommitTransaction(txn);
+}
 
 TEST_F(CatalogTests, TableObject) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -159,6 +180,10 @@ TEST_F(CatalogTests, TableObject) {
       "EMP_DB", "department_table", txn);
 
   auto index_objects = table_object->GetIndexObjects();
+  // auto index_oid = index_objects.begin()->second->GetIndexOid();
+  // auto index_obj = catalog::IndexCatalog::GetInstance()->GetIndexObject(index_oid, txn);
+  // LOG_INFO("index oid %u", index_oid);
+
   auto column_objects = table_object->GetColumnObjects();
 
   EXPECT_EQ(1, index_objects.size());

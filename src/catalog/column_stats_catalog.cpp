@@ -17,6 +17,8 @@
 #include "optimizer/stats/column_stats_collector.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 
 namespace peloton {
 namespace catalog {
@@ -110,9 +112,9 @@ bool ColumnStatsCatalog::InsertColumnStats(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
-                                           oid_t column_id,
-                                           concurrency::TransactionContext *txn) {
+bool ColumnStatsCatalog::DeleteColumnStats(
+    oid_t database_id, oid_t table_id, oid_t column_id,
+    concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -130,38 +132,66 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
        ColumnId::HISTOGRAM_BOUNDS, ColumnId::COLUMN_NAME, ColumnId::HAS_INDEX});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  expression::AbstractExpression *tb_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
-  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() == 0) {
+  expression::AbstractExpression *col_id_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::COLUMN_ID);
+  expression::AbstractExpression *col_id_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *col_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_id_expr, col_id_const_expr);
+
+  expression::AbstractExpression *db_and_tb =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+          tb_oid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_and_tb, col_oid_equality_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
+  if (result_tuples.size() == 0) {
     return nullptr;
   }
 
-  auto tile = (*result_tiles)[0].get();
-  PELOTON_ASSERT(tile->GetTupleCount() <= 1);
-  if (tile->GetTupleCount() == 0) {
-    return nullptr;
-  }
+  codegen::WrappedTuple tuple = result_tuples[0];
 
   type::Value num_rows, cardinality, frac_null, most_common_vals,
       most_common_freqs, hist_bounds, column_name, has_index;
 
-  num_rows = tile->GetValue(0, ColumnStatsOffset::NUM_ROWS_OFF);
-  cardinality = tile->GetValue(0, ColumnStatsOffset::CARDINALITY_OFF);
-  frac_null = tile->GetValue(0, ColumnStatsOffset::FRAC_NULL_OFF);
-  most_common_vals = tile->GetValue(0, ColumnStatsOffset::COMMON_VALS_OFF);
-  most_common_freqs = tile->GetValue(0, ColumnStatsOffset::COMMON_FREQS_OFF);
-  hist_bounds = tile->GetValue(0, ColumnStatsOffset::HIST_BOUNDS_OFF);
-  column_name = tile->GetValue(0, ColumnStatsOffset::COLUMN_NAME_OFF);
-  has_index = tile->GetValue(0, ColumnStatsOffset::HAS_INDEX_OFF);
+  num_rows = tuple.GetValue(ColumnStatsOffset::NUM_ROWS_OFF);
+  cardinality = tuple.GetValue(ColumnStatsOffset::CARDINALITY_OFF);
+  frac_null = tuple.GetValue(ColumnStatsOffset::FRAC_NULL_OFF);
+  most_common_vals = tuple.GetValue(ColumnStatsOffset::COMMON_VALS_OFF);
+  most_common_freqs = tuple.GetValue(ColumnStatsOffset::COMMON_FREQS_OFF);
+  hist_bounds = tuple.GetValue(ColumnStatsOffset::HIST_BOUNDS_OFF);
+  column_name = tuple.GetValue(ColumnStatsOffset::COLUMN_NAME_OFF);
+  has_index = tuple.GetValue(ColumnStatsOffset::HAS_INDEX_OFF);
 
   std::unique_ptr<std::vector<type::Value>> column_stats(
       new std::vector<type::Value>({num_rows, cardinality, frac_null,
@@ -174,8 +204,8 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
-    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
-        &column_stats_map) {
+    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
+        column_stats_map) {
   std::vector<oid_t> column_ids(
       {ColumnId::COLUMN_ID, ColumnId::NUM_ROWS, ColumnId::CARDINALITY,
        ColumnId::FRAC_NULL, ColumnId::MOST_COMMON_VALS,

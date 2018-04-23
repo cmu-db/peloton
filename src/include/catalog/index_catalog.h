@@ -44,6 +44,7 @@ class IndexCatalogObject {
 
  public:
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+  IndexCatalogObject(codegen::WrappedTuple wrapped_tuple);
 
   inline oid_t GetIndexOid() { return index_oid; }
   inline const std::string &GetIndexName() { return index_name; }
@@ -92,7 +93,6 @@ class IndexCatalog : public AbstractCatalog {
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, concurrency::TransactionContext *txn);
 
- private:
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       oid_t index_oid, concurrency::TransactionContext *txn);
 

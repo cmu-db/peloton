@@ -25,7 +25,8 @@ DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
   return &database_metrics_catalog;
 }
 
-DatabaseMetricsCatalog::DatabaseMetricsCatalog(concurrency::TransactionContext *txn)
+DatabaseMetricsCatalog::DatabaseMetricsCatalog(
+    concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." DATABASE_METRICS_CATALOG_NAME
                       " ("
@@ -41,7 +42,8 @@ DatabaseMetricsCatalog::~DatabaseMetricsCatalog() {}
 
 bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
     oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,
-    oid_t time_stamp, type::AbstractPool *pool, concurrency::TransactionContext *txn) {
+    oid_t time_stamp, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
