@@ -12,7 +12,9 @@
 
 #include "brain/index_selection.h"
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "util/file_util.h"
@@ -77,6 +79,29 @@ class RLFrameworkTest : public PelotonTest {
     catalog_->DropDatabaseWithName(database_name_, txn);
     txn_manager_->CommitTransaction(txn);
   }
+
+  std::vector<std::tuple<oid_t, oid_t>> GetAllColumns() {
+    std::vector<std::tuple<oid_t, oid_t>> result;
+
+    auto txn = txn_manager_->BeginTransaction();
+
+    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
+    const auto table_objects = db_object->GetTableObjects();
+
+    for (const auto &it : table_objects) {
+      oid_t table_oid = it.first;
+      const auto table_obj = it.second;
+      const auto column_objects = table_obj->GetColumnObjects();
+      for (const auto &col_it : column_objects) {
+        oid_t col_oid = col_it.first;
+        result.emplace_back(table_oid, col_oid);
+      }
+    }
+
+    txn_manager_->CommitTransaction(txn);
+
+    return result;
+  }
 };
 
 TEST_F(RLFrameworkTest, BasicTest) {
@@ -87,6 +112,11 @@ TEST_F(RLFrameworkTest, BasicTest) {
   CreateDatabase(database_name);
   CreateTable(table_name_1);
   CreateTable(table_name_2);
+
+  auto all_columns = GetAllColumns();
+  for (const auto &it : all_columns) {
+    LOG_DEBUG("%d -- %d", (int)std::get<0>(it), (int)std::get<1>(it));
+  }
 }
 
 }  // namespace test
