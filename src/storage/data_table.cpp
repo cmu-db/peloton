@@ -1241,8 +1241,8 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   // Check that both tile groups have the same schema
   // Currently done by checking that the number of columns are equal
   // TODO Pooja: Handle schena equality for multiple schema versions.
-  auto new_column_count = new_layout.GetColumnCount();
-  auto orig_column_count = orig_layout.GetColumnCount();
+  UNUSED_ATTRIBUTE auto new_column_count = new_layout.GetColumnCount();
+  UNUSED_ATTRIBUTE auto orig_column_count = orig_layout.GetColumnCount();
   PELOTON_ASSERT(new_column_count == orig_column_count);
 
   oid_t orig_tile_offset, orig_tile_column_offset;

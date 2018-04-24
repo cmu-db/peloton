@@ -218,7 +218,7 @@ Schema *Schema::AppendSchema(const Schema *first, std::vector<oid_t> &first_set,
 }
 
 // Append given schemas.
-Schema *Schema::AppendSchemaList(std::vector<const Schema> &schema_list) {
+Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   // All we do here is convert vector<Schema> to vector<Schema *>.
   // This is a convenience function.
   std::vector<const Schema *> schema_ptr_list;

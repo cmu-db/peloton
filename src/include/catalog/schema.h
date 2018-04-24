@@ -69,7 +69,7 @@ class Schema : public Printable {
                               const Schema *second, std::vector<oid_t> &second_set);
 
   // Append given schemas.
-  static Schema *AppendSchemaList(std::vector<const Schema> &schema_list);
+  static Schema *AppendSchemaList(std::vector<Schema> &schema_list);
 
   // Append given schemas.
   static Schema *AppendSchemaPtrList(const std::vector<const Schema *> &schema_list);
