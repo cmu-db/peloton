@@ -37,7 +37,7 @@ class PointMetric : public AbstractMetricNew {
 
   private:
     // TODO: consider making storage a lower abstraction level
-    
+
     // thread-safe map of db oid to atomic counter
     CuckooMap<oid_t, std::atomic<int64_t>> counts_;
 };
