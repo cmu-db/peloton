@@ -27,7 +27,7 @@ namespace type {
 
 // Get the element at a given index in this array
 Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
-  switch (val.GetElementType()->GetTypeId()) {
+  switch (val.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(val.value_.array);
       return ValueFactory::GetBooleanValue(vec.at(idx));
@@ -72,7 +72,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
   PELOTON_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(TypeId::BOOLEAN);
-  switch (list.GetElementType()->GetTypeId()) {
+  switch (list.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array);
       std::vector<bool>::iterator it;
@@ -162,14 +162,14 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
 CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -228,14 +228,14 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
 CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -294,14 +294,14 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
 CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -361,14 +361,14 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
                                        const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -428,14 +428,14 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
                                     const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -495,14 +495,14 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
                                           const Value &right) const {
   PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
   PELOTON_ASSERT(left.CheckComparable(right));
-  if (right.GetElementType()->GetTypeId() != left.GetElementType()->GetTypeId()) {
+  if (right.GetElemType()->GetTypeId() != left.GetElemType()->GetTypeId()) {
     std::string msg =
-        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        Type::GetInstance(right.GetElemType()->GetTypeId())->ToString() +
         " mismatch with " +
-        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+        Type::GetInstance(left.GetElemType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()->GetTypeId()) {
+  switch (left.GetElemType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
