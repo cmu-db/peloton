@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include "common/internal_types.h"
+#include "statistics/point_metric.h"
+#include "statistics/internal_metric.h"
+
 namespace peloton {
 
 namespace stats {
@@ -23,54 +27,63 @@ class StatsCollector {
 
     ~StatsCollector();
 
-    // TODO: add appropriate args for each collection point
-    void OnRead();
+    void OnRead(oid_t id);
 
-    void OnUpdate();
+    void OnUpdate(oid_t id);
 
-    void OnInsert();
+    void OnInsert(oid_t id);
 
-    void OnDelete();
+    void OnDelete(oid_t id);
 
-    void OnTxnStart();
+    void OnCommit(oid_t id);
 
-    void OnCommit();
-
-    void OnAbort();
+    void OnAbort(oid_t id);
 
     void OnQueryStart();
 
     void OnQueryEnd();
 
-    void RegisterPointMetric(/* specify collection point */);
+    void OnTxnStart();
 
-    void RegisterIntervalMetric(/* specify begin and end points */);
+    void OnTxnEnd();
+
+    void RegisterPointMetric(std::shared_ptr<PointMetric> metric,
+                             CollectionPointType point_type);
+
+    void RegisterIntervalMetric(std::shared_ptr<IntervalMetric> metric,
+                                CollectionPointType start_point_type,
+                                CollectionPointType end_point_type);
 
   private:
     StatsCollector();
 
     // iterate over a point's metrics queue
-    CollectAtPoint(std::vector<AbstractMetric> queue);
+    CollectAtPoint(std::vector<std::shared_ptr<PointMetric>> queue, oid_t id);
+
+    CollectAtStart(std::vector<std::shared_ptr<IntervalMetric>> queue);
+
+    CollectAtEnd(std::vector<std::shared_ptr<IntervalMetric>> queue);
 
     // we have one queue per collection point
-    std::vector<PointMetric> on_read_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_read_queue_;
 
-    std::vector<PointMetric> on_update_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_update_queue_;
 
-    std::vector<PointMetric> on_insert_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_insert_queue_;
 
-    std::vector<PointMetric> on_delete_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_delete_queue_;
 
-    std::vector<IntervalMetric> on_txn_start_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_commit_queue_;
 
-    // could collect both point and interval metrics
-    std::vector<AbstractMetric> on_commit_queue_;
+    std::vector<std::shared_ptr<PointMetric>> on_abort_queue_;
 
-    std::vector<AbstractMetric> on_abort_queue_;
+    std::vector<std::shared_ptr<IntervalMetric>> on_query_start_;
 
-    std::vector<IntervalMetric> on_query_start_;
+    std::vector<std::shared_ptr<IntervalMetric>> on_query_end_;
 
-    std::vector<IntervalMetric> on_query_end_;
+    std::vector<std::shared_ptr<IntervalMetric>> on_txn_start_queue_;
+
+    std::vector<std::shared_ptr<IntervalMetric>> on_txn_end_queue_;
 };
 
 }  // namespace stats
