@@ -67,6 +67,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
+
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -340,8 +341,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     return INVALID_ITEMPOINTER;
   }
 
-  auto result =
-      InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
+  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
     // Insertion failed due to some constraint (indexes, etc.) but tuple
     // is in the table already, need to give the ItemPointer back to the
@@ -354,9 +354,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   return location;
 }
 
-bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-                            concurrency::TransactionContext *transaction,
-                            ItemPointer **index_entry_ptr, bool check_fk) {
+bool DataTable::InsertTuple(const AbstractTuple *tuple,
+    ItemPointer location, concurrency::TransactionContext *transaction,
+    ItemPointer **index_entry_ptr, bool check_fk) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
@@ -395,7 +395,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-                 (*index_entry_ptr)->offset == location.offset);
+            (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -518,10 +518,10 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
   return true;
 }
 
-bool DataTable::InsertInSecondaryIndexes(
-    const AbstractTuple *tuple, const TargetList *targets_ptr,
-    concurrency::TransactionContext *transaction,
-    ItemPointer *index_entry_ptr) {
+bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
+                                         const TargetList *targets_ptr,
+                                         concurrency::TransactionContext *transaction,
+                                         ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transform the target list into a hash set
   // when attempting to perform insertion to a secondary index,
@@ -588,11 +588,10 @@ bool DataTable::InsertInSecondaryIndexes(
 }
 
 /**
- * @brief This function checks any other table which has a foreign key
- *constraint
+ * @brief This function checks any other table which has a foreign key constraint
  * referencing the current table, where a tuple is updated/deleted. The final
  * result depends on the type of cascade action.
- *
+ * 
  * @param prev_tuple: The tuple which will be updated/deleted in the current
  * table
  * @param new_tuple: The new tuple after update. This parameter is ignored
@@ -600,16 +599,17 @@ bool DataTable::InsertInSecondaryIndexes(
  * @param current_txn: The current transaction context
  * @param context: The executor context passed from upper level
  * @param is_update: whether this is a update action (false means delete)
- *
- * @return True if the check is successful (nothing happens) or the cascade
- *operation
+ * 
+ * @return True if the check is successful (nothing happens) or the cascade operation
  * is done properly. Otherwise returns false. Note that the transaction result
  * is not set in this function.
- */
-bool DataTable::CheckForeignKeySrcAndCascade(
-    storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
-    concurrency::TransactionContext *current_txn,
-    executor::ExecutorContext *context, bool is_update) {
+ */ 
+bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+                                             storage::Tuple *new_tuple,
+                                             concurrency::TransactionContext *current_txn,
+                                             executor::ExecutorContext *context,
+                                             bool is_update)
+{
   size_t fk_count = GetForeignKeySrcCount();
 
   if (fk_count == 0) return true;
@@ -619,7 +619,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
   for (size_t iter = 0; iter < fk_count; iter++) {
     catalog::ForeignKey *fk = GetForeignKeySrc(iter);
-
+    
     // Check if any row in the source table references the current tuple
     oid_t source_table_id = fk->GetSourceTableOid();
     storage::DataTable *src_table = nullptr;
@@ -638,17 +638,18 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
       // Make sure this is the right index to search in
       if (index->GetMetadata()->GetName().find("_FK_") != std::string::npos &&
-          index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds()) {
-        LOG_DEBUG("Searching in source tables's fk index...\n");
+          index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds())
+      {
+        LOG_DEBUG("Searching in source tables's fk index...\n"); 
 
         std::vector<oid_t> key_attrs = fk->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> fk_schema(
           catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
         std::unique_ptr<storage::Tuple> key(
           new storage::Tuple(fk_schema.get(), true));
-
+        
         key->SetFromTuple(prev_tuple, fk->GetSinkColumnIds(), index->GetPool());
-
+        
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
 
@@ -671,7 +672,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
               case FKConstrActionType::RESTRICT: {
                 return false;
               }
-              case FKConstrActionType::CASCADE:
+              case FKConstrActionType::CASCADE: 
               default: {
                 // Update
                 bool src_is_owner = transaction_manager.IsOwner(current_txn,
