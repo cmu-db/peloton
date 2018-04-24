@@ -186,7 +186,7 @@ class PlanSelectionTest : public PelotonTest {
     }
 
     for (size_t i = 0; i < plan->GetChildren().size(); i++) {
-      PrintPlan(plan->GetChildren()[0].get(), level + 1);
+      PrintPlan(plan->GetChildren()[i].get(), level + 1);
     }
 
     return;
