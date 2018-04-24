@@ -190,7 +190,6 @@ class TransactionLevelGCManager : public GCManager {
   */
   void ClearGarbage(int thread_id);
 
-
  private:
   inline unsigned int HashToThread(const size_t &thread_id) {
     return (unsigned int)thread_id % gc_thread_count_;
@@ -199,8 +198,6 @@ class TransactionLevelGCManager : public GCManager {
   void Running(const int &thread_id);
 
   void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
-
-
 
   bool ResetTuple(const ItemPointer &);
 
