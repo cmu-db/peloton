@@ -48,9 +48,9 @@ class TransactionLevelGCManager : public GCManager {
       : gc_thread_count_(thread_count), reclaim_maps_(thread_count) {
     unlink_queues_.reserve(thread_count);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext *>>
-      unlink_queue(new LockFreeQueue<concurrency::TransactionContext *>(
-          MAX_QUEUE_LENGTH));
+      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
+          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
+              MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
     }
@@ -71,9 +71,9 @@ class TransactionLevelGCManager : public GCManager {
 
     unlink_queues_.reserve(gc_thread_count_);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext *>>
-      unlink_queue(new LockFreeQueue<concurrency::TransactionContext *>(
-          MAX_QUEUE_LENGTH));
+      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
+          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
+              MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
     }
@@ -123,8 +123,7 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
 
-  // Returns an unused TupleSlot to GCManager (in the case of an insertion
-  // failure)
+  // Returns an unused TupleSlot to GCManager (in the case of an insertion failure)
   virtual void RecycleUnusedTupleSlot(const ItemPointer &location) override;
 
   virtual void RegisterTable(oid_t table_id, storage::DataTable *table) override {
@@ -191,6 +190,7 @@ class TransactionLevelGCManager : public GCManager {
   */
   void ClearGarbage(int thread_id);
 
+
  private:
   inline unsigned int HashToThread(const size_t &thread_id) {
     return (unsigned int)thread_id % gc_thread_count_;
@@ -199,6 +199,8 @@ class TransactionLevelGCManager : public GCManager {
   void Running(const int &thread_id);
 
   void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
+
+
 
   bool ResetTuple(const ItemPointer &);
 
@@ -218,19 +220,20 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
-  std::vector<std::shared_ptr<peloton::LockFreeQueue<
-      concurrency::TransactionContext *>>> unlink_queues_;
+  std::vector<std::shared_ptr<
+      peloton::LockFreeQueue<concurrency::TransactionContext* >>>
+      unlink_queues_;
 
   // local queues for to-be-unlinked tuples.
   // # local_unlink_queues == # gc_threads
-  std::vector<std::list<concurrency::TransactionContext *>>
-      local_unlink_queues_;
+  std::vector<
+      std::list<concurrency::TransactionContext* >> local_unlink_queues_;
 
   // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
   // # reclaim_maps == # gc_threads
-  std::vector<std::multimap<cid_t, concurrency::TransactionContext *>>
+  std::vector<std::multimap<cid_t, concurrency::TransactionContext* >>
       reclaim_maps_;
 
   // queues for to-be-reused tuples.

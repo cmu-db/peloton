@@ -66,13 +66,11 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id
-                                               UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RecycleUnusedTupleSlot(const ItemPointer &location
-                                          UNUSED_ATTRIBUTE) {}
+  virtual void RecycleUnusedTupleSlot(const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
   virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE,
                              storage::DataTable *table UNUSED_ATTRIBUTE) {}
@@ -81,8 +79,8 @@ class GCManager {
 
   virtual size_t GetTableCount() { return 0; }
 
-  virtual void RecycleTransaction(concurrency::TransactionContext *txn
-                                      UNUSED_ATTRIBUTE) {}
+  virtual void RecycleTransaction(
+                      concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
