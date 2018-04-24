@@ -21,6 +21,7 @@
 #include "common/internal_types.h"
 #include "storage/abstract_table.h"
 #include "storage/tile.h"
+#include "storage/dictionary_encoding_tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "util/stringbox_util.h"
@@ -40,7 +41,8 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      column_map(column_map) {
+      column_map(column_map),
+      is_dict_encoded(false) {
   tile_count = tile_schemas.size();
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
@@ -404,6 +406,56 @@ const std::string TileGroup::GetInfo() const {
   // if (header != nullptr) os << (*header);
   return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
                                      GETINFO_SPACER);
+}
+
+void TileGroup::DictEncode() {
+	size_t num_tile = GetTileCount();
+	for (oid_t i = 0; i < num_tile; i++) {
+		auto curr_tile = tiles[i];
+		auto encoded_tile = new DictEncodedTile(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr, curr_tile->GetAllocatedTupleCount());
+//		std::shared_ptr<Tile> encoded_tile =
+//			std::shared_ptr<DictEncodedTile>(new DictEncodedTile(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr,
+//			curr_tile->GetAllocatedTupleCount()));
+		if (!curr_tile->IsDictEncoded()) {
+			encoded_tile->DictEncode(curr_tile.get());
+			SetTile(i, std::shared_ptr<Tile>(encoded_tile));
+		}
+	}
+
+	is_dict_encoded = true;
+}
+
+void TileGroup::DictDecode() {
+	size_t num_tile = GetTileCount();
+	for (oid_t i = 0; i < num_tile; i++) {
+		auto curr_tile = tiles[i];
+		if (curr_tile->IsDictEncoded()) {
+			std::shared_ptr<Tile> decoded_tile(curr_tile->DictDecode());
+			SetTile(i, decoded_tile);
+		}
+
+	}
+
+	is_dict_encoded = false;
+}
+
+std::shared_ptr<TileGroup> TileGroup::GetDecodedTileGroupCopy(){
+	LOG_TRACE("start to generate a decoded tile group copy");
+	size_t num_tile = GetTileCount();
+	std::shared_ptr<TileGroup> ret(new TileGroup(BackendType::MM, tile_group_header, table, tile_schemas, column_map, num_tuple_slots));
+	ret->database_id = database_id;
+	ret->table_id = table_id;
+	ret->tile_group_id = tile_group_id;
+	for (oid_t i = 0; i < num_tile; i++) {
+		auto curr_tile = tiles[i];
+		if (curr_tile->IsDictEncoded()) {
+			ret->SetTile(i, std::shared_ptr<Tile>(curr_tile->DictDecode()));
+		} else {
+			ret->SetTile(i, std::shared_ptr<Tile>(curr_tile->CopyTile(BackendType::MM)));
+		}
+	}
+	LOG_TRACE("finish generating a decoded tile group copy");
+	return ret;
 }
 
 }  // namespace storage

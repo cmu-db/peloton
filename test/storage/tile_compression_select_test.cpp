@@ -49,23 +49,28 @@ TEST_F(CompressionSelectTest, BasicTest) {
 	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, testTableName, txn);
 	auto TGiterator = new storage::TileGroupIterator(dataTable_object);
 	std::shared_ptr<storage::TileGroup> tg;
+
 	while (TGiterator->HasNext()) {
 		TGiterator->Next(tg);
-		oid_t num_tile = tg->NumTiles();
-		for (oid_t to = 0; to < num_tile; to++) {
-			auto curr_tile = tg->GetTileReference(to);
-			LOG_DEBUG("before curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
-			std::shared_ptr<storage::Tile> encoded_tile =
-				std::make_shared<storage::DictEncodedTile>(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr,
-				curr_tile->GetAllocatedTupleCount());
-			if (!curr_tile->IsDictEncoded()) {
-				encoded_tile->DictEncode(curr_tile.get());
-				LOG_DEBUG("encoded_tile isEncoded: %d, ptr: %p", encoded_tile->IsDictEncoded(), (void*) encoded_tile.get());
-				tg->SetTile(to, encoded_tile);
-			}
-			curr_tile = tg->GetTileReference(to);
-			LOG_DEBUG("after curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
+		if (!tg->IsDictEncoded()) {
+			LOG_INFO("tile group not encoded. Encode now...");
+			tg->DictEncode();
 		}
+//		oid_t num_tile = tg->NumTiles();
+//		for (oid_t to = 0; to < num_tile; to++) {
+//			auto curr_tile = tg->GetTileReference(to);
+//			LOG_DEBUG("before curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
+//			std::shared_ptr<storage::Tile> encoded_tile =
+//				std::make_shared<storage::DictEncodedTile>(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr,
+//				curr_tile->GetAllocatedTupleCount());
+//			if (!curr_tile->IsDictEncoded()) {
+//				encoded_tile->DictEncode(curr_tile.get());
+//				LOG_DEBUG("encoded_tile isEncoded: %d, ptr: %p", encoded_tile->IsDictEncoded(), (void*) encoded_tile.get());
+//				tg->SetTile(to, encoded_tile);
+//			}
+//			curr_tile = tg->GetTileReference(to);
+//			LOG_DEBUG("after curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
+//		}
 	}
 	delete TGiterator;
 

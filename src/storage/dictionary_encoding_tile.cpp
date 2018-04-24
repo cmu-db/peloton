@@ -36,7 +36,8 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 				type::Type::GetTypeSize(type::TypeId::TINYINT),
 				schema.GetColumn(i).GetName(), true);
 			columns.push_back(encoded_column);
-			dict_encoded_columns.insert(i);
+			dict_encoded_columns.emplace(i, i);
+//			dict_encoded_columns.insert(i);
 		} else {
 			columns.push_back(schema.GetColumn(i));
 		}
@@ -175,7 +176,7 @@ Tile* DictEncodedTile::DictDecode() {
     }
 	}
 
-  auto *new_tile = new Tile(backend_type, tile_group_header, original_schema, tile_group, num_tuple_slots);
+  auto *new_tile = new Tile(backend_type, tile_group_header, *GetSchema(), tile_group, num_tuple_slots);
   for (oid_t i = 0; i < column_count; i++) {
 		for (oid_t to = 0; to < num_tuple_slots; to++) {
 			new_tile->SetValueFast(new_data_vector[i][to], to, original_schema.GetOffset(i), original_schema.IsInlined(i),

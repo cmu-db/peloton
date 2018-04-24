@@ -52,6 +52,7 @@ class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
 class RollbackSegment;
+class DictEncodedTile;
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
@@ -66,6 +67,7 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
  */
 class TileGroup : public Printable {
   friend class Tile;
+  friend class DictEncodedTile;
   friend class TileGroupFactory;
   friend class gc::GCManager;
 
@@ -190,6 +192,14 @@ class TileGroup : public Printable {
     tiles[tile_offset].swap(tile_to_add);
   }
 
+	void DictEncode();
+
+	void DictDecode();
+
+	std::shared_ptr<TileGroup> GetDecodedTileGroupCopy();
+
+	inline bool IsDictEncoded() const { return is_dict_encoded; }
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -226,6 +236,8 @@ class TileGroup : public Printable {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
+
+  bool is_dict_encoded;
 };
 
 }  // namespace storage

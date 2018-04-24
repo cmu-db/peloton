@@ -47,7 +47,8 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
       uninlined_data_size(0),
       column_header(NULL),
       column_header_size(INVALID_OID),
-      tile_group_header(tile_header) {
+      tile_group_header(tile_header),
+      is_dict_encoded(false) {
   PELOTON_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
