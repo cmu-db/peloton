@@ -1,0 +1,15 @@
+TableScanTranslator::Produce() produce all tuples (src/codegen/operator/table_scan_translator.cpp:61)
+
+table_.GenerateScan() scab the table and hand to consumer
+
+GetTileGroup() get the tile group (there is a GetTileGroupId() next to it, may take into consideration)
+
+GetTileGroup() is runtime_function_proxy, it calls
+storage::DataTable::GetTileGroup()
+
+storage::DataTable::GetTileGroup() calls 
+storage::DataTable::GetTileGroupById()
+
+my plan:
+
+add encode/decode function to tile group
