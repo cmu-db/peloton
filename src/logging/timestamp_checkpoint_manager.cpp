@@ -91,6 +91,8 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     }
     txn_manager.CommitTransaction(txn);
 
+    // set recovered epoch id
+    recovered_epoch_id = epoch_id;
     LOG_INFO("Complete checkpoint recovery in epoch %" PRIu64, epoch_id);
 
     recovery_timer.Stop();
@@ -101,37 +103,45 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
 }
 
 eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
-  eid_t max_epoch = INVALID_EID;
-  std::vector<std::string> dir_name_list;
-
-  // Get list of checkpoint directories
-  if (LoggingUtil::GetDirectoryList(checkpoint_base_dir_.c_str(),
-                                    dir_name_list) == false) {
-    LOG_ERROR("Failed to get directory list %s", checkpoint_base_dir_.c_str());
-    return INVALID_EID;
+  // already recovered
+  if (recovered_epoch_id != INVALID_EID) {
+  	return recovered_epoch_id;
   }
+  // for checkpoint recovery
+  else {
+    eid_t max_epoch = INVALID_EID;
+    std::vector<std::string> dir_name_list;
 
-  // Get the newest epoch from checkpoint directories
-  for (auto dir_name = dir_name_list.begin(); dir_name != dir_name_list.end();
-       dir_name++) {
-    eid_t epoch_id;
+		// Get list of checkpoint directories
+		if (LoggingUtil::GetDirectoryList(checkpoint_base_dir_.c_str(),
+																			dir_name_list) == false) {
+			LOG_ERROR("Failed to get directory list %s", checkpoint_base_dir_.c_str());
+			return INVALID_EID;
+		}
 
-    if (strcmp((*dir_name).c_str(), checkpoint_working_dir_name_.c_str()) ==
-        0) {
-      continue;
-    }
-    if ((epoch_id = std::strtoul((*dir_name).c_str(), NULL, 10)) == 0) {
-      continue;
-    }
+		// Get the newest epoch from checkpoint directories
+		for (auto dir_name : dir_name_list) {
+			eid_t epoch_id;
 
-    if (epoch_id == INVALID_EID) {
-      LOG_ERROR("Unexpected epoch value in checkpoints directory: %s",
-                (*dir_name).c_str());
-    }
-    max_epoch = (epoch_id > max_epoch) ? epoch_id : max_epoch;
+			// get the directory name as epoch id
+			// if it includes character, go next
+			if ((epoch_id = std::strtoul(dir_name.c_str(), NULL, 10)) == 0) {
+				continue;
+			}
+
+			if (epoch_id == INVALID_EID) {
+				LOG_ERROR("Unexpected epoch value in checkpoints directory: %s",
+									dir_name.c_str());
+			}
+
+			// the largest epoch is a recovered epoch id
+			if (epoch_id > max_epoch) {
+				max_epoch = epoch_id;
+			}
+		}
+		LOG_DEBUG("max epoch : %" PRIu64, max_epoch);
+		return max_epoch;
   }
-  LOG_DEBUG("max epoch : %" PRIu64, max_epoch);
-  return max_epoch;
 }
 
 void TimestampCheckpointManager::PerformCheckpointing() {
@@ -697,7 +707,6 @@ bool TimestampCheckpointManager::RecoverStorageObject(
   CopySerializeInput metadata_buffer(metadata_data, metadata_size);
   auto catalog = catalog::Catalog::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
-  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
   // recover database storage object
   size_t db_size = metadata_buffer.ReadLong();
@@ -768,13 +777,16 @@ bool TimestampCheckpointManager::RecoverStorageObject(
 
         // Set a column in the vector in order of the column_id in ColumnCatalogObject
         // ToDo: just insert by push_back function
-        auto itr = columns.begin();
+        auto column_itr = columns.begin();
         for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
-        	if (itr == columns.end() ||
-        			itr->GetOffset() >= column.GetOffset()) break;
-       		itr++;
+        	if (column_itr == columns.end() ||
+        			column_itr->GetOffset() > column.GetOffset()) {
+        		break;
+        	} else {
+        		column_itr++;
+        	}
         }
-      	columns.insert(itr, column);
+      	columns.insert(column_itr, column);
 
       }  // column loop end
 
@@ -883,7 +895,7 @@ void TimestampCheckpointManager::RecoverTableData(
   }
   CopySerializeInput input_buffer(data, sizeof(data));
 
-  LOG_TRACE("Recover table %d data (%lu byte)", table->GetOid(), table_size);
+  LOG_DEBUG("Recover table %d data (%lu byte)", table->GetOid(), table_size);
 
   // Drop a default tile group created by table catalog recovery
   table->DropTileGroups();

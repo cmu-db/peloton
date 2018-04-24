@@ -430,6 +430,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   }
 
   // check the catalog data
+  /*
   auto catalog_db_catalog =
       catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
   for (auto table_catalog_pair : catalog_db_catalog->GetTableObjects()) {
@@ -439,6 +440,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     LOG_DEBUG("Check catalog table %s", table_catalog->GetTableName().c_str());
     // currently do nothing
   }
+  */
 
   // finish the low level check
   txn_manager.CommitTransaction(txn);

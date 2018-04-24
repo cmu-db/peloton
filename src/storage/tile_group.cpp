@@ -415,9 +415,7 @@ std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
     oid_t column_offset = in.ReadInt();
     oid_t tile_offset = in.ReadInt();
     oid_t tile_column_offset = in.ReadInt();
-    std::pair<oid_t, oid_t> tile_info =
-        std::make_pair(tile_offset, tile_column_offset);
-    column_map[column_offset] = tile_info;
+    column_map[column_offset] = std::make_pair(tile_offset, tile_column_offset);
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(

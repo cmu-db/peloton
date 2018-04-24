@@ -273,8 +273,8 @@ void Schema::SerializeTo(SerializeOutput &out) {
   // Write each column information (column name, length, offset, type and
   // constraints)
   out.WriteLong(column_count);
-  for (auto column : columns) {
-    column.SerializeTo(out);
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    columns[column_itr].SerializeTo(out);
   }
 
   // Write schema information (multi-column constraints)
