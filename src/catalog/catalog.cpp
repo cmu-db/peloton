@@ -18,6 +18,7 @@
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/query_history_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -701,7 +702,6 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   auto table_object = database_object->GetTableObject(table_oid);
   auto index_objects = table_object->GetIndexObjects();
   LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
-
   // delete trigger and records in pg_trigger
   auto pg_trigger =
       catalog_map_[database_object->GetDatabaseOid()]->GetTriggerCatalog();
@@ -724,7 +724,6 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
   pg_table->DeleteTable(table_oid, txn);
-
   database->GetTableWithOid(table_oid);
   txn->RecordDrop(database_oid, table_oid, INVALID_OID);
 

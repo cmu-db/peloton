@@ -6,7 +6,7 @@
 //
 // Identification: test/tuning/layout_tuner_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Databa e Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -38,14 +38,17 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
+  std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
+
+  auto data_table = TestingExecutorUtil::CreateTableUpdateCatalog(tuple_count, db_name);
+
+
   // Create a table and populate it
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
-  false,
-                                   true, txn);
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Check column count
@@ -56,7 +59,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
   tuning::LayoutTuner &layout_tuner = tuning::LayoutTuner::GetInstance();
 
   // Attach table to index tuner
-  layout_tuner.AddTable(data_table.get());
+  layout_tuner.AddTable(data_table);
 
   // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
@@ -121,6 +124,8 @@ TEST_F(LayoutTunerTests, BasicTest) {
   EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1),0);
   EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2),0);
   EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3),1);
+
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 }  // namespace test

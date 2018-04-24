@@ -16,6 +16,8 @@
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
 #include "catalog/system_catalogs.h"
+#include "catalog/layout_catalog.h"
+#include "catalog/table_catalog.h"
 #include "common/container_tuple.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -29,7 +31,6 @@
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
-#include "storage/layout.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
@@ -68,19 +69,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
-  // Init default partition
-  if (layout_type == LayoutType::ROW) {
-    auto col_count = schema->GetColumnCount();
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      default_partition_[col_itr] = std::make_pair(0, col_itr);
-    }
-  } else if (layout_type == LayoutType::COLUMN) {
-    auto col_count = schema->GetColumnCount();
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      default_partition_[col_itr] = std::make_pair(col_itr, 0);
-    }
-  }
-
   if (is_catalog == true) {
     active_tilegroup_count_ = 1;
     active_indirection_array_count_ = 1;
@@ -1379,10 +1367,18 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-void DataTable::SetDefaultLayout(const column_map_type &column_map) {
-  // TODO Pooja: Generate layout_oid_ and add it to the catalog
-  default_layout_ = std::shared_ptr<const Layout>(
-          new const Layout(column_map));
+bool DataTable::SetDefaultLayout(const column_map_type &column_map,
+                                 type::AbstractPool *pool,
+                                 concurrency::TransactionContext *txn) {
+  oid_t layout_id = GetNextLayoutOid();
+  auto new_layout = std::shared_ptr<const Layout>(
+          new const Layout(column_map, layout_id));
+  auto layout_catalog = catalog::LayoutCatalog::GetInstance();
+  bool result = layout_catalog->InsertLayout(table_oid, new_layout, pool, txn);
+  if (result) {
+    default_layout_ = new_layout;
+  }
+  return result;
 }
 
 const Layout& DataTable::GetDefaultLayout() const {

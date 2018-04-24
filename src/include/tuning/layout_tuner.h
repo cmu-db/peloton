@@ -27,6 +27,10 @@ namespace storage {
 class DataTable;
 }
 
+namespace type {
+class AbstractPool;
+}
+
 namespace tuning {
 
 //===--------------------------------------------------------------------===//
@@ -81,14 +85,6 @@ class LayoutTuner {
    */
   void ClearTables();
 
-  /**
-   * @brief      Gets the column map information.
-   *
-   * @param[in]  column_map  The column map
-   *
-   * @return     The column map information.
-   */
-  std::string GetColumnMapInfo(const column_map_type &column_map);
 
  protected:
   /**
@@ -141,6 +137,9 @@ class LayoutTuner {
 
   /** Desired layout tile count */
   oid_t tile_count = 2;
+
+  /** Pool to add new layouts in the pg_layout table */
+  std::unique_ptr<type::AbstractPool> pool_;
 
 };
 

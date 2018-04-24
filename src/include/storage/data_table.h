@@ -248,7 +248,9 @@ class DataTable : public AbstractTable {
 
   void ClearLayoutSamples();
 
-  void SetDefaultLayout(const column_map_type &column_map);
+  bool SetDefaultLayout(const column_map_type &column_map,
+                        type::AbstractPool *pool,
+                        concurrency::TransactionContext *txn);
 
   const Layout& GetDefaultLayout() const;
 
