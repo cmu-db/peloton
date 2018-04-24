@@ -221,8 +221,8 @@ void TestingTransactionUtil::AddSecondaryIndex(storage::DataTable *table) {
   key_schema->SetIndexedColumns(key_attrs);
   auto index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
-      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema, key_schema,
-      key_attrs, unique);
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
+      key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> secondary_key_index(
       index::IndexFactory::GetIndex(index_metadata2));
