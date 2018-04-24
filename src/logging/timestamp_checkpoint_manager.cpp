@@ -768,13 +768,16 @@ bool TimestampCheckpointManager::RecoverStorageObject(
 
         // Set a column in the vector in order of the column_id in ColumnCatalogObject
         // ToDo: just insert by push_back function
-        auto itr = columns.begin();
+        auto column_itr = columns.begin();
         for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
-        	if (itr == columns.end() ||
-        			itr->GetOffset() >= column.GetOffset()) break;
-       		itr++;
+        	if (column_itr == columns.end() ||
+        			column_itr->GetOffset() > column.GetOffset()) {
+        		break;
+        	} else {
+        		column_itr++;
+        	}
         }
-      	columns.insert(itr, column);
+      	columns.insert(column_itr, column);
 
       }  // column loop end
 
