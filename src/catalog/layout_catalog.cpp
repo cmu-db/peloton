@@ -134,6 +134,20 @@ bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+bool LayoutCatalog::DeleteLayouts(oid_t table_oid,
+                                  concurrency::TransactionContext *txn) {
+  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  // delete layouts from cache
+  auto table_object =
+          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  table_object->EvictAllLayouts();
+
+  return DeleteWithIndexScan(index_offset, values, txn);
+}
+
 const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
 LayoutCatalog::GetLayouts(oid_t table_oid,
                           concurrency::TransactionContext *txn) {

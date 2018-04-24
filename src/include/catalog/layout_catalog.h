@@ -59,6 +59,8 @@ public:
 
   bool DeleteLayout(oid_t table_oid, oid_t layout_id,
                     concurrency::TransactionContext *txn);
+
+  bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
