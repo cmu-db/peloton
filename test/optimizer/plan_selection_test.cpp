@@ -415,8 +415,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest1) {
   auto txn = txn_manager.BeginTransaction();
 
   // Populate Tables table
-  int test1_table_size = 1000;
-  int test2_table_size = 100000;
+  int test1_table_size = 10;
+  int test2_table_size = 1000;
 
   InsertDataHelper(table_1_name, test1_table_size);
   InsertDataHelper(table_2_name, test2_table_size);
@@ -452,8 +452,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest1) {
 
   // TODO: This should actually be reversed, setting it to this now so that the
   // tests pass
-  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_2_name);
-  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
 }
 
 TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest2) {
@@ -462,8 +462,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest2) {
   auto txn = txn_manager.BeginTransaction();
 
   // Populate Tables table
-  int test1_table_size = 100000;
-  int test2_table_size = 1000;
+  int test1_table_size = 1000;
+  int test2_table_size = 10;
 
   InsertDataHelper(table_1_name, test1_table_size);
   InsertDataHelper(table_2_name, test2_table_size);
@@ -502,8 +502,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest3) {
   auto txn = txn_manager.BeginTransaction();
 
   // Populate Tables table
-  int test1_table_size = 1000;
-  int test2_table_size = 100000;
+  int test1_table_size = 10;
+  int test2_table_size = 1000;
 
   InsertDataHelper(table_1_name, test1_table_size);
   InsertDataHelper(table_2_name, test2_table_size);
@@ -542,8 +542,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest4) {
   auto txn = txn_manager.BeginTransaction();
 
   // Populate Tables table
-  int test1_table_size = 100000;
-  int test2_table_size = 1000;
+  int test1_table_size = 1000;
+  int test2_table_size = 10;
 
   InsertDataHelper(table_1_name, test1_table_size);
   InsertDataHelper(table_2_name, test2_table_size);
@@ -572,8 +572,8 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderLargeTest4) {
 
   // TODO: This should actually be reversed, setting it to this now so that the
   // tests pass
-  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
-  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+  ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_2_name);
+  ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_1_name);
 }
 
 TEST_F(PlanSelectionTest, SimpleJoinOrderSortedTest) {
