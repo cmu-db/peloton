@@ -434,7 +434,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
     FileHandle &file_handle, concurrency::TransactionContext *txn) {
   CopySerializeOutput metadata_buffer;
   auto catalog = catalog::Catalog::GetInstance();
-  LOG_TRACE("Do checkpointing to metadata object");
+  LOG_TRACE("Do checkpointing to storage objects");
 
   // insert each database information into metadata file
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -447,7 +447,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
     // except for catalog database
     if (db_oid == CATALOG_DATABASE_OID) continue;
 
-    LOG_TRACE("Write database catalog %d '%s'", db_oid,
+    LOG_TRACE("Write database storage object %d '%s'", db_oid,
               db_catalog->GetDatabaseName().c_str());
 
     // write database information
@@ -462,9 +462,10 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
       auto schema = table->GetSchema();
 
-      LOG_TRACE("Write table catalog %d '%s': %lu columns", table_oid,
-                table_catalog->GetTableName().c_str(),
-                schema->GetColumnCount());
+      LOG_TRACE("Write table storage object %d '%s' (%lu columns) in database "
+      					"%d '%s'", table_oid, table_catalog->GetTableName().c_str(),
+                schema->GetColumnCount(), db_oid,
+                db_catalog->GetDatabaseName().c_str());
 
       // write table information
       metadata_buffer.WriteInt(table_oid);
@@ -478,11 +479,12 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
         auto column = schema->GetColumn(column_oid);
 
         // write column information
-        // column.SerializeTo(metadata_buffer);
+        // ToDo: column length should be contained in column catalog
         metadata_buffer.WriteInt(column_oid);
         metadata_buffer.WriteLong(column.GetLength());
 
         // Column constraints
+        // ToDo: Constraints should be contained in catalog
         auto constraints = column.GetConstraints();
         metadata_buffer.WriteLong(constraints.size());
         for (auto constraint : constraints) {
@@ -491,6 +493,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       }
 
       // Write schema information (multi-column constraints)
+      // ToDo: Multi-constraints should be contained in catalog
       auto multi_constraints = schema->GetMultiConstraints();
       metadata_buffer.WriteLong(multi_constraints.size());
       for (auto multi_constraint : multi_constraints) {
@@ -498,6 +501,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       }
 
       // Write foreign key information of this sink table
+      // ToDo: Foreign key should be contained in catalog
       auto foreign_key_count = table->GetForeignKeyCount();
       metadata_buffer.WriteLong(foreign_key_count);
       for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
@@ -506,6 +510,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       }
 
       // Write foreign key information of this source tables
+      // ToDo: Foreign key should be contained in catalog
       auto foreign_key_src_count = table->GetForeignKeySrcCount();
       metadata_buffer.WriteLong(foreign_key_src_count);
       for (oid_t fk_src_idx = 0; fk_src_idx < foreign_key_src_count;
@@ -513,8 +518,6 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
         auto foreign_key_src = table->GetForeignKeySrc(fk_src_idx);
         foreign_key_src->SerializeTo(metadata_buffer);
       }
-
-      // tuning
 
       // Nothing to write about index
 
@@ -568,7 +571,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
         continue;
       }
 
-      LOG_DEBUG("Recover checkpoint file for table %d '%s'", table_oid,
+      LOG_DEBUG("Recover checkpoint file for catalog table %d '%s'", table_oid,
       		table_name.c_str());
 
       // catalogs with duplicate check
@@ -660,7 +663,7 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
           continue;
         }
 
-        LOG_DEBUG("Recover checkpoint file for table %d '%s'",
+        LOG_DEBUG("Recover checkpoint file for user table %d '%s'",
                   table_oid, table_catalog->GetTableName().c_str());
 
         // recover the table from the checkpoint file
@@ -683,7 +686,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
   size_t metadata_size = LoggingUtil::GetFileSize(file_handle);
   char metadata_data[metadata_size];
 
-  LOG_TRACE("Recover storage object (%lu byte)", metadata_size);
+  LOG_DEBUG("Recover storage object (%lu byte)", metadata_size);
 
   if (LoggingUtil::ReadNBytesFromFile(file_handle, metadata_data,
                                       metadata_size) == false) {
@@ -707,10 +710,10 @@ bool TimestampCheckpointManager::RecoverStorageObject(
     storage::Database *database;
     try {
       database = storage_manager->GetDatabaseWithOid(db_oid);
-      LOG_TRACE("Use existed database storage object %d '%s'", db_oid,
+      LOG_DEBUG("Use existed database storage object %d '%s'", db_oid,
                 db_catalog->GetDatabaseName().c_str());
     } catch (Exception &e) {
-      LOG_TRACE("Create database storage object %d '%s'", db_oid,
+      LOG_DEBUG("Create database storage object %d '%s'", db_oid,
                 db_catalog->GetDatabaseName().c_str());
 
       // create database storage object
@@ -727,11 +730,11 @@ bool TimestampCheckpointManager::RecoverStorageObject(
     size_t table_size = metadata_buffer.ReadLong();
     for (oid_t table_idx = 0; table_idx < table_size; table_idx++) {
       oid_t table_oid = metadata_buffer.ReadInt();
-      ;
+
       auto table_catalog = db_catalog->GetTableObject(table_oid);
       PELOTON_ASSERT(table_catalog != nullptr);
 
-      LOG_TRACE("Create table object %d '%s'", table_oid,
+      LOG_DEBUG("Create table object %d '%s'", table_oid,
                 table_catalog->GetTableName().c_str());
 
       // recover column information
@@ -740,16 +743,18 @@ bool TimestampCheckpointManager::RecoverStorageObject(
       for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
         oid_t column_oid = metadata_buffer.ReadInt();
         size_t column_length = metadata_buffer.ReadLong();
-        ;
+
         auto column_catalog = table_catalog->GetColumnObject(column_oid);
 
         // create column storage object
+        // ToDo: Column should be recovered from catalog
         auto column = catalog::Column(
             column_catalog->GetColumnType(), column_length,
             column_catalog->GetColumnName(), column_catalog->IsInlined(),
             column_catalog->GetColumnOffset());
 
         // recover column constraints
+        // ToDo: Constraint should be recovered from catalog
         size_t column_constraint_count = metadata_buffer.ReadLong();
         for (oid_t constraint_idx = 0; constraint_idx < column_constraint_count;
              constraint_idx++) {
@@ -761,7 +766,15 @@ bool TimestampCheckpointManager::RecoverStorageObject(
           }
         }
 
-        columns.push_back(column);
+        // Set a column in the vector in order of the column_id in ColumnCatalogObject
+        // ToDo: just insert by push_back function
+        auto itr = columns.begin();
+        for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
+        	if (itr == columns.end() ||
+        			itr->GetOffset() >= column.GetOffset()) break;
+       		itr++;
+        }
+      	columns.insert(itr, column);
 
       }  // column loop end
 
