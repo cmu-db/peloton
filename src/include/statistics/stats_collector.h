@@ -27,17 +27,25 @@ class StatsCollector {
 
     ~StatsCollector();
 
-    void OnRead(oid_t id);
-
-    void OnUpdate(oid_t id);
-
-    void OnInsert(oid_t id);
-
-    void OnDelete(oid_t id);
-
     void OnCommit(oid_t id);
 
     void OnAbort(oid_t id);
+
+    void OnTupleRead(oid_t id);
+
+    void OnTupleUpdate(oid_t id);
+
+    void OnTupleInsert(oid_t id);
+
+    void OnTupleDelete(oid_t id);
+
+    void OnIndexRead(oid_t id);
+
+    void OnIndexUpdate(oid_t id);
+
+    void OnIndexInsert(oid_t id);
+
+    void OnIndexDelete(oid_t id);
 
     void OnQueryStart();
 
