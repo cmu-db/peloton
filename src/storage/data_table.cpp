@@ -643,9 +643,9 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
         std::vector<oid_t> key_attrs = fk->GetSourceColumnIds();
         std::unique_ptr<catalog::Schema> fk_schema(
-            catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
+          catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
         std::unique_ptr<storage::Tuple> key(
-            new storage::Tuple(fk_schema.get(), true));
+          new storage::Tuple(fk_schema.get(), true));
 
         key->SetFromTuple(prev_tuple, fk->GetSinkColumnIds(), index->GetPool());
 
@@ -660,8 +660,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
             auto src_tile_group_header = src_tile_group->GetHeader();
 
             auto visibility = transaction_manager.IsVisible(
-                current_txn, src_tile_group_header, ptr->offset,
-                VisibilityIdType::COMMIT_ID);
+              current_txn, src_tile_group_header, ptr->offset,
+              VisibilityIdType::COMMIT_ID);
 
             if (visibility != VisibilityType::OK) continue;
 
@@ -674,31 +674,29 @@ bool DataTable::CheckForeignKeySrcAndCascade(
               case FKConstrActionType::CASCADE:
               default: {
                 // Update
-                bool src_is_owner = transaction_manager.IsOwner(
-                    current_txn, src_tile_group_header, ptr->offset);
+                bool src_is_owner = transaction_manager.IsOwner(current_txn,
+                    src_tile_group_header, ptr->offset);
 
-                // Read the referencing tuple, update the read timestamp so that
-                // we can
+                // Read the referencing tuple, update the read timestamp so that we can
                 // delete it later
-                bool ret =
-                    transaction_manager.PerformRead(current_txn, *ptr, true);
+                bool ret = transaction_manager.PerformRead(current_txn,
+                                                            *ptr,
+                                                            true);
 
                 if (ret == false) {
                   if (src_is_owner) {
-                    transaction_manager.YieldOwnership(
-                        current_txn, src_tile_group_header, ptr->offset);
+                    transaction_manager.YieldOwnership(current_txn, src_tile_group_header,
+                                                        ptr->offset);
                   }
                   return false;
                 }
 
-                ContainerTuple<storage::TileGroup> src_old_tuple(
-                    src_tile_group.get(), ptr->offset);
+                ContainerTuple<storage::TileGroup> src_old_tuple(src_tile_group.get(), ptr->offset);
                 storage::Tuple src_new_tuple(src_table->GetSchema(), true);
 
                 if (is_update) {
-                  for (oid_t col_itr = 0;
-                       col_itr < src_table->GetSchema()->GetColumnCount();
-                       col_itr++) {
+                  for (oid_t col_itr = 0; col_itr < src_table->GetSchema()->GetColumnCount(); col_itr++)
+                  {
                     type::Value val = src_old_tuple.GetValue(col_itr);
                     src_new_tuple.SetValue(col_itr, val, context->GetPool());
                   }
@@ -708,8 +706,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
                     auto src_col_index = key_attrs[k];
                     auto sink_col_index = fk->GetSinkColumnIds()[k];
                     src_new_tuple.SetValue(src_col_index,
-                                           new_tuple->GetValue(sink_col_index),
-                                           context->GetPool());
+                                          new_tuple->GetValue(sink_col_index),
+                                          context->GetPool());
                   }
                 }
 
@@ -717,13 +715,16 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
                 if (new_loc.IsNull()) {
                   if (src_is_owner == false) {
-                    transaction_manager.YieldOwnership(
-                        current_txn, src_tile_group_header, ptr->offset);
+                    transaction_manager.YieldOwnership(current_txn,
+                                                        src_tile_group_header,
+                                                        ptr->offset);
                   }
                   return false;
                 }
 
-                transaction_manager.PerformDelete(current_txn, *ptr, new_loc);
+                transaction_manager.PerformDelete(current_txn,
+                                                  *ptr,
+                                                  new_loc);
 
                 // For delete cascade, just stop here
                 if (is_update == false) {
@@ -731,15 +732,14 @@ bool DataTable::CheckForeignKeySrcAndCascade(
                 }
 
                 ItemPointer *index_entry_ptr = nullptr;
-                peloton::ItemPointer location = src_table->InsertTuple(
-                    &src_new_tuple, current_txn, &index_entry_ptr, false);
+                peloton::ItemPointer location =
+                    src_table->InsertTuple(&src_new_tuple, current_txn, &index_entry_ptr, false);
 
                 if (location.block == INVALID_OID) {
                   return false;
                 }
 
-                transaction_manager.PerformInsert(current_txn, location,
-                                                  index_entry_ptr);
+                transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
 
                 break;
               }
@@ -771,7 +771,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(
-    const AbstractTuple *tuple, concurrency::TransactionContext *transaction) {
+    const AbstractTuple *tuple,
+    concurrency::TransactionContext *transaction) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -796,8 +797,7 @@ bool DataTable::CheckForeignKeyConstraints(
             catalog::Schema::CopySchema(ref_table->schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
-        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(),
-                          index->GetPool());
+        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
         std::vector<ItemPointer *> location_ptrs;
@@ -806,7 +806,8 @@ bool DataTable::CheckForeignKeyConstraints(
         // if this key doesn't exist in the referred column
         if (location_ptrs.size() == 0) {
           LOG_DEBUG("The key: %s does not exist in table %s\n",
-                    key->GetInfo().c_str(), ref_table->GetInfo().c_str());
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str());
           return false;
         }
 
@@ -815,17 +816,17 @@ bool DataTable::CheckForeignKeyConstraints(
         auto tile_group_header = tile_group->GetHeader();
 
         auto &transaction_manager =
-            concurrency::TransactionManagerFactory::GetInstance();
+          concurrency::TransactionManagerFactory::GetInstance();
         auto visibility = transaction_manager.IsVisible(
-            transaction, tile_group_header, location_ptrs[0]->offset,
-            VisibilityIdType::READ_ID);
+          transaction, tile_group_header, location_ptrs[0]->offset,
+          VisibilityIdType::READ_ID);
 
         if (visibility != VisibilityType::OK) {
-          LOG_DEBUG(
-              "The key: %s is not yet visible in table %s, visibility "
-              "type: %s.\n",
-              key->GetInfo().c_str(), ref_table->GetInfo().c_str(),
-              VisibilityTypeToString(visibility).c_str());
+          LOG_DEBUG("The key: %s is not yet visible in table %s, visibility "
+                    "type: %s.\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str(),
+                    VisibilityTypeToString(visibility).c_str());
           return false;
         }
 
@@ -1420,8 +1421,7 @@ trigger::TriggerList *DataTable::GetTriggerList() {
   return trigger_list_.get();
 }
 
-void DataTable::UpdateTriggerListFromCatalog(
-    concurrency::TransactionContext *txn) {
+void DataTable::UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn) {
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
 }
@@ -1429,8 +1429,8 @@ void DataTable::UpdateTriggerListFromCatalog(
 hash_t DataTable::Hash() const {
   auto oid = GetOid();
   hash_t hash = HashUtil::Hash(&oid);
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(GetName().c_str(), GetName().length()));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(GetName().c_str(),
+                                                           GetName().length()));
   auto db_oid = GetOid();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&db_oid));
   return hash;
@@ -1441,9 +1441,12 @@ bool DataTable::Equals(const storage::DataTable &other) const {
 }
 
 bool DataTable::operator==(const DataTable &rhs) const {
-  if (GetName() != rhs.GetName()) return false;
-  if (GetDatabaseOid() != rhs.GetDatabaseOid()) return false;
-  if (GetOid() != rhs.GetOid()) return false;
+  if (GetName() != rhs.GetName())
+    return false;
+  if (GetDatabaseOid() != rhs.GetDatabaseOid())
+    return false;
+  if (GetOid() != rhs.GetOid())
+    return false;
   return true;
 }
 

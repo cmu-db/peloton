@@ -81,7 +81,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class CmpBool {
   CmpFalse = 0,
   CmpTrue = 1,
-  NULL_ = 2  // Note the underscore suffix
+  NULL_ = 2 // Note the underscore suffix
 };
 
 //===--------------------------------------------------------------------===//
@@ -1214,8 +1214,7 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
-typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
-                                      ItemPointerComparator> WriteSet;
+typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
@@ -1226,8 +1225,7 @@ enum class GCVersionType {
   ABORT_UPDATE,    // a version that is updated during txn abort.
   ABORT_INSERT,    // a version that is inserted during txn abort.
   ABORT_INS_DEL,   // a version that is inserted and deleted during txn commit.
-  TOMBSTONE,       // tombstone version that signifies that the tuple has been
-                   // deleted
+  TOMBSTONE,       // tombstone version that signifies that the tuple has been deleted
 };
 std::string GCVersionTypeToString(GCVersionType type);
 GCVersionType StringToGCVersionType(const std::string &str);
@@ -1242,8 +1240,7 @@ enum class DDLType {
   CREATE,
   DROP,
 };
-typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>>
-    CreateDropSet;
+typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
 typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GCObjectSet;
 
 //===--------------------------------------------------------------------===//

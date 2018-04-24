@@ -84,20 +84,17 @@ ResultType SelectTuple(storage::DataTable *table, const int key,
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance()
-              .GetRecycledTupleSlot(table_id)
-              .IsNull())
+  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table_id).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
   return count;
 }
 
-size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
-                                    int second_val) {
+size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val, int second_val) {
+
   size_t num_occurrences = 0;
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -111,8 +108,7 @@ size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
     auto indexed_columns = index_schema->GetIndexedColumns();
 
     // build key.
-    std::unique_ptr<storage::Tuple> current_key(
-        new storage::Tuple(index_schema, true));
+    std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
     current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
 
     std::vector<ItemPointer *> index_entries;
@@ -122,10 +118,8 @@ size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
   return num_occurrences;
 }
 
-size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
-                               int first_val, int second_val) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
+size_t CountOccurrencesInIndex(storage::DataTable *table, int idx, int first_val, int second_val) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
   auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
   auto value = type::ValueFactory::GetIntegerValue(second_val);
 
@@ -138,8 +132,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
   auto indexed_columns = index_schema->GetIndexedColumns();
 
   // build key.
-  std::unique_ptr<storage::Tuple> current_key(
-      new storage::Tuple(index_schema, true));
+  std::unique_ptr<storage::Tuple> current_key(new storage::Tuple(index_schema, true));
   current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
 
   std::vector<ItemPointer *> index_entries;
@@ -159,7 +152,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
 // Assert RQ size = 1
 // Assert not present in indexes
 TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
-  std::string test_name = "AbortInsert";
+  std::string test_name= "AbortInsert";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -203,14 +196,13 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
 }
 
 // Fail to insert a tuple
-// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or
-// FK constraints) violated)
+// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
 // Abort
 // Assert RQ size = 1
 // Assert old copy in 2 indexes
 // Assert new copy in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
-  std::string test_name = "FailedInsertPrimaryKey";
+  std::string test_name= "FailedInsertPrimaryKey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -236,7 +228,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   TransactionScheduler scheduler(2, table.get(), &txn_manager);
   scheduler.Txn(0).Insert(0, 0);
   scheduler.Txn(0).Commit();
-  scheduler.Txn(1).Insert(0, 1);  // primary key already exists in table
+  scheduler.Txn(1).Insert(0, 1); // primary key already exists in table
   scheduler.Txn(1).Commit();
   scheduler.Run();
 
@@ -260,15 +252,14 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert
-/// or FK constraints) violated)
+//// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert or FK constraints) violated)
 //// Fail to insert a tuple
 //// Abort
 //// Assert RQ size = 1
 //// Assert old tuple in 2 indexes
 //// Assert new tuple in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
-  std::string test_name = "FailedInsertSecondaryKey";
+  std::string test_name= "FailedInsertSecondaryKey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -293,9 +284,9 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
   // insert duplicate value (secondary index requires uniqueness, so fails)
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(2, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(0, 1);  // succeeds
+  scheduler.Txn(0).Insert(0, 1); // succeeds
   scheduler.Txn(0).Commit();
-  scheduler.Txn(1).Insert(1, 1);  // fails, dup value
+  scheduler.Txn(1).Insert(1, 1); // fails, dup value
   scheduler.Txn(1).Commit();
   scheduler.Run();
   EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
@@ -327,7 +318,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
 //// Assert old version in 1 index (primary key)
 //// Assert new version in 2 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
-  std::string test_name = "CommitUpdateSecondaryKey";
+  std::string test_name= "CommitUpdateSecondaryKey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -386,7 +377,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
 // Assert old version is in 2 indexes
 // Assert new version is in 1 index (primary key)
 TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
-  std::string test_name = "AbortUpdateSecondaryKey";
+  std::string test_name= "AbortUpdateSecondaryKey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -411,7 +402,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
   // update, abort
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(2, table.get(), &txn_manager);
-  scheduler.Txn(0).Insert(0, 1);  // succeeds
+  scheduler.Txn(0).Insert(0, 1); // succeeds
   scheduler.Txn(0).Commit();
   scheduler.Txn(1).Update(0, 2);
   scheduler.Txn(1).Abort();
@@ -444,7 +435,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
 // Assert old tuple in 1 index (primary key)
 // Assert new tuple in 2 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
-  std::string test_name = "CommitInsertUpdate";
+  std::string test_name= "CommitInsertUpdate";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -480,12 +471,10 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
 
-  // TODO: Enable these once we figure out how to handle reused tuple slots with
-  // indexes
-  //  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 1));
-  //
-  //  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 2));
-  //  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 2));
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 1));
+
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 2));
+  EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -502,7 +491,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertUpdateTest) {
 // Assert inserted tuple in 0 indexes
 // Assert updated tuple in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
-  std::string test_name = "AbortInsertUpdate";
+  std::string test_name= "AbortInsertUpdate";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -536,10 +525,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
-  // TODO: Enable these once we figure out how to handle reused tuple slots with
-  // indexes
-  //  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
-  //  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -556,7 +543,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertUpdateTest) {
 // Assert RQ size = 2
 // Assert deleted tuple appears in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
-  std::string test_name = "CommitDelete";
+  std::string test_name= "CommitDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -609,7 +596,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
 // Assert RQ size = 1
 // Assert tuple found in 2 indexes
 TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
-  std::string test_name = "AbortDelete";
+  std::string test_name= "AbortDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -661,7 +648,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
 // Assert RQ.size = 1
 // Assert tuple found in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
-  std::string test_name = "CommitInsertDelete";
+  std::string test_name= "CommitInsertDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -711,7 +698,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
 // Assert RQ size = 1
 // Assert tuple found in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
-  std::string test_name = "AbortInsertDelete";
+  std::string test_name= "AbortInsertDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -754,7 +741,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-// Scenario: COMMIT_UPDATE_DEL
+//Scenario: COMMIT_UPDATE_DEL
 // Insert tuple
 // Commit
 // Update tuple
@@ -764,7 +751,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
 // Assert old tuple in 0 indexes
 // Assert new tuple in 0 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
-  std::string test_name = "CommitUpdateDelete";
+  std::string test_name= "CommitUpdateDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -800,10 +787,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
   gc_manager.ClearGarbage(0);
 
   EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
-  // TODO: Enable these once we figure out how to handle reused tuple slots with
-  // indexes
-  //  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
-  //  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table.get(), 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -822,7 +807,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateDeleteTest) {
 // Assert old tuple in 2 indexes
 // Assert new tuple in 1 index (primary key)
 TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
-  std::string test_name = "AbortUpdateDelete";
+  std::string test_name= "AbortUpdateDelete";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);
@@ -860,10 +845,9 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateDeleteTest) {
 
   EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
-  // TODO: Enable these once we figure out how to handle reused tuple slots with
-  // indexes
-  //  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table.get(), 0, 1));
-  //  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
+
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table.get(), 0, 1));
+  EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 0, 2));
 
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "DB");
@@ -1239,9 +1223,9 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
-// TODO: add an immutability test back in, old one was not valid because it
-// modified
+// TODO: add an immutability test back in, old one was not valid because it modified
 // a TileGroup that was supposed to be immutable.
+
 
 }  // namespace test
 }  // namespace peloton
