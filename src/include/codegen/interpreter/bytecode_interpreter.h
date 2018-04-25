@@ -14,9 +14,36 @@
 
 #include "codegen/interpreter/bytecode_function.h"
 
+#include <type_traits>
+
 #include "codegen/query.h"
 #include "common/exception.h"
 #include "common/overflow_builtins.h"
+
+// Includes for explicit function calls
+#include "codegen/bloom_filter_accessor.h"
+#include "codegen/buffering_consumer.h"
+#include "codegen/deleter.h"
+#include "codegen/inserter.h"
+#include "codegen/query_parameters.h"
+#include "codegen/runtime_functions.h"
+#include "codegen/transaction_runtime.h"
+#include "codegen/tuple_runtime.h"
+#include "codegen/updater.h"
+#include "codegen/util/cc_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
+#include "codegen/util/sorter.h"
+#include "codegen/values_runtime.h"
+#include "executor/executor_context.h"
+#include "function/date_functions.h"
+#include "function/decimal_functions.h"
+#include "function/string_functions.h"
+#include "function/timestamp_functions.h"
+#include "planner/project_info.h"
+#include "storage/data_table.h"
+#include "storage/storage_manager.h"
+#include "storage/tile_group.h"
+#include "storage/zone_map_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -32,6 +59,53 @@ struct CallActivation {
   ffi_cif call_interface;
   std::vector<value_t *> value_pointers;
   value_t *return_pointer;
+};
+
+//----------------------------------------------------------------------------//
+//                         Template Helper Functions                          //
+//----------------------------------------------------------------------------//
+
+/**
+ * The seq-types allow to create a template sequence of integers, e.g. for
+ * indexed access. (std::integer_sequence is only available in C++14)
+ */
+template <int...>
+struct seq {
+  using type = seq;
+};
+template <typename T1, typename T2>
+struct concat;
+template <int... I1, int... I2>
+struct concat<seq<I1...>, seq<I2...>> : seq<I1..., (sizeof...(I1) + I2)...> {};
+
+template <int N>
+struct gen_seq;
+template <int N>
+struct gen_seq : concat<typename gen_seq<N / 2>::type,
+                        typename gen_seq<N - N / 2>::type>::type {};
+template <>
+struct gen_seq<0> : seq<> {};
+template <>
+struct gen_seq<1> : seq<0> {};
+
+/**
+ * This function converts references to pointers to make value handling
+ * possible. The function is tagged with the a bool type that indicates
+ * whether the type is a reference.
+ * Non-reference types are returned without changes.
+ */
+template <typename type_t>
+static ALWAYS_INLINE inline constexpr
+    typename std::remove_pointer<type_t>::type &
+    ConvertPointerToReference(type_t source,
+                              UNUSED_ATTRIBUTE std::true_type is_reference) {
+  return *source;
+};
+
+template <typename type_t>
+static ALWAYS_INLINE inline constexpr type_t ConvertPointerToReference(
+    type_t source, UNUSED_ATTRIBUTE std::false_type not_a_reference) {
+  return source;
 };
 
 class BytecodeInterpreter {
@@ -94,8 +168,16 @@ class BytecodeInterpreter {
    */
   template <typename type_t>
   ALWAYS_INLINE inline type_t GetValue(const index_t index) {
+    using type_noref_t = typename std::conditional<
+        std::is_reference<type_t>::value,
+        typename std::remove_reference<type_t>::type *, type_t>::type;
+    static_assert(sizeof(type_noref_t) <= sizeof(value_t),
+                  "The interpreter can only handle values that fit in 8 bytes");
+
     PELOTON_ASSERT(index >= 0 && index < bytecode_function_.number_values_);
-    return *reinterpret_cast<type_t *>(&values_[index]);
+    return ConvertPointerToReference(
+        *reinterpret_cast<type_noref_t *>(&values_[index]),
+        std::is_reference<type_t>());
   }
 
   /**
@@ -120,8 +202,12 @@ class BytecodeInterpreter {
    */
   template <typename type_t>
   ALWAYS_INLINE inline void SetValue(const index_t index, const type_t value) {
+    using type_noref_t = typename std::conditional<
+        std::is_reference<type_t>::value,
+        typename std::remove_reference<type_t>::type *, type_t>::type;
+
     PELOTON_ASSERT(index >= 0 && index < bytecode_function_.number_values_);
-    *reinterpret_cast<type_t *>(&values_[index]) = value;
+    *reinterpret_cast<type_noref_t *>(&values_[index]) = value;
 
     DumpValue<type_t>(index);
   }
@@ -175,8 +261,8 @@ class BytecodeInterpreter {
   void DumpValue(const index_t index) {
     std::ostringstream output;
     output << "  [" << std::dec << std::setw(3) << index
-           << "] <= " << GetValue<type_t>(index) << "/0x" << std::hex
-           << GetValue<type_t>(index);
+           << "] <= " << GetValue<bytecode_type<type_t>>(index) << "/0x"
+           << std::hex << GetValue<bytecode_type<type_t>>(index);
     LOG_TRACE("%s", output.str().c_str());
   }
 #else
@@ -729,6 +815,22 @@ class BytecodeInterpreter {
     return uitoHandler<type_t, double>(instruction);
   }
 
+  ALWAYS_INLINE inline const Instruction *doubletofloatHandler(
+      const Instruction *instruction) {
+    SetValue<float>(
+        instruction->args[0],
+        (static_cast<float>(GetValue<double>(instruction->args[1]))));
+    return AdvanceIP<1>(instruction);
+  }
+
+  ALWAYS_INLINE inline const Instruction *floattodoubleHandler(
+      const Instruction *instruction) {
+    SetValue<double>(
+        instruction->args[0],
+        (static_cast<double>(GetValue<float>(instruction->args[1]))));
+    return AdvanceIP<1>(instruction);
+  }
+
   ALWAYS_INLINE inline const Instruction *gep_offsetHandler(
       const Instruction *instruction) {
     uintptr_t sum = GetValue<uintptr_t>(instruction->args[1]) +
@@ -976,6 +1078,142 @@ class BytecodeInterpreter {
         (__builtin_ia32_crc32di(GetValue<i64>(instruction->args[1]),
                                 GetValue<i64>(instruction->args[2]))));
     return AdvanceIP<1>(instruction);
+  }
+
+  // The handlers for explicit calls are generated using templates.
+  //
+  // The call arrives in explicit_callHandler(...), which is overloaded for
+  // 1. static functions
+  // 2. class methods and
+  // 3. const class methods
+  // and is then forwarded to explicit_call_wrapperHandler(...) which is tagged
+  // by a bool type, whether the called function returns void or not, which
+  // makes it 6 instances of that function.
+
+  // 1. static function
+  template <typename return_type, typename... arg_types>
+  ALWAYS_INLINE inline const Instruction *explicit_callHandler(
+      const Instruction *instruction, return_type (*func)(arg_types...)) {
+    // forward call depending on whether func returns void or not
+    return explicit_call_wrapperHandler(instruction, func,
+                                        gen_seq<sizeof...(arg_types)>(),
+                                        std::is_void<return_type>());
+  }
+
+  // 2. class method
+  template <typename return_type, typename class_type, typename... arg_types>
+  ALWAYS_INLINE inline const Instruction *explicit_callHandler(
+      const Instruction *instruction,
+      return_type (class_type::*func)(arg_types...)) {
+    // forward call depending on whether func returns void or not
+    return explicit_call_wrapperHandler(instruction, func,
+                                        gen_seq<sizeof...(arg_types)>(),
+                                        std::is_void<return_type>());
+  }
+
+  // 3. const class method
+  template <typename return_type, typename class_type, typename... arg_types>
+  ALWAYS_INLINE inline const Instruction *explicit_callHandler(
+      const Instruction *instruction,
+      return_type (class_type::*func)(arg_types...) const) {
+    // forward call depending on whether func returns void or not
+    return explicit_call_wrapperHandler(instruction, func,
+                                        gen_seq<sizeof...(arg_types)>(),
+                                        std::is_void<return_type>());
+  }
+
+  // 1. static function a) returns void
+  template <typename return_type, typename... arg_types, int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (*func)(arg_types...),
+      const seq<indexes...> &, UNUSED_ATTRIBUTE std::false_type returns_void) {
+    // call the actual function
+    auto ret = func(GetValue<arg_types>(instruction->args[indexes + 1])...);
+    SetValue(instruction->args[0], ret);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types) + 1)>(instruction);
+  }
+
+  // 1. static function b) returns non-void
+  template <typename return_type, typename... arg_types, int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (*func)(arg_types...),
+      const seq<indexes...> &,
+      UNUSED_ATTRIBUTE std::true_type returns_not_void) {
+    // call the actual function
+    func(GetValue<arg_types>(instruction->args[indexes])...);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types))>(instruction);
+  }
+
+  // 2. class method a) returns void
+  template <typename return_type, typename class_type, typename... arg_types,
+            int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...),
+      const seq<indexes...> &, UNUSED_ATTRIBUTE std::false_type returns_void) {
+    // call the actual function
+    auto *obj = GetValue<class_type *>(instruction->args[1]);
+    return_type ret =
+        (obj->*func)(GetValue<arg_types>(instruction->args[indexes + 2])...);
+    SetValue<return_type>(instruction->args[0], ret);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types) + 2)>(instruction);
+  }
+
+  // 2. class method b) returns non-void
+  template <typename return_type, typename class_type, typename... arg_types,
+            int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...),
+      const seq<indexes...> &,
+      UNUSED_ATTRIBUTE std::true_type returns_not_void) {
+    // call the actual function
+    auto *obj = GetValue<class_type *>(instruction->args[0]);
+    (obj->*func)(GetValue<arg_types>(instruction->args[indexes + 1])...);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types) + 1)>(instruction);
+  }
+
+  // 3. const class method a) returns void
+  template <typename return_type, typename class_type, typename... arg_types,
+            int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...) const,
+      const seq<indexes...> &, UNUSED_ATTRIBUTE std::false_type returns_void) {
+    // call the actual function
+    auto *obj = GetValue<class_type *>(instruction->args[1]);
+    return_type ret =
+        (obj->*func)(GetValue<arg_types>(instruction->args[indexes + 2])...);
+    SetValue<return_type>(instruction->args[0], ret);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types) + 2)>(instruction);
+  }
+
+  // 3. const class method b) returns non-void
+  template <typename return_type, typename class_type, typename... arg_types,
+            int... indexes>
+  ALWAYS_INLINE inline const Instruction *explicit_call_wrapperHandler(
+      const Instruction *instruction,
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...) const,
+      const seq<indexes...> &,
+      UNUSED_ATTRIBUTE std::true_type returns_not_void) {
+    // call the actual function
+    auto *obj = GetValue<class_type *>(instruction->args[0]);
+    (obj->*func)(GetValue<arg_types>(instruction->args[indexes + 1])...);
+
+    return AdvanceIP<BytecodeFunction::GetExplicitCallInstructionSlotSize(
+        sizeof...(arg_types) + 1)>(instruction);
   }
 
   //--------------------------------------------------------------------------//

@@ -270,39 +270,20 @@ class BytecodeBuilder {
   //===--------------------------------------------------------------------===//
 
   /**
-   * Insert abytecode instruction with up to 6 arguments into the bytecode
-   * stream.
-   * @tparam number_instruction_slots Number of instruction slots this
-   * instruction occupies (will be checked with number of arguments)
-   * @param llvm_instruction LLVM function this instruction is created from.
-   * (Only needed for tracing information, not used in Release mode!)
-   * @param opcode Opcode of the bytecode instruction
-   * @return Reference to the created instruction in the bytecode stream.
+   * Insert a bytecode instruction into the bytecode stream.
    */
-  template <size_t number_instruction_slots = 1>
   Instruction &InsertBytecodeInstruction(
       const llvm::Instruction *llvm_instruction, Opcode opcode,
-      index_t arg0 = 0, index_t arg1 = 0, index_t arg2 = 0, index_t arg3 = 0,
-      index_t arg4 = 0, index_t arg5 = 0, index_t arg6 = 0);
+      const std::vector<index_t> &args);
 
   /**
-   * Insert bytecode instruction with 3 arguments into the bytecode stream.
+   * Insert a bytecode instruction into the bytecode stream.
    * Wrapper that automatically gets the value slots for the LLVM values
    * provided.
    */
   Instruction &InsertBytecodeInstruction(
       const llvm::Instruction *llvm_instruction, Opcode opcode,
-      const llvm::Value *arg0, const llvm::Value *arg1,
-      const llvm::Value *arg2);
-
-  /**
-   * Insert bytecode instruction with 2 arguments into the bytecode stream.
-   * Wrapper that automatically gets the value slots for the LLVM values
-   * provided.
-   */
-  Instruction &InsertBytecodeInstruction(
-      const llvm::Instruction *llvm_instruction, Opcode opcode,
-      const llvm::Value *arg0, const llvm::Value *arg1);
+      const std::vector<const llvm::Value *> &args);
 
   /**
    * Insert a external call bytecode instruction into the bytecode stream.
@@ -373,6 +354,7 @@ class BytecodeBuilder {
   void TranslateStore(const llvm::Instruction *instruction);
   void TranslateGetElementPtr(const llvm::Instruction *instruction);
   void TranslateIntExt(const llvm::Instruction *instruction);
+  void TranslateFloatTruncExt(const llvm::Instruction *instruction);
   void TranslateFloatIntCast(const llvm::Instruction *instruction);
   void TranslateCmp(const llvm::Instruction *instruction);
   void TranslateCall(const llvm::Instruction *instruction);

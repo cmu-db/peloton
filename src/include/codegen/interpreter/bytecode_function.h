@@ -42,8 +42,17 @@ using value_t = uint64_t;
 using index_t = uint16_t;
 using instr_slot_t = uint64_t;
 
+// Type template that converts any type into the matching interpreter type
+template <typename type>
+using bytecode_type = typename std::conditional<
+    sizeof(type) == 1, i8,
+    typename std::conditional<
+        sizeof(type) == 2, i16,
+        typename std::conditional<sizeof(type) == 3 || sizeof(type) == 4, i32,
+                                  i64>::type>::type>::type;
+
 /**
- * Enum holding all available instructions in all
+ * Enum holding all Opcodes for all instructions.
  */
 enum class Opcode : index_t {
   undefined,
@@ -203,6 +212,51 @@ class BytecodeFunction {
     return number_slots;
   }
 
+  /**
+   * Returns the number of slots an explicit call instruction occupies,
+   * given the number of argument slots. (return value and/or object pointer
+   * also need a slot!)
+   * @param number_args number of needed argument slots
+   * @return number of slots (each 8 Byte) that are used by this instruction
+   */
+  static constexpr ALWAYS_INLINE inline size_t
+  GetExplicitCallInstructionSlotSize(size_t number_args) {
+    return ((2 * (1 + number_args)) + sizeof(instr_slot_t) - 1) /
+           sizeof(instr_slot_t);
+  }
+
+  /**
+   * Returns the number of required argument slots that are needed in an
+   * explicit call bytecode instruction for this function.
+   * @param func pointer/reference to the function (declaration must be visible)
+   * @return number of required argument slots
+   *  = arguments + return value + object pointer
+   */
+  template <typename return_type, typename... arg_types>
+  static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
+      UNUSED_ATTRIBUTE return_type (*func)(arg_types...)) {
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types) : sizeof...(arg_types) + 1;
+  }
+
+  template <typename return_type, typename class_type, typename... arg_types>
+  static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...)) {
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1 : sizeof...(arg_types) + 2;
+  }
+
+  template <typename return_type, typename class_type, typename... arg_types>
+  static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
+      UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...) const) {
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1 : sizeof...(arg_types) + 2;
+  }
+
+  /**
+   * Returns the opcode for a fiven function name string (lookup in hash map).
+   * @param function_name string of function name with namespace
+   * @return the matching opcode or Opcode::undefined
+   */
+  static Opcode GetExplicitCallOpcodeByString(std::string function_name);
+
   /***
    * Dumps the bytecode and the constants of this bytecode function to a
    * file, identified by function name.
@@ -272,6 +326,14 @@ class BytecodeFunction {
    * InteralFunctionCalls, accessed by index.
    */
   std::vector<BytecodeFunction> sub_functions_;
+
+  /**
+   * Constant map created at system startup, that maps the function name string
+   * of explicit defined function to their opcode. This way the function name
+   * lookup is implicitly made with a hash table.
+   */
+  static const std::unordered_map<std::string, Opcode>
+      explicit_call_opcode_mapping_;
 
 #ifndef NDEBUG
   /**

@@ -19,9 +19,50 @@
 
 #include "codegen/codegen.h"
 
+// Includes for explicit function calls
+#include "codegen/bloom_filter_accessor.h"
+#include "codegen/buffering_consumer.h"
+#include "codegen/deleter.h"
+#include "codegen/inserter.h"
+#include "codegen/query_parameters.h"
+#include "codegen/runtime_functions.h"
+#include "codegen/transaction_runtime.h"
+#include "codegen/tuple_runtime.h"
+#include "codegen/updater.h"
+#include "codegen/util/cc_hash_table.h"
+#include "codegen/util/oa_hash_table.h"
+#include "codegen/util/sorter.h"
+#include "codegen/values_runtime.h"
+#include "executor/executor_context.h"
+#include "function/date_functions.h"
+#include "function/decimal_functions.h"
+#include "function/string_functions.h"
+#include "function/timestamp_functions.h"
+#include "planner/project_info.h"
+#include "storage/data_table.h"
+#include "storage/storage_manager.h"
+#include "storage/tile_group.h"
+#include "storage/zone_map_manager.h"
+
 namespace peloton {
 namespace codegen {
 namespace interpreter {
+
+/**
+ * This lambda function serves as an init function to fill the const mapping
+ * of function names to opcodes.
+ */
+const std::unordered_map<std::string, Opcode>
+    BytecodeFunction::explicit_call_opcode_mapping_ = []() {
+      std::unordered_map<std::string, Opcode> mapping;
+
+#define HANDLE_INST(op)
+#define HANDLE_EXPLICIT_CALL_INST(op, func) mapping[#func] = Opcode::op;
+
+#include "codegen/interpreter/bytecode_instructions.def"
+
+      return mapping;
+    }();
 
 const char *BytecodeFunction::GetOpcodeString(Opcode opcode) {
   switch (opcode) {
@@ -30,8 +71,6 @@ const char *BytecodeFunction::GetOpcodeString(Opcode opcode) {
     return #opcode;
 
 #include "codegen/interpreter/bytecode_instructions.def"
-
-#undef HANDLE_INST
 
     default:
       return "(invalid)";
@@ -64,6 +103,10 @@ size_t BytecodeFunction::GetInstructionSlotSize(
 #define HANDLE_OVERFLOW_TYPED_INST(op, type) \
   case Opcode::op##_##type:                  \
     return 2;
+#define HANDLE_EXPLICIT_CALL_INST(op, func)    \
+  case Opcode::op:                             \
+    return GetExplicitCallInstructionSlotSize( \
+        GetFunctionRequiredArgSlotsNum(&func));
 
 #include "codegen/interpreter/bytecode_instructions.def"
 
@@ -71,6 +114,16 @@ size_t BytecodeFunction::GetInstructionSlotSize(
       PELOTON_ASSERT(false);
       return 0;
   }
+}
+
+Opcode BytecodeFunction::GetExplicitCallOpcodeByString(
+    std::string function_name) {
+  auto result = explicit_call_opcode_mapping_.find(function_name);
+
+  if (result != explicit_call_opcode_mapping_.end())
+    return result->second;
+  else
+    return Opcode::undefined;
 }
 
 void BytecodeFunction::DumpContents() const {
@@ -220,6 +273,12 @@ std::string BytecodeFunction::Dump(const Instruction *instruction) const {
     output << "[" << std::setw(3) << instruction->args[1] << "] "; \
     output << "[" << std::setw(3) << instruction->args[2] << "] "; \
     output << "[" << std::setw(3) << instruction->args[3] << "] "; \
+    break;
+
+#define HANDLE_EXPLICIT_CALL_INST(opcode, func)                        \
+  case Opcode::opcode:                                                 \
+    for (size_t i = 0; i < GetFunctionRequiredArgSlotsNum(&func); i++) \
+      output << "[" << std::setw(3) << instruction->args[i] << "] ";   \
     break;
 
 #include "codegen/interpreter/bytecode_instructions.def"

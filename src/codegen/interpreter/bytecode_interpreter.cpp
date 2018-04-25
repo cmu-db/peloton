@@ -109,6 +109,11 @@ NEVER_INLINE NO_CLONE void BytecodeInterpreter::ExecuteFunction(
   ip = op##Handler(ip);   \
   INTERPRETER_DISPATCH_GOTO(ip);
 
+#define HANDLE_EXPLICIT_CALL_INST(op, func) \
+  _##op : TRACE_CODE_PRE;                   \
+  ip = explicit_callHandler(ip, &func);     \
+  INTERPRETER_DISPATCH_GOTO(ip);
+
 #include "codegen/interpreter/bytecode_instructions.def"
 
   //--------------------------------------------------------------------------//
