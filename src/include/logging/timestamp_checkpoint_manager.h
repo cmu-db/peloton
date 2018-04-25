@@ -86,7 +86,7 @@ class TimestampCheckpointManager : public CheckpointManager {
     checkpoint_base_dir_ = dir_name;
   }
 
-  // get a latest checkpoint epoch for recovery
+  // get a recovered epoch id, or a latest checkpoint epoch for recovery
   eid_t GetRecoveryCheckpointEpoch();
 
  protected:
@@ -258,23 +258,20 @@ class TimestampCheckpointManager : public CheckpointManager {
     }
 
     // Remove old checkpoint directory
-    for (auto dir_name = dir_name_list.begin(); dir_name != dir_name_list.end();
-         dir_name++) {
-      if (strcmp((*dir_name).c_str(), checkpoint_working_dir_name_.c_str()) !=
-          0) {
-        eid_t epoch_id = std::strtoul((*dir_name).c_str(), NULL, 10);
+    for (auto dir_name : dir_name_list) {
+      if (strcmp(dir_name.c_str(), checkpoint_working_dir_name_.c_str()) != 0) {
+        eid_t epoch_id = std::strtoul(dir_name.c_str(), NULL, 10);
         if (epoch_id == 0) {
           LOG_ERROR("Unexpected epoch value in checkpoints directory: %s",
-                    (*dir_name).c_str());
+                    dir_name.c_str());
         } else if (epoch_id == begin_epoch_id) {
           // not be old
           continue;
         }
       }
 
-      std::string remove_dir = checkpoint_base_dir_ + '/' + (*dir_name);
-      bool ret = LoggingUtil::RemoveDirectory(remove_dir.c_str(), false);
-      if (ret == false) {
+      std::string remove_dir = checkpoint_base_dir_ + '/' + dir_name;
+      if (LoggingUtil::RemoveDirectory(remove_dir.c_str(), false) == false) {
         LOG_ERROR("Failure to remove checkpoint dir: %s", remove_dir.c_str());
       }
     }
@@ -290,6 +287,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   std::string checkpoint_working_dir_name_ = "checkpointing";
   std::string checkpoint_filename_prefix_ = "checkpoint";
   std::string metadata_filename_prefix_ = "checkpoint_metadata";
+
+  eid_t recovered_epoch_id = INVALID_EID;
 };
 
 }  // namespace logging
