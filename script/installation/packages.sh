@@ -42,46 +42,53 @@ TF_TYPE="cpu"
 
 
 function install_protobuf3.4.0() {
- # Install Relevant tooling
- # Remove any old versions of protobuf
- DISTRIB=$1 # ubuntu/fedora
- if [ "$DISTRIB" == "ubuntu" ]
- then
-    sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
- elif [ "$DISTRIB" == "fedora" ] 
- then
-    sudo dnf -q remove -y protobuf protobuf-devel protobuf-compiler
- else 
-    echo "Only Ubuntu and Fedora is supported currently!"
-    return 0
- fi
- wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
- tar -xzf protobuf-cpp-3.4.0.tar.gz
- cd protobuf-3.4.0
- ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
- cd ..
- # Cleanup
- rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
+    # Install Relevant tooling
+    # Remove any old versions of protobuf
+    DISTRIB=$1 # ubuntu/fedora
+    if [ "$DISTRIB" == "ubuntu" ]; then
+        sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
+    elif [ "$DISTRIB" == "fedora" ]; then
+        sudo dnf -q remove -y protobuf protobuf-devel protobuf-compiler
+    else
+        echo "Only Ubuntu and Fedora is supported currently!"
+        return 0
+    fi
+    if /usr/local/bin/protoc --version == "libprotoc 3.4.0"; then
+        echo "protobuf-3.4.0 already installed"
+        return
+    fi
+    wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
+    tar -xzf protobuf-cpp-3.4.0.tar.gz
+    cd protobuf-3.4.0
+    ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
+    cd ..
+    # Cleanup
+    rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
 }
 
 # Utility function for installing tensorflow components of python/C++
 function install_tf() {
- TFCApiFile=$1
- TF_VERSION=$2
- LinkerConfigCmd=$3
- TARGET_DIRECTORY="/usr/local"
- # Install Tensorflow Python Binary
- sudo -E pip3 install --upgrade pip
- sudo -E pip3 install --upgrade tensorflow==${TF_VERSION}
+    if pip show -q tensorflow && [ -d /usr/local/include/tensorflow/c ]; then
+        echo "tensorflow already installed"
+        return
+    fi
+    TFCApiFile=$1
+    TF_VERSION=$2
+    LinkerConfigCmd=$3
+    TARGET_DIRECTORY="/usr/local"
+    # Install Tensorflow Python Binary
+    sudo -E pip3 install --upgrade pip
+    # Related issue: https://github.com/pypa/pip/issues/3165
+    sudo -E pip3 install tensorflow==${TF_VERSION} --upgrade --ignore-installed six
 
- # Install C-API
- TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
- wget -O $TFCApiFile $TFCApiURL
- sudo tar -C $TARGET_DIRECTORY -xzf $TFCApiFile || true
- # Configure the Linker
- eval $LinkerConfigCmd
- # Cleanup
- rm -rf ${TFCApiFile}
+    # Install C-API
+    TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
+    wget -O $TFCApiFile $TFCApiURL
+    sudo tar -C $TARGET_DIRECTORY -xzf $TFCApiFile || true
+    # Configure the Linker
+    eval $LinkerConfigCmd
+    # Cleanup
+    rm -rf ${TFCApiFile}
 }
 
 ## ------------------------------------------------
@@ -161,7 +168,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libtool \
         make \
         g++ \
-	ant \
+        libeigen3-dev \
+    	ant \
         unzip
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
@@ -194,7 +202,8 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
         llvm-dev \
         libedit-dev \
         postgresql-client \
-        libtbb-dev
+        libtbb-dev \
+        libeigen3-dev
 
 ## ------------------------------------------------
 ## FEDORA
@@ -239,7 +248,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         automake \
         libtool
     # Install version of protobuf needed by C-API
-    install_protobuf3.4.0 "fedora"        
+    install_protobuf3.4.0 "fedora"
     # Install tensorflow
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
@@ -343,6 +352,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install wget
     brew install python
     brew upgrade python
+    brew install eigen
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
