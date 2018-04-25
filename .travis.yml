@@ -30,11 +30,13 @@ matrix:
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc5 Debug/Tests/AddressSanitizer/Coveralls"
-              - CXX=g++-5
-              - CC=gcc-5
-              - PELOTON_BUILD_TYPE=Debug
-              - SANITIZER=Address
-              - COVERALLS=On
+          # set env variables manually
+          before_install:
+              - export CXX=g++-5
+              - export CC=gcc-5
+              - export PELOTON_BUILD_TYPE=Debug
+              - export SANITIZER=Address
+              - export COVERALLS=On
 
         - os: linux
           sudo: required
@@ -50,11 +52,13 @@ matrix:
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc5 Release/Tests/AddressSanitizer"
-              - CXX=g++-5
-              - CC=gcc-5
-              - PELOTON_BUILD_TYPE=Release
-              - SANITIZER=
-              - COVERALLS=Off
+          # set env variables manually
+          before_install:
+              - export CXX=g++-5
+              - export CC=gcc-5
+              - export PELOTON_BUILD_TYPE=Release
+              - export SANITIZER=
+              - export COVERALLS=Off
 
 install:
     # setup environment
