@@ -556,6 +556,7 @@ enum class PlanNodeType {
   // Scan Nodes
   SEQSCAN = 10,
   INDEXSCAN = 11,
+  CSVSCAN = 12,
 
   // Join Nodes
   NESTLOOP = 20,
@@ -816,6 +817,14 @@ enum class CopyType {
 std::string CopyTypeToString(CopyType type);
 CopyType StringToCopyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const CopyType &type);
+
+enum class ExternalFileFormat {
+  CSV,
+  BINARY
+};
+std::string ExternalFileFormatToString(ExternalFileFormat format);
+ExternalFileFormat StringToExternalFileFormat(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ExternalFileFormat &format);
 
 //===--------------------------------------------------------------------===//
 // Payload Types

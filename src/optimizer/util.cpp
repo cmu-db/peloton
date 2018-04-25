@@ -144,7 +144,7 @@ bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
 
 std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
     parser::CopyStatement *copy_stmt) {
-  std::string table_name(copy_stmt->cpy_table->GetTableName());
+  std::string table_name(copy_stmt->table->GetTableName());
   bool deserialize_parameters = false;
 
   // If we're copying the query metric table, then we need to handle the
@@ -160,9 +160,9 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      copy_stmt->cpy_table->GetDatabaseName(),
-      copy_stmt->cpy_table->GetSchemaName(),
-      copy_stmt->cpy_table->GetTableName(), txn);
+      copy_stmt->table->GetDatabaseName(),
+      copy_stmt->table->GetSchemaName(),
+      copy_stmt->table->GetTableName(), txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<planner::SeqScanPlan> select_plan(

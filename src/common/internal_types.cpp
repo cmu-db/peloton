@@ -1878,6 +1878,36 @@ std::ostream &operator<<(std::ostream &os, const CopyType &type) {
 }
 
 //===--------------------------------------------------------------------===//
+// ExternalFileFormat - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string ExternalFileFormatToString(ExternalFileFormat format) {
+  switch (format) {
+    case ExternalFileFormat::CSV:
+      return "CSV";
+    case ExternalFileFormat::BINARY:
+    default:
+      return "BINARY";
+  }
+}
+
+ExternalFileFormat StringToExternalFileFormat(const std::string &str) {
+  auto upper = StringUtil::Upper(str);
+  if (upper == "CSV") {
+    return ExternalFileFormat::CSV;
+  } else if (upper == "BINARY") {
+    return ExternalFileFormat::BINARY;
+  }
+  throw ConversionException(StringUtil::Format(
+      "No ExternalFileFormat for input '%s'", upper.c_str()));
+}
+
+std::ostream &operator<<(std::ostream &os, const ExternalFileFormat &format) {
+  os << ExternalFileFormatToString(format);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//
 

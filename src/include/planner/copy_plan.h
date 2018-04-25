@@ -6,43 +6,35 @@
 //
 // Identification: src/include/planner/copy_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "../parser/copy_statement.h"
-#include "../parser/select_statement.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
 
 namespace storage {
 class DataTable;
-}
-
-namespace parser {
-class CopyStatement;
-}
+}  // namespace storage
 
 namespace planner {
 
 class CopyPlan : public AbstractPlan {
  public:
-  CopyPlan() = delete;
-
   explicit CopyPlan(std::string file_path, bool deserialize_parameters)
       : file_path(file_path), deserialize_parameters(deserialize_parameters) {
     LOG_DEBUG("Creating a Copy Plan");
   }
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::COPY; }
+  PlanNodeType GetPlanNodeType() const override  { return PlanNodeType::COPY; }
 
-  const std::string GetInfo() const { return "CopyPlan"; }
+  const std::string GetInfo() const override { return "CopyPlan"; }
 
   // TODO: Implement copy mechanism
-  std::unique_ptr<AbstractPlan> Copy() const { return nullptr; }
+  std::unique_ptr<AbstractPlan> Copy() const override { return nullptr; }
 
   // The path of the target file
   std::string file_path;

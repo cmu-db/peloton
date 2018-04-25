@@ -2,19 +2,19 @@
 //
 //                         Peloton
 //
-// statement_import.h
+// copy_statement.h
 //
-// Identification: src/include/parser/statement_import.h
+// Identification: src/include/parser/copy_statement.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include "parser/select_statement.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
-#include "expression/constant_value_expression.h"
 #include "common/sql_node_visitor.h"
 
 namespace peloton {
@@ -26,25 +26,38 @@ namespace parser {
  */
 class CopyStatement : public SQLStatement {
  public:
-  CopyStatement(CopyType type)
+  CopyStatement()
       : SQLStatement(StatementType::COPY),
-        cpy_table(nullptr),
-        type(type),
-        delimiter(','){};
+        table(nullptr),
+        type(),
+        delimiter(',') {}
 
-  virtual ~CopyStatement() {}
+  ~CopyStatement() = default;
 
-  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const override;
 
   const std::string GetInfo() const override;
 
-  std::unique_ptr<TableRef> cpy_table;
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Public member fields
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  std::unique_ptr<TableRef> table;
+
+  std::unique_ptr<SelectStatement> select_stmt;
 
   CopyType type;
 
   std::string file_path;
+
+  ExternalFileFormat format;
+
+  bool is_from;
+
   char delimiter;
 };
 
