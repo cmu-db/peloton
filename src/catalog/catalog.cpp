@@ -923,7 +923,7 @@ std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
     const oid_t database_oid) {
   if (catalog_map_.find(database_oid) == catalog_map_.end()) {
     throw CatalogException("Failed to find SystemCatalog for database_oid = " +
-                           database_oid);
+                           std::to_string(database_oid));
   }
   return catalog_map_[database_oid];
 }
