@@ -125,7 +125,7 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", "emp_db",
+  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME, "emp_db",
                            std::move(table_schema), CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
@@ -137,7 +137,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
                                                            std::string val) {
   std::shared_ptr<Statement> statement;
   std::string sql =
-      "INSERT INTO emp_db.department_table(dept_id,dept_name) VALUES "
+      "INSERT INTO department_table(dept_id,dept_name) VALUES "
       "(" +
       std::to_string(id) + ",'" + val + "');";
   LOG_TRACE("Query: %s", sql.c_str());
@@ -148,7 +148,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
 
 std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
   std::shared_ptr<Statement> statement;
-  std::string sql = "DELETE FROM emp_db.department_table";
+  std::string sql = "DELETE FROM department_table";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
   ParseAndPlan(statement.get(), sql);
@@ -158,7 +158,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
 std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
   std::shared_ptr<Statement> statement;
   std::string sql =
-      "UPDATE emp_db.department_table SET dept_name = 'CS' WHERE dept_id = 1";
+      "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("UPDATE", sql));
   ParseAndPlan(statement.get(), sql);

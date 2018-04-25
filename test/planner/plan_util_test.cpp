@@ -40,7 +40,6 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   auto txn = txn_manager.BeginTransaction();
 
   catalog->CreateDatabase(TEST_DB_NAME, txn);
-  auto db = catalog->GetDatabaseWithName(TEST_DB_NAME, txn);
   // Insert a table first
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -55,26 +54,30 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, "test_table", std::move(table_schema),
-                       txn);
+  catalog->CreateTable(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+                       std::move(table_schema), txn);
+  auto source_table = catalog->GetTableWithName(
+      TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table", txn);
+  EXPECT_NE(source_table, nullptr);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto source_table = db->GetTableWithName("test_table");
   oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
 
   // create index on 'id'
-  catalog->CreateIndex(TEST_DB_NAME, "test_table", source_col_ids,
-                       "test_id_idx", false, IndexType::BWTREE, txn);
+  catalog->CreateIndex(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+                       source_col_ids, "test_id_idx", false, IndexType::BWTREE,
+                       txn);
 
   // create index on 'id' and 'first_name'
   col_id = source_table->GetSchema()->GetColumnID(fname_column.column_name);
   source_col_ids.push_back(col_id);
 
-  catalog->CreateIndex(TEST_DB_NAME, "test_table", source_col_ids,
-                       "test_fname_idx", false, IndexType::BWTREE, txn);
+  catalog->CreateIndex(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+                       source_col_ids, "test_fname_idx", false,
+                       IndexType::BWTREE, txn);
   txn_manager.CommitTransaction(txn);
 
   // dummy txn to get the catalog_cache object
@@ -87,7 +90,9 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   // And two indexes on following columns:
   // 1) id
   // 2) id and first_name
-  auto table_object = db_object->GetTableObject("test_table");
+  auto table_object =
+      db_object->GetTableObject("test_table", DEFUALT_SCHEMA_NAME);
+  EXPECT_NE(table_object, nullptr);
   oid_t id_idx_oid = table_object->GetIndexObject("test_id_idx")->GetIndexOid();
   oid_t fname_idx_oid =
       table_object->GetIndexObject("test_fname_idx")->GetIndexOid();

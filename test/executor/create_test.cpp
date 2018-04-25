@@ -99,8 +99,9 @@ TEST_F(CreateTests, CreatingTable) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema), CreateType::TABLE);
+  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+                           DEFAULT_DB_NAME, std::move(table_schema),
+                           CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());
@@ -140,8 +141,8 @@ TEST_F(CreateTests, CreatingUDFs) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
-                           CreateType::TABLE);
+  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+                           std::move(table_schema), CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());
@@ -242,8 +243,8 @@ TEST_F(CreateTests, CreatingTrigger) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
-                           CreateType::TABLE);
+  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+                           std::move(table_schema), CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());
@@ -331,8 +332,8 @@ TEST_F(CreateTests, CreatingTrigger) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -372,8 +373,8 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
-                           CreateType::TABLE);
+  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+                           std::move(table_schema), CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());
@@ -419,8 +420,8 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -461,8 +462,8 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
-                           CreateType::TABLE);
+  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+                           std::move(table_schema), CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());
@@ -501,7 +502,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
 
   // check whether the trigger catalog table contains this new trigger
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      DEFAULT_DB_NAME, "accounts", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
   auto trigger_list =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())

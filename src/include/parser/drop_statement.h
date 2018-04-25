@@ -39,6 +39,15 @@ class DropStatement : public TableRefStatement {
         type_(type),
         missing_(false),
         cascade_(false) {}
+  // only used in drop_test
+  DropStatement(EntityType type, std::string table_name_of_trigger,
+                std::string trigger_name)
+      : TableRefStatement(StatementType::DROP),
+        type_(type),
+        trigger_name_(trigger_name) {
+    if (!table_info_) table_info_.reset(new parser::TableInfo());
+    table_info_->table_name = table_name_of_trigger;
+  }
 
   EntityType GetDropType() { return type_; }
 

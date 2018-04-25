@@ -21,9 +21,11 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "expression/tuple_value_expression.h"
+#include "optimizer/mock_task.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/rule_impls.h"
+#include "parser/mock_sql_statement.h"
 #include "parser/postgresparser.h"
 #include "planner/abstract_join_plan.h"
 #include "planner/create_plan.h"
@@ -117,7 +119,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  // NOTE: everytime we create a database, there will be 8 catalog tables inside
   txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
+                ->GetTableCount(),
+            9);
+
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
@@ -148,6 +156,11 @@ TEST_F(OptimizerTests, HashJoinTest) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
+                ->GetTableCount(),
+            10);
+
   // Inserting a tuple to table_a
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");

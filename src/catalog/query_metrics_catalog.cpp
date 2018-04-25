@@ -26,6 +26,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
                           "." CATALOG_SCHEMA_NAME "." QUERY_METRICS_CATALOG_NAME
                           " ("
                           "query_name   VARCHAR NOT NULL PRIMARY KEY, "
+                          "database_oid INT NOT NULL PRIMARY KEY, "
                           "num_params   INT NOT NULL, "
                           "param_types    VARBINARY, "
                           "param_formats  VARBINARY, "
@@ -44,7 +45,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
 
 bool QueryMetricsCatalog::InsertQueryMetrics(
-    const std::string &name, int64_t num_params,
+    const std::string &name, oid_t database_oid, int64_t num_params,
     const stats::QueryMetric::QueryParamBuf &type_buf,
     const stats::QueryMetric::QueryParamBuf &format_buf,
     const stats::QueryMetric::QueryParamBuf &value_buf, int64_t reads,
@@ -55,6 +56,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
+  auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(num_params);
 
   auto val3 = type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY);
@@ -79,6 +81,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val12 = type::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(ColumnId::NAME, val0, pool);
+  tuple->SetValue(ColumnId::DATABASE_OID, val1, pool);
   tuple->SetValue(ColumnId::NUM_PARAMS, val2, pool);
   tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
   tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
@@ -96,11 +99,13 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 }
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(
-    const std::string &name, concurrency::TransactionContext *txn) {
+    const std::string &name, oid_t database_oid,
+    concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }

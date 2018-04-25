@@ -50,7 +50,8 @@ TEST_F(TupleSamplesStorageTests, SamplesDBTest) {
   txn_manager.CommitTransaction(txn);
   EXPECT_TRUE(samples_db != nullptr);
   EXPECT_EQ(samples_db->GetDBName(), SAMPLES_DB_NAME);
-  EXPECT_EQ(samples_db->GetTableCount(), 0);
+  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  EXPECT_EQ(samples_db->GetTableCount(), 8);
 }
 
 TEST_F(TupleSamplesStorageTests, AddSamplesTableTest) {
@@ -83,11 +84,10 @@ TEST_F(TupleSamplesStorageTests, AddSamplesTableTest) {
       tuple_samples_storage->GenerateSamplesTableName(
           data_table->GetDatabaseOid(), data_table->GetOid());
   txn = txn_manager.BeginTransaction();
-  storage::Database *samples_db =
-      catalog->GetDatabaseWithName(SAMPLES_DB_NAME, txn);
+  storage::DataTable *samples_table = catalog->GetTableWithName(
+      SAMPLES_DB_NAME, DEFUALT_SCHEMA_NAME, samples_table_name, txn);
   txn_manager.CommitTransaction(txn);
-  storage::DataTable *samples_table =
-      samples_db->GetTableWithName(samples_table_name);
+
   EXPECT_TRUE(samples_table != nullptr);
   EXPECT_EQ(samples_table->GetTupleCount(), sampled_count);
   tuple_samples_storage->DeleteSamplesTable(data_table->GetDatabaseOid(),

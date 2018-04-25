@@ -28,11 +28,11 @@
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
 
+using std::make_shared;
+using std::make_tuple;
 using std::string;
 using std::unique_ptr;
 using std::vector;
-using std::make_tuple;
-using std::make_shared;
 
 namespace peloton {
 namespace test {
@@ -128,10 +128,14 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableA_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "a", txn)->GetOid();
-  oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "b", txn)->GetOid();
+  oid_t tableA_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "a", txn)
+                         ->GetOid();
+  oid_t tableB_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                         ->GetOid();
   txn_manager.CommitTransaction(txn);
 
   // Check select_list
@@ -257,8 +261,10 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "b", txn)->GetOid();
+  oid_t tableB_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                         ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(
