@@ -56,7 +56,8 @@ class IndexScanPlan : public AbstractScan {
      * be called to notify later procedures of the absense of an index
      */
     IndexScanDesc(
-        oid_t p_index_id, const std::vector<oid_t> &p_tuple_column_id_list,
+        oid_t p_index_id,
+        const std::vector<oid_t> &p_tuple_column_id_list,
         const std::vector<ExpressionType> &expr_list_p,
         const std::vector<type::Value> &p_value_list,
         const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
