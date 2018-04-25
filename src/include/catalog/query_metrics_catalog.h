@@ -59,7 +59,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
                           int64_t inserts, int64_t latency, int64_t cpu_time,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteQueryMetrics(const std::string &name, oid_t database_oid,
+  bool DeleteQueryMetrics(const std::string &name,
                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//

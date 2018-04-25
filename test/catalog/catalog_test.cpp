@@ -100,8 +100,9 @@ TEST_F(CatalogTests, CreatingTable) {
   catalog::Catalog::GetInstance()
       ->GetSystemCatalogs(database_object->GetDatabaseOid())
       ->GetQueryMetricsCatalog()
-      ->InsertQueryMetrics("a query", 1, param, param, param, 1, 1, 1, 1, 1, 1,
-                           1, pool.get(), txn);
+      ->InsertQueryMetrics("a query", database_object->GetDatabaseOid(), 1,
+                           param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
+                           txn);
   auto param1 = catalog::Catalog::GetInstance()
                     ->GetSystemCatalogs(database_object->GetDatabaseOid())
                     ->GetQueryMetricsCatalog()

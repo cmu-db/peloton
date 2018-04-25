@@ -17,10 +17,10 @@
 #include <vector>
 
 #include "abstract_scan_plan.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/serializer.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 

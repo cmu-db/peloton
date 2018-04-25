@@ -99,8 +99,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 }
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(
-    const std::string &name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &name, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
@@ -116,6 +115,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   oid_t index_offset = IndexId::PRIMARY_KEY;               // Primary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
