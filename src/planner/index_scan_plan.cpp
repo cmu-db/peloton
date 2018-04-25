@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/index_scan_plan.h"
+#include "common/internal_types.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 namespace planner {
@@ -29,10 +29,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
       expr_types_(std::move(index_scan_desc.expr_list)),
       values_with_params_(std::move(index_scan_desc.value_list)),
-      runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
-      // Initialize the index scan predicate object and initialize all
-      // keys that we could initialize
-      index_predicate_() {
+      runtime_keys_(std::move(index_scan_desc.runtime_key_list)) {
   LOG_TRACE("Creating an Index Scan Plan");
 
   if (for_update_flag == true) {
