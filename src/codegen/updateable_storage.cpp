@@ -12,7 +12,7 @@
 
 #include "codegen/updateable_storage.h"
 
-#include "ips4o/ips4o.hpp"
+#include <algorithm>
 
 #include "codegen/lang/if.h"
 #include "codegen/type/sql_type.h"
@@ -66,11 +66,11 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   }
 
   // Sort the entries by decreasing size
-  ips4o::sort(storage_format_.begin(), storage_format_.end(),
-              [](const CompactStorage::EntryInfo &left,
-                 const CompactStorage::EntryInfo &right) {
-                return right.num_bytes < left.num_bytes;
-              });
+  std::sort(storage_format_.begin(), storage_format_.end(),
+            [](const CompactStorage::EntryInfo &left,
+               const CompactStorage::EntryInfo &right) {
+              return right.num_bytes < left.num_bytes;
+            });
 
   // Now we construct the LLVM type of this storage space
   std::vector<llvm::Type *> llvm_types;
