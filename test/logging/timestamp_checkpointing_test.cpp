@@ -126,6 +126,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
       		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
     }
   }
+  txn_manager.CommitTransaction(txn);
 
   // generate table and data that will be out of checkpointing.
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");

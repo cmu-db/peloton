@@ -68,6 +68,9 @@ const std::string Constraint::GetInfo() const {
   if (GetType() == ConstraintType::CHECK) {
     os << ", " << exp.first << " " << exp.second.GetInfo();
   }
+  if (GetType() == ConstraintType::DEFAULT) {
+    os << ", " << default_value->GetInfo();
+  }
   os << "]";
   return os.str();
 }

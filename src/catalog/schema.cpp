@@ -285,7 +285,7 @@ void Schema::SerializeTo(SerializeOutput &out) {
 }
 
 // Deserialize this schema
-std::unique_ptr<Schema> Schema::DeserializeFrom(SerializeInput &in) {
+std::shared_ptr<Schema> Schema::DeserializeFrom(SerializeInput &in) {
   std::vector<catalog::Column> columns;
 
   // recover column information
@@ -294,7 +294,7 @@ std::unique_ptr<Schema> Schema::DeserializeFrom(SerializeInput &in) {
     columns.push_back(catalog::Column::DeserializeFrom(in));
   }
 
-  std::unique_ptr<Schema> schema(new Schema(columns));
+  std::shared_ptr<Schema> schema(new Schema(columns));
 
   // read schema information (multi-column constraints)
   size_t multi_constraint_count = in.ReadLong();

@@ -83,7 +83,7 @@ class Schema : public Printable {
   void SerializeTo(SerializeOutput &out);
 
   // Deserialize this schema
-  static std::unique_ptr<Schema> DeserializeFrom(SerializeInput &in);
+  static std::shared_ptr<Schema> DeserializeFrom(SerializeInput &in);
 
   // Compare two schemas
   hash_t Hash() const;
