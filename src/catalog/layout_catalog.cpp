@@ -103,7 +103,7 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
           new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
-  auto val1 = type::ValueFactory::GetIntegerValue(layout->GetLayoutId());
+  auto val1 = type::ValueFactory::GetIntegerValue(layout->GetOid());
   auto val2 = type::ValueFactory::GetIntegerValue(layout->GetColumnCount());
   auto val3 = type::ValueFactory::GetVarcharValue(layout->SerializeColumnMap(),
                                                   nullptr);

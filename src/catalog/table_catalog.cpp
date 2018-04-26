@@ -342,7 +342,7 @@ bool TableCatalogObject::InsertLayout(std::shared_ptr<const storage::Layout> lay
     return false;
   }
 
-  oid_t  layout_id = layout->GetLayoutId();
+  oid_t  layout_id = layout->GetOid();
   // layout is already present in the cache.
   if (layout_objects_.find(layout_id) != layout_objects_.end()) {
     LOG_DEBUG("Layout %u already exists in cache!", layout_id);

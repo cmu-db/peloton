@@ -1367,20 +1367,6 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-bool DataTable::SetDefaultLayout(const column_map_type &column_map,
-                                 type::AbstractPool *pool,
-                                 concurrency::TransactionContext *txn) {
-  oid_t layout_id = GetNextLayoutOid();
-  auto new_layout = std::shared_ptr<const Layout>(
-          new const Layout(column_map, layout_id));
-  auto layout_catalog = catalog::LayoutCatalog::GetInstance();
-  bool result = layout_catalog->InsertLayout(table_oid, new_layout, pool, txn);
-  if (result) {
-    default_layout_ = new_layout;
-  }
-  return result;
-}
-
 const Layout& DataTable::GetDefaultLayout() const {
   return *default_layout_;
 }

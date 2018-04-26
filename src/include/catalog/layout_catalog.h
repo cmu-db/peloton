@@ -61,13 +61,15 @@ public:
                     concurrency::TransactionContext *txn);
 
   bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+
+private:
+
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
   GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
 
-private:
 
   LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                 concurrency::TransactionContext *txn);

@@ -43,7 +43,7 @@ class Layout : public Printable {
   // Check whether the Layout is ColumnStore.
   inline bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
 
-  oid_t  GetLayoutId() const { return layout_id_; }
+  oid_t  GetOid() const { return layout_oid_; }
 
   // Sets the tile id and column id w.r.t that tile corresponding to
   // the specified tile group column id.
@@ -78,7 +78,7 @@ class Layout : public Printable {
  private:
 
   // Layout Id of the tile
-  oid_t layout_id_;
+  oid_t layout_oid_;
 
   // Number of columns in the layout 
   oid_t num_columns_; 

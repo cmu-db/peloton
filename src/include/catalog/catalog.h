@@ -38,6 +38,7 @@ class Index;
 namespace storage {
 class Database;
 class DataTable;
+class Layout;
 class TableFactory;
 class Tuple;
 }  // namespace storage
@@ -119,6 +120,18 @@ class Catalog {
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
 
+  // Create a new layout
+  std::shared_ptr<const storage::Layout>
+  CreateLayout(oid_t database_oid, oid_t table_oid,
+               const column_map_type &column_map,
+               concurrency::TransactionContext *txn);
+
+  // Create a new layout and set it as the default for the table
+  std::shared_ptr<const storage::Layout>
+  CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
+                      const column_map_type &column_map,
+                      concurrency::TransactionContext *txn);
+
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -146,6 +159,10 @@ class Catalog {
   // Drop an index, using its index_oid
   ResultType DropIndex(oid_t database_oid, oid_t index_oid,
                        concurrency::TransactionContext *txn);
+
+  // Delete a layout using its database_oid, table_oid and layout_oid
+  ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
+                        concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//

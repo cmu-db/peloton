@@ -46,16 +46,16 @@ Layout::Layout(const column_map_type& column_map)
   // If a table has one column, it would be LayoutType::Row
   if (row_layout) {
     layout_type_ = LayoutType::ROW;
-    layout_id_ = ROW_STORE_OID;
+    layout_oid_ = ROW_STORE_OID;
   } else if (column_layout) {
     layout_type_  = LayoutType::COLUMN;
-    layout_id_ = COLUMN_STORE_OID;
+    layout_oid_ = COLUMN_STORE_OID;
   } else {
-    // layout_id_ is set to INVALID_OID, indicating that this
+    // layout_oid_ is set to INVALID_OID, indicating that this
     // layout is not stored in the catalog and thus not persistent.
     // To be used only in TempTable or Tests. 
     layout_type_ = LayoutType::HYBRID;
-    layout_id_ = INVALID_OID;
+    layout_oid_ = INVALID_OID;
   }
 
   if (layout_type_ != LayoutType::HYBRID) {
@@ -64,15 +64,15 @@ Layout::Layout(const column_map_type& column_map)
   }
 }
 
-// Constructor for Layout class with predefined layout_id
+// Constructor for Layout class with predefined layout_oid
 Layout::Layout(const column_map_type &column_map, oid_t layout_id)
-        : layout_id_(layout_id),
+        : layout_oid_(layout_id),
           num_columns_(column_map.size()),
           column_layout_(column_map) {
 
-  if (layout_id_ == ROW_STORE_OID) {
+  if (layout_oid_ == ROW_STORE_OID) {
     layout_type_ = LayoutType::ROW;
-  } else if (layout_id == COLUMN_STORE_OID) {
+  } else if (layout_oid_ == COLUMN_STORE_OID) {
     layout_type_ = LayoutType::COLUMN;
   } else {
     layout_type_ = LayoutType::HYBRID;
@@ -124,7 +124,7 @@ double Layout::GetLayoutDifference(const storage::Layout &other) const {
   // Check the schema before invoking this function.
   PELOTON_ASSERT(this->num_columns_ == other.num_columns_);
 
-  if ((this->layout_id_ != other.layout_id_)) {
+  if ((this->layout_oid_ != other.layout_oid_)) {
 
     for (oid_t col_itr = 0; col_itr < num_columns_; col_itr++) {
 
@@ -289,7 +289,7 @@ std::string Layout::GetColumnMapInfo() const {
 const std::string Layout::GetInfo() const {
   std::ostringstream os;
 
-  os << peloton::GETINFO_DOUBLE_STAR << " Layout[#" << layout_id_ << "] "
+  os << peloton::GETINFO_DOUBLE_STAR << " Layout[#" << layout_oid_ << "] "
      << peloton::GETINFO_DOUBLE_STAR << std::endl;
   os << "Number of columns[" << num_columns_ << "] " << std::endl;
   os << "LayoutType[" << LayoutTypeToString(layout_type_) << std::endl;
@@ -307,7 +307,7 @@ bool operator==(const Layout& lhs, const Layout& rhs) {
   }
 
   // Check the equality of layout_oid_
-  if (lhs.GetLayoutId() != rhs.GetLayoutId()) {
+  if (lhs.GetOid() != rhs.GetOid()) {
     return false;
   }
   // Check the equality of column_count_

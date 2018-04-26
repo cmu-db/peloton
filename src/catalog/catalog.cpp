@@ -557,6 +557,76 @@ ResultType Catalog::CreateIndex(
   return ResultType::SUCCESS;
 }
 
+/*
+ *
+  // Create a new layout
+  ResultType CreateLayout(oid_t database_oid, oid_t table_oid,
+                          const column_map_type &column_map,
+                          concurrency::TransactionContext *txn);
+  // Create a new layout and set it as the default for the table
+  ResultType CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
+                                 const column_map_type &column_map,
+                                 concurrency::TransactionContext *txn);
+ */
+
+/*
+ * @brief   create a new layout for a table
+ * @param   database_oid  database to which the table belongs to
+ * @param   table_oid     table to which the layout has to be added
+ * @param   column_map    column_map of the new layout to be created
+ * @param   txn           TransactionContext
+ * @return  shared_ptr    shared_ptr to the newly created layout in case of
+ *                        success. nullptr in case of failure.
+ */
+std::shared_ptr<const storage::Layout>
+Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
+                                 const column_map_type &column_map,
+                                 concurrency::TransactionContext *txn) {
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  auto table = database->GetTableWithOid(table_oid);
+
+  oid_t layout_oid = table->GetNextLayoutOid();
+  // Ensure that the new layout
+  PELOTON_ASSERT(layout_oid < INVALID_OID);
+  auto new_layout = std::shared_ptr<const storage::Layout>(
+          new const storage::Layout(column_map, layout_oid));
+  auto layout_catalog = catalog::LayoutCatalog::GetInstance();
+  bool result = layout_catalog->InsertLayout(table_oid, new_layout,
+                                             pool_.get(), txn);
+  if (!result) {
+    LOG_DEBUG("Failed to create a new layout for table %u", table_oid);
+    return nullptr;
+  }
+  return new_layout;
+}
+
+/*
+ * @brief   create a new layout for a table and make it the deafult if
+ *          if the creating is successsful.
+ * @param   database_oid  database to which the table belongs to
+ * @param   table_oid     table to which the layout has to be added
+ * @param   column_map    column_map of the new layout to be created
+ * @param   txn           TransactionContext
+ * @return  shared_ptr    shared_ptr to the newly created layout in case of
+ *                        success. nullptr in case of failure.
+ */
+std::shared_ptr<const storage::Layout>
+Catalog::CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
+                      const column_map_type &column_map,
+                      concurrency::TransactionContext *txn) {
+  auto new_layout = CreateLayout(database_oid, table_oid, column_map, txn);
+  // If the layout creation was successful, set it as the default
+  if (new_layout != nullptr) {
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+    auto table = database->GetTableWithOid(table_oid);
+    table->SetDefaultLayout(new_layout);
+  }
+  return new_layout;
+}
+
 //===----------------------------------------------------------------------===//
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
@@ -760,6 +830,40 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   // register index object in rw_object_set
   table->GetIndexWithOid(index_oid);
   txn->RecordDrop(database_oid, index_object->GetTableOid(), index_oid);
+
+  return ResultType::SUCCESS;
+}
+
+
+/*@brief   Drop layout
+ * tile_groups
+ * @param   database_oid    the database to which the table belongs
+ * @param   table_oid       the table to which the layout belongs
+ * @param   layout_oid      the layout to be dropped
+ * @param   txn             TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
+                               oid_t layout_oid,
+                               concurrency::TransactionContext *txn) {
+  // Check if the default_layout of the table is the same.
+  // If true reset it to a row store.
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  auto table = database->GetTableWithOid(table_oid);
+  auto default_layout = table->GetDefaultLayout();
+
+  if (default_layout.GetOid() == layout_oid) {
+    table->ResetDefaultLayout();
+  }
+
+  auto layout_catalog = LayoutCatalog::GetInstance();
+  if (!layout_catalog->DeleteLayout(table_oid, layout_oid, txn)) {
+    auto layout = table->GetDefaultLayout();
+    LOG_DEBUG("Layout delete failed. Default layout id: %u",
+              layout.GetOid());
+    return ResultType::FAILURE;
+  }
 
   return ResultType::SUCCESS;
 }

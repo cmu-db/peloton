@@ -40,6 +40,7 @@ class Sample;
 
 namespace catalog {
 class ForeignKey;
+class Catalog;
 }  // namespace catalog
 
 namespace index {
@@ -77,6 +78,7 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
+  friend class catalog::Catalog;
   friend class logging::LogManager;
 
   DataTable() = delete;
@@ -190,7 +192,6 @@ class DataTable : public AbstractTable {
   const std::vector<std::set<oid_t>> &GetIndexColumns() const {
     return indexes_columns_;
   }
-
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
@@ -248,10 +249,14 @@ class DataTable : public AbstractTable {
 
   void ClearLayoutSamples();
 
-  bool SetDefaultLayout(const column_map_type &column_map,
-                        type::AbstractPool *pool,
-                        concurrency::TransactionContext *txn);
+  inline void SetDefaultLayout(std::shared_ptr<const Layout> new_layout) {
+    default_layout_ = new_layout;
+  }
 
+  inline void ResetDefaultLayout() {
+    default_layout_ = std::shared_ptr<const Layout>(
+            new const Layout(schema->GetColumnCount()));
+  }
   const Layout& GetDefaultLayout() const;
 
   //===--------------------------------------------------------------------===//

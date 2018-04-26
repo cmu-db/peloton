@@ -16,12 +16,12 @@
 #include <string>
 #include <algorithm>
 
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
-#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace tuning {
@@ -31,9 +31,7 @@ LayoutTuner& LayoutTuner::GetInstance() {
   return layout_tuner;
 }
 
-LayoutTuner::LayoutTuner() {
-  pool_.reset(new type::EphemeralPool());
-}
+LayoutTuner::LayoutTuner() {}
 
 LayoutTuner::~LayoutTuner() {}
 
@@ -110,20 +108,23 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   // Desired number of tiles
   auto column_map = clusterer.GetPartitioning(tile_count);
 
+  auto table_oid = table->GetOid();
+  auto database_oid = table->GetDatabaseOid();
   // Update table layout
   // Since we need the layout to be updated in the catalog,
   // Start a transaction before updating the default layout.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
-  bool result = table->SetDefaultLayout(column_map, pool_.get(), txn);
-  if (!result) {
+  auto catalog = catalog::Catalog::GetInstance();
+  if (catalog->CreateDefaultLayout(database_oid, table_oid, column_map, txn)
+          == nullptr) {
     txn_manager.AbortTransaction(txn);
     LOG_DEBUG("Layout Update to failed.");
     return;
   }
   txn_manager.CommitTransaction(txn);
 
-  UNUSED_ATTRIBUTE auto layout = table->GetDefaultLayout();
+  UNUSED_ATTRIBUTE auto layout = table->  GetDefaultLayout();
   LOG_TRACE("Updated Layout: %s", layout.GetInfo().c_str());
 }
 

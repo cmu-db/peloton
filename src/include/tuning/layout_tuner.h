@@ -27,10 +27,6 @@ namespace storage {
 class DataTable;
 }
 
-namespace type {
-class AbstractPool;
-}
-
 namespace tuning {
 
 //===--------------------------------------------------------------------===//
@@ -137,9 +133,6 @@ class LayoutTuner {
 
   /** Desired layout tile count */
   oid_t tile_count = 2;
-
-  /** Pool to add new layouts in the pg_layout table */
-  std::unique_ptr<type::AbstractPool> pool_;
 
 };
 
