@@ -32,6 +32,10 @@
 #include "common/macros.h"
 #include "container/cuckoo_map.h"
 
+// Impose Row-major to avoid confusion
+#define EIGEN_DEFAULT_TO_ROW_MAJOR
+#include "eigen3/Eigen/Dense"
+
 namespace peloton {
 
 class ItemPointer;
@@ -1420,5 +1424,11 @@ enum class SSLLevel {
   SSL_PREFER = 1,
   SSL_VERIIFY = 2,
 };
+
+// Eigen/Matrix types used in brain
+// TODO(saatvik): Generalize Eigen utilities across all types
+typedef std::vector<std::vector<float>> matrix_t;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+    matrix_eig;
 
 }  // namespace peloton

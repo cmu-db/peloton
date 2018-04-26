@@ -32,6 +32,7 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 using std::make_tuple;
+using std::make_shared;
 
 namespace peloton {
 namespace test {
@@ -77,9 +78,14 @@ void SetupTables(std::string database_name) {
     vector<ResultValue> result;
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
-    auto parse_tree = parser.BuildParseTree(sql);
+
+    auto parse_tree_list = parser.BuildParseTree(sql);
+    auto parse_tree = parse_tree_list->GetStatement(0);
+    auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name);
+    bind_node_visitor.BindNameToNode(parse_tree);
+
     statement->SetPlanTree(
-        optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
+        optimizer.BuildPelotonPlanTree(parse_tree_list, txn));
     TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params,
                                             result, result_format);
@@ -319,7 +325,8 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   auto exists_sub_expr_select =
       dynamic_cast<const expression::SubqueryExpression *>(exists_sub_expr)
           ->GetSubSelect();
-  auto exists_sub_expr_select_where = exists_sub_expr_select->where_clause.get();
+  auto exists_sub_expr_select_where =
+      exists_sub_expr_select->where_clause.get();
   auto exists_sub_expr_select_ele =
       exists_sub_expr_select->select_list[0].get();
   auto in_tv_expr = in_expr->GetChild(0);
@@ -337,8 +344,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
       in_sub_expr_select_where_right->GetChild(1);
   auto in_sub_expr_select_where_right_sub_select =
       dynamic_cast<const expression::SubqueryExpression *>(
-          in_sub_expr_select_where_right_sub)
-          ->GetSubSelect();
+          in_sub_expr_select_where_right_sub)->GetSubSelect();
   auto in_sub_expr_select_where_right_sub_select_where =
       in_sub_expr_select_where_right_sub_select->where_clause.get();
   auto in_sub_expr_select_where_right_sub_select_ele =

@@ -13,6 +13,7 @@
 #include <cstdio>
 #include "sql/testing_sql_util.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
@@ -66,8 +67,12 @@ void ShowTable(std::string database_name, std::string table_name) {
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table_name));
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table_name);
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
+
+  auto parse_tree = select_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
   LOG_TRACE("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
@@ -142,9 +147,15 @@ TEST_F(DeleteTests, VariousOperations) {
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  auto parse_tree = insert_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -180,9 +191,15 @@ TEST_F(DeleteTests, VariousOperations) {
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = insert_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -215,9 +232,15 @@ TEST_F(DeleteTests, VariousOperations) {
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = insert_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -250,9 +273,15 @@ TEST_F(DeleteTests, VariousOperations) {
   auto select_stmt = peloton_parser.BuildParseTree(
       "SELECT MAX(dept_id) FROM department_table;");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = select_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(select_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -284,9 +313,15 @@ TEST_F(DeleteTests, VariousOperations) {
   auto delete_stmt_2 = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_id < 2");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = delete_stmt_2->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(delete_stmt_2, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt_2, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
@@ -318,9 +353,15 @@ TEST_F(DeleteTests, VariousOperations) {
   auto delete_stmt =
       peloton_parser.BuildParseTree("DELETE FROM department_table");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = delete_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
