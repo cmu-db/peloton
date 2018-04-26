@@ -222,10 +222,6 @@ class TransactionManager {
     return BeginTransaction(0, type, false);
   }
 
-  TransactionContext *BeginTransactionReadOnly(const IsolationLevelType type) {
-    return BeginTransaction(0, type, true);
-  }
-
   TransactionContext *BeginTransaction(const size_t thread_id = 0,
                                 const IsolationLevelType type = isolation_level_,
                                 bool read_only = false);

@@ -241,7 +241,8 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        txn = txn_manager->BeginTransactionReadOnly(IsolationLevelType::SNAPSHOT);
+        /** starts a read only transaction*/
+        txn = txn_manager->BeginTransaction(0, IsolationLevelType::SNAPSHOT, true);
       } else {
         txn = txn_manager->BeginTransaction();
       }

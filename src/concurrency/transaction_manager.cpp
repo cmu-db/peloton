@@ -60,8 +60,8 @@ TransactionContext *TransactionManager::BeginTransaction(
     txn = new TransactionContext(thread_id, type, read_id);
   }
 
-  if(read_only){
-    txn->setReadOnly();
+  if (read_only) {
+    txn->SetReadOnly();
   }
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(

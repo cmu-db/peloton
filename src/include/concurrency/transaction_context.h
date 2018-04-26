@@ -268,7 +268,7 @@ class TransactionContext : public Printable {
    *
    * @return     True if read only, False otherwise.
    */
-  inline bool IsReadOnly() const {
+  bool IsReadOnly() const {
     return read_only_;
   }
 
@@ -276,7 +276,7 @@ class TransactionContext : public Printable {
    * @brief      mark this context as read only
    *
    */
-  inline void setReadOnly() {
+  void SetReadOnly() {
     read_only_ = true;
   }
 
@@ -350,6 +350,7 @@ class TransactionContext : public Printable {
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
+  /** one default transaction is NOT 'read only' unless it is marked 'read only' explicitly*/
   bool read_only_ = false;
 };
 
