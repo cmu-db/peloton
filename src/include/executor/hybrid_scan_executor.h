@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "storage/data_table.h"
-#include "index/index.h"
 #include "executor/abstract_scan_executor.h"
+#include "index/index.h"
 #include "planner/hybrid_scan_plan.h"
+#include "storage/data_table.h"
 
 #include <set>
 
@@ -92,6 +92,9 @@ class HybridScanExecutor : public AbstractScanExecutor {
   std::set<ItemPointer> item_pointers_;
 
   oid_t block_threshold = 0;
+
+  // The predicate used for scanning the index
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace executor

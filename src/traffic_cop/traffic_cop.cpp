@@ -312,9 +312,13 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // TODO(Tianyi) Move Statement Planing into Statement's method
   // to increase coherence
   try {
+    // Run binder
+    auto bind_node_visitor = binder::BindNodeVisitor(
+        tcop_txn_state_.top().first, default_database_name_);
+    bind_node_visitor.BindNameToNode(
+        statement->GetStmtParseTreeList()->GetStatement(0));
     auto plan = optimizer_->BuildPelotonPlanTree(
-        statement->GetStmtParseTreeList(), default_database_name_,
-        tcop_txn_state_.top().first);
+        statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -362,8 +366,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
-        parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>>
+        &parameters,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
@@ -377,8 +381,8 @@ bool TrafficCop::BindParamsForCachePlan(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
   // Run binder
-  auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>(
-      tcop_txn_state_.top().first, default_database_name_);
+  auto bind_node_visitor = binder::BindNodeVisitor(tcop_txn_state_.top().first,
+                                                   default_database_name_);
 
   std::vector<type::Value> param_values;
   for (const std::unique_ptr<expression::AbstractExpression> &param :
@@ -387,7 +391,7 @@ bool TrafficCop::BindParamsForCachePlan(
       error_message_ = "Invalid Expression Type";
       return false;
     }
-    param->Accept(bind_node_visitor.get());
+    param->Accept(&bind_node_visitor);
     // TODO(Yuchen): need better check for nullptr argument
     param_values.push_back(param->Evaluate(nullptr, nullptr, nullptr));
   }
@@ -580,9 +584,12 @@ ResultType TrafficCop::ExecuteStatement(
         if (statement->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
+          auto bind_node_visitor = binder::BindNodeVisitor(
+              tcop_txn_state_.top().first, default_database_name_);
+          bind_node_visitor.BindNameToNode(
+              statement->GetStmtParseTreeList()->GetStatement(0));
           auto plan = optimizer_->BuildPelotonPlanTree(
-              statement->GetStmtParseTreeList(), default_database_name_,
-              tcop_txn_state_.top().first);
+              statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }
