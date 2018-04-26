@@ -12,9 +12,12 @@
 
 #pragma once
 
+#include <unordered_map>
 #include "common/internal_types.h"
 #include "statistics/point_metric.h"
-#include "statistics/internal_metric.h"
+#include "statistics/stat_insertion_point.h"
+#include "statistics/abstract_metric_new.h"
+#include "statistics/database_metric_new.h"
 
 namespace peloton {
 
@@ -23,75 +26,37 @@ namespace stats {
 // actual singleton
 class StatsCollector {
   public:
-    static StatsCollector* GetInstance();
+    static StatsCollector* GetInstance() {
+      static StatsCollector collector;
+      return &collector;
+    }
 
-    ~StatsCollector();
+    ~StatsCollector() = default;
 
-    void OnCommit(oid_t id);
-
-    void OnAbort(oid_t id);
-
-    void OnTupleRead(oid_t id);
-
-    void OnTupleUpdate(oid_t id);
-
-    void OnTupleInsert(oid_t id);
-
-    void OnTupleDelete(oid_t id);
-
-    void OnIndexRead(oid_t id);
-
-    void OnIndexUpdate(oid_t id);
-
-    void OnIndexInsert(oid_t id);
-
-    void OnIndexDelete(oid_t id);
-
-    void OnQueryStart();
-
-    void OnQueryEnd();
-
-    void OnTxnStart();
-
-    void OnTxnEnd();
-
-    void RegisterPointMetric(std::shared_ptr<PointMetric> metric,
-                             CollectionPointType point_type);
-
-    void RegisterIntervalMetric(std::shared_ptr<IntervalMetric> metric,
-                                CollectionPointType start_point_type,
-                                CollectionPointType end_point_type);
+    template <StatInsertionPoint type, typename... Args>
+    void CollectStat(Args... args) {
+        for (auto &metric: metric_dispatch_[type])
+          metric->OnStatAvailable<type>(args...);
+    };
 
   private:
-    StatsCollector();
+    StatsCollector() {
+        // TODO(tianyu): Write stats to register here
+      RegisterMetric<DatabaseMetricNew>
+          ({StatInsertionPoint::TXN_ABORT, StatInsertionPoint::TXN_COMMIT});
+    }
 
-    // iterate over a point's metrics queue
-    CollectAtPoint(std::vector<std::shared_ptr<PointMetric>> queue, oid_t id);
+    template<typename metric>
+    void RegisterMetric(std::vector<StatInsertionPoint> points) {
+      auto m = std::make_shared<metric>();
+      metrics_.push_back(m);
+      for (StatInsertionPoint point : points)
+        metric_dispatch_[point].push_back(m);
+    }
 
-    CollectAtStart(std::vector<std::shared_ptr<IntervalMetric>> queue);
-
-    CollectAtEnd(std::vector<std::shared_ptr<IntervalMetric>> queue);
-
-    // we have one queue per collection point
-    std::vector<std::shared_ptr<PointMetric>> on_read_queue_;
-
-    std::vector<std::shared_ptr<PointMetric>> on_update_queue_;
-
-    std::vector<std::shared_ptr<PointMetric>> on_insert_queue_;
-
-    std::vector<std::shared_ptr<PointMetric>> on_delete_queue_;
-
-    std::vector<std::shared_ptr<PointMetric>> on_commit_queue_;
-
-    std::vector<std::shared_ptr<PointMetric>> on_abort_queue_;
-
-    std::vector<std::shared_ptr<IntervalMetric>> on_query_start_;
-
-    std::vector<std::shared_ptr<IntervalMetric>> on_query_end_;
-
-    std::vector<std::shared_ptr<IntervalMetric>> on_txn_start_queue_;
-
-    std::vector<std::shared_ptr<IntervalMetric>> on_txn_end_queue_;
+    using MetricList = std::vector<std::shared_ptr<AbstractMetricNew>>
+    MetricList metrics_;
+    std::unordered_map<StatInsertionPoint, MetricList> metric_dispatch_;
 };
 
 }  // namespace stats

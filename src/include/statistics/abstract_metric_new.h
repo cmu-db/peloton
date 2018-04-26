@@ -16,6 +16,7 @@
 
 #include "common/internal_types.h"
 #include "common/printable.h"
+#include "statistics/stat_insertion_point.h"
 
 namespace peloton {
 namespace stats {
@@ -29,12 +30,15 @@ namespace stats {
  */
 class AbstractMetricNew : public Printable {
  public:
-  AbstractMetricNew(MetricType type_);
-  virtual ~AbstractMetricNew();
+  virtual ~AbstractMetricNew() = default;
 
-  virtual void Reset() = 0;
+  template <StatInsertionPoint type, typename... Args>
+  virtual void OnStatAvailable(Args... args) {};
 
-  virtual const std::string GetInfo() const = 0;
+  virtual void CollectIntoCatalog() = 0;
+
+  virtual const std::string Info() const = 0;
+
 };
 
 }  // namespace stats

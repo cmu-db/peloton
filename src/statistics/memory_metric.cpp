@@ -19,10 +19,10 @@ namespace stats {
 void MemoryMetric::Aggregate(AbstractMetric &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::MEMORY);
 
-  auto memory_metric = static_cast<MemoryMetric &>(source);
+  auto memory_metric = dynamic_cast<MemoryMetric &>(source);
   alloc_.Aggregate(memory_metric.alloc_);
   usage_.Aggregate(memory_metric.usage_);
-  }
+}
 
 }  // namespace stats
 }  // namespace peloton

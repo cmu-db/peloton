@@ -31,10 +31,7 @@ namespace stats {
  */
 class AbstractMetric : public Printable {
  public:
-  AbstractMetric(MetricType type_);
   virtual ~AbstractMetric();
-
-  const inline MetricType& GetType() const { return type_; }
 
   virtual void Reset() = 0;
 
@@ -42,9 +39,6 @@ class AbstractMetric : public Printable {
 
   virtual void Aggregate(AbstractMetric& source) = 0;
 
- private:
-  // The type this metric belongs to
-  MetricType type_;
 };
 
 }  // namespace stats
