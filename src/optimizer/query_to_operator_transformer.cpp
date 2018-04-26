@@ -359,8 +359,34 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
 
   output_expr_ = update_expr;
 }
-void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE parser::CopyStatement *op) {}
+void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
+  if (op->is_from) {
+    auto get_op = std::make_shared<OperatorExpression>(
+        LogicalExternalFileGet::make(GetAndIncreaseGetId()));
+
+    auto target_table =
+        catalog::Catalog::GetInstance()
+            ->GetDatabaseObject(op->table->GetDatabaseName(), txn_)
+            ->GetTableObject(op->table->GetTableName());
+
+    auto insert_expr = std::make_shared<OperatorExpression>(
+        LogicalInsertSelect::make(target_table));
+
+    insert_expr->PushChild(get_op);
+    output_expr_ = insert_expr;
+  } else {
+    if (op->select_stmt != nullptr) {
+      op->select_stmt->Accept(this);
+    } else {
+      op->table->Accept(this);
+    }
+    auto export_op =
+        std::make_shared<OperatorExpression>(LogicalExportExternalFile::make());
+    export_op->PushChild(output_expr_);
+    output_expr_ = export_op;
+  }
+}
+
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::AnalyzeStatement *op) {}
 

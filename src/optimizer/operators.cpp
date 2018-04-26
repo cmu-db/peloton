@@ -62,6 +62,28 @@ bool LogicalGet::operator==(const BaseOperatorNode &r) {
 }
 
 //===--------------------------------------------------------------------===//
+// External file get
+//===--------------------------------------------------------------------===//
+
+Operator LogicalExternalFileGet::make(oid_t get_id) {
+  auto *get = new LogicalExternalFileGet();
+  get->get_id = get_id;
+  return Operator(get);
+}
+
+bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
+  if (node.GetType() != OpType::LogicalExternalFileGet) return false;
+  const auto &get = *static_cast<const LogicalQueryDerivedGet *>(&node);
+  return get_id == get.get_id;
+}
+
+hash_t LogicalExternalFileGet::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
 Operator LogicalQueryDerivedGet::make(
@@ -412,6 +434,14 @@ Operator LogicalLimit::make(int64_t offset, int64_t limit) {
 }
 
 //===--------------------------------------------------------------------===//
+// External file output
+//===--------------------------------------------------------------------===//
+Operator LogicalExportExternalFile::make() {
+  auto *export_op = new LogicalExternalFileGet();
+  return Operator(export_op);
+}
+
+//===--------------------------------------------------------------------===//
 // DummyScan
 //===--------------------------------------------------------------------===//
 Operator DummyScan::make() {
@@ -503,6 +533,27 @@ hash_t PhysicalIndexScan::Hash() const {
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
+// Physical external file scan
+//===--------------------------------------------------------------------===//
+Operator ExternalFileScan::make(oid_t get_id) {
+  auto *get = new ExternalFileScan();
+  get->get_id = get_id;
+  return Operator(get);
+}
+
+bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
+  if (node.GetType() != OpType::QueryDerivedScan) return false;
+  const auto &get = *static_cast<const ExternalFileScan *>(&node);
+  return get_id == get.get_id;
+}
+
+hash_t ExternalFileScan::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -846,6 +897,8 @@ std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
 std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
 template <>
+std::string OperatorNode<LogicalExternalFileGet>::name_ = "LogicalExternalFileGet";
+template <>
 std::string OperatorNode<LogicalQueryDerivedGet>::name_ =
     "LogicalQueryDerivedGet";
 template <>
@@ -884,11 +937,15 @@ std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
 std::string OperatorNode<LogicalDistinct>::name_ = "LogicalDistinct";
 template <>
+std::string OperatorNode<LogicalExportExternalFile>::name_ = "LogicalExportExternalFile";
+template <>
 std::string OperatorNode<DummyScan>::name_ = "DummyScan";
 template <>
 std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
 template <>
 std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
+template <>
+std::string OperatorNode<ExternalFileScan>::name_ = "ExternalFileScan";
 template <>
 std::string OperatorNode<QueryDerivedScan>::name_ = "QueryDerivedScan";
 template <>
@@ -937,6 +994,8 @@ OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
+OpType OperatorNode<LogicalExternalFileGet>::type_ = OpType::LogicalExternalFileGet;
+template <>
 OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
     OpType::LogicalQueryDerivedGet;
 template <>
@@ -975,11 +1034,16 @@ OpType OperatorNode<LogicalDistinct>::type_ = OpType::LogicalDistinct;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::LogicalLimit;
 template <>
+OpType OperatorNode<LogicalExportExternalFile>::type_ = OpType::LogicalExportExternalFile;
+
+template <>
 OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
 template <>
 OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
 template <>
 OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
+template <>
+OpType OperatorNode<ExternalFileScan>::type_ = OpType::ExternalFileScan;
 template <>
 OpType OperatorNode<QueryDerivedScan>::type_ = OpType::QueryDerivedScan;
 template <>

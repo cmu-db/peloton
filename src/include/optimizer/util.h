@@ -123,12 +123,6 @@ bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
                          const expression::AbstractExpression *expr);
 
 /**
- * @brief Create a copy plan based on the copy statement
- */
-std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
-    parser::CopyStatement *copy_stmt);
-
-/**
  * @brief Construct the map from subquery column name to the actual expression
  *  at the subquery level, for example SELECT a FROM (SELECT a + b as a FROM
  *  test), we'll build the map {"a" -> a + b}

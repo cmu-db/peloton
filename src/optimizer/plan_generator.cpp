@@ -20,6 +20,7 @@
 #include "optimizer/operator_expression.h"
 #include "optimizer/properties.h"
 #include "planner/aggregate_plan.h"
+#include "planner/csv_scan_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
@@ -125,6 +126,10 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       storage::StorageManager::GetInstance()->GetTableWithOid(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
       predicate.release(), column_ids, index_scan_desc, false));
+}
+
+void PlanGenerator::Visit(const ExternalFileScan *) {
+  output_plan_.reset(new planner::CSVScanPlan("sdfsdf"));
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {

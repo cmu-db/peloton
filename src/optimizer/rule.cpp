@@ -39,6 +39,7 @@ RuleSet::RuleSet() {
   AddImplementationRule(new GetToDummyScan());
   AddImplementationRule(new GetToSeqScan());
   AddImplementationRule(new GetToIndexScan());
+  AddImplementationRule(new LogicalExternalFileGetToPhysical());
   AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
   AddImplementationRule(new InnerJoinToInnerNLJoin());
   AddImplementationRule(new InnerJoinToInnerHashJoin());

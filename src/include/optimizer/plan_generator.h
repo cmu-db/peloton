@@ -54,6 +54,8 @@ class PlanGenerator : public OperatorVisitor {
 
   void Visit(const PhysicalIndexScan *) override;
 
+  void Visit(const ExternalFileScan *) override;
+
   void Visit(const QueryDerivedScan *) override;
 
   void Visit(const PhysicalOrderBy *) override;

@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -7,7 +6,7 @@
 //
 // Identification: src/include/optimizer/operators.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +30,7 @@ class UpdateClause;
 }
 
 namespace catalog {
-  class TableCatalogObject;
+class TableCatalogObject;
 }
 
 namespace optimizer {
@@ -51,10 +50,10 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(oid_t get_id = 0,
-                       std::vector<AnnotatedExpression> predicates = {},
-                       std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
-                       std::string alias = "", bool update = false);
+  static Operator make(
+      oid_t get_id = 0, std::vector<AnnotatedExpression> predicates = {},
+      std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
+      std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -66,6 +65,21 @@ class LogicalGet : public OperatorNode<LogicalGet> {
   std::shared_ptr<catalog::TableCatalogObject> table;
   std::string table_alias;
   bool is_for_update;
+};
+
+//===--------------------------------------------------------------------===//
+// External file get
+//===--------------------------------------------------------------------===//
+class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
+ public:
+  static Operator make(oid_t get_id);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  // identifier for all get operators
+  oid_t get_id;
 };
 
 //===--------------------------------------------------------------------===//
@@ -305,6 +319,15 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
+// External file get
+//===--------------------------------------------------------------------===//
+class LogicalExportExternalFile
+    : public OperatorNode<LogicalExportExternalFile> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
 // DummyScan
 //===--------------------------------------------------------------------===//
 class DummyScan : public OperatorNode<DummyScan> {
@@ -364,6 +387,21 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
   std::vector<oid_t> key_column_id_list;
   std::vector<ExpressionType> expr_type_list;
   std::vector<type::Value> value_list;
+};
+
+//===--------------------------------------------------------------------===//
+// Physical external file scan
+//===--------------------------------------------------------------------===//
+class ExternalFileScan : public OperatorNode<ExternalFileScan> {
+ public:
+  static Operator make(oid_t get_id);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  // identifier for all get operators
+  oid_t get_id;
 };
 
 //===--------------------------------------------------------------------===//

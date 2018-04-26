@@ -214,13 +214,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       ddl_plan = move(analyze_plan);
       break;
     }
-    case StatementType::COPY: {
-      LOG_TRACE("Adding Copy plan...");
-      parser::CopyStatement *copy_parse_tree =
-          static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
-      break;
-    }
     default:
       is_ddl_stmt = false;
   }

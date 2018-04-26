@@ -24,12 +24,9 @@ namespace planner {
 
 class CopyPlan : public AbstractPlan {
  public:
-  explicit CopyPlan(std::string file_path, bool deserialize_parameters)
-      : file_path(file_path), deserialize_parameters(deserialize_parameters) {
-    LOG_DEBUG("Creating a Copy Plan");
-  }
+  explicit CopyPlan(std::string file_path) : file_path(std::move(file_path)) {}
 
-  PlanNodeType GetPlanNodeType() const override  { return PlanNodeType::COPY; }
+  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::COPY; }
 
   const std::string GetInfo() const override { return "CopyPlan"; }
 
@@ -38,9 +35,6 @@ class CopyPlan : public AbstractPlan {
 
   // The path of the target file
   std::string file_path;
-
-  // Whether the copying requires deserialization of parameters
-  bool deserialize_parameters = false;
 
  private:
   DISALLOW_COPY_AND_MOVE(CopyPlan);

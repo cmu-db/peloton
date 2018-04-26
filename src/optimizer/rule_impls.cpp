@@ -441,6 +441,31 @@ void LogicalQueryDerivedGetToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalExternalFileGetToPhysical
+LogicalExternalFileGetToPhysical::LogicalExternalFileGetToPhysical() {
+  type_ = RuleType::EXTERNAL_FILE_GET_TO_PHYSICAL;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalExternalFileGet);
+}
+
+bool LogicalExternalFileGetToPhysical::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  return true;
+}
+
+void LogicalExternalFileGetToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  const auto *get = input->Op().As<LogicalExternalFileGet>();
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(ExternalFileScan::make(get->get_id));
+  PELOTON_ASSERT(input->Children().empty());
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// LogicalDeleteToPhysical
 LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   type_ = RuleType::DELETE_TO_PHYSICAL;
