@@ -69,6 +69,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         		column_tile.first, column_tile.second.first, column_tile.second.second);
       }
       for(oid_t column_offset = 0; column_offset < column_map.size(); column_offset++) {
+      	if (column_map.count(column_offset) == 0) continue;
       	auto tile_pair = column_map.at(column_offset);
         LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
         		column_offset, tile_pair.first, tile_pair.second);

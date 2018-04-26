@@ -888,12 +888,12 @@ void TimestampCheckpointManager::RecoverTableData(
     concurrency::TransactionContext *txn) {
   size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return;
-  char data[table_size];
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data, table_size) == false) {
+  std::unique_ptr<char[]> data(new char[table_size]);
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
     LOG_ERROR("Checkpoint table file read error");
     return;
   }
-  CopySerializeInput input_buffer(data, sizeof(data));
+  CopySerializeInput input_buffer(data.get(), table_size);
 
   LOG_DEBUG("Recover table %d data (%lu byte)", table->GetOid(), table_size);
 
@@ -955,12 +955,12 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
     concurrency::TransactionContext *txn) {
   size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return 0;
-  char data[table_size];
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data, table_size) == false) {
+  std::unique_ptr<char[]> data(new char[table_size]);
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
     LOG_ERROR("Checkpoint table file read error");
     return 0;
   }
-  CopySerializeInput input_buffer(data, sizeof(data));
+  CopySerializeInput input_buffer(data.get(), table_size);
 
   LOG_TRACE("Recover table %d data without tile group (%lu byte)",
             table->GetOid(), table_size);
@@ -1000,12 +1000,12 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
     concurrency::TransactionContext *txn) {
   size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return 0;
-  char data[table_size];
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data, table_size) == false) {
+  std::unique_ptr<char[]> data(new char[table_size]);
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
     LOG_ERROR("Checkpoint table file read error");
     return 0;
   }
-  CopySerializeInput input_buffer(data, sizeof(data));
+  CopySerializeInput input_buffer(data.get(), table_size);
 
   LOG_TRACE("Recover table %d data with duplicate check (%lu byte)",
             table->GetOid(), table_size);
