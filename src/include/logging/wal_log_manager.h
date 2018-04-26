@@ -25,7 +25,7 @@ public:
     directory_ = logging_dir;
 
     if(!logger_ofstream_.is_open()){
-      logger_ofstream_.open(logging_dir+"/log", std::ofstream::out | std::ofstream::app);
+      logger_ofstream_.open(logging_dir+"/log_file", std::ofstream::out | std::ofstream::app);
 
       if(!logger_ofstream_.fail()) {
         enable_logging_ = true;
