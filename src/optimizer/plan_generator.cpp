@@ -128,8 +128,13 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       predicate.release(), column_ids, index_scan_desc, false));
 }
 
-void PlanGenerator::Visit(const ExternalFileScan *) {
-  output_plan_.reset(new planner::CSVScanPlan("sdfsdf"));
+void PlanGenerator::Visit(const ExternalFileScan *op) {
+  switch (op->format) {
+    case ExternalFileFormat::CSV: {
+      output_plan_.reset(new planner::CSVScanPlan(op->file_name));
+      break;
+    }
+  }
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {

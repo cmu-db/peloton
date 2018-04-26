@@ -72,7 +72,8 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 //===--------------------------------------------------------------------===//
 class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
  public:
-  static Operator make(oid_t get_id);
+  static Operator make(oid_t get_id, ExternalFileFormat format,
+                       std::string file_name);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -80,6 +81,8 @@ class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
 
   // identifier for all get operators
   oid_t get_id;
+  ExternalFileFormat format;
+  std::string file_name;
 };
 
 //===--------------------------------------------------------------------===//
@@ -260,7 +263,8 @@ class LogicalAggregateAndGroupBy
 class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -272,7 +276,8 @@ class LogicalInsert : public OperatorNode<LogicalInsert> {
 
 class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -300,7 +305,8 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class LogicalDelete : public OperatorNode<LogicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -340,7 +346,8 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates,
                        bool update);
@@ -362,7 +369,8 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates, bool update,
                        oid_t index_id, std::vector<oid_t> key_column_id_list,
@@ -394,7 +402,8 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 //===--------------------------------------------------------------------===//
 class ExternalFileScan : public OperatorNode<ExternalFileScan> {
  public:
-  static Operator make(oid_t get_id);
+  static Operator make(oid_t get_id, ExternalFileFormat format,
+                       std::string file_name);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -402,6 +411,8 @@ class ExternalFileScan : public OperatorNode<ExternalFileScan> {
 
   // identifier for all get operators
   oid_t get_id;
+  ExternalFileFormat format;
+  std::string file_name;
 };
 
 //===--------------------------------------------------------------------===//
@@ -551,7 +562,8 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -563,7 +575,8 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
 
 class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -573,7 +586,8 @@ class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
 //===--------------------------------------------------------------------===//
 class PhysicalDelete : public OperatorNode<PhysicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 

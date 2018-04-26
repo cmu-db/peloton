@@ -19,7 +19,7 @@ namespace planner {
 
 class CSVScanPlan : public AbstractPlan {
  public:
-  CSVScanPlan(const std::string file_name) : file_name_(std::move(file_name)) {}
+  CSVScanPlan(std::string file_name) : file_name_(std::move(file_name)) {}
 
   PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::CSVSCAN;

@@ -259,10 +259,10 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
           if (column_objects[i]->IsNotNull()) {
             // TODO: Add check for default value's existence for the current
             // column
-            throw CatalogException(
-                StringUtil::Format("ERROR:  null value in column \"%s\" "
-                                   "violates not-null constraint",
-                                   column_objects[i]->GetColumnName().c_str()));
+            throw CatalogException(StringUtil::Format(
+                "ERROR:  null value in column \"%s\" "
+                "violates not-null constraint",
+                column_objects[i]->GetColumnName().c_str()));
           }
         }
       }
@@ -361,8 +361,9 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
 }
 void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
   if (op->is_from) {
-    auto get_op = std::make_shared<OperatorExpression>(
-        LogicalExternalFileGet::make(GetAndIncreaseGetId()));
+    auto get_op =
+        std::make_shared<OperatorExpression>(LogicalExternalFileGet::make(
+            GetAndIncreaseGetId(), op->format, op->file_path));
 
     auto target_table =
         catalog::Catalog::GetInstance()

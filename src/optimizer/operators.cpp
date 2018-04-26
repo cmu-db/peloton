@@ -11,11 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/operators.h"
+
 #include "optimizer/operator_visitor.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {
+
 //===--------------------------------------------------------------------===//
 // Leaf
 //===--------------------------------------------------------------------===//
@@ -51,7 +53,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.GetType()!= OpType::Get) return false;
+  if (r.GetType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -65,21 +67,28 @@ bool LogicalGet::operator==(const BaseOperatorNode &r) {
 // External file get
 //===--------------------------------------------------------------------===//
 
-Operator LogicalExternalFileGet::make(oid_t get_id) {
+Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
+                                      std::string file_name) {
   auto *get = new LogicalExternalFileGet();
   get->get_id = get_id;
+  get->format = format;
+  get->file_name = std::move(file_name);
   return Operator(get);
 }
 
 bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::LogicalExternalFileGet) return false;
-  const auto &get = *static_cast<const LogicalQueryDerivedGet *>(&node);
-  return get_id == get.get_id;
+  const auto &get = *static_cast<const LogicalExternalFileGet *>(&node);
+  return (get_id == get.get_id && format == get.format &&
+          file_name == get.file_name);
 }
 
 hash_t LogicalExternalFileGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
   return hash;
 }
 
@@ -407,8 +416,8 @@ Operator LogicalDelete::make(
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
-        *updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -539,21 +548,28 @@ hash_t PhysicalIndexScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // Physical external file scan
 //===--------------------------------------------------------------------===//
-Operator ExternalFileScan::make(oid_t get_id) {
+Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
+                                std::string file_name) {
   auto *get = new ExternalFileScan();
   get->get_id = get_id;
+  get->format = format;
+  get->file_name = file_name;
   return Operator(get);
 }
 
 bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::QueryDerivedScan) return false;
   const auto &get = *static_cast<const ExternalFileScan *>(&node);
-  return get_id == get.get_id;
+  return (get_id == get.get_id && format == get.format &&
+          file_name == get.file_name);
 }
 
 hash_t ExternalFileScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
   return hash;
 }
 
@@ -799,8 +815,8 @@ Operator PhysicalDelete::make(
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
-        *updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
@@ -897,7 +913,8 @@ std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
 std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
 template <>
-std::string OperatorNode<LogicalExternalFileGet>::name_ = "LogicalExternalFileGet";
+std::string OperatorNode<LogicalExternalFileGet>::name_ =
+    "LogicalExternalFileGet";
 template <>
 std::string OperatorNode<LogicalQueryDerivedGet>::name_ =
     "LogicalQueryDerivedGet";
@@ -937,7 +954,8 @@ std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
 std::string OperatorNode<LogicalDistinct>::name_ = "LogicalDistinct";
 template <>
-std::string OperatorNode<LogicalExportExternalFile>::name_ = "LogicalExportExternalFile";
+std::string OperatorNode<LogicalExportExternalFile>::name_ =
+    "LogicalExportExternalFile";
 template <>
 std::string OperatorNode<DummyScan>::name_ = "DummyScan";
 template <>
@@ -994,7 +1012,8 @@ OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalExternalFileGet>::type_ = OpType::LogicalExternalFileGet;
+OpType OperatorNode<LogicalExternalFileGet>::type_ =
+    OpType::LogicalExternalFileGet;
 template <>
 OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
     OpType::LogicalQueryDerivedGet;
@@ -1034,7 +1053,8 @@ OpType OperatorNode<LogicalDistinct>::type_ = OpType::LogicalDistinct;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::LogicalLimit;
 template <>
-OpType OperatorNode<LogicalExportExternalFile>::type_ = OpType::LogicalExportExternalFile;
+OpType OperatorNode<LogicalExportExternalFile>::type_ =
+    OpType::LogicalExportExternalFile;
 
 template <>
 OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;

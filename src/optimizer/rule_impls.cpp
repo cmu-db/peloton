@@ -275,9 +275,8 @@ void GetToIndexScan::Transform(
         sort_by_asc_base_column = false;
         break;
       }
-      auto bound_oids =
-          reinterpret_cast<expression::TupleValueExpression *>(expr)
-              ->GetBoundOid();
+      auto bound_oids = reinterpret_cast<expression::TupleValueExpression *>(
+                            expr)->GetBoundOid();
       sort_col_ids.push_back(std::get<2>(bound_oids));
     }
     // Check whether any index can fulfill sort property
@@ -358,20 +357,16 @@ void GetToIndexScan::Transform(
         if (value_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
           value_list.push_back(
               reinterpret_cast<expression::ConstantValueExpression *>(
-                  value_expr)
-                  ->GetValue());
+                  value_expr)->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
-                            expr->GetModifiableChild(1))
-                            ->GetValueType()));
+                            expr->GetModifiableChild(1))->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
                   reinterpret_cast<expression::ParameterValueExpression *>(
-                      value_expr)
-                      ->GetValueIdx())
-                  .Copy());
+                      value_expr)->GetValueIdx()).Copy());
           LOG_TRACE("Parameter offset: %s",
                     (*value_list.rbegin()).GetInfo().c_str());
         }
@@ -459,9 +454,11 @@ void LogicalExternalFileGetToPhysical::Transform(
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
   const auto *get = input->Op().As<LogicalExternalFileGet>();
 
-  auto result_plan =
-      std::make_shared<OperatorExpression>(ExternalFileScan::make(get->get_id));
+  auto result_plan = std::make_shared<OperatorExpression>(
+      ExternalFileScan::make(get->get_id, get->format, get->file_name));
+
   PELOTON_ASSERT(input->Children().empty());
+
   transformed.push_back(result_plan);
 }
 
