@@ -13,6 +13,7 @@
 #include <cstdio>
 #include "sql/testing_sql_util.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
@@ -41,7 +42,8 @@ TEST_F(CopyTests, Copying) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase("emp_db", txn);
+  const auto &db_name = "emp_db";
+  catalog->CreateDatabase(db_name, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -119,9 +121,14 @@ TEST_F(CopyTests, Copying) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
+  LOG_TRACE("Binding parse tree...");
+  auto parse_tree = copy_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, db_name);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_TRACE("Binding parse tree completed!");
+
   LOG_TRACE("Building plan tree...");
-  auto copy_plan =
-      optimizer->BuildPelotonPlanTree(copy_stmt, DEFAULT_DB_NAME, txn);
+  auto copy_plan = optimizer->BuildPelotonPlanTree(copy_stmt, txn);
   statement->SetPlanTree(copy_plan);
 
   LOG_TRACE("Building executor tree...");
