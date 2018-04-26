@@ -7,17 +7,11 @@ namespace peloton {
 namespace stats {
 class DatabaseMetricNew: public AbstractMetricNew {
  public:
-  template <StatInsertionPoint type, typename... Args>
-  void OnStatAvailable(Args... args) override {
-    AbstractMetricNew::OnStatAvailable(args);
-  }
-
   // TODO(tianyu): fill argument
-  template <> void OnStatAvailable<StatInsertionPoint::TXN_COMMIT>(){
+  void OnTransactionCommit() override {
     txn_committed_++;
   }
-
-  template <> void OnStatAvailable<StatInsertionPoint::TXN_ABORT>() {
+  void OnTransactionAbort() override {
     txn_aborted_++;
   }
 
@@ -25,10 +19,12 @@ class DatabaseMetricNew: public AbstractMetricNew {
     // TODO(tianyu): implement this
   }
 
-  const std::string Info() const override {
+  const std::string GetInfo() const override {
     // TODO(tianyu): implement this
     return nullptr;
   }
+
+
 
  private:
   std::atomic<int64_t> txn_committed_, txn_aborted_;

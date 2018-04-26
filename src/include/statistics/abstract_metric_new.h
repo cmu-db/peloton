@@ -32,12 +32,13 @@ class AbstractMetricNew : public Printable {
  public:
   virtual ~AbstractMetricNew() = default;
 
-  template <StatInsertionPoint type, typename... Args>
-  virtual void OnStatAvailable(Args... args) {};
+  virtual void OnTransactionCommit() {};
+
+  virtual void OnTransactionAbort() {};
+
+  // TODO(tianyu): more handler methods
 
   virtual void CollectIntoCatalog() = 0;
-
-  virtual const std::string Info() const = 0;
 
 };
 

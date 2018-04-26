@@ -35,8 +35,18 @@ class StatsCollector {
 
     template <StatInsertionPoint type, typename... Args>
     void CollectStat(Args... args) {
-        for (auto &metric: metric_dispatch_[type])
-          metric->OnStatAvailable<type>(args...);
+        for (auto &metric: metric_dispatch_[type]) {
+          switch (type) {
+            case StatInsertionPoint::TXN_COMMIT:
+              metric->OnTransactionCommit(args...);
+              break;
+            case StatInsertionPoint::TXN_ABORT:
+              metric->OnTransactionAbort(args...);
+              break;
+            default:
+              break;
+          }
+        }
     };
 
   private:
@@ -54,7 +64,7 @@ class StatsCollector {
         metric_dispatch_[point].push_back(m);
     }
 
-    using MetricList = std::vector<std::shared_ptr<AbstractMetricNew>>
+    using MetricList = std::vector<std::shared_ptr<AbstractMetricNew>>;
     MetricList metrics_;
     std::unordered_map<StatInsertionPoint, MetricList> metric_dispatch_;
 };

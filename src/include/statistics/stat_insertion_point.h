@@ -1,3 +1,6 @@
+#pragma once
+namespace peloton {
+namespace stats {
 enum class StatInsertionPoint {
   TXN_BEGIN,
   TXN_COMMIT,
@@ -13,3 +16,6 @@ enum class StatInsertionPoint {
   QUERY_BEGIN,
   QUERY_END
 };
+};
+}
+
