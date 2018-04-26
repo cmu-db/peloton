@@ -1304,6 +1304,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::INDEXSCAN: {
       return ("INDEXSCAN");
     }
+    case PlanNodeType::CSVSCAN: {
+      return ("CSVSCAN");
+    }
     case PlanNodeType::NESTLOOP: {
       return ("NESTLOOP");
     }
@@ -1408,6 +1411,8 @@ PlanNodeType StringToPlanNodeType(const std::string &str) {
     return PlanNodeType::SEQSCAN;
   } else if (upper_str == "INDEXSCAN") {
     return PlanNodeType::INDEXSCAN;
+  } else if (upper_str == "CSVSCAN") {
+    return PlanNodeType::CSVSCAN;
   } else if (upper_str == "NESTLOOP") {
     return PlanNodeType::NESTLOOP;
   } else if (upper_str == "NESTLOOPINDEX") {
@@ -1884,10 +1889,8 @@ std::ostream &operator<<(std::ostream &os, const CopyType &type) {
 std::string ExternalFileFormatToString(ExternalFileFormat format) {
   switch (format) {
     case ExternalFileFormat::CSV:
-      return "CSV";
-    case ExternalFileFormat::BINARY:
     default:
-      return "BINARY";
+      return "CSV";
   }
 }
 
@@ -1895,8 +1898,6 @@ ExternalFileFormat StringToExternalFileFormat(const std::string &str) {
   auto upper = StringUtil::Upper(str);
   if (upper == "CSV") {
     return ExternalFileFormat::CSV;
-  } else if (upper == "BINARY") {
-    return ExternalFileFormat::BINARY;
   }
   throw ConversionException(StringUtil::Format(
       "No ExternalFileFormat for input '%s'", upper.c_str()));

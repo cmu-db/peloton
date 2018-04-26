@@ -820,7 +820,6 @@ std::ostream &operator<<(std::ostream &os, const CopyType &type);
 
 enum class ExternalFileFormat {
   CSV,
-  BINARY
 };
 std::string ExternalFileFormatToString(ExternalFileFormat format);
 ExternalFileFormat StringToExternalFileFormat(const std::string &str);
@@ -1345,6 +1344,7 @@ enum class RuleType : uint32_t {
   GET_TO_SEQ_SCAN,
   GET_TO_INDEX_SCAN,
   QUERY_DERIVED_GET_TO_PHYSICAL,
+  EXTERNAL_FILE_GET_TO_PHYSICAL,
   DELETE_TO_PHYSICAL,
   UPDATE_TO_PHYSICAL,
   INSERT_TO_PHYSICAL,
