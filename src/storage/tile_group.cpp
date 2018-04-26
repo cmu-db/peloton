@@ -410,8 +410,6 @@ std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
   std::vector<catalog::Schema> schemas;
   for (oid_t schema_idx = 0; schema_idx < tile_schema_count; schema_idx++) {
     auto tile_schema = catalog::Schema::DeserializeFrom(in);
-    LOG_INFO("tile_schema in tile group %d\n%s", tile_group_id,
-    		tile_schema->GetInfo().c_str());
     schemas.push_back(*(tile_schema.get()));
   }
 

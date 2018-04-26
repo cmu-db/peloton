@@ -54,8 +54,26 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     auto table_catalog = table_catalog_pair.second;
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
+
     LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
     		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
+    auto tile_group_count = table->GetTileGroupCount();
+    LOG_INFO("Tile group count: %lu", tile_group_count);
+    for (oid_t tg_offset = START_OID; tg_offset < tile_group_count; tg_offset++) {
+      auto tile_group = table->GetTileGroup(tg_offset);
+      auto column_map = tile_group->GetColumnMap();
+      LOG_INFO("Column map size in tile group %d : %lu",
+      		tile_group->GetTileGroupId(), column_map.size());
+      for(auto column_tile : column_map) {
+        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
+        		column_tile.first, column_tile.second.first, column_tile.second.second);
+      }
+      for(oid_t column_offset = 0; column_offset < column_map.size(); column_offset++) {
+      	auto tile_pair = column_map.at(column_offset);
+        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
+        		column_offset, tile_pair.first, tile_pair.second);
+      }
+    }
 
     // check the basic information of columns
     if (table_catalog->GetTableName() == "checkpoint_table_test") {
@@ -93,6 +111,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         }
       }
     }
+    // end: check the basic information of columns
 
     // check the index recovery
     else if (table_catalog->GetTableName() == "checkpoint_index_test") {
@@ -174,6 +193,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         }
       }
     }
+    // end: check the index recovery
 
     // check the column constraint recovery
     else if (table_catalog->GetTableName() == "checkpoint_constraint_test") {
@@ -242,7 +262,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           LOG_ERROR("Unexpected foreign key is found: %s",
                     foreign_key->GetConstraintName().c_str());
         }
-      }
+      } // loop end :foreign key constraint
 
       // index for constraints
       for (auto index_pair : table_catalog->GetIndexObjects()) {
@@ -312,7 +332,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
         }
-      }
+      } // loop end: index for constraints
 
       // single attribute constraint
       for (auto column_pair : table_catalog->GetColumnObjects()) {
@@ -425,13 +445,13 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           LOG_ERROR("Unexpected column is found: %s",
                     column_catalog->GetColumnName().c_str());
         }
-      }
-
+      } // loop end: single attribute constraint
+      // end: check the column constraint recovery
     } else {
       LOG_ERROR("Unexpected table is found: %s",
                 table_catalog->GetTableName().c_str());
     }
-  }
+  } // table loop end
 
   // check the catalog data
   /*
