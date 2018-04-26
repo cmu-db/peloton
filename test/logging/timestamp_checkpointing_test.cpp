@@ -10,10 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
+#include "catalog/column_catalog.h"
 #include "common/init.h"
 #include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "logging/timestamp_checkpoint_manager.h"
 #include "settings/settings_manager.h"
+#include "storage/storage_manager.h"
 #include "sql/testing_sql_util.h"
 
 namespace peloton {
@@ -100,6 +104,28 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO checkpoint_table_test VALUES (3, 0.0, 'xxxx');");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
+
+  // output created table information to verify checkpoint recovery
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto storage = storage::StorageManager::GetInstance();
+  auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  for (auto table_catalog_pair : default_db_catalog->GetTableObjects()) {
+    auto table_catalog = table_catalog_pair.second;
+    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
+                                          table_catalog->GetTableOid());
+    LOG_INFO("Table %d %s\n%s", table_catalog->GetTableOid(),
+    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
+
+    for (auto column_pair : table_catalog->GetColumnObjects()) {
+      auto column_catalog = column_pair.second;
+      auto column =
+          table->GetSchema()->GetColumn(column_catalog->GetColumnId());
+      LOG_INFO("Column %d %s\n%s", column_catalog->GetColumnId(),
+      		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
+    }
+  }
 
   // generate table and data that will be out of checkpointing.
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");

@@ -54,7 +54,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     auto table_catalog = table_catalog_pair.second;
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
-    LOG_DEBUG("Check the table %s", table_catalog->GetTableName().c_str());
+    LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
+    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
 
     // check the basic information of columns
     if (table_catalog->GetTableName() == "checkpoint_table_test") {
@@ -62,7 +63,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_DEBUG("Check the column %s", column.GetInfo().c_str());
+        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
+        		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
 
         if (column_catalog->GetColumnName() == "id") {
           EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
@@ -96,7 +98,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     else if (table_catalog->GetTableName() == "checkpoint_index_test") {
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_DEBUG("Check the index %s", index_catalog->GetIndexName().c_str());
+        LOG_INFO("Check the index %s", index_catalog->GetIndexName().c_str());
         // unique primary key for attribute "pid" (primary key)
         if (index_catalog->GetIndexName() == "checkpoint_index_test_pkey") {
           EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
@@ -178,7 +180,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // multiple attributes constraint
       for (auto multi_constraint : table->GetSchema()->GetMultiConstraints()) {
         // currently nothing (this might not be used)
-        LOG_DEBUG("multi constraint: %s", multi_constraint.GetInfo().c_str());
+      	LOG_INFO("multi constraint: %s", multi_constraint.GetInfo().c_str());
       }
 
       // foreign key constraint
@@ -186,7 +188,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       EXPECT_EQ(2, fk_count);
       for (oid_t fk_id = 0; fk_id < fk_count; fk_id++) {
         auto foreign_key = table->GetForeignKey(fk_id);
-        LOG_DEBUG("Check foreign key constraint: %s",
+        LOG_INFO("Check foreign key constraint: %s",
                   foreign_key->GetConstraintName().c_str());
         // value3 => checkpoint_table_test.pid
         if (foreign_key->GetConstraintName() ==
@@ -245,7 +247,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // index for constraints
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_DEBUG("check index for constraints: %s",
+        LOG_INFO("check index for constraints: %s",
         		index_catalog->GetIndexName().c_str());
 
         // primary key for attributes "pid1" and "pid2"
@@ -317,8 +319,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_DEBUG("Check constraints of the column %s",
-                  column.GetInfo().c_str());
+        LOG_INFO("Check constraints of the column %d %s\n%s",
+        		column_catalog->GetColumnId(),
+        		column_catalog->GetColumnName().c_str(),
+        		column.GetInfo().c_str());
 
         // set primary key of attributes 'pid1' and 'pid2'
         if (column_catalog->GetColumnName() == "pid1" ||
