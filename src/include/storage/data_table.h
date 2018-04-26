@@ -250,12 +250,14 @@ class DataTable : public AbstractTable {
   void ClearLayoutSamples();
 
   inline void SetDefaultLayout(std::shared_ptr<const Layout> new_layout) {
+    PELOTON_ASSERT(new_layout->GetColumnCount() == schema->GetColumnCount());
     default_layout_ = new_layout;
   }
 
-  inline void ResetDefaultLayout() {
+  inline void ResetDefaultLayout(LayoutType type = LayoutType::ROW) {
+    PELOTON_ASSERT((type == LayoutType::ROW) || (type == LayoutType::COLUMN));
     default_layout_ = std::shared_ptr<const Layout>(
-            new const Layout(schema->GetColumnCount()));
+            new const Layout(schema->GetColumnCount(), type));
   }
   const Layout& GetDefaultLayout() const;
 

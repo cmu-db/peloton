@@ -53,13 +53,15 @@ public:
 
     for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
       auto column =
-              catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+              catalog::Column(type::TypeId::INTEGER,
+                              type::Type::GetTypeSize(type::TypeId::INTEGER),
                               "FIELD" + std::to_string(col_itr), is_inlined);
 
       columns.push_back(column);
     }
 
-    std::unique_ptr<catalog::Schema> table_schema = std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+    std::unique_ptr<catalog::Schema> table_schema =
+            std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
     std::string table_name("TEST_TABLE");
 
     /////////////////////////////////////////////////////////
@@ -713,6 +715,182 @@ TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
   // invokes the TableScanTranslator
   //
   ExecuteTileGroupTest(LayoutType::COLUMN);
+}
+
+TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
+  //
+  // Creates a table with LayoutType::ROW
+  // Sets the default_layout_ as LayoutType::COLUMN
+  // Inserts tuples
+  // Sets the default_layout_ as LayoutType::HYBRID
+  // Inserts some more tuples
+  // invokes the TableScanTranslator
+  //
+
+  const int tuples_per_tilegroup= 100;
+  const int col_count = 6;
+  const bool is_inlined = true;
+  oid_t tuple_count = 100;
+
+
+  /////////////////////////////////////////////////////////
+  // Define the schema.
+  /////////////////////////////////////////////////////////
+
+  std::vector<catalog::Column> columns;
+
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    auto column =
+            catalog::Column(type::TypeId::INTEGER,
+                            type::Type::GetTypeSize(type::TypeId::INTEGER),
+                            "FIELD" + std::to_string(col_itr), is_inlined);
+
+    columns.push_back(column);
+  }
+
+  std::unique_ptr<catalog::Schema> table_schema =
+          std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+  std::string table_name("MULTI_LAYOUT_TABLE");
+
+  /////////////////////////////////////////////////////////
+  // Create table.
+  /////////////////////////////////////////////////////////
+
+  bool is_catalog = false;
+  auto *catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  const bool allocate = true;
+  auto txn = txn_manager.BeginTransaction();
+
+  // Insert table in catalog
+  catalog->CreateTable(test_db_name, table_name, std::move(table_schema),
+                       txn, is_catalog, tuples_per_tilegroup, LayoutType::ROW);
+  txn_manager.EndTransaction(txn);
+
+  auto table = GetDatabase().GetTableWithName(table_name);
+
+  /////////////////////////////////////////////////////////
+  // Reset default_layout_ to LayoutType::COLUMN
+  /////////////////////////////////////////////////////////
+  table->ResetDefaultLayout(LayoutType::COLUMN);
+
+  /////////////////////////////////////////////////////////
+  // Load in 100 tuples
+  /////////////////////////////////////////////////////////
+  txn = txn_manager.BeginTransaction();
+  auto table_schema_ptr = table->GetSchema();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
+    int populate_value = row_id;
+
+    storage::Tuple tuple(table_schema_ptr, allocate);
+
+    for (oid_t col_id = 0; col_id < col_count; col_id++) {
+      auto value = type::ValueFactory::GetIntegerValue(populate_value + col_id);
+      tuple.SetValue(col_id, value, testing_pool);
+    }
+
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+            table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
+    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+  }
+
+  txn_manager.CommitTransaction(txn);
+
+  /////////////////////////////////////////////////////////
+  // Set default_layout_ to LayoutType::HYBRID
+  /////////////////////////////////////////////////////////
+  // Populate column_map with HYBRID layout
+  column_map_type column_map;
+  column_map[0] = std::make_pair(0, 0);
+  column_map[1] = std::make_pair(1, 0);
+  column_map[2] = std::make_pair(1, 1);
+  column_map[3] = std::make_pair(2, 0);
+  column_map[4] = std::make_pair(2, 1);
+  column_map[5] = std::make_pair(2, 2);
+
+  auto database_oid = table->GetDatabaseOid();
+  auto table_oid = table->GetOid();
+
+  txn = txn_manager.BeginTransaction();
+  auto layout = catalog->CreateDefaultLayout(database_oid, table_oid,
+                                             column_map, txn);
+  EXPECT_NE(nullptr, layout);
+  txn_manager.CommitTransaction(txn);
+
+  /////////////////////////////////////////////////////////
+  // Load in 200 tuples
+  /////////////////////////////////////////////////////////
+  tuple_count = 200;
+  oid_t prev_tuple_count = 100;
+  txn = txn_manager.BeginTransaction();
+  for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
+    int populate_value = row_id + prev_tuple_count;
+
+    storage::Tuple tuple(table_schema_ptr, allocate);
+
+    for (oid_t col_id = 0; col_id < col_count; col_id++) {
+      auto value = type::ValueFactory::GetIntegerValue(populate_value + col_id);
+      tuple.SetValue(col_id, value, testing_pool);
+    }
+
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+            table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
+    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+  }
+
+  txn_manager.CommitTransaction(txn);
+
+  /////////////////////////////////////////////////////////
+  // Do a seq scan on the table
+  /////////////////////////////////////////////////////////
+
+  // Reset Tuple Count
+  tuple_count = tuple_count + prev_tuple_count;
+  // Column ids to be scanned.
+  std::vector<oid_t> column_ids;
+  for(oid_t col_id = 0 ; col_id < col_count; col_id++) {
+    column_ids.push_back(col_id);
+  }
+
+
+  // Setup the scan plan node
+  planner::SeqScanPlan scan(table, nullptr, column_ids);
+
+  // Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer{column_ids, context};
+
+
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer);
+
+  // Check that we got all the results
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(results.size(), tuple_count);
+
+  for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
+    auto &tuple = results[tuple_id];
+    int tuple_id_value = tuple_id;
+    for (oid_t col_id = 0; col_id < col_count; col_id++) {
+      auto value = type::ValueFactory::GetIntegerValue(tuple_id_value + col_id);
+      EXPECT_EQ(CmpBool::CmpTrue, tuple.GetValue(col_id).CompareEquals(value));
+    }
+  }
 }
 
 }  // namespace test
