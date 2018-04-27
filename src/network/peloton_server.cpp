@@ -226,10 +226,11 @@ int PelotonServer::VerifyCallback(int ok, X509_STORE_CTX *store) {
 template<typename... Ts>
 void PelotonServer::TrySslOperation(int (*func)(Ts...), Ts... arg) {
   if (func(arg...) < 0) {
+    auto error_message = peloton_error_message();
     if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
       SSL_CTX_free(ssl_context);
     }
-    throw ConnectionException("Error listening onsocket.");
+    throw ConnectionException(error_message);
   }
 }
 
