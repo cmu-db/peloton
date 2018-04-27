@@ -31,7 +31,7 @@ namespace peloton {
 
 ThreadPool thread_pool;
 
-void PelotonInit::Initialize() {
+void PelotonInit::Initialize(std::string log_dir, std::string log_file) {
   CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
           settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
@@ -93,7 +93,7 @@ void PelotonInit::Initialize() {
   StatementCacheManager::Init();
 
   // TODO(gandeevan): start logger thread
-  if(logging::LogManager::GetInstance().init("/tmp")) {
+  if(logging::LogManager::GetInstance().init(log_dir, log_file)) {
     LOG_DEBUG("logging enabled");
   } else {
     LOG_DEBUG("logging disabled");

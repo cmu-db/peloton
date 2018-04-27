@@ -56,12 +56,6 @@ void *LoggingTest(int port) {
     txn2.exec("INSERT INTO employee VALUES (2, 'Gandeevan Raghuraman');");
     txn2.exec("INSERT INTO employee VALUES (3, 'Anirudh Kanjani');");
 
-    // test prepare statement
-    C.prepare("searchstmt", "SELECT name FROM employee WHERE id=$1;");
-    // invocation as in variable binding
-    txn2.prepared("searchstmt")(1).exec();
-    txn2.commit();
-
   } catch (const std::exception &e) {
     LOG_INFO("[LoggingTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
@@ -70,7 +64,7 @@ void *LoggingTest(int port) {
 }
 
 TEST_F(LoggingTests, LoggingTest) {
-  peloton::PelotonInit::Initialize();
+  peloton::PelotonInit::Initialize("/tmp", "test_log_file");
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer server;
 
@@ -87,6 +81,7 @@ TEST_F(LoggingTests, LoggingTest) {
   serverThread.join();
   peloton::PelotonInit::Shutdown();
   LOG_DEBUG("Peloton has shut down");
+
 }
 }
 }

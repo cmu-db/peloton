@@ -21,11 +21,11 @@ public:
   LogManager() {}
   ~LogManager() {}
 
-  inline bool init(std::string logging_dir) {
-    directory_ = logging_dir;
+  inline bool init(std::string log_dir, std::string log_file) {
+    directory_ = log_dir;
 
     if(!logger_ofstream_.is_open()){
-      logger_ofstream_.open(logging_dir+"/log_file", std::ofstream::out | std::ofstream::app);
+      logger_ofstream_.open(log_dir+"/"+log_file, std::ofstream::out | std::ofstream::app);
 
       if(!logger_ofstream_.fail()) {
         enable_logging_ = true;

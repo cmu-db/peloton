@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <string>
 #pragma once
 
 namespace peloton {
@@ -24,7 +25,7 @@ extern ThreadPool thread_pool;
 
 class PelotonInit {
  public:
-  static void Initialize();
+  static void Initialize(std::string log_dir = "/tmp", std::string log_file = "log_file");
 
   static void Shutdown();
 
