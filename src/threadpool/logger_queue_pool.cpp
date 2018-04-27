@@ -11,6 +11,7 @@ namespace threadpool{
 
 
 void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
+  LOG_INFO("aaron: LoggerFunc");
   constexpr auto kMinPauseTime = std::chrono::microseconds(1);
   constexpr auto kMaxPauseTime = std::chrono::microseconds(1000);
   auto pause_time = kMinPauseTime;

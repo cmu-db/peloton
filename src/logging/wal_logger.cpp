@@ -50,8 +50,10 @@ bool WalLogger::IsFlushNeeded(bool pending_buffers){
 
 void WalLogger::FlushToDisk(){
 
-  if(disk_buffer_->GetSize()==0)
+  if(disk_buffer_->GetSize()==0){
+    LOG_INFO("aaron: disk_buffer_->GetSize()==0");
     return;
+  }
 
   std::ofstream *stream = LogManager::GetInstance().GetFileStream();
   stream->write(disk_buffer_->GetData(), disk_buffer_->GetSize());
@@ -60,6 +62,7 @@ void WalLogger::FlushToDisk(){
     PELOTON_ASSERT(false);
   }
 
+  LOG_INFO("aaron: stream->flush()");
   stream->flush();
 
   if(stream->fail()){

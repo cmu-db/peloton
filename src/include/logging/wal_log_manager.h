@@ -21,7 +21,12 @@ public:
   LogManager() {}
   ~LogManager() {}
 
-  inline bool init(std::string log_dir, std::string log_file) {
+  inline bool init(std::string log_dir, std::string log_file, bool enable_logging) {
+    LOG_INFO("aaron: LogManagerInit");
+    if (enable_logging == false) {
+      enable_logging_ = false;
+      return false;
+    }
     directory_ = log_dir;
 
     if(!logger_ofstream_.is_open()){
