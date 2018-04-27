@@ -123,8 +123,11 @@ bool LoggingUtil::GetDirectoryList(const char *dir_name,
         dir_name_list.push_back(element_name);
       }
     }
+
+    free(element_list[i]);
   }
 
+  free(element_list);
   return true;
 }
 
@@ -152,8 +155,11 @@ bool LoggingUtil::GetFileList(const char *dir_name,
         file_name_list.push_back(element_name);
       }
     }
+
+    free(element_list[i]);
   }
 
+  free(element_list);
   return true;
 }
 

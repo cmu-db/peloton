@@ -901,6 +901,7 @@ void TimestampCheckpointManager::RecoverTableData(
   table->DropTileGroups();
 
   // Create tile group
+	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   auto schema = table->GetSchema();
   oid_t tile_group_count = input_buffer.ReadLong();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
@@ -921,7 +922,7 @@ void TimestampCheckpointManager::RecoverTableData(
       for (oid_t column_id = 0; column_id < column_count; column_id++) {
         auto value = type::Value::DeserializeFrom(
             input_buffer, schema->GetType(column_id), NULL);
-        tuple->SetValue(column_id, value);
+        tuple->SetValue(column_id, value, pool.get());
       }
 
       // insert the tuple into the tile group
@@ -966,6 +967,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
             table->GetOid(), table_size);
 
   // recover table tuples
+	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   oid_t insert_tuple_count = 0;
   auto schema = table->GetSchema();
   oid_t column_count = schema->GetColumnCount();
@@ -976,7 +978,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
       auto value = type::Value::DeserializeFrom(
           input_buffer, schema->GetType(column_id), NULL);
-      tuple->SetValue(column_id, value);
+      tuple->SetValue(column_id, value, pool.get());
     }
 
     // insert tuple into the table without foreign key check to avoid an error
@@ -998,7 +1000,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
 oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
     storage::DataTable *table, FileHandle &file_handle,
     concurrency::TransactionContext *txn) {
-  size_t table_size = LoggingUtil::GetFileSize(file_handle);
+	size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return 0;
   std::unique_ptr<char[]> data(new char[table_size]);
   if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
@@ -1021,6 +1023,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
   }
 
   // recover table tuples
+	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   oid_t insert_tuple_count = 0;
   while (input_buffer.RestSize() > 0) {
     // recover values on each column
@@ -1029,7 +1032,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
       auto value = type::Value::DeserializeFrom(
           input_buffer, schema->GetType(column_id), NULL);
-      tuple->SetValue(column_id, value);
+      tuple->SetValue(column_id, value, pool.get());
     }
 
     // duplicate check
