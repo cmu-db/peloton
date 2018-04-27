@@ -47,7 +47,7 @@ class LoggerQueuePool {
     }
 
     ~LoggerQueuePool() {
-      if (is_running_ == true)
+      if(is_running_)
         Shutdown();
     }
 
@@ -59,6 +59,7 @@ class LoggerQueuePool {
     void Startup() {
       LOG_INFO("aaron: LoggerQueuePoolStartup");
       is_running_ = true;
+
       for (size_t i = 0; i < num_workers_; i++) {
         loggers_.emplace_back(LoggerFunc, &is_running_, &logger_queue_);
       }
@@ -76,18 +77,18 @@ class LoggerQueuePool {
 
     void SubmitLogBuffer(logging::LogBuffer *buffer) {
       if (is_running_ == false)
-        Startup();
+        PELOTON_ASSERT(false);
+
       logger_queue_.Enqueue(std::move(buffer));
     }
 
     void SubmitLogBuffer(int token, logging::LogBuffer *buffer) {
       if (is_running_ == false)
-        Startup();
+        PELOTON_ASSERT(false);
 
       int idx = (token)%kDefaultNumTokens;
       logger_queue_.Enqueue(*(log_tokens_[idx]), std::move(buffer));
     }
-
 
     static LoggerQueuePool &GetInstance() {
       static LoggerQueuePool logger_queue_pool(kDefaultLoggerPoolSize);
@@ -102,6 +103,7 @@ class LoggerQueuePool {
     std::vector<logging::LogToken *> log_tokens_;
     std::atomic_bool is_running_;
     std::atomic<int> next_token_;
+
 
 };
 

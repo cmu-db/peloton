@@ -12,6 +12,7 @@
 #pragma once
 #include <fstream>
 
+
 namespace peloton{
 namespace logging{
 
@@ -36,9 +37,7 @@ public:
         enable_logging_ = true;
         return true;
       }
-
     }
-
     enable_logging_ = false;
     return false;
   }
