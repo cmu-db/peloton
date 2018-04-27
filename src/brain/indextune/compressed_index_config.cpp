@@ -198,5 +198,49 @@ CompressedIndexConfiguration::GenerateCurrentBitSet() {
 
   return result;
 }
+
+void CompressedIndexConfiguration::AddIndex(
+    const std::shared_ptr<IndexObject> &idx_object) {
+  if (nullptr == idx_object) {
+    return;
+  }
+}
+
+void CompressedIndexConfiguration::AddIndex(size_t offset) {
+  if (0 == offset) {
+    return;
+  }
+}
+
+void CompressedIndexConfiguration::RemoveIndex(
+    const std::shared_ptr<IndexObject> &idx_object) {
+  if (nullptr == idx_object) {
+    return;
+  }
+}
+
+void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
+  if (0 == offset) {
+    return;
+  }
+}
+
+std::shared_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::AddCandidate(const IndexConfiguration &indexes) {
+  int a = 8;
+  if (0 == indexes.GetIndexCount()) {
+    a = 16;
+  }
+  return std::make_shared<boost::dynamic_bitset<>>(a);
+}
+
+std::shared_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::DropCandidate(const IndexConfiguration &indexes) {
+  int a = 8;
+  if (0 == indexes.GetIndexCount()) {
+    a = 16;
+  }
+  return std::make_shared<boost::dynamic_bitset<>>(a);
+}
 }
 }

@@ -33,10 +33,13 @@ class CompressedIndexConfiguration {
   void CreateDatabase(const std::string &db_name);
 
   // Create a new table with schema (a INT, b INT, c INT).
+  // TODO: modify
   void CreateTable(const std::string &table_name);
 
+  // TODO: remove
   void CreateIndex_A(const std::string &table_name);
 
+  // TODO: remove
   void CreateIndex_B(const std::string &table_name);
 
   void DropTable(const std::string &table_name);
@@ -55,6 +58,22 @@ class CompressedIndexConfiguration {
            const std::shared_ptr<brain::IndexObject> &index_obj);
 
   std::shared_ptr<boost::dynamic_bitset<>> GenerateCurrentBitSet();
+
+  void AddIndex(const std::shared_ptr<IndexObject> &idx_object);
+
+  void AddIndex(size_t offset);
+
+  void RemoveIndex(const std::shared_ptr<IndexObject> &idx_object);
+
+  void RemoveIndex(size_t offset);
+
+  std::shared_ptr<boost::dynamic_bitset<>> AddCandidate(
+      const IndexConfiguration &indexes);
+
+  std::shared_ptr<boost::dynamic_bitset<>> DropCandidate(
+      const IndexConfiguration &indexes);
+
+
 
  private:
   std::string database_name_;
