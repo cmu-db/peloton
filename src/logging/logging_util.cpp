@@ -53,7 +53,9 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
 
   dir = opendir(dir_name);
   if (dir == nullptr) {
-    return true;
+    LOG_ERROR("Failed to open directory: %s, error: %s", dir_name,
+              strerror(errno));
+    return false;
   }
 
   // XXX readdir is not thread safe???
@@ -99,67 +101,68 @@ void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
 
 bool LoggingUtil::GetDirectoryList(const char *dir_name,
                                    std::vector<std::string> &dir_name_list) {
-  int dir_elements;
-  struct dirent **element_list;
+  DIR *dir;
+  struct dirent *element;
 
   // get a list of elements in the directory
-  dir_elements = scandir(dir_name, &element_list, NULL, NULL);
-  if (dir_elements < 0) {
-    LOG_ERROR("Error occured in scandir(%d)", dir_elements);
+  dir = opendir(dir_name);
+  if (dir == nullptr) {
+    LOG_ERROR("Failed to open directory: %s, error: %s", dir_name,
+              strerror(errno));
     return false;
   }
 
-  // check directory and remove files
-  for (int i = 0; i < dir_elements; i++) {
-    char *element_name = element_list[i]->d_name;
+  // read directories containing in the directory
+  while ((element = readdir(dir)) != nullptr) {
+    char *element_name = element->d_name;
 
-    // remove '.' and '..'
-    if ((std::strcmp(element_name, ".\0") != 0) &&
-        (std::strcmp(element_name, "..\0") != 0)) {
-      std::string target_dir = std::string(dir_name) + '/' + element_name;
-
-      // check directory or not
-      if (CheckDirectoryExistence(target_dir.c_str())) {
-        dir_name_list.push_back(element_name);
-      }
+    // ignore '.' and '..'
+    if (strcmp(element_name, ".") == 0 ||
+    		strcmp(element_name, "..") == 0) {
+      continue;
     }
 
-    free(element_list[i]);
+      // check directory or not
+    std::string target_dir = std::string(dir_name) + '/' + element_name;
+    if (CheckDirectoryExistence(target_dir.c_str()) == true) {
+    	dir_name_list.push_back(element_name);
+    }
   }
 
-  free(element_list);
+  closedir(dir);
   return true;
 }
 
 bool LoggingUtil::GetFileList(const char *dir_name,
                               std::vector<std::string> &file_name_list) {
-  int dir_elements;
-  struct dirent **element_list;
+  DIR *dir;
+  struct dirent *element;
 
   // get a list of elements in the directory
-  dir_elements = scandir(dir_name, &element_list, NULL, NULL);
-  if (dir_elements < 0) {
-    LOG_ERROR("Error occured in scandir(%d)", dir_elements);
+  dir = opendir(dir_name);
+  if (dir == nullptr) {
+    LOG_ERROR("Failed to open directory: %s, error: %s", dir_name,
+              strerror(errno));
     return false;
   }
 
-  // check file and remove directories
-  for (int i = 0; i < dir_elements; i++) {
-    char *element_name = element_list[i]->d_name;
+  // read directories containing in the directory
+  while ((element = readdir(dir)) != nullptr) {
+    char *element_name = element->d_name;
 
-    // remove '.' and '..'
-    if ((std::strcmp(element_name, ".\0") != 0) &&
-        (std::strcmp(element_name, "..\0") != 0)) {
-      std::string target_dir = std::string(dir_name) + '/' + element_name;
-      if (CheckDirectoryExistence(target_dir.c_str()) == false) {
-        file_name_list.push_back(element_name);
-      }
+    // ignore '.' and '..'
+    if (strcmp(element_name, ".") == 0 ||
+    		strcmp(element_name, "..") == 0) {
+      continue;
     }
 
-    free(element_list[i]);
+		std::string target_dir = std::string(dir_name) + '/' + element_name;
+		if (CheckDirectoryExistence(target_dir.c_str()) == false) {
+			file_name_list.push_back(element_name);
+		}
   }
 
-  free(element_list);
+  closedir(dir);
   return true;
 }
 
