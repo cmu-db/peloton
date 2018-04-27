@@ -26,6 +26,8 @@ PROXY(ColumnLayoutInfo) {
   DECLARE_MEMBER(0, char *, col_start_ptr);
   DECLARE_MEMBER(1, uint32_t, stride);
   DECLARE_MEMBER(2, bool, columnar);
+  DECLARE_MEMBER(3, char *, element_array);
+  DECLARE_MEMBER(4, bool, is_dict_encoded);
   DECLARE_TYPE;
 };
 

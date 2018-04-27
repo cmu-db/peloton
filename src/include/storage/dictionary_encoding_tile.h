@@ -128,6 +128,17 @@ class DictEncodedTile : public Tile {
 	// decode tile and return a new tile that contain the decoded data
   Tile* DictDecode() override ;
 
+	inline bool IsColumnEncoded(oid_t column_offset) const override {
+		return dict_encoded_columns.find(column_offset) != dict_encoded_columns.end();
+	}
+
+	inline char *GetElementArray(oid_t column_offset) override {
+		if (IsColumnEncoded(column_offset)) {
+			return varlen_val_ptrs;
+		}
+		return nullptr;
+	}
+
  protected:
 
 	// the idx-string mapping
@@ -141,6 +152,8 @@ class DictEncodedTile : public Tile {
   catalog::Schema original_schema;
 	// original column offset
   std::map<size_t, oid_t> original_schema_offsets;
+  // element ptr
+  char *varlen_val_ptrs;
 };
 
 }  // namespace storage

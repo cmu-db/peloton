@@ -13,3 +13,24 @@ storage::DataTable::GetTileGroupById()
 my plan:
 
 add encode/decode function to tile group
+
+
+Now, row level.
+zone map is okay, since it is set before tile being encoded
+
+table_scan_translator.cpp: void TableScanTranslator::ScanConsumer::ProcessTuples
+
+SetupRowBatch
+
+First, batch is formed and pushed into pipeline, the real value of tuple is got from bufferconsumer:
+CompileAndExecutePlan->...->consumeResult->DeriveValue->Access(table_scan_translator.cpp)->loadColumn (table_scan_translator.cpp)->loadColumn (codegen/tile_group.cpp)
+
+It will be the best if we can store the vector in heap
+
+use columnlayout, add a new ptr, pointing to the address of vector, and a boolean to indicate whether 
+this column is encoded.
+
+The core shit: GetColumnLayouts, columnLayouts (codegen/tile_group.cpp and h) and columnlayoutInfo (runtimefunctions.h and cpp)
+
+
+yes, it is fucking load column.

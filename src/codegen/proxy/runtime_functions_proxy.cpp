@@ -20,7 +20,8 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo",
-            MEMBER(col_start_ptr), MEMBER(stride), MEMBER(columnar));
+            MEMBER(col_start_ptr), MEMBER(stride), MEMBER(columnar),
+            MEMBER(element_array), MEMBER(is_dict_encoded));
 
 DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
             MEMBER(opaque));

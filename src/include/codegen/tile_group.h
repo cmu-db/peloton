@@ -53,6 +53,9 @@ class TileGroup {
     llvm::Value *col_start_ptr;
     llvm::Value *col_stride;
     llvm::Value *is_columnar;
+    // this is the ptr to element array
+    llvm::Value *element_array;
+    llvm::Value *is_dict_encoded;
   };
 
   /*

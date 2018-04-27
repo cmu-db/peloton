@@ -146,6 +146,10 @@ class Tile : public Printable {
 
   inline bool IsDictEncoded() const { return is_dict_encoded; }
 
+  virtual inline bool IsColumnEncoded(UNUSED_ATTRIBUTE oid_t column_offset) const { return false; }
+
+  virtual inline char *GetElementArray(UNUSED_ATTRIBUTE oid_t column_offset) { return nullptr; }
+
   void SetAttributes(Tile* tile);
 
   const std::string GetColumnName(const oid_t column_index) const {

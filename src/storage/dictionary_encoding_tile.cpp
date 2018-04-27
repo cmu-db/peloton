@@ -22,7 +22,8 @@ namespace storage {
 DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile_header,
      const catalog::Schema &tuple_schema, TileGroup *tile_group,
      int tuple_count) : Tile(backend_type, tile_header, tuple_schema, tile_group, tuple_count),
-     original_schema(tuple_schema) {
+     original_schema(tuple_schema),
+     varlen_val_ptrs(nullptr) {
 	std::vector<catalog::Column> columns;
 	size_t offset = 0;
 
@@ -32,8 +33,8 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 		original_schema_offsets.emplace(offset, i);
 		if (column_type == type::TypeId::VARCHAR ||
 				column_type == type::TypeId::VARBINARY) {
-			catalog::Column encoded_column(type::TypeId::TINYINT,
-				type::Type::GetTypeSize(type::TypeId::TINYINT),
+			catalog::Column encoded_column(type::TypeId::INTEGER,
+				type::Type::GetTypeSize(type::TypeId::INTEGER),
 				schema.GetColumn(i).GetName(), true);
 			columns.push_back(encoded_column);
 			dict_encoded_columns.emplace(i, i);
@@ -55,7 +56,9 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 }
 
 // delete data is enough
-DictEncodedTile::~DictEncodedTile(){}
+DictEncodedTile::~DictEncodedTile(){
+	delete[] varlen_val_ptrs;
+}
 
 type::Value DictEncodedTile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
 	if (dict_encoded_columns.count(column_id) > 0) {
@@ -132,7 +135,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 				}
 				// many constructor of Value is private, so use
 				// DeserializeFrom to construct the idx Value
-				type::Value idx_val(type::Value::DeserializeFrom(idx_data, type::TypeId::TINYINT, true));
+				type::Value idx_val(type::Value::DeserializeFrom(idx_data, type::TypeId::INTEGER, true));
 				new_data_vector[i].push_back(idx_val);
 			}
 		} else {
@@ -150,6 +153,16 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 			SetValueFast(new_data_vector[i][to], to, schema.GetOffset(i), schema.IsInlined(i),
 					schema.GetLength(i));
 		}
+	}
+
+	// init varlen_val_ptrs
+//	varlen_val_ptrs = new const char*[element_array.size()];
+	varlen_val_ptrs = new char[element_array.size() * sizeof(const char*)];
+	for (size_t i = 0; i < element_array.size(); i++) {
+//		varlen_val_ptrs[i] = element_array[i].GetData();
+		const char *varlen_data = element_array[i].GetData();
+//		char *storage = *reinterpret_cast<char **>(varlen_val_ptrs + i);
+		PELOTON_MEMCPY(varlen_val_ptrs + i * sizeof(const char*), &varlen_data, sizeof(const char*));
 	}
 	is_dict_encoded = true;
 }

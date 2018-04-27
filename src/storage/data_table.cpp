@@ -1003,10 +1003,10 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
       tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
 
 	auto curr_tile_group = GetTileGroupById(tile_group_id);
-	if (curr_tile_group->IsDictEncoded()) {
-//		return curr_tile_group->GetDecodedTileGroupCopy();
-		curr_tile_group->DictDecode();
-	}
+//	if (curr_tile_group->IsDictEncoded()) {
+////		return curr_tile_group->GetDecodedTileGroupCopy();
+//		curr_tile_group->DictDecode();
+//	}
 
 	return curr_tile_group;
 }

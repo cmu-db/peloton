@@ -21,6 +21,7 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "storage/dictionary_encoding_tile.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
 
@@ -115,9 +116,15 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
         tile->GetTupleLocation(0) + tile_schema->GetOffset(tile_column_offset);
     infos[col_idx].stride = tile_schema->GetLength();
     infos[col_idx].is_columnar = tile_schema->GetColumnCount() == 1;
-    LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
+//    infos[col_idx].is_dict_encoded = tile->IsColumnEncoded(tile_column_offset);
+		// now, the layout of column being encoded will have non-null element array pointer
+    infos[col_idx].element_array = tile->GetElementArray(tile_column_offset);
+    infos[col_idx].is_dict_encoded = tile->IsColumnEncoded(tile_column_offset);
+    LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s, is_dict_encoded: %d, element_array: %p", col_idx,
               infos[col_idx].column, infos[col_idx].stride,
-              infos[col_idx].is_columnar ? "true" : "false");
+              infos[col_idx].is_columnar ? "true" : "false",
+              infos[col_idx].is_dict_encoded,
+              infos[col_idx].element_array);
   }
 }
 

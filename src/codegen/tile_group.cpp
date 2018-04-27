@@ -22,6 +22,8 @@
 #include "codegen/vector.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/boolean_type.h"
+#include <vector>
+#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -104,7 +106,11 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
         layout_type, column_layout_infos, col_id, 1));
     auto *columnar = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
         layout_type, column_layout_infos, col_id, 2));
-    layouts.push_back(ColumnLayout{col_id, start, stride, columnar});
+    auto *element_array = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+        layout_type, column_layout_infos, col_id, 3));
+    auto *is_dict_encoded = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+        layout_type, column_layout_infos, col_id, 4));
+    layouts.push_back(ColumnLayout{col_id, start, stride, columnar, element_array, is_dict_encoded});
   }
   return layouts;
 }
@@ -118,6 +124,9 @@ codegen::Value TileGroup::LoadColumn(
       codegen->CreateInBoundsGEP(codegen.ByteType(), layout.col_start_ptr,
                                  codegen->CreateMul(tid, layout.col_stride));
 
+//	auto element_array = reinterpret_cast<std::vector<peloton::type::Value>*>(layout.element_array);
+//	LOG_TRACE("element array is null: %d", layout.element_array == nullptr);
+
   // The value, length and is_null check
   llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
 
@@ -129,8 +138,34 @@ codegen::Value TileGroup::LoadColumn(
   // Check if it's a string or numeric value
   if (sql_type.IsVariableLength()) {
     auto *varlen_type = VarlenProxy::GetType(codegen);
-    auto *varlen_ptr_ptr = codegen->CreateBitCast(
-        col_address, varlen_type->getPointerTo()->getPointerTo());
+		llvm::Value *varlen_ptr_ptr = nullptr, *decoded_vl_ptr_ptr = nullptr;
+
+		lang::If column_is_dict_encoded{codegen, layout.is_dict_encoded};
+	  {
+	    LOG_TRACE("column is encoded");
+	    const auto &int_type = type::SqlType::LookupType(peloton::type::TypeId::INTEGER);
+	    llvm::Type *idx_type = nullptr, *idx_len_type = nullptr;
+	    llvm::Value *idx_val = nullptr;
+	    int_type.GetTypeForMaterialization(codegen, idx_type, idx_len_type);
+	    idx_val = codegen->CreateLoad(
+	           idx_type,
+	           codegen->CreateBitCast(col_address, idx_type->getPointerTo()));
+	    llvm::Value *varlen_address =
+	        codegen->CreateInBoundsGEP(codegen.ByteType(), layout.element_array,
+                                 codegen->CreateMul(idx_val,
+                                 codegen.Const32(codegen.SizeOf(codegen.CharPtrType()))));
+	    decoded_vl_ptr_ptr = codegen->CreateBitCast(
+      varlen_address, varlen_type->getPointerTo()->getPointerTo());
+	  }
+	  column_is_dict_encoded.ElseBlock();
+	  {
+	    LOG_TRACE("column is not encoded");
+	    varlen_ptr_ptr = codegen->CreateBitCast(
+      col_address, varlen_type->getPointerTo()->getPointerTo());
+	  }
+	  column_is_dict_encoded.EndIf();
+		varlen_ptr_ptr = column_is_dict_encoded.BuildPHI(decoded_vl_ptr_ptr, varlen_ptr_ptr);
+
     if (is_nullable) {
       codegen::Varlen::GetPtrAndLength(
           codegen, codegen->CreateLoad(varlen_ptr_ptr), val, length, is_null);
