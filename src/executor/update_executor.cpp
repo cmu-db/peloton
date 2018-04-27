@@ -92,6 +92,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     return false;
   }
   transaction_manager.PerformDelete(current_txn, old_location, new_location);
+  statement_write_set_.insert(new_location);
 
   ////////////////////////////////////////////
   // Insert tuple rather than install version
@@ -191,9 +192,6 @@ bool UpdateExecutor::DExecute() {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
-    if (IsInStatementWriteSet(old_location)) {
-      continue;
-    }
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
@@ -220,6 +218,11 @@ bool UpdateExecutor::DExecute() {
       }
     }
     ///////////////////////////////////////////////////////////
+
+    
+    if (IsInStatementWriteSet(old_location)) {
+      continue;
+    }
 
     if (trigger_list != nullptr) {
       LOG_TRACE("size of trigger list in target table: %d",
@@ -268,7 +271,8 @@ bool UpdateExecutor::DExecute() {
                                 executor_context_);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
-        statement_write_set_.insert(old_location);
+        // we do not need to add any item pointer to statement-level write set
+        // here, because we do not generate any new version
       }
     }
     // if we have already obtained the ownership

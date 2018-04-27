@@ -16,6 +16,7 @@
 #include "sql/testing_sql_util.h"
 #include "common/harness.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
@@ -208,10 +209,16 @@ TEST_F(UpdateTests, UpdatingOld) {
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
       "(1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  auto parse_tree = insert_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -250,10 +257,16 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -289,10 +302,16 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = "
       "1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -323,9 +342,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -358,10 +383,16 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = delete_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());

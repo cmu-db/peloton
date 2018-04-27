@@ -80,8 +80,7 @@ class Optimizer : public AbstractOptimizer {
   Optimizer();
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree,
-      const std::string default_database_name,
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
       concurrency::TransactionContext *txn) override;
 
   std::unique_ptr<OptimizerPlanInfo> GetOptimizedPlanInfo(
