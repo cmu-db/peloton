@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
+#include "brain/indextune/compressed_index_config.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
@@ -27,81 +28,20 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class RLFrameworkTest : public PelotonTest {
- private:
-  std::string database_name_;
-  catalog::Catalog *catalog_;
-  concurrency::TransactionManager *txn_manager_;
-
  public:
-  RLFrameworkTest()
-      : catalog_{catalog::Catalog::GetInstance()},
-        txn_manager_(&concurrency::TransactionManagerFactory::GetInstance()) {
-    catalog_->Bootstrap();
-  }
-
-  // Create a new database
-  void CreateDatabase(const std::string &db_name) {
-    database_name_ = db_name;
-
-    auto txn = txn_manager_->BeginTransaction();
-    catalog_->CreateDatabase(database_name_, txn);
-    txn_manager_->CommitTransaction(txn);
-  }
-
-  // Create a new table with schema (a INT, b INT, c INT).
-  void CreateTable(const std::string &table_name) {
-    auto a_column = catalog::Column(
-        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-        "a", true);
-    auto b_column = catalog::Column(
-        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-        "b", true);
-    auto c_column = catalog::Column(
-        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-        "c", true);
-    std::unique_ptr<catalog::Schema> table_schema(
-        new catalog::Schema({a_column, b_column, c_column}));
-
-    auto txn = txn_manager_->BeginTransaction();
-    catalog_->CreateTable(database_name_, table_name, std::move(table_schema),
-                          txn);
-    txn_manager_->CommitTransaction(txn);
-  }
-
-  void DropTable(const std::string &table_name) {
-    auto txn = txn_manager_->BeginTransaction();
-    catalog_->DropTable(database_name_, table_name, txn);
-    txn_manager_->CommitTransaction(txn);
-  }
-
-  void DropDatabase() {
-    auto txn = txn_manager_->BeginTransaction();
-    catalog_->DropDatabaseWithName(database_name_, txn);
-    txn_manager_->CommitTransaction(txn);
-  }
-
-  std::vector<std::tuple<oid_t, oid_t>> GetAllColumns() {
-    std::vector<std::tuple<oid_t, oid_t>> result;
-
-    auto txn = txn_manager_->BeginTransaction();
-
-    const auto db_object = catalog_->GetDatabaseObject(database_name_, txn);
-    const auto table_objects = db_object->GetTableObjects();
-
-    for (const auto &it : table_objects) {
-      oid_t table_oid = it.first;
-      const auto table_obj = it.second;
-      const auto column_objects = table_obj->GetColumnObjects();
-      for (const auto &col_it : column_objects) {
-        oid_t col_oid = col_it.first;
-        result.emplace_back(table_oid, col_oid);
-      }
+  RLFrameworkTest(catalog::Catalog *cat = nullptr,
+                  concurrency::TransactionManager *txn_manager = nullptr) {
+    if (nullptr == cat) {
+      cat = catalog::Catalog::GetInstance();
     }
-
-    txn_manager_->CommitTransaction(txn);
-
-    return result;
+    if (nullptr == txn_manager) {
+      txn_manager = &concurrency::TransactionManagerFactory::GetInstance();
+    }
+    comp_idx_config_ = std::unique_ptr<brain::CompressedIndexConfiguration>(
+        new brain::CompressedIndexConfiguration(cat, txn_manager));
   }
+
+  std::unique_ptr<brain::CompressedIndexConfiguration> comp_idx_config_;
 };
 
 TEST_F(RLFrameworkTest, BasicTest) {
@@ -109,14 +49,22 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::string table_name_1 = "dummy_table_1";
   std::string table_name_2 = "dummy_table_2";
 
-  CreateDatabase(database_name);
-  CreateTable(table_name_1);
-  CreateTable(table_name_2);
+  comp_idx_config_->CreateDatabase(database_name);
+  comp_idx_config_->CreateTable(table_name_1);
+  comp_idx_config_->CreateTable(table_name_2);
 
-  auto all_columns = GetAllColumns();
-  for (const auto &it : all_columns) {
-    LOG_DEBUG("%d -- %d", (int)std::get<0>(it), (int)std::get<1>(it));
-  }
+  // create index on (a, b) and (b, c)
+  // (a, b) -> 110 -> 6 -> 6
+  // (b, c) -> 011 -> 3 -> 3
+  comp_idx_config_->CreateIndex_A(table_name_1);
+  // create index on (a, c)
+  // (a, c) -> 101 -> 5 -> 13
+  comp_idx_config_->CreateIndex_B(table_name_2);
+
+  auto cur_bit_set = comp_idx_config_->GenerateCurrentBitSet();
+  std::string output;
+  boost::to_string(*cur_bit_set, output);
+  LOG_DEBUG("bitset: %s", output.c_str());
 }
 
 }  // namespace test
