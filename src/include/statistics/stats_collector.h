@@ -66,7 +66,7 @@ class StatsCollector {
 
     using MetricList = std::vector<std::shared_ptr<AbstractMetricNew>>;
     MetricList metrics_;
-    std::unordered_map<StatInsertionPoint, MetricList> metric_dispatch_;
+    std::unordered_map<StatInsertionPoint, MetricList, EnumHash<StatInsertionPoint>> metric_dispatch_;
 };
 
 }  // namespace stats
