@@ -18,10 +18,20 @@
 
 #include "common/internal_types.h"
 #include "common/logger.h"
+#include "expression/abstract_expression.h"
 #include "planner/abstract_scan_plan.h"
 #include "type/serializer.h"
 
 namespace peloton {
+
+namespace expression {
+class Parameter;
+}  // namespace expression
+
+namespace storage {
+class DataTable;
+}  // namespace storage
+
 namespace planner {
 
 class SeqScanPlan : public AbstractScan {
@@ -47,15 +57,6 @@ class SeqScanPlan : public AbstractScan {
   }
 
   void SetParameterValues(std::vector<type::Value> *values) override;
-
-  //===--------------------------------------------------------------------===//
-  // Serialization/Deserialization
-  //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output) const override;
-  bool DeserializeFrom(SerializeInput &input) override;
-
-  /* For init SerializeOutput */
-  int SerializeSize() const override;
 
   std::unique_ptr<AbstractPlan> Copy() const override {
     auto *new_plan =

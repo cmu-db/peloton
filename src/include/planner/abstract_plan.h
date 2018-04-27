@@ -20,8 +20,6 @@
 #include "codegen/query_parameters_map.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
-#include "type/serializeio.h"
-#include "type/serializer.h"
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "util/hash_util.h"
@@ -66,8 +64,6 @@ class AbstractPlan : public Printable {
 
   const AbstractPlan *GetChild(uint32_t child_index) const;
 
-  const AbstractPlan *GetParent() const;
-  
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -111,23 +107,6 @@ class AbstractPlan : public Printable {
 
   virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
-  // A plan will be sent to anther node via serialization
-  // So serialization should be implemented by the derived classes
-
-  //===--------------------------------------------------------------------===//
-  // Serialization/Deserialization
-  // Each sub-class will have to implement these functions
-  // After the implementation for each sub-class, we should set these to pure
-  // virtual
-  //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
-    return false;
-  }
-  virtual bool DeserializeFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
-    return false;
-  }
-  virtual int SerializeSize() const { return 0; }
-
   virtual hash_t Hash() const;
 
   virtual bool operator==(const AbstractPlan &rhs) const;
@@ -143,16 +122,10 @@ class AbstractPlan : public Printable {
     }
   }
 
- protected:
-  // only used by its derived classes (when deserialization)
-  AbstractPlan *Parent() const { return parent_; }
-
  private:
   // A plan node can have multiple children
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
-  AbstractPlan *parent_ = nullptr;
-  
   // TODO: This field is harded coded now. This needs to be changed when
   // optimizer has the cost model and cardinality estimation
   int estimated_cardinality_ = 500000;
