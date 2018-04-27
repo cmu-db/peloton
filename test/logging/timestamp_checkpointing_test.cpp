@@ -16,6 +16,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "logging/timestamp_checkpoint_manager.h"
+#include "logging/logging_util.h"
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "sql/testing_sql_util.h"

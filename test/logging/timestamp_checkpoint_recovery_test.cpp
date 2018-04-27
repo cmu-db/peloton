@@ -40,15 +40,18 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   checkpoint_manager.DoCheckpointRecovery();
 
   // low level test
+  // make sure data structures created in checkpointing test and recovered
+  // above are correct.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto storage = storage::StorageManager::GetInstance();
 
-  // check the uncommitted table does not exist
+  // check an uncommitted table does not exist
   EXPECT_FALSE(
       catalog->ExistTableByName(DEFAULT_DB_NAME, "out_of_checkpoint", txn));
 
+  // check all tables in the default database
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
   for (auto table_catalog_pair : default_db_catalog->GetTableObjects()) {
     auto table_catalog = table_catalog_pair.second;
@@ -57,24 +60,6 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
     LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
     		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
-    auto tile_group_count = table->GetTileGroupCount();
-    LOG_INFO("Tile group count: %lu", tile_group_count);
-    for (oid_t tg_offset = START_OID; tg_offset < tile_group_count; tg_offset++) {
-      auto tile_group = table->GetTileGroup(tg_offset);
-      auto column_map = tile_group->GetColumnMap();
-      LOG_INFO("Column map size in tile group %d : %lu",
-      		tile_group->GetTileGroupId(), column_map.size());
-      for(auto column_tile : column_map) {
-        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-        		column_tile.first, column_tile.second.first, column_tile.second.second);
-      }
-      for(oid_t column_offset = 0; column_offset < column_map.size(); column_offset++) {
-      	if (column_map.count(column_offset) == 0) continue;
-      	auto tile_pair = column_map.at(column_offset);
-        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-        		column_offset, tile_pair.first, tile_pair.second);
-      }
-    }
 
     // check the basic information of columns
     if (table_catalog->GetTableName() == "checkpoint_table_test") {
@@ -127,12 +112,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-//          if (2 == key_attrs.size()) {
-//          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          	EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs[1])
-//                                 ->GetColumnName());
-//          }
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          	EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs[1])
+                                 ->GetColumnName());
+          }
         }
         // unique primary key for attribute "upid" (unique)
         else if (index_catalog->GetIndexName() ==
@@ -143,10 +128,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-//          if (1 == key_attrs.size()) {
-//          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          }
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          }
         }
         // ART index for attribute "value1"
         else if (index_catalog->GetIndexName() == "index_test1") {
@@ -156,10 +141,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-//          if (1 == key_attrs.size()) {
-//          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
-//                                  ->GetColumnName());
-//          }
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
+                                  ->GetColumnName());
+          }
         }
         // SKIPLIST index for attributes "value2" and "value3"
         else if (index_catalog->GetIndexName() == "index_test2") {
@@ -169,12 +154,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-//          if (2 == key_attrs.size()) {
-//          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
-//                                  ->GetColumnName());
-//          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[1])
-//                                  ->GetColumnName());
-//          }
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
+                                  ->GetColumnName());
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[1])
+                                  ->GetColumnName());
+          }
         }
         // unique index for attribute "value2"
         else if (index_catalog->GetIndexName() == "unique_index_test") {
@@ -221,16 +206,16 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(1, source_columns.size());
-//          if (1 == source_columns.size()) {
-//          	EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns[0])
-//                                  ->GetColumnName());
-//          }
+          if (1 == source_columns.size()) {
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns[0])
+                                  ->GetColumnName());
+          }
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(1, sink_columns.size());
-//          if (1 == sink_columns.size()) {
-//          	EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns[0])
-//                              ->GetColumnName());
-//          }
+          if (1 == sink_columns.size()) {
+          	EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns[0])
+                              ->GetColumnName());
+          }
         }
         // (value4, value5) => (checkpoint_index_test.upid1,
         // checkpoint_index_test.upid2)
@@ -243,22 +228,22 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(2, source_columns.size());
-//          if (2 == source_columns.size()) {
-//          	EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns[0])
-//                                  ->GetColumnName());
-//          	EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns[1])
-//                                  ->GetColumnName());
-//          }
+          if (2 == source_columns.size()) {
+          	EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns[0])
+                                  ->GetColumnName());
+          	EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns[1])
+                                  ->GetColumnName());
+          }
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(2, sink_columns.size());
-//          if (2 == sink_columns.size()) {
-//          	EXPECT_EQ("upid1",
-//                      sink_table_catalog->GetColumnObject(sink_columns[0])
-//                        ->GetColumnName());
-//          	EXPECT_EQ("upid2",
-//                      sink_table_catalog->GetColumnObject(sink_columns[1])
-//                        ->GetColumnName());
-//          }
+          if (2 == sink_columns.size()) {
+          	EXPECT_EQ("upid1",
+                      sink_table_catalog->GetColumnObject(sink_columns[0])
+                        ->GetColumnName());
+          	EXPECT_EQ("upid2",
+                      sink_table_catalog->GetColumnObject(sink_columns[1])
+                        ->GetColumnName());
+          }
         } else {
           LOG_ERROR("Unexpected foreign key is found: %s",
                     foreign_key->GetConstraintName().c_str());
@@ -279,12 +264,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-//          if (2 == key_attrs.size()) {
-//          	EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          	EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
-//                                 ->GetColumnName());
-//          }
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          	EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
+                                 ->GetColumnName());
+          }
         }
         // UNIQUE constraint index for an attribute "value1"
         else if (index_catalog->GetIndexName() ==
@@ -295,10 +280,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-//          if (1 == key_attrs.size()) {
-//          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          }
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          }
         }
         // foreign key index for an attribute "value3"
         else if (index_catalog->GetIndexName() ==
@@ -309,10 +294,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
         	EXPECT_EQ(1, key_attrs.size());
-//          if (1 == key_attrs.size()) {
-//          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          }
+          if (1 == key_attrs.size()) {
+          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          }
         }
         // foreign key index for an attributes "value4" and "value5"
         else if (index_catalog->GetIndexName() ==
@@ -323,12 +308,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-//          if (2 == key_attrs.size()) {
-//          	EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
-//                                 ->GetColumnName());
-//          	EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
-//                                 ->GetColumnName());
-//          }
+          if (2 == key_attrs.size()) {
+          	EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
+                                 ->GetColumnName());
+          	EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
+                                 ->GetColumnName());
+          }
         } else {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
@@ -467,11 +452,16 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   }
   */
 
-  // finish the low level check
+  // finish the low level test
   txn_manager.CommitTransaction(txn);
 
+
   // high level test
-  // check the data of 3 user tables
+  // make sure the records of 3 user tables created checkpointing test
+  // are correct and their constraints are working correctly through
+  // SQL execution.
+
+  // make sure the data in each user table is correct
   std::string sql1 = "SELECT * FROM checkpoint_table_test;";
   std::vector<std::string> expected1 = {"0|1.2|aaa", "1|12.34|bbbbbb",
                                         "2|12345.7|ccccccccc", "3|0|xxxx"};
@@ -487,7 +477,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                                         "9|10|11|12|2|11|12"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql3, expected3, false);
 
-  // check the constraints are working
+  // make sure the constraints are working
   // PRIMARY KEY (1 column: pid)
   LOG_INFO("PRIMARY KEY (1 column) check");
   std::string primary_key_dml1 =
@@ -512,6 +502,25 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           table->GetSchema()->GetColumn(column_catalog->GetColumnId());
       LOG_INFO("Column %d %s\n%s", column_catalog->GetColumnId(),
       		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
+    }
+
+    auto tile_group_count = table->GetTileGroupCount();
+    LOG_INFO("Tile group count: %lu", tile_group_count);
+    for (oid_t tg_offset = START_OID; tg_offset < tile_group_count; tg_offset++) {
+      auto tile_group = table->GetTileGroup(tg_offset);
+      auto column_map = tile_group->GetColumnMap();
+      LOG_INFO("Column map size in tile group %d : %lu",
+      		tile_group->GetTileGroupId(), column_map.size());
+      for(auto column_tile : column_map) {
+        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
+        		column_tile.first, column_tile.second.first, column_tile.second.second);
+      }
+      for(oid_t column_offset = 0; column_offset < column_map.size(); column_offset++) {
+      	if (column_map.count(column_offset) == 0) continue;
+      	auto tile_pair = column_map.at(column_offset);
+        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
+        		column_offset, tile_pair.first, tile_pair.second);
+      }
     }
   }
   txn_manager.CommitTransaction(txn2);

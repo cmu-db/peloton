@@ -37,15 +37,6 @@ char *Inserter::AllocateTupleStorage() {
   // Get the tile offset assuming that it is in a tuple format
   auto tile_group = table_->GetTileGroupById(location_.block);
   oid_t tile_offset, tile_column_offset;
-
-  LOG_INFO("tile group %d (in table %d)", tile_group->GetTileGroupId(),
-  		tile_group->GetTableId());
-  for(auto column_pair : tile_group->GetColumnMap()) {
-  	LOG_INFO("  %d, (%d, %d)", column_pair.first, column_pair.second.first,
-  			column_pair.second.second);
-  }
-  LOG_INFO("get location from column_map by column_offset 0");
-
   tile_group->LocateTileAndColumn(0, tile_offset, tile_column_offset);
   tile_ = tile_group->GetTileReference(tile_offset);
   return tile_->GetTupleLocation(location_.offset);
