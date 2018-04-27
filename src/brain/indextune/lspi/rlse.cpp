@@ -1,4 +1,4 @@
-#include "brain/indextune/lspi/rlse_lm.h"
+#include "brain/indextune/lspi/rlse.h"
 
 namespace peloton{
 namespace brain{
