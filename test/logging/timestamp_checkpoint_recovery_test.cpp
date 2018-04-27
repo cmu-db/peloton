@@ -489,15 +489,35 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // check the constraints are working
   // PRIMARY KEY (1 column: pid)
-  LOG_DEBUG("PRIMARY KEY (1 column) check");
+  LOG_INFO("PRIMARY KEY (1 column) check");
   std::string primary_key_dml1 =
       "INSERT INTO checkpoint_table_test VALUES (0, 5.5, 'eee');";
   ResultType primary_key_result1 =
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result1);
 
+  // output created table information to verify checkpoint recovery
+  auto txn2 = txn_manager.BeginTransaction();
+  auto default_db_catalog2 = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn2);
+  for (auto table_catalog_pair : default_db_catalog2->GetTableObjects()) {
+    auto table_catalog = table_catalog_pair.second;
+    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
+                                          table_catalog->GetTableOid());
+    LOG_INFO("Table %d %s\n%s", table_catalog->GetTableOid(),
+    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
+
+    for (auto column_pair : table_catalog->GetColumnObjects()) {
+      auto column_catalog = column_pair.second;
+      auto column =
+          table->GetSchema()->GetColumn(column_catalog->GetColumnId());
+      LOG_INFO("Column %d %s\n%s", column_catalog->GetColumnId(),
+      		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
+    }
+  }
+  txn_manager.CommitTransaction(txn2);
+
   // PRIMARY KEY (2 column: pid1, pid2)
-  LOG_DEBUG("PRIMARY KEY (2 columns) check");
+  LOG_INFO("PRIMARY KEY (2 columns) check");
   std::string primary_key_dml2 =
       "INSERT INTO checkpoint_constraint_test VALUES (1, 2, 15, 16, 0, 1 ,2);";
   ResultType primary_key_result2 =
@@ -505,7 +525,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   EXPECT_EQ(ResultType::ABORTED, primary_key_result2);
 
   // DEFAULT (value1 = 0)
-  LOG_DEBUG("DEFAULT check");
+  LOG_INFO("DEFAULT check");
   std::string default_dml =
       "INSERT INTO checkpoint_constraint_test"
       " (pid1, pid2, value2, value3, value4, value5)"

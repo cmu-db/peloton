@@ -157,7 +157,7 @@ bool LoggingUtil::GetFileList(const char *dir_name,
     }
 
 		std::string target_dir = std::string(dir_name) + '/' + element_name;
-		if (CheckDirectoryExistence(target_dir.c_str()) == false) {
+		if (CheckDirectoryExistence(target_dir.c_str()) != false) {
 			file_name_list.push_back(element_name);
 		}
   }
