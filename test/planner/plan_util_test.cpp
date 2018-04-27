@@ -6,10 +6,11 @@
 //
 // Identification: test/planner/plan_util_test.cpp
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/binder/bind_node_visitor.h>
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
@@ -99,8 +100,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
-      TEST_DB_NAME);
+  static_cast<parser::UpdateStatement *>(sql_stmt)
+      ->table->TryBindDatabaseName(TEST_DB_NAME);
   std::set<oid_t> affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
@@ -114,8 +115,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
-      TEST_DB_NAME);
+  static_cast<parser::UpdateStatement *>(sql_stmt)
+      ->table->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
@@ -129,8 +130,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   stmt.reset(new Statement("DELETE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::DeleteStatement *>(sql_stmt)->TryBindDatabaseName(
-      TEST_DB_NAME);
+  static_cast<parser::DeleteStatement *>(sql_stmt)
+      ->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
@@ -144,8 +145,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   stmt.reset(new Statement("INSERT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::InsertStatement *>(sql_stmt)->TryBindDatabaseName(
-      TEST_DB_NAME);
+  static_cast<parser::InsertStatement *>(sql_stmt)
+      ->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
@@ -250,6 +251,9 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
       "UPDATE test_table SET last_name = '' WHERE id = 0 AND first_name = '';";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, TEST_DB_COLUMNS);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
           txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
@@ -264,6 +268,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   // no column is affected
   query_string = "UPDATE test_table SET last_name = '';";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -276,6 +282,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   // no column is affected
   query_string = "DELETE FROM test_table;";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -287,6 +295,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   // id and last_name in test_table are affected
   query_string = "DELETE FROM test_table WHERE id = 0 AND last_name = '';";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -301,6 +311,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   // no columns is affected
   query_string = "INSERT INTO test_table VALUES (1, 'pel', 'ton');";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -313,6 +325,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   // first_name and last_name in test_table are affected
   query_string = "SELECT id FROM test_table WHERE first_name = last_name;";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -327,6 +341,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   query_string =
       "SELECT pid FROM test_table_job WHERE age > 20 AND job = '' AND pid > 5;";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
@@ -345,6 +361,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
       "test_table_job.pid WHERE test_table_job.pid > 0 AND "
       "test_table.last_name = '';";
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
