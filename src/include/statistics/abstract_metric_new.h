@@ -21,25 +21,39 @@
 namespace peloton {
 namespace stats {
 
-/**
- * Abstract class for metrics
- * A metric should be able to:
- * (1) identify its type;
- * (2) print itself (ToString);
- * (3) reset itself;
- */
+// Any metric that derives from this class will override
+// whatever insertion point methods it needs
 class AbstractMetricNew : public Printable {
  public:
   virtual ~AbstractMetricNew() = default;
 
-  virtual void OnTransactionCommit() {};
+  virtual void OnTransactionBegin() {};
 
-  virtual void OnTransactionAbort() {};
+  virtual void OnTransactionCommit(UNUSED_ATTRIBUTE oid_t db_id) {};
 
-  // TODO(tianyu): more handler methods
+  virtual void OnTransactionAbort(UNUSED_ATTRIBUTE oid_t db_id) {};
+
+  virtual void OnTupleRead() {};
+
+  virtual void OnTupleUpdate() {};
+
+  virtual void OnTupleInsert() {};
+
+  virtual void OnTupleDelete() {};
+
+  virtual void OnIndexRead() {};
+
+  virtual void OnIndexUpdate() {};
+
+  virtual void OnIndexInsert() {};
+
+  virtual void OnIndexDelete() {};
+
+  virtual void OnQueryBegin() {};
+
+  virtual void OnQueryEnd() {};
 
   virtual void CollectIntoCatalog() = 0;
-
 };
 
 }  // namespace stats

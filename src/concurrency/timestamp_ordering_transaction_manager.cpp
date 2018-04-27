@@ -1076,7 +1076,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
-    stats::StatsCollector::GetInstance()->CollectStat<stats::StatInsertionPoint::TXN_BEGIN>();
+    stats::StatsCollector::GetInstance()->CollectStat<stats::StatInsertionPoint::TXN_BEGIN, oid_t>(database_id);
   }
 
 

@@ -8,11 +8,16 @@ namespace stats {
 class DatabaseMetricNew: public AbstractMetricNew {
  public:
   // TODO(tianyu): fill argument
-  void OnTransactionCommit() override {
-    txn_committed_++;
+  void OnTransactionCommit(oid_t db_id) override {
+    std::atomic<int64_t> *value;
+    txn_committed_.Find(db_id, value);
+    (*value).fetch_add(1);
   }
-  void OnTransactionAbort() override {
-    txn_aborted_++;
+
+  void OnTransactionAbort(oid_t db_id) override {
+    std::atomic<int64_t> *value;
+    txn_aborted_.Find(db_id, value);
+    (*value).fetch_add(1);
   }
 
   void CollectIntoCatalog() override {
@@ -27,8 +32,7 @@ class DatabaseMetricNew: public AbstractMetricNew {
 
 
  private:
-  std::atomic<int64_t> txn_committed_, txn_aborted_;
+   CuckooMap<oid_t, std::atomic<int64_t> *> txn_committed_, txn_aborted_;
 };
 }
 }
-
