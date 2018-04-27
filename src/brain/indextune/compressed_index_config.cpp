@@ -200,38 +200,59 @@ CompressedIndexConfiguration::GenerateCurrentBitSet() {
 }
 
 void CompressedIndexConfiguration::AddIndex(
+    std::shared_ptr<boost::dynamic_bitset<>> &bitset,
     const std::shared_ptr<IndexObject> &idx_object) {
-  if (nullptr == idx_object) {
-    return;
-  }
+  size_t offset = GetGlobalOffset(idx_object);
+  bitset->set(offset);
 }
 
-void CompressedIndexConfiguration::AddIndex(size_t offset) {
-  if (0 == offset) {
-    return;
-  }
+void CompressedIndexConfiguration::AddIndex(
+    std::shared_ptr<boost::dynamic_bitset<>> &bitset, size_t offset) {
+  bitset->set(offset);
 }
 
 void CompressedIndexConfiguration::RemoveIndex(
+    std::shared_ptr<boost::dynamic_bitset<>> &bitset,
     const std::shared_ptr<IndexObject> &idx_object) {
-  if (nullptr == idx_object) {
-    return;
-  }
+  size_t offset = GetGlobalOffset(idx_object);
+  bitset->set(offset, false);
 }
 
-void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
-  if (0 == offset) {
-    return;
-  }
+void CompressedIndexConfiguration::RemoveIndex(
+    std::shared_ptr<boost::dynamic_bitset<>> &bitset, size_t offset) {
+  bitset->set(offset, false);
 }
 
 std::shared_ptr<boost::dynamic_bitset<>>
 CompressedIndexConfiguration::AddCandidate(const IndexConfiguration &indexes) {
-  int a = 8;
-  if (0 == indexes.GetIndexCount()) {
-    a = 16;
+  const auto index_objs = indexes.GetIndexes();
+  auto result = std::make_shared<boost::dynamic_bitset<>>(next_table_offset_);
+
+  auto txn = txn_manager_->BeginTransaction();
+  const auto db_oid =
+      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
+  txn_manager_->CommitTransaction(txn);
+
+  for (const auto &idx_obj : index_objs) {
+    const auto table_oid = idx_obj->table_oid;
+    const auto &column_oids = idx_obj->column_oids;
+    const auto table_offset = table_offset_map_.at(table_oid);
+
+    // Insert empty index
+    AddIndex(result, table_offset);
+
+    std::vector<oid_t> col_oids;
+    for (const auto column_oid : column_oids) {
+      col_oids.push_back(column_oid);
+
+      // Insert prefix index
+      auto idx_new =
+          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+      AddIndex(result, idx_new);
+    }
   }
-  return std::make_shared<boost::dynamic_bitset<>>(a);
+
+  return result;
 }
 
 std::shared_ptr<boost::dynamic_bitset<>>

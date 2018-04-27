@@ -54,26 +54,29 @@ class CompressedIndexConfiguration {
   bool IsSet(const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
              const std::shared_ptr<brain::IndexObject> &index_obj);
 
+  // TODO: remove (AddIndex has the same function)
   void Set(const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
            const std::shared_ptr<brain::IndexObject> &index_obj);
 
   std::shared_ptr<boost::dynamic_bitset<>> GenerateCurrentBitSet();
 
-  void AddIndex(const std::shared_ptr<IndexObject> &idx_object);
+  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+                const std::shared_ptr<IndexObject> &idx_object);
 
-  void AddIndex(size_t offset);
+  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+                size_t offset);
 
-  void RemoveIndex(const std::shared_ptr<IndexObject> &idx_object);
+  void RemoveIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+                   const std::shared_ptr<IndexObject> &idx_object);
 
-  void RemoveIndex(size_t offset);
+  void RemoveIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+                   size_t offset);
 
   std::shared_ptr<boost::dynamic_bitset<>> AddCandidate(
       const IndexConfiguration &indexes);
 
   std::shared_ptr<boost::dynamic_bitset<>> DropCandidate(
       const IndexConfiguration &indexes);
-
-
 
  private:
   std::string database_name_;
