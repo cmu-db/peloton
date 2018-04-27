@@ -44,10 +44,6 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
                       "has_index         BOOLEAN,"
                       "PRIMARY KEY(database_id, table_id, column_id));",
                       txn) {
-  // unique key: (database_id, table_id, column_id)
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME, {0, 1, 2},
-      COLUMN_STATS_CATALOG_NAME "_skey0", true, IndexType::BWTREE, txn);
   // non-unique key: (database_id, table_id)
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME, {0, 1},

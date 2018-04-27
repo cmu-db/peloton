@@ -731,7 +731,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
-
   auto gc_set = current_txn->GetGCSetPtr();
   auto gc_object_set = current_txn->GetGCObjectSetPtr();
 

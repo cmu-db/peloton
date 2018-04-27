@@ -48,6 +48,8 @@ class CatalogSyncBrainJob : public BrainJob {
 
   // TODO(tianyu): Switch to Sequence when we have them
   std::string FetchCatalogQuery(catalog::AbstractCatalog *catalog) {
+    // We need to special cast these two tables because we cannot put a reasonable
+    // primary key on them without sequences
     if (catalog->GetName() == QUERY_HISTORY_CATALOG_NAME)  {
       return "SELECT * FROM pg_catalog." + std::string(QUERY_HISTORY_CATALOG_NAME)
           + " WHERE timestamp > " + std::to_string(last_history_timestamp_);
