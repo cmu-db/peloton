@@ -123,25 +123,54 @@ bool QueryMetricsCatalog::DeleteQueryMetrics(
 stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
     const std::string &name, oid_t database_oid,
     concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *name_expr =
+      new expression::TupleValueExpression(
+          type::TypeId::VARCHAR, 0,
+          ColumnId::NAME);
+
+  name_expr->SetBoundOid(
+      catalog_table_->GetDatabaseOid(),
+      catalog_table_->GetOid(),
+      ColumnId::NAME);
+
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::DATABASE_OID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, name_equality_expr,
+          db_oid_equality_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   stats::QueryMetric::QueryParamBuf param_types;
-  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      auto param_types_value = (*result_tiles)[0]->GetValue(0, 0);
-      param_types.buf = const_cast<uchar *>(
-          reinterpret_cast<const uchar *>(param_types_value.GetData()));
-      param_types.len = param_types_value.GetLength();
-    }
+  PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
+  if (result_tuples.size() != 0) {
+    auto param_types_value = result_tuples[0].GetValue(ColumnId::PARAM_TYPES);
+    param_types.buf = const_cast<uchar *>(
+        reinterpret_cast<const uchar *>(param_types_value.GetData()));
+    param_types.len = param_types_value.GetLength();
   }
 
   return param_types;
