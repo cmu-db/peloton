@@ -97,11 +97,17 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 
 std::string SettingsCatalog::GetSettingValue(
     const std::string &name, concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
-                                                    ColumnId::NAME);
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           ColumnId::NAME);
+
+  name_expr->SetBoundOid(
+      catalog_table_->GetDatabaseOid(),
+      catalog_table_->GetOid(),
+      ColumnId::NAME);
+
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -115,18 +121,25 @@ std::string SettingsCatalog::GetSettingValue(
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-    config_value = (result_tuples[0]).GetValue(0).ToString();
+    config_value = (result_tuples[0]).GetValue(ColumnId::VALUE).ToString();
   }
   return config_value;
 }
 
 std::string SettingsCatalog::GetDefaultValue(
     const std::string &name, concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
-                                                    ColumnId::NAME);
+  auto *name_expr =
+      new expression::TupleValueExpression(
+          type::TypeId::VARCHAR, 0,
+          ColumnId::NAME);
+
+  name_expr->SetBoundOid(
+      catalog_table_->GetDatabaseOid(),
+      catalog_table_->GetOid(),
+      ColumnId::NAME);
+
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -140,7 +153,7 @@ std::string SettingsCatalog::GetDefaultValue(
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-    config_value = result_tuples[0].GetValue(0).ToString();
+    config_value = result_tuples[0].GetValue(ColumnId::DEFAULT_VALUE).ToString();
   }
   return config_value;
 }

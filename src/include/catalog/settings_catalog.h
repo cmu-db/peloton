@@ -59,6 +59,7 @@ class SettingsCatalog : public AbstractCatalog {
     IS_PERSISTENT = 8,
     // Add new columns here in creation order
   };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
  private:
   SettingsCatalog(concurrency::TransactionContext *txn);

@@ -236,7 +236,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   auto *idx_oid_expr =
     new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::INDEX_OID);
- idx_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::INDEX_OID);
+  idx_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::INDEX_OID);
   expression::AbstractExpression *idx_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(index_oid).Copy());
