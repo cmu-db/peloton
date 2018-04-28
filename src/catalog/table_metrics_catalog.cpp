@@ -90,12 +90,27 @@ bool TableMetricsCatalog::InsertTableMetrics(
 
 bool TableMetricsCatalog::DeleteTableMetrics(
     oid_t table_oid, concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::DATABASE_OID);
+
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(),
+                        ColumnId::DATABASE_OID);
+
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
+
+  expression::AbstractExpression *predicate = oid_equality_expr;
+
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 }  // namespace catalog
