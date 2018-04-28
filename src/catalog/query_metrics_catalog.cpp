@@ -120,7 +120,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
       val12)));
 
   // Insert the tuple
-  return InsertTuple(&tuples, txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(
