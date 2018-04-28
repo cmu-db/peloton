@@ -40,6 +40,10 @@ class IndexFactory {
   /// SkipList factory methods
   static Index *GetSkipListIntsKeyIndex(IndexMetadata *metadata);
   static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
+
+  /// HashIndex factory methods
+  static Index *GetCuckooHashIntsKeyIndex(IndexMetadata *metadata);
+  static Index *GetCuckooHashGenericKeyIndex(IndexMetadata *metadata);
 };
 
 }  // namespace index

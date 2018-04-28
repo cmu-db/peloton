@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdlib>
@@ -43,13 +42,15 @@ namespace peloton {
 CUCKOO_MAP_DEFAULT_ARGUMENTS
 class CuckooMap {
  public:
-
   CuckooMap();
   CuckooMap(size_t initial_size);
   ~CuckooMap();
 
   // Inserts a item
   bool Insert(const KeyType &key, ValueType value);
+
+  // Conditional Insert for a given predicate
+  void Upsert(const KeyType &key, ValueType &value);
 
   // Extracts item with high priority
   bool Update(const KeyType &key, ValueType value);
@@ -82,7 +83,6 @@ class CuckooMap {
   GetConstIterator() const;
 
  private:
-
   // cuckoo map
   typedef cuckoohash_map<KeyType, ValueType, HashType, PredType> cuckoo_map_t;
 

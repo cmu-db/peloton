@@ -71,7 +71,6 @@ class GenericKey {
     return (tuple.GetInfo());
   }
 
-
   // actual location of data, extends past the end.
   char data[KeySize];
 
