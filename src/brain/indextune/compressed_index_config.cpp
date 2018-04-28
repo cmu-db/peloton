@@ -225,6 +225,10 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
   }
 }
 
+int CompressedIndexConfiguration::GetConfigurationCount() {
+  return 10;
+}
+
 std::shared_ptr<boost::dynamic_bitset<>>
 CompressedIndexConfiguration::AddCandidate(const IndexConfiguration &indexes) {
   int a = 8;
