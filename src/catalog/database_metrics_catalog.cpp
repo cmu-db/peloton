@@ -51,9 +51,6 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
   tuples.push_back(std::vector<ExpressionPtr>());
   auto &values = tuples[0];
 
-//  std::unique_ptr<storage::Tuple> tuple(
-//      new storage::Tuple(catalog_table_->GetSchema(), true));
-
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(txn_committed);
   auto val2 = type::ValueFactory::GetIntegerValue(txn_aborted);
@@ -68,13 +65,9 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
   values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
       val3)));
 
-//  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
-//  tuple->SetValue(ColumnId::TXN_COMMITTED, val1, pool);
-//  tuple->SetValue(ColumnId::TXN_ABORTED, val2, pool);
-//  tuple->SetValue(ColumnId::TIME_STAMP, val3, pool);
 
   // Insert the tuple into catalog table
-  return InsertTuple(&tuples, txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(

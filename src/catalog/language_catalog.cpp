@@ -69,7 +69,7 @@ bool LanguageCatalog::InsertLanguage(const std::string &lanname,
       val1)));
 
   // Insert the tuple
-  return InsertTuple(&tuples, txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 // delete a language by name

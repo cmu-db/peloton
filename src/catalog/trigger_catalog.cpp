@@ -102,7 +102,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
       val7)));
 
   // Insert the tuple
-  return InsertTuple(&tuples, txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
