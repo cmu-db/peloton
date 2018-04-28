@@ -264,6 +264,13 @@ ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type,
   return ExpressionPtr{expr};
 }
 
+ExpressionPtr PelotonCodeGenTest::ColRefExpr(storage::DataTable &table ,type::TypeId type,
+                                             uint32_t col_id) {
+  auto *expr = new expression::TupleValueExpression(type, 0, col_id);
+  expr->SetBoundOid(table.GetDatabaseOid(), table.GetOid(), col_id);
+  return ExpressionPtr{expr};
+}
+
 ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type, bool left,
                                              uint32_t col_id) {
   return ExpressionPtr{

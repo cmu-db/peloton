@@ -66,6 +66,8 @@ class ZoneMapCatalog : public AbstractCatalog {
 
   enum ZoneMapOffset { MINIMUM_OFF = 0, MAXIMUM_OFF = 1, TYPE_OFF = 2 };
 
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6};
+
  private:
   ZoneMapCatalog(concurrency::TransactionContext *txn);
 
