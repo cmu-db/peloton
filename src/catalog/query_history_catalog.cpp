@@ -13,6 +13,7 @@
 #include "catalog/query_history_catalog.h"
 
 #include "catalog/catalog.h"
+#include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -40,20 +41,29 @@ bool QueryHistoryCatalog::InsertQueryHistory(
     const std::string &query_string, const std::string &fingerprint,
     uint64_t timestamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  (void) pool;
+  // Create the tuple first
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetVarcharValue(query_string);
   auto val1 = type::ValueFactory::GetVarcharValue(fingerprint);
   auto val2 = type::ValueFactory::GetTimestampValue(timestamp);
 
-  tuple->SetValue(ColumnId::QUERY_STRING, val0,
-                  pool != nullptr ? pool : &pool_);
-  tuple->SetValue(ColumnId::FINGERPRINT, val1, pool != nullptr ? pool : &pool_);
-  tuple->SetValue(ColumnId::TIMESTAMP, val2, pool != nullptr ? pool : &pool_);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+      val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+      val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+      val2);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 }  // namespace catalog

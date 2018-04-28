@@ -67,13 +67,13 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
   auto constant_expr_2 = new expression::ConstantValueExpression(
       val2);
   auto constant_expr_3 = new expression::ConstantValueExpression(
-      val0);
+      val3);
   auto constant_expr_4 = new expression::ConstantValueExpression(
-      val1);
+      val4);
   auto constant_expr_5 = new expression::ConstantValueExpression(
-      val2);
+      val5);
   auto constant_expr_6 = new expression::ConstantValueExpression(
-      val2);
+      val6);
 
   tuples.push_back(std::vector<ExpressionPtr>());
   auto &values = tuples[0];
