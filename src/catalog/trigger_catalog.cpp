@@ -67,10 +67,13 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
                                    type::Value timestamp,
                                    type::AbstractPool *pool,
                                    concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
 
   LOG_INFO("type of trigger inserted:%d", trigger_type);
+
+  (void) pool;
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
@@ -81,17 +84,25 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   auto val6 = fire_condition;
   auto val7 = timestamp;
 
-  tuple->SetValue(ColumnId::TRIGGER_OID, val0, pool);
-  tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
-  tuple->SetValue(ColumnId::TRIGGER_NAME, val2, pool);
-  tuple->SetValue(ColumnId::FUNCTION_NAME, val3, pool);
-  tuple->SetValue(ColumnId::TRIGGER_TYPE, val4, pool);
-  tuple->SetValue(ColumnId::FUNCTION_ARGS, val5, pool);
-  tuple->SetValue(ColumnId::FIRE_CONDITION, val6, pool);
-  tuple->SetValue(ColumnId::TIMESTAMP, val7, pool);
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val0)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val1)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val2)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val3)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val4)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val5)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val6)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val7)));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(&tuples, txn);
 }
 
 ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
