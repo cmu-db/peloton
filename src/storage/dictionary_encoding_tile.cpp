@@ -57,6 +57,12 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 
 // delete data is enough
 DictEncodedTile::~DictEncodedTile(){
+
+//	delete[] varlen_val_storage;
+	auto * str_ptrs = reinterpret_cast<const char**>(varlen_val_ptrs);
+	for (size_t i = 0; i < element_array.size(); i++) {
+		delete str_ptrs[i];
+	}
 	delete[] varlen_val_ptrs;
 }
 
@@ -156,13 +162,12 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 	}
 
 	// init varlen_val_ptrs
-//	varlen_val_ptrs = new const char*[element_array.size()];
 	varlen_val_ptrs = new char[element_array.size() * sizeof(const char*)];
 	for (size_t i = 0; i < element_array.size(); i++) {
-//		varlen_val_ptrs[i] = element_array[i].GetData();
-		const char *varlen_data = element_array[i].GetData();
-//		char *storage = *reinterpret_cast<char **>(varlen_val_ptrs + i);
-		PELOTON_MEMCPY(varlen_val_ptrs + i * sizeof(const char*), &varlen_data, sizeof(const char*));
+		LOG_TRACE("element array [%zu] serialize to varlen_val_ptrs", i);
+		element_array[i].SerializeTo(varlen_val_ptrs + i * sizeof(const char *), true, nullptr);
+//		const char *varlen_data = element_array[i].GetData();
+//		PELOTON_MEMCPY(varlen_val_ptrs + i * sizeof(const char*), &varlen_data, sizeof(const char*));
 	}
 	is_dict_encoded = true;
 }
