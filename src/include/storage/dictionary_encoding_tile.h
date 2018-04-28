@@ -79,7 +79,7 @@ class DictEncodedTile : public Tile {
    */
 	// this function is used before GetValueFast which use
 	// original schema, so return original schema
-  const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
+//  const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
 
   /**
    * Returns value present at slot

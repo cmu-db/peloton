@@ -129,15 +129,16 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 				}
 //				LOG_INFO("%s", curr_val.GetInfo().c_str());
 				// assume the idx take 1 byte
-				char idx_data[1];
+				char idx_data[4];
 				if (dict.count(curr_val) == 0) {
 					LOG_INFO("Encoding!!!!!");
 					element_array.push_back(curr_val);
-					idx_data[0] = element_array.size() - 1;
-					dict.emplace(curr_val, idx_data[0]);
+//					idx_data[0] = element_array.size() - 1;
+					*reinterpret_cast<uint32_t*>(idx_data) = element_array.size() - 1;
+					dict.emplace(curr_val, *reinterpret_cast<uint32_t*>(idx_data));
 				} else {
 //					LOG_INFO("Already encoded!!!");
-					idx_data[0] = dict[curr_val];
+					*reinterpret_cast<uint32_t*>(idx_data) = dict[curr_val];
 				}
 				// many constructor of Value is private, so use
 				// DeserializeFrom to construct the idx Value
