@@ -22,10 +22,16 @@ namespace peloton {
 namespace stats {
 class ThreadLevelStatsCollector {
  public:
-  static ThreadLevelStatsCollector &GetCollectorForThread(std::thread::id tid = std::this_thread::get_id()) {
+  static ThreadLevelStatsCollector &GetCollectorForThread() {
     static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> collector_map;
+    std::thread::id tid = std::this_thread::get_id();
     return collector_map[tid];
   }
+
+  static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> &GetAllCollectprs() {
+    static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> collector_map;
+    return collector_map;
+  };
 
   ThreadLevelStatsCollector() {
     // TODO(tianyu): Write stats to register here

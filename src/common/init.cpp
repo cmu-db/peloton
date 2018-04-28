@@ -95,7 +95,7 @@ void PelotonInit::Initialize() {
   // Start Statistic Aggregator
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::StatsAggregator::GetInstance().LaunchAggregator();
+    stats::StatsAggregatorOld::GetInstance().LaunchAggregator();
   }
 }
 
@@ -103,7 +103,7 @@ void PelotonInit::Shutdown() {
   // Start Statistic Aggregator
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::StatsAggregator::GetInstance().ShutdownAggregator();
+    stats::StatsAggregatorOld::GetInstance().ShutdownAggregator();
   }
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {

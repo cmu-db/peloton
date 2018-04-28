@@ -26,6 +26,7 @@
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_context.h"
+#include "common/dedicated_thread_task.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -41,6 +42,49 @@ class BackendStatsContext;
 namespace peloton {
 namespace stats {
 
+class StatsAggregator : public DedicatedThreadTask {
+ public:
+  StatsAggregator(int64_t aggregation_interval) :
+      aggregation_interval_ms_(aggregation_interval),
+      lock_(mutex_) {}
+
+  void Terminate() override {
+    lock_.lock();
+    exiting_ = true;
+    while(exiting_)
+      exec_finished_.wait(lock_);
+    lock_.unlock();
+  }
+
+  void RunTask() override {
+    LOG_INFO("Aggregator is now running.");
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lck(mtx);
+    int64_t interval_cnt = 0;
+    double alpha = 0.4;
+    double weighted_avg_throughput = 0.0;
+
+    while (exec_finished_.wait_for(
+        lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
+        std::cv_status::timeout &&
+        !exiting_) {
+      Aggregate();
+    }
+    exiting_ = false;
+    exec_finished_.notify_all();
+    LOG_INFO("Aggregator done!");
+  }
+
+ private:
+  void Aggregate() {
+  }
+  int64_t aggregation_interval_ms_;
+  std::mutex mutex_;
+  std::unique_lock<std::mutex> lock_;
+  std::condition_variable exec_finished_;
+  bool exiting_ = false;
+
+};
 //===--------------------------------------------------------------------===//
 // Stats Aggregator
 //===--------------------------------------------------------------------===//
@@ -53,23 +97,23 @@ namespace stats {
 /**
  * Global Stats Aggregator
  */
-class StatsAggregator {
+class StatsAggregatorOld {
  public:
-  StatsAggregator(const StatsAggregator &) = delete;
-  StatsAggregator &operator=(const StatsAggregator &) = delete;
-  StatsAggregator(StatsAggregator &&) = delete;
-  StatsAggregator &operator=(StatsAggregator &&) = delete;
+  StatsAggregatorOld(const StatsAggregatorOld &) = delete;
+  StatsAggregatorOld &operator=(const StatsAggregatorOld &) = delete;
+  StatsAggregatorOld(StatsAggregatorOld &&) = delete;
+  StatsAggregatorOld &operator=(StatsAggregatorOld &&) = delete;
 
-  StatsAggregator(int64_t aggregation_interval_ms);
-  ~StatsAggregator();
+  StatsAggregatorOld(int64_t aggregation_interval_ms);
+  ~StatsAggregatorOld();
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
   // Global singleton
-  static StatsAggregator &GetInstance(int64_t aggregation_interval_ms =
-                                          STATS_AGGREGATION_INTERVAL_MS);
+  static StatsAggregatorOld &GetInstance(int64_t aggregation_interval_ms =
+  STATS_AGGREGATION_INTERVAL_MS);
 
   // Get the aggregated stats history of all exited threads
   inline BackendStatsContext &GetStatsHistory() { return stats_history_; }
@@ -162,7 +206,8 @@ class StatsAggregator {
                           concurrency::TransactionContext *txn);
 
   // Write all query metrics to a metric table
-  void UpdateQueryMetrics(int64_t time_stamp, concurrency::TransactionContext *txn);
+  void UpdateQueryMetrics(int64_t time_stamp,
+                          concurrency::TransactionContext *txn);
 
   // Aggregate stats periodically
   void RunAggregator();

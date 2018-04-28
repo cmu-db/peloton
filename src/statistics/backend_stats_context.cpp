@@ -55,7 +55,7 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history,
 
   // Register to the global aggregator
   if (regiser_to_aggregator == true)
-    StatsAggregator::GetInstance().RegisterContext(thread_id_, this);
+    StatsAggregatorOld::GetInstance().RegisterContext(thread_id_, this);
 }
 
 BackendStatsContext::~BackendStatsContext() {}
