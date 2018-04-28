@@ -188,7 +188,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
     } break;
     default:
       LOG_TRACE("Return nothing for query type: %d",
-                static_cast<int>(sql_stmt.GetType()));
+                static_cast<int>(sql_stmt->GetType()));
   }
   return (column_oids);
 }
