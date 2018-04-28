@@ -25,7 +25,7 @@ namespace stats {
 /**
  * Database-specific metrics, including the number of committed/aborted txns.
  */
-class DatabaseMetric : public AbstractMetric {
+class DatabaseMetric : public AbstractMetricOld {
  public:
   DatabaseMetric(MetricType type, oid_t database_id);
 
@@ -62,7 +62,7 @@ class DatabaseMetric : public AbstractMetric {
     return !(*this == other);
   }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   const std::string GetInfo() const;
 

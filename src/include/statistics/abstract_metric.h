@@ -13,37 +13,72 @@
 #pragma once
 
 #include <string>
+#include <memory>
+#include <atomic>
 
+#include "common/platform.h"
 #include "common/internal_types.h"
-#include "common/printable.h"
+#include "statistics/stat_insertion_point.h"
+#include "statistics/abstract_raw_data.h"
 
 namespace peloton {
 namespace stats {
 
-/**
- * Abstract class for metrics
- * A metric should be able to:
- * (1) identify its type;
- * (2) print itself (ToString);
- * (3) reset itself;
- * (4) aggregate itself with another source
- *     of the same type.
- */
-class AbstractMetric : public Printable {
+class AbstractMetricOld : public Printable {
  public:
-  AbstractMetric(MetricType type_);
-  virtual ~AbstractMetric();
+  AbstractMetricOld(MetricType type_);
+  virtual ~AbstractMetricOld();
   const inline MetricType &GetType() const { return type_; }
   virtual void Reset() = 0;
 
   virtual const std::string GetInfo() const = 0;
 
-  virtual void Aggregate(AbstractMetric &source) = 0;
+  virtual void Aggregate(AbstractMetricOld &source) = 0;
 
  private:
   // The type this metric belongs to
   MetricType type_;
 };
 
+class Metric {
+ public:
+  virtual ~Metric() = default;
+
+  // TODO(tianyu): fill arguments
+  virtual void OnTransactionBegin() {};
+  virtual void OnTransactionCommit(oid_t) {};
+  virtual void OnTransactionAbort(oid_t) {};
+  virtual void OnTupleRead() {};
+  virtual void OnTupleUpdate() {};
+  virtual void OnTupleInsert() {};
+  virtual void OnTupleDelete() {};
+  virtual void OnIndexRead() {};
+  virtual void OnIndexUpdate() {};
+  virtual void OnIndexInsert() {};
+  virtual void OnIndexDelete() {};
+  virtual void OnQueryBegin() {};
+  virtual void OnQueryEnd() {};
+
+  virtual std::shared_ptr<AbstractRawData> Swap() = 0;
+};
+
+template <typename DataType>
+class AbstractMetric : public Metric {
+ public:
+  // Should only be called by the aggregator thread
+  std::shared_ptr<AbstractRawData> Swap() override {
+    DataType *old_data = raw_data_.exchange(new DataType());
+    // We will need to wait for last writer to finish before it's safe
+    // to start reading the content. It is okay to block since this
+    // method should only be called from the aggregator thread.
+    while (!old_data->SafeToAggregate())
+      _mm_pause();
+    return std::shared_ptr<AbstractRawData>(old_data);
+  }
+
+ private:
+  std::atomic<DataType *> raw_data_;
+
+};
 }  // namespace stats
 }  // namespace peloton

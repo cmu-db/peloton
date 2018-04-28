@@ -19,12 +19,12 @@ namespace peloton {
 namespace stats {
 
 LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
-    : AbstractMetric(type) {
+    : AbstractMetricOld(type) {
   max_history_ = max_history;
   latencies_.SetCapaciry(max_history_);
 }
 
-void LatencyMetric::Aggregate(AbstractMetric& source) {
+void LatencyMetric::Aggregate(AbstractMetricOld& source) {
   PELOTON_ASSERT(source.GetType() == MetricType::LATENCY);
 
   LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);

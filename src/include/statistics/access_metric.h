@@ -26,9 +26,9 @@ namespace stats {
  * inserts, and deletes for a given storage type
  * (e.g. index or table).
  */
-class AccessMetric : public AbstractMetric {
+class AccessMetric : public AbstractMetricOld {
  public:
-  AccessMetric(MetricType type) : AbstractMetric(type) {}
+  AccessMetric(MetricType type) : AbstractMetricOld(type) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -122,7 +122,7 @@ class AccessMetric : public AbstractMetric {
 
   // Adds the counters from the source access metric
   // to the counters in this access metric
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
  private:
   //===--------------------------------------------------------------------===//

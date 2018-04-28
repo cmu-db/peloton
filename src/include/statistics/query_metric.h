@@ -32,7 +32,7 @@ typedef unsigned char uchar;
 /**
  * Metric for the access of a query
  */
-class QueryMetric : public AbstractMetric {
+class QueryMetric : public AbstractMetricOld {
  public:
   // A wrapper of the query param buffer copy
   struct QueryParamBuf {
@@ -91,7 +91,7 @@ class QueryMetric : public AbstractMetric {
 
   inline void Reset() { query_access_.Reset(); }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   inline const std::string GetInfo() const {
     std::stringstream ss;

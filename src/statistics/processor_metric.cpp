@@ -23,7 +23,7 @@
 namespace peloton {
 namespace stats {
 
-ProcessorMetric::ProcessorMetric(MetricType type) : AbstractMetric(type) {}
+ProcessorMetric::ProcessorMetric(MetricType type) : AbstractMetricOld(type) {}
 
 void ProcessorMetric::StartTimer() {
   UpdateTimeInt(user_time_begin_, sys_time_begin_);
@@ -73,7 +73,7 @@ const std::string ProcessorMetric::GetInfo() const {
   return ss.str();
 }
 
-void ProcessorMetric::Aggregate(AbstractMetric &source UNUSED_ATTRIBUTE) {}
+void ProcessorMetric::Aggregate(AbstractMetricOld &source UNUSED_ATTRIBUTE) {}
 
 }  // namespace stats
 }  // namespace peloton

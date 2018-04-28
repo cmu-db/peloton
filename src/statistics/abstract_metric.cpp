@@ -15,9 +15,9 @@
 namespace peloton {
 namespace stats {
 
-AbstractMetric::AbstractMetric(MetricType type) { type_ = type; }
+AbstractMetricOld::AbstractMetricOld(MetricType type) { type_ = type; }
 
-AbstractMetric::~AbstractMetric() {}
+AbstractMetricOld::~AbstractMetricOld() {}
 
 }  // namespace stats
 }  // namespace peloton

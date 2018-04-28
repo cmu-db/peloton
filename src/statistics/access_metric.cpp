@@ -16,7 +16,7 @@
 namespace peloton {
 namespace stats {
 
-void AccessMetric::Aggregate(AbstractMetric &source) {
+void AccessMetric::Aggregate(AbstractMetricOld &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::ACCESS);
 
   auto access_metric = static_cast<AccessMetric &>(source);

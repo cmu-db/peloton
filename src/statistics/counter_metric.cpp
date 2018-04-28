@@ -16,11 +16,11 @@
 namespace peloton {
 namespace stats {
 
-CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
+CounterMetric::CounterMetric(MetricType type) : AbstractMetricOld(type) {
   count_ = 0;
 }
 
-void CounterMetric::Aggregate(AbstractMetric &source) {
+void CounterMetric::Aggregate(AbstractMetricOld &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::COUNTER);
   count_ += static_cast<CounterMetric &>(source).GetCounter();
 }

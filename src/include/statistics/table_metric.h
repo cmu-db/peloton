@@ -27,7 +27,7 @@ namespace stats {
 /**
  * Metric for the access and memory of a table
  */
-class TableMetric : public AbstractMetric {
+class TableMetric : public AbstractMetricOld {
  public:
   typedef std::string TableKey;
 
@@ -64,7 +64,7 @@ class TableMetric : public AbstractMetric {
 
   inline bool operator!=(const TableMetric &other) { return !(*this == other); }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   inline const std::string GetInfo() const {
     std::stringstream ss;

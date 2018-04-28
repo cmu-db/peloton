@@ -18,9 +18,9 @@ namespace peloton {
 namespace stats {
 
 DatabaseMetric::DatabaseMetric(MetricType type, oid_t database_id)
-    : AbstractMetric(type), database_id_(database_id) {}
+    : AbstractMetricOld(type), database_id_(database_id) {}
 
-void DatabaseMetric::Aggregate(AbstractMetric& source) {
+void DatabaseMetric::Aggregate(AbstractMetricOld& source) {
   PELOTON_ASSERT(source.GetType() == MetricType::DATABASE);
 
   DatabaseMetric& db_metric = static_cast<DatabaseMetric&>(source);

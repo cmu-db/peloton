@@ -22,10 +22,10 @@ namespace stats {
 /**
  * Metric for the memory usage and allocation
  */
-class MemoryMetric : public AbstractMetric {
+class MemoryMetric : public AbstractMetricOld {
  public:
   MemoryMetric(MetricType type)
-      : AbstractMetric(type),
+      : AbstractMetricOld(type),
         alloc_(MetricType::COUNTER),
         usage_(MetricType::COUNTER) {}
 
@@ -69,7 +69,7 @@ class MemoryMetric : public AbstractMetric {
     return ss.str();
   }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
  private:
   //===--------------------------------------------------------------------===//

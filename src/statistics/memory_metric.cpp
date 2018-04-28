@@ -16,7 +16,7 @@
 namespace peloton {
 namespace stats {
 
-void MemoryMetric::Aggregate(AbstractMetric &source) {
+void MemoryMetric::Aggregate(AbstractMetricOld &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::MEMORY);
 
   auto memory_metric = dynamic_cast<MemoryMetric &>(source);
