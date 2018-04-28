@@ -63,8 +63,10 @@ bool ColumnStatsCatalog::InsertColumnStats(
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, bool has_index, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  (void) pool;
+  std::vector<std::vector<ExpressionPtr>> tuples;
+//  std::unique_ptr<storage::Tuple> tuple(
+//      new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
   auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
@@ -96,20 +98,35 @@ bool ColumnStatsCatalog::InsertColumnStats(
       type::ValueFactory::GetVarcharValue(column_name);
   type::Value val_has_index = type::ValueFactory::GetBooleanValue(has_index);
 
-  tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
-  tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
-  tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
-  tuple->SetValue(ColumnId::NUM_ROWS, val_num_row, nullptr);
-  tuple->SetValue(ColumnId::CARDINALITY, val_cardinality, nullptr);
-  tuple->SetValue(ColumnId::FRAC_NULL, val_frac_null, nullptr);
-  tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool);
-  tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, pool);
-  tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool);
-  tuple->SetValue(ColumnId::COLUMN_NAME, val_column_name, pool);
-  tuple->SetValue(ColumnId::HAS_INDEX, val_has_index, nullptr);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_db_id)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_table_id)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_column_id)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_num_row)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_cardinality)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_frac_null)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_common_val)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_common_freq)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_hist_bounds)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_column_name)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_has_index)));
+
+//  tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
+//  tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
+//  tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
+//  tuple->SetValue(ColumnId::NUM_ROWS, val_num_row, nullptr);
+//  tuple->SetValue(ColumnId::CARDINALITY, val_cardinality, nullptr);
+//  tuple->SetValue(ColumnId::FRAC_NULL, val_frac_null, nullptr);
+//  tuple->SetValue(ColumnId::MOST_COMMON_VALS, val_common_val, pool);
+//  tuple->SetValue(ColumnId::MOST_COMMON_FREQS, val_common_freq, pool);
+//  tuple->SetValue(ColumnId::HISTOGRAM_BOUNDS, val_hist_bounds, pool);
+//  tuple->SetValue(ColumnId::COLUMN_NAME, val_column_name, pool);
+//  tuple->SetValue(ColumnId::HAS_INDEX, val_has_index, nullptr);
 
   // Insert the tuple into catalog table
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(&tuples, txn);
 }
 
 bool ColumnStatsCatalog::DeleteColumnStats(
