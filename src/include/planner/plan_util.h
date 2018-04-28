@@ -57,6 +57,7 @@ class PlanUtil {
 
   /**
    * @brief Get the indexes affected by a given query
+   * @param CatalogCache
    * @param SQLStatement
    * @return set of affected index object ids
    */

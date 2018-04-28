@@ -28,7 +28,6 @@ class TypeSQLTests : public PelotonTest {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    // catalog::Catalog::GetInstance()->Bootstrap();
     txn_manager.CommitTransaction(txn);
   }
 

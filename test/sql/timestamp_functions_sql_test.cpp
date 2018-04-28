@@ -82,7 +82,6 @@ TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // create tale and insert one tuple
   TestingSQLUtil::ExecuteSQLQuery(

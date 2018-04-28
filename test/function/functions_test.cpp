@@ -31,16 +31,14 @@ class FunctionsTests : public PelotonTest {
 
   virtual void SetUp() {
     PelotonTest::SetUp();
-    // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous
-    // unit tests you can only call it once!
-    // auto catalog =
-    // catalog::Catalog::GetInstance(); catalog->Bootstrap();
+    // Bootstrap catalog
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
   }
 };
 
 TEST_F(FunctionsTests, CatalogTest) {
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();

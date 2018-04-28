@@ -63,11 +63,11 @@ TEST_F(DatabaseTests, AddDropTableTest) {
 
   database->AddTable(data_table.get());
   // NOTE: everytime we create a database, there will be 8 catalog tables inside
-  EXPECT_TRUE(database->GetTableCount() == 9);
+  EXPECT_TRUE(database->GetTableCount() == 1 + CATALOG_TABLES_COUNT);
 
   database->DropTableWithOid(table_oid);
 
-  EXPECT_TRUE(database->GetTableCount() == 8);
+  EXPECT_TRUE(database->GetTableCount() == CATALOG_TABLES_COUNT);
 
   data_table.release();
 

@@ -35,6 +35,7 @@ namespace catalog {
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
+#define CATALOG_TABLES_COUNT 8
 
 // Oid mask for each type
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))

@@ -47,73 +47,77 @@ class SystemCatalogs {
   void Bootstrap(const std::string &database_name,
                  concurrency::TransactionContext *txn);
 
+  //===--------------------------------------------------------------------===//
+  // GET FUNCTIONS
+  // get catalog tables with name
+  //===--------------------------------------------------------------------===//
   ColumnCatalog *GetColumnCatalog() {
-    if (!pg_attribute) {
+    if (!pg_attribute_) {
       throw CatalogException("Column catalog has not been initialized");
     }
-    return pg_attribute;
+    return pg_attribute_;
   }
 
   SchemaCatalog *GetSchemaCatalog() {
-    if (!pg_namespace) {
+    if (!pg_namespace_) {
       throw CatalogException("schema catalog has not been initialized");
     }
-    return pg_namespace;
+    return pg_namespace_;
   }
 
   TableCatalog *GetTableCatalog() {
-    if (!pg_table) {
+    if (!pg_table_) {
       throw CatalogException("Table catalog has not been initialized");
     }
-    return pg_table;
+    return pg_table_;
   }
 
   IndexCatalog *GetIndexCatalog() {
-    if (!pg_index) {
+    if (!pg_index_) {
       throw CatalogException("Index catalog has not been initialized");
     }
-    return pg_index;
+    return pg_index_;
   }
 
   TriggerCatalog *GetTriggerCatalog() {
-    if (!pg_trigger) {
+    if (!pg_trigger_) {
       throw CatalogException("Trigger catalog has not been initialized");
     }
-    return pg_trigger;
+    return pg_trigger_;
   }
 
   TableMetricsCatalog *GetTableMetricsCatalog() {
-    if (!pg_table_metrics) {
+    if (!pg_table_metrics_) {
       throw CatalogException("Table metrics catalog has not been initialized");
     }
-    return pg_table_metrics;
+    return pg_table_metrics_;
   }
 
   IndexMetricsCatalog *GetIndexMetricsCatalog() {
-    if (!pg_index_metrics) {
+    if (!pg_index_metrics_) {
       throw CatalogException("Index metrics catalog has not been initialized");
     }
-    return pg_index_metrics;
+    return pg_index_metrics_;
   }
 
   QueryMetricsCatalog *GetQueryMetricsCatalog() {
-    if (!pg_query_metrics) {
+    if (!pg_query_metrics_) {
       throw CatalogException("Query metrics catalog has not been initialized");
     }
-    return pg_query_metrics;
+    return pg_query_metrics_;
   }
 
  private:
-  ColumnCatalog *pg_attribute;
-  SchemaCatalog *pg_namespace;
-  TableCatalog *pg_table;
-  IndexCatalog *pg_index;
+  ColumnCatalog *pg_attribute_;
+  SchemaCatalog *pg_namespace_;
+  TableCatalog *pg_table_;
+  IndexCatalog *pg_index_;
 
-  TriggerCatalog *pg_trigger;
+  TriggerCatalog *pg_trigger_;
   // ProcCatalog *pg_proc;
-  TableMetricsCatalog *pg_table_metrics;
-  IndexMetricsCatalog *pg_index_metrics;
-  QueryMetricsCatalog *pg_query_metrics;
+  TableMetricsCatalog *pg_table_metrics_;
+  IndexMetricsCatalog *pg_index_metrics_;
+  QueryMetricsCatalog *pg_query_metrics_;
 };
 
 }  // namespace catalog

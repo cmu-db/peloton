@@ -81,7 +81,7 @@ class ColumnCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
-                    uint32_t column_id, uint32_t column_offset,
+                    oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
                     type::AbstractPool *pool,

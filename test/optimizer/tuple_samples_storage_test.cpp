@@ -51,7 +51,7 @@ TEST_F(TupleSamplesStorageTests, SamplesDBTest) {
   EXPECT_TRUE(samples_db != nullptr);
   EXPECT_EQ(samples_db->GetDBName(), SAMPLES_DB_NAME);
   // NOTE: everytime we create a database, there will be 8 catalog tables inside
-  EXPECT_EQ(samples_db->GetTableCount(), 8);
+  EXPECT_EQ(samples_db->GetTableCount(), CATALOG_TABLES_COUNT);
 }
 
 TEST_F(TupleSamplesStorageTests, AddSamplesTableTest) {

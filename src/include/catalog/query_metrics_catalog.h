@@ -70,7 +70,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   int64_t GetNumParams(const std::string &name,
                        concurrency::TransactionContext *txn);
   // TODO: In theory, we don't need database_oid
-  // but now we store all the query metrics under default database "pelton"
+  // but now we store all the query metrics under default database "peloton"
   enum ColumnId {
     NAME = 0,
     DATABASE_OID = 1,

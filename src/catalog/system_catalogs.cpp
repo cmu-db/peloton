@@ -21,18 +21,23 @@
 namespace peloton {
 namespace catalog {
 
+/*@brief    system catalog constructor, create core catalog tables and manually
+ * insert records into pg_attribute
+ * @param   database    the database which the catalog tables belongs to
+ * @param   txn         TransactionContext
+ */
 SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn)
-    : pg_trigger(nullptr),
-      pg_table_metrics(nullptr),
-      pg_index_metrics(nullptr),
-      pg_query_metrics(nullptr) {
+    : pg_trigger_(nullptr),
+      pg_table_metrics_(nullptr),
+      pg_index_metrics_(nullptr),
+      pg_query_metrics_(nullptr) {
   oid_t database_oid = database->GetOid();
-  pg_attribute = new ColumnCatalog(database, pool, txn);
-  pg_namespace = new SchemaCatalog(database, pool, txn);
-  pg_table = new TableCatalog(database, pool, txn);
-  pg_index = new IndexCatalog(database, pool, txn);
+  pg_attribute_ = new ColumnCatalog(database, pool, txn);
+  pg_namespace_ = new SchemaCatalog(database, pool, txn);
+  pg_table_ = new TableCatalog(database, pool, txn);
+  pg_index_ = new IndexCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert column information into pg_attribute
@@ -49,52 +54,53 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
              ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
              ->GetSchema()
              ->GetColumns()) {
-      pg_attribute->InsertColumn(shared_tables[i].second, column.GetName(),
-                                 column_id, column.GetOffset(),
-                                 column.GetType(), column.IsInlined(),
-                                 column.GetConstraints(), pool, txn);
+      pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
+                                  column_id, column.GetOffset(),
+                                  column.GetType(), column.IsInlined(),
+                                  column.GetConstraints(), pool, txn);
       column_id++;
     }
   }
 }
 
 SystemCatalogs::~SystemCatalogs() {
-  delete pg_index;
-  delete pg_table;
-  delete pg_attribute;
-  delete pg_namespace;
-  if (pg_trigger) delete pg_trigger;
+  delete pg_index_;
+  delete pg_table_;
+  delete pg_attribute_;
+  delete pg_namespace_;
+  if (pg_trigger_) delete pg_trigger_;
   // if (pg_proc) delete pg_proc;
-  if (pg_table_metrics) delete pg_table_metrics;
-  if (pg_index_metrics) delete pg_index_metrics;
-  if (pg_query_metrics) delete pg_query_metrics;
+  if (pg_table_metrics_) delete pg_table_metrics_;
+  if (pg_index_metrics_) delete pg_index_metrics_;
+  if (pg_query_metrics_) delete pg_query_metrics_;
 }
 
-/*
- * @brief   using sql create statement to create secondary catalog tables
+/*@brief    using sql create statement to create secondary catalog tables
+ * @param   database_name    the database which the namespace belongs to
+ * @param   txn              TransactionContext
  */
 void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
-  if (!pg_trigger) {
-    pg_trigger = new TriggerCatalog(database_name, txn);
+  if (!pg_trigger_) {
+    pg_trigger_ = new TriggerCatalog(database_name, txn);
   }
 
   // if (!pg_proc) {
   //     pg_proc = new ProcCatalog(database_name, txn);
   // }
 
-  if (!pg_table_metrics) {
-    pg_table_metrics = new TableMetricsCatalog(database_name, txn);
+  if (!pg_table_metrics_) {
+    pg_table_metrics_ = new TableMetricsCatalog(database_name, txn);
   }
 
-  if (!pg_index_metrics) {
-    pg_index_metrics = new IndexMetricsCatalog(database_name, txn);
+  if (!pg_index_metrics_) {
+    pg_index_metrics_ = new IndexMetricsCatalog(database_name, txn);
   }
 
-  if (!pg_query_metrics) {
-    pg_query_metrics = new QueryMetricsCatalog(database_name, txn);
+  if (!pg_query_metrics_) {
+    pg_query_metrics_ = new QueryMetricsCatalog(database_name, txn);
   }
 }
 

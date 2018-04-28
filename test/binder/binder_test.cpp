@@ -42,7 +42,6 @@ class BinderCorrectnessTest : public PelotonTest {
     PelotonTest::SetUp();
     catalog::Catalog::GetInstance();
     // NOTE: Catalog::GetInstance()->Bootstrap(), you can only call it once!
-    // catalog->Bootstrap();
     TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   }
 

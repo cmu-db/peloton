@@ -77,7 +77,6 @@ TEST_F(DropTests, DroppingTable) {
   auto catalog = catalog::Catalog::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

@@ -122,7 +122,6 @@ class TriggerTests : public PelotonTest {
     auto parser = parser::PostgresParser::GetInstance();
     // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous
     // tests you can only call it once!
-    // catalog::Catalog::GetInstance()->Bootstrap();
 
     std::unique_ptr<parser::SQLStatementList> stmt_list(
         parser.BuildParseTree(query).release());
@@ -229,7 +228,6 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   auto parser = parser::PostgresParser::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();
@@ -315,7 +313,6 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   auto parser = parser::PostgresParser::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();
@@ -397,7 +394,6 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   auto parser = parser::PostgresParser::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // catalog::Catalog::GetInstance()->Bootstrap();
 
   // Create table
   CreateTableHelper();

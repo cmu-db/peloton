@@ -1388,7 +1388,8 @@ parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
     LOG_TRACE("%d", ((Node *)(table_list->head->data.ptr_value))->type);
-    // if schema name is specified
+    // if schema name is specified, which means you are using the syntax like
+    // DROP INDEX/TABLE A.B where A is schema name and B is table/index name
     if (table_list->length == 2) {
       table_info->schema_name =
           reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
@@ -1412,8 +1413,10 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
   // first, set trigger name
   result->SetTriggerName(
       reinterpret_cast<value *>(list->tail->data.ptr_value)->val.str);
-  // if schema name is specified
   TableInfo *table_info = new TableInfo{};
+  // if schema name is specified, which means you are using the syntax like
+  // DROP TRIGGER A.B.C where A is schema name, B is table name and C is trigger
+  // name
   if (list->length == 3) {
     table_info->schema_name =
         reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
@@ -1448,7 +1451,8 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kIndex);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  // if schema name is specified
+  // if schema name is specified, which means you are using the syntax like
+  // DROP INDEX/TABLE A.B where A is schema name and B is table/index name
   if (list->length == 2) {
     TableInfo *table_info = new TableInfo{};
     table_info->schema_name =

@@ -410,7 +410,7 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 /*@brief   delete a tuple about table info from pg_table(using index scan)
  * @param   table_oid
  * @param   txn     TransactionContext
- * @return  Whether deletion is Successful
+ * @return  Whether deletion is successful
  */
 bool TableCatalog::DeleteTable(oid_t table_oid,
                                concurrency::TransactionContext *txn) {
@@ -561,6 +561,12 @@ TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
   return database_object->GetTableObjects();
 }
 
+/*@brief    update version id column within pg_table
+ * @param   update_val   the new(updated) version id
+ * @param   table_oid    which table to be updated
+ * @param   txn          TransactionContext
+ * @return  Whether update is successful
+ */
 bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
                                    concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns({ColumnId::VERSION_ID});  // version_id

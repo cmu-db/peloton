@@ -74,10 +74,12 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   txn_manager.CommitTransaction(txn);
 }
 
-/* This function *MUST* be called after a new database is created to bootstrap
- * all system catalog tables for that database.
- * The system catalog tables must be created in certain order to make sure
- * all tuples are indexed (actually this might be fine now after Paulo's fix)
+/*@brief   This function *MUST* be called after a new database is created to
+ * bootstrap all system catalog tables for that database. The system catalog
+ * tables must be created in certain order to make sure all tuples are indexed
+ *
+ * @param   database    database which this system catalogs belong to
+ * @param   txn         transaction context
  */
 void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {

@@ -124,7 +124,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            9);
+            1 + CATALOG_TABLES_COUNT);
 
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
@@ -159,7 +159,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            10);
+            2 + CATALOG_TABLES_COUNT);
 
   // Inserting a tuple to table_a
   traffic_cop.SetTcopTxnState(txn);

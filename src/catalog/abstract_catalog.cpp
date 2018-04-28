@@ -317,6 +317,10 @@ bool AbstractCatalog::UpdateWithIndexScan(
   auto index = catalog_table_->GetIndex(index_offset);
   std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
+
+  // NOTE: For indexed scan on catalog tables, we expect it not to be "partial
+  // indexed scan"(efficiency purpose).That being said, indexed column number
+  // must be equal to passed in "scan_values" size
   PELOTON_ASSERT(scan_values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(scan_values.size(),
                                          ExpressionType::COMPARE_EQUAL);

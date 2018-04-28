@@ -61,8 +61,6 @@ TEST_F(SettingsManagerTests, InitializationTest) {
 TEST_F(SettingsManagerTests, ModificationTest) {
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
-  // auto catalog = catalog::Catalog::GetInstance();
-  // catalog->Bootstrap();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto &config_manager = settings::SettingsManager::GetInstance();
