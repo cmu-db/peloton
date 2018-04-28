@@ -206,11 +206,11 @@ class Catalog {
                         const std::vector<Column> &columns,
                         concurrency::TransactionContext *txn);
 
-  ResultType ChangeColumnName(const std::string &database_name,
-                              const std::string &table_name,
-                              const std::vector<Column> &old_columns,
-                              const std::vector<std::string> &names,
-                              concurrency::TransactionContext *txn);
+  ResultType RenameColumn(const std::string &database_name,
+                          const std::string &table_name,
+                          const std::string &old_name,
+                          const std::string &new_name,
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
