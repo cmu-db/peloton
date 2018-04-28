@@ -79,8 +79,9 @@ bool ProcCatalog::InsertProc(const std::string &proname,
                              oid_t prolang, const std::string &prosrc,
                              type::AbstractPool *pool,
                              concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  (void) pool;
+  // Create the tuple first
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   oid_t proc_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(proc_oid);
@@ -91,15 +92,29 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   auto val4 = type::ValueFactory::GetIntegerValue(prolang);
   auto val5 = type::ValueFactory::GetVarcharValue(prosrc);
 
-  tuple->SetValue(ColumnId::OID, val0, pool);
-  tuple->SetValue(ColumnId::PRONAME, val1, pool);
-  tuple->SetValue(ColumnId::PRORETTYPE, val2, pool);
-  tuple->SetValue(ColumnId::PROARGTYPES, val3, pool);
-  tuple->SetValue(ColumnId::PROLANG, val4, pool);
-  tuple->SetValue(ColumnId::PROSRC, val5, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+    val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+    val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+    val5);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_4));
+  values.push_back(ExpressionPtr(constant_expr_5));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
@@ -128,9 +143,12 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
     concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *proc_name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+  auto *proc_name_expr =
+    new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::PRONAME);
+  proc_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::PRONAME);
+
   expression::AbstractExpression *proc_name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(proc_name, nullptr).Copy());
@@ -138,9 +156,11 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, proc_name_expr, proc_name_const_expr);
 
-  expression::AbstractExpression *proc_args_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+  auto *proc_args_expr =
+    new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::PROARGTYPES);
+  proc_args_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::PROARGTYPES);
   expression::AbstractExpression *proc_args_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(
