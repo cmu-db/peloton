@@ -54,18 +54,22 @@ LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
 bool LanguageCatalog::InsertLanguage(const std::string &lanname,
                                      type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  (void) pool;
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
 
   oid_t language_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(language_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(lanname);
 
-  tuple->SetValue(ColumnId::OID, val0, pool);
-  tuple->SetValue(ColumnId::LANNAME, val1, pool);
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val0)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val1)));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 // delete a language by name

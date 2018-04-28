@@ -62,8 +62,10 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
     int64_t updates, int64_t deletes, int64_t inserts, int64_t latency,
     int64_t cpu_time, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
   auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
@@ -90,22 +92,35 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val11 = type::ValueFactory::GetIntegerValue(cpu_time);
   auto val12 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::NAME, val0, pool);
-  tuple->SetValue(ColumnId::DATABASE_OID, val1, pool);
-  tuple->SetValue(ColumnId::NUM_PARAMS, val2, pool);
-  tuple->SetValue(ColumnId::PARAM_TYPES, val3, pool);
-  tuple->SetValue(ColumnId::PARAM_FORMATS, val4, pool);
-  tuple->SetValue(ColumnId::PARAM_VALUES, val5, pool);
-  tuple->SetValue(ColumnId::READS, val6, pool);
-  tuple->SetValue(ColumnId::UPDATES, val7, pool);
-  tuple->SetValue(ColumnId::DELETES, val8, pool);
-  tuple->SetValue(ColumnId::INSERTS, val9, pool);
-  tuple->SetValue(ColumnId::LATENCY, val10, pool);
-  tuple->SetValue(ColumnId::CPU_TIME, val11, pool);
-  tuple->SetValue(ColumnId::TIME_STAMP, val12, pool);
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val0)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val1)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val2)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val3)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val4)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val5)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val6)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val7)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val8)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val9)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val10)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val11)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val12)));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(

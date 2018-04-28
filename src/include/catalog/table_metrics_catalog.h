@@ -74,6 +74,8 @@ class TableMetricsCatalog : public AbstractCatalog {
     // Add new columns here in creation order
   };
 
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6};
+
   enum IndexId {
     PRIMARY_KEY = 0,
     // Add new indexes here in creation order

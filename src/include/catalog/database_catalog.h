@@ -32,7 +32,6 @@
 
 namespace peloton {
 namespace catalog {
-
 class TableCatalogObject;
 class IndexCatalogObject;
 
