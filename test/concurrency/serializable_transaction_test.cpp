@@ -67,14 +67,51 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
       concurrency::EpochManagerFactory::GetInstance().Reset();
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
       
-      TransactionScheduler scheduler(1, table, &txn_manager, true);
+      TransactionScheduler scheduler(1, table, &txn_manager, {0});
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
 
       scheduler.Run();
 
-      // Snapshot read cannot read the recent insert
-      EXPECT_EQ(0, scheduler.schedules[0].results.size());
+      EXPECT_EQ(10, scheduler.schedules[0].results.size());
+    }
+  }
+}
+
+// test r/w txn with a read-only txn runs concurrently
+TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//    Txn #0 | Txn #1
+//    ----------------
+//    BEGIN  |
+//    W(X)   |
+//           | BEGIN R/O
+//           | R(X)
+//    W(X)   |
+//    COMMIT |
+//           | R(X)
+//           | COMMIT
+    {
+      concurrency::EpochManagerFactory::GetInstance().Reset();
+      storage::DataTable *table = TestingTransactionUtil::CreateTable();
+
+      TransactionScheduler scheduler(2, table, &txn_manager, {1});
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(0).Update(0, 2);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
   }
 }

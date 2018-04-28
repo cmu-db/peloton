@@ -54,7 +54,7 @@
  *
  * See isolation_level_test.cpp for examples.
  */
-
+#include <initializer_list>
 #include "catalog/schema.h"
 #include "common/harness.h"
 #include "concurrency/transaction_context.h"
@@ -242,7 +242,7 @@ class TransactionThread {
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
         /** starts a read only transaction*/
-        txn = txn_manager->BeginTransaction(0, IsolationLevelType::SNAPSHOT, true);
+        txn = txn_manager->BeginTransaction(0, IsolationLevelType::SERIALIZABLE, true);
       } else {
         txn = txn_manager->BeginTransaction();
       }
@@ -349,13 +349,14 @@ class TransactionScheduler {
  public:
   TransactionScheduler(size_t num_txn, storage::DataTable *datatable_,
                        concurrency::TransactionManager *txn_manager_,
-                       bool first_as_ro = false)
+                       std::initializer_list<int> il = {})
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
         concurrent(false) {
+    std::set<int> read_only(il);
     for (size_t i = 0; i < num_txn; i++) {
-      if (first_as_ro && i == 0) {
+      if (read_only.find(i) != read_only.end()) {
         schedules.emplace_back(i, true);
       } else {
         schedules.emplace_back(i, false);
