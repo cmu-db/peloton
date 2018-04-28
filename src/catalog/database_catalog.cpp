@@ -268,17 +268,6 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
                                      const std::string &database_name,
                                      type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-//  std::unique_ptr<storage::Tuple> tuple(
-//      new storage::Tuple(catalog_table_->GetSchema(), true));
-//
-//  auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
-//  auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
-//
-//  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
-//  tuple->SetValue(ColumnId::DATABASE_NAME, val1, pool);
-//
-//  // Insert the tuple
-//  return InsertTuple(std::move(tuple), txn);
 
   (void) pool;
 
@@ -323,9 +312,14 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *db_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
-                                                    ColumnId::DATABASE_OID);
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                       ColumnId::DATABASE_OID);
+
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
+
   expression::AbstractExpression *db_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -369,10 +363,14 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   // cache miss, get from pg_database
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *db_name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
-                                                    ColumnId::DATABASE_NAME);
-  expression::AbstractExpression *db_name_const_expr =
+  auto *db_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                       ColumnId::DATABASE_NAME);
+    db_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(),
+                              ColumnId::DATABASE_NAME);
+
+    expression::AbstractExpression *db_name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
   expression::AbstractExpression *db_name_equality_expr =
