@@ -97,9 +97,11 @@ bool ZoneMapCatalog::DeleteColumnStatistics(
 std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::MINIMUM),
-                                 static_cast<int>(ColumnId::MAXIMUM),
-                                 static_cast<int>(ColumnId::TYPE)});
+//  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::MINIMUM),
+//                                 static_cast<int>(ColumnId::MAXIMUM),
+//                                 static_cast<int>(ColumnId::TYPE)});
+
+  std::vector<oid_t> column_ids(all_column_ids);
 
   expression::AbstractExpression *db_oid_expr =
       expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
@@ -161,9 +163,9 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
   }
   auto tuple = result_tuples[0];
   type::Value min, max, actual_type;
-  min = tuple.GetValue(ZoneMapOffset::MINIMUM_OFF);
-  max = tuple.GetValue(ZoneMapOffset::MAXIMUM_OFF);
-  actual_type = tuple.GetValue(ZoneMapOffset::TYPE_OFF);
+  min = tuple.GetValue(ColumnId ::MINIMUM);
+  max = tuple.GetValue(ColumnId::MAXIMUM);
+  actual_type = tuple.GetValue(ColumnId::TYPE);
 
   // min and max are stored as VARCHARs and should be convertd to their
   // original types.
