@@ -192,12 +192,40 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
 bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
                                          oid_t table_oid,
                                          concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(trigger_name).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *trigger_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           ColumnId::TRIGGER_NAME);
+  trigger_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                               catalog_table_->GetOid(),
+                               ColumnId::TRIGGER_NAME);
+  expression::AbstractExpression *trigger_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(trigger_name, nullptr).Copy());
+  expression::AbstractExpression *trigger_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, trigger_name_expr,
+          trigger_name_const_expr);
+
+  auto *table_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::TABLE_OID);
+  expression::AbstractExpression *table_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, trigger_name_equality_expr,
+          table_oid_equality_expr);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(

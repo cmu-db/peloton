@@ -516,12 +516,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
 
-  // need the predicate for the seq scan (conjunction)
-  // table_name == table_name and database_oid need to be same
-  // only need to get the logical tiles that wrap oid, name, db_oid
-  expression::AbstractExpression *table_name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+  auto *table_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::TABLE_NAME);
+  table_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                               catalog_table_->GetOid(),
+                               ColumnId::TABLE_NAME);
   expression::AbstractExpression *table_name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
@@ -530,9 +530,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
           ExpressionType::COMPARE_EQUAL, table_name_expr,
           table_name_const_expr);
 
-  expression::AbstractExpression *db_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::DATABASE_OID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
   expression::AbstractExpression *db_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -545,8 +548,6 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
           ExpressionType::CONJUNCTION_AND, table_name_equality_expr,
           db_oid_equality_expr);
 
-  //  LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
-  //   change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);

@@ -126,13 +126,40 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 bool QueryMetricsCatalog::DeleteQueryMetrics(
     const std::string &name, oid_t database_oid,
     concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           ColumnId::NAME);
+  name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                               catalog_table_->GetOid(),
+                               ColumnId::NAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr,
+          name_const_expr);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::DATABASE_OID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, name_equality_expr,
+          db_oid_equality_expr);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(

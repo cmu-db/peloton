@@ -72,12 +72,18 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
 
 bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
     oid_t database_oid, concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  return DeleteWithIndexScan(index_offset, values, txn);
+  expression::AbstractExpression *db_oid_expr =
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 }  // namespace catalog

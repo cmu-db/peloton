@@ -107,6 +107,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
 
  private:
   ColumnStatsCatalog(concurrency::TransactionContext *txn);
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,

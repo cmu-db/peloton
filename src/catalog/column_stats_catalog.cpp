@@ -118,27 +118,14 @@ bool ColumnStatsCatalog::InsertColumnStats(
 bool ColumnStatsCatalog::DeleteColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id,
     concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
-
-  return DeleteWithIndexScan(index_offset, values, txn);
-}
-
-std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids(
-      {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
-       ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
-       ColumnId::HISTOGRAM_BOUNDS, ColumnId::COLUMN_NAME, ColumnId::HAS_INDEX});
-
-  expression::AbstractExpression *db_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
-                                                    ColumnId::DATABASE_ID);
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::DATABASE_ID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_ID);
   expression::AbstractExpression *db_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(database_id).Copy());
@@ -146,9 +133,12 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
-  expression::AbstractExpression *tb_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
-                                                    ColumnId::TABLE_ID);
+  auto *tb_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_ID);
+  tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::TABLE_ID);
   expression::AbstractExpression *tb_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_id).Copy());
@@ -156,9 +146,70 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
-  expression::AbstractExpression *col_id_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *col_id_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::COLUMN_ID);
+  col_id_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::COLUMN_ID);
+  expression::AbstractExpression *col_id_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *col_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_id_expr, col_id_const_expr);
+
+  expression::AbstractExpression *db_and_tb =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+          tb_oid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_and_tb, col_oid_equality_expr);
+
+
+
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
+}
+
+std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
+    oid_t database_id, oid_t table_id, oid_t column_id,
+    concurrency::TransactionContext *txn) {
+
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_ID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+  auto *tb_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_ID);
+  tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
+
+  auto *col_id_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::COLUMN_ID);
+  col_id_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::COLUMN_ID);
   expression::AbstractExpression *col_id_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(column_id).Copy());
@@ -187,14 +238,14 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   type::Value num_rows, cardinality, frac_null, most_common_vals,
       most_common_freqs, hist_bounds, column_name, has_index;
 
-  num_rows = tuple.GetValue(ColumnStatsOffset::NUM_ROWS_OFF);
-  cardinality = tuple.GetValue(ColumnStatsOffset::CARDINALITY_OFF);
-  frac_null = tuple.GetValue(ColumnStatsOffset::FRAC_NULL_OFF);
-  most_common_vals = tuple.GetValue(ColumnStatsOffset::COMMON_VALS_OFF);
-  most_common_freqs = tuple.GetValue(ColumnStatsOffset::COMMON_FREQS_OFF);
-  hist_bounds = tuple.GetValue(ColumnStatsOffset::HIST_BOUNDS_OFF);
-  column_name = tuple.GetValue(ColumnStatsOffset::COLUMN_NAME_OFF);
-  has_index = tuple.GetValue(ColumnStatsOffset::HAS_INDEX_OFF);
+  num_rows = tuple.GetValue(ColumnId::NUM_ROWS);
+  cardinality = tuple.GetValue(ColumnId::CARDINALITY);
+  frac_null = tuple.GetValue(ColumnId::FRAC_NULL);
+  most_common_vals = tuple.GetValue(ColumnId::MOST_COMMON_VALS);
+  most_common_freqs = tuple.GetValue(ColumnId::MOST_COMMON_FREQS);
+  hist_bounds = tuple.GetValue(ColumnId::HISTOGRAM_BOUNDS);
+  column_name = tuple.GetValue(ColumnId::COLUMN_NAME);
+  has_index = tuple.GetValue(ColumnId::HAS_INDEX);
 
   std::unique_ptr<std::vector<type::Value>> column_stats(
       new std::vector<type::Value>({num_rows, cardinality, frac_null,
@@ -209,26 +260,44 @@ size_t ColumnStatsCatalog::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
     std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
         column_stats_map) {
-  std::vector<oid_t> column_ids(
-      {ColumnId::COLUMN_ID, ColumnId::NUM_ROWS, ColumnId::CARDINALITY,
-       ColumnId::FRAC_NULL, ColumnId::MOST_COMMON_VALS,
-       ColumnId::MOST_COMMON_FREQS, ColumnId::HISTOGRAM_BOUNDS,
-       ColumnId::COLUMN_NAME, ColumnId::HAS_INDEX});
-  oid_t index_offset = IndexId::SECONDARY_KEY_1;  // Secondary key index
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_ID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr,
+          db_oid_const_expr);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *tb_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_ID);
+  tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
-  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() == 0) {
-    return 0;
-  }
-  auto tile = (*result_tiles)[0].get();
-  size_t tuple_count = tile->GetTupleCount();
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+          tb_oid_equality_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  size_t tuple_count = result_tuples.size();
   LOG_DEBUG("Tuple count: %lu", tuple_count);
   if (tuple_count == 0) {
     return 0;
@@ -236,27 +305,22 @@ size_t ColumnStatsCatalog::GetTableStats(
 
   type::Value num_rows, cardinality, frac_null, most_common_vals,
       most_common_freqs, hist_bounds, column_name, has_index;
-  for (size_t tuple_id = 0; tuple_id < tuple_count; ++tuple_id) {
-    num_rows = tile->GetValue(tuple_id, 1 + ColumnStatsOffset::NUM_ROWS_OFF);
-    cardinality =
-        tile->GetValue(tuple_id, 1 + ColumnStatsOffset::CARDINALITY_OFF);
-    frac_null = tile->GetValue(tuple_id, 1 + ColumnStatsOffset::FRAC_NULL_OFF);
-    most_common_vals =
-        tile->GetValue(tuple_id, 1 + ColumnStatsOffset::COMMON_VALS_OFF);
-    most_common_freqs =
-        tile->GetValue(tuple_id, 1 + ColumnStatsOffset::COMMON_FREQS_OFF);
-    hist_bounds =
-        tile->GetValue(tuple_id, 1 + ColumnStatsOffset::HIST_BOUNDS_OFF);
-    column_name =
-        tile->GetValue(tuple_id, 1 + ColumnStatsOffset::COLUMN_NAME_OFF);
-    has_index = tile->GetValue(tuple_id, 1 + ColumnStatsOffset::HAS_INDEX_OFF);
+  for (auto tuple : result_tuples) {
+    num_rows = tuple.GetValue(ColumnId::NUM_ROWS);
+    cardinality = tuple.GetValue(ColumnId::CARDINALITY);
+    frac_null = tuple.GetValue(ColumnId::FRAC_NULL);
+    most_common_vals = tuple.GetValue(ColumnId::MOST_COMMON_VALS);
+    most_common_freqs = tuple.GetValue(ColumnId::MOST_COMMON_FREQS);
+    hist_bounds = tuple.GetValue(ColumnId::HISTOGRAM_BOUNDS);
+    column_name = tuple.GetValue(ColumnId::COLUMN_NAME);
+    has_index = tuple.GetValue(ColumnId::HAS_INDEX);
 
     std::unique_ptr<std::vector<type::Value>> column_stats(
         new std::vector<type::Value>({num_rows, cardinality, frac_null,
                                       most_common_vals, most_common_freqs,
                                       hist_bounds, column_name, has_index}));
 
-    oid_t column_id = tile->GetValue(tuple_id, 0).GetAs<int>();
+    oid_t column_id = tuple.GetValue(ColumnId::COLUMN_ID).GetAs<int>();
     column_stats_map[column_id] = std::move(column_stats);
   }
   return tuple_count;

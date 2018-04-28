@@ -75,13 +75,20 @@ bool LanguageCatalog::InsertLanguage(const std::string &lanname,
 // delete a language by name
 bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
                                      concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  auto *lan_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::LANNAME);
+  expression::AbstractExpression *lan_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  expression::AbstractExpression *lan_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, lan_name_expr,
+          lan_name_const_expr);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithCompiledSeqScan(column_ids, lan_name_equality_expr, txn);
 }
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
