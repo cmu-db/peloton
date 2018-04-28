@@ -15,7 +15,6 @@
 #include "concurrency/transaction_context.h"
 #include "executor/abstract_executor.h"
 #include "planner/alter_plan.h"
-#include "planner/rename_plan.h"
 
 namespace peloton {
 
@@ -33,7 +32,7 @@ class AlterExecutor : public AbstractExecutor {
   AlterExecutor &operator=(AlterExecutor &&) = delete;
 
   AlterExecutor(const planner::AbstractPlan *node,
-                ExecutorContext *executor_context, bool isAlter);
+                ExecutorContext *executor_context);
 
   ~AlterExecutor() {}
 
@@ -42,7 +41,7 @@ class AlterExecutor : public AbstractExecutor {
 
   bool DExecute();
 
-  bool RenameColumn(const planner::RenamePlan &node,
+  bool RenameColumn(const planner::AlterPlan &node,
                     concurrency::TransactionContext *txn);
 
   bool DropColumn(const planner::AlterPlan &node,

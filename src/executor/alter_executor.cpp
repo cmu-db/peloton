@@ -21,8 +21,9 @@ namespace executor {
 
 // Constructor for alter table executor
 AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
-                             ExecutorContext *executor_context, bool isAlter)
-    : AbstractExecutor(node, executor_context), isAlter_(isAlter) {}
+                             ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context),
+      isAlter_(!reinterpret_cast<const planner::AlterPlan *>(node)->IsRename()) {}
 
 // Initialize executor
 // Nothing to initialize for now
@@ -37,7 +38,7 @@ bool AlterExecutor::DExecute() {
   LOG_TRACE("Executing Alter...");
   bool result = false;
   if (!isAlter_) {
-    const planner::RenamePlan &node = GetPlanNode<planner::RenamePlan>();
+    const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
     auto current_txn = executor_context_->GetTransaction();
     result = RenameColumn(node, current_txn);
   } else {
@@ -58,7 +59,7 @@ bool AlterExecutor::DExecute() {
 }
 
 bool AlterExecutor::RenameColumn(
-    const peloton::planner::RenamePlan &node,
+    const peloton::planner::AlterPlan &node,
     peloton::concurrency::TransactionContext *txn) {
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();

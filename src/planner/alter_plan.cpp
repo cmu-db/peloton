@@ -31,23 +31,43 @@ AlterPlan::AlterPlan(const std::string &database_name,
       dropped_columns(dropped_columns),
       type(a_type) {}
 
+AlterPlan::AlterPlan(const std::string &database_name,
+                     const std::string &table_name,
+                     const std::vector<std::string> &old_names,
+                     const std::vector<std::string> &new_names,
+                     const AlterType a_type)
+    : table_name(table_name),
+      database_name(database_name),
+      old_names_(old_names),
+      new_names_(new_names),
+      type(a_type) {}
+
+
 AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
   table_name = std::string(parse_tree->GetTableName());
   database_name = std::string(parse_tree->GetDatabaseName());
-  switch (parse_tree->type){
-    case parser::AlterTableStatement::AlterTableType::DROP:
-      for (auto col : *parse_tree->names) {
-        LOG_TRACE("Drooped column name: %s", col);
-        dropped_columns.push_back(std::string(col));
-        type = AlterType::DROP;
-      }
-    case parser::AlterTableStatement::AlterTableType::ADD:
-    default:
-      LOG_TRACE("Not Implemented the plan yet!");
+  switch (parse_tree->type) {
+  case parser::AlterTableStatement::AlterTableType::RENAME: {
+    old_names_.emplace_back(std::string{parse_tree->oldName});
+    new_names_.emplace_back(std::string{parse_tree->newName});
+    type = AlterType::RENAME;
+    break;
   }
-  //std::vector<catalog::Column> columns;
-  // case 1: add column(column name + column data type)
-  //if (parse_tree->type == AlterTableType::COLUMN) {
+  case parser::AlterTableStatement::AlterTableType::DROP:
+    for (auto col : *parse_tree->names) {
+      LOG_TRACE("Drooped column name: %s", col);
+      dropped_columns.push_back(std::string(col));
+      type = AlterType::DROP;
+    }
+    break;
+  case parser::AlterTableStatement::AlterTableType::ADD:
+  default:
+    LOG_ERROR("Not Implemented the plan yet!");
+    type = AlterType::INVALID;
+  }
+    //std::vector<catalog::Column> columns;
+    // case 1: add column(column name + column data type)
+    //if (parse_tree->type == AlterTableType::COLUMN) {
     // Add columns: traverse through vector of ColumnDefinition
     /*for (auto col : *parse_tree->columns) {
       type::TypeId val = col->GetValueType(col->type);
@@ -69,6 +89,10 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
     // Drop columns: traverse through vector of char*(column name)
 
   }
+
+
+
+
 
 
 }  // namespace planner
