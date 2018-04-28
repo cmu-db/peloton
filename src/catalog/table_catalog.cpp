@@ -28,7 +28,7 @@
 
 namespace peloton {
 namespace catalog {
-    using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
+
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                                        concurrency::TransactionContext *txn,
                                        int tupleId)

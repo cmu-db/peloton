@@ -45,6 +45,8 @@ class Tuple;
 
 namespace catalog {
 
+using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
+
 class AbstractCatalog {
  public:
   virtual ~AbstractCatalog() {}
