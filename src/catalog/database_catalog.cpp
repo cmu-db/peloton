@@ -290,14 +290,31 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
 
 bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
                                      concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  // cache miss, get from pg_database
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::DATABASE_OID);
+
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
+
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+  expression::AbstractExpression *predicate = db_oid_equality_expr;
 
   // evict cache
   txn->catalog_cache.EvictDatabaseObject(database_oid);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
