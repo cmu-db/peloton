@@ -268,17 +268,35 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
                                      const std::string &database_name,
                                      type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+//  std::unique_ptr<storage::Tuple> tuple(
+//      new storage::Tuple(catalog_table_->GetSchema(), true));
+//
+//  auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
+//  auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
+//
+//  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
+//  tuple->SetValue(ColumnId::DATABASE_NAME, val1, pool);
+//
+//  // Insert the tuple
+//  return InsertTuple(std::move(tuple), txn);
 
+  (void) pool;
+
+  std::vector<std::vector<ExpressionPtr>> tuples;
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
-  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
-  tuple->SetValue(ColumnId::DATABASE_NAME, val1, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+      val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+      val1);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
