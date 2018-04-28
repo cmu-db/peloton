@@ -74,6 +74,12 @@ class StringFunctions {
   // Length will return the number of characters in the given string
   static uint32_t Length(executor::ExecutorContext &ctx, const char *str,
                          uint32_t length);
+
+  // Nextval will return the next value of the given sequence
+  static uint32_t Nextval(executor::ExecutorContext &ctx, const char *sequence_name);
+
+  // Currval will return the current value of the given sequence
+  static uint32_t Currval(executor::ExecutorContext &ctx, const char *sequence_name);
 };
 
 }  // namespace function

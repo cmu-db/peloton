@@ -33,5 +33,9 @@ DEFINE_METHOD(peloton::function, StringFunctions, Trim);
 DEFINE_METHOD(peloton::function, StringFunctions, LTrim);
 DEFINE_METHOD(peloton::function, StringFunctions, RTrim);
 
+// Sequence-related functions
+DEFINE_METHOD(peloton::function, StringFunctions, Nextval);
+DEFINE_METHOD(peloton::function, StringFunctions, Currval);
+
 }  // namespace codegen
 }  // namespace peloton

@@ -16,12 +16,17 @@
 #include "executor/executor_context.h"
 #include "concurrency/transaction_context.h"
 
+
 namespace peloton {
 namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction,
-                                 codegen::QueryParameters parameters)
-    : transaction_(transaction), parameters_(std::move(parameters)) {}
+                                 codegen::QueryParameters parameters,
+                                 const std::string default_database_name)
+    : transaction_(transaction), parameters_(std::move(parameters)),
+      default_database_name_(default_database_name) {
+  LOG_DEBUG("ExecutorContext default db name: %s", default_database_name.c_str());
+}
 
 concurrency::TransactionContext *ExecutorContext::GetTransaction() const {
   return transaction_;
@@ -41,6 +46,10 @@ type::EphemeralPool *ExecutorContext::GetPool() {
 
   // return pool
   return pool_.get();
+}
+
+std::string ExecutorContext::GetDatabaseName() const {
+  return default_database_name_;
 }
 
 }  // namespace executor

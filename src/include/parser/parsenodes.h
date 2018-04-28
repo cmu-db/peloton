@@ -730,6 +730,16 @@ typedef struct CreateSchemaStmt
   bool    if_not_exists;  /* just do nothing if schema already exists? */
 } CreateSchemaStmt;
 
+typedef struct CreateSeqStmt
+{
+	NodeTag		type;
+	RangeVar *sequence;		/* the sequence to create */
+	List	   *options;
+	Oid			  ownerId;		/* ID of owner, or InvalidOid for default */
+	bool		  for_identity;
+	bool		  if_not_exists;	/* just do nothing if it already exists? */
+} CreateSeqStmt;
+
 typedef enum RoleSpecType
 {
   ROLESPEC_CSTRING,     /* role name is stored as a C string */

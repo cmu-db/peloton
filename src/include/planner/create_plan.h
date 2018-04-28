@@ -50,7 +50,7 @@ struct ForeignKeyInfo {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  
+
   // This construnctor is for Create Database Test used only
   explicit CreatePlan(std::string database_name, CreateType c_type);
 
@@ -86,7 +86,9 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
-  inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+  inline std::vector<ForeignKeyInfo> GetForeignKeys() const {
+    return foreign_keys;
+  }
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
   void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
@@ -108,11 +110,19 @@ class CreatePlan : public AbstractPlan {
 
   int16_t GetTriggerType() const { return trigger_type; }
 
-protected:
-    // This is a helper method for extracting foreign key information
-    // and storing it in an internal struct.
-    void ProcessForeignKeyConstraint(const std::string &table_name,
-                                     const parser::ColumnDefinition *col);
+  std::string GetSequenceName() const { return sequence_name; }
+  int64_t GetSequenceStart() const { return seq_start; };
+  int64_t GetSequenceIncrement() const { return seq_increment; }
+  int64_t GetSequenceMaxValue() const { return seq_max_value; }
+  int64_t GetSequenceMinValue() const { return seq_min_value; }
+  int64_t GetSequenceCacheSize() const { return seq_cache; }
+  bool GetSequenceCycle() const { return seq_cycle; }
+
+ protected:
+  // This is a helper method for extracting foreign key information
+  // and storing it in an internal struct.
+  void ProcessForeignKeyConstraint(const std::string &table_name,
+                                   const parser::ColumnDefinition *col);
 
  private:
   // Table Name
@@ -149,6 +159,15 @@ protected:
   std::unique_ptr<expression::AbstractExpression> trigger_when = nullptr;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
+
+  // information for sequences;
+  std::string sequence_name;
+  int64_t seq_start;
+  int64_t seq_increment;
+  int64_t seq_max_value;
+  int64_t seq_min_value;
+  int64_t seq_cache;  // sequence cache size, not supported yet
+  bool seq_cycle;
 
  private:
   DISALLOW_COPY_AND_MOVE(CreatePlan);
