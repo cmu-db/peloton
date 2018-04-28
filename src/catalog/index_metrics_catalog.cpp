@@ -12,6 +12,7 @@
 
 #include "catalog/index_metrics_catalog.h"
 
+#include "expression/expression_util.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -46,8 +47,10 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
     oid_t database_oid, oid_t table_oid, oid_t index_oid, int64_t reads,
     int64_t deletes, int64_t inserts, int64_t time_stamp,
     type::AbstractPool *pool, concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  (void) pool;
+  // Create the tuple first
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
@@ -57,16 +60,32 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
   auto val5 = type::ValueFactory::GetIntegerValue(inserts);
   auto val6 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
-  tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
-  tuple->SetValue(ColumnId::INDEX_OID, val2, pool);
-  tuple->SetValue(ColumnId::READS, val3, pool);
-  tuple->SetValue(ColumnId::DELETES, val4, pool);
-  tuple->SetValue(ColumnId::INSERTS, val5, pool);
-  tuple->SetValue(ColumnId::TIME_STAMP, val6, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+      val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+      val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+      val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+      val0);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+      val1);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+      val2);
+  auto constant_expr_6 = new expression::ConstantValueExpression(
+      val2);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_4));
+  values.push_back(ExpressionPtr(constant_expr_5));
+  values.push_back(ExpressionPtr(constant_expr_6));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool IndexMetricsCatalog::DeleteIndexMetrics(
