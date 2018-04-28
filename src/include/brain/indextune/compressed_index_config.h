@@ -24,6 +24,9 @@
 namespace peloton {
 namespace brain {
 
+// TODO: Maybe we should rename it to CompressedIndexConfigManager
+// TODO: Maybe we should decouple the Manager and the bitset based CompressedIndexConfig
+
 class CompressedIndexConfiguration {
  public:
   explicit CompressedIndexConfiguration(
@@ -77,6 +80,14 @@ class CompressedIndexConfiguration {
 
   std::shared_ptr<boost::dynamic_bitset<>> DropCandidate(
       const IndexConfiguration &indexes);
+
+  // (saatvik): Should return all possible number of configurations allowed
+  // Required to prepare RL models
+  // TODO: pending
+  int GetConfigurationCount();
+
+  // TODO: Should return the bitset representing the current index configuration
+  std::shared_ptr<boost::dynamic_bitset<>> GetCurrentIndexConfig();
 
  private:
   std::string database_name_;

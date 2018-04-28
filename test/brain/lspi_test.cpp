@@ -10,8 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/indextune/lspi/rlse_lm.h"
+#include "brain/indextune/lspi/rlse.h"
+#include "brain/indextune/lspi/lstd.h"
 #include "brain/util/eigen_util.h"
+#include "brain/indextune/lspi/lspi_tuner.h"
 #include "common/harness.h"
 
 namespace peloton {
@@ -42,7 +44,7 @@ TEST_F(LSPITests, RLSETest) {
     model.Update(feat_vec, value_true);
     if((i+1) % LOG_INTERVAL == 0) {
       float curr_loss = loss_vector.array().mean();
-      LOG_DEBUG("Loss at %d: %.5f", i, curr_loss);
+      LOG_DEBUG("Loss at %d: %.5f", i + 1, curr_loss);
       EXPECT_LE(curr_loss, prev_loss);
       prev_loss = curr_loss;
     }
