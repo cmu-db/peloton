@@ -293,10 +293,8 @@ class PostgresParser {
   static expression::AbstractExpression *SubqueryExprTransform(SubLink *node);
 
   // transform helper for alter table statement
-  static parser::AlterTableStatement *AlterTransform(AlterTableStmt *root);
+  static parser::AlterTableStatement *AlterTransform(Node *root);
 
-  // transform helper for alter rename statement
-  static parser::RenameFuncStatement *RenameTransform(RenameStmt *root);
 };
 
 }  // namespace parser

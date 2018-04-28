@@ -25,7 +25,6 @@
 #include "explain_statement.h"
 #include "insert_statement.h"
 #include "prepare_statement.h"
-#include "rename_function_statement.h"
 #include "select_statement.h"
 #include "sql_statement.h"
 #include "transaction_statement.h"
