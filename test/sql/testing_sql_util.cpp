@@ -115,6 +115,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   bind_node_visitor.BindNameToNode(parsed_stmt->GetStatement(0));
 
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  txn_manager.CommitTransaction(txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -248,7 +249,9 @@ void TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
   // Execute query
   TestingSQLUtil::ExecuteSQLQuery(std::move(query), result, tuple_descriptor,
                                   rows_changed, error_message);
-  unsigned int rows = result.size() / tuple_descriptor.size();
+  unsigned int rows = tuple_descriptor.size() == 0
+                          ? result.size()
+                          : result.size() / tuple_descriptor.size();
 
   // Build actual result as set of rows for comparison
   std::vector<std::string> actual_result(rows);

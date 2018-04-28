@@ -23,6 +23,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
@@ -116,40 +117,6 @@ TEST_F(CatalogTests, CreatingTable) {
                         ->GetColumnObject(1)
                         ->GetColumnName());
   txn_manager.CommitTransaction(txn);
-  // EXPECT_EQ(5, time_stamp);
-
-  // We remove these tests so people can add new catalogs without breaking this
-  // test...
-  // 3 + 4
-  // EXPECT_EQ(catalog::Catalog::GetInstance()
-  //               ->GetDatabaseWithName("pg_catalog")
-  //               ->GetTableWithName("pg_table")
-  //               ->GetTupleCount(),
-  //           11);
-  // // 6 + pg_database(2) + pg_table(3) + pg_attribute(7) + pg_index(6)
-  // EXPECT_EQ(catalog::Catalog::GetInstance()
-  //               ->GetDatabaseWithName("pg_catalog")
-  //               ->GetTableWithName("pg_attribute")
-  //               ->GetTupleCount(),
-  //           57);
-  // // pg_catalog + emp_db
-  // EXPECT_EQ(catalog::Catalog::GetInstance()
-  //               ->GetDatabaseWithName("pg_catalog")
-  //               ->GetTableWithName("pg_database")
-  //               ->GetTupleCount(),
-  //           2);
-  // // 3 + pg_index(3) + pg_attribute(3) + pg_table(3) + pg_database(2)
-  // EXPECT_EQ(catalog::Catalog::GetInstance()
-  //               ->GetDatabaseWithName("pg_catalog")
-  //               ->GetTableWithName("pg_index")
-  //               ->GetTupleCount(),
-  //           18);
-  // EXPECT_EQ(catalog::Catalog::GetInstance()
-  //               ->GetDatabaseWithName("pg_catalog")
-  //               ->GetTableWithName("pg_table")
-  //               ->GetSchema()
-  //               ->GetLength(),
-  //           72);
 }
 
 TEST_F(CatalogTests, TableObject) {
@@ -198,6 +165,69 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(version_oid, 1);
 
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(CatalogTests, TestingNamespace) {
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("begin;"));
+  // create namespaces emp_ns0 and emp_ns1
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery(
+                                     "create database default_database;"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery("create schema emp_ns0;"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery("create schema emp_ns1;"));
+
+  // create emp_table0 and emp_table1 in namespaces
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "create table emp_ns0.emp_table0 (a int, b varchar);"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "create table emp_ns0.emp_table1 (a int, b varchar);"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "create table emp_ns1.emp_table0 (a int, b varchar);"));
+  EXPECT_EQ(ResultType::FAILURE,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "create table emp_ns1.emp_table0 (a int, b varchar);"));
+
+  // insert values into emp_table0
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "insert into emp_ns0.emp_table0 values (1, 'abc');"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "insert into emp_ns0.emp_table0 values (2, 'abc');"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery(
+                "insert into emp_ns1.emp_table0 values (1, 'abc');"));
+
+  // select values from emp_table0 and emp_table1
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "select * from emp_ns0.emp_table1;", {});
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "select * from emp_ns0.emp_table0;", {"1|abc", "2|abc"});
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "select * from emp_ns1.emp_table0;", {"1|abc"});
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("commit;"));
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("begin;"));
+  EXPECT_EQ(ResultType::FAILURE, TestingSQLUtil::ExecuteSQLQuery(
+                                     "select * from emp_ns1.emp_table1;"));
+  EXPECT_EQ(ResultType::ABORTED, TestingSQLUtil::ExecuteSQLQuery("commit;"));
+
+  // drop namespace emp_ns0 and emp_ns1
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("begin;"));
+  EXPECT_EQ(ResultType::SUCCESS,
+            TestingSQLUtil::ExecuteSQLQuery("drop schema emp_ns0;"));
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "select * from emp_ns1.emp_table0;", {"1|abc"});
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("commit;"));
+  EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("begin;"));
+  EXPECT_EQ(ResultType::FAILURE,
+            TestingSQLUtil::ExecuteSQLQuery("drop schema emp_ns0;"));
+  EXPECT_EQ(ResultType::FAILURE, TestingSQLUtil::ExecuteSQLQuery(
+                                     "select * from emp_ns0.emp_table1;"));
+  EXPECT_EQ(ResultType::ABORTED, TestingSQLUtil::ExecuteSQLQuery("commit;"));
 }
 
 TEST_F(CatalogTests, DroppingTable) {
