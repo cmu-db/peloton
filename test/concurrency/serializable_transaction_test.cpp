@@ -111,6 +111,7 @@ TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+      //behaves like read committed
       EXPECT_EQ(2, scheduler.schedules[1].results[1]);
     }
   }
