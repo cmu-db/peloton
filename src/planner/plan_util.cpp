@@ -127,8 +127,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
       auto txn = txn_manager.BeginTransaction();
 
       try {
-        auto plan =
-            optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
+        auto plan = optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
         auto db_object = catalog_cache.GetDatabaseObject(db_name);
         database_id = db_object->GetDatabaseOid();
@@ -152,14 +151,16 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
             // Aggregate columns scanned in predicates
             ExprSet expr_set;
             auto predicate_ptr = temp_scan_ptr->GetPredicate();
-            expression::AbstractExpression *copied_predicate;
+            std::unique_ptr<expression::AbstractExpression> copied_predicate;
             if (nullptr == predicate_ptr) {
               copied_predicate = nullptr;
             } else {
-              copied_predicate = predicate_ptr->Copy();
+              copied_predicate =
+                  std::unique_ptr<expression::AbstractExpression>(
+                      predicate_ptr->Copy());
             }
-            expression::ExpressionUtil::GetTupleValueExprs(expr_set,
-                                                           copied_predicate);
+            expression::ExpressionUtil::GetTupleValueExprs(
+                expr_set, copied_predicate.get());
 
             for (const auto expr : expr_set) {
               auto tuple_value_expr =
