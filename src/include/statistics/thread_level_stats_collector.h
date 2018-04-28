@@ -27,6 +27,10 @@ class ThreadLevelStatsCollector {
     return collector_map[tid];
   }
 
+  ThreadLevelStatsCollector() {
+    // TODO(tianyu): Write stats to register here
+  }
+
   // TODO(tianyu): fill arguments
   inline void CollectTransactionBegin() {
     for (auto &metric : metric_dispatch_[StatInsertionPoint::TXN_BEGIN])
@@ -36,24 +40,52 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[StatInsertionPoint::TXN_COMMIT])
       metric->OnTransactionCommit(database_id);
   };
-
-  inline void CollectTransactionAbort(oid_t) {};
-  inline void CollectTupleRead() {};
-  inline void CollectTupleUpdate() {};
-  inline void CollectTupleInsert() {};
-  inline void CollectTupleDelete() {};
-  inline void CollectIndexRead() {};
-  inline void CollectIndexUpdate() {};
-  inline void CollectIndexInsert() {};
-  inline void CollectIndexDelete() {};
-  inline void CollectQueryBegin() {};
-  inline void CollectQueryEnd() {};
+  inline void CollectTransactionAbort(oid_t database_id) {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::TXN_ABORT])
+      metric->OnTransactionAbort(database_id);
+  };
+  inline void CollectTupleRead() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::TUPLE_READ])
+      metric->OnTupleRead();
+  };
+  inline void CollectTupleUpdate() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::TUPLE_UPDATE])
+      metric->OnTupleUpdate();
+  };
+  inline void CollectTupleInsert() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::TUPLE_INSERT])
+      metric->OnTupleInsert();
+  };
+  inline void CollectTupleDelete() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::TUPLE_DELETE])
+      metric->OnTupleDelete();
+  };
+  inline void CollectIndexRead() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::INDEX_READ])
+      metric->OnIndexRead();
+  };
+  inline void CollectIndexUpdate() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::INDEX_UPDATE])
+      metric->OnIndexUpdate();
+  };
+  inline void CollectIndexInsert() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::INDEX_INSERT])
+      metric->OnIndexInsert();
+  };
+  inline void CollectIndexDelete() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::INDEX_DELETE])
+      metric->OnIndexDelete();
+  };
+  inline void CollectQueryBegin() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::QUERY_BEGIN])
+      metric->OnQueryBegin();
+  };
+  inline void CollectQueryEnd() {
+    for (auto &metric : metric_dispatch_[StatInsertionPoint::QUERY_END])
+      metric->OnQueryEnd();
+  };
 
  private:
-  static void RegisterMetrics() {
-    // TODO(tianyu): Write stats to register here
-  }
-
   template<typename metric>
   void RegisterMetric(std::vector<StatInsertionPoint> points) {
     auto m = std::make_shared<metric>();

@@ -61,7 +61,7 @@ class BackendStatsContext {
   TableMetric *GetTableMetric(oid_t database_id, oid_t table_id);
 
   // Returns the database metric with the given database ID
-  DatabaseMetric *GetDatabaseMetric(oid_t database_id);
+  DatabaseMetricOld *GetDatabaseMetric(oid_t database_id);
 
   // Returns the index metric with the given database ID, table ID, and
   // index ID
@@ -180,7 +180,7 @@ class BackendStatsContext {
   //===--------------------------------------------------------------------===//
 
   // Database metrics
-  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>>
+  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetricOld>>
       database_metrics_{};
 
   // Table metrics

@@ -30,11 +30,8 @@ class AbstractMetricOld : public Printable {
   virtual ~AbstractMetricOld();
   const inline MetricType &GetType() const { return type_; }
   virtual void Reset() = 0;
-
   virtual const std::string GetInfo() const = 0;
-
   virtual void Aggregate(AbstractMetricOld &source) = 0;
-
  private:
   // The type this metric belongs to
   MetricType type_;
@@ -76,9 +73,8 @@ class AbstractMetric : public Metric {
     return std::shared_ptr<AbstractRawData>(old_data);
   }
 
- private:
+ protected:
   std::atomic<DataType *> raw_data_;
-
 };
 }  // namespace stats
 }  // namespace peloton

@@ -18,16 +18,66 @@
 #include "common/internal_types.h"
 #include "statistics/counter_metric.h"
 #include "statistics/abstract_metric.h"
-
 namespace peloton {
 namespace stats {
-
-/**
- * Database-specific metrics, including the number of committed/aborted txns.
- */
-class DatabaseMetric : public AbstractMetricOld {
+class DatabaseMetricRawData : public AbstractRawData {
  public:
-  DatabaseMetric(MetricType type, oid_t database_id);
+  inline void IncrementTxnCommited(oid_t database_id) {
+    counters_[database_id].first++;
+  }
+
+  inline void IncrementTxnAborted(oid_t database_id){
+    counters_[database_id].second++;
+  }
+
+  void Aggregate(AbstractRawData &other) override {
+    auto &other_db_metric = dynamic_cast<DatabaseMetricRawData &>(other);
+    for (auto &entry: other_db_metric.counters_) {
+      auto &this_counter = counters_[entry.first];
+      auto &other_counter = entry.second;
+      this_counter.first += other_counter.first;
+      this_counter.second += other_counter.second;
+    }
+  }
+
+  // TODO(tianyu) Implement
+  void WriteToCatalog() override{}
+
+  const std::string GetInfo() const override {
+    return "";
+  }
+
+ private:
+  /**
+   * Maps from database id to a pair of counters.
+   *
+   * First counter represents number of transactions committed and the second
+   * one represents the number of transactions aborted.
+   */
+  std::unordered_map<oid_t, std::pair<uint64_t, uint64_t>> counters_;
+
+};
+
+class DatabaseMetric: public AbstractMetric<DatabaseMetricRawData> {
+ public:
+  inline void OnTransactionCommit(oid_t database_id) override {
+    DatabaseMetricRawData *raw_data = raw_data_.load();
+    raw_data->MarkUnsafe();
+    raw_data->IncrementTxnCommited(database_id);
+    raw_data->MarkSafe();
+  }
+
+  inline void OnTransactionAbort(oid_t database_id) override {
+    DatabaseMetricRawData *raw_data = raw_data_.load();
+    raw_data->MarkUnsafe();
+    raw_data->IncrementTxnAborted(database_id);
+    raw_data->MarkSafe();
+  }
+};
+
+class DatabaseMetricOld : public AbstractMetricOld {
+ public:
+  DatabaseMetricOld(MetricType type, oid_t database_id);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -52,13 +102,13 @@ class DatabaseMetric : public AbstractMetricOld {
     txn_aborted_.Reset();
   }
 
-  inline bool operator==(const DatabaseMetric &other) {
+  inline bool operator==(const DatabaseMetricOld &other) {
     return database_id_ == other.database_id_ &&
-           txn_committed_ == other.txn_committed_ &&
-           txn_aborted_ == other.txn_aborted_;
+        txn_committed_ == other.txn_committed_ &&
+        txn_aborted_ == other.txn_aborted_;
   }
 
-  inline bool operator!=(const DatabaseMetric &other) {
+  inline bool operator!=(const DatabaseMetricOld &other) {
     return !(*this == other);
   }
 
