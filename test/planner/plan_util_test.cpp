@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/binder/bind_node_visitor.h>
+#include "binder/bind_node_visitor.h"
 #include "common/harness.h"
-
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
