@@ -81,21 +81,18 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
 
 size_t CompressedIndexConfiguration::GetLocalOffset(
     const oid_t table_oid, const std::set<oid_t> &column_oids) {
-  std::set<size_t> offsets;
+  std::set<size_t> col_ids;
   const auto &col_id_map = table_id_map_[table_oid];
   for (const auto col_oid : column_oids) {
-    size_t offset = col_id_map.find(col_oid)->second;
-    offsets.insert(offset);
+    size_t id = col_id_map.find(col_oid)->second;
+    col_ids.insert(id);
   }
 
-  size_t map_size = col_id_map.size();
   size_t final_offset = 0;
-  size_t step = (((size_t)1U) << map_size) >> 1U;
-  for (size_t i = 0; i < map_size; ++i) {
-    if (offsets.find(i) != offsets.end()) {
-      final_offset += step;
-    }
-    step >>= 1;
+
+  for (const auto id : col_ids) {
+    size_t offset = (((size_t)1U) << id);
+    final_offset += offset;
   }
 
   return final_offset;
