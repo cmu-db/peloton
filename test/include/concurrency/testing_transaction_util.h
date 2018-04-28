@@ -349,14 +349,14 @@ class TransactionScheduler {
  public:
   TransactionScheduler(size_t num_txn, storage::DataTable *datatable_,
                        concurrency::TransactionManager *txn_manager_,
-                       std::initializer_list<int> il = {})
+                       std::set<int> read_only_ = {})
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
         concurrent(false) {
-    std::set<int> read_only(il);
+
     for (size_t i = 0; i < num_txn; i++) {
-      if (read_only.find(i) != read_only.end()) {
+      if (read_only_.find(i) != read_only_.end()) {
         schedules.emplace_back(i, true);
       } else {
         schedules.emplace_back(i, false);
