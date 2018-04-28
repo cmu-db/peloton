@@ -59,11 +59,14 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
-  void CreateIndex_A(const std::string &db_name,
-                     const std::string &table_name) {
+  std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_A(
+      const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
+    const auto db_oid = db_obj->GetOid();
     const auto table_obj = db_obj->GetTableWithName(table_name);
+    const auto table_oid = table_obj->GetOid();
+    std::vector<std::shared_ptr<brain::IndexObject>> result;
 
     auto col_a = table_obj->GetSchema()->GetColumnID("a");
     auto col_b = table_obj->GetSchema()->GetColumnID("b");
@@ -76,14 +79,24 @@ class RLFrameworkTest : public PelotonTest {
     catalog_->CreateIndex(db_name, table_name, index_b_c, "index_b_c", false,
                           IndexType::BWTREE, txn);
 
+    result.push_back(
+        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_a_b));
+    result.push_back(
+        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_b_c));
+
     txn_manager_->CommitTransaction(txn);
+
+    return result;
   }
 
-  void CreateIndex_B(const std::string &db_name,
-                     const std::string &table_name) {
+  std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_B(
+      const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
+    const auto db_oid = db_obj->GetOid();
     const auto table_obj = db_obj->GetTableWithName(table_name);
+    const auto table_oid = table_obj->GetOid();
+    std::vector<std::shared_ptr<brain::IndexObject>> result;
 
     auto col_a = table_obj->GetSchema()->GetColumnID("a");
     auto col_c = table_obj->GetSchema()->GetColumnID("c");
@@ -92,7 +105,12 @@ class RLFrameworkTest : public PelotonTest {
     catalog_->CreateIndex(db_name, table_name, index_a_c, "index_a_c", false,
                           IndexType::BWTREE, txn);
 
+    result.push_back(
+        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_a_c));
+
     txn_manager_->CommitTransaction(txn);
+
+    return result;
   }
 
   void DropTable(const std::string &db_name, const std::string &table_name) {
@@ -122,9 +140,11 @@ TEST_F(RLFrameworkTest, BasicTest) {
   CreateTable(database_name, table_name_2);
 
   // create index on (a, b) and (b, c)
-  CreateIndex_A(database_name, table_name_1);
+  auto idx_objs = CreateIndex_A(database_name, table_name_1);
   // create index on (a, c)
-  CreateIndex_B(database_name, table_name_2);
+  auto idx_objs_B = CreateIndex_B(database_name, table_name_2);
+
+  idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
   auto comp_idx_config = std::unique_ptr<brain::CompressedIndexConfiguration>(
       new brain::CompressedIndexConfiguration(database_name));
@@ -133,6 +153,13 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::string output;
   boost::to_string(*cur_bit_set, output);
   LOG_DEBUG("bitset: %s", output.c_str());
+
+  for (const auto &idx_obj : idx_objs) {
+    size_t global_offset = comp_idx_config->GetGlobalOffset(idx_obj);
+    const auto new_idx_obj = comp_idx_config->GetIndex(global_offset);
+    EXPECT_TRUE(comp_idx_config->IsSet(idx_obj));
+    EXPECT_EQ(*idx_obj, *new_idx_obj);
+  }
 }
 
 }  // namespace test

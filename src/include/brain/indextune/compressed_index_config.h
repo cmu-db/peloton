@@ -35,24 +35,22 @@ class CompressedIndexConfiguration {
       concurrency::TransactionManager *txn_manager = nullptr);
 
   size_t GetLocalOffset(const oid_t table_oid,
-                        const std::set<oid_t> &column_oids);
+                        const std::set<oid_t> &column_oids) const;
 
-  size_t GetGlobalOffset(const std::shared_ptr<brain::IndexObject> &index_obj);
+  size_t GetGlobalOffset(
+      const std::shared_ptr<brain::IndexObject> &index_obj) const;
 
-  bool IsSet(const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-             const std::shared_ptr<brain::IndexObject> &index_obj);
+  bool IsSet(const std::shared_ptr<brain::IndexObject> &index_obj) const;
 
-  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-                const std::shared_ptr<IndexObject> &idx_object);
+  std::shared_ptr<brain::IndexObject> GetIndex(size_t global_offset) const;
 
-  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-                size_t offset);
+  void AddIndex(const std::shared_ptr<IndexObject> &idx_object);
 
-  void RemoveIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-                   const std::shared_ptr<IndexObject> &idx_object);
+  void AddIndex(size_t offset);
 
-  void RemoveIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-                   size_t offset);
+  void RemoveIndex(const std::shared_ptr<IndexObject> &idx_object);
+
+  void RemoveIndex(size_t offset);
 
   std::shared_ptr<boost::dynamic_bitset<>> AddDropCandidate(
       const IndexConfiguration &indexes);
@@ -68,10 +66,17 @@ class CompressedIndexConfiguration {
 
   std::unordered_map<oid_t, std::unordered_map<oid_t, size_t>> table_id_map_;
   std::unordered_map<oid_t, std::unordered_map<size_t, oid_t>> id_table_map_;
-  std::unordered_map<oid_t, size_t> table_offset_map_;
+  std::map<oid_t, size_t> table_offset_map_;
+  std::map<size_t, oid_t> table_offset_reverse_map_;
 
   size_t next_table_offset_;
   std::shared_ptr<boost::dynamic_bitset<>> cur_index_config_;
+
+  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
+                const std::shared_ptr<IndexObject> &idx_object);
+
+  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
+                size_t offset);
 };
 }
 }

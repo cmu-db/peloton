@@ -57,6 +57,7 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
     }
 
     table_offset_map_[table_oid] = next_table_offset_;
+    table_offset_reverse_map_[next_table_offset_] = table_oid;
     next_table_offset_ += ((size_t)1U << next_id);
   }
 
@@ -80,11 +81,11 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
 }
 
 size_t CompressedIndexConfiguration::GetLocalOffset(
-    const oid_t table_oid, const std::set<oid_t> &column_oids) {
+    const oid_t table_oid, const std::set<oid_t> &column_oids) const {
   std::set<size_t> col_ids;
-  const auto &col_id_map = table_id_map_[table_oid];
+  const auto &col_id_map = table_id_map_.at(table_oid);
   for (const auto col_oid : column_oids) {
-    size_t id = col_id_map.find(col_oid)->second;
+    size_t id = col_id_map.at(col_oid);
     col_ids.insert(id);
   }
 
@@ -99,42 +100,82 @@ size_t CompressedIndexConfiguration::GetLocalOffset(
 }
 
 size_t CompressedIndexConfiguration::GetGlobalOffset(
-    const std::shared_ptr<brain::IndexObject> &index_obj) {
+    const std::shared_ptr<brain::IndexObject> &index_obj) const {
   oid_t table_oid = index_obj->table_oid;
   const auto local_offset = GetLocalOffset(table_oid, index_obj->column_oids);
-  const auto table_offset = table_offset_map_.find(table_oid)->second;
+  const auto table_offset = table_offset_map_.at(table_oid);
   return table_offset + local_offset;
 }
 
 bool CompressedIndexConfiguration::IsSet(
-    const std::shared_ptr<boost::dynamic_bitset<>> &bitset,
-    const std::shared_ptr<brain::IndexObject> &index_obj) {
+    const std::shared_ptr<brain::IndexObject> &index_obj) const {
   size_t offset = GetGlobalOffset(index_obj);
-  return bitset->test(offset);
+  return cur_index_config_->test(offset);
+}
+
+std::shared_ptr<brain::IndexObject> CompressedIndexConfiguration::GetIndex(
+    size_t global_offset) const {
+  size_t table_offset;
+  auto it = table_offset_reverse_map_.lower_bound(global_offset);
+  if (it == table_offset_reverse_map_.end()) {
+    table_offset = table_offset_reverse_map_.rbegin()->first;
+  } else {
+    --it;
+    table_offset = it->first;
+  }
+
+  auto local_offset = global_offset - table_offset;
+  const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
+  const auto &id_col_map = id_table_map_.at(table_oid);
+  std::vector<oid_t> col_oids;
+
+  size_t cur_offset = 0;
+  while (local_offset) {
+    if (local_offset & (size_t)1U) {
+      col_oids.push_back(id_col_map.at(cur_offset));
+    }
+    local_offset >>= 1;
+    cur_offset += 1;
+  }
+
+  auto txn = txn_manager_->BeginTransaction();
+  const auto db_oid =
+      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
+  txn_manager_->CommitTransaction(txn);
+
+  return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
 }
 
 void CompressedIndexConfiguration::AddIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitset,
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
-  bitset->set(offset);
+  cur_index_config_->set(offset);
+}
+
+void CompressedIndexConfiguration::AddIndex(size_t offset) {
+  cur_index_config_->set(offset);
 }
 
 void CompressedIndexConfiguration::AddIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitset, size_t offset) {
-  bitset->set(offset);
-}
-
-void CompressedIndexConfiguration::RemoveIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitset,
+    std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
-  bitset->set(offset, false);
+  bitmap->set(offset);
+}
+
+void CompressedIndexConfiguration::AddIndex(
+    std::shared_ptr<boost::dynamic_bitset<>> &bitmap, size_t offset) {
+  bitmap->set(offset);
 }
 
 void CompressedIndexConfiguration::RemoveIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitset, size_t offset) {
-  bitset->set(offset, false);
+    const std::shared_ptr<IndexObject> &idx_object) {
+  size_t offset = GetGlobalOffset(idx_object);
+  cur_index_config_->set(offset, false);
+}
+
+void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
+  cur_index_config_->set(offset, false);
 }
 
 std::shared_ptr<boost::dynamic_bitset<>>
@@ -143,6 +184,7 @@ CompressedIndexConfiguration::AddDropCandidate(
   const auto &index_objs = indexes.GetIndexes();
   auto result = std::make_shared<boost::dynamic_bitset<>>(next_table_offset_);
 
+  // TODO: should we make db_oid, table_oid as private member?
   auto txn = txn_manager_->BeginTransaction();
   const auto db_oid =
       catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
