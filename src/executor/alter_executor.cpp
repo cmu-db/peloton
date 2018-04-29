@@ -23,7 +23,8 @@ namespace executor {
 AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context),
-      isAlter_(!reinterpret_cast<const planner::AlterPlan *>(node)->IsRename()) {}
+      isAlter_(
+          !reinterpret_cast<const planner::AlterPlan *>(node)->IsRename()) {}
 
 // Initialize executor
 // Nothing to initialize for now
@@ -46,7 +47,7 @@ bool AlterExecutor::DExecute() {
     auto current_txn = executor_context_->GetTransaction();
     AlterType type = node.GetAlterTableType();
     switch (type) {
-      case AlterType::DROP:
+      case AlterType::ALTER:
         result = DropColumn(node, current_txn);
         break;
       default:
