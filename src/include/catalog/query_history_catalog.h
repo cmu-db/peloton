@@ -38,6 +38,8 @@ class QueryHistoryCatalog : public AbstractCatalog {
   static QueryHistoryCatalog &GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return QUERY_HISTORY_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

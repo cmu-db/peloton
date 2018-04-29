@@ -35,7 +35,8 @@ IndexMetricsCatalog::IndexMetricsCatalog(concurrency::TransactionContext *txn)
                       "reads          INT NOT NULL, "
                       "deletes        INT NOT NULL, "
                       "inserts        INT NOT NULL, "
-                      "time_stamp     INT NOT NULL);",
+                      "time_stamp     INT NOT NULL,"
+                      "PRIMARY KEY(database_oid, table_oid, index_oid));",
                       txn) {
   // Add secondary index here if necessary
 }

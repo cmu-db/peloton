@@ -24,7 +24,7 @@ namespace stats {
 /**
  * Metric as a counter. E.g. # txns committed, # tuples read, etc.
  */
-class CounterMetric : public AbstractMetric {
+class CounterMetric : public AbstractMetricOld {
  public:
   CounterMetric(MetricType type);
 
@@ -57,7 +57,7 @@ class CounterMetric : public AbstractMetric {
   }
 
   // Adds the source counter to this counter
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   // Returns a string representation of this counter
   inline const std::string GetInfo() const {

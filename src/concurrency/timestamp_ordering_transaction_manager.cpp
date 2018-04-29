@@ -21,6 +21,7 @@
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager_factory.h"
 #include "settings/settings_manager.h"
+#include "statistics/stats_event_type.h"
 
 namespace peloton {
 namespace concurrency {
@@ -1075,6 +1076,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionAbort(database_id);
   }
 
   return ResultType::ABORTED;

@@ -13,11 +13,13 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
+#include <include/brain/catalog_sync_brain_job.h>
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
 #include "brain/brain.h"
+#include "catalog/catalog.h"
 
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
@@ -50,10 +52,17 @@ int RunPelotonBrain() {
   // TODO(tianyu): boot up other peloton resources as needed here
   peloton::brain::Brain brain;
   evthread_use_pthreads();
+  auto catalog = peloton::catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+  peloton::settings::SettingsManager::GetInstance().InitializeCatalog();
   // TODO(tianyu): register jobs here
   struct timeval one_second;
   one_second.tv_sec = 1;
   one_second.tv_usec = 0;
+
+  struct timeval one_minute;
+  one_minute.tv_sec = 60;
+  one_minute.tv_usec = 0;
 
   auto example_task = [](peloton::brain::BrainEnvironment *) {
     // TODO(tianyu): Replace with real address
@@ -65,6 +74,7 @@ int RunPelotonBrain() {
   };
 
   brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test", example_task);
+  brain.RegisterJob<peloton::brain::CatalogSyncBrainJob>(&one_minute, "sync");
   brain.Run();
   return 0;
 }

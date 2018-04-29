@@ -24,6 +24,7 @@ class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
+class AbstractCatalog;
 }  // namespace catalog
 
 namespace concurrency {
@@ -212,12 +213,14 @@ class Catalog {
   const FunctionData GetFunction(
       const std::string &name, const std::vector<type::TypeId> &argument_types);
 
+  inline const std::vector<AbstractCatalog *> &AvailableCatalogs() const { return catalogs_; }
+
  private:
   Catalog();
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;
-
+  std::vector<AbstractCatalog *> catalogs_;
   std::mutex catalog_mutex;
 };
 

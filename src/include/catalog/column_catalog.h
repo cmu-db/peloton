@@ -76,6 +76,8 @@ class ColumnCatalog : public AbstractCatalog {
 
   ~ColumnCatalog();
 
+  inline std::string GetName() const override { return COLUMN_CATALOG_NAME; }
+
   // No use
   inline oid_t GetNextOid() { return INVALID_OID; }
 

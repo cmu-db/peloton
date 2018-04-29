@@ -12,21 +12,22 @@
 
 #pragma once
 
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "statistics/memory_metric.h"
 #include "util/string_util.h"
 
 namespace peloton {
 namespace stats {
 
 /**
- * Metric for the access of a table
+ * Metric for the access and memory of a table
  */
-class TableMetric : public AbstractMetric {
+class TableMetric : public AbstractMetricOld {
  public:
   typedef std::string TableKey;
 
@@ -37,6 +38,8 @@ class TableMetric : public AbstractMetric {
   //===--------------------------------------------------------------------===//
 
   inline AccessMetric &GetTableAccess() { return table_access_; }
+  
+  inline MemoryMetric &GetTableMemory() { return table_memory_; }
 
   inline std::string GetName() { return table_name_; }
 
@@ -48,7 +51,10 @@ class TableMetric : public AbstractMetric {
   // HELPER FUNCTIONS
   //===--------------------------------------------------------------------===//
 
-  inline void Reset() { table_access_.Reset(); }
+  inline void Reset() {
+    table_access_.Reset();
+    table_memory_.Reset();
+  }
 
   inline bool operator==(const TableMetric &other) {
     return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
@@ -58,7 +64,7 @@ class TableMetric : public AbstractMetric {
 
   inline bool operator!=(const TableMetric &other) { return !(*this == other); }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   inline const std::string GetInfo() const {
     std::stringstream ss;
@@ -67,7 +73,8 @@ class TableMetric : public AbstractMetric {
     ss << table_id_ << ")" << std::endl;
     ;
     ss << peloton::GETINFO_SINGLE_LINE << std::endl;
-    ss << table_access_.GetInfo();
+    ss << table_access_.GetInfo() << std::endl;
+    ss << table_memory_.GetInfo() << std::endl;
     return ss.str();
   }
 
@@ -87,6 +94,9 @@ class TableMetric : public AbstractMetric {
 
   // The number of tuple accesses
   AccessMetric table_access_{MetricType::ACCESS};
+
+  // The memory stats of table
+  MemoryMetric table_memory_{MetricType::MEMORY};
 };
 
 }  // namespace stats

@@ -41,7 +41,7 @@ struct LatencyMeasurements {
  * Metric for storing raw latency values and computing
  * latency measurements.
  */
-class LatencyMetric : public AbstractMetric {
+class LatencyMetric : public AbstractMetricOld {
  public:
   LatencyMetric(MetricType type, size_t max_history);
 
@@ -85,7 +85,7 @@ class LatencyMetric : public AbstractMetric {
   void ComputeLatencies();
 
   // Combines the source latency metric with this latency metric
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   // Returns a string representation of this latency metric
   const std::string GetInfo() const;

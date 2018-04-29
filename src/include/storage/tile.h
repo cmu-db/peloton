@@ -18,6 +18,8 @@
 #include "catalog/schema.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
+#include "settings/settings_manager.h"
+#include "statistics/backend_stats_context.h"
 #include "type/abstract_pool.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
@@ -288,6 +290,14 @@ class TileFactory {
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
                             schema);
+
+    // Record memory allocation
+    if (table_id != INVALID_OID &&
+        static_cast<StatsType>(settings::SettingsManager::GetInt(
+            settings::SettingId::stats_mode)) != StatsType::INVALID) {
+      stats::BackendStatsContext::GetInstance()->IncreaseTableMemoryAlloc(
+          database_id, table_id, tile->tile_size);
+    }
 
     return tile;
   }

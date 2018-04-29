@@ -1059,6 +1059,41 @@ enum class MetricType {
   QUERY = 9,
   // Statistics for CPU
   PROCESSOR = 10,
+  // Statictics for memory usage and allocation
+  MEMORY = 11,
+};
+
+enum class CollectionPointType {
+  // invalid collection
+  INVALID = INVALID_TYPE_ID,
+  // tuple read
+  ON_TUPLE_READ,
+  // tuple update
+  ON_TUPLE_UPDATE,
+  // tuple insert
+  ON_TUPLE_INSERT,
+  // tuple delete
+  ON_TUPLE_DELETE,
+  // index read
+  ON_INDEX_READ,
+  // index update
+  ON_INDEX_UPDATE,
+  // index insert
+  ON_INDEX_INSERT,
+  // index delete
+  ON_INDEX_DELETE,
+  // txn commit - for point metric
+  ON_COMMIT,
+  // txn abort - for point metric
+  ON_ABORT,
+  // query start
+  ON_QUERY_START,
+  // query end
+  ON_QUERY_END,
+  // txn start
+  ON_TXN_START,
+  // txn end - for interval metric
+  ON_TXN_END,
 };
 
 // All builtin operators we currently support

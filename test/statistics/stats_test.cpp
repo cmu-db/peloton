@@ -48,7 +48,7 @@ void LaunchAggregator(int64_t stat_interval) {
                                     static_cast<int>(StatsType::ENABLE));
 
   auto &aggregator =
-      peloton::stats::StatsAggregator::GetInstance(stat_interval);
+      peloton::stats::StatsAggregatorOld::GetInstance(stat_interval);
   aggregator.GetAggregatedStats().ResetQueryCount();
   aggregator.ShutdownAggregator();
   aggregator.LaunchAggregator();
@@ -57,7 +57,7 @@ void LaunchAggregator(int64_t stat_interval) {
 // Force a final aggregation
 void ForceFinalAggregation(int64_t stat_interval) {
   auto &aggregator =
-      peloton::stats::StatsAggregator::GetInstance(stat_interval);
+      peloton::stats::StatsAggregatorOld::GetInstance(stat_interval);
   int64_t interval_cnt = 0;
   double alpha = 0;
   double weighted_avg_throughput = 0;
@@ -120,7 +120,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   // Launch aggregator thread
   int64_t aggregate_interval = 100;
   LaunchAggregator(aggregate_interval);
-  auto &aggregator = stats::StatsAggregator::GetInstance();
+  auto &aggregator = stats::StatsAggregatorOld::GetInstance();
 
   // Create database, table and index
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

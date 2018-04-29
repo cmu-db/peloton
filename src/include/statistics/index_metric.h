@@ -27,7 +27,7 @@ namespace stats {
 /**
  * Metric of index accesses and other index-specific metrics.
  */
-class IndexMetric : public AbstractMetric {
+class IndexMetric : public AbstractMetricOld {
  public:
   typedef std::string IndexKey;
 
@@ -64,7 +64,7 @@ class IndexMetric : public AbstractMetric {
 
   inline bool operator!=(const IndexMetric &other) { return !(*this == other); }
 
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
   inline const std::string GetInfo() const {
     std::stringstream ss;

@@ -122,4 +122,7 @@ template class CuckooMap<StatementCache *, StatementCache *>;
 template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
                          ItemPointerComparator>;
 
+// Used in StatsCollector
+template class CuckooMap<oid_t, std::atomic<int64_t> *>;
+
 }  // namespace peloton

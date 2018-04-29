@@ -29,7 +29,7 @@ namespace stats {
 /**
  * Metric for storing raw processor execution time values.
  */
-class ProcessorMetric : public AbstractMetric {
+class ProcessorMetric : public AbstractMetricOld {
  public:
   ProcessorMetric(MetricType type);
 
@@ -63,7 +63,7 @@ class ProcessorMetric : public AbstractMetric {
   const std::string GetInfo() const;
 
   // Combines the source processor metric with this processor metric
-  void Aggregate(AbstractMetric &source);
+  void Aggregate(AbstractMetricOld &source);
 
  private:
   //===--------------------------------------------------------------------===//

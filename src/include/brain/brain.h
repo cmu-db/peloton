@@ -16,6 +16,9 @@
 #include <cstdio>
 #include <utility>
 #include <functional>
+#include <pqxx/pqxx>
+#include "settings/setting_id.h"
+#include "settings/settings_manager.h"
 #include "capnp/ez-rpc.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 #include "common/notifiable_task.h"
@@ -28,7 +31,26 @@ namespace brain {
  * the brain, such as RPC and Catalog.
  */
 class BrainEnvironment {
-  // TODO(tianyu): fill in as needed
+ public:
+  BrainEnvironment() :
+      rpc_client_{settings::SettingsManager::GetString(settings::SettingId::peloton_rpc_address)},
+      sql_connection_{settings::SettingsManager::GetString(settings::SettingId::peloton_address)} {}
+
+  inline PelotonService::Client GetPelotonService() {
+    return rpc_client_.getMain<PelotonService>();
+  }
+
+  inline pqxx::result ExecuteQuery(const std::string &query) {
+    pqxx::work w(sql_connection_);
+    pqxx::result result =  w.exec(query);
+    w.commit();
+    return result;
+  }
+
+ private:
+  capnp::EzRpcClient rpc_client_;
+  // TODO(tianyu): eventually change this into rpc
+  pqxx::connection sql_connection_;
 };
 
 /**
@@ -87,7 +109,7 @@ class Brain {
       delete entry.second;
   }
 
-  template <typename BrainJob, typename... Args>
+  template<typename BrainJob, typename... Args>
   inline void RegisterJob(const struct timeval *period,
                           std::string name, Args... args) {
     auto *job = new BrainJob(&env_, args...);

@@ -22,7 +22,7 @@ namespace stats {
 QueryMetric::QueryMetric(MetricType type, const std::string& query_name,
                          std::shared_ptr<QueryParams> query_params,
                          const oid_t database_id)
-    : AbstractMetric(type),
+    : AbstractMetricOld(type),
       database_id_(database_id),
       query_name_(query_name),
       query_params_(query_params) {
@@ -43,7 +43,7 @@ QueryMetric::QueryParams::QueryParams(QueryParamBuf format_buf_copy,
             val_buf_copy.len);
 }
 
-void QueryMetric::Aggregate(AbstractMetric& source UNUSED_ATTRIBUTE) {}
+void QueryMetric::Aggregate(AbstractMetricOld& source UNUSED_ATTRIBUTE) {}
 
 }  // namespace stats
 }  // namespace peloton

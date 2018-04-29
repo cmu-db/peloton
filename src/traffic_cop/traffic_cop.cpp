@@ -305,7 +305,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
 

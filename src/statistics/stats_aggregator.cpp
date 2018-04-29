@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cinttypes>
 #include "statistics/stats_aggregator.h"
+#include <cinttypes>
 
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/table_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index.h"
 #include "storage/storage_manager.h"
@@ -26,7 +26,7 @@
 namespace peloton {
 namespace stats {
 
-StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
+StatsAggregatorOld::StatsAggregatorOld(int64_t aggregation_interval_ms)
     : stats_history_(0, false),
       aggregated_stats_(LATENCY_MAX_HISTORY_AGGREGATOR, false),
       aggregation_interval_ms_(aggregation_interval_ms),
@@ -41,7 +41,7 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
   LaunchAggregator();
 }
 
-StatsAggregator::~StatsAggregator() {
+StatsAggregatorOld::~StatsAggregatorOld() {
   LOG_DEBUG("StatsAggregator destruction");
   ShutdownAggregator();
   try {
@@ -51,14 +51,14 @@ StatsAggregator::~StatsAggregator() {
   }
 }
 
-void StatsAggregator::LaunchAggregator() {
+void StatsAggregatorOld::LaunchAggregator() {
   if (!is_aggregating_) {
-    aggregator_thread_ = std::thread(&StatsAggregator::RunAggregator, this);
+    aggregator_thread_ = std::thread(&StatsAggregatorOld::RunAggregator, this);
     is_aggregating_ = true;
   }
 }
 
-void StatsAggregator::ShutdownAggregator() {
+void StatsAggregatorOld::ShutdownAggregator() {
   if (is_aggregating_) {
     is_aggregating_ = false;
     exec_finished_.notify_one();
@@ -68,7 +68,7 @@ void StatsAggregator::ShutdownAggregator() {
   }
 }
 
-void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
+void StatsAggregatorOld::Aggregate(int64_t &interval_cnt, double &alpha,
                                 double &weighted_avg_throughput) {
   interval_cnt++;
   LOG_TRACE(
@@ -130,7 +130,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 }
 
-void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
+void StatsAggregatorOld::UpdateQueryMetrics(int64_t time_stamp,
                                          concurrency::TransactionContext *txn) {
   // Get the target query metrics table
   LOG_TRACE("Inserting Query Metric Tuples");
@@ -182,7 +182,7 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
   }
 }
 
-void StatsAggregator::UpdateMetrics() {
+void StatsAggregatorOld::UpdateMetrics() {
   // All tuples are inserted in a single txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -192,8 +192,9 @@ void StatsAggregator::UpdateMetrics() {
   auto storage_manager = storage::StorageManager::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
-                        time_since_epoch).count();
+  auto time_stamp =
+      std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch)
+          .count();
 
   auto database_count = storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
@@ -220,7 +221,7 @@ void StatsAggregator::UpdateMetrics() {
   txn_manager.CommitTransaction(txn);
 }
 
-void StatsAggregator::UpdateTableMetrics(storage::Database *database,
+void StatsAggregatorOld::UpdateTableMetrics(storage::Database *database,
                                          int64_t time_stamp,
                                          concurrency::TransactionContext *txn) {
   // Update table metrics table for each of the indices
@@ -237,16 +238,20 @@ void StatsAggregator::UpdateTableMetrics(storage::Database *database,
     auto deletes = table_access.GetDeletes();
     auto inserts = table_access.GetInserts();
 
+    auto table_memory = table_metrics->GetTableMemory();
+    auto memory_alloc = table_memory.GetAllocation();
+    auto memory_usage = table_memory.GetUsage();
+
     catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
-        database_oid, table_oid, reads, updates, deletes, inserts, time_stamp,
-        pool_.get(), txn);
+        database_oid, table_oid, reads, updates, deletes, inserts,
+        memory_alloc, memory_usage, time_stamp, pool_.get(), txn);
     LOG_TRACE("Table Metric Tuple inserted");
 
     UpdateIndexMetrics(database, table, time_stamp, txn);
   }
 }
 
-void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
+void StatsAggregatorOld::UpdateIndexMetrics(storage::Database *database,
                                          storage::DataTable *table,
                                          int64_t time_stamp,
                                          concurrency::TransactionContext *txn) {
@@ -272,8 +277,8 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
   }
 }
 
-void StatsAggregator::RunAggregator() {
-  LOG_DEBUG("Aggregator is now running.");
+void StatsAggregatorOld::RunAggregator() {
+  LOG_INFO("Aggregator is now running.");
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
   int64_t interval_cnt = 0;
@@ -286,11 +291,11 @@ void StatsAggregator::RunAggregator() {
          is_aggregating_) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   }
-  LOG_DEBUG("Aggregator done!");
+  LOG_INFO("Aggregator done!");
 }
 
-StatsAggregator &StatsAggregator::GetInstance(int64_t aggregation_interval_ms) {
-  static StatsAggregator stats_aggregator(aggregation_interval_ms);
+StatsAggregatorOld &StatsAggregatorOld::GetInstance(int64_t aggregation_interval_ms) {
+  static StatsAggregatorOld stats_aggregator(aggregation_interval_ms);
   return stats_aggregator;
 }
 
@@ -300,7 +305,7 @@ StatsAggregator &StatsAggregator::GetInstance(int64_t aggregation_interval_ms) {
 
 // Register the BackendStatsContext of a worker thread to global Stats
 // Aggregator
-void StatsAggregator::RegisterContext(std::thread::id id_,
+void StatsAggregatorOld::RegisterContext(std::thread::id id_,
                                       BackendStatsContext *context_) {
   {
     std::lock_guard<std::mutex> lock(stats_mutex_);
@@ -315,7 +320,7 @@ void StatsAggregator::RegisterContext(std::thread::id id_,
 
 // Unregister a BackendStatsContext. Currently we directly reuse the thread id
 // instead of explicitly unregistering it.
-void StatsAggregator::UnregisterContext(std::thread::id id) {
+void StatsAggregatorOld::UnregisterContext(std::thread::id id) {
   {
     std::lock_guard<std::mutex> lock(stats_mutex_);
 
@@ -329,7 +334,7 @@ void StatsAggregator::UnregisterContext(std::thread::id id) {
   }
 }
 
-storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
+storage::DataTable *StatsAggregatorOld::GetMetricTable(std::string table_name) {
   auto storage_manager = storage::StorageManager::GetInstance();
   PELOTON_ASSERT(storage_manager->GetDatabaseCount() > 0);
   storage::Database *catalog_database =

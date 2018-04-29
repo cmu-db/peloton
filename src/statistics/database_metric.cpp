@@ -17,18 +17,18 @@
 namespace peloton {
 namespace stats {
 
-DatabaseMetric::DatabaseMetric(MetricType type, oid_t database_id)
-    : AbstractMetric(type), database_id_(database_id) {}
+DatabaseMetricOld::DatabaseMetricOld(MetricType type, oid_t database_id)
+    : AbstractMetricOld(type), database_id_(database_id) {}
 
-void DatabaseMetric::Aggregate(AbstractMetric& source) {
+void DatabaseMetricOld::Aggregate(AbstractMetricOld& source) {
   PELOTON_ASSERT(source.GetType() == MetricType::DATABASE);
 
-  DatabaseMetric& db_metric = static_cast<DatabaseMetric&>(source);
+  DatabaseMetricOld& db_metric = static_cast<DatabaseMetricOld&>(source);
   txn_committed_.Aggregate(db_metric.GetTxnCommitted());
   txn_aborted_.Aggregate(db_metric.GetTxnAborted());
 }
 
-const std::string DatabaseMetric::GetInfo() const {
+const std::string DatabaseMetricOld::GetInfo() const {
   std::stringstream ss;
   ss << peloton::GETINFO_THICK_LINE << std::endl;
   ss << "// DATABASE_ID " << database_id_ << std::endl;

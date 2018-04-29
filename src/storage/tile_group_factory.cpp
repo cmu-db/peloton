@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/tile_group_factory.h"
-// #include "logging/logging_util.h"
+#include "settings/settings_manager.h"
+#include "statistics/backend_stats_context.h"
 #include "storage/tile_group_header.h"
 
 //===--------------------------------------------------------------------===//
@@ -30,17 +31,23 @@ TileGroup *TileGroupFactory::GetTileGroup(
     const column_map_type &column_map, int tuple_count) {
   // Allocate the data on appropriate backend
   BackendType backend_type = BackendType::MM;
-      // logging::LoggingUtil::GetBackendType(peloton_logging_mode);
+  // logging::LoggingUtil::GetBackendType(peloton_logging_mode);
 
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
+
+  // Record memory allocation for tile group header
+  if (table_id != INVALID_OID &&
+      static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->IncreaseTableMemoryAlloc(
+        database_id, table_id, tile_header->GetHeaderSize());
+  }
+
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,
-                                        schemas, column_map, tuple_count);
+                                        schemas, column_map, tuple_count,
+                                        database_id, table_id, tile_group_id);
 
   tile_header->SetTileGroup(tile_group);
-
-  tile_group->database_id = database_id;
-  tile_group->tile_group_id = tile_group_id;
-  tile_group->table_id = table_id;
 
   return tile_group;
 }
