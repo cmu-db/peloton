@@ -22,7 +22,8 @@ namespace executor {
 // Constructor for alter table executor
 AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
                              ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context),
+      isAlter_(!reinterpret_cast<const planner::AlterPlan *>(node)->IsRename()) {}
 
 // Initialize executor
 // Nothing to initialize for now
@@ -36,24 +37,29 @@ bool AlterExecutor::DInit() {
 bool AlterExecutor::DExecute() {
   LOG_TRACE("Executing Drop...");
   bool result = false;
-  const planner::RenamePlan &node = GetPlanNode<planner::RenamePlan>();
-  auto current_txn = executor_context_->GetTransaction();
-  PlanNodeType plan_node_type = node.GetPlanNodeType();
-  if (plan_node_type == PlanNodeType::RENAME) {
+  if (!isAlter_) {
+    const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
+    auto current_txn = executor_context_->GetTransaction();
     result = RenameColumn(node, current_txn);
-  } else if (plan_node_type == PlanNodeType::ALTER) {
-    LOG_TRACE("Will perform alter table operations");
   } else {
-    throw NotImplementedException(
-        StringUtil::Format("Plan node type not supported, %s",
-                           PlanNodeTypeToString(plan_node_type).c_str()));
+    const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
+    auto current_txn = executor_context_->GetTransaction();
+    AlterType type = node.GetAlterTableType();
+    switch (type) {
+      case AlterType::DROP:
+        result = DropColumn(node, current_txn);
+        break;
+      default:
+        throw NotImplementedException(StringUtil::Format(
+            "Alter Type not supported, %s", AlterTypeToString(type).c_str()));
+    }
   }
 
   return result;
 }
 
 bool AlterExecutor::RenameColumn(
-    const peloton::planner::RenamePlan &node,
+    const peloton::planner::AlterPlan &node,
     peloton::concurrency::TransactionContext *txn) {
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();
@@ -69,7 +75,27 @@ bool AlterExecutor::RenameColumn(
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Rename column succeeded!");
 
-    // Add on succeed logic if necessary
+    // TODO Add on succeed logic if necessary
+  } else {
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
+  return false;
+}
+
+bool AlterExecutor::DropColumn(const peloton::planner::AlterPlan &node,
+                               peloton::concurrency::TransactionContext *txn) {
+  auto database_name = node.GetDatabaseName();
+  auto table_name = node.GetTableName();
+  auto drop_columns = node.GetDroppedColumns();
+
+  ResultType result = catalog::Catalog::GetInstance()->DropColumn(
+      database_name, table_name, drop_columns, txn);
+  txn->SetResult(result);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Drop column succeed!");
+
+    // TODO Add on succeed logic if necessary
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
