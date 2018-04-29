@@ -24,7 +24,6 @@
 #include "expression/abstract_expression.h"
 #include "expression/operator_expression.h"
 
-#define private public
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"

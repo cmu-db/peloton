@@ -249,9 +249,11 @@ void TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
   // Execute query
   TestingSQLUtil::ExecuteSQLQuery(std::move(query), result, tuple_descriptor,
                                   rows_changed, error_message);
-  unsigned int rows = tuple_descriptor.size() == 0
-                          ? result.size()
-                          : result.size() / tuple_descriptor.size();
+  if (tuple_descriptor.size() == 0) {
+    PELOTON_ASSERT(result.size() == 0);
+    return;
+  }
+  unsigned int rows = result.size() / tuple_descriptor.size();
 
   // Build actual result as set of rows for comparison
   std::vector<std::string> actual_result(rows);
