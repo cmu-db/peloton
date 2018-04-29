@@ -80,7 +80,9 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
   auto *lan_name_expr =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::LANNAME);
-  expression::AbstractExpression *lan_name_const_expr =
+  lan_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::LANNAME);
+      
+      expression::AbstractExpression *lan_name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
   expression::AbstractExpression *lan_name_equality_expr =
