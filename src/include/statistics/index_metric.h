@@ -23,15 +23,70 @@
 
 namespace peloton {
 namespace stats {
+class IndexMetricRawData : public AbstractRawData {
+ public:
+  inline void IncrementReads(oid_t index_id) {
+    auto entry = counters_.find(index_id);
+    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    counters_[index_id][READ]++;
+  }
+
+  inline void IncrementUpdates(oid_t index_id) {
+    auto entry = counters_.find(index_id);
+    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    counters_[index_id][UPDATE]++;
+  }
+
+  inline void IncrementInserts(oid_t index_id) {
+    auto entry = counters_.find(index_id);
+    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    counters_[index_id][INSERT]++;
+  }
+
+  inline void IncrementDeletes(oid_t index_id) {
+    auto entry = counters_.find(index_id);
+    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    counters_[index_id][DELETE]++;
+  }
+
+  void Aggregate(AbstractRawData &other) override {
+    auto &other_index_metric = dynamic_cast<IndexMetricRawData &>(other);
+    for (auto &entry: other_index_metric.counters_) {
+      auto &this_counter = counters_[entry.first];
+      auto &other_counter = entry.second;
+      for(size_t i = 0; i < NUM_COUNTERS; i++) {
+        this_counter[i] += other_counter[i];
+      }
+    }
+  }
+
+  // TODO(justin) -- actually implement
+  void WriteToCatalog() override{}
+
+  const std::string GetInfo() const override {
+    return "index metric";
+  }
+private:
+  std::unordered_map<oid_t, std::vector<uint64_t>> counters_;
+
+  static const size_t NUM_COUNTERS = 4;
+
+  enum AccessType {
+    READ = 0,
+    UPDATE,
+    INSERT,
+    DELETE
+  };
+};
 
 /**
  * Metric of index accesses and other index-specific metrics.
  */
-class IndexMetric : public AbstractMetricOld {
+class IndexMetricOld : public AbstractMetricOld {
  public:
   typedef std::string IndexKey;
 
-  IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
+  IndexMetricOld(MetricType type, oid_t database_id, oid_t table_id,
               oid_t index_id);
 
   //===--------------------------------------------------------------------===//
@@ -56,13 +111,13 @@ class IndexMetric : public AbstractMetricOld {
 
   inline void Reset() { index_access_.Reset(); }
 
-  inline bool operator==(const IndexMetric &other) {
+  inline bool operator==(const IndexMetricOld &other) {
     return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
            index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
            index_access_ == other.index_access_;
   }
 
-  inline bool operator!=(const IndexMetric &other) { return !(*this == other); }
+  inline bool operator!=(const IndexMetricOld &other) { return !(*this == other); }
 
   void Aggregate(AbstractMetricOld &source);
 

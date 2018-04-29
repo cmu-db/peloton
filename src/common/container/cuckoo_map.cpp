@@ -27,7 +27,7 @@ class TileGroup;
 
 namespace stats {
 class BackendStatsContext;
-class IndexMetric;
+class IndexMetricOld;
 }  // namespace stats
 
 class StatementCache;
@@ -110,7 +110,7 @@ template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
 template class CuckooMap<std::thread::id,
                          std::shared_ptr<stats::BackendStatsContext>>;
 
-template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetric>>;
+template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetricOld>>;
 
 // Used in SharedPointerKeyTest
 template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;

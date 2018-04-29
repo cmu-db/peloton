@@ -65,7 +65,7 @@ class BackendStatsContext {
 
   // Returns the index metric with the given database ID, table ID, and
   // index ID
-  IndexMetric *GetIndexMetric(oid_t database_id, oid_t table_id,
+  IndexMetricOld *GetIndexMetric(oid_t database_id, oid_t table_id,
                               oid_t index_id);
 
   // Returns the metrics for completed queries
@@ -187,7 +187,7 @@ class BackendStatsContext {
   std::unordered_map<oid_t, std::unique_ptr<TableMetric>> table_metrics_{};
 
   // Index metrics
-  CuckooMap<oid_t, std::shared_ptr<IndexMetric>> index_metrics_{};
+  CuckooMap<oid_t, std::shared_ptr<IndexMetricOld>> index_metrics_{};
 
   // Index oids
   std::unordered_set<oid_t> index_ids_;

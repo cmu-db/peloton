@@ -85,14 +85,14 @@ DatabaseMetricOld *BackendStatsContext::GetDatabaseMetric(oid_t database_id) {
 
 // Returns the index metric with the given database ID, table ID, and
 // index ID
-IndexMetric *BackendStatsContext::GetIndexMetric(oid_t database_id,
+IndexMetricOld *BackendStatsContext::GetIndexMetric(oid_t database_id,
                                                  oid_t table_id,
                                                  oid_t index_id) {
-  std::shared_ptr<IndexMetric> index_metric;
+  std::shared_ptr<IndexMetricOld> index_metric;
   // Index metric doesn't exist yet
   if (index_metrics_.Contains(index_id) == false) {
     index_metric.reset(
-        new IndexMetric{MetricType::INDEX, database_id, table_id, index_id});
+        new IndexMetricOld{MetricType::INDEX, database_id, table_id, index_id});
     index_metrics_.Insert(index_id, index_metric);
     index_id_lock.Lock();
     index_ids_.insert(index_id);
@@ -280,7 +280,7 @@ void BackendStatsContext::Aggregate(BackendStatsContext &source) {
 
   // Aggregate all per-index metrics
   for (auto id : index_ids_) {
-    std::shared_ptr<IndexMetric> index_metric;
+    std::shared_ptr<IndexMetricOld> index_metric;
     index_metrics_.Find(id, index_metric);
     auto database_oid = index_metric->GetDatabaseId();
     auto table_oid = index_metric->GetTableId();
@@ -307,7 +307,7 @@ void BackendStatsContext::Reset() {
     table_item.second->Reset();
   }
   for (auto id : index_ids_) {
-    std::shared_ptr<IndexMetric> index_metric;
+    std::shared_ptr<IndexMetricOld> index_metric;
     index_metrics_.Find(id, index_metric);
     index_metric->Reset();
   }
@@ -343,7 +343,7 @@ void BackendStatsContext::Reset() {
         if (index == nullptr) continue;
         oid_t index_id = index->GetOid();
         if (index_metrics_.Contains(index_id) == false) {
-          std::shared_ptr<IndexMetric> index_metric(new IndexMetric{
+          std::shared_ptr<IndexMetricOld> index_metric(new IndexMetricOld{
               MetricType::INDEX, database_id, table_id, index_id});
           index_metrics_.Insert(index_id, index_metric);
           index_ids_.insert(index_id);
@@ -368,7 +368,7 @@ std::string BackendStatsContext::ToString() const {
 
         oid_t table_id = table_item.second->GetTableId();
         for (auto id : index_ids_) {
-          std::shared_ptr<IndexMetric> index_metric;
+          std::shared_ptr<IndexMetricOld> index_metric;
           index_metrics_.Find(id, index_metric);
           if (index_metric->GetDatabaseId() == database_id &&
               index_metric->GetTableId() == table_id) {

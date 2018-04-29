@@ -17,7 +17,7 @@
 namespace peloton {
 namespace stats {
 
-IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
+IndexMetricOld::IndexMetricOld(MetricType type, oid_t database_id, oid_t table_id,
                          oid_t index_id)
     : AbstractMetricOld(type),
       database_id_(database_id),
@@ -35,10 +35,10 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
   }
 }
 
-void IndexMetric::Aggregate(AbstractMetricOld& source) {
+void IndexMetricOld::Aggregate(AbstractMetricOld& source) {
   assert(source.GetType() == MetricType::INDEX);
 
-  IndexMetric& index_metric = static_cast<IndexMetric&>(source);
+  IndexMetricOld& index_metric = static_cast<IndexMetricOld&>(source);
   index_access_.Aggregate(index_metric.GetIndexAccess());
 }
 

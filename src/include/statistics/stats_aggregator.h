@@ -61,9 +61,9 @@ class StatsAggregator : public DedicatedThreadTask {
     LOG_INFO("Aggregator is now running.");
     std::mutex mtx;
     std::unique_lock<std::mutex> lck(mtx);
-    int64_t interval_cnt = 0;
-    double alpha = 0.4;
-    double weighted_avg_throughput = 0.0;
+    // int64_t interval_cnt = 0;
+    // double alpha = 0.4;
+    // double weighted_avg_throughput = 0.0;
 
     while (exec_finished_.wait_for(
         lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
