@@ -383,7 +383,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   auto *db_name_expr =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                        ColumnId::DATABASE_NAME);
-    db_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+  db_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
                               catalog_table_->GetOid(),
                               ColumnId::DATABASE_NAME);
 

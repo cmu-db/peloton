@@ -226,19 +226,45 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
 bool ColumnCatalog::DeleteColumn(oid_t table_oid,
                                  const std::string &column_name,
                                  concurrency::TransactionContext *txn) {
-  oid_t index_offset =
-      IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *table_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+  expression::AbstractExpression *table_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+  auto *col_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           ColumnId::COLUMN_NAME);
+  col_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                               catalog_table_->GetOid(),
+                               ColumnId::COLUMN_NAME);
+  expression::AbstractExpression *col_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+  expression::AbstractExpression *col_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_name_expr,
+          col_name_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, table_oid_equality_expr,
+          col_name_equality_expr);
 
   // delete column from cache
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 /* @brief   delete all column records from the same table
