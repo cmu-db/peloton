@@ -55,23 +55,16 @@ class DatabaseMetricRawData : public AbstractRawData {
    * one represents the number of transactions aborted.
    */
   std::unordered_map<oid_t, std::pair<uint64_t, uint64_t>> counters_;
-
 };
 
 class DatabaseMetric: public AbstractMetric<DatabaseMetricRawData> {
  public:
   inline void OnTransactionCommit(oid_t database_id) override {
-    DatabaseMetricRawData *raw_data = raw_data_.load();
-    raw_data->MarkUnsafe();
-    raw_data->IncrementTxnCommited(database_id);
-    raw_data->MarkSafe();
+    GetRawData()->IncrementTxnCommited(database_id);
   }
 
   inline void OnTransactionAbort(oid_t database_id) override {
-    DatabaseMetricRawData *raw_data = raw_data_.load();
-    raw_data->MarkUnsafe();
-    raw_data->IncrementTxnAborted(database_id);
-    raw_data->MarkSafe();
+    GetRawData()->IncrementTxnAborted(database_id);
   }
 };
 
