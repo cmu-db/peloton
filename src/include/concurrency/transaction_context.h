@@ -24,7 +24,6 @@
 #include "common/printable.h"
 #include "common/internal_types.h"
 #include "logging/log_buffer.h"
-#include "logging/wal_log_manager.h"
 #include "threadpool/logger_queue_pool.h"
 
 #define INTITIAL_RW_SET_SIZE 64

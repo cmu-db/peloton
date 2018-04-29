@@ -15,8 +15,6 @@
 #include "logging/log_buffer.h"
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
-#include "storage/tile_group.h"
-#include "../include/logging/wal_logger.h"
 
 
 namespace peloton{

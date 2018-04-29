@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 #include <fstream>
-#include <include/settings/settings_manager.h>
+
+#include "settings/settings_manager.h"
 #include "util/file_util.h"
+#include "logging/wal_recovery.h"
 
 
 namespace peloton{
@@ -21,15 +23,11 @@ namespace logging{
 class LogManager{
 public:
 
-  LogManager() {}
+  LogManager() : enable_logging_(false) {}
   ~LogManager() {}
 
-  inline bool init(std::string log_dir, std::string log_file, bool enable_logging) {
-    LOG_INFO("aaron: LogManagerInit");
-    if (enable_logging == false) {
-      enable_logging_ = false;
-      return false;
-    }
+  inline bool init(std::string log_dir, std::string log_file) {
+
     directory_ = log_dir;
     log_file = log_file;
 
@@ -39,7 +37,8 @@ public:
         boost::filesystem::create_directory(dir);
       }
       catch (boost::filesystem::filesystem_error &e) {
-        LOG_DEBUG("Failed to create log directory %s. Reason %s", log_dir.c_str(), e.what());
+        LOG_ERROR("Failed to create log directory %s. Reason %s", log_dir.c_str(), e.what());
+        return false;
       }
     }
 
@@ -51,7 +50,7 @@ public:
         return true;
       }
     }
-    enable_logging_ = false;
+
     return false;
   }
 
@@ -71,11 +70,16 @@ public:
   inline bool IsLoggingEnabled() { return enable_logging_; }
   inline std::string GetDirectory() { return directory_; }
   inline std::string GetLogFilePath() { return directory_ + log_file_; }
+
+  inline void DoRecovery(){
+    WalRecovery* wr = new WalRecovery();
+    wr->StartRecovery();
+    delete wr;
+  }
+
+
   inline std::ofstream *GetFileStream() { return &logger_ofstream_; }
 
-//  TODO(gandeevan): support StartLogging and StopLogging
-//  static void StartLogging() {}
-//  static void StopLogging() {}
 
 
 private:

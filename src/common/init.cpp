@@ -25,8 +25,7 @@
 #include "index/index.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
-#include "threadpool/logger_queue_pool.h"
-#include "logging/wal_log_manager.h"
+
 
 namespace peloton {
 
@@ -93,11 +92,14 @@ void PelotonInit::Initialize(std::string log_dir, std::string log_file, bool ena
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 
-  if(logging::LogManager::GetInstance().init(log_dir, log_file, enable_logging)) {
-    LOG_DEBUG("logging enabled");
-  } else {
-    LOG_DEBUG("logging disabled");
+  logging::LogManager::GetInstance().DoRecovery();
+
+  if(enable_logging){
+    if(!logging::LogManager::GetInstance().init(log_dir, log_file)){
+      LOG_ERROR("LogManager Initialization failed");
+    }
   }
+
 
   threadpool::LoggerQueuePool::GetInstance().Startup();
 
