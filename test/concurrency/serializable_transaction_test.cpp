@@ -76,6 +76,8 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
 
       //manually update snapshot epoch number, so later snapshot read must get a larger epoch than table creating txn
       //or it may read nothing
+      //wait one epoch. so that global epoch is guaranteed to increase
+      std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
       concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
 
       TransactionScheduler scheduler(1, table, &txn_manager, {0});
@@ -127,6 +129,7 @@ TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
       //force snapshot epoch to be updated. it should be larger than table creation txn's epoch
+      std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
       concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
 
       TransactionScheduler scheduler(2, table, &txn_manager, {1});
