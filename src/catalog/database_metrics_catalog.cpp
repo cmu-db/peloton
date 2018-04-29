@@ -74,9 +74,12 @@ bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
     oid_t database_oid, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *db_oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::DATABASE_OID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
   expression::AbstractExpression *db_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(database_oid).Copy());
