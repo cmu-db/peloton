@@ -97,9 +97,10 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(create_stmt->GetStatement(0));
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -134,8 +135,10 @@ TEST_F(OptimizerTests, HashJoinTest) {
   create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(create_stmt->GetStatement(0));
+
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -168,8 +171,10 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_a(aid, value) VALUES (1, 1);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(insert_stmt->GetStatement(0));
+
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -196,9 +201,10 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_b(bid, value) VALUES (1, 2);");
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(insert_stmt->GetStatement(0));
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -224,9 +230,10 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   auto select_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(select_stmt->GetStatement(0));
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
 
   result_format = std::vector<int>(4, 0);
   TestingSQLUtil::counter_.store(1);
@@ -263,7 +270,11 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
 
   optimizer::Optimizer optimizer;
   txn = txn_manager.BeginTransaction();
-  auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
+
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(stmt->GetStatement(0));
+
+  auto plan = optimizer.BuildPelotonPlanTree(stmt, txn);
   txn_manager.CommitTransaction(txn);
 
   auto &child_plan = plan->GetChildren();
@@ -310,11 +321,12 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
-  auto parse_tree = stmt->GetStatements().at(0).get();
+  auto parse_tree = stmt->GetStatement(0);
   auto predicates = std::vector<expression::AbstractExpression *>();
-  optimizer::util::SplitPredicates(reinterpret_cast<parser::SelectStatement *>(
-                                       parse_tree)->where_clause.get(),
-                                   predicates);
+  optimizer::util::SplitPredicates(
+      reinterpret_cast<parser::SelectStatement *>(parse_tree)
+          ->where_clause.get(),
+      predicates);
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
@@ -323,9 +335,8 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
       RewriteRuleSetName::PREDICATE_PUSH_DOWN, new PushFilterThroughJoin());
   txn = txn_manager.BeginTransaction();
 
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
 
   std::shared_ptr<GroupExpression> gexpr =
       optimizer.TestInsertQueryTree(parse_tree, txn);
@@ -392,11 +403,12 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
-  auto parse_tree = stmt->GetStatements().at(0).get();
+  auto parse_tree = stmt->GetStatement(0);
   auto predicates = std::vector<expression::AbstractExpression *>();
-  optimizer::util::SplitPredicates(reinterpret_cast<parser::SelectStatement *>(
-                                       parse_tree)->where_clause.get(),
-                                   predicates);
+  optimizer::util::SplitPredicates(
+      reinterpret_cast<parser::SelectStatement *>(parse_tree)
+          ->where_clause.get(),
+      predicates);
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
@@ -410,9 +422,8 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
 
   txn = txn_manager.BeginTransaction();
 
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
 
   std::shared_ptr<GroupExpression> gexpr =
       optimizer.TestInsertQueryTree(parse_tree, txn);

@@ -314,7 +314,7 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
   values.push_back(type::ValueFactory::GetIntegerValue(id).Copy());
 
   return planner::IndexScanPlan::IndexScanDesc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_ids, expr_types, values, runtime_keys);
 }
 
 bool TestingTransactionUtil::ExecuteRead(

@@ -12,9 +12,10 @@
 
 #include "catalog/abstract_catalog.h"
 
+#include "binder/bind_node_visitor.h"
+
 #include "common/statement.h"
 
-#include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 
@@ -55,25 +56,38 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 
 AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
                                  concurrency::TransactionContext *txn) {
-  // get catalog table schema
+  // Get catalog table schema
   auto &peloton_parser = parser::PostgresParser::GetInstance();
+
+  // Build the parse tree
+  const auto parse_tree_list = peloton_parser.BuildParseTree(catalog_table_ddl);
+  if (parse_tree_list->GetStatements().empty()) {
+    throw CatalogException(
+        "Parse tree list has no parse trees. Cannot build plan");
+  }
+  // TODO: support multi-statement queries
+  auto parse_tree = parse_tree_list->GetStatement(0);
+
+  // Run binder
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DATABASE_CATALOG_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+
+  // Create the plan tree
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
-      optimizer::Optimizer().BuildPelotonPlanTree(
-          peloton_parser.BuildParseTree(catalog_table_ddl),
-          DATABASE_CATALOG_NAME, txn));
+      optimizer::Optimizer().BuildPelotonPlanTree(parse_tree_list, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
 
-  // create catalog table
+  // Create catalog table
   Catalog::GetInstance()->CreateTable(
       CATALOG_DATABASE_NAME, catalog_table_name,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
-  // get catalog table oid
+  // Get catalog table oid
   auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
       CATALOG_DATABASE_NAME, catalog_table_name, txn);
 
-  // set catalog_table_
+  // Set catalog_table_
   try {
     catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
         CATALOG_DATABASE_OID, catalog_table_object->GetTableOid());
@@ -134,7 +148,7 @@ bool AbstractCatalog::DeleteWithIndexScan(
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_offsets, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_offsets, expr_types, values, runtime_keys);
 
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
       new planner::IndexScanPlan(catalog_table_, nullptr, column_offsets,
@@ -179,7 +193,7 @@ AbstractCatalog::GetResultWithIndexScan(
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_offsets, expr_types, values, runtime_keys);
+      index->GetOid(), key_column_offsets, expr_types, values, runtime_keys);
 
   planner::IndexScanPlan index_scan_node(catalog_table_, nullptr,
                                          column_offsets, index_scan_desc);

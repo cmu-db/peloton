@@ -14,6 +14,7 @@
 
 #include <set>
 #include <string>
+#include <tuple>
 
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
@@ -35,6 +36,7 @@ class SQLStatement;
 }  // namespace parser
 
 namespace planner {
+typedef std::tuple<oid_t, oid_t, oid_t> col_triplet;
 
 class PlanUtil {
  public:
@@ -62,6 +64,18 @@ class PlanUtil {
   static const std::set<oid_t> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
       const parser::SQLStatement &sql_stmt);
+
+  /**
+  * @brief Get the columns affected by a given query
+  * @param CatalogCache
+  * @param SQLStatementList
+  * @param DBName
+  * @return vector of affected column ids with triplet format
+  */
+  static const std::vector<col_triplet> GetIndexableColumns(
+      catalog::CatalogCache &catalog_cache,
+      std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
+      const std::string &db_name);
 
  private:
   ///
