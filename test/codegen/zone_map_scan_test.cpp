@@ -67,19 +67,19 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 100;
 };
 
-//TEST_F(ZoneMapScanTest, ScanNoPredicates) {
-//  // SELECT a, b, c FROM table;
-//  // 1) Setup the scan plan node
-//  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
-//  // 2) Do binding
-//  planner::BindingContext context;
-//  scan.PerformBinding(context);
-//  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
-//  // COMPILE and execute
-//  CompileAndExecute(scan, buffer);
-//  const auto &results = buffer.GetOutputTuples();
-//  EXPECT_EQ(NumRowsInTestTable(), results.size());
-//}
+TEST_F(ZoneMapScanTest, ScanNoPredicates) {
+  // SELECT a, b, c FROM table;
+  // 1) Setup the scan plan node
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
+  // 2) Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer);
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable(), results.size());
+}
 
 TEST_F(ZoneMapScanTest, SimplePredicate) {
   // SELECT a, b, c FROM table where a >= 20;

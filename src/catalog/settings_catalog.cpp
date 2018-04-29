@@ -113,8 +113,8 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 
  auto *name_expr =
    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
-                                        ColumnId::NAME);
- name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::NAME);
+                                        static_cast<int>(ColumnId::NAME));
+ name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), static_cast<int>(ColumnId::NAME));
 
  expression::AbstractExpression *name_const_expr =
    expression::ExpressionUtil::ConstantValueFactory(
@@ -132,12 +132,12 @@ std::string SettingsCatalog::GetSettingValue(
 
   auto *name_expr =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
-                                           ColumnId::NAME);
+                                           static_cast<int>(ColumnId::NAME));
 
   name_expr->SetBoundOid(
       catalog_table_->GetDatabaseOid(),
       catalog_table_->GetOid(),
-      ColumnId::NAME);
+      static_cast<int>(ColumnId::NAME));
 
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
@@ -152,7 +152,7 @@ std::string SettingsCatalog::GetSettingValue(
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-    config_value = (result_tuples[0]).GetValue(ColumnId::VALUE).ToString();
+    config_value = (result_tuples[0]).GetValue(static_cast<int>(ColumnId::VALUE)).ToString();
   }
   return config_value;
 }
@@ -164,12 +164,12 @@ std::string SettingsCatalog::GetDefaultValue(
   auto *name_expr =
       new expression::TupleValueExpression(
           type::TypeId::VARCHAR, 0,
-          ColumnId::NAME);
+          static_cast<int>(ColumnId::NAME));
 
   name_expr->SetBoundOid(
       catalog_table_->GetDatabaseOid(),
       catalog_table_->GetOid(),
-      ColumnId::NAME);
+      static_cast<int>(ColumnId::NAME));
 
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
@@ -184,7 +184,7 @@ std::string SettingsCatalog::GetDefaultValue(
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
   if (result_tuples.size() != 0) {
-    config_value = result_tuples[0].GetValue(ColumnId::DEFAULT_VALUE).ToString();
+    config_value = result_tuples[0].GetValue(static_cast<int>(ColumnId::DEFAULT_VALUE)).ToString();
   }
   return config_value;
 }

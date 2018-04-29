@@ -64,13 +64,13 @@ bool DatabaseCatalogObject::InsertTableObject(
   // check if already in cache
   if (table_objects_cache.find(table_object->GetTableOid()) !=
       table_objects_cache.end()) {
-    LOG_DEBUG("Table %u already exists in cache!", table_object->GetTableOid());
+    LOG_TRACE("Table %u already exists in cache!", table_object->GetTableOid());
     return false;
   }
 
   if (table_name_cache.find(table_object->GetTableName()) !=
       table_name_cache.end()) {
-    LOG_DEBUG("Table %s already exists in cache!",
+    LOG_TRACE("Table %s already exists in cache!",
               table_object->GetTableName().c_str());
     return false;
   }
@@ -356,7 +356,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     (void)success;
     return database_object;
   } else {
-    LOG_DEBUG("Found %lu database tiles with oid %u", result_tuples.size(),
+    LOG_TRACE("Found %lu database tiles with oid %u", result_tuples.size(),
               database_oid);
   }
 
