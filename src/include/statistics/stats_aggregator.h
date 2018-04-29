@@ -27,6 +27,7 @@
 #include "storage/data_table.h"
 #include "concurrency/transaction_context.h"
 #include "common/dedicated_thread_task.h"
+#include "thread_level_stats_collector.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -51,7 +52,7 @@ class StatsAggregator : public DedicatedThreadTask {
   void Terminate() override {
     lock_.lock();
     exiting_ = true;
-    while(exiting_)
+    while (exiting_)
       exec_finished_.wait(lock_);
     lock_.unlock();
   }
@@ -66,18 +67,28 @@ class StatsAggregator : public DedicatedThreadTask {
 
     while (exec_finished_.wait_for(
         lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
-        std::cv_status::timeout &&
-        !exiting_) {
+        std::cv_status::timeout && !exiting_)
       Aggregate();
-    }
     exiting_ = false;
     exec_finished_.notify_all();
     LOG_INFO("Aggregator done!");
   }
 
- private:
   void Aggregate() {
+    std::vector<std::shared_ptr<AbstractRawData>> acc;
+    for (auto &entry : ThreadLevelStatsCollector::GetAllCollectors()) {
+      auto data_block = entry.second.GetDataToAggregate();
+      if (acc.empty())
+        acc = data_block;
+      else
+        for (size_t i = 0; i < acc.size(); i++)
+          acc[i]->Aggregate(*data_block[i]);
+    }
+    for (auto &raw_data : acc)
+      raw_data->WriteToCatalog();
   }
+
+ private:
   int64_t aggregation_interval_ms_;
   std::mutex mutex_;
   std::unique_lock<std::mutex> lock_;

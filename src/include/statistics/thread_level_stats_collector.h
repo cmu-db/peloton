@@ -28,7 +28,7 @@ class ThreadLevelStatsCollector {
     return collector_map[tid];
   }
 
-  static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> &GetAllCollectprs() {
+  static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> &GetAllCollectors() {
     static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> collector_map;
     return collector_map;
   };
@@ -90,6 +90,13 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[StatInsertionPoint::QUERY_END])
       metric->OnQueryEnd();
   };
+
+  std::vector<std::shared_ptr<AbstractRawData>> GetDataToAggregate() {
+    std::vector<std::shared_ptr<AbstractRawData>> result;
+    for (auto &metric : metrics_)
+      result.push_back(metric->Swap());
+    return result;
+  }
 
  private:
   template<typename metric>
