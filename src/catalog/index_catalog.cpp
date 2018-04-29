@@ -260,13 +260,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
-  // try get from cache
-  // auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
-  // if (index_object) {
-  //  return index_object;
-  //}
 
-  // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
 
   auto *idx_oid_expr =
@@ -304,13 +298,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
-  // try get from cache
-  // auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
-  // if (index_object) {
-  //   return index_object;
-  // }
 
-  // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SKEY_INDEX_NAME;  // Index of index_name
   std::vector<type::Value> values;
@@ -354,8 +342,6 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
-  // auto index_objects = table_object->GetIndexObjects(true);
-  // if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
