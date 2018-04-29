@@ -95,9 +95,12 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
     oid_t lang_oid, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
-                                                    ColumnId::OID);
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(), ColumnId::OID);
+
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(lang_oid).Copy());
@@ -122,9 +125,11 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::LANNAME);
+  name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                          catalog_table_->GetOid(), ColumnId::LANNAME);
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(lang_name, nullptr).Copy());
