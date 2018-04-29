@@ -119,20 +119,7 @@ bool ProcCatalog::InsertProc(const std::string &proname,
 
 std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
     oid_t proc_oid, concurrency::TransactionContext *txn) const {
-//std::vector<oid_t> column_ids(all_column_ids);
-//oid_t index_offset = IndexId::PRIMARY_KEY;
-//std::vector<type::Value> values;
-//values.push_back(type::ValueFactory::GetIntegerValue(proc_oid).Copy());
-//
-//auto result_tiles =
-//    GetResultWithIndexScan(column_ids, index_offset, values, txn);
-//PELOTON_ASSERT(result_tiles->size() <= 1);
-//
-//std::unique_ptr<ProcCatalogObject> ret;
-//if (result_tiles->size() == 1) {
-//  PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-//  ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
-//}
+
   std::vector<oid_t> column_ids(all_column_ids);
 
   auto *oid_expr =
