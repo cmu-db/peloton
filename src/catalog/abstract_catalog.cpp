@@ -33,6 +33,7 @@
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
 
 #include "storage/database.h"
 #include "storage/storage_manager.h"
@@ -164,6 +165,73 @@ bool AbstractCatalog::DeleteWithIndexScan(
   bool status = delete_executor.Execute();
 
   return status;
+}
+
+/* @brief   Update specific columns using index scan
+ * @param   update_columns    Columns to be updated
+ * @param   update_values     Values to be updated
+ * @param   scan_values       Value to be scaned (used in index scan)
+ * @param   index_offset      Offset of index for scan
+ * @return  true if successfully executes
+ */
+bool AbstractCatalog::UpdateWithIndexScan(
+    std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
+    std::vector<type::Value> scan_values, oid_t index_offset,
+    concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Scan table requires transaction");
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  // Construct index scan executor
+  auto index = catalog_table_->GetIndex(index_offset);
+  oid_t index_oid = index->GetOid();
+  std::vector<oid_t> key_column_offsets =
+      index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
+  PELOTON_ASSERT(scan_values.size() == key_column_offsets.size());
+  std::vector<ExpressionType> expr_types(scan_values.size(),
+                                         ExpressionType::COMPARE_EQUAL);
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index_oid, key_column_offsets, expr_types, scan_values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_, nullptr,
+                                         update_columns, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+  // Construct update executor
+  TargetList target_list;
+  DirectMapList direct_map_list;
+
+  size_t column_count = catalog_table_->GetSchema()->GetColumnCount();
+  for (size_t col_itr = 0; col_itr < column_count; col_itr++) {
+    // Skip any column for update
+    if (std::find(std::begin(update_columns), std::end(update_columns),
+                  col_itr) == std::end(update_columns)) {
+      direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
+    }
+  }
+
+  PELOTON_ASSERT(update_columns.size() == update_values.size());
+  for (size_t i = 0; i < update_values.size(); i++) {
+    planner::DerivedAttribute update_attribute{
+        new expression::ConstantValueExpression(update_values[i])};
+    target_list.emplace_back(update_columns[i], update_attribute);
+  }
+
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(catalog_table_, std::move(project_info));
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+  update_executor.AddChild(&index_scan_executor);
+  // Execute
+  update_executor.Init();
+  return update_executor.Execute();
 }
 
 /*@brief   Index scan helper function

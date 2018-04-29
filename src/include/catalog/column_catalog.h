@@ -70,9 +70,10 @@ class ColumnCatalog : public AbstractCatalog {
 
  public:
   // Global Singleton, only the first call requires passing parameters.
-  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                    type::AbstractPool *pool = nullptr,
-                                    concurrency::TransactionContext *txn = nullptr);
+  static ColumnCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   ~ColumnCatalog();
 
@@ -86,10 +87,14 @@ class ColumnCatalog : public AbstractCatalog {
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                    type::AbstractPool *pool,
+                    concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool RenameColumn(oid_t table_oid, const std::string &column_name,
+                    const std::string &new_name,
+                    concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
