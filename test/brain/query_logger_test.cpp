@@ -32,7 +32,7 @@ class QueryLoggerTests : public PelotonTest {
     brain::QueryLogger::Fingerprint fingerprint{select_query_};
     select_query_fingerprint_ = fingerprint.GetFingerprint();
 
-    wait_time_ = 2;
+    wait_time_ = 5;
   }
 
   void TearDown() override { PelotonInit::Shutdown(); }

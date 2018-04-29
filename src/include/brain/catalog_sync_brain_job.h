@@ -41,7 +41,7 @@ class CatalogSyncBrainJob : public BrainJob {
  private:
   static time_t TimeFromString(const char *str) {
     struct tm tm;
-    memset(&tm, 0, sizeof(struct tm));
+    PELOTON_MEMSET(&tm, 0, sizeof(struct tm));
     strptime(str, "%Y-%m-%d %H:%M:%S", &tm);
     return mktime(&tm);
   }
