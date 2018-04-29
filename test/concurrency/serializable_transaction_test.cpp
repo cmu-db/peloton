@@ -64,16 +64,34 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // Just scan the table
     {
+      //same as 'ConcurrentReadOnlyTransactionTest'
+      thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
       concurrency::EpochManagerFactory::GetInstance().Reset();
+      concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+      gc::GCManagerFactory::Configure();
+      gc::GCManagerFactory::GetInstance().StartGC();
+
+      //this consists of 2 txns. 1.catalog creation 2.test table creation
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
-      
+
+      //manually update snapshot epoch number, so later snapshot read must get a larger epoch than table creating txn
+      //or it may read nothing
+      concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
+
       TransactionScheduler scheduler(1, table, &txn_manager, {0});
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
 
       scheduler.Run();
 
+      //it should read all the 10 tuples
       EXPECT_EQ(10, scheduler.schedules[0].results.size());
+
+      gc::GCManagerFactory::GetInstance().StopGC();
+      concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+      thread_pool.Shutdown();
+      //reset to default value, other test cases
+      gc::GCManagerFactory::Configure(0);
     }
   }
 }
@@ -93,9 +111,23 @@ TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
 //    COMMIT |
 //           | R(X)
 //           | COMMIT
+
     {
+      //if gc manager is active, finishing a txn will make the txn be removed from epoch list as well.
+      //epoch manager needs this behavior to find the largest expired txn id.
+      //that id is used to determine whether snapshot epoch falls behind and needs update.
+      //gc and epoch manager both depend on thread pool
+      thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
       concurrency::EpochManagerFactory::GetInstance().Reset();
+      concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+      gc::GCManagerFactory::Configure();
+      gc::GCManagerFactory::GetInstance().StartGC();
+
+      //this contains 2 txns: 1.create catalog table 2.create test table
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
+
+      //force snapshot epoch to be updated. it should be larger than table creation txn's epoch
+      concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
 
       TransactionScheduler scheduler(2, table, &txn_manager, {1});
       scheduler.Txn(0).Update(0, 1);
@@ -110,9 +142,15 @@ TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 
+      //read only txn should read the same snapshot that exists after table creation and before update txn commits
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
-      //behaves like read committed
-      EXPECT_EQ(2, scheduler.schedules[1].results[1]);
+      EXPECT_EQ(0, scheduler.schedules[1].results[1]);
+
+      gc::GCManagerFactory::GetInstance().StopGC();
+      concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+      thread_pool.Shutdown();
+      //reset it to default value for test cases
+      gc::GCManagerFactory::Configure(0);
     }
   }
 }
