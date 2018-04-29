@@ -30,6 +30,7 @@
 #include "trigger/trigger.h"
 #include "catalog/table_catalog.h"
 #include "parser/pg_trigger.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -85,6 +86,14 @@ bool DeleteExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  oid_t table_oid = target_table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  if (!lock_success) {
+    LOG_WARN("Cannot obtain lock for the table, abort!");
+  }
+
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
 
@@ -137,20 +146,23 @@ bool DeleteExecutor::DExecute() {
     storage::Tuple prev_tuple(target_table_->GetSchema(), true);
 
     // Get a copy of the old tuple
-    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+    for (oid_t column_itr = 0;
+         column_itr < target_table_schema->GetColumnCount(); column_itr++) {
       type::Value val = (old_tuple.GetValue(column_itr));
       prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
     }
 
     // Check the foreign key source table
-    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
-                                                    nullptr,
-                                                    current_txn,
-                                                    executor_context_,
-                                                    false) == false)
-    {
+    if (target_table_->CheckForeignKeySrcAndCascade(
+            &prev_tuple, nullptr, current_txn, executor_context_, false) ==
+        false) {
       transaction_manager.SetTransactionResult(current_txn,
-                                              peloton::ResultType::FAILURE);
+                                               peloton::ResultType::FAILURE);
+      // Unlock the table
+      bool unlock_success = lm->UnlockShared(table_oid);
+      if (!unlock_success) {
+        LOG_TRACE("Cannot unlock the table, abort!");
+      }
       return false;
     }
 
@@ -210,6 +222,11 @@ bool DeleteExecutor::DExecute() {
         if (acquire_ownership_success == false) {
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success) {
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
         // if it is the latest version and not locked by other threads, then
@@ -232,6 +249,11 @@ bool DeleteExecutor::DExecute() {
           }
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
+          // Unlock the table
+          bool unlock_success = lm->UnlockShared(table_oid);
+          if (!unlock_success) {
+            LOG_TRACE("Cannot unlock the table, abort!");
+          }
           return false;
         }
         transaction_manager.PerformDelete(current_txn, old_location,
@@ -243,6 +265,11 @@ bool DeleteExecutor::DExecute() {
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
+        // Unlock the table
+        bool unlock_success = lm->UnlockShared(table_oid);
+        if (!unlock_success) {
+          LOG_TRACE("Cannot unlock the table, abort!");
+        }
         return false;
       }
     }
@@ -291,6 +318,11 @@ bool DeleteExecutor::DExecute() {
       trigger_list->ExecTriggers(TriggerType::ON_COMMIT_DELETE_STATEMENT,
                                  current_txn);
     }
+  }
+  // Unlock the table
+  bool unlock_success = lm->UnlockShared(table_oid);
+  if (!unlock_success) {
+    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }

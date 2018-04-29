@@ -18,6 +18,7 @@
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
+#include "concurrency/lock_manager.h"
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
 #include "storage/database.h"
@@ -87,14 +88,12 @@ bool CreateExecutor::DExecute() {
 }
 
 bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
-
   auto txn = context_->GetTransaction();
   auto database_name = node.GetDatabaseName();
-  ResultType result = catalog::Catalog::GetInstance()->CreateDatabase(
-      database_name, txn);
+  ResultType result =
+      catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
   txn->SetResult(result);
-  LOG_TRACE("Result is: %s",
-            ResultTypeToString(txn->GetResult()).c_str());
+  LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   return (true);
 }
 
@@ -110,6 +109,14 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Creating table succeeded!");
+
+    // Initialize table lock
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+        database_name, table_name, current_txn);
+
+    oid_t table_oid = table_object->GetTableOid();
+    concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+    lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
 
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
@@ -153,30 +160,25 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
 
         // Create the catalog object and shove it into the table
-        auto catalog_fk = new catalog::ForeignKey(INVALID_OID,
-            sink_table->GetOid(), sink_col_ids, source_col_ids,
+        auto catalog_fk = new catalog::ForeignKey(
+            INVALID_OID, sink_table->GetOid(), sink_col_ids, source_col_ids,
             fk.upd_action, fk.del_action, fk.constraint_name);
         source_table->AddForeignKey(catalog_fk);
 
         // Register FK with the sink table for delete/update actions
-        catalog_fk = new catalog::ForeignKey(source_table->GetOid(),
-                                              INVALID_OID,
-                                              sink_col_ids,
-                                              source_col_ids,
-                                              fk.upd_action,
-                                              fk.del_action,
-                                              fk.constraint_name);
+        catalog_fk = new catalog::ForeignKey(
+            source_table->GetOid(), INVALID_OID, sink_col_ids, source_col_ids,
+            fk.upd_action, fk.del_action, fk.constraint_name);
         sink_table->RegisterForeignKeySource(catalog_fk);
 
         // Add a non-unique index on the source table if needed
-        std::vector<std::string> source_col_names =
-            fk.foreign_key_sources;
-        std::string index_name =
-            source_table->GetName() + "_FK_" + sink_table->GetName() + "_"
-            + std::to_string(count);
+        std::vector<std::string> source_col_names = fk.foreign_key_sources;
+        std::string index_name = source_table->GetName() + "_FK_" +
+                                 sink_table->GetName() + "_" +
+                                 std::to_string(count);
         catalog->CreateIndex(database_name, source_table->GetName(),
-                              source_col_ids, index_name, false,
-                              IndexType::BWTREE, current_txn);
+                             source_col_ids, index_name, false,
+                             IndexType::BWTREE, current_txn);
         count++;
 
 #ifdef LOG_DEBUG_ENABLED
@@ -197,12 +199,21 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     LOG_TRACE("Result is: %s",
               ResultTypeToString(current_txn->GetResult()).c_str());
   }
-
-  return (true);
+  return true;
 }
 
+/**
+ * @brief   Create an index.
+ * @details Create an index. Will block other transactions while creating
+ * the index. TODO: implement support for "create index concurrently"
+ * @param   node    current planner node
+ * @return  bool    always true
+ */
 bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
+  // Get transaction
   auto txn = context_->GetTransaction();
+
+  // Get metadata about the index
   auto database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
@@ -211,20 +222,39 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
 
   auto key_attrs = node.GetKeyAttrs();
 
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      database_name, table_name, txn);
+
+  // Get table oid
+  oid_t table_oid = table_object->GetTableOid();
+
+  // Lock the table being indexed
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockExclusive(table_oid);
+  if (!lock_success) {
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
+
+  // Create index in the catalog
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, table_name, key_attrs, index_name, unique_flag,
-      index_type, txn);
+      database_name, table_name, key_attrs, index_name, unique_flag, index_type,
+      txn);
+
+  // Unlock the table being indexed
+  bool unlock_success = lm->UnlockExclusive(table_oid);
+  if (!unlock_success) {
+    LOG_TRACE("Cannot unlock the table, abort!");
+  }
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Creating table succeeded!");
+    LOG_TRACE("Creating index succeeded!");
   } else if (txn->GetResult() == ResultType::FAILURE) {
-    LOG_TRACE("Creating table failed!");
+    LOG_TRACE("Creating index failed!");
   } else {
-    LOG_TRACE("Result is: %s",
-              ResultTypeToString(txn->GetResult()).c_str());
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
-  return (true);
+  return true;
 }
 
 bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
@@ -251,13 +281,13 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
       (const unsigned char *)output.Data(), (int32_t)output.Size(), true);
 
   catalog::TriggerCatalog::GetInstance().InsertTrigger(
-      table_object->GetTableOid(), trigger_name,
-      newTrigger.GetTriggerType(), newTrigger.GetFuncname(),
-      newTrigger.GetArgs(), when, time_stamp, pool_.get(), txn);
+      table_object->GetTableOid(), trigger_name, newTrigger.GetTriggerType(),
+      newTrigger.GetFuncname(), newTrigger.GetArgs(), when, time_stamp,
+      pool_.get(), txn);
   // ask target table to update its trigger list variable
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          database_name, table_name, txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                        table_name, txn);
   target_table->UpdateTriggerListFromCatalog(txn);
 
   // hardcode SUCCESS result for txn
@@ -269,7 +299,6 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
 
   return (true);
 }
-
 
 }  // namespace executor
 }  // namespace peloton
