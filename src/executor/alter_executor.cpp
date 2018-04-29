@@ -35,7 +35,7 @@ bool AlterExecutor::DInit() {
 }
 
 bool AlterExecutor::DExecute() {
-  LOG_TRACE("Executing Drop...");
+  LOG_TRACE("Executing Alter...");
   bool result = false;
   if (!isAlter_) {
     const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
@@ -66,16 +66,15 @@ bool AlterExecutor::RenameColumn(
   auto new_column_name = node.GetNewName();
   auto old_column_name = node.GetOldName();
 
-  std::vector<std::string> old_names = {old_column_name};
-  std::vector<std::string> names = {new_column_name};
-  ResultType result = catalog::Catalog::GetInstance()->ChangeColumnName(
-      database_name, table_name, old_names, names, txn);
+  ResultType result = catalog::Catalog::GetInstance()->RenameColumn(
+      database_name, table_name, old_column_name, new_column_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Rename column succeeded!");
 
-    // TODO Add on succeed logic if necessary
+    // TODO: Add on succeed logic if necessary
+    executor_context_->num_processed = 1;
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
@@ -95,7 +94,8 @@ bool AlterExecutor::DropColumn(const peloton::planner::AlterPlan &node,
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Drop column succeed!");
 
-    // TODO Add on succeed logic if necessary
+    // TODO: Add on succeed logic if necessary
+    executor_context_->num_processed = 1;
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }

@@ -66,7 +66,7 @@ public class AlterTableTest extends PLTestBase {
      * Insert 1 tuple, rename the column, and see if the change is visible.
      */
     @Test
-    public void test_RenameColumn_1() throws SQLException {
+    public void test_RenameCol_Base() throws SQLException {
         conn.createStatement().execute(SQL_RENAME_COLUMN);
         ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
         rs.next();
@@ -80,7 +80,7 @@ public class AlterTableTest extends PLTestBase {
      * Rename a column that does not exists, should throw exception
      */
     @Test
-    public void test_RenameColumn_2() throws SQLException {
+    public void test_RenameCol_NotExist() throws SQLException {
         String sql = "ALTER TABLE foo RENAME a to b;";
 
         // Old column does not exist
@@ -89,10 +89,10 @@ public class AlterTableTest extends PLTestBase {
     }
 
     /**
-     * Rename a column that does not exists, should throw exception
+     * Rename a column to a name that already exists, should throw exception
      */
     @Test
-    public void test_RenameColumn_3() throws SQLException {
+    public void test_RenameCol_Exist() throws SQLException {
         String sql = "ALTER TABLE foo RENAME year to id;";
 
         // New column already exists
@@ -104,7 +104,7 @@ public class AlterTableTest extends PLTestBase {
      * Two transactions try to rename at the same time, should throw exception
      */
     @Test
-    public void test_RenameColumn_4() throws SQLException {
+    public void test_RenameCol_Concurrent() throws SQLException {
         conn.setAutoCommit(false);
         conn2.setAutoCommit(false);
 
@@ -118,8 +118,13 @@ public class AlterTableTest extends PLTestBase {
     }
 
 //    The following tests are currently broken.
+//
+//    /**
+//     * 2 transactions, t2 reads the table between t1 executes the rename
+//     * and commits the changes.
+//     */
 //    @Test
-//    public void test_RenameColumn_5() throws SQLException {
+//    public void test_RenameCol_ReadBeforeCommit() throws SQLException {
 //        conn.setAutoCommit(false);
 //        conn2.setAutoCommit(false);
 //
@@ -138,11 +143,11 @@ public class AlterTableTest extends PLTestBase {
 //    }
 //
 //    /**
-//     * 2 transactions, t2 read the table before and after t1 change the column
-//     * name and should not see the changes.
+//     * 2 transactions, t2 reads the table before and after t1 changes the
+//     * column name and should not see the changes.
 //     */
 //    @Test
-//    public void test_RenameColumn_6() throws SQLException {
+//    public void test_RenameCol_ReadBeforeAndAfterCommit() throws SQLException {
 //        conn.setAutoCommit(false);
 //        conn2.setAutoCommit(false);
 //
@@ -164,9 +169,12 @@ public class AlterTableTest extends PLTestBase {
 //        assertNoMoreRows(rs_2);
 //        conn2.commit();
 //    }
-
+//
+//    /**
+//     * 2 transactions, t2 reads the table after t1 commits the changes.
+//     */
 //    @Test
-//    public void test_RenameColumn_7() throws SQLException {
+//    public void test_RenameCol_ReadAfterCommit() throws SQLException {
 //        conn.setAutoCommit(false);
 //        conn2.setAutoCommit(false);
 //

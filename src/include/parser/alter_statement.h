@@ -18,11 +18,12 @@
 namespace peloton {
 namespace parser {
 /**
- * @struct AlterTableStatement
+ * @class AlterTableStatement
  * @brief Represents "ALTER TABLE add column COLUMN_NAME COLUMN_TYPE"
  * TODO: add implementation of AlterTableStatement
  */
-struct AlterTableStatement : TableRefStatement {
+class AlterTableStatement : public TableRefStatement {
+ public:
   enum class AlterTableType { INVALID = 0, ADD = 1, DROP = 2, RENAME = 3 };
   AlterTableStatement(AlterTableType type)
       : TableRefStatement(StatementType::ALTER),

@@ -791,7 +791,14 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 //===--------------------------------------------------------------------===//
 // ALTER TABLE
 //===--------------------------------------------------------------------===//
-/* Helper function for alter table, called internally
+
+/**
+ * @brief Helper function for alter table, called internally
+ * @param database_oid database to which the table belongs to
+ * @param table_oid table to which the column belongs to
+ * @param new_schema the new table schema
+ * @param txn the transaction Context
+ * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::AlterTable(
     UNUSED_ATTRIBUTE oid_t database_oid, UNUSED_ATTRIBUTE oid_t table_oid,
@@ -803,13 +810,32 @@ ResultType Catalog::AlterTable(
   return ResultType::SUCCESS;
 }
 
+/**
+ * @brief Add new columns to the table.
+ * @param database_name database to which the table belongs to
+ * @param table_name table to which the column belongs to
+ * @param columns the column to be added
+ * @param txn the transaction Context
+ * @return TransactionContext ResultType(SUCCESS or FAILURE)
+ *
+ */
 ResultType Catalog::AddColumn(
     UNUSED_ATTRIBUTE const std::string &database_name,
     UNUSED_ATTRIBUTE const std::string &table_name,
     UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+  // TODO: perform ADD Operation
   return ResultType::SUCCESS;
 }
+
+/**
+ * @brief Drop the column from the table.
+ * @param database_name database to which the table belongs to
+ * @param table_name table to which the columns belong to
+ * @param columns the columns to be dropped
+ * @param txn the transaction Context
+ * @return TransactionContext ResultType(SUCCESS or FAILURE)
+ */
 
 ResultType Catalog::DropColumn(
     const std::string &database_name,
@@ -829,21 +855,29 @@ ResultType Catalog::DropColumn(
   return ResultType::SUCCESS;
 }
 
-ResultType Catalog::ChangeColumnName(const std::string &database_name,
-                                     const std::string &table_name,
-                                     const std::vector<std::string> &old_names,
-                                     const std::vector<std::string> &names,
-                                     concurrency::TransactionContext *txn) {
+/**
+ * @brief Change the column name in the catalog.
+ * @param database_name database to which the table belongs to
+ * @param table_name table to which the column belongs to
+ * @param columns the column to be dropped
+ * @param txn the transaction Context
+ * @return TransactionContext ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::RenameColumn(const std::string &database_name,
+                                 const std::string &table_name,
+                                 const std::string &old_name,
+                                 const std::string &new_name,
+                                 concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Change Column requires transaction.");
   }
 
-  if (old_names.size() == 0 || names.size() == 0) {
-    throw CatalogException("No names are given.");
+  if (new_name.size() == 0) {
+    throw CatalogException("Name can not be empty string.");
   }
 
-  LOG_TRACE("Change Column Name %s to %s", old_names[0].c_str(),
-            names[0].c_str());
+  LOG_TRACE("Change Column Name %s to %s", old_name.c_str(),
+            new_name.c_str());
 
   try {
     // Get table from the name
@@ -854,23 +888,23 @@ ResultType Catalog::ChangeColumnName(const std::string &database_name,
     // Currently we only support change the first column name!
 
     // Check the validity of old name and the new name
-    oid_t columnId = schema->GetColumnID(names[0]);
+    oid_t columnId = schema->GetColumnID(new_name);
     if (columnId != INVALID_OID) {
       throw CatalogException("New column already exists in the table.");
     }
-    columnId = schema->GetColumnID(old_names[0]);
+    columnId = schema->GetColumnID(old_name);
     if (columnId == INVALID_OID) {
       throw CatalogException("Old column does not exist in the table.");
     }
 
     // Change column name in the global schema
-    schema->ChangeColumnName(columnId, names[0]);
+    schema->ChangeColumnName(columnId, new_name);
 
     // Change cached ColumnCatalog
     oid_t table_oid = Catalog::GetInstance()
                           ->GetTableObject(database_name, table_name, txn)
                           ->GetTableOid();
-    catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, old_names[0],
+    catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, old_name,
                                                         txn);
     auto new_column = schema->GetColumn(columnId);
     catalog::ColumnCatalog::GetInstance()->InsertColumn(
