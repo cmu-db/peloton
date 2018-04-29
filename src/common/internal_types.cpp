@@ -426,6 +426,9 @@ std::string AlterTypeToString(AlterType type) {
     case AlterType::RENAME: {
       return "RENAME";
     }
+    case AlterType::ALTER: {
+      return "ALTER";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for AlterType value '%d'",
@@ -440,6 +443,8 @@ AlterType StringToAlterType(const std::string &str) {
     return AlterType::INVALID;
   } else if (upper_str == "RENAME") {
     return AlterType::RENAME;
+  } else if (upper_str == "ALTER") {
+    return AlterType::ALTER;
   } else {
     throw ConversionException(StringUtil::Format(
         "No AlterType conversion from string '%s'", upper_str.c_str()));
