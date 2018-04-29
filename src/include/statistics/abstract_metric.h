@@ -155,7 +155,8 @@ class AbstractMetric : public Metric {
   /**
    * @see Metric
    *
-   * To ensure this method works as intended, be sure to
+   * To ensure this method works as intended, be sure to use GetRawData() to
+   * access the underlying raw data
    * @return a shared pointer to the old AbstractRawData
    */
   std::shared_ptr<AbstractRawData> Swap() override {
