@@ -1,7 +1,7 @@
 #pragma once
 namespace peloton {
 namespace stats {
-enum class StatsEventType {
+enum class stats_event_type {
   TXN_BEGIN,
   TXN_COMMIT,
   TXN_ABORT,

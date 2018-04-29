@@ -18,7 +18,7 @@
 
 #include "common/platform.h"
 #include "common/internal_types.h"
-#include "statistics/StatsEventType.h"
+#include "statistics/stats_event_type.h"
 #include "statistics/abstract_raw_data.h"
 
 namespace peloton {
