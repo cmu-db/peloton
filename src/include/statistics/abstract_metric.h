@@ -135,7 +135,7 @@ class RawDataWrapper {
    * @param safe the boolean variable it uses to signal its lifetime
    */
   inline RawDataWrapper(DataType *ptr, bool &safe) : ptr_(ptr), safe_(safe) {
-    safe = false;
+    safe_ = false;
   }
   DataType *ptr_;
   bool &safe_;
