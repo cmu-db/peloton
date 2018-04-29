@@ -147,19 +147,25 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
                                     concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
 
-  expression::AbstractExpression *name_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::VARCHAR, 0,
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::TRIGGER_NAME);
+  name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                         catalog_table_->GetOid(), ColumnId::TRIGGER_NAME);
+
   expression::AbstractExpression *name_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetVarcharValue(trigger_name, nullptr).Copy());
+
   expression::AbstractExpression *name_equality_expr =
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(), ColumnId::TABLE_OID);
 
-  expression::AbstractExpression *oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
-                                                    ColumnId::TABLE_OID);
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -214,6 +220,7 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
   table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
                            catalog_table_->GetOid(),
                            ColumnId::TABLE_OID);
+
   expression::AbstractExpression *table_oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -235,9 +242,12 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(all_column_ids);
 
-  expression::AbstractExpression *type_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::SMALLINT, 0,
+  auto *type_expr =
+      new expression::TupleValueExpression(type::TypeId::SMALLINT, 0,
                                                     ColumnId::TRIGGER_TYPE);
+  type_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                         catalog_table_->GetOid(), ColumnId::TRIGGER_TYPE);
+
   expression::AbstractExpression *type_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetSmallIntValue(trigger_type).Copy());
@@ -245,9 +255,12 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
       expression::ExpressionUtil::ComparisonFactory(
           ExpressionType::COMPARE_EQUAL, type_expr, type_const_expr);
 
-  expression::AbstractExpression *oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::TABLE_OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -288,9 +301,13 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
   LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(all_column_ids);
-  expression::AbstractExpression *oid_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0,
+
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
                                                     ColumnId::TABLE_OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetIntegerValue(table_oid).Copy());
