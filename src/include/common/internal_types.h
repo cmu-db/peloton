@@ -646,8 +646,7 @@ std::ostream &operator<<(std::ostream &os, const DropType &type);
 enum class AlterType {
   INVALID = INVALID_TYPE_ID,  // invalid alter type
   RENAME = 1,                 // rename table, column, database...
-  ADD = 2,
-  DROP = 3
+  ALTER = 2
 };
 std::string AlterTypeToString(AlterType type);
 AlterType StringToAlterType(const std::string &str);
@@ -1230,7 +1229,8 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
-typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
+typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
+                                      ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
