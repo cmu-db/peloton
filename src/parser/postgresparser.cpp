@@ -1730,80 +1730,80 @@ parser::TransactionStatement *PostgresParser::TransactionTransform(
 }
 
 parser::AlterTableStatement *PostgresParser::AlterTransform(
-    AlterTableStmt *root) {
-  // TODO (shilun) adding alter type check
-  parser::AlterTableStatement *result = new AlterTableStatement(
-      parser::AlterTableStatement::AlterTableType::INVALID);
-
-  // Get database and table name
-  RangeVar *relation = root->relation;
-  result->table_info_ =
-      std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
-  if (relation->relname) {
-    result->table_info_->table_name = strdup(relation->relname);
+    Node *root) {
+  switch(root->type){
+  case T_RenameStmt:{
+    RenameStmt *newRoot = reinterpret_cast<RenameStmt *>(root);
+    if (newRoot->renameType != ObjectType::OBJECT_COLUMN) {
+      throw NotImplementedException(StringUtil::Format(
+          "Rename type %d not supported yes...\n", newRoot->relationType));
+    }
+    parser::AlterTableStatement *result = new parser::AlterTableStatement(
+        parser::AlterTableStatement::AlterTableType::RENAME);
+    RangeVar *relation = newRoot->relation;
+    result->table_info_ =
+        std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
+    if (relation->relname) {
+      result->table_info_.get()->table_name = strdup(relation->relname);
+    }
+    if (relation->catalogname) {
+      result->table_info_.get()->database_name = strdup(relation->catalogname);
+    }
+    if (newRoot->subname) {
+      result->oldName = strdup(newRoot->subname);
+    }
+    if (newRoot->newname) {
+      result->newName = strdup(newRoot->newname);
+    }
+    LOG_TRACE("finished transform");
+    return result;
   }
-  if (relation->catalogname) {
-    result->table_info_->database_name = strdup(relation->catalogname);
-  }
+  case T_AlterTableStmt: {
+    // TODO (shilun) adding alter type check
+    // Currently we only support add/drop column type
+    AlterTableStmt *newRoot = reinterpret_cast<AlterTableStmt *>(root);
+    parser::AlterTableStatement* result =
+        new AlterTableStatement(AlterTableStatement::AlterTableType::INVALID);
 
-  for (auto cell = root->cmds->head; cell != NULL; cell = cell->next) {
-    auto cmd = reinterpret_cast<AlterTableCmd *>(cell->data.ptr_value);
-    switch (cmd->subtype) {
-      /*case AT_AddColumn: {
-        auto column =
-            ColumnDefTransform(reinterpret_cast<ColumnDef*>(cmd->def));
-        result->columns->push_back(column);
-        break;
-      }
+    // Get database and table name
+    RangeVar* relation = newRoot->relation;
+    result->table_info_ = std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
+    if (relation->relname) {
+      result->table_info_.get()->table_name = strdup(relation->relname);
+    }
+    if (relation->catalogname) {
+      result->table_info_.get()->database_name = strdup(relation->catalogname);
+    }
+
+    for (auto cell = newRoot->cmds->head; cell != NULL; cell = cell->next) {
+      auto cmd = reinterpret_cast<AlterTableCmd*>(cell->data.ptr_value);
+      switch (cmd->subtype) {
+        /*case AT_AddColumn: {
+          auto column =
+              ColumnDefTransform(reinterpret_cast<ColumnDef*>(cmd->def));
+          result->columns->push_back(column);
+          break;
+        }*/
       case AT_DropColumn:
         result->names->push_back(strdup(cmd->name));
+        result->type = AlterTableStatement::AlterTableType::DROP;
         break;
-      case AT_AlterColumnGenericOptions:*/
       default: {
         throw NotImplementedException(StringUtil::Format(
             "Alter Table type %d not supported yet...\n", cmd->subtype));
       }
+      }
     }
+    return result;
   }
-  return result;
+  default:
+    LOG_ERROR("Not supported Alter Node type yet");
+    throw NotImplementedException(StringUtil::Format(
+        "Alter Table type %d not supported yet...", root->type));
+  }
+
 }
 
-/**
- * RenameTransorm - right now we only support
- * ALTER TABLE [ ONLY ] name [ * ]
-    RENAME [ COLUMN ] column TO new_column
- * @param root
- * @return
- */
-parser::RenameFuncStatement *PostgresParser::RenameTransform(RenameStmt *root) {
-  if (root->renameType != ObjectType::OBJECT_COLUMN) {
-    throw NotImplementedException(StringUtil::Format(
-        "Rename type %d not supported yes...\n", root->relationType));
-  }
-  parser::RenameFuncStatement *result = new parser::RenameFuncStatement(
-      parser::RenameFuncStatement::ObjectType::COLUMN);
-  RangeVar *relation = root->relation;
-  result->table_info_ =
-      std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
-  if (relation->relname) {
-    result->table_info_->table_name = strdup(relation->relname);
-    LOG_TRACE("root->relname: %s", relation->relname);
-  }
-  if (relation->catalogname) {
-    result->table_info_->database_name = strdup(relation->catalogname);
-    LOG_TRACE("root->catalogname: %s", relation->catalogname);
-  }
-  if (root->subname) {
-    result->oldName = strdup(root->subname);
-    LOG_TRACE("root->subname: %s", root->subname);
-  }
-  if (root->newname) {
-    result->newName = strdup(root->newname);
-    LOG_TRACE("root->newname: %s", root->newname);
-  }
-  LOG_TRACE("finished transform");
-  return result;
-}
 
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
@@ -1812,12 +1812,10 @@ parser::RenameFuncStatement *PostgresParser::RenameTransform(RenameStmt *root) {
 parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
   parser::SQLStatement *result = nullptr;
   switch (stmt->type) {
+    case T_RenameStmt:// also use alter transform to transform the node
     case T_AlterTableStmt:
       // TODO (Shilun): adding T_ALTER_TABLE_STMT
-      result = AlterTransform(reinterpret_cast<AlterTableStmt *>(stmt));
-      break;
-    case T_RenameStmt:
-      result = RenameTransform(reinterpret_cast<RenameStmt *>(stmt));
+      result = AlterTransform(stmt);
       break;
     case T_SelectStmt:
       result = SelectTransform(reinterpret_cast<SelectStmt *>(stmt));

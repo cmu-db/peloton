@@ -838,11 +838,20 @@ ResultType Catalog::AddColumn(
  */
 
 ResultType Catalog::DropColumn(
-    UNUSED_ATTRIBUTE const std::string &database_name,
-    UNUSED_ATTRIBUTE const std::string &table_name,
-    UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
-  // TODO: perform DROP Operation
+    const std::string &database_name,
+    const std::string &table_name,
+    const std::vector<std::string> &columns,
+    concurrency::TransactionContext *txn) {
+  try {
+    oid_t table_oid = Catalog::GetInstance()
+        ->GetTableObject(database_name, table_name, txn)
+        ->GetTableOid();
+    for (std::string name: columns) {
+      catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, name, txn);
+    }
+  } catch(CatalogException &e){
+    return ResultType::FAILURE;
+  }
   return ResultType::SUCCESS;
 }
 

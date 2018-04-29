@@ -42,7 +42,6 @@
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/alter_plan.h"
-#include "planner/rename_plan.h"
 
 #include "storage/data_table.h"
 
@@ -149,15 +148,10 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   switch (stmt_type) {
     case StatementType::ALTER: {
       // TODO (shilun) adding support of Alter
-      LOG_TRACE("TO BE Implemented...");
-      break;
-    }
-    case StatementType::RENAME: {
-      LOG_TRACE("Adding Rename Plan");
-      unique_ptr<planner::AbstractPlan> rename_plan(
-          new planner::RenamePlan((parser::RenameFuncStatement *)tree));
-      ddl_plan = move(rename_plan);
-      LOG_TRACE("plan build complete");
+      LOG_TRACE("Adding Alter Plan");
+      unique_ptr<planner::AbstractPlan> alter_plan(
+          new planner::AlterPlan((parser::AlterTableStatement *)tree));
+      ddl_plan = move(alter_plan);
       break;
     }
     case StatementType::DROP: {

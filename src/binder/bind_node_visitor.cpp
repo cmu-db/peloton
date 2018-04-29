@@ -190,9 +190,6 @@ void BindNodeVisitor::Visit(parser::TransactionStatement *) {}
 void BindNodeVisitor::Visit(parser::AlterTableStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
 }
-void BindNodeVisitor::Visit(parser::RenameFuncStatement *node) {
-  node->TryBindDatabaseName(default_database_name_);
-}
 void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
 }

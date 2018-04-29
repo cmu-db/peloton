@@ -18,40 +18,47 @@
 namespace peloton {
 namespace parser {
 /**
- * @struct AlterTableStatement
+ * @class AlterTableStatement
  * @brief Represents "ALTER TABLE add column COLUMN_NAME COLUMN_TYPE"
  * TODO: add implementation of AlterTableStatement
  */
 class AlterTableStatement : public TableRefStatement {
  public:
-  enum class AlterTableType { INVALID = 0, ADD = 1, DROP = 2 };
+  enum class AlterTableType { INVALID = 0, ADD = 1, DROP = 2, RENAME = 3 };
   AlterTableStatement(AlterTableType type)
       : TableRefStatement(StatementType::ALTER),
         type(type),
-        names(new std::vector<char *>) {}
+        names(new std::vector<char*>),
+        oldName(nullptr),
+        newName(nullptr)
+        {};
 
   virtual ~AlterTableStatement() {
+    /*if (columns != nullptr) {
+      for (auto col : *columns) delete col;
+      delete columns;
+    }*/
     if (names != nullptr) {
       for (auto name : *names) delete name;
       delete names;
     }
+    if (oldName) delete oldName;
+    if (newName) delete newName;
   }
 
-  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
-
-  const std::string GetInfo(UNUSED_ATTRIBUTE int num_indent) const override {
-    return std::string{};
-  }
-
-  const std::string GetInfo() const override { return std::string{}; }
+  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
 
   AlterTableType type;
 
   // Dropped columns
-  std::vector<char *> *names;
+  std::vector<char*>* names;
 
   // Added columns
-  // std::vector<ColumnDefinition*>* columns;
+  //std::vector<ColumnDefinition*>* columns;
+
+    // the name that needs to be changed
+  char *oldName;
+  char *newName;
 };
 
 }  // End parser namespace

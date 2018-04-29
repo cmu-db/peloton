@@ -336,8 +336,9 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor =
           new executor::PopulateIndexExecutor(plan, executor_context);
       break;
-    case PlanNodeType::RENAME:
-      child_executor = new executor::AlterExecutor(plan, executor_context);
+    case PlanNodeType::ALTER:
+      child_executor =
+          new executor::AlterExecutor(plan, executor_context);
       break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
