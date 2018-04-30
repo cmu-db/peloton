@@ -62,19 +62,19 @@ class Metric {
   virtual ~Metric() = default;
 
   // TODO(tianyu): fill arguments
-  virtual void OnTransactionBegin(){};
-  virtual void OnTransactionCommit(oid_t){};
-  virtual void OnTransactionAbort(oid_t){};
-  virtual void OnTupleRead(oid_t, size_t){};
-  virtual void OnTupleUpdate(oid_t){};
-  virtual void OnTupleInsert(oid_t){};
-  virtual void OnTupleDelete(oid_t){};
-  virtual void OnIndexRead(oid_t, size_t){};
-  virtual void OnIndexUpdate(oid_t){};
-  virtual void OnIndexInsert(oid_t){};
-  virtual void OnIndexDelete(oid_t){};
-  virtual void OnQueryBegin(){};
-  virtual void OnQueryEnd(){};
+  virtual void OnTransactionBegin() {};
+  virtual void OnTransactionCommit(oid_t) {};
+  virtual void OnTransactionAbort(oid_t) {};
+  virtual void OnTupleRead(oid_t, size_t) {};
+  virtual void OnTupleUpdate(oid_t) {};
+  virtual void OnTupleInsert(oid_t) {};
+  virtual void OnTupleDelete(oid_t) {};
+  virtual void OnIndexRead(oid_t, size_t) {};
+  virtual void OnIndexUpdate(oid_t) {};
+  virtual void OnIndexInsert(oid_t) {};
+  virtual void OnIndexDelete(oid_t) {};
+  virtual void OnQueryBegin() {};
+  virtual void OnQueryEnd() {};
 
   /**
    * @brief Replace RawData with an empty one and return the old one.
@@ -102,7 +102,7 @@ class Metric {
 };
 
 /* Forward Declaration */
-template <typename DataType>
+template<typename DataType>
 class AbstractMetric;
 
 /**
@@ -115,7 +115,7 @@ class AbstractMetric;
  *
  * @tparam DataType the type of AbstractRawData this Wrapper holds
  */
-template <typename DataType>
+template<typename DataType>
 class RawDataWrapper {
   friend class AbstractMetric<DataType>;
 
@@ -150,7 +150,7 @@ class RawDataWrapper {
  *
  * @tparam DataType the type of AbstractRawData this Metric holds
  */
-template <typename DataType>
+template<typename DataType>
 class AbstractMetric : public Metric {
  public:
   /**
@@ -180,8 +180,11 @@ class AbstractMetric : public Metric {
    * @return a RawDataWrapper object to access raw_data_
    */
   inline RawDataWrapper<DataType> GetRawData() {
-    // safe_ should first be flipped to false before loading the raw_data_ so that
-    // the aggregator would always be blocked when it tries to swap out if there is a reader.
+    // safe_ should first be flipped to false before loading the raw_data_ so
+    // that the aggregator would always be blocked when it tries to swap out if
+    // there is a reader. At most one instance of this should be live at any
+    // given time.
+    PELOTON_ASSERT(safe_);
     safe_ = false;
     return {raw_data_.load(), safe_};
   }
