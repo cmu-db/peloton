@@ -72,6 +72,7 @@ void CostCalculator::Visit(const PhysicalLimit *op) {
   output_cost_ =
       std::min((size_t)child_num_rows, (size_t)op->limit) * DEFAULT_TUPLE_COST;
 }
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalNLJoin *op) {
   auto left_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
@@ -80,6 +81,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalNLJoin *op) {
 
   output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
 }
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashJoin *op) {
   auto left_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
@@ -88,46 +90,32 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashJoin *op) {
 
   output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
 }
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {
-  auto left_child_rows =
-      memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
-  auto right_child_rows =
-      memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
 
-  output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
-}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightNLJoin *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterNLJoin *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
-  auto left_child_rows =
-      memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
-  auto right_child_rows =
-      memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-  // TODO(boweic): Build (left) table should have different cost to probe table
-  output_cost_ = (left_child_rows + right_child_rows) * DEFAULT_TUPLE_COST;
-}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightHashJoin *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterHashJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInsert *op) {}
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInsertSelect *op) {}
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDelete *op) {}
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalUpdate *op) {}
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashGroupBy *op) {
   // TODO(boweic): Integrate hash in groupby may cause us to miss the
   // opportunity to further optimize some query where the child output is
   // already hashed by the GroupBy key, we'll do a hash anyway
   output_cost_ = HashCost() + GroupByCost();
 }
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSortGroupBy *op) {
   // Sort group by does not sort the tuples, it requires input columns to be
   // sorted
   output_cost_ = GroupByCost();
 }
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDistinct *op) {
   output_cost_ = HashCost();
 }
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalAggregate *op) {
   // TODO(boweic): Ditto, separate groupby operator and implementation(e.g.
   // hash, sort) may enable opportunity for further optimization

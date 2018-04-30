@@ -167,9 +167,9 @@ class LogicalSingleJoin : public OperatorNode<LogicalSingleJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalJoin : public OperatorNode<LogicalJoin> {
  public:
-  static Operator make(JoinType _type);
+  static Operator make(JoinType type);
 
-  static Operator make(JoinType _type,
+  static Operator make(JoinType type,
                        std::vector<AnnotatedExpression> &conditions);
 
   bool operator==(const BaseOperatorNode &r) override;
@@ -390,7 +390,7 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
 class PhysicalNLJoin : public OperatorNode<PhysicalNLJoin> {
  public:
   static Operator make(
-      JoinType _type, std::vector<AnnotatedExpression> conditions,
+      JoinType type, std::vector<AnnotatedExpression> conditions,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
@@ -411,7 +411,7 @@ class PhysicalNLJoin : public OperatorNode<PhysicalNLJoin> {
 class PhysicalHashJoin : public OperatorNode<PhysicalHashJoin> {
  public:
   static Operator make(
-      JoinType _type, std::vector<AnnotatedExpression> conditions,
+      JoinType type, std::vector<AnnotatedExpression> conditions,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
@@ -424,106 +424,6 @@ class PhysicalHashJoin : public OperatorNode<PhysicalHashJoin> {
 
   std::vector<AnnotatedExpression> join_predicates;
   JoinType type;
-};
-
-//===--------------------------------------------------------------------===//
-// InnerNLJoin
-//===--------------------------------------------------------------------===//
-class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
- public:
-  static Operator make(
-      std::vector<AnnotatedExpression> conditions,
-      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
-      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
-
-  std::vector<AnnotatedExpression> join_predicates;
-};
-
-//===--------------------------------------------------------------------===//
-// LeftNLJoin
-//===--------------------------------------------------------------------===//
-class PhysicalLeftNLJoin : public OperatorNode<PhysicalLeftNLJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
-};
-
-//===--------------------------------------------------------------------===//
-// RightNLJoin
-//===--------------------------------------------------------------------===//
-class PhysicalRightNLJoin : public OperatorNode<PhysicalRightNLJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
-};
-
-//===--------------------------------------------------------------------===//
-// OuterNLJoin
-//===--------------------------------------------------------------------===//
-class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
-};
-
-//===--------------------------------------------------------------------===//
-// InnerHashJoin
-//===--------------------------------------------------------------------===//
-class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
- public:
-  static Operator make(
-      std::vector<AnnotatedExpression> conditions,
-      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
-      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
-
-  std::vector<AnnotatedExpression> join_predicates;
-};
-
-//===--------------------------------------------------------------------===//
-// LeftHashJoin
-//===--------------------------------------------------------------------===//
-class PhysicalLeftHashJoin : public OperatorNode<PhysicalLeftHashJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
-};
-
-//===--------------------------------------------------------------------===//
-// RightHashJoin
-//===--------------------------------------------------------------------===//
-class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
-};
-
-//===--------------------------------------------------------------------===//
-// OuterHashJoin
-//===--------------------------------------------------------------------===//
-class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
- public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(
-      std::shared_ptr<expression::AbstractExpression> join_predicate);
 };
 
 //===--------------------------------------------------------------------===//

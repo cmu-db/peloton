@@ -233,18 +233,18 @@ bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // Join (Inner + Outer Joins)
 //===--------------------------------------------------------------------===//
-Operator LogicalJoin::make(JoinType _type) {
+Operator LogicalJoin::make(JoinType type) {
   LogicalJoin *join = new LogicalJoin;
   join->join_predicates = {};
-  join->type = _type;
+  join->type = type;
   return Operator(join);
 }
 
-Operator LogicalJoin::make(JoinType _type,
+Operator LogicalJoin::make(JoinType type,
                            std::vector<AnnotatedExpression> &conditions) {
   LogicalJoin *join = new LogicalJoin;
   join->join_predicates = std::move(conditions);
-  join->type = _type;
+  join->type = type;
   return Operator(join);
 }
 
@@ -531,25 +531,25 @@ Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
 // NLJoin (Inner + Outer Joins)
 //===--------------------------------------------------------------------===//
 Operator PhysicalNLJoin::make(
-    JoinType _type, std::vector<AnnotatedExpression> conditions,
+    JoinType type, std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalNLJoin *join = new PhysicalNLJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
   join->right_keys = std::move(right_keys);
-  join->type = _type;
+  join->type = type;
 
   return Operator(join);
 }
 
 hash_t PhysicalNLJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto &expr : left_keys)
+  for (const auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &expr : right_keys)
+  for (const auto &expr : right_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &pred : join_predicates)
+  for (const auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -581,24 +581,24 @@ bool PhysicalNLJoin::operator==(const BaseOperatorNode &r) {
 // HashJoin
 //===--------------------------------------------------------------------===//
 Operator PhysicalHashJoin::make(
-    JoinType _type, std::vector<AnnotatedExpression> conditions,
+    JoinType type, std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalHashJoin *join = new PhysicalHashJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
   join->right_keys = std::move(right_keys);
-  join->type = _type;
+  join->type = type;
   return Operator(join);
 }
 
 hash_t PhysicalHashJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto &expr : left_keys)
+  for (const auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &expr : right_keys)
+  for (const auto &expr : right_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &pred : join_predicates)
+  for (const auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -623,161 +623,6 @@ bool PhysicalHashJoin::operator==(const BaseOperatorNode &r) {
       return false;
   }
   return true;
-}
-
-//===--------------------------------------------------------------------===//
-// InnerNLJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(
-    std::vector<AnnotatedExpression> conditions,
-    std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
-    std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
-  PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
-  join->join_predicates = std::move(conditions);
-  join->left_keys = std::move(left_keys);
-  join->right_keys = std::move(right_keys);
-
-  return Operator(join);
-}
-
-hash_t PhysicalInnerNLJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  for (auto &expr : left_keys)
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &expr : right_keys)
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &pred : join_predicates)
-    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
-  return hash;
-}
-
-bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerNLJoin) return false;
-  const PhysicalInnerNLJoin &node =
-      *static_cast<const PhysicalInnerNLJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size() ||
-      left_keys.size() != node.left_keys.size() ||
-      right_keys.size() != node.right_keys.size())
-    return false;
-  for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->ExactlyEquals(*node.left_keys[i].get())) return false;
-  }
-  for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
-  }
-  for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(
-            *node.join_predicates[i].expr.get()))
-      return false;
-  }
-  return true;
-}
-
-//===--------------------------------------------------------------------===//
-// LeftNLJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// RightNLJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalRightNLJoin *join = new PhysicalRightNLJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// OuterNLJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// InnerHashJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(
-    std::vector<AnnotatedExpression> conditions,
-    std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
-    std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
-  PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
-  join->join_predicates = std::move(conditions);
-  join->left_keys = std::move(left_keys);
-  join->right_keys = std::move(right_keys);
-  return Operator(join);
-}
-
-hash_t PhysicalInnerHashJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  for (auto &expr : left_keys)
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &expr : right_keys)
-    hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto &pred : join_predicates)
-    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
-  return hash;
-}
-
-bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerHashJoin) return false;
-  const PhysicalInnerHashJoin &node =
-      *static_cast<const PhysicalInnerHashJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size() ||
-      left_keys.size() != node.left_keys.size() ||
-      right_keys.size() != node.right_keys.size())
-    return false;
-  for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->ExactlyEquals(*node.left_keys[i].get())) return false;
-  }
-  for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
-  }
-  for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(
-            *node.join_predicates[i].expr.get()))
-      return false;
-  }
-  return true;
-}
-
-//===--------------------------------------------------------------------===//
-// LeftHashJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// RightHashJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalRightHashJoin *join = new PhysicalRightHashJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
-}
-
-//===--------------------------------------------------------------------===//
-// OuterHashJoin
-//===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
-  PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin();
-  join->join_predicate = join_predicate;
-  return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
@@ -966,25 +811,6 @@ std::string OperatorNode<PhysicalNLJoin>::name_ = "PhysicalNLJoin";
 template <>
 std::string OperatorNode<PhysicalHashJoin>::name_ = "PhysicalHashJoin";
 template <>
-std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
-template <>
-std::string OperatorNode<PhysicalLeftNLJoin>::name_ = "PhysicalLeftNLJoin";
-template <>
-std::string OperatorNode<PhysicalRightNLJoin>::name_ = "PhysicalRightNLJoin";
-template <>
-std::string OperatorNode<PhysicalOuterNLJoin>::name_ = "PhysicalOuterNLJoin";
-template <>
-std::string OperatorNode<PhysicalInnerHashJoin>::name_ =
-    "PhysicalInnerHashJoin";
-template <>
-std::string OperatorNode<PhysicalLeftHashJoin>::name_ = "PhysicalLeftHashJoin";
-template <>
-std::string OperatorNode<PhysicalRightHashJoin>::name_ =
-    "PhysicalRightHashJoin";
-template <>
-std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
-    "PhysicalOuterHashJoin";
-template <>
 std::string OperatorNode<PhysicalInsert>::name_ = "PhysicalInsert";
 template <>
 std::string OperatorNode<PhysicalInsertSelect>::name_ = "PhysicalInsertSelect";
@@ -1053,25 +879,9 @@ OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
 template <>
 OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>
-OpType OperatorNode<PhysicalHashJoin>::type_ = OpType::HashJoin;
-template <>
 OpType OperatorNode<PhysicalNLJoin>::type_ = OpType::NLJoin;
 template <>
-OpType OperatorNode<PhysicalInnerNLJoin>::type_ = OpType::InnerNLJoin;
-template <>
-OpType OperatorNode<PhysicalLeftNLJoin>::type_ = OpType::LeftNLJoin;
-template <>
-OpType OperatorNode<PhysicalRightNLJoin>::type_ = OpType::RightNLJoin;
-template <>
-OpType OperatorNode<PhysicalOuterNLJoin>::type_ = OpType::OuterNLJoin;
-template <>
-OpType OperatorNode<PhysicalInnerHashJoin>::type_ = OpType::InnerHashJoin;
-template <>
-OpType OperatorNode<PhysicalLeftHashJoin>::type_ = OpType::LeftHashJoin;
-template <>
-OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
-template <>
-OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
+OpType OperatorNode<PhysicalHashJoin>::type_ = OpType::HashJoin;
 template <>
 OpType OperatorNode<PhysicalInsert>::type_ = OpType::Insert;
 template <>

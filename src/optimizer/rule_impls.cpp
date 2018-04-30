@@ -689,7 +689,7 @@ void JoinToNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  // first build an expression representing hash join
+  // first build an expression representing nested loop join
   const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();

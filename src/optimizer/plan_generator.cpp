@@ -237,7 +237,7 @@ void PlanGenerator::Visit(const PhysicalHashJoin *op) {
   }
   // Evaluate Expr for hash plan
   vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
-  for (auto &expr : op->right_keys) {
+  for (const auto &expr : op->right_keys) {
     auto hash_key = expr->Copy();
     expression::ExpressionUtil::EvaluateExpression(r_child_map, hash_key);
     hash_keys.emplace_back(hash_key);

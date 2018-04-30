@@ -74,7 +74,7 @@ public class OptimizerTest extends PLTestBase {
 
 
     @Test
-    public void testInnerJoin() throws SQLException {
+    public void testInnerJoin1() throws SQLException {
         try (
                 Statement stmt = conn.createStatement();
                 ResultSet resultSet = stmt.executeQuery("SELECT t1.a FROM t1 INNER JOIN t2 ON (t1.b = t2.b) ORDER BY t1.a;");) {
@@ -87,6 +87,10 @@ public class OptimizerTest extends PLTestBase {
             e.printStackTrace();
             fail();
         }
+    }
+
+    @Test
+    public void testInnerJoin2() throws SQLException {
         try (
                 Statement stmt = conn.createStatement();
                 ResultSet resultSet = stmt.executeQuery("SELECT x.a FROM t1 AS x INNER JOIN t2 ON(x.b = t2.b AND x.c = t2.c) ORDER BY x.a;");) {
@@ -99,12 +103,10 @@ public class OptimizerTest extends PLTestBase {
             e.printStackTrace();
             fail();
         }
-
-
     }
 
     @Test
-    public void testLeftOuterJoin() throws SQLException {
+    public void testLeftOuterJoin1() throws SQLException {
         try (
                 Statement stmt = conn.createStatement();
                 ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d;");) {
@@ -128,6 +130,10 @@ public class OptimizerTest extends PLTestBase {
             e.printStackTrace();
             fail();
         }
+    }
+
+    @Test
+    public void testLeftOuterJoin2() throws SQLException {
         try (
                 Statement stmt = conn.createStatement();
                 ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
@@ -147,6 +153,10 @@ public class OptimizerTest extends PLTestBase {
             e.printStackTrace();
             fail();
         }
+    }
+
+    @Test
+    public void testLeftOuterJoin3() throws SQLException {
         try (
                 Statement stmt = conn.createStatement();
                 ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
@@ -166,7 +176,6 @@ public class OptimizerTest extends PLTestBase {
             e.printStackTrace();
             fail();
         }
-
     }
 
     @Test

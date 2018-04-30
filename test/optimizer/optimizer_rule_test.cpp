@@ -50,6 +50,9 @@ using namespace optimizer;
 class OptimizerRuleTests : public PelotonTest {};
 
 TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
+  // Start Join Structure: left JOIN right
+  // End Join Structure: right JOIN left
+
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
@@ -74,6 +77,9 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
 }
 
 TEST_F(OptimizerRuleTests, LeftJoinCommutativeRuleTest) {
+  // Start Join Structure: left LEFT JOIN right
+  // End Join Structure: right RIGHT JOIN left
+
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
@@ -99,6 +105,9 @@ TEST_F(OptimizerRuleTests, LeftJoinCommutativeRuleTest) {
 }
 
 TEST_F(OptimizerRuleTests, RightJoinCommutativeRuleTest) {
+  // Start Join Structure: left RIGHT JOIN right
+  // End Join Structure: right LEFT JOIN left
+
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
@@ -124,6 +133,9 @@ TEST_F(OptimizerRuleTests, RightJoinCommutativeRuleTest) {
 }
 
 TEST_F(OptimizerRuleTests, OuterJoinCommutativeRuleTest) {
+  // Start Join Structure: left OUTER JOIN right
+  // End Join Structure: right OUTER JOIN left
+
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());

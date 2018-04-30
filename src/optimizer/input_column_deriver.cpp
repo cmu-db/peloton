@@ -131,26 +131,6 @@ void InputColumnDeriver::Visit(const PhysicalHashJoin *op) {
   JoinHelper(op);
 }
 
-void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *op) {
-  JoinHelper(op);
-}
-
-void InputColumnDeriver::Visit(const PhysicalLeftNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalRightNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalOuterNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *op) {
-  JoinHelper(op);
-}
-
-void InputColumnDeriver::Visit(const PhysicalLeftHashJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalRightHashJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalOuterHashJoin *) {}
-
 void InputColumnDeriver::Visit(const PhysicalInsert *) {
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
