@@ -65,11 +65,11 @@ BackendStatsContext::~BackendStatsContext() {}
 //===--------------------------------------------------------------------===//
 
 // Returns the table metric with the given database ID and table ID
-TableMetric *BackendStatsContext::GetTableMetric(oid_t database_id,
+TableMetricOld *BackendStatsContext::GetTableMetric(oid_t database_id,
                                                  oid_t table_id) {
   if (table_metrics_.find(table_id) == table_metrics_.end()) {
-    table_metrics_[table_id] = std::unique_ptr<TableMetric>(
-        new TableMetric{MetricType::TABLE, database_id, table_id});
+    table_metrics_[table_id] = std::unique_ptr<TableMetricOld>(
+        new TableMetricOld{MetricType::TABLE, database_id, table_id});
   }
   return table_metrics_[table_id].get();
 }
@@ -332,8 +332,8 @@ void BackendStatsContext::Reset() {
       oid_t table_id = table->GetOid();
 
       if (table_metrics_.find(table_id) == table_metrics_.end()) {
-        table_metrics_[table_id] = std::unique_ptr<TableMetric>(
-            new TableMetric{MetricType::TABLE, database_id, table_id});
+        table_metrics_[table_id] = std::unique_ptr<TableMetricOld>(
+            new TableMetricOld{MetricType::TABLE, database_id, table_id});
       }
 
       // Reset indexes metrics

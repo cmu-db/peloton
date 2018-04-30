@@ -17,7 +17,7 @@
 namespace peloton {
 namespace stats {
 
-TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
+TableMetricOld::TableMetricOld(MetricType type, oid_t database_id, oid_t table_id)
     : AbstractMetricOld(type), database_id_(database_id), table_id_(table_id) {
   try {
     auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
@@ -29,10 +29,10 @@ TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
   }
 }
 
-void TableMetric::Aggregate(AbstractMetricOld& source) {
+void TableMetricOld::Aggregate(AbstractMetricOld& source) {
   assert(source.GetType() == MetricType::TABLE);
 
-  TableMetric& table_metric = static_cast<TableMetric&>(source);
+  TableMetricOld& table_metric = static_cast<TableMetricOld&>(source);
   table_access_.Aggregate(table_metric.GetTableAccess());
   table_memory_.Aggregate(table_metric.GetTableMemory());
 }

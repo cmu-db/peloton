@@ -58,7 +58,7 @@ class BackendStatsContext {
   inline std::thread::id GetThreadId() { return thread_id_; }
 
   // Returns the table metric with the given database ID and table ID
-  TableMetric *GetTableMetric(oid_t database_id, oid_t table_id);
+  TableMetricOld *GetTableMetric(oid_t database_id, oid_t table_id);
 
   // Returns the database metric with the given database ID
   DatabaseMetricOld *GetDatabaseMetric(oid_t database_id);
@@ -184,7 +184,7 @@ class BackendStatsContext {
       database_metrics_{};
 
   // Table metrics
-  std::unordered_map<oid_t, std::unique_ptr<TableMetric>> table_metrics_{};
+  std::unordered_map<oid_t, std::unique_ptr<TableMetricOld>> table_metrics_{};
 
   // Index metrics
   CuckooMap<oid_t, std::shared_ptr<IndexMetricOld>> index_metrics_{};

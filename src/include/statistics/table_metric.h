@@ -23,22 +23,96 @@
 
 namespace peloton {
 namespace stats {
+class TableMetricRawData : public AbstractRawData {
+public:
+ inline void IncrementTableReads(oid_t table_id, size_t num_read) {
+   auto entry = counters_.find(table_id);
+   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
+   counters_[table_id][READ] += num_read;
+ }
 
+ inline void IncrementTableUpdates(oid_t table_id) {
+   auto entry = counters_.find(table_id);
+   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
+   counters_[table_id][UPDATE]++;
+ }
+
+ inline void IncrementTableInserts(oid_t table_id) {
+   auto entry = counters_.find(table_id);
+   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
+   counters_[table_id][INSERT]++;
+ }
+
+ inline void IncrementTableDeletes(oid_t table_id) {
+   auto entry = counters_.find(table_id);
+   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
+   counters_[table_id][DELETE]++;
+ }
+
+ void Aggregate(AbstractRawData &other) override {
+   auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
+   for (auto &entry: other_index_metric.counters_) {
+     auto &this_counter = counters_[entry.first];
+     auto &other_counter = entry.second;
+     for(size_t i = 0; i < NUM_COUNTERS; i++) {
+       this_counter[i] += other_counter[i];
+     }
+   }
+ }
+
+ // TODO(justin) -- actually implement
+ void WriteToCatalog() override{}
+
+ const std::string GetInfo() const override {
+   return "index metric";
+ }
+private:
+ std::unordered_map<oid_t, std::vector<uint64_t>> counters_;
+
+ static const size_t NUM_COUNTERS = 4;
+
+ enum AccessType {
+   READ = 0,
+   UPDATE,
+   INSERT,
+   DELETE
+ };
+};
+
+class TableMetric: public AbstractMetric<TableMetricRawData> {
+ public:
+  inline void OnTupleRead(oid_t table_id, size_t num_read) override {
+    GetRawData()->IncrementTableReads(table_id, num_read);
+  }
+
+  inline void OnTupleUpdate(oid_t table_id) override {
+    GetRawData()->IncrementTableUpdates(table_id);
+  }
+
+  inline void OnTupleInsert(oid_t table_id) override {
+    GetRawData()->IncrementTableInserts(table_id);
+  }
+
+  inline void OnTupleDelete(oid_t table_id) override {
+    GetRawData()->IncrementTableDeletes(table_id);
+  }
+
+};
 /**
  * Metric for the access and memory of a table
  */
-class TableMetric : public AbstractMetricOld {
+class TableMetricOld : public AbstractMetricOld {
  public:
   typedef std::string TableKey;
 
-  TableMetric(MetricType type, oid_t database_id, oid_t table_id);
+  TableMetricOld(MetricType type, oid_t database_id, oid_t table_id);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
   inline AccessMetric &GetTableAccess() { return table_access_; }
-  
+
   inline MemoryMetric &GetTableMemory() { return table_memory_; }
 
   inline std::string GetName() { return table_name_; }
@@ -56,13 +130,13 @@ class TableMetric : public AbstractMetricOld {
     table_memory_.Reset();
   }
 
-  inline bool operator==(const TableMetric &other) {
+  inline bool operator==(const TableMetricOld &other) {
     return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
            table_name_ == other.table_name_ &&
            table_access_ == other.table_access_;
   }
 
-  inline bool operator!=(const TableMetric &other) { return !(*this == other); }
+  inline bool operator!=(const TableMetricOld &other) { return !(*this == other); }
 
   void Aggregate(AbstractMetricOld &source);
 

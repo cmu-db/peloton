@@ -64,10 +64,10 @@ class Metric {
   virtual void OnTransactionBegin() {};
   virtual void OnTransactionCommit(oid_t) {};
   virtual void OnTransactionAbort(oid_t) {};
-  virtual void OnTupleRead() {};
-  virtual void OnTupleUpdate() {};
-  virtual void OnTupleInsert() {};
-  virtual void OnTupleDelete() {};
+  virtual void OnTupleRead(oid_t, size_t) {};
+  virtual void OnTupleUpdate(oid_t) {};
+  virtual void OnTupleInsert(oid_t) {};
+  virtual void OnTupleDelete(oid_t) {};
   virtual void OnIndexRead(oid_t, size_t) {};
   virtual void OnIndexUpdate(oid_t) {};
   virtual void OnIndexInsert(oid_t) {};

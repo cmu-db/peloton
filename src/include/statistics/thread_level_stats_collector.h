@@ -64,21 +64,21 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_ABORT])
       metric->OnTransactionAbort(database_id);
   };
-  inline void CollectTupleRead() {
+  inline void CollectTupleRead(oid_t table_id, size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_READ])
-      metric->OnTupleRead();
+      metric->OnTupleRead(table_id, num_read);
   };
-  inline void CollectTupleUpdate() {
+  inline void CollectTupleUpdate(oid_t table_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_UPDATE])
-      metric->OnTupleUpdate();
+      metric->OnTupleUpdate(table_id);
   };
-  inline void CollectTupleInsert() {
+  inline void CollectTupleInsert(oid_t table_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_INSERT])
-      metric->OnTupleInsert();
+      metric->OnTupleInsert(table_id);
   };
-  inline void CollectTupleDelete() {
+  inline void CollectTupleDelete(oid_t table_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_DELETE])
-      metric->OnTupleDelete();
+      metric->OnTupleDelete(table_id);
   };
   inline void CollectIndexRead(oid_t index_id, size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
