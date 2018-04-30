@@ -41,9 +41,9 @@ struct LatencyMeasurements {
  * Metric for storing raw latency values and computing
  * latency measurements.
  */
-class LatencyMetric : public AbstractMetricOld {
+class LatencyMetricOld : public AbstractMetricOld {
  public:
-  LatencyMetric(MetricType type, size_t max_history);
+  LatencyMetricOld(MetricType type, size_t max_history);
 
   //===--------------------------------------------------------------------===//
   // HELPER METHODS

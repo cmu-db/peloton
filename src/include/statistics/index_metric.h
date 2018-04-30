@@ -69,14 +69,16 @@ class IndexMetricRawData : public AbstractRawData {
 private:
   std::unordered_map<oid_t, std::vector<uint64_t>> counters_;
 
-  static const size_t NUM_COUNTERS = 4;
-
-  enum AccessType {
+  // this serves as an index into each table's counter vector
+  enum CounterType {
     READ = 0,
     UPDATE,
     INSERT,
     DELETE
   };
+
+  // should be number of possible CounterType values
+  static const size_t NUM_COUNTERS = 4;
 };
 
 class IndexMetric: public AbstractMetric<IndexMetricRawData> {

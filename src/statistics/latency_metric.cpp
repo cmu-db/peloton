@@ -18,16 +18,16 @@
 namespace peloton {
 namespace stats {
 
-LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
+LatencyMetricOld::LatencyMetricOld(MetricType type, size_t max_history)
     : AbstractMetricOld(type) {
   max_history_ = max_history;
   latencies_.SetCapaciry(max_history_);
 }
 
-void LatencyMetric::Aggregate(AbstractMetricOld& source) {
+void LatencyMetricOld::Aggregate(AbstractMetricOld& source) {
   PELOTON_ASSERT(source.GetType() == MetricType::LATENCY);
 
-  LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);
+  LatencyMetricOld& latency_metric = static_cast<LatencyMetricOld&>(source);
   CircularBuffer<double> source_latencies = latency_metric.Copy();
   {
     // This method should only ever be called by the aggregator which
@@ -41,7 +41,7 @@ void LatencyMetric::Aggregate(AbstractMetricOld& source) {
   }
 }
 
-CircularBuffer<double> LatencyMetric::Copy() {
+CircularBuffer<double> LatencyMetricOld::Copy() {
   CircularBuffer<double> new_buffer;
   {
     // This method is only called by the aggregator to make
@@ -52,7 +52,7 @@ CircularBuffer<double> LatencyMetric::Copy() {
   return new_buffer;
 }
 
-const std::string LatencyMetric::GetInfo() const {
+const std::string LatencyMetricOld::GetInfo() const {
   std::stringstream ss;
   ss << "TXN LATENCY (ms): [ ";
   ss << "average=" << latency_measurements_.average_;
@@ -66,7 +66,7 @@ const std::string LatencyMetric::GetInfo() const {
   return ss.str();
 }
 
-void LatencyMetric::ComputeLatencies() {
+void LatencyMetricOld::ComputeLatencies() {
   // LatencyMeasurements measurements;
   if (latencies_.IsEmpty()) {
     return;
