@@ -77,7 +77,7 @@ class RuntimeFunctions {
    */
   static void GetTileGroupLayout(const storage::TileGroup *tile_group,
                                  ColumnLayoutInfo *infos, uint32_t num_cols);
-
+  
   /**
    * Execute a parallel scan over the given table in the given database.
    *
@@ -106,6 +106,12 @@ class RuntimeFunctions {
       void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
       void (*work_func)(void *, void *));
 
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Exception related functions
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
    * Throw a divide-by-zero exception. This function doesn't return.
    */
@@ -115,6 +121,8 @@ class RuntimeFunctions {
    * Throw a mathematical overflow exception. This function does not return.
    */
   static void ThrowOverflowException();
+
+  static void ThrowInvalidInputStringException();
 };
 
 }  // namespace codegen
