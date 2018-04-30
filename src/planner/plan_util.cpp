@@ -37,7 +37,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
     catalog::CatalogCache &catalog_cache,
     const parser::SQLStatement &sql_stmt) {
   std::set<oid_t> index_oids;
-  std::string db_name, table_name;
+  std::string db_name, table_name, schema_name;
   switch (sql_stmt.GetType()) {
     // For INSERT, DELETE, all indexes are affected
     case StatementType::INSERT: {
@@ -45,17 +45,19 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
           static_cast<const parser::InsertStatement &>(sql_stmt);
       db_name = insert_stmt.GetDatabaseName();
       table_name = insert_stmt.GetTableName();
+      schema_name = insert_stmt.GetSchemaName();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
-      if (table_name.empty() || db_name.empty()) {
+      if (table_name.empty() || db_name.empty() || schema_name.empty()) {
         auto &delete_stmt =
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
         table_name = delete_stmt.GetTableName();
+        schema_name = delete_stmt.GetSchemaName();
       }
       auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
-                             ->GetTableObject(table_name)
+                             ->GetTableObject(table_name, schema_name)
                              ->GetIndexObjects();
       for (auto &index : indexes_map) {
         index_oids.insert(index.first);
@@ -66,8 +68,9 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
           static_cast<const parser::UpdateStatement &>(sql_stmt);
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
-      auto db_object = catalog_cache.GetDatabaseObject(db_name);
-      auto table_object = db_object->GetTableObject(table_name);
+      schema_name = update_stmt.table->GetSchemaName();
+      auto table_object = catalog_cache.GetDatabaseObject(db_name)
+                              ->GetTableObject(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -165,10 +168,6 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
             for (const auto expr : expr_set) {
               auto tuple_value_expr =
                   static_cast<const expression::TupleValueExpression *>(expr);
-
-              table_id =
-                  db_object->GetTableObject(tuple_value_expr->GetTableName())
-                      ->GetTableOid();
               column_oids.emplace_back(database_id, table_id,
                                        (oid_t)tuple_value_expr->GetColumnId());
             }

@@ -80,18 +80,15 @@ TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
   txn_manager.CommitTransaction(txn);
-  // Create a t
-  txn = txn_manager.BeginTransaction();
-
+  // create tale and insert one tuple
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE foo(id integer, value timestamp);");
   // Add in a testing timestamp
   TestingSQLUtil::ExecuteSQLQuery(
       "insert into foo values(3, '2016-12-07 13:26:02.123456-05');");
-
-  txn_manager.CommitTransaction(txn);
 
   std::string test_query;
   std::vector<std::string> expected;

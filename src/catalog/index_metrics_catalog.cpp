@@ -19,23 +19,17 @@
 namespace peloton {
 namespace catalog {
 
-IndexMetricsCatalog *IndexMetricsCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static IndexMetricsCatalog index_metrics_catalog{txn};
-  return &index_metrics_catalog;
-}
-
-IndexMetricsCatalog::IndexMetricsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." INDEX_METRICS_CATALOG_NAME
-                      " ("
-                      "database_oid   INT NOT NULL, "
-                      "table_oid      INT NOT NULL, "
-                      "index_oid      INT NOT NULL, "
-                      "reads          INT NOT NULL, "
-                      "deletes        INT NOT NULL, "
-                      "inserts        INT NOT NULL, "
-                      "time_stamp     INT NOT NULL);",
+IndexMetricsCatalog::IndexMetricsCatalog(const std::string &database_name,
+                                         concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                          "." CATALOG_SCHEMA_NAME "." INDEX_METRICS_CATALOG_NAME
+                          " ("
+                          "table_oid      INT NOT NULL, "
+                          "index_oid      INT NOT NULL, "
+                          "reads          INT NOT NULL, "
+                          "deletes        INT NOT NULL, "
+                          "inserts        INT NOT NULL, "
+                          "time_stamp     INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
@@ -43,13 +37,12 @@ IndexMetricsCatalog::IndexMetricsCatalog(concurrency::TransactionContext *txn)
 IndexMetricsCatalog::~IndexMetricsCatalog() {}
 
 bool IndexMetricsCatalog::InsertIndexMetrics(
-    oid_t database_oid, oid_t table_oid, oid_t index_oid, int64_t reads,
-    int64_t deletes, int64_t inserts, int64_t time_stamp,
-    type::AbstractPool *pool, concurrency::TransactionContext *txn) {
+    oid_t table_oid, oid_t index_oid, int64_t reads, int64_t deletes,
+    int64_t inserts, int64_t time_stamp, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(index_oid);
   auto val3 = type::ValueFactory::GetIntegerValue(reads);
@@ -57,7 +50,6 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
   auto val5 = type::ValueFactory::GetIntegerValue(inserts);
   auto val6 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
   tuple->SetValue(ColumnId::INDEX_OID, val2, pool);
   tuple->SetValue(ColumnId::READS, val3, pool);
@@ -69,8 +61,8 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexMetricsCatalog::DeleteIndexMetrics(oid_t index_oid,
-                                             concurrency::TransactionContext *txn) {
+bool IndexMetricsCatalog::DeleteIndexMetrics(
+    oid_t index_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
