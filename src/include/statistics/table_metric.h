@@ -27,56 +27,47 @@ class TableMetricRawData : public AbstractRawData {
  public:
   inline void IncrementTableReads(oid_t table_id, size_t num_read) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][READ] += num_read;
   }
 
   inline void IncrementTableUpdates(oid_t table_id) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][UPDATE]++;
   }
 
   inline void IncrementTableInserts(oid_t table_id) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][INSERT]++;
   }
 
   inline void IncrementTableDeletes(oid_t table_id) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][DELETE]++;
   }
 
-  inline void IncrementTableMemAlloc(oid table_id, int64_t bytes) {
+  inline void IncrementTableMemAlloc(oid_t table_id, int64_t bytes) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][DELETE] += bytes;
   }
 
-  inline void DecrementTableMemAlloc(oid table_id, int64_t bytes) {
+  inline void DecrementTableMemAlloc(oid_t table_id, int64_t bytes) {
     auto entry = counters_.find(table_id);
-    if (entry != counters_.end())
+    if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[table_id][DELETE] -= bytes;
   }
 
-  void Aggregate(AbstractRawData &other) override {
-    auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
-    for (auto &entry : other_index_metric.counters_) {
-      auto &this_counter = counters_[entry.first];
-      auto &other_counter = entry.second;
-      for (size_t i = 0; i < NUM_COUNTERS; i++) {
-        this_counter[i] += other_counter[i];
-      }
-    }
-  }
+  void Aggregate(AbstractRawData &other) override;
 
   // TODO(justin) -- actually implement
   void WriteToCatalog() override {}

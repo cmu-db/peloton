@@ -27,25 +27,25 @@ class IndexMetricRawData : public AbstractRawData {
  public:
   inline void IncrementIndexReads(oid_t index_id, size_t num_read) {
     auto entry = counters_.find(index_id);
-    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][READ] += num_read;
   }
 
   inline void IncrementIndexUpdates(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][UPDATE]++;
   }
 
   inline void IncrementIndexInserts(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][INSERT]++;
   }
 
   inline void IncrementIndexDeletes(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
+    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][DELETE]++;
   }
 
@@ -67,7 +67,7 @@ class IndexMetricRawData : public AbstractRawData {
     return "index metric";
   }
 private:
-  std::unordered_map<oid_t, std::vector<uint64_t>> counters_;
+  std::unordered_map<oid_t, std::vector<int64_t>> counters_;
 
   // this serves as an index into each table's counter vector
   enum CounterType {

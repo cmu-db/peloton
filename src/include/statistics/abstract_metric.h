@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
 #include <atomic>
+#include <memory>
+#include <string>
 
-#include "common/platform.h"
 #include "common/internal_types.h"
-#include "statistics/stats_event_type.h"
+#include "common/platform.h"
 #include "statistics/abstract_raw_data.h"
+#include "statistics/stats_event_type.h"
 
 namespace peloton {
 namespace stats {
@@ -32,6 +32,7 @@ class AbstractMetricOld : public Printable {
   virtual void Reset() = 0;
   virtual const std::string GetInfo() const = 0;
   virtual void Aggregate(AbstractMetricOld &source) = 0;
+
  private:
   // The type this metric belongs to
   MetricType type_;
@@ -61,19 +62,19 @@ class Metric {
   virtual ~Metric() = default;
 
   // TODO(tianyu): fill arguments
-  virtual void OnTransactionBegin() {};
-  virtual void OnTransactionCommit(oid_t) {};
-  virtual void OnTransactionAbort(oid_t) {};
-  virtual void OnTupleRead(oid_t, size_t) {};
-  virtual void OnTupleUpdate(oid_t) {};
-  virtual void OnTupleInsert(oid_t) {};
-  virtual void OnTupleDelete(oid_t) {};
-  virtual void OnIndexRead(oid_t, size_t) {};
-  virtual void OnIndexUpdate(oid_t) {};
-  virtual void OnIndexInsert(oid_t) {};
-  virtual void OnIndexDelete(oid_t) {};
-  virtual void OnQueryBegin() {};
-  virtual void OnQueryEnd() {};
+  virtual void OnTransactionBegin(){};
+  virtual void OnTransactionCommit(oid_t){};
+  virtual void OnTransactionAbort(oid_t){};
+  virtual void OnTupleRead(oid_t, size_t){};
+  virtual void OnTupleUpdate(oid_t){};
+  virtual void OnTupleInsert(oid_t){};
+  virtual void OnTupleDelete(oid_t){};
+  virtual void OnIndexRead(oid_t, size_t){};
+  virtual void OnIndexUpdate(oid_t){};
+  virtual void OnIndexInsert(oid_t){};
+  virtual void OnIndexDelete(oid_t){};
+  virtual void OnQueryBegin(){};
+  virtual void OnQueryEnd(){};
 
   /**
    * @brief Replace RawData with an empty one and return the old one.
@@ -101,7 +102,7 @@ class Metric {
 };
 
 /* Forward Declaration */
-template<typename DataType>
+template <typename DataType>
 class AbstractMetric;
 
 /**
@@ -114,13 +115,14 @@ class AbstractMetric;
  *
  * @tparam DataType the type of AbstractRawData this Wrapper holds
  */
-template<typename DataType>
+template <typename DataType>
 class RawDataWrapper {
   friend class AbstractMetric<DataType>;
+
  public:
   inline RawDataWrapper(RawDataWrapper &&other) = default;
 
-  inline ~RawDataWrapper() { safe_ = true; } // Unblock aggregator
+  inline ~RawDataWrapper() { safe_ = true; }  // Unblock aggregator
 
   DISALLOW_COPY(RawDataWrapper);
 
@@ -128,15 +130,14 @@ class RawDataWrapper {
    * @return the underlying pointer
    */
   inline DataType *operator->() const { return ptr_; }
+
  private:
   /**
    * Constructs a new Wrapper instance
    * @param ptr the pointer it wraps around
    * @param safe the boolean variable it uses to signal its lifetime
    */
-  inline RawDataWrapper(DataType *ptr, bool &safe) : ptr_(ptr), safe_(safe) {
-    safe_ = false;
-  }
+  inline RawDataWrapper(DataType *ptr, bool &safe) : ptr_(ptr), safe_(safe) {}
   DataType *ptr_;
   bool &safe_;
 };
@@ -149,7 +150,7 @@ class RawDataWrapper {
  *
  * @tparam DataType the type of AbstractRawData this Metric holds
  */
-template<typename DataType>
+template <typename DataType>
 class AbstractMetric : public Metric {
  public:
   /**
@@ -179,13 +180,15 @@ class AbstractMetric : public Metric {
    * @return a RawDataWrapper object to access raw_data_
    */
   inline RawDataWrapper<DataType> GetRawData() {
+    // safe_ should first be flipped to false before loading the raw_data_ so that
+    // the aggregator would always be blocked when it tries to swap out if there is a reader.
+    safe_ = false;
     return {raw_data_.load(), safe_};
   }
 
  private:
   std::atomic<DataType *> raw_data_;
   bool safe_ = true;
-
 };
 }  // namespace stats
 }  // namespace peloton
