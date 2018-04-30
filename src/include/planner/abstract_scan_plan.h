@@ -56,7 +56,7 @@ class AbstractScan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  void GetAttributes(std::vector<const AttributeInfo *> &ais) const {
+  virtual void GetAttributes(std::vector<const AttributeInfo *> &ais) const {
     for (const auto &ai : attributes_) {
       ais.push_back(&ai);
     }

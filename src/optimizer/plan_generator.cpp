@@ -15,6 +15,7 @@
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
+#include "codegen/type/type.h"
 #include "concurrency/transaction_context.h"
 #include "expression/expression_util.h"
 #include "optimizer/operator_expression.h"
@@ -131,7 +132,17 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 void PlanGenerator::Visit(const ExternalFileScan *op) {
   switch (op->format) {
     case ExternalFileFormat::CSV: {
-      output_plan_.reset(new planner::CSVScanPlan(op->file_name));
+      // First construct the output column descriptions
+      std::vector<planner::CSVScanPlan::ColumnInfo> cols;
+      for (const auto *output_col : output_cols_) {
+        auto col_info = planner::CSVScanPlan::ColumnInfo{
+            .name = "", .type = output_col->GetValueType()};
+        cols.emplace_back(std::move(col_info));
+      }
+
+      // Create the plan
+      output_plan_.reset(
+          new planner::CSVScanPlan(op->file_name, std::move(cols)));
       break;
     }
   }

@@ -53,6 +53,8 @@ class InputColumnDeriver : public OperatorVisitor {
 
   void Visit(const PhysicalIndexScan *op) override;
 
+  void Visit(const ExternalFileScan *op) override;
+
   void Visit(const QueryDerivedScan *op) override;
 
   void Visit(const PhysicalOrderBy *) override;

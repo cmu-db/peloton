@@ -46,14 +46,22 @@ class CopyStatement : public SQLStatement {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
+  // The table that is copied into or copied from
   std::unique_ptr<TableRef> table;
 
+  // The SQL statement used instead of a table when copying data out to a file
   std::unique_ptr<SelectStatement> select_stmt;
 
+  // The set of attributes being written out or read in
+  std::vector<std::unique_ptr<expression::AbstractExpression>> select_list;
+
+  // The type of copy
   CopyType type;
 
+  // The input or output file that is read of written into
   std::string file_path;
 
+  // The format of the file
   ExternalFileFormat format;
 
   bool is_from;

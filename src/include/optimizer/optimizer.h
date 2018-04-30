@@ -23,24 +23,24 @@ namespace peloton {
 namespace parser {
 class SQLStatementList;
 class SQLStatement;
-}
+}  // namespace parser
 
 namespace planner {
 class AbstractPlan;
-};
+}  // namespace planner
 
 namespace optimizer {
 class OperatorExpression;
-}
+}  // namespace optimizer
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace test {
 class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
 class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-}
+}  // namespace test
 
 namespace optimizer {
 
@@ -109,16 +109,6 @@ class Optimizer : public AbstractOptimizer {
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       parser::SQLStatement *tree, bool &is_ddl_stmt,
       concurrency::TransactionContext *txn);
-
-  /**
-   * Construct a plan object for the given parsed copy statement.
-   *
-   * @param copy_stmt The copy statement we're transforming
-   * @param txn The transactional context
-   * @return The construct plan object for the COPY statement
-   */
-  std::unique_ptr<planner::AbstractPlan> HandleDDLCopyStatement(
-      parser::CopyStatement *copy_stmt, concurrency::TransactionContext *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.

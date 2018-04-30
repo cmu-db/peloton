@@ -168,10 +168,12 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
 void BindNodeVisitor::Visit(parser::LimitDescription *) {}
 
 void BindNodeVisitor::Visit(parser::CopyStatement *node) {
-  // Bind the source/target table of the copy
   context_ = std::make_shared<BinderContext>(nullptr);
   if (node->table != nullptr) {
     node->table->Accept(this);
+
+    // If the table is given, we're either writing or reading all columns
+    context_->GenerateAllColumnExpressions(node->select_list);
   } else {
     node->select_stmt->Accept(this);
   }

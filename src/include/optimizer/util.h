@@ -17,7 +17,6 @@
 #include <string>
 
 #include "expression/abstract_expression.h"
-#include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {

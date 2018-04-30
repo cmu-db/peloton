@@ -55,6 +55,8 @@ void InputColumnDeriver::Visit(const PhysicalSeqScan *) { ScanHelper(); }
 
 void InputColumnDeriver::Visit(const PhysicalIndexScan *) { ScanHelper(); }
 
+void InputColumnDeriver::Visit(const ExternalFileScan *) { ScanHelper(); }
+
 void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
   // QueryDerivedScan should only be a renaming layer
   ExprMap output_cols_map;
