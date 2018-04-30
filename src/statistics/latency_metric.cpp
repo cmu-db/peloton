@@ -24,10 +24,10 @@ LatencyMetricOld::LatencyMetricOld(MetricType type, size_t max_history)
   latencies_.SetCapaciry(max_history_);
 }
 
-void LatencyMetricOld::Aggregate(AbstractMetricOld& source) {
+void LatencyMetricOld::Aggregate(AbstractMetricOld &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::LATENCY);
 
-  LatencyMetricOld& latency_metric = static_cast<LatencyMetricOld&>(source);
+  LatencyMetricOld &latency_metric = static_cast<LatencyMetricOld &>(source);
   CircularBuffer<double> source_latencies = latency_metric.Copy();
   {
     // This method should only ever be called by the aggregator which

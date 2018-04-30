@@ -27,61 +27,59 @@ class IndexMetricRawData : public AbstractRawData {
  public:
   inline void IncrementIndexReads(oid_t index_id, size_t num_read) {
     auto entry = counters_.find(index_id);
-    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    if (entry == counters_.end())
+      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][READ] += num_read;
   }
 
   inline void IncrementIndexUpdates(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    if (entry == counters_.end())
+      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][UPDATE]++;
   }
 
   inline void IncrementIndexInserts(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    if (entry == counters_.end())
+      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][INSERT]++;
   }
 
   inline void IncrementIndexDeletes(oid_t index_id) {
     auto entry = counters_.find(index_id);
-    if(entry == counters_.end()) counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    if (entry == counters_.end())
+      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
     counters_[index_id][DELETE]++;
   }
 
   void Aggregate(AbstractRawData &other) override {
     auto &other_index_metric = dynamic_cast<IndexMetricRawData &>(other);
-    for (auto &entry: other_index_metric.counters_) {
+    for (auto &entry : other_index_metric.counters_) {
       auto &this_counter = counters_[entry.first];
       auto &other_counter = entry.second;
-      for(size_t i = 0; i < NUM_COUNTERS; i++) {
+      for (size_t i = 0; i < NUM_COUNTERS; i++) {
         this_counter[i] += other_counter[i];
       }
     }
   }
 
   // TODO(justin) -- actually implement
-  void WriteToCatalog() override{}
+  void WriteToCatalog() override {}
 
-  const std::string GetInfo() const override {
-    return "index metric";
-  }
-private:
+  const std::string GetInfo() const override { return "index metric"; }
+
+ private:
   std::unordered_map<oid_t, std::vector<int64_t>> counters_;
 
   // this serves as an index into each table's counter vector
-  enum CounterType {
-    READ = 0,
-    UPDATE,
-    INSERT,
-    DELETE
-  };
+  enum CounterType { READ = 0, UPDATE, INSERT, DELETE };
 
   // should be number of possible CounterType values
   static const size_t NUM_COUNTERS = 4;
 };
 
-class IndexMetric: public AbstractMetric<IndexMetricRawData> {
+class IndexMetric : public AbstractMetric<IndexMetricRawData> {
  public:
   inline void OnIndexRead(oid_t index_id, size_t num_read) override {
     GetRawData()->IncrementIndexReads(index_id, num_read);
@@ -98,7 +96,6 @@ class IndexMetric: public AbstractMetric<IndexMetricRawData> {
   inline void OnIndexDelete(oid_t index_id) override {
     GetRawData()->IncrementIndexDeletes(index_id);
   }
-
 };
 /**
  * Metric of index accesses and other index-specific metrics.
@@ -108,7 +105,7 @@ class IndexMetricOld : public AbstractMetricOld {
   typedef std::string IndexKey;
 
   IndexMetricOld(MetricType type, oid_t database_id, oid_t table_id,
-              oid_t index_id);
+                 oid_t index_id);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -138,7 +135,9 @@ class IndexMetricOld : public AbstractMetricOld {
            index_access_ == other.index_access_;
   }
 
-  inline bool operator!=(const IndexMetricOld &other) { return !(*this == other); }
+  inline bool operator!=(const IndexMetricOld &other) {
+    return !(*this == other);
+  }
 
   void Aggregate(AbstractMetricOld &source);
 

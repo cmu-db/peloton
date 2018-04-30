@@ -46,7 +46,6 @@ class QueryMetric : public AbstractMetricOld {
 
   // A wrapper of the query params used in prepared statement
   struct QueryParams {
-
     QueryParams(QueryParamBuf format_buf_copy, QueryParamBuf type_buf_copy,
                 QueryParamBuf val_buf_copy, int num_params);
 

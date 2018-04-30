@@ -20,10 +20,10 @@ namespace stats {
 DatabaseMetricOld::DatabaseMetricOld(MetricType type, oid_t database_id)
     : AbstractMetricOld(type), database_id_(database_id) {}
 
-void DatabaseMetricOld::Aggregate(AbstractMetricOld& source) {
+void DatabaseMetricOld::Aggregate(AbstractMetricOld &source) {
   PELOTON_ASSERT(source.GetType() == MetricType::DATABASE);
 
-  DatabaseMetricOld& db_metric = static_cast<DatabaseMetricOld&>(source);
+  DatabaseMetricOld &db_metric = static_cast<DatabaseMetricOld &>(source);
   txn_committed_.Aggregate(db_metric.GetTxnCommitted());
   txn_aborted_.Aggregate(db_metric.GetTxnAborted());
 }

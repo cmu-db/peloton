@@ -45,15 +45,13 @@ namespace stats {
 
 class StatsAggregator : public DedicatedThreadTask {
  public:
-  StatsAggregator(int64_t aggregation_interval) :
-      aggregation_interval_ms_(aggregation_interval),
-      lock_(mutex_) {}
+  StatsAggregator(int64_t aggregation_interval)
+      : aggregation_interval_ms_(aggregation_interval), lock_(mutex_) {}
 
   void Terminate() override {
     lock_.lock();
     exiting_ = true;
-    while (exiting_)
-      exec_finished_.wait(lock_);
+    while (exiting_) exec_finished_.wait(lock_);
     lock_.unlock();
   }
 
@@ -63,8 +61,9 @@ class StatsAggregator : public DedicatedThreadTask {
     std::unique_lock<std::mutex> lck(mtx);
 
     while (exec_finished_.wait_for(
-        lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
-        std::cv_status::timeout && !exiting_)
+               lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
+               std::cv_status::timeout &&
+           !exiting_)
       Aggregate();
     exiting_ = false;
     exec_finished_.notify_all();
@@ -81,8 +80,7 @@ class StatsAggregator : public DedicatedThreadTask {
         for (size_t i = 0; i < acc.size(); i++)
           acc[i]->Aggregate(*data_block[i]);
     }
-    for (auto &raw_data : acc)
-      raw_data->WriteToCatalog();
+    for (auto &raw_data : acc) raw_data->WriteToCatalog();
   }
 
  private:
@@ -91,7 +89,6 @@ class StatsAggregator : public DedicatedThreadTask {
   std::unique_lock<std::mutex> lock_;
   std::condition_variable exec_finished_;
   bool exiting_ = false;
-
 };
 //===--------------------------------------------------------------------===//
 // Stats Aggregator
@@ -120,8 +117,8 @@ class StatsAggregatorOld {
   //===--------------------------------------------------------------------===//
 
   // Global singleton
-  static StatsAggregatorOld &GetInstance(int64_t aggregation_interval_ms =
-  STATS_AGGREGATION_INTERVAL_MS);
+  static StatsAggregatorOld &GetInstance(
+      int64_t aggregation_interval_ms = STATS_AGGREGATION_INTERVAL_MS);
 
   // Get the aggregated stats history of all exited threads
   inline BackendStatsContext &GetStatsHistory() { return stats_history_; }

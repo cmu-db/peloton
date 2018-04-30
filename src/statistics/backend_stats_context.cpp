@@ -26,8 +26,8 @@
 namespace peloton {
 namespace stats {
 
-CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-    &BackendStatsContext::GetBackendContextMap() {
+CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+BackendStatsContext::GetBackendContextMap() {
   static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
       stats_context_map;
   return stats_context_map;
@@ -66,7 +66,7 @@ BackendStatsContext::~BackendStatsContext() {}
 
 // Returns the table metric with the given database ID and table ID
 TableMetricOld *BackendStatsContext::GetTableMetric(oid_t database_id,
-                                                 oid_t table_id) {
+                                                    oid_t table_id) {
   if (table_metrics_.find(table_id) == table_metrics_.end()) {
     table_metrics_[table_id] = std::unique_ptr<TableMetricOld>(
         new TableMetricOld{MetricType::TABLE, database_id, table_id});
@@ -86,8 +86,8 @@ DatabaseMetricOld *BackendStatsContext::GetDatabaseMetric(oid_t database_id) {
 // Returns the index metric with the given database ID, table ID, and
 // index ID
 IndexMetricOld *BackendStatsContext::GetIndexMetric(oid_t database_id,
-                                                 oid_t table_id,
-                                                 oid_t index_id) {
+                                                    oid_t table_id,
+                                                    oid_t index_id) {
   std::shared_ptr<IndexMetricOld> index_metric;
   // Index metric doesn't exist yet
   if (index_metrics_.Contains(index_id) == false) {
@@ -103,7 +103,7 @@ IndexMetricOld *BackendStatsContext::GetIndexMetric(oid_t database_id,
   return index_metric.get();
 }
 
-LatencyMetricOld& BackendStatsContext::GetQueryLatencyMetric() {
+LatencyMetricOld &BackendStatsContext::GetQueryLatencyMetric() {
   return txn_latencies_;
 }
 

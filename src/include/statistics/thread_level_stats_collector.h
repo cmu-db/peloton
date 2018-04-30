@@ -24,7 +24,8 @@ namespace stats {
  * @brief Class responsible for collecting raw data on a single thread.
  *
  * Each thread will be assigned one collector that is globally unique. This is
- * to ensure that we can collect raw data in an non-blocking way as the collection
+ * to ensure that we can collect raw data in an non-blocking way as the
+ *collection
  * code runs on critical query path. Periodically a dedicated aggregator thread
  * will put the data from all collectors together into a meaningful form.
  */
@@ -34,7 +35,8 @@ class ThreadLevelStatsCollector {
    * @return the Collector for the calling thread
    */
   static ThreadLevelStatsCollector &GetCollectorForThread() {
-    static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> collector_map;
+    static std::unordered_map<std::thread::id, ThreadLevelStatsCollector>
+        collector_map;
     std::thread::id tid = std::this_thread::get_id();
     return collector_map[tid];
   }
@@ -42,8 +44,10 @@ class ThreadLevelStatsCollector {
   /**
    * @return A mapping from each thread to their assigned Collector
    */
-  static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> &GetAllCollectors() {
-    static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> collector_map;
+  static std::unordered_map<std::thread::id, ThreadLevelStatsCollector> &
+  GetAllCollectors() {
+    static std::unordered_map<std::thread::id, ThreadLevelStatsCollector>
+        collector_map;
     return collector_map;
   };
 
@@ -113,8 +117,7 @@ class ThreadLevelStatsCollector {
    */
   std::vector<std::shared_ptr<AbstractRawData>> GetDataToAggregate() {
     std::vector<std::shared_ptr<AbstractRawData>> result;
-    for (auto &metric : metrics_)
-      result.push_back(metric->Swap());
+    for (auto &metric : metrics_) result.push_back(metric->Swap());
     return result;
   }
 
@@ -125,12 +128,11 @@ class ThreadLevelStatsCollector {
    * @tparam metric type of Metric to register
    * @param types A list of event types to receive updates about.
    */
-  template<typename metric>
+  template <typename metric>
   void RegisterMetric(std::vector<stats_event_type> types) {
     auto m = std::make_shared<metric>();
     metrics_.push_back(m);
-    for (stats_event_type type : types)
-      metric_dispatch_[type].push_back(m);
+    for (stats_event_type type : types) metric_dispatch_[type].push_back(m);
   }
 
   using MetricList = std::vector<std::shared_ptr<Metric>>;
@@ -142,9 +144,8 @@ class ThreadLevelStatsCollector {
    * Mapping from each type of event to a list of metrics registered to receive
    * updates from that type of event.
    */
-  std::unordered_map<stats_event_type,
-                     MetricList,
-                     EnumHash<stats_event_type>> metric_dispatch_;
+  std::unordered_map<stats_event_type, MetricList, EnumHash<stats_event_type>>
+      metric_dispatch_;
 };
 
 }  // namespace stats

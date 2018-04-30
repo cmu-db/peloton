@@ -26,13 +26,13 @@ class DatabaseMetricRawData : public AbstractRawData {
     counters_[database_id].first++;
   }
 
-  inline void IncrementTxnAborted(oid_t database_id){
+  inline void IncrementTxnAborted(oid_t database_id) {
     counters_[database_id].second++;
   }
 
   void Aggregate(AbstractRawData &other) override {
     auto &other_db_metric = dynamic_cast<DatabaseMetricRawData &>(other);
-    for (auto &entry: other_db_metric.counters_) {
+    for (auto &entry : other_db_metric.counters_) {
       auto &this_counter = counters_[entry.first];
       auto &other_counter = entry.second;
       this_counter.first += other_counter.first;
@@ -41,11 +41,9 @@ class DatabaseMetricRawData : public AbstractRawData {
   }
 
   // TODO(tianyu) Implement
-  void WriteToCatalog() override{}
+  void WriteToCatalog() override {}
 
-  const std::string GetInfo() const override {
-    return "";
-  }
+  const std::string GetInfo() const override { return ""; }
 
  private:
   /**
@@ -57,7 +55,7 @@ class DatabaseMetricRawData : public AbstractRawData {
   std::unordered_map<oid_t, std::pair<uint64_t, uint64_t>> counters_;
 };
 
-class DatabaseMetric: public AbstractMetric<DatabaseMetricRawData> {
+class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
  public:
   inline void OnTransactionCommit(oid_t database_id) override {
     GetRawData()->IncrementTxnCommited(database_id);
@@ -97,8 +95,8 @@ class DatabaseMetricOld : public AbstractMetricOld {
 
   inline bool operator==(const DatabaseMetricOld &other) {
     return database_id_ == other.database_id_ &&
-        txn_committed_ == other.txn_committed_ &&
-        txn_aborted_ == other.txn_aborted_;
+           txn_committed_ == other.txn_committed_ &&
+           txn_aborted_ == other.txn_aborted_;
   }
 
   inline bool operator!=(const DatabaseMetricOld &other) {

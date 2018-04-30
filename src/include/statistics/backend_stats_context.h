@@ -66,7 +66,7 @@ class BackendStatsContext {
   // Returns the index metric with the given database ID, table ID, and
   // index ID
   IndexMetricOld *GetIndexMetric(oid_t database_id, oid_t table_id,
-                              oid_t index_id);
+                                 oid_t index_id);
 
   // Returns the metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> &GetCompletedQueryMetrics() {
@@ -77,7 +77,7 @@ class BackendStatsContext {
   QueryMetric *GetOnGoingQueryMetric() { return ongoing_query_metric_.get(); }
 
   // Returns the latency metric
-  LatencyMetricOld& GetQueryLatencyMetric();
+  LatencyMetricOld &GetQueryLatencyMetric();
 
   // Increment the read stat for given tile group
   void IncrementTableReads(oid_t tile_group_id);
@@ -227,8 +227,8 @@ class BackendStatsContext {
   void CompleteQueryMetric();
 
   // Get the mapping table of backend stat context for each thread
-  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-      &GetBackendContextMap(void);
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+  GetBackendContextMap(void);
 };
 
 }  // namespace stats

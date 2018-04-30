@@ -69,7 +69,7 @@ void StatsAggregatorOld::ShutdownAggregator() {
 }
 
 void StatsAggregatorOld::Aggregate(int64_t &interval_cnt, double &alpha,
-                                double &weighted_avg_throughput) {
+                                   double &weighted_avg_throughput) {
   interval_cnt++;
   LOG_TRACE(
       "\n//////////////////////////////////////////////////////"
@@ -130,8 +130,8 @@ void StatsAggregatorOld::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 }
 
-void StatsAggregatorOld::UpdateQueryMetrics(int64_t time_stamp,
-                                         concurrency::TransactionContext *txn) {
+void StatsAggregatorOld::UpdateQueryMetrics(
+    int64_t time_stamp, concurrency::TransactionContext *txn) {
   // Get the target query metrics table
   LOG_TRACE("Inserting Query Metric Tuples");
   // auto query_metrics_table = GetMetricTable(MetricType::QUERY_NAME);
@@ -192,9 +192,8 @@ void StatsAggregatorOld::UpdateMetrics() {
   auto storage_manager = storage::StorageManager::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp =
-      std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch)
-          .count();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
 
   auto database_count = storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
@@ -221,9 +220,9 @@ void StatsAggregatorOld::UpdateMetrics() {
   txn_manager.CommitTransaction(txn);
 }
 
-void StatsAggregatorOld::UpdateTableMetrics(storage::Database *database,
-                                         int64_t time_stamp,
-                                         concurrency::TransactionContext *txn) {
+void StatsAggregatorOld::UpdateTableMetrics(
+    storage::Database *database, int64_t time_stamp,
+    concurrency::TransactionContext *txn) {
   // Update table metrics table for each of the indices
   auto database_oid = database->GetOid();
   auto table_count = database->GetTableCount();
@@ -243,18 +242,17 @@ void StatsAggregatorOld::UpdateTableMetrics(storage::Database *database,
     auto memory_usage = table_memory.GetUsage();
 
     catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
-        database_oid, table_oid, reads, updates, deletes, inserts,
-        memory_alloc, memory_usage, time_stamp, pool_.get(), txn);
+        database_oid, table_oid, reads, updates, deletes, inserts, memory_alloc,
+        memory_usage, time_stamp, pool_.get(), txn);
     LOG_TRACE("Table Metric Tuple inserted");
 
     UpdateIndexMetrics(database, table, time_stamp, txn);
   }
 }
 
-void StatsAggregatorOld::UpdateIndexMetrics(storage::Database *database,
-                                         storage::DataTable *table,
-                                         int64_t time_stamp,
-                                         concurrency::TransactionContext *txn) {
+void StatsAggregatorOld::UpdateIndexMetrics(
+    storage::Database *database, storage::DataTable *table, int64_t time_stamp,
+    concurrency::TransactionContext *txn) {
   // Update index metrics table for each of the indices
   auto database_oid = database->GetOid();
   auto table_oid = table->GetOid();
@@ -294,7 +292,8 @@ void StatsAggregatorOld::RunAggregator() {
   LOG_INFO("Aggregator done!");
 }
 
-StatsAggregatorOld &StatsAggregatorOld::GetInstance(int64_t aggregation_interval_ms) {
+StatsAggregatorOld &StatsAggregatorOld::GetInstance(
+    int64_t aggregation_interval_ms) {
   static StatsAggregatorOld stats_aggregator(aggregation_interval_ms);
   return stats_aggregator;
 }
@@ -306,7 +305,7 @@ StatsAggregatorOld &StatsAggregatorOld::GetInstance(int64_t aggregation_interval
 // Register the BackendStatsContext of a worker thread to global Stats
 // Aggregator
 void StatsAggregatorOld::RegisterContext(std::thread::id id_,
-                                      BackendStatsContext *context_) {
+                                         BackendStatsContext *context_) {
   {
     std::lock_guard<std::mutex> lock(stats_mutex_);
 
