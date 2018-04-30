@@ -58,6 +58,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(GetOid());
   }
 
   LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
@@ -85,10 +86,11 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   // it is unnecessary for us to allocate memory
   bool ret = container.Delete(index_key, value);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (ret && static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexDelete(GetOid());
   }
 
   LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
@@ -122,9 +124,10 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
     assert(ret == false);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (ret && static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(GetOid());
   }
 
   return ret;
@@ -201,6 +204,7 @@ void BWTREE_INDEX_TYPE::Scan(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
   }
 
   return;
@@ -267,6 +271,7 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
   }
   return;
 }
@@ -284,6 +289,7 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
   }
 
   return;

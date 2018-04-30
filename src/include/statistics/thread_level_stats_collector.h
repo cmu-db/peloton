@@ -80,21 +80,21 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_DELETE])
       metric->OnTupleDelete();
   };
-  inline void CollectIndexRead() {
+  inline void CollectIndexRead(oid_t index_id, size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
-      metric->OnIndexRead();
+      metric->OnIndexRead(index_id, num_read);
   };
-  inline void CollectIndexUpdate() {
+  inline void CollectIndexUpdate(oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_UPDATE])
-      metric->OnIndexUpdate();
+      metric->OnIndexUpdate(index_id);
   };
-  inline void CollectIndexInsert() {
+  inline void CollectIndexInsert(oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_INSERT])
-      metric->OnIndexInsert();
+      metric->OnIndexInsert(index_id);
   };
-  inline void CollectIndexDelete() {
+  inline void CollectIndexDelete(oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
-      metric->OnIndexDelete();
+      metric->OnIndexDelete(index_id);
   };
   inline void CollectQueryBegin() {
     for (auto &metric : metric_dispatch_[stats_event_type::QUERY_BEGIN])

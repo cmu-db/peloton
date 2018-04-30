@@ -68,10 +68,10 @@ class Metric {
   virtual void OnTupleUpdate() {};
   virtual void OnTupleInsert() {};
   virtual void OnTupleDelete() {};
-  virtual void OnIndexRead() {};
-  virtual void OnIndexUpdate() {};
-  virtual void OnIndexInsert() {};
-  virtual void OnIndexDelete() {};
+  virtual void OnIndexRead(oid_t, size_t) {};
+  virtual void OnIndexUpdate(oid_t) {};
+  virtual void OnIndexInsert(oid_t) {};
+  virtual void OnIndexDelete(oid_t) {};
   virtual void OnQueryBegin() {};
   virtual void OnQueryEnd() {};
 

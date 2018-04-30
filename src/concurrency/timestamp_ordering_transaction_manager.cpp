@@ -21,7 +21,6 @@
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager_factory.h"
 #include "settings/settings_manager.h"
-#include "statistics/stats_event_type.h"
 
 namespace peloton {
 namespace concurrency {

@@ -25,25 +25,25 @@ namespace peloton {
 namespace stats {
 class IndexMetricRawData : public AbstractRawData {
  public:
-  inline void IncrementReads(oid_t index_id) {
+  inline void IncrementIndexReads(oid_t index_id, size_t num_read) {
     auto entry = counters_.find(index_id);
     if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
-    counters_[index_id][READ]++;
+    counters_[index_id][READ] += num_read;
   }
 
-  inline void IncrementUpdates(oid_t index_id) {
+  inline void IncrementIndexUpdates(oid_t index_id) {
     auto entry = counters_.find(index_id);
     if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
     counters_[index_id][UPDATE]++;
   }
 
-  inline void IncrementInserts(oid_t index_id) {
+  inline void IncrementIndexInserts(oid_t index_id) {
     auto entry = counters_.find(index_id);
     if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
     counters_[index_id][INSERT]++;
   }
 
-  inline void IncrementDeletes(oid_t index_id) {
+  inline void IncrementIndexDeletes(oid_t index_id) {
     auto entry = counters_.find(index_id);
     if(entry != counters_.end()) counters_[index_id] = std::vector<uint64_t>(NUM_COUNTERS);
     counters_[index_id][DELETE]++;
@@ -79,6 +79,25 @@ private:
   };
 };
 
+class IndexMetric: public AbstractMetric<IndexMetricRawData> {
+ public:
+  inline void OnIndexRead(oid_t index_id, size_t num_read) override {
+    GetRawData()->IncrementIndexReads(index_id, num_read);
+  }
+
+  inline void OnIndexUpdate(oid_t index_id) override {
+    GetRawData()->IncrementIndexUpdates(index_id);
+  }
+
+  inline void OnIndexInsert(oid_t index_id) override {
+    GetRawData()->IncrementIndexInserts(index_id);
+  }
+
+  inline void OnIndexDelete(oid_t index_id) override {
+    GetRawData()->IncrementIndexDeletes(index_id);
+  }
+
+};
 /**
  * Metric of index accesses and other index-specific metrics.
  */
