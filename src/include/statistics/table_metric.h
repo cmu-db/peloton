@@ -24,65 +24,83 @@
 namespace peloton {
 namespace stats {
 class TableMetricRawData : public AbstractRawData {
-public:
- inline void IncrementTableReads(oid_t table_id, size_t num_read) {
-   auto entry = counters_.find(table_id);
-   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
-   counters_[table_id][READ] += num_read;
- }
+ public:
+  inline void IncrementTableReads(oid_t table_id, size_t num_read) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][READ] += num_read;
+  }
 
- inline void IncrementTableUpdates(oid_t table_id) {
-   auto entry = counters_.find(table_id);
-   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
-   counters_[table_id][UPDATE]++;
- }
+  inline void IncrementTableUpdates(oid_t table_id) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][UPDATE]++;
+  }
 
- inline void IncrementTableInserts(oid_t table_id) {
-   auto entry = counters_.find(table_id);
-   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
-   counters_[table_id][INSERT]++;
- }
+  inline void IncrementTableInserts(oid_t table_id) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][INSERT]++;
+  }
 
- inline void IncrementTableDeletes(oid_t table_id) {
-   auto entry = counters_.find(table_id);
-   if(entry != counters_.end()) counters_[table_id] = std::vector<uint64_t>(NUM_COUNTERS);
-   counters_[table_id][DELETE]++;
- }
+  inline void IncrementTableDeletes(oid_t table_id) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][DELETE]++;
+  }
 
- void Aggregate(AbstractRawData &other) override {
-   auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
-   for (auto &entry: other_index_metric.counters_) {
-     auto &this_counter = counters_[entry.first];
-     auto &other_counter = entry.second;
-     for(size_t i = 0; i < NUM_COUNTERS; i++) {
-       this_counter[i] += other_counter[i];
-     }
-   }
- }
+  inline void IncrementTableMemAlloc(oid table_id, int64_t bytes) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][DELETE] += bytes;
+  }
 
- // TODO(justin) -- actually implement
- void WriteToCatalog() override{}
+  inline void DecrementTableMemAlloc(oid table_id, int64_t bytes) {
+    auto entry = counters_.find(table_id);
+    if (entry != counters_.end())
+      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[table_id][DELETE] -= bytes;
+  }
 
- const std::string GetInfo() const override {
-   return "index metric";
- }
-private:
- std::unordered_map<oid_t, std::vector<uint64_t>> counters_;
+  void Aggregate(AbstractRawData &other) override {
+    auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
+    for (auto &entry : other_index_metric.counters_) {
+      auto &this_counter = counters_[entry.first];
+      auto &other_counter = entry.second;
+      for (size_t i = 0; i < NUM_COUNTERS; i++) {
+        this_counter[i] += other_counter[i];
+      }
+    }
+  }
 
- // this serves as an index into each table's counter vector 
- enum CounterType {
-   READ = 0,
-   UPDATE,
-   INSERT,
-   DELETE
- };
+  // TODO(justin) -- actually implement
+  void WriteToCatalog() override {}
 
- // should be number of possible CounterType values
- static const size_t NUM_COUNTERS = 4;
+  const std::string GetInfo() const override { return "index metric"; }
 
+ private:
+  std::unordered_map<oid_t, std::vector<int64_t>> counters_;
+
+  // this serves as an index into each table's counter vector
+  enum CounterType {
+    READ = 0,
+    UPDATE,
+    INSERT,
+    DELETE,
+    MEMORY_ALLOC,
+    MEMORY_USAGE
+  };
+
+  // should be number of possible CounterType values
+  static const size_t NUM_COUNTERS = 6;
 };
 
-class TableMetric: public AbstractMetric<TableMetricRawData> {
+class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
   inline void OnTupleRead(oid_t table_id, size_t num_read) override {
     GetRawData()->IncrementTableReads(table_id, num_read);
@@ -99,7 +117,6 @@ class TableMetric: public AbstractMetric<TableMetricRawData> {
   inline void OnTupleDelete(oid_t table_id) override {
     GetRawData()->IncrementTableDeletes(table_id);
   }
-
 };
 /**
  * Metric for the access and memory of a table
@@ -139,7 +156,9 @@ class TableMetricOld : public AbstractMetricOld {
            table_access_ == other.table_access_;
   }
 
-  inline bool operator!=(const TableMetricOld &other) { return !(*this == other); }
+  inline bool operator!=(const TableMetricOld &other) {
+    return !(*this == other);
+  }
 
   void Aggregate(AbstractMetricOld &source);
 
