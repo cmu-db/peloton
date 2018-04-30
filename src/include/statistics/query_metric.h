@@ -73,7 +73,7 @@ class QueryMetric : public AbstractMetricOld {
 
   inline AccessMetric &GetQueryAccess() { return query_access_; }
 
-  inline LatencyMetric &GetQueryLatency() { return latency_metric_; }
+  inline LatencyMetricOld &GetQueryLatency() { return latency_metric_; }
 
   inline ProcessorMetric &GetProcessorMetric() { return processor_metric_; }
 
@@ -120,7 +120,7 @@ class QueryMetric : public AbstractMetricOld {
   AccessMetric query_access_{MetricType::ACCESS};
 
   // Latency metric
-  LatencyMetric latency_metric_{MetricType::LATENCY, 2};
+  LatencyMetricOld latency_metric_{MetricType::LATENCY, 2};
 
   // Processor metric
   ProcessorMetric processor_metric_{MetricType::PROCESSOR};
