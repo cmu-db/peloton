@@ -29,6 +29,13 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(OutputDecimal);
   DECLARE_METHOD(OutputVarchar);
   DECLARE_METHOD(OutputVarbinary);
+
+  DECLARE_MEMBER(InputBoolean);
+  DECLARE_MEMBER(InputTinyInt);
+  DECLARE_MEMBER(InputSmallInt);
+  DECLARE_MEMBER(InputInteger);
+  DECLARE_MEMBER(InputBigInt);
+
   DECLARE_METHOD(CompareStrings);
 };
 
