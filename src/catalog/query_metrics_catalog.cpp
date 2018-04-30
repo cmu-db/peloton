@@ -20,34 +20,26 @@
 namespace peloton {
 namespace catalog {
 
-QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static QueryMetricsCatalog query_metrics_catalog{txn};
-  return &query_metrics_catalog;
-}
-
-QueryMetricsCatalog::QueryMetricsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." QUERY_METRICS_CATALOG_NAME
-                      " ("
-                      "query_name   VARCHAR NOT NULL, "
-                      "database_oid INT NOT NULL, "
-                      "num_params   INT NOT NULL, "
-                      "param_types    VARBINARY, "
-                      "param_formats  VARBINARY, "
-                      "param_values   VARBINARY, "
-                      "reads    INT NOT NULL, "
-                      "updates  INT NOT NULL, "
-                      "deletes  INT NOT NULL, "
-                      "inserts  INT NOT NULL, "
-                      "latency  INT NOT NULL, "
-                      "cpu_time INT NOT NULL, "
-                      "time_stamp INT NOT NULL);",
+QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
+                                         concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                          "." CATALOG_SCHEMA_NAME "." QUERY_METRICS_CATALOG_NAME
+                          " ("
+                          "query_name   VARCHAR NOT NULL PRIMARY KEY, "
+                          "database_oid INT NOT NULL PRIMARY KEY, "
+                          "num_params   INT NOT NULL, "
+                          "param_types    VARBINARY, "
+                          "param_formats  VARBINARY, "
+                          "param_values   VARBINARY, "
+                          "reads    INT NOT NULL, "
+                          "updates  INT NOT NULL, "
+                          "deletes  INT NOT NULL, "
+                          "inserts  INT NOT NULL, "
+                          "latency  INT NOT NULL, "
+                          "cpu_time INT NOT NULL, "
+                          "time_stamp INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, QUERY_METRICS_CATALOG_NAME, {0, 1},
-      QUERY_METRICS_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
@@ -106,10 +98,9 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
-                                             oid_t database_oid,
-                                             concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
+bool QueryMetricsCatalog::DeleteQueryMetrics(
+    const std::string &name, concurrency::TransactionContext *txn) {
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -119,10 +110,9 @@ bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
 }
 
 stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
-    const std::string &name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
+  oid_t index_offset = IndexId::PRIMARY_KEY;               // Primary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -145,14 +135,12 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   return param_types;
 }
 
-int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
-                                          oid_t database_oid,
-                                          concurrency::TransactionContext *txn) {
+int64_t QueryMetricsCatalog::GetNumParams(
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
+  oid_t index_offset = IndexId::PRIMARY_KEY;              // Primary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
