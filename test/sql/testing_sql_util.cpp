@@ -115,7 +115,6 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   bind_node_visitor.BindNameToNode(parsed_stmt->GetStatement(0));
 
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
-  txn_manager.CommitTransaction(txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);

@@ -69,9 +69,8 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
       schema_name = update_stmt.table->GetSchemaName();
-      auto table_object =
-          catalog_cache.GetDatabaseObject(db_name)->GetTableObject(table_name,
-                                                                   schema_name);
+      auto table_object = catalog_cache.GetDatabaseObject(db_name)
+                              ->GetTableObject(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -169,10 +168,6 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
             for (const auto expr : expr_set) {
               auto tuple_value_expr =
                   static_cast<const expression::TupleValueExpression *>(expr);
-
-              table_id =
-                  db_object->GetTableObject(tuple_value_expr->GetTableName())
-                      ->GetTableOid();
               column_oids.emplace_back(database_id, table_id,
                                        (oid_t)tuple_value_expr->GetColumnId());
             }
