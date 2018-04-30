@@ -7,7 +7,45 @@
 namespace peloton{
 namespace logging {
 
+
+
 class WalRecovery{
+
+private:
+
+    // (graghura): this is a dirty hack to establish the
+    // replay order. This is tightly coupled with the way
+    // transaction id is generated :(
+    // The transaction with the smaller epoch_id is replayed
+    // first. If the epoch's are the same, then the txn with the
+    // lower next_txn_id (decentralized_epoch_manager.cpp)
+    // is replayed first.
+
+    // TODO(graghura) : change this after the mvcc bugs are fixed.
+
+    struct RecoveryComparator {
+        bool operator()(txn_id_t txn_id_1, txn_id_t txn_id_2) const {
+          eid_t epoch_txn_1 =  txn_id_1 >> 32;
+          eid_t epoch_txn_2 =  txn_id_2 >> 32;
+
+          int next_id_1 = txn_id_1 & 0xFFFFFFFF;
+          int next_id_2 = txn_id_2 & 0xFFFFFFFF;
+
+          if(epoch_txn_1==epoch_txn_2){
+            if(next_id_1<=next_id_2)
+              return true;
+            else
+              return false;
+          } else if(epoch_txn_1<epoch_txn_2) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+    };
+
+    using ReplayMap = std::map<txn_id_t, int, RecoveryComparator>;
+
 
 public:
     WalRecovery() {}
@@ -19,10 +57,10 @@ public:
 private:
 
     void ReplayLogFile();
-    void ParseLog(std::map<txn_id_t, LogRecordType> &all_txns);
-    LogRecord ReadRecord(CopySerializeInput record_decode);
+    void FirstPass(std::map<txn_id_t, std::pair<LogRecordType, int>> &,
+                               ReplayMap &, uint32_t &nbytes);
 
-
+//  LogRecord ReadRecord(CopySerializeInput record_decode);
 //  void DoRecovery();
 //  void ReplayLogRecord();
 
