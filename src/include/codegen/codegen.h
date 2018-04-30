@@ -95,11 +95,13 @@ class CodeGen {
   llvm::Constant *Const32(int32_t val) const;
   llvm::Constant *Const64(int64_t val) const;
   llvm::Constant *ConstDouble(double val) const;
-  llvm::Constant *ConstString(const std::string &s) const;
+  llvm::Value *ConstString(const std::string &str_val,
+                           const std::string &name) const;
+  llvm::Value *ConstGenericBytes(llvm::Type *type, const void *data,
+                                 uint32_t length,
+                                 const std::string &name) const;
   llvm::Constant *Null(llvm::Type *type) const;
   llvm::Constant *NullPtr(llvm::PointerType *type) const;
-  /// Wrapper for pointer for constant string
-  llvm::Value *ConstStringPtr(const std::string &s) const;
 
   llvm::Value *AllocateVariable(llvm::Type *type, const std::string &name);
   llvm::Value *AllocateBuffer(llvm::Type *element_type, uint32_t num_elems,

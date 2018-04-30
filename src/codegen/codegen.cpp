@@ -59,12 +59,30 @@ llvm::Constant *CodeGen::ConstDouble(double val) const {
   return llvm::ConstantFP::get(DoubleType(), val);
 }
 
-llvm::Constant *CodeGen::ConstString(const std::string &s) const {
+llvm::Value *CodeGen::ConstString(const std::string &str_val,
+                                     const std::string &name) const {
   // Strings are treated as arrays of bytes
-  auto *str = llvm::ConstantDataArray::getString(GetContext(), s);
-  return new llvm::GlobalVariable(GetModule(), str->getType(), true,
-                                  llvm::GlobalValue::InternalLinkage, str,
-                                  "str");
+  auto *str = llvm::ConstantDataArray::getString(GetContext(), str_val);
+  auto *global_var =
+      new llvm::GlobalVariable(GetModule(), str->getType(), true,
+                               llvm::GlobalValue::InternalLinkage, str, name);
+  return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
+}
+
+llvm::Value *CodeGen::ConstGenericBytes(llvm::Type *type, const void *data,
+                                        uint32_t length,
+                                        const std::string &name) const {
+  // Create the constant data array that wraps the input data
+  llvm::ArrayRef<uint8_t> elements{reinterpret_cast<const uint8_t *>(data),
+                                   length};
+  auto *arr = llvm::ConstantDataArray::get(GetContext(), elements);
+
+  // Create a global variable for the data
+  auto *global_var = new llvm::GlobalVariable(
+      GetModule(), type, true, llvm::GlobalValue::InternalLinkage, arr, name);
+
+  // Return a pointer to the first element
+  return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
 }
 
 llvm::Constant *CodeGen::Null(llvm::Type *type) const {
@@ -73,11 +91,6 @@ llvm::Constant *CodeGen::Null(llvm::Type *type) const {
 
 llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
   return llvm::ConstantPointerNull::get(type);
-}
-
-llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
-  auto &ir_builder = GetBuilder();
-  return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
 
 llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
@@ -143,12 +156,9 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
         "printf", llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()),
         reinterpret_cast<void *>(printf));
   }
-  auto &ir_builder = code_context_.GetBuilder();
-  auto *format_str =
-      ir_builder.CreateGEP(ConstString(format), {Const32(0), Const32(0)});
 
   // Collect all the arguments into a vector
-  std::vector<llvm::Value *> printf_args{format_str};
+  std::vector<llvm::Value *> printf_args = {ConstString(format, "format")};
   printf_args.insert(printf_args.end(), args.begin(), args.end());
 
   // Call the function

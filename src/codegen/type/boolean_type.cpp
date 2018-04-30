@@ -84,7 +84,8 @@ struct CastBooleanToVarchar : public TypeSystem::CastHandleNull {
 
     // Convert this boolean (unsigned int) into a string
     llvm::Value *str_val = codegen->CreateSelect(
-        value.GetValue(), codegen.ConstString("T"), codegen.ConstString("F"));
+        value.GetValue(), codegen.ConstString("T", "true"),
+        codegen.ConstString("F", "false"));
 
     // We could be casting this non-nullable value to a nullable type
     llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
@@ -249,7 +250,6 @@ struct LogicalOr : public TypeSystem::BinaryOperatorHandleNull {
 // Implicit casts
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::BOOLEAN};
-
 
 // Explicit casts
 CastBooleanToInteger kBooleanToInteger;
