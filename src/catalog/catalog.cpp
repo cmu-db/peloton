@@ -615,18 +615,18 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 
 ResultType Catalog::DropIndex(const std::string &index_name,
                               concurrency::TransactionContext *txn) {
-    if(txn == nullptr) {
-        throw CatalogException("Do not have transaction to drop index " +
-                               index_name);
-    }
-    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
-                index_name, txn);
-    if(index_object == nullptr) {
-        throw CatalogException("Index name " + index_name + " cannot be found");
-    }
-    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to drop index " +
+                           index_name);
+  }
+  auto index_object =
+      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  if (index_object == nullptr) {
+    throw CatalogException("Index name " + index_name + " cannot be found");
+  }
+  ResultType result = DropIndex(index_object->GetIndexOid(), txn);
 
-    return result;
+  return result;
 }
 
 //===--------------------------------------------------------------------===//
@@ -837,19 +837,18 @@ ResultType Catalog::AddColumn(
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
 
-ResultType Catalog::DropColumn(
-    const std::string &database_name,
-    const std::string &table_name,
-    const std::vector<std::string> &columns,
-    concurrency::TransactionContext *txn) {
+ResultType Catalog::DropColumn(const std::string &database_name,
+                               const std::string &table_name,
+                               const std::vector<std::string> &columns,
+                               concurrency::TransactionContext *txn) {
   try {
     oid_t table_oid = Catalog::GetInstance()
-        ->GetTableObject(database_name, table_name, txn)
-        ->GetTableOid();
-    for (std::string name: columns) {
+                          ->GetTableObject(database_name, table_name, txn)
+                          ->GetTableOid();
+    for (std::string name : columns) {
       catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, name, txn);
     }
-  } catch(CatalogException &e){
+  } catch (CatalogException &e) {
     return ResultType::FAILURE;
   }
   return ResultType::SUCCESS;
@@ -876,8 +875,7 @@ ResultType Catalog::RenameColumn(const std::string &database_name,
     throw CatalogException("Name can not be empty string.");
   }
 
-  LOG_TRACE("Change Column Name %s to %s", old_name.c_str(),
-            new_name.c_str());
+  LOG_TRACE("Change Column Name %s to %s", old_name.c_str(), new_name.c_str());
 
   try {
     // Get table from the name
@@ -900,17 +898,15 @@ ResultType Catalog::RenameColumn(const std::string &database_name,
     // Change column name in the global schema
     schema->ChangeColumnName(columnId, new_name);
 
-    // Change cached ColumnCatalog
+    // Modify the pg_table
     oid_t table_oid = Catalog::GetInstance()
                           ->GetTableObject(database_name, table_name, txn)
                           ->GetTableOid();
-    catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, old_name,
-                                                        txn);
-    auto new_column = schema->GetColumn(columnId);
-    catalog::ColumnCatalog::GetInstance()->InsertColumn(
-        table_oid, new_column.GetName(), columnId, new_column.GetOffset(),
-        new_column.GetType(), new_column.IsInlined(),
-        new_column.GetConstraints(), pool_.get(), txn);
+    bool res = catalog::ColumnCatalog::GetInstance()->RenameColumn(
+        table_oid, old_name, new_name, txn);
+    if (!res) {
+      throw CatalogException("Change Column name failed.");
+    }
 
   } catch (CatalogException &e) {
     return ResultType::FAILURE;
@@ -1195,11 +1191,11 @@ void Catalog::InitializeFunctions() {
       /**
        * decimal functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Abs", function::BuiltInFuncType{OperatorId::Abs,
-                                            function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
@@ -1236,33 +1232,29 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
-      AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT,
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
+                         type::TypeId::SMALLINT, internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
-      AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
-          internal_lang, "Abs",
-          function::BuiltInFuncType{OperatorId::Abs,
-                                    function::DecimalFunctions::_Abs},
-          txn);
+      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
+                         internal_lang, "Abs",
+                         function::BuiltInFuncType{
+                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                         txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,

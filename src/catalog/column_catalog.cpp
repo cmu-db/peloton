@@ -41,9 +41,9 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
 
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
+ColumnCatalog *ColumnCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static ColumnCatalog column_catalog{pg_catalog, pool, txn};
   return &column_catalog;
 }
@@ -248,6 +248,36 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   }
 
   return table_object->GetColumnObjects();
+}
+
+/*
+ * @brief Rename the column name to a new name.
+ * @ return whether the update succeed
+ */
+bool ColumnCatalog::RenameColumn(oid_t table_oid,
+                                 const std::string &column_name,
+                                 const std::string &new_name,
+                                 concurrency::TransactionContext *txn) {
+  std::vector<oid_t> update_columns({ColumnId::COLUMN_NAME});
+
+  std::vector<type::Value> update_values;
+  update_values.push_back(type::ValueFactory::GetVarcharValue(new_name).Copy());
+
+  // values to execute index scan
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  scan_values.push_back(
+      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+
+  // Index of table_oid & column_name
+  oid_t index_offset = IndexId::PRIMARY_KEY;
+
+  auto table_object =
+      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  table_object->EvictColumnObject(column_name);
+
+  return UpdateWithIndexScan(update_columns, update_values, scan_values,
+                             index_offset, txn);
 }
 
 }  // namespace catalog
