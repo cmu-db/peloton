@@ -24,6 +24,12 @@
 namespace peloton {
 namespace codegen {
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Output functions
+///
+////////////////////////////////////////////////////////////////////////////////
+
 namespace {
 
 inline void SetValue(peloton::type::Value *val_ptr,
@@ -94,8 +100,22 @@ void ValuesRuntime::OutputVarbinary(char *values, uint32_t idx, const char *ptr,
            peloton::type::ValueFactory::GetVarbinaryValue(bin_ptr, len, false));
 }
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Input functions
+///
+////////////////////////////////////////////////////////////////////////////////
+
 namespace {
 
+/**
+ * Skip all leading and trailing whitespace from the string bounded by the
+ * provided pointers. This function will modify the input pointers to point to
+ * the first non-space character at the start and end of the input string.
+ *
+ * @param[in,out] left A pointer to the leftmost character in the input string
+ * @param[in,out] right A pointer to the rightmost character in the input string
+ */
 void TrimLeftRight(char *&left, char *&right) {
   while (*left == ' ') {
     left++;
@@ -105,6 +125,17 @@ void TrimLeftRight(char *&left, char *&right) {
   }
 }
 
+/**
+ * Convert the provided input string into a integral number. This function
+ * handles leading whitespace and leading negative (-) or positive (+) signs.
+ * Additionally, it performs a bounds check to ensure the number falls into the
+ * valid range of numbers for the given type.
+ *
+ * @tparam T The integral type (int8_t, int16_t, int32_t, int64_t)
+ * @param ptr A pointer to the start of the input string
+ * @param len The length of the input string
+ * @return The numeric interpretation of the input string
+ */
 template <typename T>
 typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
     char *ptr, uint32_t len) {
@@ -113,7 +144,7 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
     // ERROR
   }
 
-  // Trim whitespace on left and right
+  // Trim leading and trailing whitespace
   TrimLeftRight(start, end);
 
   // Check negative or positive sign
@@ -125,6 +156,7 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
     start++;
   }
 
+  // Convert
   int64_t num = 0;
   while (start != end) {
     if (*start < '0' || *start > '9') {
@@ -136,15 +168,18 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
     start++;
   }
 
+  // Negate number if we need to
   if (negative) {
     num = -num;
   }
 
+  // Perform bounds check
   if (num <= std::numeric_limits<T>::min() ||
       num >= std::numeric_limits<T>::max()) {
     RuntimeFunctions::ThrowOverflowException();
   }
 
+  // Done
   return static_cast<T>(num);
 }
 
@@ -157,7 +192,7 @@ bool ValuesRuntime::InputBoolean(UNUSED_ATTRIBUTE const type::Type &type,
 
   char *start = ptr, *end = ptr + len;
 
-  // Trim whitespace on both ends
+  // Trim leading and trailing whitespace
   TrimLeftRight(start, end);
 
   //

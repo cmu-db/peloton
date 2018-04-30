@@ -33,6 +33,9 @@ class Integer : public SqlType, public Singleton<Integer> {
   void GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                  llvm::Type *&len_type) const override;
 
+  llvm::Function *GetInputFunction(CodeGen &codegen,
+                                   const Type &type) const override;
+
   llvm::Function *GetOutputFunction(CodeGen &codegen,
                                     const Type &type) const override;
 

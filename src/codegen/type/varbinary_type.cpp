@@ -159,9 +159,8 @@ std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 Varbinary::Varbinary()
     : SqlType(peloton::type::TypeId::VARBINARY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable, 
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Varbinary::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"The VARBINARY type does not have a minimum value ..."};
@@ -181,6 +180,12 @@ void Varbinary::GetTypeForMaterialization(CodeGen &codegen,
                                           llvm::Type *&len_type) const {
   val_type = codegen.CharPtrType();
   len_type = codegen.Int32Type();
+}
+
+llvm::Function *Varbinary::GetInputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"Blob input not implemented yet"};
 }
 
 llvm::Function *Varbinary::GetOutputFunction(

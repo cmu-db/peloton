@@ -251,17 +251,16 @@ struct LogicalOr : public TypeSystem::BinaryOperatorHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::BOOLEAN};
 
+// clang-format off
 // Explicit casts
 CastBooleanToInteger kBooleanToInteger;
 CastBooleanToDecimal kBooleanToDecimal;
 CastBooleanToVarchar kBooleanToVarchar;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER,
-     kBooleanToInteger},
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR,
-     kBooleanToVarchar},
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL,
-     kBooleanToDecimal}};
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER, kBooleanToInteger},
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR, kBooleanToVarchar},
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL, kBooleanToDecimal}};
+// clang-format on
 
 // Comparison operations
 CompareBoolean kCompareBoolean;
@@ -323,6 +322,11 @@ void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.BoolType();
   len_type = nullptr;
+}
+
+llvm::Function *Boolean::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return ValuesRuntimeProxy::InputBoolean.GetFunction(codegen);
 }
 
 llvm::Function *Boolean::GetOutputFunction(

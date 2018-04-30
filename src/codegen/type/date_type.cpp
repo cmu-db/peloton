@@ -130,11 +130,12 @@ struct CompareDate : public TypeSystem::SimpleComparisonHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
 
+// clang-format off
 // Explicit casts
 CastDateToTimestamp kDateToTimestamp;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP,
-     kDateToTimestamp}};
+    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP, kDateToTimestamp}};
+// clang-format on
 
 // Comparison operations
 CompareDate kCompareDate;
@@ -185,6 +186,12 @@ void Date::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                      llvm::Type *&len_type) const {
   val_type = codegen.Int32Type();
   len_type = nullptr;
+}
+
+llvm::Function *Date::GetInputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"Date inputs not supported yet"};
 }
 
 llvm::Function *Date::GetOutputFunction(

@@ -516,21 +516,17 @@ std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::INTEGER, peloton::type::TypeId::BIGINT,
     peloton::type::TypeId::DECIMAL};
 
+// clang-format off
 // Explicit casting rules
 CastTinyInt kCastTinyInt;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL,
-     kCastTinyInt}};
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL, kCastTinyInt}};
+// clang-format on
 
 // Comparison operations
 CompareTinyInt kCompareTinyInt;
@@ -601,6 +597,11 @@ void TinyInt::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.Int8Type();
   len_type = nullptr;
+}
+
+llvm::Function *TinyInt::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return ValuesRuntimeProxy::InputTinyInt.GetFunction(codegen);
 }
 
 llvm::Function *TinyInt::GetOutputFunction(

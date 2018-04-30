@@ -498,11 +498,8 @@ struct Substr : public TypeSystem::NaryOperator {
     // Setup function arguments
     llvm::Value *executor_ctx = ctx.executor_context;
     std::vector<llvm::Value *> args = {
-        executor_ctx,
-        input_args[0].GetValue(),
-        input_args[0].GetLength(),
-        input_args[1].GetValue(),
-        input_args[2].GetValue(),
+        executor_ctx, input_args[0].GetValue(), input_args[0].GetLength(),
+        input_args[1].GetValue(), input_args[2].GetValue(),
     };
 
     // Call
@@ -550,9 +547,12 @@ LTrim kLTrim;
 RTrim kRTrim;
 Repeat kRepeat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike},         {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::DatePart, kDatePart}, {OperatorId::BTrim, kBTrim},
-    {OperatorId::LTrim, kLTrim},       {OperatorId::RTrim, kRTrim},
+    {OperatorId::Like, kLike},
+    {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::DatePart, kDatePart},
+    {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},
+    {OperatorId::RTrim, kRTrim},
     {OperatorId::Repeat, kRepeat}};
 
 // Nary operations
@@ -594,6 +594,12 @@ void Varchar::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.CharPtrType();
   len_type = codegen.Int32Type();
+}
+
+llvm::Function *Varchar::GetInputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"String input not implemented yet"};
 }
 
 llvm::Function *Varchar::GetOutputFunction(

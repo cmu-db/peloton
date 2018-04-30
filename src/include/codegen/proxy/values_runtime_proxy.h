@@ -30,11 +30,11 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(OutputVarchar);
   DECLARE_METHOD(OutputVarbinary);
 
-  DECLARE_MEMBER(InputBoolean);
-  DECLARE_MEMBER(InputTinyInt);
-  DECLARE_MEMBER(InputSmallInt);
-  DECLARE_MEMBER(InputInteger);
-  DECLARE_MEMBER(InputBigInt);
+  DECLARE_METHOD(InputBoolean);
+  DECLARE_METHOD(InputTinyInt);
+  DECLARE_METHOD(InputSmallInt);
+  DECLARE_METHOD(InputInteger);
+  DECLARE_METHOD(InputBigInt);
 
   DECLARE_METHOD(CompareStrings);
 };

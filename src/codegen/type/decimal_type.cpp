@@ -192,9 +192,9 @@ struct Abs : public TypeSystem::UnaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-    const override {
+      const override {
     llvm::Value *raw_ret =
-      codegen.Call(DecimalFunctionsProxy::Abs, {val.GetValue()});
+        codegen.Call(DecimalFunctionsProxy::Abs, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
   }
 };
@@ -473,21 +473,17 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DECIMAL};
 
+// clang-format off
 // Explicit casting rules
 CastDecimal kCastDecimal;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL,
-     kCastDecimal}};
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL, kCastDecimal}};
+// clang-format on
 
 // Comparison operations
 CompareDecimal kCompareDecimal;
@@ -560,6 +556,12 @@ void Decimal::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.DoubleType();
   len_type = nullptr;
+}
+
+llvm::Function *Decimal::GetInputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"Decimal inputs not implemented yet"};
 }
 
 llvm::Function *Decimal::GetOutputFunction(

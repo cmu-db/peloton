@@ -13,6 +13,7 @@
 #include "codegen/proxy/values_runtime_proxy.h"
 
 #include "codegen/proxy/value_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 namespace codegen {
