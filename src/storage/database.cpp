@@ -94,6 +94,32 @@ void Database::DropTableWithOid(const oid_t table_oid) {
   }
 }
 
+/**
+ * Replace the the data table with oid.
+ * @param table_oid the oid of that table
+ * @param new_table the new table storage
+ * @return pointer to that table.
+ */
+storage::DataTable *Database::ReplaceTableWithOid(
+    const oid_t table_oid, storage::DataTable *new_table) {
+  {
+    std::lock_guard<std::mutex> lock(database_mutex);
+
+    oid_t table_offset = 0;
+    for (auto table : tables) {
+      if (table->GetOid() == table_oid) {
+        break;
+      }
+      table_offset++;
+    }
+    PELOTON_ASSERT(table_offset < tables.size());
+
+    auto old_table = tables.at(table_offset);
+    tables[table_offset] = new_table;
+    return old_table;
+  }
+}
+
 storage::DataTable *Database::GetTable(const oid_t table_offset) const {
   PELOTON_ASSERT(table_offset < tables.size());
   auto table = tables.at(table_offset);
