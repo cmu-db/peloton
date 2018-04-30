@@ -17,6 +17,7 @@
 #include "codegen/type/smallint_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/bigint_type.h"
+#include "codegen/values_runtime.h"
 
 namespace peloton {
 namespace test {
@@ -159,6 +160,81 @@ TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
     DivideByZeroTest<int32_t>(codegen::type::Integer::Instance(), op);
     DivideByZeroTest<int64_t>(codegen::type::BigInt::Instance(), op);
   }
+}
+
+namespace {
+
+template <typename T>
+using InputFunc = T (*)(const codegen::type::Type &, const char *, uint32_t);
+
+template <typename T>
+void TestInputIntegral(
+    const codegen::type::Type &type, InputFunc<T> TestFunc,
+    std::vector<std::pair<std::string, int64_t>> extra_valid_tests = {},
+    std::vector<std::string> extra_invalid_tests = {},
+    std::vector<std::string> extra_overflow_tests = {}) {
+  // Default valid tests - these are valid for all integral types
+  std::vector<std::pair<std::string, int64_t>> valid_tests = {{"0", 0},
+                                                              {"-1", -1},
+                                                              {"2", 2},
+                                                              {"+3", 3},
+                                                              {"  4", 4},
+                                                              {"  -5", -5},
+                                                              {"  +6", 6},
+                                                              {"7  ", 7},
+                                                              {"-8  ", -8},
+                                                              {"  9  ", 9},
+                                                              {"  -10  ", -10},
+                                                              {"  +11  ", 11}};
+  valid_tests.insert(valid_tests.end(), extra_valid_tests.begin(),
+                     extra_valid_tests.end());
+
+  // Default invalid tests
+  std::vector<std::string> invalid_tests = {"a",   "-b",  "+c",  " 1c",
+                                            "2d ", "3 3", "-4 4"};
+  invalid_tests.insert(invalid_tests.end(), extra_invalid_tests.begin(),
+                       extra_invalid_tests.end());
+
+  // Default overflow tests
+  std::vector<std::string> overflow_tests = {
+      std::to_string(static_cast<int64_t>(std::numeric_limits<T>::min()) - 1),
+      std::to_string(static_cast<int64_t>(std::numeric_limits<T>::max()) + 1)};
+  overflow_tests.insert(overflow_tests.end(), extra_overflow_tests.begin(),
+                        extra_overflow_tests.end());
+
+  for (const auto &test : valid_tests) {
+    auto *ptr = test.first.data();
+    auto len = static_cast<uint32_t>(test.first.length());
+    EXPECT_EQ(test.second, TestFunc(type, ptr, len));
+  }
+
+  for (const auto &test : invalid_tests) {
+    auto *ptr = test.data();
+    auto len = static_cast<uint32_t>(test.length());
+    EXPECT_THROW(TestFunc(type, ptr, len), std::runtime_error);
+  }
+
+  for (const auto &test : overflow_tests) {
+    auto *ptr = test.data();
+    auto len = static_cast<uint32_t>(test.length());
+    EXPECT_THROW(TestFunc(type, ptr, len), std::overflow_error);
+  }
+}
+}  // namespace
+
+TEST_F(ValueIntegrityTest, InputIntegralTypesTest) {
+  codegen::type::Type tinyint{type::TypeId::TINYINT, false};
+  TestInputIntegral<int8_t>(tinyint, codegen::ValuesRuntime::InputTinyInt,
+                            {{"-126", -126}, {"126", 126}});
+
+  codegen::type::Type smallint{type::TypeId::SMALLINT, false};
+  TestInputIntegral<int16_t>(smallint, codegen::ValuesRuntime::InputSmallInt);
+
+  codegen::type::Type integer{type::TypeId::INTEGER, false};
+  TestInputIntegral<int32_t>(integer, codegen::ValuesRuntime::InputInteger);
+
+  codegen::type::Type bigint{type::TypeId::BIGINT, false};
+  TestInputIntegral<int64_t>(bigint, codegen::ValuesRuntime::InputBigInt);
 }
 
 }  // namespace test

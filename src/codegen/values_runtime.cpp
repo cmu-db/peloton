@@ -116,12 +116,12 @@ namespace {
  * @param[in,out] left A pointer to the leftmost character in the input string
  * @param[in,out] right A pointer to the rightmost character in the input string
  */
-void TrimLeftRight(char *&left, char *&right) {
+void TrimLeftRight(const char *&left, const char *&right) {
   while (*left == ' ') {
     left++;
   }
-  while (*right == ' ') {
-    right++;
+  while (right > left && *(right - 1) == ' ') {
+    right--;
   }
 }
 
@@ -138,11 +138,9 @@ void TrimLeftRight(char *&left, char *&right) {
  */
 template <typename T>
 typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
-    char *ptr, uint32_t len) {
-  char *start = ptr, *end = ptr + len;
-  if (start == end) {
-    // ERROR
-  }
+    const char *ptr, uint32_t len) {
+  const char *start = ptr;
+  const char *end = start + len;
 
   // Trim leading and trailing whitespace
   TrimLeftRight(start, end);
@@ -173,7 +171,7 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
     num = -num;
   }
 
-  // Perform bounds check
+  // Range check
   if (num <= std::numeric_limits<T>::min() ||
       num >= std::numeric_limits<T>::max()) {
     RuntimeFunctions::ThrowOverflowException();
@@ -186,11 +184,11 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
 }  // namespace
 
 bool ValuesRuntime::InputBoolean(UNUSED_ATTRIBUTE const type::Type &type,
-                                 char *ptr, uint32_t len) {
+                                 const char *ptr, uint32_t len) {
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   PELOTON_ASSERT(len != 0 && "Length must be non-zero");
 
-  char *start = ptr, *end = ptr + len;
+  const char *start = ptr, *end = ptr + len;
 
   // Trim leading and trailing whitespace
   TrimLeftRight(start, end);
@@ -267,28 +265,28 @@ bool ValuesRuntime::InputBoolean(UNUSED_ATTRIBUTE const type::Type &type,
 }
 
 int8_t ValuesRuntime::InputTinyInt(UNUSED_ATTRIBUTE const type::Type &type,
-                                   char *ptr, uint32_t len) {
+                                   const char *ptr, uint32_t len) {
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   PELOTON_ASSERT(len != 0 && "Length must be non-zero");
   return ToNum<int8_t>(ptr, len);
 }
 
 int16_t ValuesRuntime::InputSmallInt(UNUSED_ATTRIBUTE const type::Type &type,
-                                     char *ptr, uint32_t len) {
+                                     const char *ptr, uint32_t len) {
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   PELOTON_ASSERT(len != 0 && "Length must be non-zero");
   return ToNum<int16_t>(ptr, len);
 }
 
 int32_t ValuesRuntime::InputInteger(UNUSED_ATTRIBUTE const type::Type &type,
-                                    char *ptr, uint32_t len) {
+                                    const char *ptr, uint32_t len) {
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   PELOTON_ASSERT(len != 0 && "Length must be non-zero");
   return ToNum<int32_t>(ptr, len);
 }
 
 int64_t ValuesRuntime::InputBigInt(UNUSED_ATTRIBUTE const type::Type &type,
-                                   char *ptr, uint32_t len) {
+                                   const char *ptr, uint32_t len) {
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   PELOTON_ASSERT(len != 0 && "Length must be non-zero");
   return ToNum<int64_t>(ptr, len);

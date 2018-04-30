@@ -67,15 +67,20 @@ class ValuesRuntime {
   ////
   //////////////////////////////////////////////////////////////////////////////
 
-  static bool InputBoolean(const type::Type &type, char *ptr, uint32_t len);
+  static bool InputBoolean(const type::Type &type, const char *ptr,
+                           uint32_t len);
 
-  static int8_t InputTinyInt(const type::Type &type, char *ptr, uint32_t len);
+  static int8_t InputTinyInt(const type::Type &type, const char *ptr,
+                             uint32_t len);
 
-  static int16_t InputSmallInt(const type::Type &type, char *ptr, uint32_t len);
+  static int16_t InputSmallInt(const type::Type &type, const char *ptr,
+                               uint32_t len);
 
-  static int32_t InputInteger(const type::Type &type, char *ptr, uint32_t len);
+  static int32_t InputInteger(const type::Type &type, const char *ptr,
+                              uint32_t len);
 
-  static int64_t InputBigInt(const type::Type &type, char *ptr, uint32_t len);
+  static int64_t InputBigInt(const type::Type &type, const char *ptr,
+                             uint32_t len);
 
   /**
    * Compare two strings, returning an integer value indicating their sort order
