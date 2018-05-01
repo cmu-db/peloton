@@ -47,6 +47,9 @@ public:
                                     type::AbstractPool *pool = nullptr,
                                     concurrency::TransactionContext *txn = nullptr);
 
+  LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                concurrency::TransactionContext *txn);
+
   ~LayoutCatalog();
 
   //===--------------------------------------------------------------------===//
@@ -69,10 +72,6 @@ private:
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
   GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
-
-
-  LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

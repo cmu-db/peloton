@@ -162,7 +162,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
   system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFUALT_SCHEMA_OID, DEFUALT_SCHEMA_NAME, pool_.get(), txn);
+      DEFUALT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
@@ -592,8 +592,11 @@ Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
   PELOTON_ASSERT(layout_oid < INVALID_OID);
   auto new_layout = std::shared_ptr<const storage::Layout>(
           new const storage::Layout(column_map, layout_oid));
-  auto layout_catalog = catalog::LayoutCatalog::GetInstance();
-  bool result = layout_catalog->InsertLayout(table_oid, new_layout,
+
+  // Add the layout the pg_layout table
+  auto pg_layout =
+          catalog_map_[database_oid]->GetLayoutCatalog();
+  bool result = pg_layout->InsertLayout(table_oid, new_layout,
                                              pool_.get(), txn);
   if (!result) {
     LOG_DEBUG("Failed to create a new layout for table %u", table_oid);
@@ -790,6 +793,11 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
       catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
   pg_attribute->DeleteColumns(table_oid, txn);
 
+  // delete record in pg_layout
+  auto pg_layout =
+          catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
+  pg_layout->DeleteLayouts(table_oid, txn);
+
   // delete record in pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
@@ -857,8 +865,8 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
     table->ResetDefaultLayout();
   }
 
-  auto layout_catalog = LayoutCatalog::GetInstance();
-  if (!layout_catalog->DeleteLayout(table_oid, layout_oid, txn)) {
+  auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
+  if (!pg_layout->DeleteLayout(table_oid, layout_oid, txn)) {
     auto layout = table->GetDefaultLayout();
     LOG_DEBUG("Layout delete failed. Default layout id: %u",
               layout.GetOid());

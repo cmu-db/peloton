@@ -12,7 +12,8 @@
 
 #include "catalog/layout_catalog.h"
 
-#include "catalog/column_catalog.h"
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
@@ -28,9 +29,10 @@ LayoutCatalog *LayoutCatalog::GetInstance(storage::Database *pg_catalog,
   return &layout_catalog;
 }
 
-LayoutCatalog::LayoutCatalog(storage::Database *pg_catalog,
-                             type::AbstractPool *pool,
-                             concurrency::TransactionContext *txn)
+LayoutCatalog::LayoutCatalog(
+        storage::Database *pg_catalog,
+        UNUSED_ATTRIBUTE type::AbstractPool *pool,
+        UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
         : AbstractCatalog(LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME,
                           InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_attribute
@@ -39,19 +41,6 @@ LayoutCatalog::LayoutCatalog(storage::Database *pg_catalog,
            IndexConstraintType::PRIMARY_KEY);
   AddIndex({ColumnId::TABLE_OID}, LAYOUT_CATALOG_SKEY0_OID,
            LAYOUT_CATALOG_NAME "_skey0", IndexConstraintType::DEFAULT);
-
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-          ColumnCatalog::GetInstance(pg_catalog, pool, txn);
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(LAYOUT_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
 }
 
 LayoutCatalog::~LayoutCatalog() {}
@@ -126,9 +115,12 @@ bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(layout_id).Copy());
 
+  auto pg_table = Catalog::GetInstance()
+          ->GetSystemCatalogs(database_oid)
+          ->GetTableCatalog();
+
   // delete column from cache
-  auto table_object =
-          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictLayout(layout_id);
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -141,8 +133,10 @@ bool LayoutCatalog::DeleteLayouts(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // delete layouts from cache
-  auto table_object =
-          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+          ->GetSystemCatalogs(database_oid)
+          ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllLayouts();
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -152,8 +146,10 @@ const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
 LayoutCatalog::GetLayouts(oid_t table_oid,
                           concurrency::TransactionContext *txn) {
   // Try to find the layouts in the cache
-  auto table_object =
-          TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+          ->GetSystemCatalogs(database_oid)
+          ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto layout_objects = table_object->GetLayouts(true);
   if (layout_objects.size() != 0) {

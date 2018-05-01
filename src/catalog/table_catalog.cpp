@@ -412,14 +412,6 @@ bool TableCatalogObject::EvictLayout(oid_t layout_id) {
   return true;
 }
 
-TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static TableCatalog table_catalog{pg_catalog, pool, txn};
-  return &table_catalog;
-}
-
-
 TableCatalog::~TableCatalog() {}
 
 /*@brief   private function for initialize schema of pg_table

@@ -430,15 +430,16 @@ storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert table in catalog
-  catalog->CreateTable(db_name, table_name, std::move(table_schema),
-                       txn, is_catalog, tuples_per_tilegroup_count);
-  txn_manager.EndTransaction(txn);
+  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
+                       std::move(table_schema), txn, is_catalog,
+                       tuples_per_tilegroup_count);
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto test_db = catalog->GetDatabaseWithName(db_name, txn);
-  txn_manager.EndTransaction(txn);
+  auto table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
+                                         table_name, txn);
+  txn_manager.CommitTransaction(txn);
 
-  auto table = test_db->GetTableWithName(table_name);
   return table;
 }
 

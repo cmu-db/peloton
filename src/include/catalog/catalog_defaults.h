@@ -36,7 +36,7 @@ namespace catalog {
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
-#define CATALOG_TABLES_COUNT 8
+#define CATALOG_TABLES_COUNT 9
 
 // Oid mask for each type
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
@@ -55,7 +55,7 @@ namespace catalog {
 #define CATALOG_SCHEMA_OID (0 | SCHEMA_OID_MASK)
 #define DEFUALT_SCHEMA_OID (1 | SCHEMA_OID_MASK)
 #define CATALOG_SCHEMA_NAME "pg_catalog"
-#define DEFUALT_SCHEMA_NAME "public"
+#define DEFAULT_SCHEMA_NAME "public"
 
 // Reserved pg_xxx table oid
 #define DATABASE_CATALOG_OID (0 | TABLE_OID_MASK)

@@ -75,11 +75,14 @@ public:
     auto txn = txn_manager.BeginTransaction();
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, table_name, std::move(table_schema),
-                         txn, is_catalog, tuples_per_tilegroup, layout_type);
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
+                         std::move(table_schema), txn, is_catalog,
+                         tuples_per_tilegroup, layout_type);
+    // Get table reference
+    auto table = catalog->GetTableWithName(test_db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_name, txn);
     txn_manager.EndTransaction(txn);
-
-    auto table = GetDatabase().GetTableWithName(table_name);
 
     /////////////////////////////////////////////////////////
     // Load in the data
@@ -184,11 +187,11 @@ public:
     std::unique_ptr<catalog::Schema> schema{new catalog::Schema(cols)};
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name,
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, all_cols_table_name,
                          std::move(schema), txn);
 
     all_cols_table = catalog->GetTableWithName(
-        test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name, txn);
+        test_db_name, DEFAULT_SCHEMA_NAME, all_cols_table_name, txn);
     auto *table_schema = all_cols_table->GetSchema();
 
     // Insert one row where all columns are NULL
@@ -763,11 +766,13 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   auto txn = txn_manager.BeginTransaction();
 
   // Insert table in catalog
-  catalog->CreateTable(test_db_name, table_name, std::move(table_schema),
-                       txn, is_catalog, tuples_per_tilegroup, LayoutType::ROW);
+  catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
+                       std::move(table_schema), txn, is_catalog,
+                       tuples_per_tilegroup, LayoutType::ROW);
+  // Get table reference
+  auto table = catalog->GetTableWithName(test_db_name,
+                                         DEFAULT_SCHEMA_NAME, table_name, txn);
   txn_manager.EndTransaction(txn);
-
-  auto table = GetDatabase().GetTableWithName(table_name);
 
   /////////////////////////////////////////////////////////
   // Reset default_layout_ to LayoutType::COLUMN
