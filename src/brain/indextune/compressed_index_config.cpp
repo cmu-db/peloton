@@ -73,7 +73,7 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
       std::vector<oid_t> col_oids(indexed_cols);
       auto idx_obj =
           std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(*cur_index_config_, idx_obj);
+      AddIndex(idx_obj);
     }
   }
 
@@ -234,6 +234,42 @@ CompressedIndexConfiguration::AddCandidates(
     }
   }
 
+  return result;
+}
+
+std::shared_ptr<brain::IndexObject>
+CompressedIndexConfiguration::ConvertIndexTriplet(
+    const planner::col_triplet &idx_triplet) {
+  const auto db_oid = std::get<0>(idx_triplet);
+  const auto table_oid = std::get<1>(idx_triplet);
+  const auto idx_oid = std::get<2>(idx_triplet);
+
+  auto txn = txn_manager_->BeginTransaction();
+  const auto db_obj = catalog_->GetDatabaseObject(db_oid, txn);
+  const auto table_obj = db_obj->GetTableObject(table_oid);
+  const auto idx_obj = table_obj->GetIndexObject(idx_oid);
+  const auto col_oids = idx_obj->GetKeyAttrs();
+  std::vector<oid_t> input_oids(col_oids);
+
+  txn_manager_->CommitTransaction(txn);
+
+  return std::make_shared<brain::IndexObject>(db_oid, table_oid, input_oids);
+}
+
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::DropCandidates(
+    std::unique_ptr<parser::SQLStatement> sql_stmt) {
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(next_table_offset_));
+
+  auto txn = txn_manager_->BeginTransaction();
+  std::vector<planner::col_triplet> affected_indexes =
+      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+  for (const auto &col_triplet : affected_indexes) {
+    auto idx_obj = ConvertIndexTriplet(col_triplet);
+    AddIndex(*result, idx_obj);
+  }
+  txn_manager_->CommitTransaction(txn);
   return result;
 }
 

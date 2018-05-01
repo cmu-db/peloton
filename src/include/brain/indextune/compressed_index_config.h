@@ -119,6 +119,20 @@ class CompressedIndexConfiguration {
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
 
   /**
+   * @brief Convert an index triplet to an index object
+   */
+  std::shared_ptr<brain::IndexObject> ConvertIndexTriplet(
+      const planner::col_triplet &idx_triplet);
+
+  /**
+  * Given a SQLStatement, generate drop candidates
+  * @param sql_stmt: the SQLStatement
+  * @return the drop candidates
+  */
+  std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
+      std::unique_ptr<parser::SQLStatement> sql_stmt);
+
+  /**
    * @brief Get the total number of possible indexes in current database
    */
   size_t GetConfigurationCount() const;
