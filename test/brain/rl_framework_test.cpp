@@ -190,7 +190,7 @@ TEST_F(RLFrameworkTest, BasicTest) {
 
   auto add_sql_stmt_list = GetBindedSqlStmtList(query_string, database_name);
   auto add_candidates =
-      comp_idx_config.DropCandidates(std::move(add_sql_stmt_list));
+      comp_idx_config.AddCandidates(std::move(add_sql_stmt_list));
 
   // TODO (weichenl): add EXPECT_EQ()
 }
