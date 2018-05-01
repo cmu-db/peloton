@@ -33,12 +33,12 @@ namespace stats {
 class ThreadLevelStatsCollector {
  public:
   using CollectorsMap = tbb::concurrent_unordered_map<std::thread::id,
-                                                      ThreadLevelStatsCollector>
+                                                      ThreadLevelStatsCollector,
+                                                      std::hash<std::thread::id>>;
   /**
    * @return the Collector for the calling thread
    */
-  static
-  ThreadLevelStatsCollector &GetCollectorForThread() {
+  static ThreadLevelStatsCollector &GetCollectorForThread() {
     static CollectorsMap collector_map;
     std::thread::id tid = std::this_thread::get_id();
     return collector_map[tid];
