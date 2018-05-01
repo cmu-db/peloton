@@ -31,6 +31,9 @@ private:
           int next_id_1 = txn_id_1 & 0xFFFFFFFF;
           int next_id_2 = txn_id_2 & 0xFFFFFFFF;
 
+          if(txn_id_1==txn_id_2)
+            return false;
+
           if(epoch_txn_1==epoch_txn_2){
             if(next_id_1<=next_id_2)
               return true;
@@ -44,7 +47,8 @@ private:
         }
     };
 
-    using ReplayMap = std::map<txn_id_t, int, RecoveryComparator>;
+    // key: txn_id, value: {COMMITED/ABORTED, len of all log_records of txn_id}
+    using ReplayTxnMap = std::map<txn_id_t, std::pair<LogRecordType, int>, RecoveryComparator>;
 
 
 public:
@@ -57,8 +61,13 @@ public:
 private:
 
     void ReplayLogFile();
-    void FirstPass(std::map<txn_id_t, std::pair<LogRecordType, int>> &,
-                               ReplayMap &, uint32_t &nbytes);
+    void FirstPass(ReplayTxnMap &, size_t &log_buffer_size);
+    void SecondPass( std::map<txn_id_t, std::pair<int, int>> &all_txns,
+                                  char *buffer, size_t buf_len);
+
+//    void SecondPass(ReplayTxnMap &all_txns, char *buffer, size_t buf_size);
+
+
 
 //  LogRecord ReadRecord(CopySerializeInput record_decode);
 //  void DoRecovery();
