@@ -5,6 +5,8 @@
 
 #include "type/serializeio.h"
 #include "logging/log_record.h"
+#include "storage/storage_manager.h"
+#include "storage/tuple.h"
 
 namespace peloton{
 namespace logging {
@@ -76,7 +78,9 @@ private:
   void ReplayAllTxns();
   void ReplaySingleTxn(txn_id_t txn_id);
 
-
+  bool InstallCatalogTuple(LogRecordType type, storage::Tuple *tuple,
+                                   storage::DataTable *table, cid_t cur_cid,
+                                   ItemPointer location);
 
 
 

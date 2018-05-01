@@ -1,6 +1,10 @@
 
 
-#include <include/concurrency/epoch_manager_factory.h>
+#include "concurrency/transaction_manager_factory.h"
+#include "catalog/catalog_defaults.h"
+#include "type/ephemeral_pool.h"
+#include "catalog/manager.h"
+#include "concurrency/epoch_manager_factory.h"
 #include "logging/wal_recovery.h"
 #include "logging/log_util.h"
 #include "common/logger.h"
@@ -146,10 +150,54 @@ void WalRecovery::ParseFromDisk(ReplayStage stage){
   delete[] buf;
 }
 
+bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple *tuple,
+                               storage::DataTable *table, cid_t cur_cid,
+                               ItemPointer location){
+
+  ItemPointer *i = nullptr;
+
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction(IsolationLevelType::SERIALIZABLE);
+
+  oid_t tile_group_id = location.block;
+  auto tg = table->GetTileGroupById(location.block);
+  auto tile_group_header =
+          catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+
+//  oid_t tuple_slot = location.offset;
+
+  if(record_type==LogRecordType::TUPLE_INSERT){
+
+    PL_ASSERT(tg!= nullptr);
+
+    tg->CopyTuple(tuple, location.offset);
+    bool result = table->InsertTuple(tuple, location, txn, &i);
+
+    (void) result;
+
+    PL_ASSERT(result==true);
+
+    tile_group_header->SetBeginCommitId(location.offset, cur_cid);
+    tile_group_header->SetEndCommitId(location.offset, MAX_CID);
+    tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
+    tile_group_header->SetNextItemPointer(location.offset,
+                                          INVALID_ITEMPOINTER);
+
+    tile_group_header->SetIndirection(location.offset,i);
+  }
+
+  txn_manager.CommitTransaction(txn);
+  return true;
+}
+
+
+
 void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   int start_offset = commited_txns_[txn_id].first;
   int curr_offset  = start_offset;
   int total_len = all_txns_[txn_id].second;
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+
 
   while(total_len > 0){
 
@@ -163,19 +211,84 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 //  LOG_INFO("length curr_offset = %d, record_len = %d", curr_offset, record_len);
 
     CopySerializeInput record_decode((const void *)(log_buffer_+curr_offset), record_len);
+
     LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
     txn_id_t txn_id = record_decode.ReadLong();
     eid_t  epoch_id = record_decode.ReadLong();
+    cid_t commit_id = record_decode.ReadLong();
 
     (void) txn_id;
-//  LOG_INFO("replaying txn %llu", txn_id);
 
     if(max_epoch_id_==INVALID_EID)
       max_epoch_id_ = epoch_id;
     else if(epoch_id>max_epoch_id_)
       max_epoch_id_ = epoch_id;
 
-    (void) record_type;
+    switch(record_type){
+
+      case LogRecordType::TRANSACTION_BEGIN: {
+        break;
+      }
+
+      case LogRecordType::TRANSACTION_COMMIT: {
+        //(graghura): return probably?
+        break;
+      }
+
+      case LogRecordType::TRANSACTION_ABORT: {
+        LOG_ERROR("Should not be replaying an aborted transaction");
+        PL_ASSERT(false);
+      }
+
+      case LogRecordType::TUPLE_INSERT: {
+        oid_t database_id = (oid_t) record_decode.ReadLong();
+        oid_t table_id = (oid_t) record_decode.ReadLong();
+
+        oid_t tg_block = (oid_t) record_decode.ReadLong();
+        oid_t tg_offset = (oid_t) record_decode.ReadLong();
+
+        ItemPointer location(tg_block, tg_offset);
+        auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+                database_id, table_id);
+        auto schema = table->GetSchema();
+        auto tg = table->GetTileGroupById(tg_block);
+
+        // Create the tile group if it does not exist
+        if (tg.get() == nullptr) {
+          table->AddTileGroupWithOidForRecovery(tg_block);
+          tg = table->GetTileGroupById(tg_block);
+          catalog::Manager::GetInstance().GetNextTileGroupId();
+        }
+
+        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+        for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
+          type::Value val = type::Value::DeserializeFrom(
+                  record_decode, schema->GetColumn(oid).GetType());
+          tuple->SetValue(oid, val, pool.get());
+        }
+
+        if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
+
+          InstallCatalogTuple(record_type, tuple.get(), table, commit_id,
+                              location);
+        }
+
+        break;
+      }
+
+      case LogRecordType::TUPLE_UPDATE: {
+        break;
+      }
+
+      case LogRecordType::TUPLE_DELETE: {
+        break;
+      }
+
+      default:{
+        break;
+      }
+    }
+
 
     curr_offset += record_len;
     total_len -= record_len + sizeof(int);
