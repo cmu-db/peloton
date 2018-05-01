@@ -24,7 +24,8 @@ LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
     : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
       lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
 
-LanguageCatalog &LanguageCatalog::GetInstance(concurrency::TransactionContext *txn) {
+LanguageCatalog &LanguageCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static LanguageCatalog language_catalog{txn};
   return language_catalog;
 }
@@ -33,13 +34,13 @@ LanguageCatalog::~LanguageCatalog(){};
 
 LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." LANGUAGE_CATALOG_NAME
+                      "." CATALOG_SCHEMA_NAME "." LANGUAGE_CATALOG_NAME
                       " ("
                       "language_oid   INT NOT NULL PRIMARY KEY, "
                       "lanname        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME, {1},
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, LANGUAGE_CATALOG_NAME, {1},
       LANGUAGE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 

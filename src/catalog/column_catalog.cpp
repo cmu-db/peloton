@@ -11,10 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction_context.h"
 
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -27,10 +30,10 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
       column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<oid_t>()),
+                    .GetAs<uint32_t>()),
       column_offset(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<oid_t>()),
+              .GetAs<uint32_t>()),
       column_type(StringToTypeId(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
@@ -40,13 +43,6 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
                      .GetAs<bool>()),
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
-
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
-  static ColumnCatalog column_catalog{pg_catalog, pool, txn};
-  return &column_catalog;
-}
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool,
@@ -62,8 +58,8 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
            COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
-  // Insert columns into pg_attribute
-  oid_t column_id = 0;
+  // Insert columns of pg_attribute table into pg_attribute itself
+  uint32_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
                  column.GetOffset(), column.GetType(), column.IsInlined(),
@@ -193,8 +189,10 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
   // delete column from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -213,8 +211,10 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // delete columns from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllColumnObjects();
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -224,8 +224,10 @@ const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::TransactionContext *txn) {
   // try get from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);
   if (column_objects.size() != 0) return column_objects;

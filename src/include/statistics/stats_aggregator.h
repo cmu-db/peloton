@@ -12,20 +12,20 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
-#include <vector>
-#include <unordered_map>
 #include <condition_variable>
-#include <string>
 #include <fstream>
+#include <map>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "statistics/backend_stats_context.h"
-#include "storage/database.h"
-#include "storage/data_table.h"
 #include "concurrency/transaction_context.h"
+#include "statistics/backend_stats_context.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -68,8 +68,8 @@ class StatsAggregator {
   //===--------------------------------------------------------------------===//
 
   // Global singleton
-  static StatsAggregator &GetInstance(int64_t aggregation_interval_ms =
-                                          STATS_AGGREGATION_INTERVAL_MS);
+  static StatsAggregator &GetInstance(
+      int64_t aggregation_interval_ms = STATS_AGGREGATION_INTERVAL_MS);
 
   // Get the aggregated stats history of all exited threads
   inline BackendStatsContext &GetStatsHistory() { return stats_history_; }
@@ -88,9 +88,6 @@ class StatsAggregator {
   // Unregister a BackendStatsContext. Currently we directly reuse the thread id
   // instead of explicitly unregistering it.
   void UnregisterContext(std::thread::id id);
-
-  // Utility function to get the metric table
-  storage::DataTable *GetMetricTable(std::string table_name);
 
   // Aggregate the stats of current living threads
   void Aggregate(int64_t &interval_cnt, double &alpha,
@@ -162,7 +159,8 @@ class StatsAggregator {
                           concurrency::TransactionContext *txn);
 
   // Write all query metrics to a metric table
-  void UpdateQueryMetrics(int64_t time_stamp, concurrency::TransactionContext *txn);
+  void UpdateQueryMetrics(int64_t time_stamp,
+                          concurrency::TransactionContext *txn);
 
   // Aggregate stats periodically
   void RunAggregator();
