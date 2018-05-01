@@ -156,18 +156,17 @@ TEST_F(RLFrameworkTest, BasicTest) {
 
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
-  auto comp_idx_config = std::unique_ptr<brain::CompressedIndexConfiguration>(
-      new brain::CompressedIndexConfiguration(database_name));
+  auto comp_idx_config = brain::CompressedIndexConfiguration(database_name);
 
-  auto cur_bit_set = comp_idx_config->GetCurrentIndexConfig();
+  auto cur_bit_set = comp_idx_config.GetCurrentIndexConfig();
   std::string output;
   boost::to_string(*cur_bit_set, output);
   LOG_DEBUG("bitset: %s", output.c_str());
 
   for (const auto &idx_obj : idx_objs) {
-    size_t global_offset = comp_idx_config->GetGlobalOffset(idx_obj);
-    const auto new_idx_obj = comp_idx_config->GetIndex(global_offset);
-    EXPECT_TRUE(comp_idx_config->IsSet(idx_obj));
+    size_t global_offset = comp_idx_config.GetGlobalOffset(idx_obj);
+    const auto new_idx_obj = comp_idx_config.GetIndex(global_offset);
+    EXPECT_TRUE(comp_idx_config.IsSet(idx_obj));
     EXPECT_EQ(*idx_obj, *new_idx_obj);
   }
 }

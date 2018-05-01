@@ -61,8 +61,8 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
     next_table_offset_ += ((size_t)1U << next_id);
   }
 
-  cur_index_config_ =
-      std::make_shared<boost::dynamic_bitset<>>(next_table_offset_);
+  cur_index_config_ = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(next_table_offset_));
 
   // Scan tables to populate current config
   for (const auto &table_obj : table_objs) {
@@ -157,14 +157,14 @@ void CompressedIndexConfiguration::AddIndex(size_t offset) {
 }
 
 void CompressedIndexConfiguration::AddIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
+    std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   bitmap->set(offset);
 }
 
 void CompressedIndexConfiguration::AddIndex(
-    std::shared_ptr<boost::dynamic_bitset<>> &bitmap, size_t offset) {
+    std::unique_ptr<boost::dynamic_bitset<>> &bitmap, size_t offset) {
   bitmap->set(offset);
 }
 
@@ -178,11 +178,12 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
   cur_index_config_->set(offset, false);
 }
 
-std::shared_ptr<boost::dynamic_bitset<>>
+std::unique_ptr<boost::dynamic_bitset<>>
 CompressedIndexConfiguration::AddDropCandidate(
     const IndexConfiguration &indexes) {
   const auto &index_objs = indexes.GetIndexes();
-  auto result = std::make_shared<boost::dynamic_bitset<>>(next_table_offset_);
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(next_table_offset_));
 
   // TODO: should we make db_oid, table_oid as private member?
   auto txn = txn_manager_->BeginTransaction();
@@ -212,13 +213,24 @@ CompressedIndexConfiguration::AddDropCandidate(
   return result;
 }
 
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::AddDropCandidate(
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
+  if (nullptr == sql_stmt_list) {
+    return std::unique_ptr<boost::dynamic_bitset<>>(
+        new boost::dynamic_bitset<>(8));
+  }
+  return std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(16));
+}
+
 size_t CompressedIndexConfiguration::GetConfigurationCount() {
   return next_table_offset_;
 }
 
-const std::shared_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::GetCurrentIndexConfig() {
-  return cur_index_config_;
+const boost::dynamic_bitset<>
+    *CompressedIndexConfiguration::GetCurrentIndexConfig() {
+  return cur_index_config_.get();
 }
 }
 }
