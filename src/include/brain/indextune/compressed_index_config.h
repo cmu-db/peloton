@@ -130,7 +130,7 @@ class CompressedIndexConfiguration {
   * @return the drop candidates
   */
   std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
-      std::unique_ptr<parser::SQLStatement> sql_stmt);
+      std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
 
   /**
    * @brief Get the total number of possible indexes in current database

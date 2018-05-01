@@ -189,6 +189,7 @@ CompressedIndexConfiguration::AddCandidates(
       new boost::dynamic_bitset<>(next_table_offset_));
 
   auto txn = txn_manager_->BeginTransaction();
+  catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
           txn->catalog_cache, std::move(sql_stmt_list), database_name_);
@@ -258,11 +259,14 @@ CompressedIndexConfiguration::ConvertIndexTriplet(
 
 std::unique_ptr<boost::dynamic_bitset<>>
 CompressedIndexConfiguration::DropCandidates(
-    std::unique_ptr<parser::SQLStatement> sql_stmt) {
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+
   auto txn = txn_manager_->BeginTransaction();
+  catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
   for (const auto &col_triplet : affected_indexes) {
