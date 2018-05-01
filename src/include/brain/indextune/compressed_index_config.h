@@ -112,11 +112,10 @@ class CompressedIndexConfiguration {
   /**
    * Given a SQLStatementList, generate the prefix closure from the first
    * SQLStatement element
-   * @param sql_stmt_list: the SQLStatementList
+   * @param query: query in question
    * @return the prefix closure as a bitset
    */
-  std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
-      std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
+  std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(const std::string& query);
 
   /**
    * @brief Convert an index triplet to an index object
@@ -129,8 +128,7 @@ class CompressedIndexConfiguration {
   * @param sql_stmt: the SQLStatement
   * @return the drop candidates
   */
-  std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
-      std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
+  std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(const std::string& query);
 
   /**
    * @brief Get the total number of possible indexes in current database
@@ -147,6 +145,14 @@ class CompressedIndexConfiguration {
    * config bitset
    */
   void ToEigen(vector_eig &curr_config_vec) const;
+
+  /**
+   * @brief: converts query string to a binded sql-statement list
+   */
+  std::unique_ptr<parser::SQLStatementList>
+  ToBindedSqlStmtList(const std::string &query_string);
+
+
 
   std::string ToString() const;
 
@@ -206,6 +212,7 @@ class CompressedIndexConfiguration {
                 const std::shared_ptr<IndexObject> &idx_object);
 
   void AddIndex(boost::dynamic_bitset<> &bitmap, size_t offset);
+
 };
 }
 }

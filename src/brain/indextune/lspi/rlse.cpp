@@ -2,7 +2,7 @@
 
 namespace peloton{
 namespace brain{
-RLSEModel::RLSEModel(int feat_len, double variance_init): feat_len_(feat_len) {
+RLSEModel::RLSEModel(size_t feat_len, double variance_init): feat_len_(feat_len) {
   model_variance_ = matrix_eig::Zero(feat_len, feat_len);
   model_variance_.diagonal().array() += variance_init;
   weights_ = vector_eig::Zero(feat_len);
