@@ -44,12 +44,12 @@
 
 #include "storage/data_table.h"
 
-
 #include "binder/bind_node_visitor.h"
 
 using std::make_shared;
 using std::vector;
 using std::unordered_map;
+using std::make_shared;
 using std::shared_ptr;
 using std::unique_ptr;
 using std::move;
@@ -171,7 +171,6 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
   }
 
   try {
-
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
                                     query_info.output_exprs);
     auto info_obj = std::unique_ptr<OptimizerPlanInfo>(new OptimizerPlanInfo());

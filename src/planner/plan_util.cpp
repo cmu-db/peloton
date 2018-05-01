@@ -137,7 +137,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
 
       try {
         auto plan =
-            optimizer->BuildPelotonPlanTree(sql_stmt_list, db_name, txn);
+            optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
         auto db_object = catalog_cache.GetDatabaseObject(db_name);
         database_id = db_object->GetDatabaseOid();
