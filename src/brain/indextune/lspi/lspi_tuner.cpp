@@ -13,17 +13,16 @@ LSPIIndexTuner::LSPIIndexTuner(
   lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len_));
 }
 
-void LSPIIndexTuner::Tune(UNUSED_ATTRIBUTE const std::vector<std::string>& queries,
-                          UNUSED_ATTRIBUTE const std::vector<double>& query_latencies) {
-  PELOTON_ASSERT(queries.size() == query_latencies.size());
-  size_t num_queries = queries.size();
-  // Step 1: Update the RLSE model with more samples
-  for(size_t i = 0; i < num_queries; i++) {
-
-  }
-  // Step 2: Iterate through the queries - Per query obtain optimal add/drop candidates
-  // Step 3:
-}
+//void LSPIIndexTuner::Tune(UNUSED_ATTRIBUTE const std::vector<std::string>& queries,
+//                          UNUSED_ATTRIBUTE const std::vector<double>& query_latencies) {
+//  size_t num_queries = queries.size();
+//  // Step 1: Update the RLSE model with more samples
+//  for(int i = 0; i < num_queries; i++) {
+//
+//  }
+//  // Step 2: Iterate through the queries - Per query obtain optimal add/drop candidates
+//  // Step 3:
+//}
 
 //void LSPIIndexTuner::FindOptimal(vector_eig &optimal_next) const {
 //  auto curr_config = index_config_->GetCurrentIndexConfig();

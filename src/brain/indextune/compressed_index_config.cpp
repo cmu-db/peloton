@@ -277,7 +277,8 @@ CompressedIndexConfiguration::DropCandidates(const std::string& query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
-  auto sql_stmt = ToBindedSqlStmtList(query)->GetStatement(0);
+  auto sql_stmt_list = ToBindedSqlStmtList(query);
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
 
   auto txn = txn_manager_->BeginTransaction();
   catalog_->GetDatabaseObject(database_name_, txn);
