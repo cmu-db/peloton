@@ -187,14 +187,28 @@ TEST_F(RLFrameworkTest, BasicTest) {
     EXPECT_EQ(*idx_obj, *new_idx_obj);
   }
 
-  std::string query_string = "UPDATE dummy_table_1 SET a = 0 WHERE b = 1;";
+  std::string query_string =
+      "UPDATE dummy_table_1 SET a = 0 WHERE b = 1 AND c = 2;";
   auto drop_candidates = comp_idx_config.DropCandidates(query_string);
   auto add_candidates = comp_idx_config.AddCandidates(query_string);
 
+  auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
+  auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
   auto index_a_b =
       GetIndexObjectFromString(database_name, table_name_1, {"a", "b"});
   auto index_b_c =
       GetIndexObjectFromString(database_name, table_name_1, {"b", "c"});
+
+  std::vector<std::shared_ptr<brain::IndexObject>> add_expect_indexes = {
+      index_empty, index_b, index_b_c};
+  std::vector<std::shared_ptr<brain::IndexObject>> drop_expect_indexes = {
+      index_a_b};
+
+  auto add_expect_bitset = comp_idx_config.GenerateBitSet(add_expect_indexes);
+  auto drop_expect_bitset = comp_idx_config.GenerateBitSet(drop_expect_indexes);
+
+  EXPECT_EQ(*add_expect_bitset, *add_candidates);
+  EXPECT_EQ(*drop_expect_bitset, *drop_candidates);
 }
 
 }  // namespace test

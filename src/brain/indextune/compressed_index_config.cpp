@@ -183,8 +183,7 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddCandidates(const std::string& query) {
-
+CompressedIndexConfiguration::AddCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -192,9 +191,7 @@ CompressedIndexConfiguration::AddCandidates(const std::string& query) {
   catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache,
-          ToBindedSqlStmtList(query),
-          database_name_);
+          txn->catalog_cache, ToBindedSqlStmtList(query), database_name_);
   txn_manager_->CommitTransaction(txn);
 
   // Aggregate all columns in the same table
@@ -260,7 +257,8 @@ CompressedIndexConfiguration::ConvertIndexTriplet(
 }
 
 std::unique_ptr<parser::SQLStatementList>
-    CompressedIndexConfiguration::ToBindedSqlStmtList(const std::string &query_string) {
+CompressedIndexConfiguration::ToBindedSqlStmtList(
+    const std::string &query_string) {
   auto txn = txn_manager_->BeginTransaction();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
@@ -273,7 +271,7 @@ std::unique_ptr<parser::SQLStatementList>
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::DropCandidates(const std::string& query) {
+CompressedIndexConfiguration::DropCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -340,6 +338,19 @@ std::string CompressedIndexConfiguration::ToString() const {
   }
 
   return str_stream.str();
+}
+
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::GenerateBitSet(
+    const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(next_table_offset_));
+
+  for (const auto &idx_obj : idx_objs) {
+    AddIndex(*result, idx_obj);
+  }
+
+  return result;
 }
 }
 }
