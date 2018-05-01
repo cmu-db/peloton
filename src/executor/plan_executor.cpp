@@ -64,7 +64,7 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
+      [&on_complete, &consumer, plan](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
         for (const auto &tuple : consumer.GetOutputTuples()) {
           for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
@@ -147,8 +147,8 @@ void PlanExecutor::ExecutePlan(
   PELOTON_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
     stats::BackendStatsContext::GetInstance()
         ->GetQueryLatencyMetric()
         .StartTimer();
@@ -172,8 +172,8 @@ void PlanExecutor::ExecutePlan(
     on_complete(result, {});
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsModeType::ENABLE) {
     stats::BackendStatsContext::GetInstance()
         ->GetQueryLatencyMetric()
         .RecordLatency();

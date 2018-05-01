@@ -4,20 +4,26 @@
 //
 // stats_collector.h
 //
-// Identification: src/statistics/backend_stats_context.h
+// Identification: src/statistics/thread_level_stats_collector.h
 //
-// Copyright (c) 2017-18, Carnegie Mellon University Database Group
+// Copyright (c) 2017-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include <unordered_map>
 #include <thread>
+#include <unordered_map>
 #include "common/internal_types.h"
-#include "statistics/stats_event_type.h"
+#include "catalog/manager.h"
+#include "storage/tile_group.h"
+#include "settings/settings_manager.h"
 #include "statistics/abstract_metric.h"
 #include "tbb/concurrent_unordered_map.h"
+#include "statistics/database_metric.h"
+#include "statistics/index_metric.h"
+#include "statistics/stats_event_type.h"
+#include "statistics/table_metric.h"
 
 namespace peloton {
 namespace stats {
@@ -52,39 +58,101 @@ class ThreadLevelStatsCollector {
     return collector_map;
   };
 
-  ThreadLevelStatsCollector() {
-    // TODO(tianyu): Write stats to register here
-  }
+  ThreadLevelStatsCollector();
 
   // TODO(tianyu): fill arguments
   inline void CollectTransactionBegin() {
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_BEGIN])
       metric->OnTransactionBegin();
   };
-  inline void CollectTransactionCommit(oid_t database_id) {
+
+  inline void CollectTransactionCommit(oid_t tile_group_id) {
+    if (metric_dispatch_.find(stats_event_type::TXN_COMMIT) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_COMMIT])
-      metric->OnTransactionCommit(database_id);
+      metric->OnTransactionCommit(db_table_ids.first);
   };
-  inline void CollectTransactionAbort(oid_t database_id) {
+
+  inline void CollectTransactionAbort(oid_t tile_group_id) {
+    if (metric_dispatch_.find(stats_event_type::TXN_ABORT) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_ABORT])
-      metric->OnTransactionAbort(database_id);
+      metric->OnTransactionAbort(db_table_ids.first);
   };
-  inline void CollectTupleRead(oid_t table_id, size_t num_read) {
+
+  inline void CollectTupleRead(oid_t tile_group_id, size_t num_read) {
+    if (metric_dispatch_.find(stats_event_type::TUPLE_READ) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_READ])
-      metric->OnTupleRead(table_id, num_read);
+      metric->OnRead(db_table_ids, num_read);
   };
-  inline void CollectTupleUpdate(oid_t table_id) {
+
+  inline void CollectTupleUpdate(oid_t tile_group_id) {
+    if (metric_dispatch_.find(stats_event_type::TUPLE_UPDATE) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_UPDATE])
-      metric->OnTupleUpdate(table_id);
+      metric->OnUpdate(db_table_ids);
   };
-  inline void CollectTupleInsert(oid_t table_id) {
+
+  inline void CollectTupleInsert(oid_t tile_group_id) {
+    if (metric_dispatch_.find(stats_event_type::TUPLE_INSERT) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_INSERT])
-      metric->OnTupleInsert(table_id);
+      metric->OnInsert(db_table_ids);
   };
-  inline void CollectTupleDelete(oid_t table_id) {
+
+  inline void CollectTupleDelete(oid_t tile_group_id) {
+    if (metric_dispatch_.find(stats_event_type::TUPLE_DELETE) ==
+        metric_dispatch_.end())
+      return;
+
+    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
+    if (db_table_ids.first == INVALID_OID) return;
+
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_DELETE])
-      metric->OnTupleDelete(table_id);
+      metric->OnDelete(db_table_ids);
   };
+
+  inline void CollectTableMemoryAlloc(oid_t database_id, oid_t table_id,
+                                      size_t bytes) {
+    if (table_id == INVALID_OID || database_id == INVALID_OID) return;
+
+    for (auto &metric : metric_dispatch_[stats_event_type::TABLE_MEMORY_ALLOC])
+      metric->OnMemoryAlloc({database_id, table_id}, bytes);
+  };
+
+  inline void CollectTableMemoryFree(oid_t database_id, oid_t table_id,
+                                     size_t bytes) {
+    if (table_id == INVALID_OID || database_id == INVALID_OID) return;
+    for (auto &metric : metric_dispatch_[stats_event_type::TABLE_MEMORY_FREE])
+      metric->OnMemoryFree({database_id, table_id}, bytes);
+  };
+
   inline void CollectIndexRead(oid_t index_id, size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
       metric->OnIndexRead(index_id, num_read);
@@ -101,14 +169,7 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
       metric->OnIndexDelete(index_id);
   };
-  inline void CollectMemoryAlloc(oid_t oid, size_t bytes) {
-    for (auto &metric : metric_dispatch_[stats_event_type::MEMORY_ALLOC])
-      metric->OnMemoryAlloc(oid, bytes);
-  };
-  inline void CollectMemoryFree(oid_t oid, size_t bytes) {
-    for (auto &metric : metric_dispatch_[stats_event_type::MEMORY_FREE])
-      metric->OnMemoryFree(oid, bytes);
-  };
+
   inline void CollectQueryBegin() {
     for (auto &metric : metric_dispatch_[stats_event_type::QUERY_BEGIN])
       metric->OnQueryBegin();
@@ -144,14 +205,25 @@ class ThreadLevelStatsCollector {
     for (stats_event_type type : types) metric_dispatch_[type].push_back(m);
   }
 
+  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+      oid_t tile_group_id) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) {
+      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
+    }
+    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
+                                   tile_group->GetTableId());
+  }
+
   using MetricList = std::vector<std::shared_ptr<Metric>>;
   /**
    * List of all registered metrics
    */
   MetricList metrics_;
   /**
-   * Mapping from each type of event to a list of metrics registered to receive
-   * updates from that type of event.
+   * Mapping from each type of event to a list of metrics registered to
+   * receive updates from that type of event.
    */
   std::unordered_map<stats_event_type, MetricList, EnumHash < stats_event_type>>
   metric_dispatch_;

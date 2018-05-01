@@ -67,17 +67,12 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   // if (schema.IsInlined() == false) {
   pool = new type::EphemeralPool();
   //}
-
 }
 
 Tile::~Tile() {
   // Record memory deallocation
-  if (table_id != INVALID_OID &&
-      static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->DecreaseTableMemoryAlloc(
-        database_id, table_id, this->tile_size);
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTableMemoryFree(database_id, table_id, this->tile_size);
   // reclaim the tile memory (INLINED data)
   // auto &storage_manager = storage::StorageManager::GetInstance();
   // storage_manager.Release(backend_type, data);

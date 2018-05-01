@@ -29,7 +29,6 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include "settings/settings_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -262,8 +261,8 @@ ResultType PostgresProtocolHandler::ExecQueryExplain(
   std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
       new parser::SQLStatementList());
   unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
-  auto stmt = traffic_cop_->PrepareStatement(
-      "explain", query, std::move(unnamed_sql_stmt_list));
+  auto stmt = traffic_cop_->PrepareStatement("explain", query,
+                                             std::move(unnamed_sql_stmt_list));
   ResultType status = ResultType::UNKNOWN;
   if (stmt != nullptr) {
     traffic_cop_->SetStatement(stmt);
@@ -379,28 +378,10 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
-  auto type_buf_begin = pkt->Begin() + pkt->ptr;
-  auto type_buf_len = ReadParamType(pkt, num_params, param_types);
+  ReadParamType(pkt, num_params, param_types);
 
   // Cache the received query
-  bool unnamed_query = statement_name.empty();
   statement->SetParamTypes(param_types);
-
-  // Stat
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    // Make a copy of param types for stat collection
-    stats::QueryMetric::QueryParamBuf query_type_buf;
-    query_type_buf.len = type_buf_len;
-    query_type_buf.buf = PacketCopyBytes(type_buf_begin, type_buf_len);
-
-    // Unnamed statement
-    if (unnamed_query) {
-      unnamed_stmt_param_types_ = query_type_buf;
-    } else {
-      statement_param_types_[statement_name] = query_type_buf;
-    }
-  }
 
   // Cache the statement
   statement_cache_.AddStatement(statement);
@@ -429,8 +410,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   int num_params_format = PacketGetInt(pkt, 2);
   std::vector<int16_t> formats(num_params_format);
 
-  auto format_buf_begin = pkt->Begin() + pkt->ptr;
-  auto format_buf_len = ReadParamFormat(pkt, num_params_format, formats);
+  ReadParamFormat(pkt, num_params_format, formats);
 
   int num_params = PacketGetInt(pkt, 2);
   // error handling
@@ -500,9 +480,8 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
 
   auto param_types = statement->GetParamTypes();
 
-  auto val_buf_begin = pkt->Begin() + pkt->ptr;
-  auto val_buf_len = ReadParamValue(pkt, num_params, param_types,
-                                    bind_parameters, param_values, formats);
+  ReadParamValue(pkt, num_params, param_types, bind_parameters, param_values,
+                 formats);
 
   int format_codes_number = PacketGetInt(pkt, 2);
   LOG_TRACE("format_codes_number: %d", format_codes_number);
@@ -533,24 +512,6 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID &&
-      num_params > 0) {
-    // Make a copy of format for stat collection
-    stats::QueryMetric::QueryParamBuf param_format_buf;
-    param_format_buf.len = format_buf_len;
-    param_format_buf.buf = PacketCopyBytes(format_buf_begin, format_buf_len);
-    PELOTON_ASSERT(format_buf_len > 0);
-
-    // Make a copy of value for stat collection
-    stats::QueryMetric::QueryParamBuf param_val_buf;
-    param_val_buf.len = val_buf_len;
-    param_val_buf.buf = PacketCopyBytes(val_buf_begin, val_buf_len);
-    PELOTON_ASSERT(val_buf_len > 0);
-
-    param_stat.reset(new stats::QueryMetric::QueryParams(
-        param_format_buf, param_type_buf, param_val_buf, num_params));
-  }
 
   // Construct a portal.
   // Notice that this will move param_values so no value will be left there.
@@ -635,7 +596,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       } else {
         // BINARY mode
         PostgresValueType pg_value_type =
@@ -715,7 +677,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       }
     }
   }

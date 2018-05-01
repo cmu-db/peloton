@@ -57,11 +57,9 @@ class StatsAggregator : public DedicatedThreadTask {
 
   void RunTask() override {
     LOG_INFO("Aggregator is now running.");
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lck(mtx);
 
     while (exec_finished_.wait_for(
-               lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
+               lock_, std::chrono::milliseconds(aggregation_interval_ms_)) ==
                std::cv_status::timeout &&
            !exiting_)
       Aggregate();

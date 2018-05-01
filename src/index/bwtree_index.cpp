@@ -14,8 +14,7 @@
 
 #include "index/index_key.h"
 #include "index/scan_optimizer.h"
-#include "statistics/stats_aggregator.h"
-#include "settings/settings_manager.h"
+#include "statistics/thread_level_stats_collector.h"
 
 namespace peloton {
 namespace index {
@@ -53,20 +52,16 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  bool ret = container.Insert(index_key, value);
-
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(GetOid());
+  bool inserted = container.Insert(index_key, value);
+  if (inserted) {
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectIndexInsert(GetOid());
   }
 
-  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
-            index_key.GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(),
-            (ret ? "SUCCESS" : "FAIL"));
+  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
 
-  return ret;
+  return inserted;
 }
 
 /*
@@ -80,25 +75,18 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  size_t delete_count = 0;
-
   // In Delete() since we just use the value for comparison (i.e. read-only)
   // it is unnecessary for us to allocate memory
-  bool ret = container.Delete(index_key, value);
-
-  if (ret && static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
-        delete_count, metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexDelete(GetOid());
+  bool removed = container.Delete(index_key, value);
+  if (removed) {
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectIndexDelete(GetOid());
   }
 
-  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
-            index_key.GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(),
-            (ret ? "SUCCESS" : "FAIL"));
+  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
 
-  return ret;
+  return removed;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
@@ -113,24 +101,22 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   // This function will complete them in one step
   // predicate will be set to nullptr if the predicate
   // returns true for some value
-  bool ret = container.ConditionalInsert(index_key, value, predicate,
-                                         &predicate_satisfied);
+  bool inserted = container.ConditionalInsert(index_key, value, predicate,
+                                              &predicate_satisfied);
 
   // If predicate is not satisfied then we know insertion successes
   if (predicate_satisfied == false) {
     // So it should always succeed?
-    assert(ret == true);
+    assert(inserted == true);
   } else {
-    assert(ret == false);
+    assert(inserted == false);
+  }
+  if (inserted) {
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectIndexInsert(GetOid());
   }
 
-  if (ret && static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(GetOid());
-  }
-
-  return ret;
+  return inserted;
 }
 
 /*
@@ -200,12 +186,8 @@ void BWTREE_INDEX_TYPE::Scan(
     }
   }  // if is full scan
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
+      GetOid(), result.size());
 
   return;
 }
@@ -267,12 +249,8 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
     it++;
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
+      GetOid(), result.size());
   return;
 }
 
@@ -285,12 +263,8 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   // This function in BwTree fills a given vector
   container.GetValue(index_key, result);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(GetOid(), result.size());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
+      GetOid(), result.size());
 
   return;
 }
