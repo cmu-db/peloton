@@ -18,12 +18,12 @@ namespace peloton{
 namespace brain{
 class LSTDModel{
  public:
-  explicit LSTDModel(int feat_len, double variance_init=1e-3, double gamma=0.9999);
+  explicit LSTDModel(size_t feat_len, double variance_init=1e-3, double gamma=0.9999);
   void Update(vector_eig state_feat_curr, vector_eig state_feat_next, double true_cost);
   double Predict(vector_eig state_feat);
  private:
   // feature length
-  int feat_len_;
+  size_t feat_len_;
   // discounting-factor
   double gamma_;
   // model variance

@@ -2,7 +2,7 @@
 
 namespace peloton{
 namespace brain{
-LSTDModel::LSTDModel(int feat_len, double variance_init, double gamma): feat_len_(feat_len),
+LSTDModel::LSTDModel(size_t feat_len, double variance_init, double gamma): feat_len_(feat_len),
                                                                         gamma_(gamma) {
   model_variance_ = matrix_eig::Zero(feat_len, feat_len);
   model_variance_.diagonal().array() += variance_init;

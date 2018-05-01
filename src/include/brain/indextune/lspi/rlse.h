@@ -25,7 +25,7 @@ class RLSEModel{
    * Any changes to feature length will need model reinitialization
    * explicitly by the user
    */
-  explicit RLSEModel(int feat_len, double variance_init=1e-3);
+  explicit RLSEModel(size_t feat_len, double variance_init=1e-3);
   /**
    * Update model weights
    * @param feat_vector: Feature vector(X) - Independent variables
@@ -44,7 +44,7 @@ class RLSEModel{
   double Predict(vector_eig feat_vector);
  private:
   // feature length
-  int feat_len_;
+  size_t feat_len_;
   // model variance
   matrix_eig model_variance_;
   // parameters of model

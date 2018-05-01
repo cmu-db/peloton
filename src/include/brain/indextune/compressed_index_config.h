@@ -148,6 +148,8 @@ class CompressedIndexConfiguration {
    */
   void ToEigen(vector_eig &curr_config_vec) const;
 
+
+
   std::string ToString() const;
 
  private:
@@ -206,6 +208,7 @@ class CompressedIndexConfiguration {
                 const std::shared_ptr<IndexObject> &idx_object);
 
   void AddIndex(boost::dynamic_bitset<> &bitmap, size_t offset);
+
 };
 }
 }
