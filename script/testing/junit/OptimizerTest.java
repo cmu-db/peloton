@@ -114,7 +114,7 @@ public class OptimizerTest extends PLTestBase {
             String r =
                     "1|2|3|3|4|5\n" +
                             "null|null|null|1|2|3\n" +
-                            "null|null|null|2|3|4\n";
+                            "null|null|null|2|3|4";
             ExpectedResult expectedResult = new ExpectedResult(r);
             Utils.assertResultsSetEqual(resultSet, expectedResult);
         } catch (Exception e) {
@@ -136,7 +136,7 @@ public class OptimizerTest extends PLTestBase {
                 ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
             String r =
                     "1|2|3|3|4|5\n" +
-                            "null|null|null|2|3|4\n";
+                            "null|null|null|2|3|4";
             ExpectedResult expectedResult = new ExpectedResult(r);
             Utils.assertResultsSetEqual(resultSet, expectedResult);
         } catch (Exception e) {
@@ -158,7 +158,7 @@ public class OptimizerTest extends PLTestBase {
                 ResultSet resultSet = stmt.executeQuery("SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.a=t2.d WHERE t1.a>1")) {
             String r =
                     "1|2|3|3|4|5\n" +
-                            "null|null|null|2|3|4\n";
+                            "null|null|null|2|3|4";
             ExpectedResult expectedResult = new ExpectedResult(r);
             Utils.assertResultsSetEqual(resultSet, expectedResult);
         } catch (Exception e) {
