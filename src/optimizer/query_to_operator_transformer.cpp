@@ -361,6 +361,10 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
 }
 void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
   if (op->is_from) {
+    // The copy statement is reading from a file into a table. We construct a
+    // logical external-file get operator as the leaf, and an insert operator
+    // as the root.
+
     auto get_op =
         std::make_shared<OperatorExpression>(LogicalExternalFileGet::make(
             GetAndIncreaseGetId(), op->format, op->file_path));
@@ -368,7 +372,8 @@ void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
     auto target_table =
         catalog::Catalog::GetInstance()
             ->GetDatabaseObject(op->table->GetDatabaseName(), txn_)
-            ->GetTableObject(op->table->GetTableName());
+            ->GetTableObject(op->table->GetTableName(),
+                             op->table->GetSchemaName());
 
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsertSelect::make(target_table));
