@@ -181,7 +181,7 @@ class Catalog {
   // ALTER TABLE
   //===--------------------------------------------------------------------===//
   ResultType AlterTable(oid_t database_oid, oid_t table_oid,
-                        std::unique_ptr<catalog::Schema> new_schema,
+                        std::unique_ptr<catalog::Schema> &new_schema,
                         concurrency::TransactionContext *txn);
 
   ResultType AddColumn(const std::string &database_name,

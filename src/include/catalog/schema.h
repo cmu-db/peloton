@@ -149,6 +149,11 @@ class Schema : public Printable {
     columns[column_id].column_name = new_name;
   }
 
+  inline void ChangeColumnType(const oid_t column_id,
+                               const type::TypeId &new_type) {
+    columns[column_id].SetType(new_type);
+  }
+
   inline oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
