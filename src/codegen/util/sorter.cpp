@@ -115,17 +115,23 @@ void Sorter::SortParallel(
     sorters.push_back(sorter);
   }
 
-  // Sort each run in parallel
+  // This is a 2D matrix that stores, for each sorter, a list of separators. A
+  // separator separates a sorted run into equal, evenly spaces peices.
+  // separators[i][j] lists the j-th separator key in the i-th separator.
+  // We use these separator from each sorter to evenly split the inputs across
+  // all worker threads by taking a median-of-medians.
   std::vector<std::vector<char *>> separators(sorters.size());
   for (uint32_t i = 0; i < separators.size(); i++) {
     separators[i].resize(sorters.size());
   }
 
-  // Time
+  // Time it all
   Timer<std::milli> timer;
   timer.Start();
 
-  common::synchronization::CountDownLatch sort_latch(sorters.size());
+  common::synchronization::CountDownLatch sort_latch{sorters.size()};
+
+  // Sort each run in parallel
   auto &work_pool = threadpool::MonoQueuePool::GetExecutionInstance();
   for (uint32_t sort_idx = 0; sort_idx < sorters.size(); sort_idx++) {
     work_pool.SubmitTask([&sorters, &separators, &sort_latch, sort_idx]() {
@@ -133,7 +139,7 @@ void Sorter::SortParallel(
       auto *sorter = sorters[sort_idx];
       sorter->Sort();
 
-      // Now compute local separators
+      // Now compute local separators that "evenly" divide the input
       auto part_size = sorter->NumTuples() / sorters.size();
       for (uint32_t idx = 0; idx < separators.size() - 1; idx++) {
         separators[idx][sort_idx] = sorter->tuples_[(idx + 1) * part_size];
@@ -201,7 +207,9 @@ void Sorter::SortParallel(
   timer.Reset();
   timer.Start();
 
-  common::synchronization::CountDownLatch merge_latch(merge_work.size());
+  common::synchronization::CountDownLatch merge_latch{merge_work.size()};
+
+  // Divide up the merging work across all threads
   auto heap_cmp = [this](const std::pair<char **, char **> &l,
                          const std::pair<char **, char **> &r) {
     return !(cmp_func_(*l.first, *r.first) < 0);

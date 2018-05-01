@@ -169,11 +169,11 @@ void RuntimeFunctions::ExecuteTableScan(
   thread_states.Allocate(num_tasks);
 
   // Create count down latch
-  common::synchronization::CountDownLatch latch(num_tasks);
+  common::synchronization::CountDownLatch latch{num_tasks};
 
   // Now, submit the tasks
   for (uint32_t task_id = 0; task_id < num_tasks; task_id++) {
-    bool last_task = task_id == num_tasks - 1;
+    bool last_task = (task_id == num_tasks - 1);
     auto tilegroup_start = task_id * num_tilegroups_per_task;
     auto tilegroup_stop =
         last_task ? num_tilegroups : tilegroup_start + num_tilegroups_per_task;
@@ -216,7 +216,7 @@ void RuntimeFunctions::ExecutePerState(
 
   // Create count down latch
   uint32_t num_tasks = thread_states.NumThreads();
-  common::synchronization::CountDownLatch latch(num_tasks);
+  common::synchronization::CountDownLatch latch{num_tasks};
 
   // Loop over states
   for (uint32_t tid = 0; tid < num_tasks; tid++) {

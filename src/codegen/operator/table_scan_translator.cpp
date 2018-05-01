@@ -147,8 +147,10 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
   }
 }
 
-// TODO merge serial and parallel ...
-// TODO cleanup zonemap stuff
+// TODO merge serial and parallel since there is a lot of duplication
+// TODO cleanup zonemap stuff - zonemaps hardcode memory pointers which may not
+// live as long as the compiled query. Hence, it may point to invalid memory
+// at some invocation of the query.
 
 llvm::Value *TableScanTranslator::LoadTablePtr(CodeGen &codegen) const {
   const storage::DataTable &table = *GetScanPlan().GetTable();
@@ -202,7 +204,7 @@ void TableScanTranslator::ProduceParallel() const {
   // The input arguments
   const storage::DataTable &table = *GetScanPlan().GetTable();
 
-  // The use RuntimeFunctions::ExecuteTableScan() to launch a parallel scan.
+  // We use RuntimeFunctions::ExecuteTableScan() to launch a parallel scan.
   // We pass in the database and table IDs to scan the correct table.
   auto *dispatcher =
       RuntimeFunctionsProxy::ExecuteTableScan.GetFunction(codegen);

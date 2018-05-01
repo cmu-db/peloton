@@ -28,7 +28,7 @@ namespace synchronization {
 class CountDownLatch {
  public:
   /// Constructor
-  explicit CountDownLatch(uint32_t count);
+  explicit CountDownLatch(uint64_t count);
 
   /// This class cannot be copy or move-constructed
   DISALLOW_COPY_AND_MOVE(CountDownLatch);
@@ -43,7 +43,7 @@ class CountDownLatch {
   uint32_t GetCount();
 
  private:
-  uint32_t count_;
+  uint64_t count_;
   std::mutex mutex_;
   std::condition_variable cv_;
 };
@@ -54,7 +54,7 @@ class CountDownLatch {
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-inline CountDownLatch::CountDownLatch(uint32_t count) : count_(count) {}
+inline CountDownLatch::CountDownLatch(uint64_t count) : count_(count) {}
 
 inline bool CountDownLatch::Await(uint64_t nanos) {
   std::unique_lock<std::mutex> lock(mutex_);

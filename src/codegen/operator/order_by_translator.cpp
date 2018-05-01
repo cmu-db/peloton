@@ -303,13 +303,6 @@ void OrderByTranslator::Produce() const {
     CodeGen &codegen = GetCodeGen();
     auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
-#if 0
-    // The tuples have been materialized into the buffer space, NOW SORT!!!
-    if (!child_pipeline_.IsParallel()) {
-      sorter_.Sort(codegen, sorter_ptr);
-    }
-#endif
-
     // Now iterate over the sorted list
     auto *i32_type = codegen.Int32Type();
     auto vec_size = Vector::kDefaultVectorSize.load();
