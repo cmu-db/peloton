@@ -1,5 +1,4 @@
-#include <fstream>
-#include <assert.h>
+
 
 #include "logging/wal_recovery.h"
 #include "logging/log_util.h"
@@ -98,13 +97,14 @@ void WalRecovery::StartRecovery(){
 //}
 //
 
-// Pass 1:
-void WalRecovery::FirstPass(ReplayTxnMap &all_txns, size_t &log_buffer_size){
+void WalRecovery::ParseFromDisk(ReplayStage stage){
 
   int  buf_size = 4096, buf_rem = 0, buf_curr = 0,total_len=0;
   char *buf = new char[buf_size];
-
   bool replay_complete = false;
+
+  fstream_.clear();
+  fstream_.seekg(0, std::ios::beg);
 
   while(!replay_complete) {
 
@@ -133,50 +133,10 @@ void WalRecovery::FirstPass(ReplayTxnMap &all_txns, size_t &log_buffer_size){
         total_len += len;
         buf_curr += sizeof(len);
 
-        CopySerializeInput record_decode((const void *)(buf+buf_curr), len);
-        LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
-        txn_id_t txn_id = record_decode.ReadLong();
-
-        switch(record_type){
-          case LogRecordType::TRANSACTION_BEGIN:{
-            if(all_txns.find(txn_id) != all_txns.end()){
-              LOG_ERROR("Duplicate transaction");
-              PELOTON_ASSERT(false);
-            }
-
-            auto value = std::make_pair(record_type, len);
-            all_txns.insert(std::make_pair(txn_id, value));
-
-            break;
-          }
-
-          case LogRecordType::TRANSACTION_COMMIT:{
-            // keeps track of the memory that needs to be allocated.
-            log_buffer_size += (len+all_txns[txn_id].second);
-          }
-
-          // intentional fall through
-
-          case LogRecordType::TRANSACTION_ABORT:
-          case LogRecordType::TUPLE_DELETE:
-          case LogRecordType::TUPLE_UPDATE:
-          case LogRecordType::TUPLE_INSERT: {
-
-            if(all_txns.find(txn_id) == all_txns.end()){
-              LOG_ERROR("Transaction not found");
-              PL_ASSERT(false);
-            }
-
-            all_txns[txn_id].first = record_type;
-            all_txns[txn_id].second += len;
-
-            break;
-          }
-
-          default: {
-            LOG_ERROR("Unknown LogRecordType.");
-            PL_ASSERT(false);
-          }
+        if(stage==ReplayStage::PASS_1){
+          Pass1(buf+buf_curr, len);
+        } else if (stage==ReplayStage::PASS_2) {
+          Pass2(buf+buf_curr, len);
         }
 
         buf_curr += len;
@@ -194,48 +154,102 @@ void WalRecovery::FirstPass(ReplayTxnMap &all_txns, size_t &log_buffer_size){
   delete[] buf;
 }
 
+// Pass 1:
+void WalRecovery::Pass1(char *buf, int len) {
 
-//void WalRecovery::SecondPass(std::map<txn_id_t, std::pair<int, int>> &all_txns,
-//                  char *buffer, size_t buf_len){
+  CopySerializeInput record_decode((const void *)buf, len);
+  LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
+  txn_id_t txn_id = record_decode.ReadLong();
+
+  switch(record_type){
+    case LogRecordType::TRANSACTION_BEGIN:{
+      if(all_txns_.find(txn_id) != all_txns_.end()){
+        LOG_ERROR("Duplicate transaction");
+        PELOTON_ASSERT(false);
+      }
+
+      auto value = std::make_pair(record_type, len);
+      all_txns_.insert(std::make_pair(txn_id, value));
+
+      break;
+    }
+
+    case LogRecordType::TRANSACTION_COMMIT:{
+      // keeps track of the memory that needs to be allocated.
+      log_buffer_size_ += (len+all_txns_[txn_id].second);
+    }
+
+    // intentional fall through
+    case LogRecordType::TRANSACTION_ABORT:
+    case LogRecordType::TUPLE_DELETE:
+    case LogRecordType::TUPLE_UPDATE:
+    case LogRecordType::TUPLE_INSERT: {
+
+      if(all_txns_.find(txn_id) == all_txns_.end()){
+        LOG_ERROR("Transaction not found");
+        PELOTON_ASSERT(false);
+      }
+
+      all_txns_[txn_id].first = record_type;
+      all_txns_[txn_id].second += len;
+
+      break;
+    }
+
+    default: {
+      LOG_ERROR("Unknown LogRecordType.");
+      PELOTON_ASSERT(false);
+    }
+  }
+
+}
+
+// Pass 2:
+void WalRecovery::Pass2(char *buf, int len){
+  (void) buf;
+  (void) len;
+//
+//  CopySerializeInput record_decode((const void *)buf, len);
+//  LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
+//  txn_id_t txn_id = record_decode.ReadLong();
 //
 //
-//
-//
-//}
+//  if(commited_txns_.find(txn_id)==commited_txns_.end()) {
+//    return;
+//  }
+
+}
 
 void WalRecovery::ReplayLogFile(){
 
 
-  size_t curr_txn_offset = 0, log_buffer_size = 0;
-
-  ReplayTxnMap all_txns;
-
-  // key: txn_id, value: {log_buf_start_offset, log_buf_curr_offset}
-  std::map<txn_id_t, std::pair<int, int>> commited_txns;
-
+  size_t curr_txn_offset = 0;
 
   // Pass 1
-  FirstPass(all_txns, log_buffer_size);
+  ParseFromDisk(ReplayStage::PASS_1);
 
-  LOG_INFO("all_txns_len = %zu", all_txns.size());
+  LOG_INFO("all_txns_len = %zu", all_txns_.size());
 
-  for(auto it = all_txns.begin(); it!=all_txns.end(); it++){
+  for(auto it = all_txns_.begin(); it!=all_txns_.end(); it++){
 
     if(it->second.first != LogRecordType::TRANSACTION_COMMIT)
       continue;
 
     auto offset_pair = std::make_pair(curr_txn_offset, curr_txn_offset);
-    commited_txns.insert(std::make_pair(it->first, offset_pair));
+    commited_txns_.insert(std::make_pair(it->first, offset_pair));
 
     curr_txn_offset += it->second.second;
   }
 
+  for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
+    LOG_INFO("txn_id = %llu offset = %d", it->first, it->second.first);
+  }
 
   // Pass 2
-//  char *log_buffer  = new char[log_buffer_size];
-//  SecondPass(commited_txns, log_buffer, log_buffer_size);
-//
-//
+  log_buffer_  = new char[log_buffer_size_];
+  ParseFromDisk(ReplayStage::PASS_2);
+
+
 //  // DEBUG INFO
 //  for(auto it = commited_txns.begin(); it!=commited_txns.end(); it++){
 //    txn_id_t txn_id = it->first;

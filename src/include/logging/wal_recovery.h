@@ -1,6 +1,8 @@
 #pragma once
 
+#include <fstream>
 #include <map>
+
 #include "type/serializeio.h"
 #include "logging/log_record.h"
 
@@ -12,6 +14,11 @@ namespace logging {
 class WalRecovery{
 
 private:
+
+    enum class ReplayStage{
+        PASS_1,
+        PASS_2
+    };
 
     // (graghura): this is a dirty hack to establish the
     // replay order. This is tightly coupled with the way
@@ -52,7 +59,9 @@ private:
 
 
 public:
-    WalRecovery() {}
+    WalRecovery() :
+      log_buffer_size_(0), log_buffer_(nullptr) {}
+
     ~WalRecovery(){}
 
 
@@ -60,24 +69,21 @@ public:
 
 private:
 
-    void ReplayLogFile();
-    void FirstPass(ReplayTxnMap &, size_t &log_buffer_size);
-    void SecondPass( std::map<txn_id_t, std::pair<int, int>> &all_txns,
-                                  char *buffer, size_t buf_len);
+  void ReplayLogFile();
+  void ParseFromDisk(ReplayStage stage);
+  void Pass1(char *buf, int len);
+  void Pass2(char *buf, int len);
 
-//    void SecondPass(ReplayTxnMap &all_txns, char *buffer, size_t buf_size);
-
-
-
-//  LogRecord ReadRecord(CopySerializeInput record_decode);
-//  void DoRecovery();
-//  void ReplayLogRecord();
 
   //TODO(graghura): don't hardcode the path
   std::string logpath_ = "/tmp/log";
   std::fstream fstream_;
 
+  int log_buffer_size_;
+  char *log_buffer_;
 
+  ReplayTxnMap all_txns_;
+  std::map<txn_id_t, std::pair<int, int>> commited_txns_;  // {txn_id, {log_buf_start_offset, log_buf_curr_offset}}
 
 
 };
