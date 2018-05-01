@@ -183,8 +183,8 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddCandidates(
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
+CompressedIndexConfiguration::AddCandidates(const std::string& query) {
+
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -192,7 +192,9 @@ CompressedIndexConfiguration::AddCandidates(
   catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache, std::move(sql_stmt_list), database_name_);
+          txn->catalog_cache,
+          std::move(ToBindedSqlStmtList(query)),
+          database_name_);
   txn_manager_->CommitTransaction(txn);
 
   // Aggregate all columns in the same table
@@ -257,13 +259,25 @@ CompressedIndexConfiguration::ConvertIndexTriplet(
   return std::make_shared<brain::IndexObject>(db_oid, table_oid, input_oids);
 }
 
+std::unique_ptr<parser::SQLStatementList>
+    CompressedIndexConfiguration::ToBindedSqlStmtList(const std::string &query_string) {
+  auto txn = txn_manager_->BeginTransaction();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name_);
+  bind_node_visitor.BindNameToNode(sql_stmt);
+  txn_manager_->CommitTransaction(txn);
+
+  return sql_stmt_list;
+}
+
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::DropCandidates(
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
+CompressedIndexConfiguration::DropCandidates(const std::string& query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
-  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto sql_stmt = ToBindedSqlStmtList(query)->GetStatement(0);
 
   auto txn = txn_manager_->BeginTransaction();
   catalog_->GetDatabaseObject(database_name_, txn);

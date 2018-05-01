@@ -135,19 +135,6 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
-  std::unique_ptr<parser::SQLStatementList> GetBindedSqlStmtList(
-      const std::string &query_string, const std::string &database_name) {
-    auto txn = txn_manager_->BeginTransaction();
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-    auto sql_stmt = sql_stmt_list->GetStatement(0);
-    auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name);
-    bind_node_visitor.BindNameToNode(sql_stmt);
-    txn_manager_->CommitTransaction(txn);
-
-    return sql_stmt_list;
-  }
-
  private:
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
@@ -184,13 +171,10 @@ TEST_F(RLFrameworkTest, BasicTest) {
   }
 
   std::string query_string = "UPDATE dummy_table_1 SET a = 0 WHERE b = 1;";
-  auto drop_sql_stmt_list = GetBindedSqlStmtList(query_string, database_name);
   auto drop_candidates =
-      comp_idx_config.DropCandidates(std::move(drop_sql_stmt_list));
-
-  auto add_sql_stmt_list = GetBindedSqlStmtList(query_string, database_name);
+      comp_idx_config.DropCandidates(query_string);
   auto add_candidates =
-      comp_idx_config.DropCandidates(std::move(add_sql_stmt_list));
+      comp_idx_config.DropCandidates(query_string);
 
   // TODO (weichenl): add EXPECT_EQ()
 }
