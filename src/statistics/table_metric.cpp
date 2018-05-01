@@ -38,7 +38,7 @@ void TableMetricOld::Aggregate(AbstractMetricOld &source) {
   table_memory_.Aggregate(table_metric.GetTableMemory());
 }
 
-void TableMetric::Aggregate(AbstractMetric &other) {
+void TableMetricRawData::Aggregate(AbstractRawData &other) {
   auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
   for (auto &entry : other_index_metric.counters_) {
     auto &this_counter = counters_[entry.first];

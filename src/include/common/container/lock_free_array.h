@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include "tbb/concurrent_vector.h"
-#include "tbb/tbb_allocator.h"
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
 #include <array>
 #include <atomic>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
+#include "tbb/concurrent_vector.h"
+#include "tbb/tbb_allocator.h"
 
 namespace peloton {
 
@@ -62,6 +62,35 @@ class LockFreeArray {
 
   // Exists ?
   bool Contains(const ValueType &value);
+
+  /**
+   * Wrapper iterator class around tbb_iterator
+   */
+  class Iterator {
+    using tbb_iterator = tbb::internal::vector_iterator<
+        tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>>,
+        ValueType>;
+
+   public:
+    Iterator(tbb_iterator iter) : iter_(iter) {}
+
+    inline Iterator &operator++() {
+      ++iter_;
+      return *this;
+    }
+
+    inline ValueType &operator*() { return *iter_; }
+
+    inline bool operator==(const Iterator &rhs) { return iter_ == rhs.iter_; }
+    inline bool operator!=(const Iterator &rhs) { return iter_ != rhs.iter_; }
+
+   private:
+    tbb_iterator iter_;
+  };
+
+  Iterator Begin() { return Iterator(lock_free_array.begin()); }
+
+  Iterator End() { return Iterator(lock_free_array.end()); }
 
  private:
   // lock free array

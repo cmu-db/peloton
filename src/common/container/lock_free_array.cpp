@@ -13,9 +13,9 @@
 #include <memory>
 
 #include "common/container/lock_free_array.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -27,7 +27,7 @@ namespace storage {
 class TileGroup;
 class Database;
 class IndirectionArray;
-}
+}  // namespace storage
 
 template <typename ValueType>
 LOCK_FREE_ARRAY_TYPE::LockFreeArray() {
@@ -35,7 +35,10 @@ LOCK_FREE_ARRAY_TYPE::LockFreeArray() {
 }
 
 template <typename ValueType>
-LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
+LOCK_FREE_ARRAY_TYPE::~LockFreeArray() {
+  lock_free_array.clear();
+  lock_free_array.shrink_to_fit();
+}
 
 template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value) {
@@ -93,13 +96,19 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
 }
 
 template <typename ValueType>
-size_t LOCK_FREE_ARRAY_TYPE::GetSize() const { return lock_free_array.size(); }
+size_t LOCK_FREE_ARRAY_TYPE::GetSize() const {
+  return lock_free_array.size();
+}
 
 template <typename ValueType>
-bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
+bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const {
+  return lock_free_array.empty();
+}
 
 template <typename ValueType>
-void LOCK_FREE_ARRAY_TYPE::Clear() { lock_free_array.clear(); }
+void LOCK_FREE_ARRAY_TYPE::Clear() {
+  lock_free_array.clear();
+}
 
 template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
@@ -107,7 +116,7 @@ bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
 
   for (std::size_t array_itr = 0; array_itr < lock_free_array.size();
        array_itr++) {
-    auto array_value = lock_free_array.at(array_itr);
+    auto &array_value = lock_free_array.at(array_itr);
     // Check array value
     if (array_value == value) {
       exists = true;

@@ -62,19 +62,21 @@ class Metric {
   virtual ~Metric() = default;
 
   // TODO(tianyu): fill arguments
-  virtual void OnTransactionBegin() {};
-  virtual void OnTransactionCommit(oid_t) {};
-  virtual void OnTransactionAbort(oid_t) {};
-  virtual void OnTupleRead(oid_t, size_t) {};
-  virtual void OnTupleUpdate(oid_t) {};
-  virtual void OnTupleInsert(oid_t) {};
-  virtual void OnTupleDelete(oid_t) {};
-  virtual void OnIndexRead(oid_t, size_t) {};
-  virtual void OnIndexUpdate(oid_t) {};
-  virtual void OnIndexInsert(oid_t) {};
-  virtual void OnIndexDelete(oid_t) {};
-  virtual void OnQueryBegin() {};
-  virtual void OnQueryEnd() {};
+  virtual void OnTransactionBegin(){};
+  virtual void OnTransactionCommit(oid_t){};
+  virtual void OnTransactionAbort(oid_t){};
+  virtual void OnTupleRead(oid_t, size_t){};
+  virtual void OnTupleUpdate(oid_t){};
+  virtual void OnTupleInsert(oid_t){};
+  virtual void OnTupleDelete(oid_t){};
+  virtual void OnIndexRead(oid_t, size_t){};
+  virtual void OnIndexUpdate(oid_t){};
+  virtual void OnIndexInsert(oid_t){};
+  virtual void OnIndexDelete(oid_t){};
+  virtual void OnMemoryAlloc(oid_t, size_t){};
+  virtual void OnMemoryFree(oid_t, size_t){};
+  virtual void OnQueryBegin(){};
+  virtual void OnQueryEnd(){};
 
   /**
    * @brief Replace RawData with an empty one and return the old one.
@@ -102,7 +104,7 @@ class Metric {
 };
 
 /* Forward Declaration */
-template<typename DataType>
+template <typename DataType>
 class AbstractMetric;
 
 /**
@@ -115,7 +117,7 @@ class AbstractMetric;
  *
  * @tparam DataType the type of AbstractRawData this Wrapper holds
  */
-template<typename DataType>
+template <typename DataType>
 class RawDataWrapper {
   friend class AbstractMetric<DataType>;
 
@@ -150,7 +152,7 @@ class RawDataWrapper {
  *
  * @tparam DataType the type of AbstractRawData this Metric holds
  */
-template<typename DataType>
+template <typename DataType>
 class AbstractMetric : public Metric {
  public:
   /**

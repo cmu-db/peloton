@@ -13,6 +13,8 @@ enum class stats_event_type {
   INDEX_UPDATE,
   INDEX_INSERT,
   INDEX_DELETE,
+  MEMORY_ALLOC,
+  MEMORY_FREE,
   QUERY_BEGIN,
   QUERY_END
 };

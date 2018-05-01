@@ -100,6 +100,14 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
       metric->OnIndexDelete(index_id);
   };
+  inline void CollectMemoryAlloc(oid_t oid, size_t bytes) {
+    for (auto &metric : metric_dispatch_[stats_event_type::MEMORY_ALLOC])
+      metric->OnMemoryAlloc(oid, bytes);
+  };
+  inline void CollectMemoryFree(oid_t oid, size_t bytes) {
+    for (auto &metric : metric_dispatch_[stats_event_type::MEMORY_FREE])
+      metric->OnMemoryFree(oid, bytes);
+  };
   inline void CollectQueryBegin() {
     for (auto &metric : metric_dispatch_[stats_event_type::QUERY_BEGIN])
       metric->OnQueryBegin();

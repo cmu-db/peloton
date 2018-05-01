@@ -108,6 +108,14 @@ class TableMetric : public AbstractMetric<TableMetricRawData> {
   inline void OnTupleDelete(oid_t table_id) override {
     GetRawData()->IncrementTableDeletes(table_id);
   }
+
+  inline void OnMemoryAlloc(oid_t table_id, size_t bytes) override {
+    GetRawData()->IncrementTableMemAlloc(table_id, bytes);
+  }
+
+  inline void OnMemoryFree(oid_t table_id, size_t bytes) override {
+    GetRawData()->DecrementTableMemAlloc(table_id, bytes);
+  }
 };
 /**
  * Metric for the access and memory of a table
