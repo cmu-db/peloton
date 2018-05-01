@@ -148,6 +148,23 @@ class RLFrameworkTest : public PelotonTest {
     return sql_stmt_list;
   }
 
+  std::shared_ptr<brain::IndexObject> GetIndexObjectFromString(
+      const std::string &database_name, const std::string &table_name,
+      const std::vector<std::string> &columns) {
+    auto txn = txn_manager_->BeginTransaction();
+    const auto db_obj = catalog_->GetDatabaseWithName(database_name, txn);
+    const auto db_oid = db_obj->GetOid();
+    const auto table_obj = db_obj->GetTableWithName(table_name);
+    const auto table_oid = table_obj->GetOid();
+    std::vector<oid_t> col_oids;
+    for (const auto &col : columns) {
+      col_oids.push_back(table_obj->GetSchema()->GetColumnID(col));
+    }
+    txn_manager_->CommitTransaction(txn);
+
+    return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+  }
+
  private:
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
@@ -192,7 +209,10 @@ TEST_F(RLFrameworkTest, BasicTest) {
   auto add_candidates =
       comp_idx_config.AddCandidates(std::move(add_sql_stmt_list));
 
-  // TODO (weichenl): add EXPECT_EQ()
+  auto index_a_b =
+      GetIndexObjectFromString(database_name, table_name_1, {"a", "b"});
+  auto index_b_c =
+      GetIndexObjectFromString(database_name, table_name_1, {"b", "c"});
 }
 
 }  // namespace test
