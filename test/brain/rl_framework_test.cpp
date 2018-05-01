@@ -174,7 +174,7 @@ TEST_F(RLFrameworkTest, BasicTest) {
   auto drop_candidates =
       comp_idx_config.DropCandidates(query_string);
   auto add_candidates =
-      comp_idx_config.DropCandidates(query_string);
+      comp_idx_config.AddCandidates(query_string);
 
   // TODO (weichenl): add EXPECT_EQ()
 }

@@ -193,7 +193,7 @@ CompressedIndexConfiguration::AddCandidates(const std::string& query) {
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
           txn->catalog_cache,
-          std::move(ToBindedSqlStmtList(query)),
+          ToBindedSqlStmtList(query),
           database_name_);
   txn_manager_->CommitTransaction(txn);
 

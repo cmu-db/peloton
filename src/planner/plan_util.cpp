@@ -118,6 +118,9 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
   std::string table_name;
   oid_t database_id, table_id;
 
+  auto db_object = catalog_cache.GetDatabaseObject(db_name);
+  database_id = db_object->GetDatabaseOid();
+
   // Assume that there is only one SQLStatement in the list
   auto sql_stmt = sql_stmt_list->GetStatement(0);
   switch (sql_stmt->GetType()) {
@@ -136,11 +139,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
       auto txn = txn_manager.BeginTransaction();
 
       try {
-        auto plan =
-            optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
-
-        auto db_object = catalog_cache.GetDatabaseObject(db_name);
-        database_id = db_object->GetDatabaseOid();
+        auto plan = optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
         // Perform a breadth first search on plan tree
         std::queue<const AbstractPlan *> scan_queue;
