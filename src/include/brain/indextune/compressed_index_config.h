@@ -122,29 +122,27 @@ class CompressedIndexConfiguration {
   /**
    * @brief Get the total number of possible indexes in current database
    */
-  size_t GetConfigurationCount();
+  size_t GetConfigurationCount() const;
 
   /**
    * @brief Get the current index configuration as a bitset
    */
-  const boost::dynamic_bitset<> *GetCurrentIndexConfig();
+  const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
 
   /**
-   * @brief Get the Eigen vector representation of the current index config bitset
+   * @brief Get the Eigen vector/feature representation of the current index config bitset
    */
-  void GetEigen(vector_eig& curr_config_vec);
+  void ToEigen(vector_eig& curr_config_vec) const;
 
-  std::string ToString();
-
-
+  std::string ToString() const;
 
  private:
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
-
   std::unordered_map<oid_t, std::unordered_map<oid_t, size_t>> table_id_map_;
   std::unordered_map<oid_t, std::unordered_map<size_t, oid_t>> id_table_map_;
+
   std::map<oid_t, size_t> table_offset_map_;
   std::map<size_t, oid_t> table_offset_reverse_map_;
 
