@@ -1,5 +1,6 @@
 
 
+#include <include/concurrency/epoch_manager_factory.h>
 #include "logging/wal_recovery.h"
 #include "logging/log_util.h"
 #include "common/logger.h"
@@ -20,82 +21,6 @@ void WalRecovery::StartRecovery(){
   ReplayLogFile();
 }
 
-
-//void WalRecovery::InstallInsertRecord(){
-//
-//}
-//
-//void WalRecovery::InstallDeleteRecord(){
-//
-//}
-//
-//void WalRecovery::InstallUpdateRecord(){
-//
-//}
-
-//LogRecord WalRecovery::ReadRecord(CopySerializeInput record_decode){
-//
-//  LogRecordType record_type =
-//          (LogRecordType)(record_decode.ReadEnumInSingleByte());
-//
-//  eid_t record_eid = record_decode.ReadLong();
-//  txn_id_t record_txn_id = record_decode.ReadLong();
-//  cid_t record_cid = record_decode.ReadLong();
-//
-//
-//  switch(record_type){
-//    case LogRecordType::TRANSACTION_BEGIN:
-//    case LogRecordType::TRANSACTION_ABORT:
-//    case LogRecordType::TRANSACTION_COMMIT: {
-//      return logging::LogRecordFactory::CreateTupleRecord(
-//              record_type, record_eid, record_txn_id,
-//              record_cid);
-//    }
-//
-//    case LogRecordType::TUPLE_INSERT:
-//    case LogRecordType::TUPLE_DELETE: {
-//      oid_t database_id = (oid_t)record_decode.ReadLong();
-//      oid_t table_id = (oid_t)record_decode.ReadLong();
-//
-//      oid_t tg_block = (oid_t)record_decode.ReadLong();
-//      oid_t tg_offset = (oid_t)record_decode.ReadLong();
-//
-//      return logging::LogRecordFactory::CreateTupleRecord(
-//              record_type, ItemPointer(tg_block, tg_offset),
-//              record_eid, record_txn_id,
-//              record_cid);
-//    }
-//
-//
-//    case LogRecordType::TUPLE_UPDATE:
-//      oid_t database_id = (oid_t)record_decode.ReadLong();
-//      oid_t table_id = (oid_t)record_decode.ReadLong();
-//
-//      oid_t old_tg_block = (oid_t)record_decode.ReadLong();
-//      oid_t old_tg_offset = (oid_t)record_decode.ReadLong();
-//
-//      oid_t tg_block = (oid_t)record_decode.ReadLong();
-//      oid_t tg_offset = (oid_t)record_decode.ReadLong();
-//
-//      return logging::LogRecordFactory::CreateTupleRecord(
-//              record_type, ItemPointer(old_tg_block, old_tg_offset),
-//              ItemPointer(tg_block, tg_offset),
-//              record_eid, record_txn_id,
-//              record_cid);
-//
-//
-//    default:
-//      LOG_ERROR("Unknown LogRecordType");
-//      PL_ASSERT(false);
-//
-//  }
-//
-//}
-
-//void WalRecovery::ReplayLogRecord(LogRecord &log_record){
-//
-//}
-//
 
 void WalRecovery::ParseFromDisk(ReplayStage stage){
 
@@ -221,6 +146,57 @@ void WalRecovery::ParseFromDisk(ReplayStage stage){
   delete[] buf;
 }
 
+void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
+  int start_offset = commited_txns_[txn_id].first;
+  int curr_offset  = start_offset;
+  int total_len = all_txns_[txn_id].second;
+
+  while(total_len > 0){
+
+//  LOG_INFO("length curr_offset = %d", curr_offset);
+
+    CopySerializeInput length_decode((const void *)(log_buffer_+curr_offset), sizeof(int));
+    int record_len = length_decode.ReadInt();
+
+    curr_offset += sizeof(int);
+
+//  LOG_INFO("length curr_offset = %d, record_len = %d", curr_offset, record_len);
+
+    CopySerializeInput record_decode((const void *)(log_buffer_+curr_offset), record_len);
+    LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
+    txn_id_t txn_id = record_decode.ReadLong();
+    eid_t  epoch_id = record_decode.ReadLong();
+
+    (void) txn_id;
+//  LOG_INFO("replaying txn %llu", txn_id);
+
+    if(max_epoch_id_==INVALID_EID)
+      max_epoch_id_ = epoch_id;
+    else if(epoch_id>max_epoch_id_)
+      max_epoch_id_ = epoch_id;
+
+    (void) record_type;
+
+    curr_offset += record_len;
+    total_len -= record_len + sizeof(int);
+  }
+
+}
+
+void WalRecovery::ReplayAllTxns(){
+
+
+  for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
+    ReplaySingleTxn(it->first);
+  }
+
+  // reset epoch
+  if (max_epoch_id_ != INVALID_EID) {
+    auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+    epoch_manager.Reset(max_epoch_id_+1);
+  }
+}
+
 
 void WalRecovery::ReplayLogFile(){
 
@@ -230,14 +206,14 @@ void WalRecovery::ReplayLogFile(){
   // Pass 1
   ParseFromDisk(ReplayStage::PASS_1);
 
-  LOG_INFO("all_txns_len = %zu", all_txns_.size());
+//  LOG_INFO("all_txns_len = %zu", all_txns_.size());
 
   for(auto it = all_txns_.begin(); it!=all_txns_.end(); it++){
 
     if(it->second.first != LogRecordType::TRANSACTION_COMMIT)
       continue;
 
-    LOG_INFO("txn_id = %llu length = %d", it->first, it->second.second);
+//    LOG_INFO("txn_id = %llu length = %d", it->first, it->second.second);
 
     auto offset_pair = std::make_pair(curr_txn_offset, curr_txn_offset);
     commited_txns_.insert(std::make_pair(it->first, offset_pair));
@@ -245,13 +221,15 @@ void WalRecovery::ReplayLogFile(){
     curr_txn_offset += it->second.second;
   }
 
-  for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
-    LOG_INFO("txn_id = %llu offset = %d", it->first, it->second.first);
-  }
+//  for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
+//    LOG_INFO("txn_id = %llu offset = %d", it->first, it->second.first);
+//  }
 
   // Pass 2
   log_buffer_  = new char[log_buffer_size_];
   ParseFromDisk(ReplayStage::PASS_2);
+
+  ReplayAllTxns();
 
 
 //  // DEBUG INFO

@@ -60,7 +60,9 @@ private:
 
 public:
     WalRecovery() :
-      log_buffer_size_(0), log_buffer_(nullptr) {}
+      max_epoch_id_(INVALID_EID),
+      log_buffer_size_(0),
+      log_buffer_(nullptr) {}
 
     ~WalRecovery(){}
 
@@ -71,13 +73,18 @@ private:
 
   void ReplayLogFile();
   void ParseFromDisk(ReplayStage stage);
-//  void Pass1(char *buf, int len);
-  void Pass2(char *buf, int len);
+  void ReplayAllTxns();
+  void ReplaySingleTxn(txn_id_t txn_id);
+
+
+
 
 
   //TODO(graghura): don't hardcode the path
   std::string logpath_ = "/tmp/log";
   std::fstream fstream_;
+
+  eid_t max_epoch_id_;
 
   int log_buffer_size_;
   char *log_buffer_;
