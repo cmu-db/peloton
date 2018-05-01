@@ -224,10 +224,16 @@ CompressedIndexConfiguration::GetCurrentIndexConfig() {
 void CompressedIndexConfiguration::GetEigen(vector_eig &curr_config_vec) {
   curr_config_vec = vector_eig::Zero(GetConfigurationCount());
   size_t config_id = cur_index_config_->find_first();
-  while(config_id != boost::dynamic_bitset::npos) {
+  while(config_id != boost::dynamic_bitset<>::npos) {
     curr_config_vec[config_id] = 1.0;
     config_id = cur_index_config_->find_next(config_id);
   }
+}
+
+std::string CompressedIndexConfiguration::ToString() {
+  std::string output;
+  boost::to_string(*GetCurrentIndexConfig(), output);
+  return output;
 }
 }
 }

@@ -33,14 +33,18 @@ class RLFrameworkTest : public PelotonTest {
       : catalog_{catalog::Catalog::GetInstance()},
         txn_manager_{&concurrency::TransactionManagerFactory::GetInstance()} {}
 
-  // Create a new database
+  /**
+   * @brief Create a new database
+   */
   void CreateDatabase(const std::string &db_name) {
     auto txn = txn_manager_->BeginTransaction();
     catalog_->CreateDatabase(db_name, txn);
     txn_manager_->CommitTransaction(txn);
   }
 
-  // Create a new table with schema (a INT, b INT, c INT).
+  /**
+   * @brief Create a new table with schema (a INT, b INT, c INT).
+   */
   void CreateTable(const std::string &db_name, const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -59,6 +63,9 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
+  /**
+   * @brief Create two indexes on columns (a, b) and (b, c), respectively
+   */
   std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_A(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
@@ -89,6 +96,9 @@ class RLFrameworkTest : public PelotonTest {
     return result;
   }
 
+  /**
+   * @brief Create one index on columns (a, c)
+   */
   std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_B(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
@@ -135,24 +145,24 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::string table_name_1 = "dummy_table_1";
   std::string table_name_2 = "dummy_table_2";
 
+  // We build a DB with 2 tables, each having 3 columns
   CreateDatabase(database_name);
   CreateTable(database_name, table_name_1);
   CreateTable(database_name, table_name_2);
 
-  // create index on (a, b) and (b, c)
+  // create index on (a1, b1) and (b1, c1)
   auto idx_objs = CreateIndex_A(database_name, table_name_1);
-  // create index on (a, c)
+  // create index on (a2, c2)
   auto idx_objs_B = CreateIndex_B(database_name, table_name_2);
-
+  // Put everything in the vector of index objects
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
   auto comp_idx_config = std::unique_ptr<brain::CompressedIndexConfiguration>(
       new brain::CompressedIndexConfiguration(database_name));
-
-  auto cur_bit_set = comp_idx_config->GetCurrentIndexConfig();
-  std::string output;
-  boost::to_string(*cur_bit_set, output);
-  LOG_DEBUG("bitset: %s", output.c_str());
+  // We expect 2**3 possible configurations
+  EXPECT_EQ(comp_idx_config->GetConfigurationCount(), 16);
+  
+  LOG_DEBUG("bitset: %s", comp_idx_config->ToString().c_str());
 
   for (const auto &idx_obj : idx_objs) {
     size_t global_offset = comp_idx_config->GetGlobalOffset(idx_obj);
