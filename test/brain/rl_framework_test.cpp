@@ -33,14 +33,18 @@ class RLFrameworkTest : public PelotonTest {
       : catalog_{catalog::Catalog::GetInstance()},
         txn_manager_{&concurrency::TransactionManagerFactory::GetInstance()} {}
 
-  // Create a new database
+  /**
+   * @brief Create a new database
+   */
   void CreateDatabase(const std::string &db_name) {
     auto txn = txn_manager_->BeginTransaction();
     catalog_->CreateDatabase(db_name, txn);
     txn_manager_->CommitTransaction(txn);
   }
 
-  // Create a new table with schema (a INT, b INT, c INT).
+  /**
+   * @brief Create a new table with schema (a INT, b INT, c INT).
+   */
   void CreateTable(const std::string &db_name, const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -59,6 +63,9 @@ class RLFrameworkTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
+  /**
+   * @brief Create two indexes on columns (a, b) and (b, c), respectively
+   */
   std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_A(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
@@ -89,6 +96,9 @@ class RLFrameworkTest : public PelotonTest {
     return result;
   }
 
+  /**
+   * @brief Create one index on columns (a, c)
+   */
   std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_B(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
