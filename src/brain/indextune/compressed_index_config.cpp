@@ -73,7 +73,7 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
       std::vector<oid_t> col_oids(indexed_cols);
       auto idx_obj =
           std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(cur_index_config_, idx_obj);
+      AddIndex(*cur_index_config_, idx_obj);
     }
   }
 
