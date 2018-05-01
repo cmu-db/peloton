@@ -208,15 +208,20 @@ void WalRecovery::Pass1(char *buf, int len) {
 void WalRecovery::Pass2(char *buf, int len){
   (void) buf;
   (void) len;
-//
-//  CopySerializeInput record_decode((const void *)buf, len);
-//  LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
-//  txn_id_t txn_id = record_decode.ReadLong();
-//
-//
-//  if(commited_txns_.find(txn_id)==commited_txns_.end()) {
-//    return;
-//  }
+
+  CopySerializeInput record_decode((const void *)buf, len);
+  LogRecordType record_type = (LogRecordType)(record_decode.ReadEnumInSingleByte());
+  txn_id_t txn_id = record_decode.ReadLong();
+
+  (void) record_type;
+
+  if(commited_txns_.find(txn_id)==commited_txns_.end()) {
+    return;
+  }
+
+  int curr_offset = commited_txns_[txn_id].second;
+  PL_MEMCPY(log_buffer_+curr_offset, buf, len);
+  commited_txns_[txn_id].second += len;
 
 }
 
