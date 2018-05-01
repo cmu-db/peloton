@@ -947,9 +947,10 @@ std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
  * @param txn the transaction Context
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
-                               std::unique_ptr<catalog::Schema> new_schema,
-                               concurrency::TransactionContext *txn) {
+ResultType Catalog::AlterTable(
+    UNUSED_ATTRIBUTE oid_t database_oid, UNUSED_ATTRIBUTE oid_t table_oid,
+    UNUSED_ATTRIBUTE std::unique_ptr<catalog::Schema> &new_schema,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
   LOG_TRACE("AlterTable in Catalog");
 
   if (txn == nullptr)

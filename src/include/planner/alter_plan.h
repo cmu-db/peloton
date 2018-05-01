@@ -75,11 +75,18 @@ class AlterPlan : public AbstractPlan {
 
   std::string GetDatabaseName() const { return database_name; }
 
-  // catalog::Schema *GetAddedColumns() const { return added_columns; }
+  const std::vector<std::unique_ptr<catalog::Schema>> &GetAddedColumns() const {
+    return added_columns;
+  }
 
   const std::vector<std::string> &GetDroppedColumns() const {
     return dropped_columns;
   }
+
+  const std::vector<std::pair<std::string, type::TypeId>> &
+  GetChangedTypeColumns() const {
+    return changed_type_columns;
+  };
 
   AlterType GetAlterTableType() const { return type; }
 

@@ -33,9 +33,8 @@ class Column : public Printable {
     // Nothing to see...
   }
 
-  Column(type::TypeId value_type, size_t column_length,
-         std::string column_name, bool is_inlined = false,
-         oid_t column_offset = INVALID_OID)
+  Column(type::TypeId value_type, size_t column_length, std::string column_name,
+         bool is_inlined = false, oid_t column_offset = INVALID_OID)
       : column_name(column_name),
         column_type(value_type),
         fixed_length(INVALID_OID),
@@ -77,6 +76,8 @@ class Column : public Printable {
   size_t GetVariableLength() const { return variable_length; }
 
   inline type::TypeId GetType() const { return column_type; }
+
+  inline void SetType(const type::TypeId &new_type) { column_type = new_type; }
 
   inline bool IsInlined() const { return is_inlined; }
 

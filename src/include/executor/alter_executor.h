@@ -44,11 +44,8 @@ class AlterExecutor : public AbstractExecutor {
   bool RenameColumn(const planner::AlterPlan &node,
                     concurrency::TransactionContext *txn);
 
-  bool DropColumn(const planner::AlterPlan &node,
+  bool AlterTable(const planner::AlterPlan &node,
                   concurrency::TransactionContext *txn);
-
- private:
-  bool isAlter_;
 };
 
 }  // executor
