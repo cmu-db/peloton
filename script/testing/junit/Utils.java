@@ -22,7 +22,7 @@ public class Utils {
                 if (returnedString == null) {
                     assertEquals(expectedResult.getItemAtIndex(i, j), "null");
                 } else {
-                    assertTrue(results.getString(j + 1).equals(expectedResult.getItemAtIndex(i, j)));
+                    assertTrue(returnedString.equals(expectedResult.getItemAtIndex(i, j)));
                 }
             }
         }
@@ -53,7 +53,17 @@ class ExpectedResult {
     }
 
     public String getItemAtIndex(int row, int column) {
-        return this.rows.get(row)[column];
+        String ret = this.rows.get(row)[column];
+        if (ret == null) {
+            for (int i = 0; i < this.rows.size(); i++) {
+                for (int j = 0; j < this.rows.get(i).length; j++) {
+                    System.out.print(this.rows.get(i)[j] + "|");
+                }
+                System.out.println();
+            }
+            throw new RuntimeException("Should not return NULL");
+        }
+        return ret;
     }
 
     private List<String[]> rows;
