@@ -19,7 +19,7 @@
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "util/file_util.h"
+#include "brain/util/eigen_util.h"
 
 namespace peloton {
 namespace brain {
@@ -58,6 +58,9 @@ class CompressedIndexConfiguration {
   size_t GetConfigurationCount();
 
   const std::shared_ptr<boost::dynamic_bitset<>> GetCurrentIndexConfig();
+
+  // Get the Eigen vector representation of the current index config bitset
+  void GetEigen(vector_eig& curr_config_vec);
 
  private:
   std::string database_name_;
