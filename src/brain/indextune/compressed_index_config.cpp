@@ -113,6 +113,10 @@ bool CompressedIndexConfiguration::IsSet(
   return cur_index_config_->test(offset);
 }
 
+bool CompressedIndexConfiguration::IsSet(const size_t offset) const {
+  return cur_index_config_->test(offset);
+}
+
 std::shared_ptr<brain::IndexObject> CompressedIndexConfiguration::GetIndex(
     size_t global_offset) const {
   size_t table_offset;
@@ -157,15 +161,15 @@ void CompressedIndexConfiguration::AddIndex(size_t offset) {
 }
 
 void CompressedIndexConfiguration::AddIndex(
-    std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
+    boost::dynamic_bitset<> &bitmap,
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
-  bitmap->set(offset);
+  bitmap.set(offset);
 }
 
-void CompressedIndexConfiguration::AddIndex(
-    std::unique_ptr<boost::dynamic_bitset<>> &bitmap, size_t offset) {
-  bitmap->set(offset);
+void CompressedIndexConfiguration::AddIndex(boost::dynamic_bitset<> &bitmap,
+                                            size_t offset) {
+  bitmap.set(offset);
 }
 
 void CompressedIndexConfiguration::RemoveIndex(
@@ -179,26 +183,46 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddDropCandidate(
-    const IndexConfiguration &indexes) {
-  const auto &index_objs = indexes.GetIndexes();
+CompressedIndexConfiguration::AddCandidates(
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
-  // TODO: should we make db_oid, table_oid as private member?
   auto txn = txn_manager_->BeginTransaction();
-  const auto db_oid =
-      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
+  std::vector<planner::col_triplet> affected_cols_vector =
+      planner::PlanUtil::GetIndexableColumns(
+          txn->catalog_cache, std::move(sql_stmt_list), database_name_);
   txn_manager_->CommitTransaction(txn);
 
-  for (const auto &idx_obj : index_objs) {
-    const auto table_oid = idx_obj->table_oid;
-    const auto &column_oids = idx_obj->column_oids;
+  // Aggregate all columns in the same table
+  std::unordered_map<oid_t, brain::IndexObject> aggregate_map;
+
+  for (const auto &each_triplet : affected_cols_vector) {
+    const auto db_oid = std::get<0>(each_triplet);
+    const auto table_oid = std::get<1>(each_triplet);
+    const auto col_oid = std::get<2>(each_triplet);
+
+    if (aggregate_map.find(table_oid) == aggregate_map.end()) {
+      aggregate_map[table_oid] = brain::IndexObject();
+      aggregate_map.at(table_oid).db_oid = db_oid;
+      aggregate_map.at(table_oid).table_oid = table_oid;
+    }
+
+    aggregate_map.at(table_oid).column_oids.insert(col_oid);
+  }
+
+  const auto db_oid = aggregate_map.begin()->second.db_oid;
+
+  for (const auto it : aggregate_map) {
+    const auto table_oid = it.first;
+    const auto &column_oids = it.second.column_oids;
     const auto table_offset = table_offset_map_.at(table_oid);
 
     // Insert empty index
-    AddIndex(result, table_offset);
+    AddIndex(*result, table_offset);
 
+    // For each index, iterate through its columns
+    // and incrementally add the columns to the prefix closure of current table
     std::vector<oid_t> col_oids;
     for (const auto column_oid : column_oids) {
       col_oids.push_back(column_oid);
@@ -206,22 +230,11 @@ CompressedIndexConfiguration::AddDropCandidate(
       // Insert prefix index
       auto idx_new =
           std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(result, idx_new);
+      AddIndex(*result, idx_new);
     }
   }
 
   return result;
-}
-
-std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddDropCandidate(
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list) {
-  if (nullptr == sql_stmt_list) {
-    return std::unique_ptr<boost::dynamic_bitset<>>(
-        new boost::dynamic_bitset<>(8));
-  }
-  return std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(16));
 }
 
 size_t CompressedIndexConfiguration::GetConfigurationCount() {

@@ -71,6 +71,13 @@ class CompressedIndexConfiguration {
   bool IsSet(const std::shared_ptr<brain::IndexObject> &index_obj) const;
 
   /**
+  * Check whether an index is in current configuration or not
+  * @param offset: the global offset of the index
+  * @return the bit for that index is set or not
+  */
+  bool IsSet(const size_t offset) const;
+
+  /**
    * Given a global offset, get the corresponding index
    * @param global_offset: the global offset
    * @return the index object at "global_offset" of current configuration
@@ -102,20 +109,12 @@ class CompressedIndexConfiguration {
   void RemoveIndex(size_t offset);
 
   /**
-   * Given an index configuration, generate the prefix closure
-   * @param indexes: the index configuration
-   * @return the prefix closure as a bitset
-   */
-  std::unique_ptr<boost::dynamic_bitset<>> AddDropCandidate(
-      const IndexConfiguration &indexes);
-
-  /**
    * Given a SQLStatementList, generate the prefix closure from the first
    * SQLStatement element
    * @param sql_stmt_list: the SQLStatementList
    * @return the prefix closure as a bitset
    */
-  std::unique_ptr<boost::dynamic_bitset<>> AddDropCandidate(
+  std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
 
   /**
@@ -133,20 +132,57 @@ class CompressedIndexConfiguration {
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
 
+  /**
+   * Outer mapping: table_oid -> inner mapping
+   * Inner mapping: column_oid -> internal mapping ID
+   *
+   * For example, table T (table_oid = 12345) has three columns: A (column_oid =
+   * 5), B (column_oid = 3), C (column_oid = 14). Then we will have:
+   * table_id_map_[12345] ==> inner mapping
+   * inner mapping ==> {5->0, 3->1, 14, 2} (here 5, 3 and 14 are column oids, 0,
+   * 1 and 2 are interal mapping IDs)
+   */
   std::unordered_map<oid_t, std::unordered_map<oid_t, size_t>> table_id_map_;
+
+  /**
+   * Outer mapping: table_oid -> inner reverse mapping
+   * Inner reverse mapping: internal mapping ID -> column_oid
+   *
+   * Using the same example as above, now we will have:
+   * table_id_map_[12345] ==> inner reverse mapping
+   * inner revserse mapping ==> {0->5, 1->3, 2->14} (here 5, 3 and 14 are column
+   * oids, 0, 1 and 2 are interal mapping IDs)
+   */
   std::unordered_map<oid_t, std::unordered_map<size_t, oid_t>> id_table_map_;
+
+  /**
+   * the mapping between table_oid and the starting position of table in the
+   * bitset.
+   *
+   * For example, table A (table_oid = 111) has 3 columns (8 possible index
+   * configs in total), table B (table_oid =
+   * 222) has 2 columns (4 possible index configs in total), table C (table_oid
+   * = 333) has 4 columns (16 possible index configs in total).
+   *
+   * Then we will have:
+   * table_offset_map_[111] = 0
+   * table_offset_map_[222] = 8
+   * table_offset_map_[333] = 12
+   */
   std::map<oid_t, size_t> table_offset_map_;
+
+  // This map is just the reverse mapping of table_offset_map_
   std::map<size_t, oid_t> table_offset_reverse_map_;
 
+  // the next offset of a new table
   size_t next_table_offset_;
 
   std::unique_ptr<boost::dynamic_bitset<>> cur_index_config_;
 
-  void AddIndex(std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
+  void AddIndex(boost::dynamic_bitset<> &bitmap,
                 const std::shared_ptr<IndexObject> &idx_object);
 
-  void AddIndex(std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
-                size_t offset);
+  void AddIndex(boost::dynamic_bitset<> &bitmap, size_t offset);
 };
 }
 }

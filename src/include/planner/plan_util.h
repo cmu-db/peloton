@@ -59,7 +59,7 @@ class PlanUtil {
   * @brief Get the indexes affected by a given query
   * @param CatalogCache
   * @param SQLStatement
-  * @return set of affected index object ids
+  * @return vector of affected index ids with triplet format
   */
   static const std::vector<col_triplet> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
