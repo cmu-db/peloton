@@ -19,13 +19,14 @@
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "util/file_util.h"
+#include "brain/util/eigen_util.h"
 #include "planner/plan_util.h"
+#include "util/file_util.h"
 
 namespace peloton {
 namespace brain {
 
-// TODO: Maybe we should rename it to CompressedIndexConfigManager
+// TODO: Maybe we should rename it to CompressedIndexConfigUtil
 // TODO: Maybe we should decouple the Manager and the bitset based
 // CompressedIndexConfig
 
@@ -120,12 +121,20 @@ class CompressedIndexConfiguration {
   /**
    * @brief Get the total number of possible indexes in current database
    */
-  size_t GetConfigurationCount();
+  size_t GetConfigurationCount() const;
 
   /**
    * @brief Get the current index configuration as a bitset
    */
-  const boost::dynamic_bitset<> *GetCurrentIndexConfig();
+  const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
+
+  /**
+   * @brief Get the Eigen vector/feature representation of the current index
+   * config bitset
+   */
+  void ToEigen(vector_eig &curr_config_vec) const;
+
+  std::string ToString() const;
 
  private:
   std::string database_name_;

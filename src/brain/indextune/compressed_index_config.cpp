@@ -237,13 +237,54 @@ CompressedIndexConfiguration::AddCandidates(
   return result;
 }
 
-size_t CompressedIndexConfiguration::GetConfigurationCount() {
+size_t CompressedIndexConfiguration::GetConfigurationCount() const {
   return next_table_offset_;
 }
 
 const boost::dynamic_bitset<>
-    *CompressedIndexConfiguration::GetCurrentIndexConfig() {
+    *CompressedIndexConfiguration::GetCurrentIndexConfig() const {
   return cur_index_config_.get();
+}
+
+void CompressedIndexConfiguration::ToEigen(vector_eig &curr_config_vec) const {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  curr_config_vec = vector_eig::Zero(GetConfigurationCount());
+  size_t config_id = cur_index_config_->find_first();
+  while (config_id != boost::dynamic_bitset<>::npos) {
+    curr_config_vec[config_id] = 1.0;
+    config_id = cur_index_config_->find_next(config_id);
+  }
+}
+
+std::string CompressedIndexConfiguration::ToString() const {
+  // First get the entire bitset
+  std::stringstream str_stream;
+  std::string bitset_str;
+  boost::to_string(*GetCurrentIndexConfig(), bitset_str);
+  str_stream << "Database: " << database_name_ << std::endl;
+  str_stream << "Compressed Index Representation: " << bitset_str << std::endl;
+  for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
+       tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
+    auto next_tbl_offset_iter = std::next(tbl_offset_iter);
+    size_t start_idx = tbl_offset_iter->first;
+    size_t end_idx;
+    if (next_tbl_offset_iter == table_offset_reverse_map_.end()) {
+      end_idx = GetConfigurationCount();
+    } else {
+      end_idx = next_tbl_offset_iter->first;
+    }
+    oid_t table_oid = tbl_offset_iter->second;
+    str_stream << "Table OID: " << table_oid << " Compressed Section: "
+               << bitset_str.substr(start_idx, end_idx) << std::endl;
+    for (auto col_iter = table_id_map_.at(table_oid).begin();
+         col_iter != table_id_map_.at(table_oid).end(); col_iter++) {
+      str_stream << "Col OID: " << col_iter->first
+                 << " Offset: " << col_iter->second << std::endl;
+    }
+  }
+
+  return str_stream.str();
 }
 }
 }

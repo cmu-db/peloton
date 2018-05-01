@@ -145,23 +145,23 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::string table_name_1 = "dummy_table_1";
   std::string table_name_2 = "dummy_table_2";
 
+  // We build a DB with 2 tables, each having 3 columns
   CreateDatabase(database_name);
   CreateTable(database_name, table_name_1);
   CreateTable(database_name, table_name_2);
 
-  // create index on (a, b) and (b, c)
+  // create index on (a1, b1) and (b1, c1)
   auto idx_objs = CreateIndex_A(database_name, table_name_1);
-  // create index on (a, c)
+  // create index on (a2, c2)
   auto idx_objs_B = CreateIndex_B(database_name, table_name_2);
-
+  // Put everything in the vector of index objects
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
   auto comp_idx_config = brain::CompressedIndexConfiguration(database_name);
+  // We expect 2**3 possible configurations
+  EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
 
-  auto cur_bit_set = comp_idx_config.GetCurrentIndexConfig();
-  std::string output;
-  boost::to_string(*cur_bit_set, output);
-  LOG_DEBUG("bitset: %s", output.c_str());
+  LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
 
   for (const auto &idx_obj : idx_objs) {
     size_t global_offset = comp_idx_config.GetGlobalOffset(idx_obj);
