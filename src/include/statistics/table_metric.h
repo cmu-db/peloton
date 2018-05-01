@@ -14,7 +14,6 @@
 
 #include <sstream>
 #include <string>
-#include <boost/functional/hash.hpp>
 
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
@@ -79,17 +78,6 @@ class TableMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
-  struct pair_hash {
-    template <class T1, class T2>
-    std::size_t operator()(const std::pair<T1, T2> &p) const {
-      size_t seed = 0;
-      boost::hash_combine(seed, p.first);
-      boost::hash_combine(seed, p.second);
-
-      return seed;
-    }
-  };
-
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 

@@ -55,7 +55,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   bool inserted = container.Insert(index_key, value);
   if (inserted) {
     stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexInsert(GetOid());
+        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
   }
 
   LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
@@ -80,7 +80,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   bool removed = container.Delete(index_key, value);
   if (removed) {
     stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexDelete(GetOid());
+        .CollectIndexDelete(metadata->GetDatabaseOid(), GetOid());
   }
 
   LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
@@ -113,7 +113,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   }
   if (inserted) {
     stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexInsert(GetOid());
+        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
   }
 
   return inserted;
@@ -187,7 +187,7 @@ void BWTREE_INDEX_TYPE::Scan(
   }  // if is full scan
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
-      GetOid(), result.size());
+      metadata->GetDatabaseOid(), GetOid(), result.size());
 
   return;
 }
@@ -250,7 +250,7 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
   }
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
-      GetOid(), result.size());
+      metadata->GetDatabaseOid(), GetOid(), result.size());
   return;
 }
 
@@ -264,7 +264,7 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   container.GetValue(index_key, result);
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
-      GetOid(), result.size());
+      metadata->GetDatabaseOid(), GetOid(), result.size());
 
   return;
 }

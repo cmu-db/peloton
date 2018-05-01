@@ -38,9 +38,9 @@ namespace stats {
  */
 class ThreadLevelStatsCollector {
  public:
-  using CollectorsMap = tbb::concurrent_unordered_map<std::thread::id,
-                                                      ThreadLevelStatsCollector,
-                                                      std::hash<std::thread::id>>;
+  using CollectorsMap =
+      tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
+                                    std::hash<std::thread::id>>;
   /**
    * @return the Collector for the calling thread
    */
@@ -153,21 +153,22 @@ class ThreadLevelStatsCollector {
       metric->OnMemoryFree({database_id, table_id}, bytes);
   };
 
-  inline void CollectIndexRead(oid_t index_id, size_t num_read) {
+  inline void CollectIndexRead(oid_t database_id, oid_t index_id,
+                               size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
-      metric->OnIndexRead(index_id, num_read);
+      metric->OnRead({database_id, index_id}, num_read);
   };
-  inline void CollectIndexUpdate(oid_t index_id) {
+  inline void CollectIndexUpdate(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_UPDATE])
-      metric->OnIndexUpdate(index_id);
+      metric->OnUpdate({database_id, index_id});
   };
-  inline void CollectIndexInsert(oid_t index_id) {
+  inline void CollectIndexInsert(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_INSERT])
-      metric->OnIndexInsert(index_id);
+      metric->OnInsert({database_id, index_id});
   };
-  inline void CollectIndexDelete(oid_t index_id) {
+  inline void CollectIndexDelete(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
-      metric->OnIndexDelete(index_id);
+      metric->OnDelete({database_id, index_id});
   };
 
   inline void CollectQueryBegin() {
@@ -198,7 +199,7 @@ class ThreadLevelStatsCollector {
    * @tparam metric type of Metric to register
    * @param types A list of event types to receive updates about.
    */
-  template<typename metric>
+  template <typename metric>
   void RegisterMetric(std::vector<stats_event_type> types) {
     auto m = std::make_shared<metric>();
     metrics_.push_back(m);
@@ -225,8 +226,8 @@ class ThreadLevelStatsCollector {
    * Mapping from each type of event to a list of metrics registered to
    * receive updates from that type of event.
    */
-  std::unordered_map<stats_event_type, MetricList, EnumHash < stats_event_type>>
-  metric_dispatch_;
+  std::unordered_map<stats_event_type, MetricList, EnumHash<stats_event_type>>
+      metric_dispatch_;
 };
 
 }  // namespace stats

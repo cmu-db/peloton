@@ -25,32 +25,33 @@ namespace peloton {
 namespace stats {
 class IndexMetricRawData : public AbstractRawData {
  public:
-  inline void IncrementIndexReads(oid_t index_id, size_t num_read) {
-    auto entry = counters_.find(index_id);
+  inline void IncrementIndexReads(std::pair<oid_t, oid_t> db_index_id,
+                                  size_t num_read) {
+    auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
-      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[index_id][READ] += num_read;
+      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_index_id][READ] += num_read;
   }
 
-  inline void IncrementIndexUpdates(oid_t index_id) {
-    auto entry = counters_.find(index_id);
+  inline void IncrementIndexUpdates(std::pair<oid_t, oid_t> db_index_id) {
+    auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
-      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[index_id][UPDATE]++;
+      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_index_id][UPDATE]++;
   }
 
-  inline void IncrementIndexInserts(oid_t index_id) {
-    auto entry = counters_.find(index_id);
+  inline void IncrementIndexInserts(std::pair<oid_t, oid_t> db_index_id) {
+    auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
-      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[index_id][INSERT]++;
+      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_index_id][INSERT]++;
   }
 
-  inline void IncrementIndexDeletes(oid_t index_id) {
-    auto entry = counters_.find(index_id);
+  inline void IncrementIndexDeletes(std::pair<oid_t, oid_t> db_index_id) {
+    auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
-      counters_[index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[index_id][DELETE]++;
+      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_index_id][DELETE]++;
   }
 
   void Aggregate(AbstractRawData &other) override {
@@ -70,7 +71,8 @@ class IndexMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
-  std::unordered_map<oid_t, std::vector<int64_t>> counters_;
+  std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
+      counters_;
 
   // this serves as an index into each table's counter vector
   enum CounterType { READ = 0, UPDATE, INSERT, DELETE };
@@ -81,20 +83,21 @@ class IndexMetricRawData : public AbstractRawData {
 
 class IndexMetric : public AbstractMetric<IndexMetricRawData> {
  public:
-  inline void OnIndexRead(oid_t index_id, size_t num_read) override {
-    GetRawData()->IncrementIndexReads(index_id, num_read);
+  inline void OnRead(std::pair<oid_t, oid_t> db_index_id,
+                     size_t num_read) override {
+    GetRawData()->IncrementIndexReads(db_index_id, num_read);
   }
 
-  inline void OnIndexUpdate(oid_t index_id) override {
-    GetRawData()->IncrementIndexUpdates(index_id);
+  inline void OnUpdate(std::pair<oid_t, oid_t> db_index_id) override {
+    GetRawData()->IncrementIndexUpdates(db_index_id);
   }
 
-  inline void OnIndexInsert(oid_t index_id) override {
-    GetRawData()->IncrementIndexInserts(index_id);
+  inline void OnInsert(std::pair<oid_t, oid_t> db_index_id) override {
+    GetRawData()->IncrementIndexInserts(db_index_id);
   }
 
-  inline void OnIndexDelete(oid_t index_id) override {
-    GetRawData()->IncrementIndexDeletes(index_id);
+  inline void OnDelete(std::pair<oid_t, oid_t> db_index_id) override {
+    GetRawData()->IncrementIndexDeletes(db_index_id);
   }
 };
 /**
