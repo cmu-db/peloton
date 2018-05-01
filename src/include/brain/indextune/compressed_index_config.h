@@ -20,6 +20,8 @@
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "brain/util/eigen_util.h"
+#include "planner/plan_util.h"
+#include "util/file_util.h"
 
 namespace peloton {
 namespace brain {
@@ -105,8 +107,17 @@ class CompressedIndexConfiguration {
    * @param indexes: the index configuration
    * @return the prefix closure as a bitset
    */
-  std::shared_ptr<boost::dynamic_bitset<>> AddDropCandidate(
+  std::unique_ptr<boost::dynamic_bitset<>> AddDropCandidate(
       const IndexConfiguration &indexes);
+
+  /**
+   * Given a SQLStatementList, generate the prefix closure from the first
+   * SQLStatement element
+   * @param sql_stmt_list: the SQLStatementList
+   * @return the prefix closure as a bitset
+   */
+  std::unique_ptr<boost::dynamic_bitset<>> AddDropCandidate(
+      std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
 
   /**
    * @brief Get the total number of possible indexes in current database
@@ -116,7 +127,7 @@ class CompressedIndexConfiguration {
   /**
    * @brief Get the current index configuration as a bitset
    */
-  const std::shared_ptr<boost::dynamic_bitset<>> GetCurrentIndexConfig();
+  const boost::dynamic_bitset<> *GetCurrentIndexConfig();
 
   /**
    * @brief Get the Eigen vector representation of the current index config bitset
@@ -138,13 +149,13 @@ class CompressedIndexConfiguration {
   std::map<size_t, oid_t> table_offset_reverse_map_;
 
   size_t next_table_offset_;
-  // TODO (weichenl): use unique_ptr instead
-  std::shared_ptr<boost::dynamic_bitset<>> cur_index_config_;
 
-  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
+  std::unique_ptr<boost::dynamic_bitset<>> cur_index_config_;
+
+  void AddIndex(std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
                 const std::shared_ptr<IndexObject> &idx_object);
 
-  void AddIndex(std::shared_ptr<boost::dynamic_bitset<>> &bitmap,
+  void AddIndex(std::unique_ptr<boost::dynamic_bitset<>> &bitmap,
                 size_t offset);
 };
 }

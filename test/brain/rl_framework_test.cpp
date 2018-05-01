@@ -157,17 +157,16 @@ TEST_F(RLFrameworkTest, BasicTest) {
   // Put everything in the vector of index objects
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
-  auto comp_idx_config = std::unique_ptr<brain::CompressedIndexConfiguration>(
-      new brain::CompressedIndexConfiguration(database_name));
+  auto comp_idx_config = brain::CompressedIndexConfiguration(database_name);
   // We expect 2**3 possible configurations
-  EXPECT_EQ(comp_idx_config->GetConfigurationCount(), 16);
-  
-  LOG_DEBUG("bitset: %s", comp_idx_config->ToString().c_str());
+  EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
+
+  LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
 
   for (const auto &idx_obj : idx_objs) {
-    size_t global_offset = comp_idx_config->GetGlobalOffset(idx_obj);
-    const auto new_idx_obj = comp_idx_config->GetIndex(global_offset);
-    EXPECT_TRUE(comp_idx_config->IsSet(idx_obj));
+    size_t global_offset = comp_idx_config.GetGlobalOffset(idx_obj);
+    const auto new_idx_obj = comp_idx_config.GetIndex(global_offset);
+    EXPECT_TRUE(comp_idx_config.IsSet(idx_obj));
     EXPECT_EQ(*idx_obj, *new_idx_obj);
   }
 }
