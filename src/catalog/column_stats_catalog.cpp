@@ -230,7 +230,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  PL_ASSERT(result_tuples.size() <= 1);  // unique
+  PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
   if (result_tuples.size() == 0) {
     return nullptr;
   }

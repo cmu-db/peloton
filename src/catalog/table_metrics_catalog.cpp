@@ -86,11 +86,11 @@ bool TableMetricsCatalog::DeleteTableMetrics(
 
   auto *oid_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
-                                           ColumnId::DATABASE_OID);
+                                           ColumnId::TABLE_OID);
 
   oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
                         catalog_table_->GetOid(),
-                        ColumnId::DATABASE_OID);
+                        ColumnId::TABLE_OID);
 
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(

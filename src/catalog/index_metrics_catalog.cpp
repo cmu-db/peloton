@@ -87,11 +87,11 @@ bool IndexMetricsCatalog::DeleteIndexMetrics(
 
   auto *oid_expr =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
-                                           ColumnId::DATABASE_OID);
+                                           ColumnId::INDEX_OID);
 
   oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
                            catalog_table_->GetOid(),
-                           ColumnId::DATABASE_OID);
+                           ColumnId::INDEX_OID);
 
   expression::AbstractExpression *oid_const_expr =
       expression::ExpressionUtil::ConstantValueFactory(

@@ -297,7 +297,6 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
     table_object->EvictAllColumnObjects();
-  }
   return result;
 }
 

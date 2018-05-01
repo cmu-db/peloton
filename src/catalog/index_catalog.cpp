@@ -84,13 +84,6 @@ IndexCatalogObject::IndexCatalogObject(codegen::WrappedTuple wrapped_tuple)
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
-IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static IndexCatalog index_catalog{pg_catalog, pool, txn};
-  return &index_catalog;
-}
-
 IndexCatalog::IndexCatalog(
     storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)

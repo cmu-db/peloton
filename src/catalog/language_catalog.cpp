@@ -115,7 +115,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
       GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
 
 
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tuples.size() == 1) {
@@ -145,7 +145,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
-  PL_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (result_tuples.size() == 1) {
