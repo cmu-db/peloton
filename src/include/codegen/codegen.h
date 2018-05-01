@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "codegen/code_context.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -97,8 +98,8 @@ class CodeGen {
   llvm::Constant *ConstDouble(double val) const;
   llvm::Value *ConstString(const std::string &str_val,
                            const std::string &name) const;
-  llvm::Value *ConstGenericBytes(llvm::Type *type, const void *data,
-                                 uint32_t length,
+  llvm::Value *ConstType(const type::Type &type);
+  llvm::Value *ConstGenericBytes(const void *data, uint32_t length,
                                  const std::string &name) const;
   llvm::Constant *Null(llvm::Type *type) const;
   llvm::Constant *NullPtr(llvm::PointerType *type) const;
@@ -192,6 +193,9 @@ class CodeGen {
  private:
   // The context/module where all the code this class produces goes
   CodeContext &code_context_;
+
+  std::unordered_map<type::Type, llvm::Value *, type::TypeHasher,
+                     type::TypeEquality> type_variables_;
 };
 
 }  // namespace codegen

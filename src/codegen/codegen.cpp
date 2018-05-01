@@ -60,7 +60,7 @@ llvm::Constant *CodeGen::ConstDouble(double val) const {
 }
 
 llvm::Value *CodeGen::ConstString(const std::string &str_val,
-                                     const std::string &name) const {
+                                  const std::string &name) const {
   // Strings are treated as arrays of bytes
   auto *str = llvm::ConstantDataArray::getString(GetContext(), str_val);
   auto *global_var =
@@ -69,8 +69,18 @@ llvm::Value *CodeGen::ConstString(const std::string &str_val,
   return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
 }
 
-llvm::Value *CodeGen::ConstGenericBytes(llvm::Type *type, const void *data,
-                                        uint32_t length,
+llvm::Value *CodeGen::ConstType(const type::Type &type) {
+  auto iter = type_variables_.find(type);
+  if (iter != type_variables_.end()) {
+    return iter->second;
+  }
+  const type::Type t = type;
+  llvm::Value *ret = ConstGenericBytes(&type, sizeof(type), "type");
+  type_variables_.insert(std::make_pair(t, ret));
+  return ret;
+}
+
+llvm::Value *CodeGen::ConstGenericBytes(const void *data, uint32_t length,
                                         const std::string &name) const {
   // Create the constant data array that wraps the input data
   llvm::ArrayRef<uint8_t> elements{reinterpret_cast<const uint8_t *>(data),
@@ -78,8 +88,9 @@ llvm::Value *CodeGen::ConstGenericBytes(llvm::Type *type, const void *data,
   auto *arr = llvm::ConstantDataArray::get(GetContext(), elements);
 
   // Create a global variable for the data
-  auto *global_var = new llvm::GlobalVariable(
-      GetModule(), type, true, llvm::GlobalValue::InternalLinkage, arr, name);
+  auto *global_var =
+      new llvm::GlobalVariable(GetModule(), arr->getType(), true,
+                               llvm::GlobalValue::InternalLinkage, arr, name);
 
   // Return a pointer to the first element
   return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
