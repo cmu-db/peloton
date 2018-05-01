@@ -71,7 +71,7 @@ private:
 
   void ReplayLogFile();
   void ParseFromDisk(ReplayStage stage);
-  void Pass1(char *buf, int len);
+//  void Pass1(char *buf, int len);
   void Pass2(char *buf, int len);
 
 
