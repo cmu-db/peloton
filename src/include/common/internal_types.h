@@ -1355,6 +1355,10 @@ enum class RuleType : uint32_t {
   PULL_FILTER_THROUGH_MARK_JOIN,
   PULL_FILTER_THROUGH_AGGREGATION,
 
+  // Transitive predicates rules (logical -> logical)
+  TRANSITIVE_PREDICATES_LOGICAL_GET,
+  TRANSITIVE_PREDICATES_LOGICAL_FILTER,
+
   // Place holder to generate number of rules compile time
   NUM_RULES
 
@@ -1391,6 +1395,8 @@ typedef std::unordered_map<expression::AbstractExpression *, unsigned,
 typedef std::unordered_set<expression::AbstractExpression *,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
+
+typedef std::pair<std::string, std::string> PredicateInfo;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

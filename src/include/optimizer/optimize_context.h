@@ -12,8 +12,13 @@
 
 #pragma once
 
-#include "common/timer.h"
+#include <memory>
+#include <map>
 
+#include "common/timer.h"
+#include "common/internal_types.h"
+
+#include "expression/abstract_expression.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimizer_task_pool.h"
@@ -36,6 +41,7 @@ class OptimizeContext {
   OptimizerMetadata *metadata;
   std::shared_ptr<PropertySet> required_prop;
   double cost_upper_bound;
+  std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> transitive_table;
 };
 
 }  // namespace optimizer

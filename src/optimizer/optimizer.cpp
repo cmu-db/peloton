@@ -29,6 +29,7 @@
 #include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
+#include "optimizer/transitive_predicates.h"
 #include "optimizer/optimizer_task_pool.h"
 #include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
@@ -67,6 +68,13 @@ void Optimizer::OptimizeLoop(int root_group_id,
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   metadata_.SetTaskPool(task_stack.get());
+
+  // Apply query rewrite rules
+  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+                                      RewriteRuleSetName::TRANSITIVE_PREDICATES));
+
+  ExecuteTaskStack(*task_stack, root_group_id, root_context);
+
 
   // Perform rewrite first
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,
