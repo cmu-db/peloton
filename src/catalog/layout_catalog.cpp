@@ -14,7 +14,6 @@
 
 #include "catalog/catalog.h"
 #include "catalog/system_catalogs.h"
-#include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "storage/layout.h"
@@ -97,10 +96,10 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
   auto val3 = type::ValueFactory::GetVarcharValue(layout->SerializeColumnMap(),
                                                   nullptr);
 
-  tuple->SetValue(ColumnId::TABLE_OID, val0, pool);
-  tuple->SetValue(ColumnId::LAYOUT_OID, val1, pool);
-  tuple->SetValue(ColumnId::NUM_COLUMNS, val2, pool);
-  tuple->SetValue(ColumnId::COLUMN_MAP, val3, pool);
+  tuple->SetValue(LayoutCatalog::ColumnId::TABLE_OID, val0, pool);
+  tuple->SetValue(LayoutCatalog::ColumnId::LAYOUT_OID, val1, pool);
+  tuple->SetValue(LayoutCatalog::ColumnId::NUM_COLUMNS, val2, pool);
+  tuple->SetValue(LayoutCatalog::ColumnId::COLUMN_MAP, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -167,13 +166,16 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
 
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      oid_t layout_oid = tile->GetValue(tuple_id, ColumnId::LAYOUT_OID)
+      oid_t layout_oid =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
               .GetAs<oid_t>();
-      oid_t num_coulmns = tile->GetValue(tuple_id, ColumnId::NUM_COLUMNS)
+      oid_t num_coulmns =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
               .GetAs<oid_t>();
 
-      std::string column_map_str = tile->GetValue(
-              tuple_id, ColumnId::COLUMN_MAP).GetAs<std::string>();
+      std::string column_map_str =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
+                      .GetAs<std::string>();
       auto column_map = storage::Layout::DeserializeColumnMap(num_coulmns,
                                                               column_map_str);
       auto layout_object =
@@ -183,6 +185,18 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
   }
 
   return table_object->GetLayouts();
+}
+
+std::shared_ptr<const storage::Layout>
+LayoutCatalog::GetLayoutWithOid(oid_t table_oid, oid_t layout_oid,
+                 concurrency::TransactionContext *txn) {
+  auto table_layouts = GetLayouts(table_oid, txn);
+  for (const auto &layout_entry : table_layouts) {
+    if (layout_entry.second->GetOid() == layout_oid) {
+      return layout_entry.second;
+    }
+  }
+  return nullptr;
 }
 
 }  // namespace catalog

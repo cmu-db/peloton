@@ -186,7 +186,7 @@ std::vector<catalog::Schema> Layout::GetLayoutSchemas(
   return schemas;
 }
 
-std::map<oid_t, oid_t> Layout::GetColumnLayoutStats() const {
+std::map<oid_t, oid_t> Layout::GetLayoutStats() const {
   std::map<oid_t, oid_t> column_map_stats;
 
   // Cluster per-tile column count

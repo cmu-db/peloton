@@ -125,6 +125,14 @@ TEST_F(LayoutTunerTests, BasicTest) {
   EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2),0);
   EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3),1);
 
+  // Check the per tile stats of the new layout
+  // The layout must contain 2 tiles with the following stats
+  // 0 -> 3
+  // 1 -> 1
+  auto layout_stats = new_default_layout.GetLayoutStats();
+  EXPECT_EQ(layout_stats[0], 3);
+  EXPECT_EQ(layout_stats[1], 1);
+
   TestingExecutorUtil::DeleteDatabase(db_name);
 }
 

@@ -15,6 +15,7 @@
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
@@ -301,6 +302,106 @@ TEST_F(CatalogTests, DroppingDatabase) {
 TEST_F(CatalogTests, DroppingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
   EXPECT_NE(nullptr, catalog);
+}
+
+TEST_F(CatalogTests, LayoutCatalogTest) {
+  // This test creates a table, changes its layout.
+  // Create another additional layout.
+  // Ensure that default is not changed.
+  // Drops layout and verifies that the default_layout is reset.
+  // It also queries pg_layout to ensure that the entry is removed.
+
+  auto db_name = "temp_db";
+  auto table_name = "temp_table";
+  auto catalog = catalog::Catalog::GetInstance();
+  // Create database.
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->CreateDatabase(db_name, txn);
+
+  // Create table.
+  auto val0 = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "val0", true);
+  auto val1 = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "val1", true);
+  auto val2 = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "val2", true);
+  auto val3 = catalog::Column(
+          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+          "val3", true);
+  std::unique_ptr<catalog::Schema> table_schema(
+          new catalog::Schema({val0, val1, val2, val3}));
+  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME,
+                       table_name, std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+
+  txn = txn_manager.BeginTransaction();
+  auto table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
+                                         table_name, txn);
+  auto table_oid = table->GetOid();
+  auto database_oid = table->GetDatabaseOid();
+  txn_manager.CommitTransaction(txn);
+
+  // Change default layout.
+
+  std::map<oid_t, std::pair<oid_t, oid_t>> default_map;
+  default_map[0] = std::make_pair(0, 0);
+  default_map[1] = std::make_pair(0, 1);
+  default_map[2] = std::make_pair(1, 0);
+  default_map[3] = std::make_pair(1, 1);
+
+  txn = txn_manager.BeginTransaction();
+  auto default_layout = catalog->CreateDefaultLayout(database_oid, table_oid,
+                                                     default_map, txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_NE(nullptr, default_layout);
+
+  // Create additional layout.
+  std::map<oid_t, std::pair<oid_t, oid_t>> non_default_map;
+  non_default_map[0] = std::make_pair(0, 0);
+  non_default_map[1] = std::make_pair(0, 1);
+  non_default_map[2] = std::make_pair(1, 0);
+  non_default_map[3] = std::make_pair(1, 1);
+
+  txn = txn_manager.BeginTransaction();
+  auto other_layout = catalog->CreateLayout(database_oid, table_oid,
+                                                 non_default_map, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Check that the default layout is still the same.
+  EXPECT_NE(*other_layout.get(), table->GetDefaultLayout());
+
+  // Drop the default layout.
+  auto default_layout_oid = default_layout->GetOid();
+  txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(ResultType::SUCCESS, catalog->DropLayout(
+          database_oid, table_oid, default_layout_oid, txn));
+  txn_manager.CommitTransaction(txn);
+
+  // Check that default layout is reset and set to row_store.
+  EXPECT_NE(*default_layout.get(), table->GetDefaultLayout());
+  EXPECT_TRUE(table->GetDefaultLayout().IsRowStore());
+
+  // Query pg_layout to ensure that the entry is dropped
+  txn = txn_manager.BeginTransaction();
+  auto pg_layout = catalog->
+          GetSystemCatalogs(database_oid)->GetLayoutCatalog();
+  EXPECT_EQ(nullptr,
+            pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
+
+  // The additional layout must be present in pg_layout
+  auto other_layout_oid = other_layout->GetOid();
+  EXPECT_NE(nullptr,
+            pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn));
+  txn_manager.CommitTransaction(txn);
+
+  // Drop database
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName(db_name, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

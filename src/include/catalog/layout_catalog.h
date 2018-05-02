@@ -38,8 +38,6 @@ class Layout;
 namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
-  friend class TableCatalogObject;
-  friend class Catalog;
 
 public:
   // Global Singleton, only the first call requires passing parameters.
@@ -65,13 +63,17 @@ public:
 
   bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
 
-private:
-
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
   GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+
+  std::shared_ptr<const storage::Layout>
+  GetLayoutWithOid(oid_t table_oid, oid_t layout_oid,
+                   concurrency::TransactionContext *txn);
+
+private:
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

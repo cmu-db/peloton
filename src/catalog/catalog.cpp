@@ -181,6 +181,9 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
+  system_catalogs->GetTableCatalog()->InsertTable(
+          LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
+          database_oid, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
@@ -558,18 +561,6 @@ ResultType Catalog::CreateIndex(
 }
 
 /*
- *
-  // Create a new layout
-  ResultType CreateLayout(oid_t database_oid, oid_t table_oid,
-                          const column_map_type &column_map,
-                          concurrency::TransactionContext *txn);
-  // Create a new layout and set it as the default for the table
-  ResultType CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
-                                 const column_map_type &column_map,
-                                 concurrency::TransactionContext *txn);
- */
-
-/*
  * @brief   create a new layout for a table
  * @param   database_oid  database to which the table belongs to
  * @param   table_oid     table to which the layout has to be added
@@ -580,8 +571,8 @@ ResultType Catalog::CreateIndex(
  */
 std::shared_ptr<const storage::Layout>
 Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
-                                 const column_map_type &column_map,
-                                 concurrency::TransactionContext *txn) {
+                      const column_map_type &column_map,
+                      concurrency::TransactionContext *txn) {
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
@@ -617,8 +608,8 @@ Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
  */
 std::shared_ptr<const storage::Layout>
 Catalog::CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
-                      const column_map_type &column_map,
-                      concurrency::TransactionContext *txn) {
+                             const column_map_type &column_map,
+                             concurrency::TransactionContext *txn) {
   auto new_layout = CreateLayout(database_oid, table_oid, column_map, txn);
   // If the layout creation was successful, set it as the default
   if (new_layout != nullptr) {
