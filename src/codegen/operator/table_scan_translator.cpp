@@ -14,9 +14,9 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/proxy/executor_context_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
-#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/zone_map_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
@@ -50,7 +50,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-  LOG_DEBUG("Finished constructing TableScanTranslator ...");
+  LOG_TRACE("Finished constructing TableScanTranslator ...");
 }
 
 // Produce!
@@ -135,8 +135,12 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
-                 tid_end, selection_vector_, true};
+  RowBatch batch{translator_.GetCompilationContext(),
+                 tile_group_id_,
+                 tid_start,
+                 tid_end,
+                 selection_vector_,
+                 true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
@@ -227,7 +231,8 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
     // Reify the boolean value since it may be NULL
-    PELOTON_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
+    PELOTON_ASSERT(valid_row.GetType().GetSqlType() ==
+                   type::Boolean::Instance());
     llvm::Value *bool_val = type::Boolean::Instance().Reify(codegen, valid_row);
 
     // Set the validity of the row

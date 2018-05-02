@@ -21,16 +21,16 @@
 #include "common/exception.h"
 
 #include "optimizer/binding.h"
+#include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/optimize_context.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/plan_generator.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_to_operator_transformer.h"
-#include "optimizer/input_column_deriver.h"
-#include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/optimizer_task_pool.h"
-#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -165,11 +165,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
         auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetTableName(), txn);
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
           // Check if column is missing

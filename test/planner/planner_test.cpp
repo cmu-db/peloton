@@ -15,17 +15,17 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
 #include "expression/comparison_expression.h"
+#include "expression/expression_util.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "expression/expression_util.h"
-#include "parser/statements.h"
 #include "parser/postgresparser.h"
+#include "parser/statements.h"
 
+#include "planner/attribute_info.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/drop_plan.h"
-#include "planner/attribute_info.h"
 #include "planner/plan_util.h"
 #include "planner/project_info.h"
 #include "planner/seq_scan_plan.h"
@@ -41,33 +41,33 @@ namespace test {
 class PlannerTest : public PelotonTest {};
 
 TEST_F(PlannerTest, CreateDatabasePlanTest) {
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
-  auto parse_tree_list = peloton_parser.BuildParseTree("CREATE DATABASE pelotondb;");
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto parse_tree_list =
+      peloton_parser.BuildParseTree("CREATE DATABASE pelotondb;");
   // There should be only one statement in the statement list
   EXPECT_EQ(1, parse_tree_list->GetNumStatements());
   auto &parse_tree = parse_tree_list->GetStatements().at(0);
 
   std::unique_ptr<planner::CreatePlan> create_DB_plan(
-    new planner::CreatePlan((parser::CreateStatement *)parse_tree.get())
-  );
+      new planner::CreatePlan((parser::CreateStatement *)parse_tree.get()));
   EXPECT_STREQ("pelotondb", create_DB_plan->GetDatabaseName().c_str());
   EXPECT_EQ(CreateType::DB, create_DB_plan->GetCreateType());
 }
 
 TEST_F(PlannerTest, DropDatabasePlanTest) {
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
-  auto parse_tree_list = peloton_parser.BuildParseTree("DROP DATABASE pelotondb;");
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto parse_tree_list =
+      peloton_parser.BuildParseTree("DROP DATABASE pelotondb;");
   // There should be only one statement in the statement list
   EXPECT_EQ(1, parse_tree_list->GetNumStatements());
   auto &parse_tree = parse_tree_list->GetStatements().at(0);
 
   std::unique_ptr<planner::DropPlan> drop_DB_plan(
-    new planner::DropPlan((parser::DropStatement *)parse_tree.get())
-  );
+      new planner::DropPlan((parser::DropStatement *)parse_tree.get()));
   EXPECT_STREQ("pelotondb", drop_DB_plan->GetDatabaseName().c_str());
   EXPECT_EQ(DropType::DB, drop_DB_plan->GetDropType());
 }
-  
+
 TEST_F(PlannerTest, DeletePlanTestParameter) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -85,7 +85,8 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // DELETE FROM department_table WHERE id = $0
@@ -99,7 +100,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
 
   // Create delete plan
   std::unique_ptr<planner::DeletePlan> delete_plan(
@@ -148,7 +149,8 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // UPDATE department_table SET name = $0 WHERE id = $1
@@ -157,7 +159,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   auto table_name = std::string("department_table");
   auto database_name = DEFAULT_DB_NAME;
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name, txn);
+      database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
   auto schema = target_table->GetSchema();
 
   TargetList tlist;
@@ -244,7 +246,8 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   auto ret = catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      std::move(table_schema), txn);
   if (ret != ResultType::SUCCESS) LOG_TRACE("create table failed");
   txn_manager.CommitTransaction(txn);
 
@@ -255,7 +258,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
 
   std::string name = "department_table";
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
-  table_ref->table_info_ .reset(new parser::TableInfo());
+  table_ref->table_info_.reset(new parser::TableInfo());
   table_ref->table_info_->table_name = name;
   insert_statement->table_ref_.reset(table_ref);
 
@@ -264,27 +267,30 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   // at  this point
   insert_statement->insert_values.push_back(
       std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>());
-  auto& parameter_exprs = insert_statement->insert_values[0];
+  auto &parameter_exprs = insert_statement->insert_values[0];
   auto parameter_expr_1 = new expression::ParameterValueExpression(0);
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
-  parameter_exprs.push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_1));
-  parameter_exprs.push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
+  parameter_exprs.push_back(
+      std::unique_ptr<expression::AbstractExpression>(parameter_expr_1));
+  parameter_exprs.push_back(
+      std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
 
-  std::unique_ptr<planner::InsertPlan> insert_plan(new planner::InsertPlan(
-      target_table, &insert_statement->columns,
-      &insert_statement->insert_values));
+  std::unique_ptr<planner::InsertPlan> insert_plan(
+      new planner::InsertPlan(target_table, &insert_statement->columns,
+                              &insert_statement->insert_values));
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(1).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(
-                        (std::string) "CS",
-                        TestingHarness::GetInstance().GetTestingPool()).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(
+          (std::string) "CS", TestingHarness::GetInstance().GetTestingPool())
+          .Copy());
   LOG_INFO("Value 1: %s", values.at(0).GetInfo().c_str());
   LOG_INFO("Value 2: %s", values.at(1).GetInfo().c_str());
   // bind values to parameters in plan
@@ -314,7 +320,8 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES (1, $1)
@@ -340,24 +347,27 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
   insert_statement->insert_values.push_back(
       std::vector<std::unique_ptr<expression::AbstractExpression>>());
-  auto& exprs = insert_statement->insert_values[0];
-  exprs.push_back(std::unique_ptr<expression::AbstractExpression>(constant_expr_1));
-  exprs.push_back(std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
+  auto &exprs = insert_statement->insert_values[0];
+  exprs.push_back(
+      std::unique_ptr<expression::AbstractExpression>(constant_expr_1));
+  exprs.push_back(
+      std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
 
-  std::unique_ptr<planner::InsertPlan> insert_plan(new planner::InsertPlan(
-      target_table, &insert_statement->columns,
-      &insert_statement->insert_values));
+  std::unique_ptr<planner::InsertPlan> insert_plan(
+      new planner::InsertPlan(target_table, &insert_statement->columns,
+                              &insert_statement->insert_values));
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(
-                        (std::string) "CS",
-                        TestingHarness::GetInstance().GetTestingPool()).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(
+          (std::string) "CS", TestingHarness::GetInstance().GetTestingPool())
+          .Copy());
   LOG_INFO("Value 1: %s", values.at(0).GetInfo().c_str());
   // bind values to parameters in plan
   insert_plan->SetParameterValues(&values);

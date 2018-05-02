@@ -46,7 +46,7 @@ ProcCatalog::~ProcCatalog(){};
 
 ProcCatalog::ProcCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." PROC_CATALOG_NAME
+                      "." CATALOG_SCHEMA_NAME "." PROC_CATALOG_NAME
                       " ("
                       "proc_oid      INT NOT NULL PRIMARY KEY, "
                       "proname       VARCHAR NOT NULL, "
@@ -55,9 +55,9 @@ ProcCatalog::ProcCatalog(concurrency::TransactionContext *txn)
                       "prolang       INT NOT NULL, "
                       "prosrc        VARCHAR NOT NULL);",
                       txn) {
-  Catalog::GetInstance()->CreateIndex(CATALOG_DATABASE_NAME, PROC_CATALOG_NAME,
-                                      {1, 3}, PROC_CATALOG_NAME "_skey0", false,
-                                      IndexType::BWTREE, txn);
+  Catalog::GetInstance()->CreateIndex(
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, PROC_CATALOG_NAME, {1, 3},
+      PROC_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 bool ProcCatalog::InsertProc(const std::string &proname,
@@ -117,8 +117,9 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(
-      TypeIdArrayToString(proc_arg_types)).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(TypeIdArrayToString(proc_arg_types))
+          .Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);

@@ -28,7 +28,6 @@ class TypeSQLTests : public PelotonTest {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    catalog::Catalog::GetInstance()->Bootstrap();
     txn_manager.CommitTransaction(txn);
   }
 
@@ -112,8 +111,7 @@ void CheckQueryResult(std::vector<ResultValue> result,
   for (size_t i = 0; i < result.size(); i++) {
     for (size_t j = 0; j < tuple_descriptor_size; j++) {
       int idx = i * tuple_descriptor_size + j;
-      std::string s =
-          std::string(result[idx].begin(), result[idx].end());
+      std::string s = std::string(result[idx].begin(), result[idx].end());
       EXPECT_EQ(s, expected[i]);
     }
   }

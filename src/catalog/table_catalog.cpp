@@ -10,15 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
 #include "catalog/table_catalog.h"
 
+#include <memory>
+
+#include "catalog/catalog.h"
+#include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/column_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -31,8 +34,12 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                     .GetAs<oid_t>()),
       table_name(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAME)
                      .ToString()),
+      schema_name(tile->GetValue(tupleId, TableCatalog::ColumnId::SCHEMA_NAME)
+                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
+      version_id(tile->GetValue(tupleId, TableCatalog::ColumnId::VERSION_ID)
+                     .GetAs<uint32_t>()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
@@ -127,8 +134,10 @@ TableCatalogObject::GetIndexObjects(bool cached_only) {
   if (!valid_index_objects && !cached_only) {
     // get index catalog objects from pg_index
     valid_index_objects = true;
-    index_objects =
-        IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
+    auto pg_index = Catalog::GetInstance()
+                        ->GetSystemCatalogs(database_oid)
+                        ->GetIndexCatalog();
+    index_objects = pg_index->GetIndexObjects(table_oid, txn);
   }
   return index_objects;
 }
@@ -251,7 +260,10 @@ std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnObjects(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
     // get column catalog objects from pg_column
-    ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
+    auto pg_attribute = Catalog::GetInstance()
+                            ->GetSystemCatalogs(database_oid)
+                            ->GetColumnCatalog();
+    pg_attribute->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
   }
   return column_objects;
@@ -264,8 +276,9 @@ std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnNames(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
     auto column_objects = GetColumnObjects();
-    std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject> > column_names;
-    for (auto& pair : column_objects) {
+    std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
+        column_names;
+    for (auto &pair : column_objects) {
       auto column = pair.second;
       column_names[column->GetColumnName()] = column;
     }
@@ -303,30 +316,18 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   return nullptr;
 }
 
-TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static TableCatalog table_catalog{pg_catalog, pool, txn};
-  return &table_catalog;
-}
-
-TableCatalog::TableCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool,
-                           concurrency::TransactionContext *txn)
+TableCatalog::TableCatalog(
+    storage::Database *database, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
+                      InitializeSchema().release(), database) {
+  // Add indexes for pg_namespace
+  AddIndex({0}, TABLE_CATALOG_PKEY_OID, TABLE_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({1, 2}, TABLE_CATALOG_SKEY0_OID, TABLE_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({3}, TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1",
+           IndexConstraintType::DEFAULT);
 }
 
 TableCatalog::~TableCatalog() {}
@@ -351,14 +352,26 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
+  auto schema_name_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "schema_name", false);
+  schema_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto database_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
+  auto version_id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "version_id", true);
+  version_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
-      {table_id_column, table_name_column, database_id_column}));
+      {table_id_column, table_name_column, schema_name_column,
+       database_id_column, version_id_column}));
 
   return table_catalog_schema;
 }
@@ -371,6 +384,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  * @return  Whether insertion is Successful
  */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
+                               const std::string &schema_name,
                                oid_t database_oid, type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
   // Create the tuple first
@@ -379,11 +393,15 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
-  auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
+  auto val2 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
+  auto val3 = type::ValueFactory::GetIntegerValue(database_oid);
+  auto val4 = type::ValueFactory::GetIntegerValue(0);
 
   tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
-  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
+  tuple->SetValue(TableCatalog::ColumnId::SCHEMA_NAME, val2, pool);
+  tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val3, pool);
+  tuple->SetValue(TableCatalog::ColumnId::VERSION_ID, val4, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -392,9 +410,10 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 /*@brief   delete a tuple about table info from pg_table(using index scan)
  * @param   table_oid
  * @param   txn     TransactionContext
- * @return  Whether deletion is Successful
+ * @return  Whether deletion is successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -402,8 +421,8 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext 
   // evict from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
   if (table_object) {
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     database_object->EvictTableObject(table_oid);
   }
 
@@ -437,8 +456,8 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
@@ -455,12 +474,13 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 /*@brief   read table catalog object from pg_table using table name + database
  * oid
  * @param   table_name
+ * @param   schema_name
  * @param   database_oid
  * @param   txn     TransactionContext
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, oid_t database_oid,
+    const std::string &table_name, const std::string &schema_name,
     concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
@@ -468,18 +488,19 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
-    auto table_object = database_object->GetTableObject(table_name, true);
+    auto table_object =
+        database_object->GetTableObject(table_name, schema_name, true);
     if (table_object) return table_object;
   }
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
+  oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -488,8 +509,8 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     PELOTON_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
@@ -507,8 +528,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * @return  table catalog objects
  */
 std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
-TableCatalog::GetTableObjects(oid_t database_oid,
-                              concurrency::TransactionContext *txn) {
+TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -539,6 +559,36 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   database_object->SetValidTableObjects(true);
   return database_object->GetTableObjects();
+}
+
+/*@brief    update version id column within pg_table
+ * @param   update_val   the new(updated) version id
+ * @param   table_oid    which table to be updated
+ * @param   txn          TransactionContext
+ * @return  Whether update is successful
+ */
+bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
+                                   concurrency::TransactionContext *txn) {
+  std::vector<oid_t> update_columns({ColumnId::VERSION_ID});  // version_id
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
+  // values to execute index scan
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values to update
+  std::vector<type::Value> update_values;
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(update_val).Copy());
+
+  // get table object, then evict table object
+  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
+  if (table_object) {
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    database_object->EvictTableObject(table_oid);
+  }
+
+  return UpdateWithIndexScan(update_columns, update_values, scan_values,
+                             index_offset, txn);
 }
 
 }  // namespace catalog
