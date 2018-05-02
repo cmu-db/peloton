@@ -58,6 +58,7 @@ pipeline {
                         sh 'cd build && make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'sudo add-apt-repository ppa:openjdk-r/ppa'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget openjdk-8-jdk openjdk-8-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
                         sh 'cd build && python ../script/testing/junit/run_junit.py'
@@ -79,6 +80,7 @@ pipeline {
                         sh 'cd build && make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'sudo add-apt-repository ppa:openjdk-r/ppa'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget openjdk-8-jdk openjdk-8-jre' // prerequisites for jdbc_validator
                         sh 'cd build && python ../script/validators/jdbc_validator.py'
                         sh 'cd build && python ../script/testing/junit/run_junit.py'
