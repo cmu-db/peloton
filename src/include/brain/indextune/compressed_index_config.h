@@ -136,7 +136,7 @@ class CompressedIndexConfiguration {
   size_t GetConfigurationCount() const;
 
   /**
-   * @brief Get the current index configuration as a bitset
+   * @brief Get the current index configuration as a bitset(read-only)
    */
   const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
 
@@ -144,7 +144,13 @@ class CompressedIndexConfiguration {
    * @brief Get the Eigen vector/feature representation of the current index
    * config bitset
    */
-  void ToEigen(vector_eig &curr_config_vec) const;
+  void ToEigen(vector_eig &config_vec) const;
+
+  /**
+   * @brief Get the Eigen vector/feature representation of the covered index
+   * config
+   */
+  void ToCoveredEigen(vector_eig &config_vec) const;
 
   /**
    * @brief: converts query string to a binded sql-statement list

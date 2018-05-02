@@ -301,14 +301,38 @@ const boost::dynamic_bitset<>
   return cur_index_config_.get();
 }
 
-void CompressedIndexConfiguration::ToEigen(vector_eig &curr_config_vec) const {
+void CompressedIndexConfiguration::ToEigen(vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
-  curr_config_vec = vector_eig::Zero(GetConfigurationCount());
+  config_vec = vector_eig::Zero(GetConfigurationCount());
   size_t config_id = cur_index_config_->find_first();
   while (config_id != boost::dynamic_bitset<>::npos) {
-    curr_config_vec[config_id] = 1.0;
+    config_vec[config_id] = 1.0;
     config_id = cur_index_config_->find_next(config_id);
+  }
+}
+
+void CompressedIndexConfiguration::ToCoveredEigen(vector_eig &config_vec) const {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  config_vec = vector_eig::Zero(GetConfigurationCount());
+  for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
+       tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
+    auto next_tbl_offset_iter = std::next(tbl_offset_iter);
+    size_t start_idx = tbl_offset_iter->first;
+    size_t end_idx;
+    if (next_tbl_offset_iter == table_offset_reverse_map_.end()) {
+      end_idx = GetConfigurationCount();
+    } else {
+      end_idx = next_tbl_offset_iter->first;
+    }
+    size_t last_set_idx = start_idx;
+    while (last_set_idx < end_idx) {
+      size_t next_set_idx = cur_index_config_->find_next(last_set_idx);
+      if(next_set_idx >= end_idx) break;
+      last_set_idx = next_set_idx;
+    }
+    config_vec.segment(start_idx, last_set_idx - start_idx + 1).array() = 1.0;
   }
 }
 
@@ -317,6 +341,8 @@ std::string CompressedIndexConfiguration::ToString() const {
   std::stringstream str_stream;
   std::string bitset_str;
   boost::to_string(*GetCurrentIndexConfig(), bitset_str);
+  // since bitset follows MSB <---- LSB
+  std::reverse(bitset_str.begin(), bitset_str.end());
   str_stream << "Database: " << database_name_ << std::endl;
   str_stream << "Compressed Index Representation: " << bitset_str << std::endl;
   for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
