@@ -111,6 +111,12 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
     std::vector<AnnotatedExpression> predicates,
     std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> &transitive_table);
 
+/**
+ * @brief Removes trivial predicates (like 'a = a')
+ *
+ * @param predicates The existing predicates
+ */
+std::vector<AnnotatedExpression> SimplifyPredicates(std::vector<AnnotatedExpression> predicates);
 
 /**
  * @brief Extract single table precates and multi-table predicates from the expr

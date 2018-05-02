@@ -134,6 +134,33 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
   return new_predicates;
 }
 
+std::vector<AnnotatedExpression> SimplifyPredicates(std::vector<AnnotatedExpression> predicates) {
+  std::vector<AnnotatedExpression> new_predicates;
+
+  for (auto predicate : predicates) {
+    if (predicate.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL ||
+	predicate.expr->GetExpressionType() == ExpressionType::COMPARE_NOTEQUAL) {
+      auto expr = predicate.expr;
+
+      PELOTON_ASSERT(expr->GetChildrenSize() == 2);
+
+      auto child1 = expr->GetModifiableChild(0);
+      auto child2 = expr->GetModifiableChild(1);
+
+      if (child1->ExactlyEquals(*child2)) {
+	continue;
+      }
+    }
+
+    
+    new_predicates.emplace_back(AnnotatedExpression(
+        std::shared_ptr<expression::AbstractExpression>(predicate.expr->Copy()),
+	predicate.table_alias_set));
+  }
+
+  return new_predicates;
+}
+
 std::vector<AnnotatedExpression> ExtractPredicates(
     expression::AbstractExpression *expr,
     std::vector<AnnotatedExpression> annotated_predicates) {

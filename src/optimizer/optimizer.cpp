@@ -75,6 +75,11 @@ void Optimizer::OptimizeLoop(int root_group_id,
 
   ExecuteTaskStack(*task_stack, root_group_id, root_context);
 
+  // Apply query rewrite rules
+  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+                                      RewriteRuleSetName::SIMPLIFY_PREDICATES));
+
+  ExecuteTaskStack(*task_stack, root_group_id, root_context);
 
   // Perform rewrite first
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,

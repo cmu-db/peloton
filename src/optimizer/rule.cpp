@@ -65,7 +65,10 @@ RuleSet::RuleSet() {
   AddRewriteRule(RewriteRuleSetName::TRANSITIVE_PREDICATES,
                  new TransitivePredicatesLogicalGet());
   AddRewriteRule(RewriteRuleSetName::TRANSITIVE_PREDICATES,
-                 new TransitivePredicatesLogicalFilter());
+		 new TransitivePredicatesLogicalFilter());
+
+  AddRewriteRule(RewriteRuleSetName::SIMPLIFY_PREDICATES,
+                 new SimplifyPredicatesLogicalFilter());
 }
 
 }  // namespace optimizer
