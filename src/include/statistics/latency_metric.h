@@ -37,6 +37,42 @@ struct LatencyMeasurements {
   double perc_99th_ = 0.0;
 };
 
+class LatencyMetricRawData : public AbstractRawData {
+  public:
+    inline void RecordLatency(const double val) {
+      latencies_.PushBack(val);
+    }
+
+    void Aggregate(AbstractRawData &other);
+
+    void WriteToCatalog();
+  private:
+    /**
+     * Calculate descriptive statistics on raw latency measurements
+     */
+    LatencyMeasurements DescriptiveFromRaw();
+
+    // Circular buffer with capacity N that stores the <= N
+    // most recent latencies collected
+    CircularBuffer<double> latencies_;
+};
+
+class LatencyMetric : public AbstractMetric<LatencyMetricRawData> {
+  public:
+    inline void OnQueryBegin() {
+      timer_ms_.Reset();
+      timer_ms_.Start();
+    }
+
+    inline void OnQueryEnd() {
+      timer_ms_.Stop();
+      GetRawData()->RecordLatency(timer_ms_.GetDuration());
+    }
+  private:
+    // Timer for timing individual latencies
+    Timer<std::ratio<1, 1000>> timer_ms_;
+};
+
 /**
  * Metric for storing raw latency values and computing
  * latency measurements.

@@ -57,14 +57,14 @@ class TableMetricRawData : public AbstractRawData {
     auto entry = counters_.find(table_id);
     if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][DELETE] += bytes;
+    counters_[table_id][MEMORY_ALLOC] += bytes;
   }
 
   inline void DecrementTableMemAlloc(oid_t table_id, int64_t bytes) {
     auto entry = counters_.find(table_id);
     if (entry == counters_.end())
       counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][DELETE] -= bytes;
+    counters_[table_id][MEMORY_ALLOC] -= bytes;
   }
 
   void Aggregate(AbstractRawData &other) override;
