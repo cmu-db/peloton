@@ -68,12 +68,16 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
   for (const auto &table_obj : table_objs) {
     const auto table_oid = table_obj.first;
     const auto index_objs = table_obj.second->GetIndexObjects();
-    for (const auto &index_obj : index_objs) {
-      const auto &indexed_cols = index_obj.second->GetKeyAttrs();
-      std::vector<oid_t> col_oids(indexed_cols);
-      auto idx_obj =
-          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(idx_obj);
+    if (index_objs.empty()) {
+      AddIndex(table_offset_map_.at(table_oid));
+    } else {
+      for (const auto &index_obj : index_objs) {
+        const auto &indexed_cols = index_obj.second->GetKeyAttrs();
+        std::vector<oid_t> col_oids(indexed_cols);
+        auto idx_obj =
+            std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+        AddIndex(idx_obj);
+      }
     }
   }
 
@@ -281,7 +285,8 @@ CompressedIndexConfiguration::DropCandidates(const std::string &query) {
   auto txn = txn_manager_->BeginTransaction();
   catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt,
+                                            true);
   for (const auto &col_triplet : affected_indexes) {
     auto idx_obj = ConvertIndexTriplet(col_triplet);
     AddIndex(*result, idx_obj);
