@@ -39,6 +39,7 @@ std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr_ = nullptr;
   op->Accept(this);
+  LOG_DEBUG("Operator: \n%s", output_expr_->GetInfo().c_str());
   return output_expr_;
 }
 

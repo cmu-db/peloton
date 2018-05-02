@@ -10,11 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
+
 #include "optimizer/util.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/query_metrics_catalog.h"
 #include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/copy_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
@@ -22,6 +25,114 @@
 namespace peloton {
 namespace optimizer {
 namespace util {
+
+void FillTransitiveTable(
+    std::vector<AnnotatedExpression> predicates,
+    std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> &transitive_table) {
+  for (auto &predicate : predicates) {
+    if (predicate.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      auto expr = predicate.expr;
+
+      PELOTON_ASSERT(expr->GetChildrenSize() == 2);
+
+      auto child1 = expr->GetModifiableChild(0);
+      auto child2 = expr->GetModifiableChild(1);
+
+      if (child1->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+	auto child_tuple = dynamic_cast<expression::TupleValueExpression *>(child1);
+	PredicateInfo p_info = PredicateInfo(child_tuple->GetTableName(), child_tuple->GetColumnName());
+
+	bool not_found = true;
+	auto predicate_to_add = expr->GetModifiableChild(1);
+	auto predicate_list = transitive_table[p_info];
+	for (auto predicate : predicate_list) {
+	  if (predicate->ExactlyEquals(*predicate_to_add)) {
+	    not_found = false;
+	    break;
+	  }
+	}
+
+	if (not_found) {
+	  transitive_table[p_info].push_back(predicate_to_add);
+	}
+      }
+
+      if (child2->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+	auto child_tuple = dynamic_cast<expression::TupleValueExpression *>(child2);
+	PredicateInfo p_info = PredicateInfo(child_tuple->GetTableName(), child_tuple->GetColumnName());
+
+	bool not_found = true;
+	auto predicate_to_add = expr->GetModifiableChild(0);
+	auto predicate_list = transitive_table[p_info];
+	for (auto predicate : predicate_list) {
+	  if (predicate->ExactlyEquals(*predicate_to_add)) {
+	    not_found = false;
+	    break;
+	  }
+	}
+
+	if (not_found) {
+	  transitive_table[p_info].push_back(predicate_to_add);
+	}
+      }
+
+      LOG_DEBUG("Predicate: %s \n------", expr->GetInfo().c_str());
+    }
+  }
+}
+
+std::vector<AnnotatedExpression> GenerateTransitivePredicates(
+    std::vector<AnnotatedExpression> predicates,
+    std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> &transitive_table) {
+  std::vector<AnnotatedExpression> new_predicates;
+
+  for (auto predicate : predicates) {
+    if (predicate.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      auto expr = predicate.expr;
+
+      PELOTON_ASSERT(expr->GetChildrenSize() == 2);
+
+      for (int i = 0; i < int(expr->GetChildrenSize()); i++) {
+	auto child = expr->GetModifiableChild(i);
+
+	if (child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+	  auto child_tuple = dynamic_cast<expression::TupleValueExpression *>(child);
+	  PredicateInfo p_info = PredicateInfo(child_tuple->GetTableName(), child_tuple->GetColumnName());
+
+	  if (transitive_table.count(p_info) != 0) {
+	    auto potential_transitives_list = transitive_table[p_info];
+	    for (auto potential_transitive : potential_transitives_list) {
+	      auto transitive_predicate = predicate.expr->Copy();
+	      transitive_predicate->SetChild(i, potential_transitive);
+
+	      LOG_DEBUG("Possibly (%s, %s): %s", p_info.first.c_str(), p_info.second.c_str(), transitive_predicate->GetInfo().c_str());
+	      bool not_found = true;
+	      for (auto predicate2 : predicates) {
+		if (predicate2.expr->ExactlyEquals(*transitive_predicate)) {
+		  LOG_DEBUG("Nop %s", predicate2.expr->GetInfo().c_str());
+		  not_found = false;
+		  break;
+		}
+	      }
+
+	      if (not_found) {
+		std::unordered_set<std::string> table_alias_set;
+		expression::ExpressionUtil::GenerateTableAliasSet(transitive_predicate,
+                                                      table_alias_set);
+
+		new_predicates.emplace_back(AnnotatedExpression(
+                    std::shared_ptr<expression::AbstractExpression>(transitive_predicate->Copy()),
+		        table_alias_set));
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  return new_predicates;
+}
 
 std::vector<AnnotatedExpression> ExtractPredicates(
     expression::AbstractExpression *expr,
