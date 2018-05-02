@@ -215,7 +215,12 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
 ResultType TrafficCop::ExecuteStatementPlanGetResult() {
 
 
-  if (p_status_.m_result == ResultType::FAILURE) return ResultType::FAILURE;
+  if (p_status_.m_result == ResultType::FAILURE) {
+    if(!tcop_txn_state_.empty()) {
+      tcop_txn_state_.pop();
+    }
+    return ResultType::FAILURE;
+  }
 
   if(tcop_txn_state_.empty()) return ResultType::NOOP;
 
