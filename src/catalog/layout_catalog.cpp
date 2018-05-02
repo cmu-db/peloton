@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// column_catalog.h
+// layout_catalog.h
 //
 // Identification: src/include/catalog/layout_catalog.cpp
 //
@@ -15,6 +15,7 @@
 #include "catalog/catalog.h"
 #include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
+#include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/layout.h"
 
@@ -164,24 +165,32 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
   auto result_tiles =
           GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      oid_t layout_oid =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
-              .GetAs<oid_t>();
-      oid_t num_coulmns =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
-              .GetAs<oid_t>();
+  // result_tiles should contain only 1 LogicalTile per table
+  auto result_size = (*result_tiles).size();
+  PELOTON_ASSERT(result_size <= 1);
+  if (result_size == 0) {
+    LOG_DEBUG("No entry for table %u in pg_layout", table_oid);
+    return table_object->GetLayouts();
+  }
 
-      std::string column_map_str =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
-                      .GetAs<std::string>();
-      auto column_map = storage::Layout::DeserializeColumnMap(num_coulmns,
-                                                              column_map_str);
-      auto layout_object =
-              std::make_shared<const storage::Layout>(column_map, layout_oid);
-      table_object->InsertLayout(layout_object);
-    }
+  // Get the LogicalTile
+  auto tile = (*result_tiles)[0].get();
+  auto tuple_count = tile->GetTupleCount();
+  for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
+    oid_t layout_oid =
+            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
+                    .GetAs<oid_t>();
+    oid_t num_columns =
+            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
+                    .GetAs<oid_t>();
+    std::string column_map_str =
+            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
+                    .ToString();
+    auto column_map = storage::Layout::DeserializeColumnMap(num_columns,
+                                                            column_map_str);
+    auto layout_object =
+            std::make_shared<const storage::Layout>(column_map, layout_oid);
+    table_object->InsertLayout(layout_object);
   }
 
   return table_object->GetLayouts();

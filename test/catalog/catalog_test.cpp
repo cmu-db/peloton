@@ -235,9 +235,8 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
-  EXPECT_EQ(
-      11,
+  // NOTE: everytime we create a database, there will be 9 catalog tables inside
+  EXPECT_EQ(CATALOG_TABLES_COUNT+3,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
@@ -250,8 +249,7 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table", DEFAULT_SCHEMA_NAME);
-  EXPECT_EQ(
-      10,
+  EXPECT_EQ(CATALOG_TABLES_COUNT+2,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -263,8 +261,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn),
                CatalogException);
   //
-  EXPECT_EQ(
-      10,
+  EXPECT_EQ(CATALOG_TABLES_COUNT+2,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -273,8 +270,7 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
                    "emp_db", DEFAULT_SCHEMA_NAME, "void_table", txn),
                CatalogException);
-  EXPECT_EQ(
-      10,
+  EXPECT_EQ(CATALOG_TABLES_COUNT+2,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -282,8 +278,7 @@ TEST_F(CatalogTests, DroppingTable) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
                                              "emp_table", txn);
-  EXPECT_EQ(
-      9,
+  EXPECT_EQ(CATALOG_TABLES_COUNT+1,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }

@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// tuple.cpp
+// layout.cpp
 //
 // Identification: src/storage/layout.cpp
 //

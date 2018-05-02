@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// tuple.h
+// layout.h
 //
 // Identification: src/include/storage/layout.h
 //
