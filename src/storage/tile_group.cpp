@@ -358,6 +358,7 @@ const std::string TileGroup::GetInfo() const {
      << peloton::GETINFO_DOUBLE_STAR << std::endl;
   os << "Database[" << database_id << "] // ";
   os << "Table[" << table_id << "] " << std::endl;
+  os << "Layout[" << *tile_group_layout_ << std::endl;
   os << (*tile_group_header) << std::endl;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {

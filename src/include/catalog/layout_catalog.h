@@ -58,7 +58,7 @@ public:
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn);
 
-  bool DeleteLayout(oid_t table_oid, oid_t layout_id,
+  bool DeleteLayout(oid_t table_oid, oid_t layout_oid,
                     concurrency::TransactionContext *txn);
 
   bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);

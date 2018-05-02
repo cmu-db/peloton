@@ -124,7 +124,7 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   }
   txn_manager.CommitTransaction(txn);
 
-  UNUSED_ATTRIBUTE auto layout = table->  GetDefaultLayout();
+  UNUSED_ATTRIBUTE auto layout = table->GetDefaultLayout();
   LOG_TRACE("Updated Layout: %s", layout.GetInfo().c_str());
 }
 

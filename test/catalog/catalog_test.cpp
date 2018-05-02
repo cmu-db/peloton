@@ -389,8 +389,8 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
 
   // The additional layout must be present in pg_layout
   auto other_layout_oid = other_layout->GetOid();
-  EXPECT_NE(nullptr,
-            pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn));
+  EXPECT_EQ(*(other_layout.get()), *(pg_layout
+          ->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));
   txn_manager.CommitTransaction(txn);
 
   // Drop database

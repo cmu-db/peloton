@@ -353,7 +353,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   auto table = storage::TableFactory::GetDataTable(
       database_object->GetDatabaseOid(), table_oid, schema.release(),
-      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog, layout_type);
+      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog,
+      layout_type);
   database->AddTable(table, is_catalog);
   // put data table object into rw_object_set
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);

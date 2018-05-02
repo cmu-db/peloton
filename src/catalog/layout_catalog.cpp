@@ -22,13 +22,9 @@
 namespace peloton {
 namespace catalog {
 
-LayoutCatalog *LayoutCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
-  static LayoutCatalog layout_catalog{pg_catalog, pool, txn};
-  return &layout_catalog;
-}
-
+/** @brief   Constructor invoked by the SystemsCatalog constructor.
+ *  @param   pg_catalog  The database to which this pg_layout belongs.
+ */
 LayoutCatalog::LayoutCatalog(
         storage::Database *pg_catalog,
         UNUSED_ATTRIBUTE type::AbstractPool *pool,
@@ -42,9 +38,12 @@ LayoutCatalog::LayoutCatalog(
   AddIndex({ColumnId::TABLE_OID}, LAYOUT_CATALOG_SKEY0_OID,
            LAYOUT_CATALOG_NAME "_skey0", IndexConstraintType::DEFAULT);
 }
-
+/** @brief   Destructor. Do nothing. Layouts will be dropped by DropTable. */
 LayoutCatalog::~LayoutCatalog() {}
 
+/** @brief   Initilailizes the schema for the pg_layout table.
+ *  @return  unique_ptr of the schema for pg_layout.
+ */
 std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
@@ -83,6 +82,13 @@ std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
   return column_catalog_schema;
 }
 
+/** @brief      Insert a layout into the pg_layout table.
+ *  @param      table_oid  oid of the table to which the new layout belongs.
+ *  @param      layout  layout to be added to the pg_layout table.
+ *  @param      pool to allocate memory for the column_map column.
+ *  @param      txn TransactionContext for adding the layout.
+ *  @return     true on success.
+ */
 bool LayoutCatalog::InsertLayout(oid_t table_oid,
                                  std::shared_ptr<const storage::Layout> layout,
                                  type::AbstractPool *pool,
@@ -106,14 +112,20 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
+/** @brief      Delete a layout from the pg_layout table.
+ *  @param      table_oid  oid of the table to which the old layout belongs.
+ *  @param      layout_oid  oid of the layout to be deleted.
+ *  @param      txn TransactionContext for deleting the layout.
+ *  @return     true on success.
+ */
+bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_oid,
                                  concurrency::TransactionContext *txn) {
   oid_t index_offset =
           IndexId::PRIMARY_KEY;  // Index of table_oid & layout_oid
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(layout_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(layout_oid).Copy());
 
   auto pg_table = Catalog::GetInstance()
           ->GetSystemCatalogs(database_oid)
@@ -121,11 +133,16 @@ bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_id,
 
   // delete column from cache
   auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictLayout(layout_id);
+  table_object->EvictLayout(layout_oid);
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+/** @brief      Delete all layouts correponding to a table from the pg_layout.
+ *  @param      table_oid  oid of the table to delete all layouts.
+ *  @param      txn TransactionContext for deleting the layouts.
+ *  @return     true on success.
+ */
 bool LayoutCatalog::DeleteLayouts(oid_t table_oid,
                                   concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
@@ -142,6 +159,11 @@ bool LayoutCatalog::DeleteLayouts(oid_t table_oid,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+/** @brief      Get all layouts correponding to a table from the pg_layout.
+ *  @param      table_oid  oid of the table to fetch all layouts.
+ *  @param      txn TransactionContext for getting the layouts.
+ *  @return     unordered_map containing a layout_oid -> layout mapping.
+ */
 const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
 LayoutCatalog::GetLayouts(oid_t table_oid,
                           concurrency::TransactionContext *txn) {
@@ -165,37 +187,35 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
   auto result_tiles =
           GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  // result_tiles should contain only 1 LogicalTile per table
-  auto result_size = (*result_tiles).size();
-  PELOTON_ASSERT(result_size <= 1);
-  if (result_size == 0) {
-    LOG_DEBUG("No entry for table %u in pg_layout", table_oid);
-    return table_object->GetLayouts();
-  }
-
-  // Get the LogicalTile
-  auto tile = (*result_tiles)[0].get();
-  auto tuple_count = tile->GetTupleCount();
-  for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
-    oid_t layout_oid =
-            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
-                    .GetAs<oid_t>();
-    oid_t num_columns =
-            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
-                    .GetAs<oid_t>();
-    std::string column_map_str =
-            tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
-                    .ToString();
-    auto column_map = storage::Layout::DeserializeColumnMap(num_columns,
-                                                            column_map_str);
-    auto layout_object =
-            std::make_shared<const storage::Layout>(column_map, layout_oid);
-    table_object->InsertLayout(layout_object);
+  for (auto &tile : (*result_tiles)) { // Iterate through the result_tiles
+    for (auto tuple_id : *tile) {
+      oid_t layout_oid =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
+                      .GetAs<oid_t>();
+      oid_t num_columns =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
+                      .GetAs<oid_t>();
+      std::string column_map_str =
+              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
+                      .ToString();
+      auto column_map = storage::Layout::DeserializeColumnMap(num_columns,
+                                                              column_map_str);
+      auto layout_object =
+              std::make_shared<const storage::Layout>(column_map, layout_oid);
+      table_object->InsertLayout(layout_object);
+    }
   }
 
   return table_object->GetLayouts();
 }
 
+/** @brief      Get the layout by layout_oid from the pg_layout.
+ *  @param      table_oid  oid of the table to fetch the layout.
+ *  @param      layout_oid  oid of the layout being queried.
+ *  @param      txn TransactionContext for getting the layout.
+ *  @return     shared_ptr corresponding to the layout_oid if found.
+ *              nullptr otherwise.
+ */
 std::shared_ptr<const storage::Layout>
 LayoutCatalog::GetLayoutWithOid(oid_t table_oid, oid_t layout_oid,
                  concurrency::TransactionContext *txn) {

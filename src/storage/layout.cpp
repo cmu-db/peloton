@@ -146,7 +146,7 @@ oid_t Layout::GetTileIdFromColumnId(oid_t column_id) const {
   return tile_offset;
 }
 
-oid_t Layout::GetTileColumnId(oid_t column_id) const {
+oid_t Layout::GetTileColumnOffset(oid_t column_id) const {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return tile_column_id;

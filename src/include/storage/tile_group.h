@@ -161,6 +161,7 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
+  // Get the layout of the TileGroup. Used to locate columns. 
   const storage::Layout& GetLayout() const { return *tile_group_layout_; }
 
  protected:

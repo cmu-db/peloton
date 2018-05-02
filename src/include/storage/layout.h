@@ -17,8 +17,11 @@
 #include "common/internal_types.h"
 #include "common/printable.h"
 
+//@{
+/** @brief  Pre-defined OIDs for ROW and COLUMN store.  */
 #define ROW_STORE_OID 0
 #define COLUMN_STORE_OID 1
+//@}
 
 namespace peloton {
 
@@ -28,64 +31,105 @@ class Schema;
 
 namespace storage {
 
+/**
+ * @brief   Class to store the physical layout of a TileGroup.
+ */
 class Layout : public Printable {
  public:
 
+  /**
+   * @brief   Constructor for predefined layout types.
+   * @param   num_columns Number of columns in the layouts.
+   * @param   layout_type Has to be LayoutType::ROW or LayoutType::COLUMN.
+   */
   Layout (const oid_t num_columns, LayoutType layout_type = LayoutType::ROW);
 
+  /**
+   * @brief   Constructor for arbitrary column_maps.
+   *          If the column_map is of type LayoutType::HYBRID,
+   *          the layout_oid_ is set to INVALID_OID. For all other
+   *          layouts, the pre-defined OIDs are used. Should be used
+   *          only for testing & TempTables, the layout isn't persistent.
+   * @param   column_map Column map of the layout to be constructed
+   *
+   */
   Layout(const column_map_type& column_map);
 
-  Layout(const column_map_type& column_map, oid_t layout_id);
+  /**
+   * @brief   Constructor for arbitrary column_maps.
+   * @param   column_map Column map of the layout to be constructed.
+   * @param   layout_oid Per-table unique OID. Generted by DataTable.
+   */
+  Layout(const column_map_type& column_map, oid_t layout_oid);
 
-  // Check whether the Layout is a RowStore.
+  /** @brief  Check whether this layout is a row store. */
   inline bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
 
-  // Check whether the Layout is ColumnStore.
+  /** @brief  Check whether this layout is a column store. */
   inline bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
 
+  /** @brief  Return the layout_oid_ of this object. */
   oid_t  GetOid() const { return layout_oid_; }
 
-  // Sets the tile id and column id w.r.t that tile corresponding to
-  // the specified tile group column id.
+  /** @brief  Sets the tile id and column id w.r.t. of the tile corresponding
+   *          to the specified tile group column id.
+   */
   void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                            oid_t &tile_column_offset) const;
 
+  /** @brief    Returns the layout difference w.r.t. the other Layout.
+   *  @double   The delta between the layouts. Used by LayoutTuner class.
+   */
   double GetLayoutDifference(const storage::Layout &other) const;
 
+  /** @brief  Returns the tile_id of the given column_id. */
   oid_t GetTileIdFromColumnId(oid_t column_id) const;
 
-  oid_t GetTileColumnId(oid_t column_id) const;
+  /** @brief  Returns the column offset of the column_id. */
+  oid_t GetTileColumnOffset(oid_t column_id) const;
 
+  /** @brief  Returns the number of columns in the layout. */
   oid_t GetColumnCount() const { return num_columns_;}
 
+  /** @brief  Constructs the schema for the given layout.  Thid function
+   *          is used only in TempTables and LogicalTiles.
+   */
   std::vector<catalog::Schema> GetLayoutSchemas(catalog::Schema* const schema) const;
 
+  /** @brief  Returns the layout statistics used by the LayoutTuner. */
   std::map<oid_t, oid_t> GetLayoutStats() const;
 
+  /** @brief  Serialzies the column_map to be added to pg_layout. */
   std::string SerializeColumnMap() const;
 
+  /** @brief  Deserializes the string that has been read from pg_layout. */
   static column_map_type DeserializeColumnMap(oid_t num_columns,
                                               std::string column_map_str);
 
+  /** @brief  Returns a string containing the column_map of this layout. */
   std::string GetColumnMapInfo() const;
 
-  // Get a string representation for debugging
+  /** @brief  Returns a string representation for debugging function. */
   const std::string GetInfo() const;
 
+  //@{
+  /** @brief  Operators for checking equality of two layouts. */
   friend bool operator==(const Layout& lhs, const Layout& rhs);
   friend bool operator!=(const Layout& lhs, const Layout& rhs);
+  //@}
 
  private:
 
-  // Layout Id of the tile
+  /** @brief  Layout Oid of the layout object. */
   oid_t layout_oid_;
 
-  // Number of columns in the layout 
+  /** @brief  Number of columns in the layout. */
   oid_t num_columns_; 
 
-  // Layout of the columns.
+  /** @brief  column_map of the layout. */
   column_map_type column_layout_;
 
+  /** @brief  Layout type is always (ROW, COLUMN or HYBRID). */
   LayoutType layout_type_;
 
 };
