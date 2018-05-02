@@ -305,7 +305,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
+  if (settings::SettingsManager::GetBool(
+          settings::SettingId::brain_data_collection)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
 
@@ -539,15 +540,15 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
+// TODO(Tianyi) Further simplify this API
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
     size_t thread_id) {
-  // TODO(Tianyi) Further simplify this API
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement, std::move(param_stats));
   }

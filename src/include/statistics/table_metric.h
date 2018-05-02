@@ -25,46 +25,49 @@ namespace peloton {
 namespace stats {
 class TableMetricRawData : public AbstractRawData {
  public:
-  inline void IncrementTableReads(oid_t table_id, size_t num_read) {
-    auto entry = counters_.find(table_id);
+  inline void IncrementTableReads(std::pair<oid_t, oid_t> db_table_id,
+                                  size_t num_read) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][READ] += num_read;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][READ] += num_read;
   }
 
-  inline void IncrementTableUpdates(oid_t table_id) {
-    auto entry = counters_.find(table_id);
+  inline void IncrementTableUpdates(std::pair<oid_t, oid_t> db_table_id) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][UPDATE]++;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][UPDATE]++;
   }
 
-  inline void IncrementTableInserts(oid_t table_id) {
-    auto entry = counters_.find(table_id);
+  inline void IncrementTableInserts(std::pair<oid_t, oid_t> db_table_id) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][INSERT]++;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][INSERT]++;
   }
 
-  inline void IncrementTableDeletes(oid_t table_id) {
-    auto entry = counters_.find(table_id);
+  inline void IncrementTableDeletes(std::pair<oid_t, oid_t> db_table_id) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][DELETE]++;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][DELETE]++;
   }
 
-  inline void IncrementTableMemAlloc(oid_t table_id, int64_t bytes) {
-    auto entry = counters_.find(table_id);
+  inline void IncrementTableMemAlloc(std::pair<oid_t, oid_t> db_table_id,
+                                     int64_t bytes) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][MEMORY_ALLOC] += bytes;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][MEMORY_ALLOC] += bytes;
   }
 
-  inline void DecrementTableMemAlloc(oid_t table_id, int64_t bytes) {
-    auto entry = counters_.find(table_id);
+  inline void DecrementTableMemAlloc(std::pair<oid_t, oid_t> db_table_id,
+                                     int64_t bytes) {
+    auto entry = counters_.find(db_table_id);
     if (entry == counters_.end())
-      counters_[table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[table_id][MEMORY_ALLOC] -= bytes;
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    counters_[db_table_id][MEMORY_ALLOC] -= bytes;
   }
 
   void Aggregate(AbstractRawData &other) override;
@@ -75,7 +78,8 @@ class TableMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
-  std::unordered_map<oid_t, std::vector<int64_t>> counters_;
+  std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
+      counters_;
 
   // this serves as an index into each table's counter vector
   enum CounterType {
@@ -93,28 +97,31 @@ class TableMetricRawData : public AbstractRawData {
 
 class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
-  inline void OnTupleRead(oid_t table_id, size_t num_read) override {
-    GetRawData()->IncrementTableReads(table_id, num_read);
+  inline void OnRead(std::pair<oid_t, oid_t> db_table_id,
+                     size_t num_read) override {
+    GetRawData()->IncrementTableReads(db_table_id, num_read);
   }
 
-  inline void OnTupleUpdate(oid_t table_id) override {
-    GetRawData()->IncrementTableUpdates(table_id);
+  inline void OnUpdate(std::pair<oid_t, oid_t> db_table_id) override {
+    GetRawData()->IncrementTableUpdates(db_table_id);
   }
 
-  inline void OnTupleInsert(oid_t table_id) override {
-    GetRawData()->IncrementTableInserts(table_id);
+  inline void OnInsert(std::pair<oid_t, oid_t> db_table_id) override {
+    GetRawData()->IncrementTableInserts(db_table_id);
   }
 
-  inline void OnTupleDelete(oid_t table_id) override {
-    GetRawData()->IncrementTableDeletes(table_id);
+  inline void OnDelete(std::pair<oid_t, oid_t> db_table_id) override {
+    GetRawData()->IncrementTableDeletes(db_table_id);
   }
 
-  inline void OnMemoryAlloc(oid_t table_id, size_t bytes) override {
-    GetRawData()->IncrementTableMemAlloc(table_id, bytes);
+  inline void OnMemoryAlloc(std::pair<oid_t, oid_t> db_table_id,
+                            size_t bytes) override {
+    GetRawData()->IncrementTableMemAlloc(db_table_id, bytes);
   }
 
-  inline void OnMemoryFree(oid_t table_id, size_t bytes) override {
-    GetRawData()->DecrementTableMemAlloc(table_id, bytes);
+  inline void OnMemoryFree(std::pair<oid_t, oid_t> db_table_id,
+                           size_t bytes) override {
+    GetRawData()->DecrementTableMemAlloc(db_table_id, bytes);
   }
 };
 /**

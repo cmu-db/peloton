@@ -77,7 +77,7 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 enum class CmpBool {
   CmpFalse = 0,
   CmpTrue = 1,
-  NULL_ = 2 // Note the underscore suffix
+  NULL_ = 2  // Note the underscore suffix
 };
 
 //===--------------------------------------------------------------------===//
@@ -1025,9 +1025,9 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 // Disable or enable
 // TODO: This should probably be a collection level and not a boolean
 // (enable/disable)
-enum class StatsType {
+enum class StatsModeType {
   // Disable statistics collection
-  INVALID = INVALID_TYPE_ID,
+  DISABLE = INVALID_TYPE_ID,
   // Enable statistics collection
   ENABLE = 1,
 };
@@ -1245,7 +1245,8 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
-typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator> WriteSet;
+typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
+                                      ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
@@ -1271,7 +1272,8 @@ enum class DDLType {
   CREATE,
   DROP,
 };
-typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
+typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>>
+    CreateDropSet;
 typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GCObjectSet;
 
 //===--------------------------------------------------------------------===//

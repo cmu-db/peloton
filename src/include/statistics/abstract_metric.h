@@ -65,16 +65,12 @@ class Metric {
   virtual void OnTransactionBegin(){};
   virtual void OnTransactionCommit(oid_t){};
   virtual void OnTransactionAbort(oid_t){};
-  virtual void OnTupleRead(oid_t, size_t){};
-  virtual void OnTupleUpdate(oid_t){};
-  virtual void OnTupleInsert(oid_t){};
-  virtual void OnTupleDelete(oid_t){};
-  virtual void OnIndexRead(oid_t, size_t){};
-  virtual void OnIndexUpdate(oid_t){};
-  virtual void OnIndexInsert(oid_t){};
-  virtual void OnIndexDelete(oid_t){};
-  virtual void OnMemoryAlloc(oid_t, size_t){};
-  virtual void OnMemoryFree(oid_t, size_t){};
+  virtual void OnRead(std::pair<oid_t, oid_t>, size_t){};
+  virtual void OnUpdate(std::pair<oid_t, oid_t>){};
+  virtual void OnInsert(std::pair<oid_t, oid_t>){};
+  virtual void OnDelete(std::pair<oid_t, oid_t>){};
+  virtual void OnMemoryAlloc(std::pair<oid_t, oid_t>, size_t){};
+  virtual void OnMemoryFree(std::pair<oid_t, oid_t>, size_t){};
   virtual void OnQueryBegin(){};
   virtual void OnQueryEnd(){};
 

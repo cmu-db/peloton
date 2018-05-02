@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <fstream>
 #include <memory>
 #include "event2/thread.h"
@@ -79,16 +78,16 @@ void PelotonServer::SSLLockingFunction(int mode, int n,
 }
 
 unsigned long PelotonServer::SSLIdFunction(void) {
-  return ((unsigned long) THREAD_ID);
+  return ((unsigned long)THREAD_ID);
 }
 
 void PelotonServer::LoadSSLFileSettings() {
   private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(
-      settings::SettingId::private_key_file);
+                                     settings::SettingId::private_key_file);
   certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(
-      settings::SettingId::certificate_file);
+                                     settings::SettingId::certificate_file);
   root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(
-      settings::SettingId::root_cert_file);
+                                   settings::SettingId::root_cert_file);
 }
 
 void PelotonServer::SSLInit() {
@@ -110,7 +109,8 @@ void PelotonServer::SSLInit() {
   // TODO(Yuchen): deal with returned error 0?
   SSLMutexSetup();
   // set general-purpose version, actual protocol will be negotiated to the
-  // highest version  mutually support between client and server during handshake
+  // highest version  mutually support between client and server during
+  // handshake
   ssl_context = SSL_CTX_new(SSLv23_method());
   if (ssl_context == nullptr) {
     SetSSLLevel(SSLLevel::SSL_DISABLE);
@@ -161,10 +161,10 @@ void PelotonServer::SSLInit() {
     // automatically.  set routine to filter the return status of the default
     // verification and returns new verification status.  SSL_VERIFY_PEER: send
     // certificate request to client. Client may ignore the request. If the
-    // client sends  back the certificate, it will be verified. Handshake will be
-    // terminated if the verification fails.  SSL_VERIFY_FAIL_IF_NO_PEER_CERT: use
-    // with SSL_VERIFY_PEER, if client does not send back the certificate,
-    // terminate the handshake.
+    // client sends  back the certificate, it will be verified. Handshake will
+    // be terminated if the verification fails.
+    // SSL_VERIFY_FAIL_IF_NO_PEER_CERT: use with SSL_VERIFY_PEER, if client does
+    // not send back the certificate, terminate the handshake.
     SSL_CTX_set_verify(ssl_context, SSL_VERIFY_PEER, VerifyCallback);
     SSL_CTX_set_verify_depth(ssl_context, 4);
   } else {
@@ -222,7 +222,7 @@ int PelotonServer::VerifyCallback(int ok, X509_STORE_CTX *store) {
   return ok;
 }
 
-template<typename... Ts>
+template <typename... Ts>
 void PelotonServer::TrySslOperation(int (*func)(Ts...), Ts... arg) {
   if (func(arg...) < 0) {
     if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
@@ -236,7 +236,7 @@ PelotonServer &PelotonServer::SetupServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
   if (settings::SettingsManager::GetString(
-      settings::SettingId::socket_family) != "AF_INET")
+          settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
@@ -256,13 +256,13 @@ PelotonServer &PelotonServer::SetupServer() {
   setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
   TrySslOperation<int, const struct sockaddr *, socklen_t>(
-      bind, listen_fd_, (struct sockaddr *) &sin, sizeof(sin));
+      bind, listen_fd_, (struct sockaddr *)&sin, sizeof(sin));
   TrySslOperation<int, int>(listen, listen_fd_, conn_backlog);
 
   dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(
       CONNECTION_THREAD_COUNT, listen_fd_);
 
-  LOG_INFO("Listening on port %llu", (unsigned long long) port_);
+  LOG_INFO("Listening on port %llu", (unsigned long long)port_);
   return *this;
 }
 
@@ -274,6 +274,15 @@ void PelotonServer::ServerLoop() {
     auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(address.c_str());
     DedicatedThreadRegistry::GetInstance()
         .RegisterDedicatedThread<PelotonRpcHandlerTask>(this, rpc_task);
+  }
+
+  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
+    auto stats_aggregate_task =
+        std::make_shared<stats::StatsAggregator>(STATS_AGGREGATION_INTERVAL_MS);
+    DedicatedThreadRegistry::GetInstance()
+        .RegisterDedicatedThread<stats::StatsAggregator>(this,
+                                                         stats_aggregate_task);
   }
   dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");

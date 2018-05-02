@@ -91,20 +91,9 @@ void PelotonInit::Initialize() {
 
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
-
-  // Start Statistic Aggregator
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::StatsAggregatorOld::GetInstance().LaunchAggregator();
-  }
 }
 
 void PelotonInit::Shutdown() {
-  // Start Statistic Aggregator
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::StatsAggregatorOld::GetInstance().ShutdownAggregator();
-  }
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto &index_tuner = tuning::IndexTuner::GetInstance();

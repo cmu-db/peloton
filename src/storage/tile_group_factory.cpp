@@ -12,7 +12,7 @@
 
 #include "storage/tile_group_factory.h"
 #include "settings/settings_manager.h"
-#include "statistics/backend_stats_context.h"
+#include "statistics/thread_level_stats_collector.h"
 #include "storage/tile_group_header.h"
 
 //===--------------------------------------------------------------------===//
@@ -36,16 +36,13 @@ TileGroup *TileGroupFactory::GetTileGroup(
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
 
   // Record memory allocation for tile group header
-  if (table_id != INVALID_OID &&
-      static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncreaseTableMemoryAlloc(
-        database_id, table_id, tile_header->GetHeaderSize());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTableMemoryAlloc(database_id, table_id,
+                               tile_header->GetHeaderSize());
 
-  TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,
-                                        schemas, column_map, tuple_count,
-                                        database_id, table_id, tile_group_id);
+  TileGroup *tile_group =
+      new TileGroup(backend_type, tile_header, table, schemas, column_map,
+                    tuple_count, database_id, table_id, tile_group_id);
 
   tile_header->SetTileGroup(tile_group);
 

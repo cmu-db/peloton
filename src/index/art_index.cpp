@@ -14,8 +14,7 @@
 
 #include "common/container_tuple.h"
 #include "index/scan_optimizer.h"
-#include "settings/settings_manager.h"
-#include "statistics/backend_stats_context.h"
+#include "statistics/thread_level_stats_collector.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
 #include "util/portable_endian.h"
@@ -65,14 +64,10 @@ bool ArtIndex::InsertEntry(const storage::Tuple *key, ItemPointer *value) {
   auto thread_info = container_.getThreadInfo();
   container_.insert(tree_key, reinterpret_cast<TID>(value), thread_info);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(
-        GetMetadata());
-  }
-
   // Update stats
   IncreaseNumberOfTuplesBy(1);
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(
+      metadata->GetDatabaseOid(), GetOid());
 
   return true;
 }
@@ -90,11 +85,9 @@ bool ArtIndex::DeleteEntry(const storage::Tuple *key, ItemPointer *value) {
   if (removed) {
     // Update stats
     DecreaseNumberOfTuplesBy(1);
-    if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-            settings::SettingId::stats_mode)) != StatsType::INVALID) {
-      stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
-          1, GetMetadata());
-    }
+
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectIndexDelete(metadata->GetDatabaseOid(), GetOid());
   }
 
   return removed;
@@ -114,11 +107,8 @@ bool ArtIndex::CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
   if (inserted) {
     // Update stats
     IncreaseNumberOfTuplesBy(1);
-    if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-            settings::SettingId::stats_mode)) != StatsType::INVALID) {
-      stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(
-          GetMetadata());
-    }
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
   }
 
   return inserted;
@@ -153,11 +143,8 @@ void ArtIndex::Scan(
   }
 
   // Update stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), GetMetadata());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
+      metadata->GetDatabaseOid(), GetOid(), result.size());
 }
 
 void ArtIndex::ScanLimit(const std::vector<type::Value> &values,
@@ -225,11 +212,8 @@ void ArtIndex::ScanRange(const art::Key &start, const art::Key &end,
   }
 
   // Update stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), GetMetadata());
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
+      metadata->GetDatabaseOid(), GetOid(), result.size());
 }
 
 void ArtIndex::SetLoadKeyFunc(art::Tree::LoadKeyFunction load_func, void *ctx) {

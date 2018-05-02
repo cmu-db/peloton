@@ -59,13 +59,9 @@ TileGroup::TileGroup(BackendType backend_type,
 
 TileGroup::~TileGroup() {
   // Record memory deallocation for tile group header
-  if (table_id != INVALID_OID &&
-      static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->DecreaseTableMemoryAlloc(
-        database_id, table_id, tile_group_header->GetHeaderSize());
-  }
-
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTableMemoryFree(database_id, table_id,
+                              tile_group_header->GetHeaderSize());
   // Drop references on all tiles
   // clean up tile group header
   delete tile_group_header;
@@ -86,9 +82,7 @@ type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
-oid_t TileGroup::GetTileGroupId() const {
-  return tile_group_id;
-}
+oid_t TileGroup::GetTileGroupId() const { return tile_group_id; }
 
 // TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
@@ -100,7 +94,6 @@ oid_t TileGroup::GetNextTupleSlot() const {
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
-
 
 //===--------------------------------------------------------------------===//
 // Operations
@@ -166,7 +159,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
   // Set MVCC info
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
-            INVALID_TXN_ID);
+                 INVALID_TXN_ID);
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
   return tuple_slot_id;
@@ -346,14 +339,12 @@ type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
-                         oid_t column_id) {
+void TileGroup::SetValue(type::Value &value, oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
@@ -404,7 +395,8 @@ const std::string TileGroup::GetInfo() const {
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
-      os << std::endl << (*tile);
+      os << std::endl
+         << (*tile);
     }
   }
 
