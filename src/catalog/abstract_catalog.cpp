@@ -131,8 +131,8 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   return this_p_status.m_result == peloton::ResultType::SUCCESS;
 }
 
-/*@brief   insert tuple(reord) helper function
-* @param   tuple     tuple to be inserted
+/*@brief   insert tuple(reord) using compiled plan
+* @param   insert_values     tuples to be inserted
 * @param   txn       TransactionContext
 * @return  Whether insertion is Successful
 */
@@ -233,9 +233,9 @@ bool AbstractCatalog::DeleteWithIndexScan(
 }
 
 
-/*@brief   Delete a tuple using index scan
-* @param   index_offset  Offset of index for scan
-* @param   values        Values for search
+/*@brief   Delete a tuple using sequential scan
+* @param   column_offsets  Offset of seq scan
+* @param   predicate        Predicate used in the seq scan
 * @param   txn           TransactionContext
 * @return  Whether deletion is Successful
 */
@@ -457,6 +457,82 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
 
   LOG_TRACE("Successfully created index '%s' for table '%d'",
             index_name.c_str(), (int)catalog_table_->GetOid());
+}
+/*@brief   Update specific columns using compiled sequential scan
+ * @param   update_columns    Columns to be updated
+ * @param   update_values     Values to be updated
+ * @param   column_offsets    columns used for seq scan
+ * @param   predicate         Predicate used in the seq scan
+ * @return  true if successfully executes
+ */
+bool AbstractCatalog::UpdateWithCompiledSeqScan(
+  std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
+  std::vector<oid_t> column_offsets, expression::AbstractExpression *predicate,
+  concurrency::TransactionContext *txn) {
+ if (txn == nullptr) throw CatalogException("Scan table requires transaction");
+     // Construct update executor
+     TargetList target_list;
+     DirectMapList direct_map_list;
+
+     size_t column_count = catalog_table_->GetSchema()->GetColumnCount();
+     for (size_t col_itr = 0; col_itr < column_count; col_itr++) {
+      // Skip any column for update
+      if (std::find(std::begin(update_columns), std::end(update_columns),
+                    col_itr) == std::end(update_columns)) {
+       direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
+      }
+     }
+
+     PELOTON_ASSERT(update_columns.size() == update_values.size());
+     for (size_t i = 0; i < update_values.size(); i++) {
+      planner::DerivedAttribute update_attribute{
+        new expression::ConstantValueExpression(update_values[i])};
+      target_list.emplace_back(update_columns[i], update_attribute);
+     }
+
+     std::unique_ptr<const planner::ProjectInfo> project_info(
+       new planner::ProjectInfo(std::move(target_list),
+                                std::move(direct_map_list)));
+
+     std::shared_ptr<planner::UpdatePlan> update_plan{
+       new planner::UpdatePlan(catalog_table_, std::move(project_info))
+     };
+
+     std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+       catalog_table_, predicate, column_offsets)};
+     update_plan->AddChild(std::move(scan));
+
+     // Do binding
+     planner::BindingContext context;
+     update_plan->PerformBinding(context);
+
+     codegen::BufferingConsumer buffer{column_offsets, context};
+
+     bool cached;
+
+     codegen::QueryParameters parameters(*update_plan, {});
+     std::unique_ptr<executor::ExecutorContext> executor_context(
+       new executor::ExecutorContext(txn, std::move(parameters)));
+
+     // search for query
+     codegen::Query *query = codegen::QueryCache::Instance().Find(update_plan);;
+     std::unique_ptr<codegen::Query> compiled_query(nullptr);
+     cached = (query != nullptr);
+
+     // if not cached, compile the query and save it into cache
+     executor::ExecutionResult ret;
+     if (!cached) {
+      compiled_query = codegen::QueryCompiler().Compile(
+        *update_plan, executor_context->GetParams().GetQueryParametersMap(),
+        buffer);
+      query = compiled_query.get();
+      codegen::QueryCache::Instance().Add(update_plan, std::move(compiled_query));
+     }
+
+     query->Execute(std::move(executor_context), buffer,
+                    [&ret](executor::ExecutionResult result) { ret = result; });
+
+     return ret.m_result == peloton::ResultType::SUCCESS;
 }
 
 /*@brief   Update specific columns using index scan

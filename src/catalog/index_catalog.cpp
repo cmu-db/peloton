@@ -313,20 +313,44 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_INDEX_NAME;  // Index of index_name & schema_name
-  std::vector<type::Value> values;
-  values.push_back(
+
+  auto index_name_expr = new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+  ColumnId::INDEX_NAME);
+
+  index_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(),
+  ColumnId::INDEX_NAME);
+
+  expression::AbstractExpression *index_name_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
       type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
-  values.push_back(
+  expression::AbstractExpression *index_name_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, index_name_expr, index_name_const_expr);
+
+  auto *schema_name_expr =
+    new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                         ColumnId::SCHEMA_NAME);
+  schema_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                                catalog_table_->GetOid(),
+                                ColumnId::SCHEMA_NAME);
+  expression::AbstractExpression *schema_name_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
       type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
+  expression::AbstractExpression *schema_name_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, schema_name_expr, schema_name_const_expr);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  expression::AbstractExpression *predicate =
+    expression::ExpressionUtil::ConjunctionFactory(
+      ExpressionType::CONJUNCTION_AND, index_name_equality_expr,
+      schema_name_equality_expr);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+  std::vector<codegen::WrappedTuple> result_tuples =
+    GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  if (result_tuples.size() == 1) {
     auto index_object =
-        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+        std::make_shared<IndexCatalogObject>(result_tuples[0]);
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
@@ -337,7 +361,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
   } else {
-    LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
+    LOG_DEBUG("Found %lu index with name %s", result_tuples.size(),
               index_name.c_str());
   }
 

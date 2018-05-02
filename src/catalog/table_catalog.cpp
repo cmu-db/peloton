@@ -576,7 +576,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
           table_name_const_expr);
 
   auto *schema_name_expr =
-      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
                                                     ColumnId::SCHEMA_NAME);
   schema_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
                            catalog_table_->GetOid(),
@@ -671,14 +671,23 @@ TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
 bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
                                    concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns({ColumnId::VERSION_ID});  // version_id
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
-  // values to execute index scan
-  std::vector<type::Value> scan_values;
-  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   // values to update
   std::vector<type::Value> update_values;
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(update_val).Copy());
+    type::ValueFactory::GetIntegerValue(update_val).Copy());
+  // cache miss, get from pg_table
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *table_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                         ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+  expression::AbstractExpression *table_oid_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
 
   // get table object, then evict table object
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
@@ -688,8 +697,8 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
     database_object->EvictTableObject(table_oid);
   }
 
-  return UpdateWithIndexScan(update_columns, update_values, scan_values,
-                             index_offset, txn);
+  return UpdateWithCompiledSeqScan(update_columns, update_values, column_ids,
+                                   table_oid_equality_expr, txn);
 }
 
 }  // namespace catalog
