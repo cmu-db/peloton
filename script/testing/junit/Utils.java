@@ -15,8 +15,6 @@ public class Utils {
     public static void assertResultsSetEqual(ResultSet results, ExpectedResult expectedResult) throws SQLException {
         int rows = expectedResult.getRows();
         int columns = expectedResult.getColumns();
-        System.out.println("expectedResult.rows = " + rows);
-        System.out.println("expectedResult.columns = " + columns);
         ResultSetMetaData rsmd = results.getMetaData();
         int columnsNumber = rsmd.getColumnCount();
         assertEquals(columns, columnsNumber);
@@ -26,15 +24,12 @@ public class Utils {
             for (int j = 0; j < columns; j++) {
 
                 String returnedString = results.getString(j + 1);
-                System.out.println("i = " + i + "\t j = " + j);
-                System.out.println("returnedString= " + returnedString);
                 String expected = expectedResult.getItemAtIndex(i, j);
-                System.out.println("expected = " + expected);
 
                 if (returnedString == null) {
                     assertEquals(expected, "null");
                 } else {
-                    assertTrue(returnedString.equals(expectedResult.getItemAtIndex(i, j)));
+                    assertEquals(returnedString,expected);
                 }
             }
         }
