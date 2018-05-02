@@ -25,6 +25,10 @@
 namespace peloton {
 namespace optimizer {
 
+//===--------------------------------------------------------------------===//
+// Transitive predicates rules
+//===--------------------------------------------------------------------===//
+
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalGet
 TransitivePredicatesLogicalGet::TransitivePredicatesLogicalGet() {
@@ -99,7 +103,7 @@ bool TransitivePredicatesLogicalFilter::Check(std::shared_ptr<OperatorExpression
 
 void TransitivePredicatesLogicalFilter::Transform(
     std::shared_ptr<OperatorExpression> input,
-    UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
   LOG_TRACE("TransitivePredicatesLogicalFilter::Transform");
   LOG_DEBUG("Transitive table size %d", int(context->transitive_table.size()));
@@ -132,6 +136,59 @@ void TransitivePredicatesLogicalFilter::Transform(
 
   auto filter_children = input->Children();
   for (auto child : filter_children) {
+    output->PushChild(child);
+  }
+
+  transformed.push_back(output);
+}
+
+//===--------------------------------------------------------------------===//
+// Simplify predicates rules
+//===--------------------------------------------------------------------===//
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalFilter
+SimplifyPredicatesLogicalFilter::SimplifyPredicatesLogicalFilter() {
+  type_ = RuleType::SIMPLIFY_PREDICATES_LOGICAL_FILTER;
+
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::InnerJoin));
+  child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
+
+  match_pattern->AddChild(child);
+}
+
+bool SimplifyPredicatesLogicalFilter::Check(std::shared_ptr<OperatorExpression> input,
+					    OptimizeContext *context) const {
+  (void)input;
+  (void)context;
+  return true;
+}
+
+void SimplifyPredicatesLogicalFilter::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("SimplifyPredicatesLogicalFilter::Transform");
+
+  auto filter = input->Op().As<LogicalFilter>();
+  auto &filter_predicates = filter->predicates;
+
+  auto new_predicates = util::SimplifyPredicates(filter_predicates);
+
+  PELOTON_ASSERT(new_predicates.size() <= filter_predicates.size());
+
+  if (new_predicates.size() == filter_predicates.size())
+    return;
+  
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(
+          LogicalFilter::make(new_predicates));
+
+  auto filter_children = input->Children();
+  for (auto &child : filter_children) {
     output->PushChild(child);
   }
 

@@ -42,5 +42,17 @@ class TransitivePredicatesLogicalFilter : public Rule {
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
+
+class SimplifyPredicatesLogicalFilter : public Rule {
+ public:
+  SimplifyPredicatesLogicalFilter();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
 }  // namespace optimizer
 }  // namespace peloton

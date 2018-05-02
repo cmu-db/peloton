@@ -1359,6 +1359,10 @@ enum class RuleType : uint32_t {
   TRANSITIVE_PREDICATES_LOGICAL_GET,
   TRANSITIVE_PREDICATES_LOGICAL_FILTER,
 
+  // Simplify predicates rules (logical -> logical)
+  SIMPLIFY_PREDICATES_LOGICAL_GET,
+  SIMPLIFY_PREDICATES_LOGICAL_FILTER,
+
   // Place holder to generate number of rules compile time
   NUM_RULES
 
