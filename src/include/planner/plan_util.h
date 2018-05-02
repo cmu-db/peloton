@@ -63,7 +63,7 @@ class PlanUtil {
   */
   static const std::vector<col_triplet> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
-      const parser::SQLStatement &sql_stmt);
+      const parser::SQLStatement &sql_stmt, const bool ignore_primary = false);
 
   /**
   * @brief Get the columns affected by a given query

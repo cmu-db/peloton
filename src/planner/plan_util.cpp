@@ -34,10 +34,12 @@ namespace peloton {
 namespace planner {
 
 const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
-    catalog::CatalogCache &catalog_cache,
-    const parser::SQLStatement &sql_stmt) {
+    catalog::CatalogCache &catalog_cache, const parser::SQLStatement &sql_stmt,
+    const bool ignore_primary) {
   std::vector<col_triplet> index_triplets;
   std::string db_name, table_name;
+  std::shared_ptr<catalog::DatabaseCatalogObject> db_object;
+  std::shared_ptr<catalog::TableCatalogObject> table_object;
   oid_t db_oid, table_oid;
   switch (sql_stmt.GetType()) {
     // For INSERT, DELETE, all indexes are affected
@@ -46,9 +48,10 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
           static_cast<const parser::InsertStatement &>(sql_stmt);
       db_name = insert_stmt.GetDatabaseName();
       table_name = insert_stmt.GetTableName();
-      auto db_object = catalog_cache.GetDatabaseObject(db_name);
+      db_object = catalog_cache.GetDatabaseObject(db_name);
       db_oid = db_object->GetDatabaseOid();
-      table_oid = db_object->GetTableObject(table_name)->GetTableOid();
+      table_object = db_object->GetTableObject(table_name);
+      table_oid = table_object->GetTableOid();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
@@ -57,24 +60,38 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
         table_name = delete_stmt.GetTableName();
-        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        db_object = catalog_cache.GetDatabaseObject(db_name);
         db_oid = db_object->GetDatabaseOid();
-        table_oid = db_object->GetTableObject(table_name)->GetTableOid();
+        table_object = db_object->GetTableObject(table_name);
+        table_oid = table_object->GetTableOid();
       }
-      auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
-                             ->GetTableObject(table_name)
-                             ->GetIndexObjects();
+      auto indexes_map = table_object->GetIndexObjects();
       for (auto &index : indexes_map) {
-        index_triplets.emplace_back(db_oid, table_oid, index.first);
+        bool add_index = true;
+
+        if (ignore_primary) {
+          const auto col_oids = index.second->GetKeyAttrs();
+          for (const auto col_oid : col_oids) {
+            if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
+              add_index = false;
+              break;
+            }
+          }
+        }
+
+        if (add_index) {
+          index_triplets.emplace_back(db_oid, table_oid, index.first);
+        }
       }
+
     } break;
     case StatementType::UPDATE: {
       auto &update_stmt =
           static_cast<const parser::UpdateStatement &>(sql_stmt);
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
-      auto db_object = catalog_cache.GetDatabaseObject(db_name);
-      auto table_object = db_object->GetTableObject(table_name);
+      db_object = catalog_cache.GetDatabaseObject(db_name);
+      table_object = db_object->GetTableObject(table_name);
       db_oid = db_object->GetDatabaseOid();
       table_oid = table_object->GetTableOid();
 
@@ -84,6 +101,7 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
         auto col_object = table_object->GetColumnObject(update_clause->column);
+
         update_oids.insert(col_object->GetColumnId());
       }
 
@@ -97,7 +115,20 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
         if (!SetUtil::IsDisjoint(key_attrs_set, update_oids)) {
           LOG_TRACE("Index (%s) is affected",
                     index.second->GetIndexName().c_str());
-          index_triplets.emplace_back(db_oid, table_oid, index.first);
+          bool add_index = true;
+
+          if (ignore_primary) {
+            for (const auto col_oid : key_attrs) {
+              if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
+                add_index = false;
+                break;
+              }
+            }
+          }
+
+          if (add_index) {
+            index_triplets.emplace_back(db_oid, table_oid, index.first);
+          }
         }
       }
     } break;

@@ -43,9 +43,38 @@ class RLFrameworkTest : public PelotonTest {
   }
 
   /**
-   * @brief Create a new table with schema (a INT, b INT, c INT).
+   * @brief Create a new table with schema (a INT, b INT, c INT). b is PRIMARY
+   * KEY.
    */
-  void CreateTable(const std::string &db_name, const std::string &table_name) {
+  void CreateTable_A(const std::string &db_name,
+                     const std::string &table_name) {
+    auto a_column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "a", true);
+
+    auto b_column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "b", true);
+    auto b_primary = catalog::Constraint(ConstraintType::PRIMARY, "b_primary");
+    b_column.AddConstraint(b_primary);
+
+    auto c_column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "c", true);
+
+    std::unique_ptr<catalog::Schema> table_schema(
+        new catalog::Schema({a_column, b_column, c_column}));
+
+    auto txn = txn_manager_->BeginTransaction();
+    catalog_->CreateTable(db_name, table_name, std::move(table_schema), txn);
+    txn_manager_->CommitTransaction(txn);
+  }
+
+  /**
+  * @brief Create a new table with schema (a INT, b INT, c INT).
+  */
+  void CreateTable_B(const std::string &db_name,
+                     const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
         "a", true);
@@ -164,8 +193,8 @@ TEST_F(RLFrameworkTest, BasicTest) {
 
   // We build a DB with 2 tables, each having 3 columns
   CreateDatabase(database_name);
-  CreateTable(database_name, table_name_1);
-  CreateTable(database_name, table_name_2);
+  CreateTable_A(database_name, table_name_1);
+  CreateTable_B(database_name, table_name_2);
 
   // create index on (a1, b1) and (b1, c1)
   auto idx_objs = CreateIndex_A(database_name, table_name_1);
@@ -187,14 +216,29 @@ TEST_F(RLFrameworkTest, BasicTest) {
     EXPECT_EQ(*idx_obj, *new_idx_obj);
   }
 
-  std::string query_string = "UPDATE dummy_table_1 SET a = 0 WHERE b = 1;";
+  std::string query_string =
+      "UPDATE dummy_table_1 SET a = 0 WHERE b = 1 AND c = 2;";
   auto drop_candidates = comp_idx_config.DropCandidates(query_string);
   auto add_candidates = comp_idx_config.AddCandidates(query_string);
 
+  auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
+  auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
   auto index_a_b =
       GetIndexObjectFromString(database_name, table_name_1, {"a", "b"});
   auto index_b_c =
       GetIndexObjectFromString(database_name, table_name_1, {"b", "c"});
+
+  // we should have prefix closure: {}, {b}, {b, c}
+  std::vector<std::shared_ptr<brain::IndexObject>> add_expect_indexes = {
+      index_empty, index_b, index_b_c};
+  // since b is primary key, we will ignore index {a, b}
+  std::vector<std::shared_ptr<brain::IndexObject>> drop_expect_indexes = {};
+
+  auto add_expect_bitset = comp_idx_config.GenerateBitSet(add_expect_indexes);
+  auto drop_expect_bitset = comp_idx_config.GenerateBitSet(drop_expect_indexes);
+
+  EXPECT_EQ(*add_expect_bitset, *add_candidates);
+  EXPECT_EQ(*drop_expect_bitset, *drop_candidates);
 }
 
 }  // namespace test

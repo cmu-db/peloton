@@ -68,12 +68,16 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
   for (const auto &table_obj : table_objs) {
     const auto table_oid = table_obj.first;
     const auto index_objs = table_obj.second->GetIndexObjects();
-    for (const auto &index_obj : index_objs) {
-      const auto &indexed_cols = index_obj.second->GetKeyAttrs();
-      std::vector<oid_t> col_oids(indexed_cols);
-      auto idx_obj =
-          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(idx_obj);
+    if (index_objs.empty()) {
+      AddIndex(table_offset_map_.at(table_oid));
+    } else {
+      for (const auto &index_obj : index_objs) {
+        const auto &indexed_cols = index_obj.second->GetKeyAttrs();
+        std::vector<oid_t> col_oids(indexed_cols);
+        auto idx_obj =
+            std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+        AddIndex(idx_obj);
+      }
     }
   }
 
@@ -183,8 +187,7 @@ void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddCandidates(const std::string& query) {
-
+CompressedIndexConfiguration::AddCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -192,9 +195,7 @@ CompressedIndexConfiguration::AddCandidates(const std::string& query) {
   catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache,
-          ToBindedSqlStmtList(query),
-          database_name_);
+          txn->catalog_cache, ToBindedSqlStmtList(query), database_name_);
   txn_manager_->CommitTransaction(txn);
 
   // Aggregate all columns in the same table
@@ -260,7 +261,8 @@ CompressedIndexConfiguration::ConvertIndexTriplet(
 }
 
 std::unique_ptr<parser::SQLStatementList>
-    CompressedIndexConfiguration::ToBindedSqlStmtList(const std::string &query_string) {
+CompressedIndexConfiguration::ToBindedSqlStmtList(
+    const std::string &query_string) {
   auto txn = txn_manager_->BeginTransaction();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
@@ -273,7 +275,7 @@ std::unique_ptr<parser::SQLStatementList>
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::DropCandidates(const std::string& query) {
+CompressedIndexConfiguration::DropCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -283,7 +285,8 @@ CompressedIndexConfiguration::DropCandidates(const std::string& query) {
   auto txn = txn_manager_->BeginTransaction();
   catalog_->GetDatabaseObject(database_name_, txn);
   std::vector<planner::col_triplet> affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt,
+                                            true);
   for (const auto &col_triplet : affected_indexes) {
     auto idx_obj = ConvertIndexTriplet(col_triplet);
     AddIndex(*result, idx_obj);
@@ -366,6 +369,19 @@ std::string CompressedIndexConfiguration::ToString() const {
   }
 
   return str_stream.str();
+}
+
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfiguration::GenerateBitSet(
+    const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(next_table_offset_));
+
+  for (const auto &idx_obj : idx_objs) {
+    AddIndex(*result, idx_obj);
+  }
+
+  return result;
 }
 }
 }
