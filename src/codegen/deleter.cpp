@@ -41,8 +41,7 @@ void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  bool is_owner =
-      TransactionRuntime::IsOwner(*txn, tile_group_header, tuple_offset);
+  bool is_owner = txn_manager.IsOwner(txn, tile_group_header, tuple_offset);
   bool is_written = txn_manager.IsWritten(txn, tile_group_header, tuple_offset);
 
   ItemPointer old_location{tile_group_id, tuple_offset};
