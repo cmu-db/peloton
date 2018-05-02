@@ -53,6 +53,8 @@ class ComparisonExpression : public AbstractExpression {
    */
   AbstractExpression *Copy() const override;
 
+  bool SymmetricsEquals(const AbstractExpression &other) const override;
+
   void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const override;
