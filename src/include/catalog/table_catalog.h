@@ -83,10 +83,10 @@ class TableCatalogObject {
   void EvictAllLayouts();
 
   // Get layouts
-  std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
-  GetLayouts(bool cached_only = false);
-  std::shared_ptr<const storage::Layout> GetLayout(
-          oid_t layout_id, bool cached_entry = false);
+  std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>> GetLayouts(
+      bool cached_only = false);
+  std::shared_ptr<const storage::Layout> GetLayout(oid_t layout_id,
+                                                   bool cached_entry = false);
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }

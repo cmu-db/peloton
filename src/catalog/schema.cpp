@@ -211,7 +211,8 @@ Schema *Schema::AppendSchema(const Schema *first, const Schema *second) {
 
 // Append subset of columns in the two given schemas
 Schema *Schema::AppendSchema(const Schema *first, std::vector<oid_t> &first_set,
-                             const Schema *second, std::vector<oid_t> &second_set) {
+                             const Schema *second,
+                             std::vector<oid_t> &second_set) {
   const std::vector<const Schema *> schema_list({first, second});
   const std::vector<std::vector<oid_t>> subsets({first_set, second_set});
   return AppendSchemaPtrList(schema_list, subsets);
@@ -229,7 +230,8 @@ Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
 }
 
 // Append given schemas.
-Schema *Schema::AppendSchemaPtrList(const std::vector<const Schema *> &schema_list) {
+Schema *Schema::AppendSchemaPtrList(
+    const std::vector<const Schema *> &schema_list) {
   std::vector<std::vector<oid_t>> subsets;
 
   for (unsigned int i = 0; i < schema_list.size(); i++) {

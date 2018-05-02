@@ -18,12 +18,12 @@
 #include <mutex>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "planner/project_info.h"
 #include "storage/layout.h"
 #include "type/abstract_pool.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -161,8 +161,8 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
-  // Get the layout of the TileGroup. Used to locate columns. 
-  const storage::Layout& GetLayout() const { return *tile_group_layout_; }
+  // Get the layout of the TileGroup. Used to locate columns.
+  const storage::Layout &GetLayout() const { return *tile_group_layout_; }
 
  protected:
   //===--------------------------------------------------------------------===//

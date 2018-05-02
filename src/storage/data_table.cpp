@@ -15,8 +15,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
-#include "catalog/system_catalogs.h"
 #include "catalog/layout_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "common/container_tuple.h"
 #include "common/exception.h"
@@ -871,8 +871,8 @@ void DataTable::ResetDirty() { dirty_ = false; }
 TileGroup *DataTable::GetTileGroupWithLayout(
     std::shared_ptr<const Layout> layout) {
   oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
-  return (AbstractTable::GetTileGroupWithLayout(
-      database_oid, tile_group_id, layout, tuples_per_tilegroup_));
+  return (AbstractTable::GetTileGroupWithLayout(database_oid, tile_group_id,
+                                                layout, tuples_per_tilegroup_));
 }
 
 oid_t DataTable::AddDefaultIndirectionArray(
@@ -900,7 +900,8 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   oid_t tile_group_id = INVALID_OID;
 
   // Create a tile group with that partitioning
-  std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(default_layout_));
+  std::shared_ptr<TileGroup> tile_group(
+      GetTileGroupWithLayout(default_layout_));
   PELOTON_ASSERT(tile_group.get());
 
   tile_group_id = tile_group->GetTileGroupId();
@@ -940,7 +941,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
     layout = default_layout_;
   } else {
     layout = std::shared_ptr<const Layout>(
-            new const Layout(schema->GetColumnCount()));
+        new const Layout(schema->GetColumnCount()));
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
@@ -1192,7 +1193,7 @@ catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
-    storage::TileGroup *tile_group, const Layout& layout) {
+    storage::TileGroup *tile_group, const Layout &layout) {
   std::vector<catalog::Schema> new_schema;
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
@@ -1207,8 +1208,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
     tile_group_layout.LocateTileAndColumn(col_id, orig_tile_offset,
                                           orig_tile_column_offset);
     // Get new layout's tile and offset for col_id.
-    layout.LocateTileAndColumn(col_id, new_tile_offset,
-                               new_tile_column_offset);
+    layout.LocateTileAndColumn(col_id, new_tile_offset, new_tile_column_offset);
 
     // Get the column info from original tile
     auto tile = tile_group->GetTile(orig_tile_offset);
@@ -1234,7 +1234,6 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 // Set the transformed tile group column-at-a-time
 void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
                              storage::TileGroup *new_tile_group) {
-
   auto new_layout = new_tile_group->GetLayout();
   auto orig_layout = orig_tile_group->GetLayout();
 
@@ -1254,10 +1253,10 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // Locate the original base tile and tile column offset
     orig_layout.LocateTileAndColumn(column_itr, orig_tile_offset,
-                                         orig_tile_column_offset);
+                                    orig_tile_column_offset);
 
     new_layout.LocateTileAndColumn(column_itr, new_tile_offset,
-                                        new_tile_column_offset);
+                                   new_tile_column_offset);
 
     auto orig_tile = orig_tile_group->GetTile(orig_tile_offset);
     auto new_tile = new_tile_group->GetTile(new_tile_offset);
@@ -1308,8 +1307,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
       TileGroupFactory::GetTileGroup(
           tile_group->GetDatabaseId(), tile_group->GetTableId(),
           tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-          new_schema, default_layout_,
-          tile_group->GetAllocatedTupleCount()));
+          new_schema, default_layout_, tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
   SetTransformedTileGroup(tile_group.get(), new_tile_group.get());
@@ -1367,9 +1365,7 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-const Layout& DataTable::GetDefaultLayout() const {
-  return *default_layout_;
-}
+const Layout &DataTable::GetDefaultLayout() const { return *default_layout_; }
 
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {
   trigger_list_->AddTrigger(new_trigger);
@@ -1421,8 +1417,7 @@ bool DataTable::operator==(const DataTable &rhs) const {
 bool DataTable::SetCurrentLayoutOid(oid_t new_layout_oid) {
   oid_t old_oid = current_layout_oid_;
   while (old_oid <= new_layout_oid) {
-    if (current_layout_oid_.compare_exchange_strong(
-            old_oid, new_layout_oid)) {
+    if (current_layout_oid_.compare_exchange_strong(old_oid, new_layout_oid)) {
       return true;
     }
     old_oid = current_layout_oid_;
@@ -1430,5 +1425,5 @@ bool DataTable::SetCurrentLayoutOid(oid_t new_layout_oid) {
   return false;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

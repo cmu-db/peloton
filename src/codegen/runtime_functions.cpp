@@ -20,8 +20,8 @@
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/layout.h"
-#include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "storage/tile_group.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
 
@@ -102,10 +102,10 @@ void RuntimeFunctions::FillPredicateArray(
 // to skip over to find successive values of the column.
 //===----------------------------------------------------------------------===//
 void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
-                                          const catalog::Schema *schema, 
+                                          const catalog::Schema *schema,
                                           ColumnLayoutInfo *infos,
                                           uint32_t num_cols) {
-  const auto& layout = tile_group->GetLayout();
+  const auto &layout = tile_group->GetLayout();
   // For LayoutType::ROW, the tile group contains a single tile
   // and all the columns are in the same order as the table schema.
   if (layout.IsRowStore()) {

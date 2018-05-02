@@ -81,7 +81,7 @@ class TestingExecutorUtil {
    * @return A pointer to the DataTable created.
    */
   static storage::DataTable *CreateTableUpdateCatalog(
-          int tuples_per_tilegroup_count, std::string &db_name);
+      int tuples_per_tilegroup_count, std::string &db_name);
 
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();

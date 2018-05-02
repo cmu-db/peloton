@@ -16,9 +16,9 @@
 
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "common/internal_types.h"
 #include "storage/abstract_table.h"
 #include "storage/layout.h"
 #include "storage/tile.h"
@@ -40,7 +40,7 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      tile_group_layout_(layout){
+      tile_group_layout_(layout) {
   tile_count_ = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
@@ -288,7 +288,6 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   oid_t column_itr = 0;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
-
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
     const catalog::Schema *schema = tile->GetSchema();
@@ -319,8 +318,8 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  tile_group_layout_->LocateTileAndColumn(column_id,
-    tile_offset, tile_column_id);
+  tile_group_layout_->LocateTileAndColumn(column_id, tile_offset,
+                                          tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
@@ -328,8 +327,8 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
                          oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  tile_group_layout_->LocateTileAndColumn(column_id,
-    tile_offset, tile_column_id);
+  tile_group_layout_->LocateTileAndColumn(column_id, tile_offset,
+                                          tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
 

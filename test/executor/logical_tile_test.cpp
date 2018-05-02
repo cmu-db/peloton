@@ -103,7 +103,6 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
     tile_schemas.push_back(tile_group->GetTile(i)->GetSchema());
   }
 
-
   // Create tuple schema from tile schemas.
   std::unique_ptr<catalog::Schema> schema(
       catalog::Schema::AppendSchemaPtrList(tile_schemas));

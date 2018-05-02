@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include "catalog/schema.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"

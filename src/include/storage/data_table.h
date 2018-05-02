@@ -18,9 +18,9 @@
 #include <queue>
 #include <set>
 
+#include "common/container/lock_free_array.h"
 #include "common/item_pointer.h"
 #include "common/platform.h"
-#include "common/container/lock_free_array.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
 #include "storage/layout.h"
@@ -257,9 +257,9 @@ class DataTable : public AbstractTable {
   inline void ResetDefaultLayout(LayoutType type = LayoutType::ROW) {
     PELOTON_ASSERT((type == LayoutType::ROW) || (type == LayoutType::COLUMN));
     default_layout_ = std::shared_ptr<const Layout>(
-            new const Layout(schema->GetColumnCount(), type));
+        new const Layout(schema->GetColumnCount(), type));
   }
-  const Layout& GetDefaultLayout() const;
+  const Layout &GetDefaultLayout() const;
 
   //===--------------------------------------------------------------------===//
   // INDEX TUNER
@@ -375,7 +375,6 @@ class DataTable : public AbstractTable {
   oid_t GetNextLayoutOid() { return ++current_layout_oid_; }
 
  private:
-
   //===--------------------------------------------------------------------===//
   // STATIC MEMBERS
   //===--------------------------------------------------------------------===//

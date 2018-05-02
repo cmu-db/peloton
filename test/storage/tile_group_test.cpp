@@ -85,7 +85,7 @@ TEST_F(TileGroupTests, BasicTest) {
   column_map[3] = std::make_pair(1, 1);
 
   std::shared_ptr<const storage::Layout> layout =
-          std::make_shared<const storage::Layout>(column_map);
+      std::make_shared<const storage::Layout>(column_map);
 
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(
@@ -216,7 +216,7 @@ TEST_F(TileGroupTests, StressTest) {
   column_map[3] = std::make_pair(1, 1);
 
   std::shared_ptr<const storage::Layout> layout =
-          std::make_shared<const storage::Layout>(column_map);
+      std::make_shared<const storage::Layout>(column_map);
 
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(
@@ -238,11 +238,14 @@ TEST_F(TileGroupTests, StressTest) {
 //  std::vector<catalog::Schema> schemas;
 //
 //  // SCHEMA
-//  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+//  catalog::Column column1(type::TypeId::INTEGER,
+//  type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "A", true);
-//  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+//  catalog::Column column2(type::TypeId::INTEGER,
+//  type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "B", true);
-//  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
+//  catalog::Column column3(type::TypeId::TINYINT,
+//  type::Type::GetTypeSize(type::TypeId::TINYINT),
 //                          "C", true);
 //  catalog::Column column4(type::TypeId::VARCHAR, 50, "D", false);
 //
@@ -381,9 +384,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   const int tuple_count = 4;
 
-
   std::shared_ptr<const storage::Layout> layout =
-          std::make_shared<const storage::Layout>(schema->GetColumnCount());
+      std::make_shared<const storage::Layout>(schema->GetColumnCount());
 
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(

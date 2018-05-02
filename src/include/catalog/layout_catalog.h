@@ -33,17 +33,17 @@ namespace peloton {
 
 namespace storage {
 class Layout;
-} // namespace storage
+}  // namespace storage
 
 namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
-
-public:
+ public:
   // Global Singleton, only the first call requires passing parameters.
-  static LayoutCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                    type::AbstractPool *pool = nullptr,
-                                    concurrency::TransactionContext *txn = nullptr);
+  static LayoutCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                 concurrency::TransactionContext *txn);
@@ -69,12 +69,10 @@ public:
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
   GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
 
-  std::shared_ptr<const storage::Layout>
-  GetLayoutWithOid(oid_t table_oid, oid_t layout_oid,
-                   concurrency::TransactionContext *txn);
+  std::shared_ptr<const storage::Layout> GetLayoutWithOid(
+      oid_t table_oid, oid_t layout_oid, concurrency::TransactionContext *txn);
 
-private:
-
+ private:
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
   enum ColumnId {
@@ -92,7 +90,6 @@ private:
     // Add new indexes here in creation order
   };
 };
-
 
 }  // namespace catalog
 }  // namespace peloton

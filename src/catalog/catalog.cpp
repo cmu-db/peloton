@@ -182,8 +182,8 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
-          LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-          database_oid, pool_.get(), txn);
+      LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
+      database_oid, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
@@ -570,11 +570,9 @@ ResultType Catalog::CreateIndex(
  * @return  shared_ptr    shared_ptr to the newly created layout in case of
  *                        success. nullptr in case of failure.
  */
-std::shared_ptr<const storage::Layout>
-Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
-                      const column_map_type &column_map,
-                      concurrency::TransactionContext *txn) {
-
+std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
+    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
+    concurrency::TransactionContext *txn) {
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
   auto table = database->GetTableWithOid(table_oid);
@@ -583,13 +581,12 @@ Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
   // Ensure that the new layout
   PELOTON_ASSERT(layout_oid < INVALID_OID);
   auto new_layout = std::shared_ptr<const storage::Layout>(
-          new const storage::Layout(column_map, layout_oid));
+      new const storage::Layout(column_map, layout_oid));
 
   // Add the layout the pg_layout table
-  auto pg_layout =
-          catalog_map_[database_oid]->GetLayoutCatalog();
-  bool result = pg_layout->InsertLayout(table_oid, new_layout,
-                                             pool_.get(), txn);
+  auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
+  bool result =
+      pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn);
   if (!result) {
     LOG_DEBUG("Failed to create a new layout for table %u", table_oid);
     return nullptr;
@@ -607,10 +604,9 @@ Catalog::CreateLayout(oid_t database_oid, oid_t table_oid,
  * @return  shared_ptr    shared_ptr to the newly created layout in case of
  *                        success. nullptr in case of failure.
  */
-std::shared_ptr<const storage::Layout>
-Catalog::CreateDefaultLayout(oid_t database_oid, oid_t table_oid,
-                             const column_map_type &column_map,
-                             concurrency::TransactionContext *txn) {
+std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
+    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
+    concurrency::TransactionContext *txn) {
   auto new_layout = CreateLayout(database_oid, table_oid, column_map, txn);
   // If the layout creation was successful, set it as the default
   if (new_layout != nullptr) {
@@ -787,7 +783,7 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
 
   // delete record in pg_layout
   auto pg_layout =
-          catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
   pg_layout->DeleteLayouts(table_oid, txn);
 
   // delete record in pg_table
@@ -834,7 +830,6 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   return ResultType::SUCCESS;
 }
 
-
 /*@brief   Drop layout
  * tile_groups
  * @param   database_oid    the database to which the table belongs
@@ -860,8 +855,7 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
   if (!pg_layout->DeleteLayout(table_oid, layout_oid, txn)) {
     auto layout = table->GetDefaultLayout();
-    LOG_DEBUG("Layout delete failed. Default layout id: %u",
-              layout.GetOid());
+    LOG_DEBUG("Layout delete failed. Default layout id: %u", layout.GetOid());
     return ResultType::FAILURE;
   }
 

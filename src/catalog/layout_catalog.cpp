@@ -26,15 +26,13 @@ namespace catalog {
  *  @param   pg_catalog  The database to which this pg_layout belongs.
  */
 LayoutCatalog::LayoutCatalog(
-        storage::Database *pg_catalog,
-        UNUSED_ATTRIBUTE type::AbstractPool *pool,
-        UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
-        : AbstractCatalog(LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME,
-                          InitializeSchema().release(), pg_catalog) {
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
+    : AbstractCatalog(LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME,
+                      InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_attribute
-  AddIndex({ColumnId::TABLE_OID, ColumnId::LAYOUT_OID},
-           LAYOUT_CATALOG_PKEY_OID, LAYOUT_CATALOG_NAME "_pkey",
-           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({ColumnId::TABLE_OID, ColumnId::LAYOUT_OID}, LAYOUT_CATALOG_PKEY_OID,
+           LAYOUT_CATALOG_NAME "_pkey", IndexConstraintType::PRIMARY_KEY);
   AddIndex({ColumnId::TABLE_OID}, LAYOUT_CATALOG_SKEY0_OID,
            LAYOUT_CATALOG_NAME "_skey0", IndexConstraintType::DEFAULT);
 }
@@ -49,35 +47,36 @@ std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto table_id_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "table_oid", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "table_oid", true);
   table_id_column.AddConstraint(catalog::Constraint(
-          ConstraintType::PRIMARY, primary_key_constraint_name));
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   table_id_column.AddConstraint(
-          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto layout_oid_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "layout_oid", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "layout_oid", true);
   layout_oid_column.AddConstraint(catalog::Constraint(
-          ConstraintType::PRIMARY, primary_key_constraint_name));
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   layout_oid_column.AddConstraint(
-          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto num_columns_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "num_columns", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "num_columns", true);
   num_columns_column.AddConstraint(
-          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_map_column = catalog::Column(
-          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-          "column_map", false);
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "column_map", false);
   column_map_column.AddConstraint(
-          catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> column_catalog_schema(new catalog::Schema(
-          {table_id_column, layout_oid_column, num_columns_column, column_map_column}));
+  std::unique_ptr<catalog::Schema> column_catalog_schema(
+      new catalog::Schema({table_id_column, layout_oid_column,
+                           num_columns_column, column_map_column}));
 
   return column_catalog_schema;
 }
@@ -95,7 +94,7 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
-          new storage::Tuple(catalog_table_->GetSchema(), true));
+      new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(layout->GetOid());
@@ -120,16 +119,15 @@ bool LayoutCatalog::InsertLayout(oid_t table_oid,
  */
 bool LayoutCatalog::DeleteLayout(oid_t table_oid, oid_t layout_oid,
                                  concurrency::TransactionContext *txn) {
-  oid_t index_offset =
-          IndexId::PRIMARY_KEY;  // Index of table_oid & layout_oid
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid & layout_oid
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(layout_oid).Copy());
 
   auto pg_table = Catalog::GetInstance()
-          ->GetSystemCatalogs(database_oid)
-          ->GetTableCatalog();
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
 
   // delete column from cache
   auto table_object = pg_table->GetTableObject(table_oid, txn);
@@ -151,8 +149,8 @@ bool LayoutCatalog::DeleteLayouts(oid_t table_oid,
 
   // delete layouts from cache
   auto pg_table = Catalog::GetInstance()
-          ->GetSystemCatalogs(database_oid)
-          ->GetTableCatalog();
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllLayouts();
 
@@ -169,8 +167,8 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
                           concurrency::TransactionContext *txn) {
   // Try to find the layouts in the cache
   auto pg_table = Catalog::GetInstance()
-          ->GetSystemCatalogs(database_oid)
-          ->GetTableCatalog();
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto layout_objects = table_object->GetLayouts(true);
@@ -185,23 +183,23 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
-          GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  for (auto &tile : (*result_tiles)) { // Iterate through the result_tiles
+  for (auto &tile : (*result_tiles)) {  // Iterate through the result_tiles
     for (auto tuple_id : *tile) {
       oid_t layout_oid =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
-                      .GetAs<oid_t>();
+          tile->GetValue(tuple_id, LayoutCatalog::ColumnId::LAYOUT_OID)
+              .GetAs<oid_t>();
       oid_t num_columns =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
-                      .GetAs<oid_t>();
+          tile->GetValue(tuple_id, LayoutCatalog::ColumnId::NUM_COLUMNS)
+              .GetAs<oid_t>();
       std::string column_map_str =
-              tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
-                      .ToString();
-      auto column_map = storage::Layout::DeserializeColumnMap(num_columns,
-                                                              column_map_str);
+          tile->GetValue(tuple_id, LayoutCatalog::ColumnId::COLUMN_MAP)
+              .ToString();
+      auto column_map =
+          storage::Layout::DeserializeColumnMap(num_columns, column_map_str);
       auto layout_object =
-              std::make_shared<const storage::Layout>(column_map, layout_oid);
+          std::make_shared<const storage::Layout>(column_map, layout_oid);
       table_object->InsertLayout(layout_object);
     }
   }
@@ -216,9 +214,8 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
  *  @return     shared_ptr corresponding to the layout_oid if found.
  *              nullptr otherwise.
  */
-std::shared_ptr<const storage::Layout>
-LayoutCatalog::GetLayoutWithOid(oid_t table_oid, oid_t layout_oid,
-                 concurrency::TransactionContext *txn) {
+std::shared_ptr<const storage::Layout> LayoutCatalog::GetLayoutWithOid(
+    oid_t table_oid, oid_t layout_oid, concurrency::TransactionContext *txn) {
   auto table_layouts = GetLayouts(table_oid, txn);
   for (const auto &layout_entry : table_layouts) {
     if (layout_entry.second->GetOid() == layout_oid) {

@@ -27,11 +27,11 @@ namespace storage {
 AbstractTable::AbstractTable(oid_t table_oid, catalog::Schema *schema,
                              bool own_schema, peloton::LayoutType layout_type)
     : table_oid(table_oid), schema(schema), own_schema_(own_schema) {
-
   // The default Layout should always be ROW or COLUMN
-  PELOTON_ASSERT((layout_type == LayoutType::ROW) || (layout_type == LayoutType::COLUMN));
+  PELOTON_ASSERT((layout_type == LayoutType::ROW) ||
+                 (layout_type == LayoutType::COLUMN));
   default_layout_ = std::shared_ptr<const Layout>(
-          new Layout(schema->GetColumnCount(), layout_type));
+      new Layout(schema->GetColumnCount(), layout_type));
 }
 
 AbstractTable::~AbstractTable() {
@@ -41,15 +41,12 @@ AbstractTable::~AbstractTable() {
 
 TileGroup *AbstractTable::GetTileGroupWithLayout(
     oid_t database_id, oid_t tile_group_id,
-    std::shared_ptr<const Layout> layout,
-    const size_t num_tuples) {
-
+    std::shared_ptr<const Layout> layout, const size_t num_tuples) {
   // Populate the schema for each tile
   std::vector<catalog::Schema> schemas = layout->GetLayoutSchemas(schema);
 
-  TileGroup *tile_group =
-      TileGroupFactory::GetTileGroup(database_id, GetOid(), tile_group_id, this,
-                                     schemas, layout, num_tuples);
+  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
+      database_id, GetOid(), tile_group_id, this, schemas, layout, num_tuples);
 
   return tile_group;
 }

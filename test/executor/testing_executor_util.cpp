@@ -172,7 +172,8 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
   column_map[3] = std::make_pair(1, 1);
 
   std::shared_ptr<const storage::Layout> layout =
-          std::shared_ptr<const storage::Layout>(new const storage::Layout(column_map));
+      std::shared_ptr<const storage::Layout>(
+          new const storage::Layout(column_map));
 
   std::shared_ptr<storage::TileGroup> tile_group_ptr(
       storage::TileGroupFactory::GetTileGroup(
@@ -257,7 +258,7 @@ void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
  */
 void TestingExecutorUtil::PopulateTiles(
     std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
-  size_t  tile_count = tile_group->GetTileCount();
+  size_t tile_count = tile_group->GetTileCount();
   // Create tuple schema from tile schemas.
   std::vector<const catalog::Schema *> tile_schemas;
   for (oid_t tile_id = 0; tile_id < tile_count; tile_id++) {
@@ -420,9 +421,10 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
 }
 
 storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
-        int tuples_per_tilegroup_count, std::string &db_name) {
-  auto table_schema = std::unique_ptr<catalog::Schema>(new catalog::Schema(
-          {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)}));
+    int tuples_per_tilegroup_count, std::string &db_name) {
+  auto table_schema = std::unique_ptr<catalog::Schema>(
+      new catalog::Schema({GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2),
+                           GetColumnInfo(3)}));
   std::string table_name("test_table");
 
   bool is_catalog = false;
@@ -436,8 +438,8 @@ storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                         table_name, txn);
+  auto table =
+      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);
 
   return table;

@@ -41,14 +41,14 @@ TEST_F(LayoutTunerTests, BasicTest) {
   std::string db_name = "test_db";
   TestingExecutorUtil::InitializeDatabase(db_name);
 
-  auto data_table = TestingExecutorUtil::CreateTableUpdateCatalog(tuple_count, db_name);
-
+  auto data_table =
+      TestingExecutorUtil::CreateTableUpdateCatalog(tuple_count, db_name);
 
   // Create a table and populate it
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false,
-                                     false, true, txn);
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
+                                     true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Check column count
@@ -63,7 +63,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s",old_default_layout.GetColumnMapInfo().c_str());
+  LOG_INFO("Layout: %s", old_default_layout.GetColumnMapInfo().c_str());
 
   // Start layout tuner
   layout_tuner.Start();
@@ -118,12 +118,11 @@ TEST_F(LayoutTunerTests, BasicTest) {
   column_count = new_default_layout.GetColumnCount();
   EXPECT_EQ(column_count, 4);
 
-
   // Check the tile corresponding to each column.
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(0),0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1),0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2),0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3),1);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(0), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3), 1);
 
   // Check the per tile stats of the new layout
   // The layout must contain 2 tiles with the following stats

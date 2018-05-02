@@ -136,9 +136,9 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog->CreateDatabase("emp_db", txn);
-  catalog::Catalog::GetInstance()->CreateTable(
-      "emp_db", DEFAULT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFAULT_SCHEMA_NAME,
+                                               "department_table",
+                                               std::move(table_schema), txn);
 
   // Create multiple stat worker threads
   int num_threads = 8;

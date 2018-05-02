@@ -89,7 +89,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
       CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
 
   // Construct schema.
-  unsigned  int num_tiles = tile_group->NumTiles();
+  unsigned int num_tiles = tile_group->NumTiles();
   for (unsigned int i = 0; i < num_tiles; i++) {
     auto base_tile_ref = tile_group->GetTileReference(i);
     auto schema = base_tile_ref->GetSchema();

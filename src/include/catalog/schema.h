@@ -65,14 +65,17 @@ class Schema : public Printable {
   static Schema *AppendSchema(const Schema *first, const Schema *second);
 
   // Append subset of columns in the two given schemas
-  static Schema *AppendSchema(const Schema *first, std::vector<oid_t> &first_set,
-                              const Schema *second, std::vector<oid_t> &second_set);
+  static Schema *AppendSchema(const Schema *first,
+                              std::vector<oid_t> &first_set,
+                              const Schema *second,
+                              std::vector<oid_t> &second_set);
 
   // Append given schemas.
   static Schema *AppendSchemaList(std::vector<Schema> &schema_list);
 
   // Append given schemas.
-  static Schema *AppendSchemaPtrList(const std::vector<const Schema *> &schema_list);
+  static Schema *AppendSchemaPtrList(
+      const std::vector<const Schema *> &schema_list);
 
   // Append subsets of columns in the given schemas.
   static Schema *AppendSchemaPtrList(

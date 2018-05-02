@@ -19,9 +19,9 @@
 #include <set>
 #include <string>
 
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "common/internal_types.h"
 #include "storage/layout.h"
 
 //===--------------------------------------------------------------------===//
@@ -80,9 +80,7 @@ class AbstractTable : public Printable {
     default_layout_ = layout;
   }
 
-  std::shared_ptr<const Layout> GetDefaultLayout() {
-    return default_layout_;
-  }
+  std::shared_ptr<const Layout> GetDefaultLayout() { return default_layout_; }
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//

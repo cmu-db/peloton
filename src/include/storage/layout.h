@@ -36,13 +36,12 @@ namespace storage {
  */
 class Layout : public Printable {
  public:
-
   /**
    * @brief   Constructor for predefined layout types.
    * @param   num_columns Number of columns in the layouts.
    * @param   layout_type Has to be LayoutType::ROW or LayoutType::COLUMN.
    */
-  Layout (const oid_t num_columns, LayoutType layout_type = LayoutType::ROW);
+  Layout(const oid_t num_columns, LayoutType layout_type = LayoutType::ROW);
 
   /**
    * @brief   Constructor for arbitrary column_maps.
@@ -53,23 +52,25 @@ class Layout : public Printable {
    * @param   column_map Column map of the layout to be constructed
    *
    */
-  Layout(const column_map_type& column_map);
+  Layout(const column_map_type &column_map);
 
   /**
    * @brief   Constructor for arbitrary column_maps.
    * @param   column_map Column map of the layout to be constructed.
    * @param   layout_oid Per-table unique OID. Generted by DataTable.
    */
-  Layout(const column_map_type& column_map, oid_t layout_oid);
+  Layout(const column_map_type &column_map, oid_t layout_oid);
 
   /** @brief  Check whether this layout is a row store. */
   inline bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
 
   /** @brief  Check whether this layout is a column store. */
-  inline bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
+  inline bool IsColumnStore() const {
+    return (layout_type_ == LayoutType::COLUMN);
+  }
 
   /** @brief  Return the layout_oid_ of this object. */
-  oid_t  GetOid() const { return layout_oid_; }
+  oid_t GetOid() const { return layout_oid_; }
 
   /** @brief  Sets the tile id and column id w.r.t. of the tile corresponding
    *          to the specified tile group column id.
@@ -89,12 +90,13 @@ class Layout : public Printable {
   oid_t GetTileColumnOffset(oid_t column_id) const;
 
   /** @brief  Returns the number of columns in the layout. */
-  oid_t GetColumnCount() const { return num_columns_;}
+  oid_t GetColumnCount() const { return num_columns_; }
 
   /** @brief  Constructs the schema for the given layout.  Thid function
    *          is used only in TempTables and LogicalTiles.
    */
-  std::vector<catalog::Schema> GetLayoutSchemas(catalog::Schema* const schema) const;
+  std::vector<catalog::Schema> GetLayoutSchemas(
+      catalog::Schema *const schema) const;
 
   /** @brief  Returns the layout statistics used by the LayoutTuner. */
   std::map<oid_t, oid_t> GetLayoutStats() const;
@@ -114,25 +116,23 @@ class Layout : public Printable {
 
   //@{
   /** @brief  Operators for checking equality of two layouts. */
-  friend bool operator==(const Layout& lhs, const Layout& rhs);
-  friend bool operator!=(const Layout& lhs, const Layout& rhs);
+  friend bool operator==(const Layout &lhs, const Layout &rhs);
+  friend bool operator!=(const Layout &lhs, const Layout &rhs);
   //@}
 
  private:
-
   /** @brief  Layout Oid of the layout object. */
   oid_t layout_oid_;
 
   /** @brief  Number of columns in the layout. */
-  oid_t num_columns_; 
+  oid_t num_columns_;
 
   /** @brief  column_map of the layout. */
   column_map_type column_layout_;
 
   /** @brief  Layout type is always (ROW, COLUMN or HYBRID). */
   LayoutType layout_type_;
-
 };
 
-} //namespace storage
-} //namespace peloton
+}  // namespace storage
+}  // namespace peloton

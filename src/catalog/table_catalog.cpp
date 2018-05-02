@@ -320,8 +320,8 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
 TableCatalog::TableCatalog(
     storage::Database *database, UNUSED_ATTRIBUTE type::AbstractPool *pool,
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
-        : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                          InitializeSchema().release(), database) {
+    : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+                      InitializeSchema().release(), database) {
   // Add indexes for pg_namespace
   AddIndex({0}, TABLE_CATALOG_PKEY_OID, TABLE_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
@@ -335,14 +335,14 @@ TableCatalog::TableCatalog(
  *  @param   layout  Layout object to be inserted
  *  @return  false if layout already exists in cache
  */
-bool TableCatalogObject::InsertLayout(std::shared_ptr<const storage::Layout> layout) {
-
+bool TableCatalogObject::InsertLayout(
+    std::shared_ptr<const storage::Layout> layout) {
   // Invalid object
   if (layout == nullptr) {
     return false;
   }
 
-  oid_t  layout_id = layout->GetOid();
+  oid_t layout_id = layout->GetOid();
   // layout is already present in the cache.
   if (layout_objects_.find(layout_id) != layout_objects_.end()) {
     LOG_DEBUG("Layout %u already exists in cache!", layout_id);
@@ -370,8 +370,8 @@ TableCatalogObject::GetLayouts(bool cached_only) {
   if (!valid_layout_objects_ && !cached_only) {
     // get layout catalog objects from pg_layout
     auto pg_layout = Catalog::GetInstance()
-            ->GetSystemCatalogs(database_oid)
-            ->GetLayoutCatalog();
+                         ->GetSystemCatalogs(database_oid)
+                         ->GetLayoutCatalog();
     pg_layout->GetLayouts(table_oid, txn);
     valid_column_objects = true;
   }
@@ -383,8 +383,8 @@ TableCatalogObject::GetLayouts(bool cached_only) {
  *  @param   cached_only If set to true, don't fetch the layout objects.
  *  @return  Layout object of corresponding to the layout_id if present.
  */
-std::shared_ptr<const storage::Layout>
-TableCatalogObject::GetLayout(oid_t layout_id, bool cached_entry) {
+std::shared_ptr<const storage::Layout> TableCatalogObject::GetLayout(
+    oid_t layout_id, bool cached_entry) {
   // fetch layout objects in case we have not
   GetLayouts(cached_entry);
   auto it = layout_objects_.find(layout_id);

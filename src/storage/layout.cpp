@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "catalog/column.h"
 #include "catalog/schema.h"
@@ -24,13 +24,11 @@ namespace storage {
 // Constructor for the layout class with column_count
 // The default layout is always a ROW_STORE
 Layout::Layout(const oid_t num_columns, LayoutType layout_type)
-        : num_columns_(num_columns),
-          layout_type_(layout_type){}
+    : num_columns_(num_columns), layout_type_(layout_type) {}
 
 // Constructor for the Layout class with column_map
-Layout::Layout(const column_map_type& column_map)
-        : num_columns_(column_map.size()),
-          column_layout_(column_map) {
+Layout::Layout(const column_map_type &column_map)
+    : num_columns_(column_map.size()), column_layout_(column_map) {
   // Figure out the layout type if not present
   bool row_layout = true, column_layout = true;
   for (oid_t column_id = 0; column_id < num_columns_; column_id++) {
@@ -48,12 +46,12 @@ Layout::Layout(const column_map_type& column_map)
     layout_type_ = LayoutType::ROW;
     layout_oid_ = ROW_STORE_OID;
   } else if (column_layout) {
-    layout_type_  = LayoutType::COLUMN;
+    layout_type_ = LayoutType::COLUMN;
     layout_oid_ = COLUMN_STORE_OID;
   } else {
     // layout_oid_ is set to INVALID_OID, indicating that this
     // layout is not stored in the catalog and thus not persistent.
-    // To be used only in TempTable or Tests. 
+    // To be used only in TempTable or Tests.
     layout_type_ = LayoutType::HYBRID;
     layout_oid_ = INVALID_OID;
   }
@@ -66,10 +64,9 @@ Layout::Layout(const column_map_type& column_map)
 
 // Constructor for Layout class with predefined layout_oid
 Layout::Layout(const column_map_type &column_map, oid_t layout_id)
-        : layout_oid_(layout_id),
-          num_columns_(column_map.size()),
-          column_layout_(column_map) {
-
+    : layout_oid_(layout_id),
+      num_columns_(column_map.size()),
+      column_layout_(column_map) {
   if (layout_oid_ == ROW_STORE_OID) {
     layout_type_ = LayoutType::ROW;
   } else if (layout_oid_ == COLUMN_STORE_OID) {
@@ -84,22 +81,20 @@ Layout::Layout(const column_map_type &column_map, oid_t layout_id)
   }
 }
 
-
 // Sets the tile id and column id w.r.t that tile corresponding to
 // the specified tile group column id.
-void Layout::LocateTileAndColumn(oid_t column_offset,
-    oid_t &tile_offset, oid_t &tile_column_offset) const {
+void Layout::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+                                 oid_t &tile_column_offset) const {
+  // Ensure that the column_offset is not out of bound
+  PELOTON_ASSERT(num_columns_ > column_offset);
 
-	// Ensure that the column_offset is not out of bound
-	PELOTON_ASSERT(num_columns_ > column_offset);
-
-	// For row store layout, tile id is always 0 and the tile
-	// column_id and tile column_id is the same.
-	if (layout_type_ == LayoutType::ROW) {
-		tile_offset = 0;
-		tile_column_offset = column_offset;
-		return;
-	}
+  // For row store layout, tile id is always 0 and the tile
+  // column_id and tile column_id is the same.
+  if (layout_type_ == LayoutType::ROW) {
+    tile_offset = 0;
+    tile_column_offset = column_offset;
+    return;
+  }
 
   // For column store layout, tile_id is always same as column_id
   // and the tile column_id is always 0.
@@ -109,11 +104,11 @@ void Layout::LocateTileAndColumn(oid_t column_offset,
     return;
   }
 
-	// For other layouts, fetch the layout and
-	// get the entry in the column map
-	auto entry = column_layout_.at(column_offset);
-	tile_offset = entry.first;
-	tile_column_offset = entry.second;
+  // For other layouts, fetch the layout and
+  // get the entry in the column map
+  auto entry = column_layout_.at(column_offset);
+  tile_offset = entry.first;
+  tile_column_offset = entry.second;
 }
 
 double Layout::GetLayoutDifference(const storage::Layout &other) const {
@@ -125,11 +120,9 @@ double Layout::GetLayoutDifference(const storage::Layout &other) const {
   PELOTON_ASSERT(this->num_columns_ == other.num_columns_);
 
   if ((this->layout_oid_ != other.layout_oid_)) {
-
     for (oid_t col_itr = 0; col_itr < num_columns_; col_itr++) {
-
       if (this->GetTileIdFromColumnId(col_itr) !=
-              other.GetTileIdFromColumnId(col_itr)) {
+          other.GetTileIdFromColumnId(col_itr)) {
         diff++;
       }
     }
@@ -153,8 +146,7 @@ oid_t Layout::GetTileColumnOffset(oid_t column_id) const {
 }
 
 std::vector<catalog::Schema> Layout::GetLayoutSchemas(
-        catalog::Schema* const schema) const {
-
+    catalog::Schema *const schema) const {
   std::vector<catalog::Schema> schemas;
 
   // Build the schema tile at a time
@@ -174,7 +166,7 @@ std::vector<catalog::Schema> Layout::GetLayoutSchemas(
     // as the schema. This snipet was initially in abstract_table.cpp.
     for (auto column_info : column_layout_) {
       tile_schemas[column_info.second.first].push_back(
-              schema->GetColumn(column_info.first));
+          schema->GetColumn(column_info.first));
     }
 
     for (auto entry : tile_schemas) {
@@ -267,7 +259,7 @@ std::string Layout::GetColumnMapInfo() const {
     for (auto column_info : column_layout_) {
       oid_t col_id = column_info.first;
       oid_t tile_id = column_info.second.first;
-      if(tile_column_map.find(tile_id) == tile_column_map.end()) {
+      if (tile_column_map.find(tile_id) == tile_column_map.end()) {
         tile_column_map[tile_id] = {};
       }
       tile_column_map[tile_id].push_back(col_id);
@@ -299,8 +291,7 @@ const std::string Layout::GetInfo() const {
                                      GETINFO_SPACER);
 }
 
-bool operator==(const Layout& lhs, const Layout& rhs) {
-
+bool operator==(const Layout &lhs, const Layout &rhs) {
   // Check the equality of layout_type_
   if (lhs.layout_type_ != rhs.layout_type_) {
     return false;
@@ -317,21 +308,16 @@ bool operator==(const Layout& lhs, const Layout& rhs) {
 
   // Check for the equality of the column_layout_ for
   // LayoutType::HYBRID
-  if (lhs.layout_type_ == LayoutType::HYBRID)
-  {
+  if (lhs.layout_type_ == LayoutType::HYBRID) {
     return (lhs.column_layout_ == rhs.column_layout_);
   }
   // In case of LayoutType::ROW or LayoutType::COLUMN,
   // there is no need to check for column_layout_ equality
 
   return true;
-
 }
 
-bool operator!=(const Layout& lhs, const Layout& rhs) {
-  return !(lhs == rhs);
-}
+bool operator!=(const Layout &lhs, const Layout &rhs) { return !(lhs == rhs); }
 
-
-} // namespace storage
-} // namespace peloton
+}  // namespace storage
+}  // namespace peloton
