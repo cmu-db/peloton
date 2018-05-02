@@ -108,10 +108,20 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 	      LOG_DEBUG("Possibly (%s, %s): %s", p_info.first.c_str(), p_info.second.c_str(), transitive_predicate->GetInfo().c_str());
 	      bool not_found = true;
 	      for (auto predicate2 : predicates) {
-		if (predicate2.expr->ExactlyEquals(*transitive_predicate)) {
+		if (predicate2.expr->SymmetricsEquals(*transitive_predicate)) {
 		  LOG_DEBUG("Nop %s", predicate2.expr->GetInfo().c_str());
 		  not_found = false;
 		  break;
+		}
+	      }
+
+	      if (not_found) {
+		for (auto predicate2 : new_predicates) {
+		  if (predicate2.expr->SymmetricsEquals(*transitive_predicate)) {
+		    LOG_DEBUG("Nop %s", predicate2.expr->GetInfo().c_str());
+		    not_found = false;
+		    break;
+		  }
 		}
 	      }
 
