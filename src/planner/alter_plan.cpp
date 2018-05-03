@@ -58,10 +58,10 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
     }
     case parser::AlterTableStatement::AlterTableType::ALTER: {
       // deal with dropped columns
+      type = AlterType::ALTER;
       for (auto col : *parse_tree->dropped_names) {
         LOG_TRACE("Drooped column name: %s", col);
         dropped_columns.push_back(std::string(col));
-        type = AlterType::ALTER;
       }
 
       // deal with added columns
@@ -96,6 +96,7 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
         std::string name = tmp.get()->name;
         changed_type_columns.emplace_back(std::make_pair(name, val));
       }
+      break;
     }
     default:
       LOG_ERROR("Not Implemented the plan yet!");
