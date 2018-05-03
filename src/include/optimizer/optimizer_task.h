@@ -222,7 +222,8 @@ class OptimizeInputs : public OptimizerTask {
  */
 class DeriveStats : public OptimizerTask {
  public:
-  DeriveStats(GroupExpression *gexpr, ExprSet required_cols,
+  DeriveStats(GroupExpression *gexpr,
+              ExprSet required_cols,
               std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),
@@ -270,24 +271,6 @@ class BottomUpRewrite : public OptimizerTask {
   BottomUpRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
                   RewriteRuleSetName rule_set_name, bool has_optimized_child)
       : OptimizerTask(context, OptimizerTaskType::BOTTOM_UP_REWRITE),
-        group_id_(group_id),
-        rule_set_name_(rule_set_name),
-        has_optimized_child_(has_optimized_child) {}
-  virtual void execute() override;
-
- private:
-  GroupID group_id_;
-  RewriteRuleSetName rule_set_name_;
-  bool has_optimized_child_;
-};
-
-class BottomUpExpressionRewrite : public OptimizerTask {
- public:
-  BottomUpExpressionRewrite(GroupID group_id,
-                            std::shared_ptr<OptimizeContext> context,
-                            RewriteRuleSetName rule_set_name,
-                            bool has_optimized_child)
-      : OptimizerTask(context, OptimizerTaskType::REWRITE_EXPR),
         group_id_(group_id),
         rule_set_name_(rule_set_name),
         has_optimized_child_(has_optimized_child) {}

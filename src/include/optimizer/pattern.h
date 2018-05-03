@@ -20,30 +20,22 @@
 namespace peloton {
 namespace optimizer {
 
-template <typename T>
-class PatternBase {
+class Pattern {
  public:
-  PatternBase(T op) : _type(op) {}
+  Pattern(OpType op);
 
-  void AddChild(std::shared_ptr<PatternBase> child) {
-    children.push_back(child);
-  }
+  void AddChild(std::shared_ptr<Pattern> child);
 
-  const std::vector<std::shared_ptr<PatternBase>> &Children() const {
-    return children;
-  }
+  const std::vector<std::shared_ptr<Pattern>> &Children() const;
 
   inline size_t GetChildPatternsSize() const { return children.size(); }
 
-  T Type() const { return _type; }
+  OpType Type() const;
 
- protected:
-  T _type;
-
-  std::vector<std::shared_ptr<PatternBase>> children;
+ private:
+  OpType _type;
+  std::vector<std::shared_ptr<Pattern>> children;
 };
-
-using Pattern = PatternBase<OpType>;
 
 }  // namespace optimizer
 }  // namespace peloton
