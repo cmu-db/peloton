@@ -106,6 +106,12 @@ class CompressedIndexConfigContainer {
    */
   void UnsetBit(size_t offset);
 
+  /**
+   * @brief Given a new bitset, add/drop corresponding indexes and update
+   * current bitset
+   */
+  void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
+
   // Getters
   /**
    * @brief Get the total number of possible indexes in current database

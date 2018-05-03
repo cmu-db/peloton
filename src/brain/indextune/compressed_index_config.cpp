@@ -274,5 +274,66 @@ void CompressedIndexConfigContainer::ToCoveredEigen(
     config_vec.segment(start_idx, last_set_idx - start_idx + 1).array() = 1.0;
   }
 }
+
+void CompressedIndexConfigContainer::AdjustIndexes(
+    const boost::dynamic_bitset<> &new_bitset) {
+  boost::dynamic_bitset<> &ori_bitset = *cur_index_config_;
+
+  const auto drop_bitset = ori_bitset - new_bitset;
+
+  auto txn = txn_manager_->BeginTransaction();
+  for (size_t current_bit = drop_bitset.find_first();
+       current_bit != boost::dynamic_bitset<>::npos;
+       current_bit = drop_bitset.find_next(current_bit)) {
+    // 1. unset current bit
+    UnsetBit(current_bit);
+
+    // 2. drop its corresponding index in catalog
+    oid_t index_oid = index_id_reverse_map_.at(current_bit);
+    catalog_->DropIndex(index_oid, txn);
+
+    // 3. erase its entry in the maps
+    index_id_reverse_map_.erase(current_bit);
+    index_id_map_.erase(index_oid);
+  }
+  txn_manager_->CommitTransaction(txn);
+
+  const auto add_bitset = new_bitset - ori_bitset;
+
+  txn = txn_manager_->BeginTransaction();
+
+  const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
+
+  for (size_t current_bit = add_bitset.find_first();
+       current_bit != boost::dynamic_bitset<>::npos;
+       current_bit = drop_bitset.find_next(current_bit)) {
+    // 1. set current bit
+    SetBit(current_bit);
+
+    // 2. add its corresponding index in catalog
+    const auto new_index = GetIndex(current_bit);
+    const auto table_obj = db_obj->GetTableObject(new_index->table_oid);
+    const auto table_name = table_obj->GetTableName();
+
+    std::vector<oid_t> index_vector(new_index->column_oids.begin(),
+                                    new_index->column_oids.end());
+
+    std::ostringstream stringStream;
+    stringStream << "automated_index_" << current_bit;
+    const std::string temp_index_name = stringStream.str();
+
+    catalog_->CreateIndex(database_name_, table_name, index_vector,
+                          temp_index_name, false, IndexType::BWTREE, txn);
+
+    // 3. insert its entry in the maps
+    const auto index_object = table_obj->GetIndexObject(temp_index_name);
+    const auto index_oid = index_object->GetIndexOid();
+
+    index_id_map_[index_oid] = current_bit;
+    index_id_reverse_map_[current_bit] = index_oid;
+  }
+
+  txn_manager_->CommitTransaction(txn);
+}
 }
 }

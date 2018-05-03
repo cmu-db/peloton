@@ -36,8 +36,7 @@ class CompressedIndexConfigUtil {
  * @return the prefix closure as a bitset
  */
   static std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
-      CompressedIndexConfigContainer &container,
-      const std::string &query);
+      CompressedIndexConfigContainer &container, const std::string &query);
 
   /**
   * Given a SQLStatement, generate drop candidates
@@ -46,8 +45,7 @@ class CompressedIndexConfigUtil {
   * @return the drop candidates
   */
   static std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
-      CompressedIndexConfigContainer &container,
-      const std::string &query);
+      CompressedIndexConfigContainer &container, const std::string &query);
 
   /**
   * @brief Return a bitset initialized using a list of indexes
@@ -57,8 +55,8 @@ class CompressedIndexConfigUtil {
       const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
 
   static void SetBit(const CompressedIndexConfigContainer &container,
-                boost::dynamic_bitset<> &bitmap,
-                const std::shared_ptr<IndexObject> &idx_object);
+                     boost::dynamic_bitset<> &bitmap,
+                     const std::shared_ptr<IndexObject> &idx_object);
 
   /**
  * Get the covered index configuration feature vector.
@@ -67,8 +65,8 @@ class CompressedIndexConfigUtil {
  * considered covered and set to 1.
  * @param config_vec: configuration vector to construct
  */
-  static void ConstructConfigFeature(const CompressedIndexConfigContainer& container,
-                                     vector_eig &config_vec);
+  static void ConstructConfigFeature(
+      const CompressedIndexConfigContainer &container, vector_eig &config_vec);
   // Feature constructors
   /**
    * Constructs the feature vector representing the SQL query running on the
@@ -86,16 +84,18 @@ class CompressedIndexConfigUtil {
    * belongs(config) (ii) !(f(query) && belongs(config))?
    */
   static void ConstructQueryConfigFeature(
-      const CompressedIndexConfigContainer& container,
+      const CompressedIndexConfigContainer &container,
       std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
       std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
       vector_eig &query_config_vec);
+
  private:
   /**
    * @brief: converts query string to a binded sql-statement list
    */
   static std::unique_ptr<parser::SQLStatementList> ToBindedSqlStmtList(
-      CompressedIndexConfigContainer &container, const std::string &query_string);
+      CompressedIndexConfigContainer &container,
+      const std::string &query_string);
 
   /**
    * @brief Convert an index triplet to an index object
