@@ -16,7 +16,7 @@ namespace stats {
 ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
   // TODO(tianyu): Write stats to register here
   if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsModeType::ENABLE) {
+          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
     // TODO(tianyi): Have more fine grained control for these metrics
     RegisterMetric<TableMetric>(
         {stats_event_type::TUPLE_READ, stats_event_type::TUPLE_UPDATE,
