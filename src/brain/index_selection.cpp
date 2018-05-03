@@ -166,7 +166,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   while (current_index_count < k) {
     // this is the set S so far
     auto original_indexes = indexes;
-    for (auto index : remaining_indexes.GetIndexes()) {
+    for (auto const &index : remaining_indexes.GetIndexes()) {
       indexes = original_indexes;
       indexes.AddIndexObject(index);
       cur_cost = ComputeCost(indexes, workload);
@@ -215,9 +215,9 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   IndexConfiguration empty;
   // The running index configuration contains the possible subsets generated so
   // far. It is updated after every iteration
-  running_index_config.insert({empty, 0.0});
+  running_index_config.emplace(empty, 0.0);
 
-  for (auto index : indexes.GetIndexes()) {
+  for (auto const &index : indexes.GetIndexes()) {
     // Make a copy of the running index configuration and add each element to it
     temp_index_config = running_index_config;
 
@@ -229,11 +229,11 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
       // instead of adding to the running list
       if (new_element.GetIndexCount() >=
           context_.naive_enumeration_threshold_) {
-        result_index_config.insert(
-            {new_element, ComputeCost(new_element, workload)});
+        result_index_config.emplace(new_element,
+            ComputeCost(new_element, workload));
       } else {
-        running_index_config.insert(
-            {new_element, ComputeCost(new_element, workload)});
+        running_index_config.emplace(new_element,
+            ComputeCost(new_element, workload));
       }
     }
   }
