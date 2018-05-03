@@ -1067,6 +1067,10 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
               // otherwise, copy value in old table
               // TODO: Change type if necessary
               val = result_tile->GetValue(i, it->second);
+              if (new_schema->GetColumn(new_column_id).GetType() != old_schema->GetColumn(it->second).GetType()) {
+                //change the value's type
+                val = val.CastAs(new_schema->GetColumn(new_column_id).GetType());
+              }
             }
             tuple->SetValue(new_column_id, val, pool_.get());
           }
