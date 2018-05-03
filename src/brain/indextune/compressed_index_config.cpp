@@ -69,14 +69,21 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const auto table_oid = table_obj.first;
     const auto index_objs = table_obj.second->GetIndexObjects();
     if (index_objs.empty()) {
-      AddIndex(table_offset_map_.at(table_oid));
+      SetBit(table_offset_map_.at(table_oid));
     } else {
       for (const auto &index_obj : index_objs) {
         const auto &indexed_cols = index_obj.second->GetKeyAttrs();
+        const auto index_oid = index_obj.first;
+
         std::vector<oid_t> col_oids(indexed_cols);
         auto idx_obj =
             std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-        AddIndex(idx_obj);
+
+        const auto global_index_offset = GetGlobalOffset(idx_obj);
+        index_id_map_[index_oid] = global_index_offset;
+        index_id_reverse_map_[global_index_offset] = index_oid;
+
+        SetBit(global_index_offset);
       }
     }
   }
@@ -154,23 +161,23 @@ std::shared_ptr<brain::IndexObject> CompressedIndexConfigContainer::GetIndex(
   return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
 }
 
-void CompressedIndexConfigContainer::AddIndex(
+void CompressedIndexConfigContainer::SetBit(
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset);
 }
 
-void CompressedIndexConfigContainer::AddIndex(size_t offset) {
+void CompressedIndexConfigContainer::SetBit(size_t offset) {
   cur_index_config_->set(offset);
 }
 
-void CompressedIndexConfigContainer::RemoveIndex(
+void CompressedIndexConfigContainer::UnsetBit(
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset, false);
 }
 
-void CompressedIndexConfigContainer::RemoveIndex(size_t offset) {
+void CompressedIndexConfigContainer::UnsetBit(size_t offset) {
   cur_index_config_->set(offset, false);
 }
 
@@ -183,11 +190,12 @@ const boost::dynamic_bitset<>
   return cur_index_config_.get();
 }
 
-concurrency::TransactionManager* CompressedIndexConfigContainer::GetTransactionManager() {
+concurrency::TransactionManager *
+CompressedIndexConfigContainer::GetTransactionManager() {
   return txn_manager_;
 }
 
-catalog::Catalog* CompressedIndexConfigContainer::GetCatalog() {
+catalog::Catalog *CompressedIndexConfigContainer::GetCatalog() {
   return catalog_;
 }
 
@@ -248,8 +256,7 @@ void CompressedIndexConfigContainer::ToCoveredEigen(
   // anything
   config_vec = vector_eig::Zero(GetConfigurationCount());
   for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
-       tbl_offset_iter != table_offset_reverse_map_.end();
-       ++tbl_offset_iter) {
+       tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
     auto next_tbl_offset_iter = std::next(tbl_offset_iter);
     size_t start_idx = tbl_offset_iter->first;
     size_t end_idx;
@@ -260,8 +267,7 @@ void CompressedIndexConfigContainer::ToCoveredEigen(
     }
     size_t last_set_idx = start_idx;
     while (last_set_idx < end_idx) {
-      size_t next_set_idx =
-          cur_index_config_->find_next(last_set_idx);
+      size_t next_set_idx = cur_index_config_->find_next(last_set_idx);
       if (next_set_idx >= end_idx) break;
       last_set_idx = next_set_idx;
     }

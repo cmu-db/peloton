@@ -219,10 +219,10 @@ TEST_F(RLFrameworkTest, BasicTest) {
 
   std::string query_string =
       "UPDATE dummy_table_1 SET a = 0 WHERE b = 1 AND c = 2;";
-  auto drop_candidates =
-      brain::CompressedIndexConfigUtil::DropCandidates(comp_idx_config, query_string);
-  auto add_candidates =
-      brain::CompressedIndexConfigUtil::AddCandidates(comp_idx_config, query_string);
+  auto drop_candidates = brain::CompressedIndexConfigUtil::DropCandidates(
+      comp_idx_config, query_string);
+  auto add_candidates = brain::CompressedIndexConfigUtil::AddCandidates(
+      comp_idx_config, query_string);
 
   auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
   auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
@@ -237,10 +237,10 @@ TEST_F(RLFrameworkTest, BasicTest) {
   // since b is primary key, we will ignore index {a, b}
   std::vector<std::shared_ptr<brain::IndexObject>> drop_expect_indexes = {};
 
-  auto add_expect_bitset =
-      brain::CompressedIndexConfigUtil::GenerateBitSet(comp_idx_config, add_expect_indexes);
-  auto drop_expect_bitset =
-      brain::CompressedIndexConfigUtil::GenerateBitSet(comp_idx_config, drop_expect_indexes);
+  auto add_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
+      comp_idx_config, add_expect_indexes);
+  auto drop_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
+      comp_idx_config, drop_expect_indexes);
 
   EXPECT_EQ(*add_expect_bitset, *add_candidates);
   EXPECT_EQ(*drop_expect_bitset, *drop_candidates);

@@ -25,8 +25,7 @@ CompressedIndexConfigUtil::AddCandidates(
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache,
-          ToBindedSqlStmtList(container, query),
+          txn->catalog_cache, ToBindedSqlStmtList(container, query),
           container.GetDatabaseName());
   container.GetTransactionManager()->CommitTransaction(txn);
 
@@ -66,7 +65,7 @@ CompressedIndexConfigUtil::AddCandidates(
       // Insert prefix index
       auto idx_new =
           std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(container, *result, idx_new);
+      SetBit(container, *result, idx_new);
     }
   }
 
@@ -89,7 +88,7 @@ CompressedIndexConfigUtil::DropCandidates(
                                             true);
   for (const auto &col_triplet : affected_indexes) {
     auto idx_obj = ConvertIndexTriplet(container, col_triplet);
-    AddIndex(container, *result, idx_obj);
+    SetBit(container, *result, idx_obj);
   }
   container.GetTransactionManager()->CommitTransaction(txn);
   return result;
@@ -117,12 +116,14 @@ CompressedIndexConfigUtil::ConvertIndexTriplet(
 
 std::unique_ptr<parser::SQLStatementList>
 CompressedIndexConfigUtil::ToBindedSqlStmtList(
-    CompressedIndexConfigContainer &container, const std::string &query_string) {
+    CompressedIndexConfigContainer &container,
+    const std::string &query_string) {
   auto txn = container.GetTransactionManager()->BeginTransaction();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, container.GetDatabaseName());
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, container.GetDatabaseName());
   bind_node_visitor.BindNameToNode(sql_stmt);
   container.GetTransactionManager()->CommitTransaction(txn);
 
@@ -137,13 +138,13 @@ CompressedIndexConfigUtil::GenerateBitSet(
       new boost::dynamic_bitset<>(container.GetConfigurationCount()));
 
   for (const auto &idx_obj : idx_objs) {
-    AddIndex(container, *result, idx_obj);
+    SetBit(container, *result, idx_obj);
   }
 
   return result;
 }
 
-void CompressedIndexConfigUtil::AddIndex(
+void CompressedIndexConfigUtil::SetBit(
     const CompressedIndexConfigContainer &container,
     boost::dynamic_bitset<> &bitmap,
     const std::shared_ptr<IndexObject> &idx_object) {
@@ -151,10 +152,11 @@ void CompressedIndexConfigUtil::AddIndex(
   bitmap.set(offset);
 }
 
-void CompressedIndexConfigUtil::ConstructQueryConfigFeature(const CompressedIndexConfigContainer &container,
-                                                            std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
-                                                            std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
-                                                            vector_eig &query_config_vec) {
+void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
+    const CompressedIndexConfigContainer &container,
+    std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
+    std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
+    vector_eig &query_config_vec) {
   size_t num_configs = container.GetConfigurationCount();
   auto curr_config_set = container.GetCurrentIndexConfig();
   query_config_vec = vector_eig::Zero(2 * num_configs);
@@ -181,8 +183,8 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(const CompressedInde
   }
 }
 
-void CompressedIndexConfigUtil::ConstructConfigFeature(const CompressedIndexConfigContainer &container,
-                                                       vector_eig &config_vec) {
+void CompressedIndexConfigUtil::ConstructConfigFeature(
+    const CompressedIndexConfigContainer &container, vector_eig &config_vec) {
   container.ToCoveredEigen(config_vec);
 }
 }

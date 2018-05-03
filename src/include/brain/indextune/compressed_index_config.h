@@ -86,25 +86,25 @@ class CompressedIndexConfigContainer {
    * Add an index to current configuration
    * @param idx_object: the index to be added
    */
-  void AddIndex(const std::shared_ptr<IndexObject> &idx_object);
+  void SetBit(const std::shared_ptr<IndexObject> &idx_object);
 
   /**
    * Add an index to current configuration
    * @param offset: the global offset of the index to be added
    */
-  void AddIndex(size_t offset);
+  void SetBit(size_t offset);
 
   /**
    * Remove an index from current configuration
    * @param idx_object: the index to be removed
    */
-  void RemoveIndex(const std::shared_ptr<IndexObject> &idx_object);
+  void UnsetBit(const std::shared_ptr<IndexObject> &idx_object);
 
   /**
    * Remove and index from current configuration
    * @param offset: the global offset of the index to be removed
    */
-  void RemoveIndex(size_t offset);
+  void UnsetBit(size_t offset);
 
   // Getters
   /**
@@ -116,8 +116,8 @@ class CompressedIndexConfigContainer {
    * @brief Get the current index configuration as a bitset(read-only)
    */
   const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
-  concurrency::TransactionManager* GetTransactionManager();
-  catalog::Catalog* GetCatalog();
+  concurrency::TransactionManager *GetTransactionManager();
+  catalog::Catalog *GetCatalog();
   std::string GetDatabaseName() const;
   size_t GetTableOffset(oid_t table_oid) const;
 
@@ -182,6 +182,12 @@ class CompressedIndexConfigContainer {
 
   // This map is just the reverse mapping of table_offset_map_
   std::map<size_t, oid_t> table_offset_reverse_map_;
+
+  // This map stores an index's oid -> its global offset in the bitset
+  std::unordered_map<oid_t, size_t> index_id_map_;
+
+  // This map is the reverse mapping of index_id_map_
+  std::unordered_map<size_t, oid_t> index_id_reverse_map_;
 
   // the next offset of a new table
   size_t next_table_offset_;

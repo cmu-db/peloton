@@ -56,7 +56,7 @@ class CompressedIndexConfigUtil {
       const CompressedIndexConfigContainer &container,
       const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
 
-  static void AddIndex(const CompressedIndexConfigContainer &container,
+  static void SetBit(const CompressedIndexConfigContainer &container,
                 boost::dynamic_bitset<> &bitmap,
                 const std::shared_ptr<IndexObject> &idx_object);
 
