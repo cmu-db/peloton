@@ -54,6 +54,68 @@ expression::AbstractExpression *createExpTree() {
       ExpressionType::CONJUNCTION_AND, exp3, exp6);
   return (root);
 }
+TEST_F(ExpressionUtilTests, OperatorFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp_two = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(2));
+
+  auto two = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::OperatorFactory(
+          ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, exp1, exp2);
+  EXPECT_EQ(CmpBool::CmpTrue,
+            exp_two->GetValue().CompareEquals(two->GetValue()));
+}
+
+TEST_F(ExpressionUtilTests, ComparisonFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto true_value = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto cmp = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, exp1, exp2);
+
+  EXPECT_EQ(CmpBool::CmpTrue,
+            cmp->GetValue().CompareEquals(true_value->GetValue()));
+}
+
+TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(false));
+  auto cmp = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, exp1, exp2);
+  EXPECT_EQ(CmpBool::CmpTrue, cmp->GetValue().CompareEquals(exp2->GetValue()));
+  auto exp3 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto exp4 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(false));
+  auto exp5 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(false));
+  auto cmp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_OR, exp3, exp4);
+  EXPECT_EQ(CmpBool::CmpFalse,
+            cmp2->GetValue().CompareEquals(exp5->GetValue()));
+}
 
 // Make sure that we can traverse a tree
 TEST_F(ExpressionUtilTests, GetInfoTest) {
