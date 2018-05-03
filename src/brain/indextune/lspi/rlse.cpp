@@ -8,7 +8,7 @@ RLSEModel::RLSEModel(size_t feat_len, double variance_init): feat_len_(feat_len)
   weights_ = vector_eig::Zero(feat_len);
 }
 
-void RLSEModel::Update(vector_eig feat_vector, double true_val) {
+void RLSEModel::Update(const vector_eig& feat_vector, double true_val) {
   double err = Predict(feat_vector) - true_val;
   double gamma = 1 + (feat_vector.transpose()*model_variance_).dot(feat_vector);
   matrix_eig H = model_variance_*(1/gamma);
@@ -16,7 +16,7 @@ void RLSEModel::Update(vector_eig feat_vector, double true_val) {
   weights_ -= (H*feat_vector)*err;
 }
 
-double RLSEModel::Predict(vector_eig feat_vector) {
+double RLSEModel::Predict(const vector_eig& feat_vector) const {
   return weights_.dot(feat_vector);
 }
 }

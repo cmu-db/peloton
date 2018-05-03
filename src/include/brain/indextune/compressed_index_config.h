@@ -130,18 +130,32 @@ class CompressedIndexConfigContainer {
   // Utility functions
   std::string ToString() const;
   /**
- * @brief Get the Eigen vector/feature representation of the current index
- * @param container: input container
- * config bitset
- */
+   * @brief Get the Eigen vector/feature representation of the current index
+   * config bitset
+   */
   void ToEigen(vector_eig &config_vec) const;
+
+  /**
+   * @brief Get the Eigen vector/feature representation from the
+   * provided config set
+   */
+  void ToEigen(const boost::dynamic_bitset<>& config_set,
+               vector_eig &config_vec) const;
 
   /**
    * @brief Get the Eigen vector/feature representation of the covered index
    * config
    */
   void ToCoveredEigen(vector_eig &config_vec) const;
-
+  /**
+   * Get the covered index configuration feature vector.
+   * The difference between this and `GetCurrentIndexConfig` is that
+   * all single column index configurations by a multicolumn index are
+   * considered covered and set to 1.
+   * @param config_vec: configuration vector to construct
+   */
+  void ToCoveredEigen(const boost::dynamic_bitset<>& config_set,
+                      vector_eig &config_vec) const;
  private:
   std::string database_name_;
   catalog::Catalog *catalog_;
@@ -189,6 +203,7 @@ class CompressedIndexConfigContainer {
   // This map is just the reverse mapping of table_offset_map_
   std::map<size_t, oid_t> table_offset_reverse_map_;
 
+  // TODO(weichenl): Remove both these maps later
   // This map stores an index's oid -> its global offset in the bitset
   std::unordered_map<oid_t, size_t> index_id_map_;
 

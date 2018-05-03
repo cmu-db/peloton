@@ -8,9 +8,11 @@ LSPIIndexTuner::LSPIIndexTuner(
     : db_name_(db_name) {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, cat, txn_manager));
-  feat_len_ = index_config_->GetConfigurationCount();
-  rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len_));
-  lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len_));
+  size_t feat_len = index_config_->GetConfigurationCount();
+  rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
+  lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len));
+  prev_config_vec = vector_eig::Zero(feat_len);
+  prev_config_vec[0] = 1.0;
 }
 
 void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
@@ -18,7 +20,8 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   size_t num_queries = queries.size();
   std::vector<boost::dynamic_bitset<>> add_candidate_sets;
   std::vector<boost::dynamic_bitset<>> drop_candidate_sets;
-  boost::dynamic_bitset<> curr_config_set =
+  double latency_avg = 0.0;
+  const boost::dynamic_bitset<> &curr_config_set =
       *index_config_->GetCurrentIndexConfig();
   // Be careful about not duplicating bitsets anywhere since they can
   // be potentially huge
@@ -31,7 +34,9 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
     CompressedIndexConfigUtil::DropCandidates(*index_config_, queries[i],
                                               drop_candidate_set);
     drop_candidate_sets.push_back(std::move(drop_candidate_set));
+    latency_avg += query_latencies[i];
   }
+  latency_avg /= num_queries;
   // Step 2: Update the RLSE model with the new samples
   for (size_t i = 0; i < num_queries; i++) {
     vector_eig query_config_feat;
@@ -48,10 +53,13 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
                       add_candidate_sets[i], drop_candidate_sets[i],
                       optimal_config_set);
   }
+
+  vector_eig new_config_vec;
+  index_config_->ToCoveredEigen(optimal_config_set, new_config_vec);
   // Step 4: Update the LSPI model based on current most optimal query config
-  // TODO(saatviks): Finish step 4
+  lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
-  // TODO(weichenl): Call AdjustConfig on 'optimal_config_set'
+  //  index_config_->AdjustIndexes(optimal_config_set);
 }
 
 void LSPIIndexTuner::FindOptimalConfig(
@@ -61,17 +69,20 @@ void LSPIIndexTuner::FindOptimalConfig(
     boost::dynamic_bitset<> &optimal_config_set) {
   // Iterate through add candidates
   size_t index_id_rec = add_candidate_set.find_first();
-  vector_eig query_config_vec;
+  vector_eig query_config_vec, config_vec;
   while (index_id_rec != boost::dynamic_bitset<>::npos) {
     if (!optimal_config_set.test(index_id_rec)) {
       // Make a copy of the current config
-      auto hypothetical_config = boost::dynamic_bitset<>(curr_config_set);
+      auto hypothetical_config = curr_config_set;
       hypothetical_config.set(index_id_rec);
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,
           query_config_vec);
-      double hypothetical_config_cost = rlse_model_->Predict(query_config_vec);
-      if (hypothetical_config_cost < max_cost) {
+      index_config_->ToCoveredEigen(config_vec);
+      double hypothetical_exec_cost = rlse_model_->Predict(query_config_vec);
+      double hypothetical_config_cost = lstd_model_->Predict(config_vec);
+      double cost = hypothetical_config_cost + hypothetical_exec_cost;
+      if (cost < max_cost) {
         optimal_config_set.set(index_id_rec);
       }
     }
@@ -83,13 +94,15 @@ void LSPIIndexTuner::FindOptimalConfig(
   while (index_id_drop != boost::dynamic_bitset<>::npos) {
     if (optimal_config_set.test(index_id_drop)) {
       // Make a copy of the current config
-      auto hypothetical_config = boost::dynamic_bitset<>(curr_config_set);
+      auto hypothetical_config = curr_config_set;
       hypothetical_config.reset(index_id_drop);
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,
           query_config_vec);
-      double hypothetical_config_cost = rlse_model_->Predict(query_config_vec);
-      if (hypothetical_config_cost < max_cost) {
+      double hypothetical_exec_cost = rlse_model_->Predict(query_config_vec);
+      double hypothetical_config_cost = lstd_model_->Predict(config_vec);
+      double cost = hypothetical_config_cost + hypothetical_exec_cost;
+      if (cost < max_cost) {
         optimal_config_set.reset(index_id_drop);
       }
     }

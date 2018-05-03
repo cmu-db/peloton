@@ -239,21 +239,36 @@ std::string CompressedIndexConfigContainer::ToString() const {
   return str_stream.str();
 }
 
+void CompressedIndexConfigContainer::ToEigen(const boost::dynamic_bitset<>& config_set,
+                                             vector_eig &config_vec) const {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  PELOTON_ASSERT(config_set.size() == GetConfigurationCount());
+  config_vec = vector_eig::Zero(config_set.size());
+  size_t config_id = config_set.find_first();
+  while (config_id != boost::dynamic_bitset<>::npos) {
+    config_vec[config_id] = 1.0;
+    config_id = config_set.find_next(config_id);
+  }
+}
+
 void CompressedIndexConfigContainer::ToEigen(vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
-  config_vec = vector_eig::Zero(next_table_offset_);
-  size_t config_id = cur_index_config_->find_first();
-  while (config_id != boost::dynamic_bitset<>::npos) {
-    config_vec[config_id] = 1.0;
-    config_id = cur_index_config_->find_next(config_id);
-  }
+  ToEigen(*cur_index_config_, config_vec);
 }
 
 void CompressedIndexConfigContainer::ToCoveredEigen(
     vector_eig &config_vec) const {
+  ToCoveredEigen(*cur_index_config_, config_vec);
+}
+
+void CompressedIndexConfigContainer::ToCoveredEigen(
+    const boost::dynamic_bitset<>& config_set,
+    vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
+  PELOTON_ASSERT(GetConfigurationCount() == config_set.size());
   config_vec = vector_eig::Zero(GetConfigurationCount());
   for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
        tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
@@ -267,7 +282,7 @@ void CompressedIndexConfigContainer::ToCoveredEigen(
     }
     size_t last_set_idx = start_idx;
     while (last_set_idx < end_idx) {
-      size_t next_set_idx = cur_index_config_->find_next(last_set_idx);
+      size_t next_set_idx = config_set.find_next(last_set_idx);
       if (next_set_idx >= end_idx) break;
       last_set_idx = next_set_idx;
     }

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/binder/bind_node_visitor.h>
+#include "binder/bind_node_visitor.h"
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
