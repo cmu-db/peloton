@@ -316,6 +316,8 @@ void GetToIndexScan::Transform(
     std::vector<oid_t> key_column_id_list;
     std::vector<ExpressionType> expr_type_list;
     std::vector<type::Value> value_list;
+    std::unordered_map<oid_t, std::pair<ExpressionType, type::Value>>
+        type_value_pair_by_key_id;
     for (auto &pred : get->predicates) {
       auto expr = pred.expr.get();
       if (expr->GetChildrenSize() != 2) continue;
@@ -352,29 +354,26 @@ void GetToIndexScan::Transform(
         std::string col_name(column_ref->GetColumnName());
         LOG_TRACE("Column name: %s", col_name.c_str());
         auto column_id = get->table->GetColumnObject(col_name)->GetColumnId();
-        key_column_id_list.push_back(column_id);
-        expr_type_list.push_back(expr_type);
-
+        type::Value value;
         if (value_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-          value_list.push_back(
-              reinterpret_cast<expression::ConstantValueExpression *>(
-                  value_expr)
-                  ->GetValue());
+          value = reinterpret_cast<expression::ConstantValueExpression *>(
+                      value_expr)
+                      ->GetValue();
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
                             expr->GetModifiableChild(1))
                             ->GetValueType()));
         } else {
-          value_list.push_back(
-              type::ValueFactory::GetParameterOffsetValue(
-                  reinterpret_cast<expression::ParameterValueExpression *>(
-                      value_expr)
-                      ->GetValueIdx())
-                  .Copy());
+          value = type::ValueFactory::GetParameterOffsetValue(
+                      reinterpret_cast<expression::ParameterValueExpression *>(
+                          value_expr)
+                          ->GetValueIdx())
+                      .Copy();
           LOG_TRACE("Parameter offset: %s",
                     (*value_list.rbegin()).GetInfo().c_str());
         }
+        type_value_pair_by_key_id[column_id] = {expr_type, value};
       }
     }  // Loop predicates end
 
@@ -396,7 +395,8 @@ void GetToIndexScan::Transform(
           type_value_pair_by_key_id.count(key_attr_list[0])) {
         for (const auto &key_col_oid : key_attr_list) {
           if (type_value_pair_by_key_id.count(key_col_oid)) {
-            const auto& type_value_pair = type_value_pair_by_key_id[key_col_oid];
+            const auto &type_value_pair =
+                type_value_pair_by_key_id[key_col_oid];
             index_key_column_id_list.push_back(key_col_oid);
             index_expr_type_list.push_back(type_value_pair.first);
             index_value_list.push_back(type_value_pair.second);

@@ -276,7 +276,6 @@ double CalculateSelectivityForPredicate(
             : 0;
 
     auto left_expr = expr->GetChild(1 - right_index);
-    PL_ASSERT(left_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto col_name =
         reinterpret_cast<const expression::TupleValueExpression *>(left_expr)
             ->GetColFullName();
