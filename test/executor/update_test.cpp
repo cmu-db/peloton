@@ -12,13 +12,14 @@
 
 #include <cstdio>
 
+#include "common/harness.h"
 #include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
-#include "common/harness.h"
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/statement.h"
 #include "concurrency/transaction_context.h"
@@ -46,7 +47,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "traffic_cop/traffic_cop.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -176,18 +176,17 @@ TEST_F(UpdateTests, UpdatingOld) {
       new catalog::Schema({id_column, manager_id_column, name_column}));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema), CreateType::TABLE);
+  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+                           DEFAULT_DB_NAME, std::move(table_schema),
+                           CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
-            1);
 
   LOG_INFO("Table created!");
 
-  storage::DataTable *table =
-      catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table", txn);
+  storage::DataTable *table = catalog->GetTableWithName(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
@@ -416,6 +415,6 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}  // namespace?
+}  // namespace
 }  // namespace test
 }  // namespace peloton

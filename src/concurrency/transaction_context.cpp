@@ -15,13 +15,13 @@
 #include <sstream>
 
 #include "common/logger.h"
-#include "common/platform.h"
 #include "common/macros.h"
+#include "common/platform.h"
 #include "trigger/trigger.h"
 
 #include <chrono>
-#include <thread>
 #include <iomanip>
+#include <thread>
 
 namespace peloton {
 namespace concurrency {
@@ -75,8 +75,8 @@ TransactionContext::TransactionContext(const size_t thread_id,
 TransactionContext::~TransactionContext() {}
 
 void TransactionContext::Init(const size_t thread_id,
-                       const IsolationLevelType isolation, const cid_t &read_id,
-                       const cid_t &commit_id) {
+                              const IsolationLevelType isolation,
+                              const cid_t &read_id, const cid_t &commit_id) {
   read_id_ = read_id;
 
   // commit id can be set at a transaction's commit phase.
@@ -129,7 +129,7 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     if (rw_type == RWType::READ) {
       rw_set_.Update(location, RWType::READ_OWN);
-    } 
+    }
   } else {
     rw_set_.Insert(location, RWType::READ_OWN);
   }
@@ -188,7 +188,7 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
       --insert_count_;
       return true;
     }
-    if(rw_type == RWType::DELETE) {
+    if (rw_type == RWType::DELETE) {
       PELOTON_ASSERT(false);
       return false;
     }
@@ -210,7 +210,8 @@ const std::string TransactionContext::GetInfo() const {
   return os.str();
 }
 
-void TransactionContext::AddOnCommitTrigger(trigger::TriggerData &trigger_data) {
+void TransactionContext::AddOnCommitTrigger(
+    trigger::TriggerData &trigger_data) {
   if (on_commit_triggers_ == nullptr) {
     on_commit_triggers_.reset(new trigger::TriggerSet());
   }

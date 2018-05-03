@@ -52,6 +52,13 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetDatabaseName();
   }
 
+  std::string GetSchemaName() const {
+    if (analyze_table == nullptr) {
+      return INVALID_NAME;
+    }
+    return analyze_table->GetSchemaName();
+  }
+
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const override;

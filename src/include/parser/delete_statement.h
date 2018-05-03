@@ -45,6 +45,8 @@ class DeleteStatement : public SQLStatement {
 
   std::string GetDatabaseName() const { return table_ref->GetDatabaseName(); }
 
+  std::string GetSchemaName() const { return table_ref->GetSchemaName(); }
+
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const override;

@@ -57,8 +57,8 @@ class BinderContext {
    * @brief Update the table alias map given a table reference (in the from
    * clause)
    */
-  void AddRegularTable(const std::string db_name, const std::string table_name,
-                       const std::string table_alias,
+  void AddRegularTable(const std::string db_name, const std::string schema_name,
+                       std::string table_name, const std::string table_alias,
                        concurrency::TransactionContext *txn);
 
   /**

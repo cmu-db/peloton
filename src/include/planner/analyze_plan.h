@@ -40,12 +40,12 @@ class AnalyzePlan : public AbstractPlan {
 
   explicit AnalyzePlan(storage::DataTable *table);
 
-  explicit AnalyzePlan(std::string table_name,
+  explicit AnalyzePlan(std::string table_name, std::string schema_name,
                        std::string database_name,
                        concurrency::TransactionContext *txn);
 
-  explicit AnalyzePlan(std::string table_name, 
-                       std::string database_name, 
+  explicit AnalyzePlan(std::string table_name, std::string schema_name,
+                       std::string database_name,
                        std::vector<char *> column_names,
                        concurrency::TransactionContext *txn);
 
@@ -67,9 +67,9 @@ class AnalyzePlan : public AbstractPlan {
   }
 
  private:
-  storage::DataTable* target_table_ = nullptr;
+  storage::DataTable *target_table_ = nullptr;
   std::string table_name_;
-  std::vector<char*> column_names_;
+  std::vector<char *> column_names_;
 };
 
 }  // namespace planner

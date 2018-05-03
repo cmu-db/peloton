@@ -56,11 +56,11 @@ class PlanUtil {
       const planner::AbstractPlan *plan);
 
   /**
-  * @brief Get the indexes affected by a given query
-  * @param CatalogCache
-  * @param SQLStatement
-  * @return set of affected index object ids
-  */
+   * @brief Get the indexes affected by a given query
+   * @param CatalogCache
+   * @param SQLStatement
+   * @return set of affected index object ids
+   */
   static const std::set<oid_t> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
       const parser::SQLStatement &sql_stmt);
