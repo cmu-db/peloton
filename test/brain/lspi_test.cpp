@@ -15,6 +15,8 @@
 #include "brain/util/eigen_util.h"
 #include "brain/indextune/lspi/lspi_tuner.h"
 #include "common/harness.h"
+#include "sql/testing_sql_util.h"
+#include <chrono>
 
 namespace peloton {
 namespace test {
@@ -23,7 +25,52 @@ namespace test {
 // Tensorflow Tests
 //===--------------------------------------------------------------------===//
 
-class LSPITests : public PelotonTest {};
+class LSPITests : public PelotonTest {
+ private:
+  std::string database_name_;
+
+ public:
+  LSPITests() {}
+
+  /**
+   * @brief Create a new database
+   */
+  void CreateDatabase(const std::string &db_name) {
+    database_name_ = db_name;
+    std::string create_db_str = "CREATE DATABASE " + db_name + ";";
+    TestingSQLUtil::ExecuteSQLQuery(create_db_str);
+  }
+
+  /**
+   * @brief Create a new table with schema (a INT, b INT, c INT)
+   */
+  void CreateTable(const std::string &table_name) {
+    std::string create_str =
+        "CREATE TABLE " + table_name + "(a INT, b INT, c INT);";
+    TestingSQLUtil::ExecuteSQLQuery(create_str);
+  }
+
+  double TimedExecuteQuery(const std::string &query_str) {
+    auto start = std::chrono::system_clock::now();
+
+    TestingSQLUtil::ExecuteSQLQuery(query_str);
+
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+
+    return elapsed_seconds.count();
+  }
+
+  void InsertIntoTable(std::string table_name, int no_of_tuples) {
+    // Insert tuples into table
+    for (int i = 0; i < no_of_tuples; i++) {
+      std::ostringstream oss;
+      oss << "INSERT INTO " << table_name << " VALUES (" << i << "," << i + 1
+          << "," << i + 2 << ");";
+      TestingSQLUtil::ExecuteSQLQuery(oss.str());
+    }
+  }
+};
 
 TEST_F(LSPITests, RLSETest) {
   // Attempt to fit y = m*x
@@ -49,6 +96,35 @@ TEST_F(LSPITests, RLSETest) {
       prev_loss = curr_loss;
     }
   }
+}
+
+TEST_F(LSPITests, TuneTest) {
+  const std::string database_name = DEFAULT_DB_NAME;
+  const std::string table_name = "dummy_table";
+  const int num_rows = 200;
+
+  CreateDatabase(database_name);
+  CreateTable(table_name);
+  InsertIntoTable(table_name, num_rows);
+
+  std::vector<std::string> query_strs;
+  query_strs.push_back("SELECT * FROM " + table_name +
+                       " WHERE a > 160 and a < 250");
+  query_strs.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
+  query_strs.push_back("SELECT * FROM " + table_name +
+                       " WHERE b > 190 and b < 250");
+  query_strs.push_back("UPDATE " + table_name +
+                       " SET a = 45 WHERE a < 1 or b > 4");
+
+  std::vector<double> query_latencies;
+  for (const auto &query_str : query_strs) {
+    auto latency = TimedExecuteQuery(query_str);
+    query_latencies.push_back(latency);
+  }
+
+  brain::LSPIIndexTuner index_tuner(database_name);
+
+  index_tuner.Tune(query_strs, query_latencies);
 }
 
 }  // namespace test
