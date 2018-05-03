@@ -15,8 +15,6 @@
 #include <thread>
 #include <unordered_map>
 #include "common/internal_types.h"
-#include "catalog/manager.h"
-#include "storage/tile_group.h"
 #include "settings/settings_manager.h"
 #include "statistics/abstract_metric.h"
 #include "tbb/concurrent_unordered_map.h"
@@ -67,75 +65,33 @@ class ThreadLevelStatsCollector {
   };
 
   inline void CollectTransactionCommit(oid_t tile_group_id) {
-    if (metric_dispatch_.find(stats_event_type::TXN_COMMIT) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_COMMIT])
-      metric->OnTransactionCommit(db_table_ids.first);
+      metric->OnTransactionCommit(tile_group_id);
   };
 
   inline void CollectTransactionAbort(oid_t tile_group_id) {
-    if (metric_dispatch_.find(stats_event_type::TXN_ABORT) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TXN_ABORT])
-      metric->OnTransactionAbort(db_table_ids.first);
+      metric->OnTransactionAbort(tile_group_id);
   };
 
   inline void CollectTupleRead(oid_t tile_group_id, size_t num_read) {
-    if (metric_dispatch_.find(stats_event_type::TUPLE_READ) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_READ])
-      metric->OnRead(db_table_ids, num_read);
+      metric->OnTupleRead(tile_group_id, num_read);
   };
 
   inline void CollectTupleUpdate(oid_t tile_group_id) {
-    if (metric_dispatch_.find(stats_event_type::TUPLE_UPDATE) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_UPDATE])
-      metric->OnUpdate(db_table_ids);
+      metric->OnTupleUpdate(tile_group_id);
   };
 
   inline void CollectTupleInsert(oid_t tile_group_id) {
-    if (metric_dispatch_.find(stats_event_type::TUPLE_INSERT) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_INSERT])
-      metric->OnInsert(db_table_ids);
+      metric->OnTupleInsert(tile_group_id);
   };
 
   inline void CollectTupleDelete(oid_t tile_group_id) {
-    if (metric_dispatch_.find(stats_event_type::TUPLE_DELETE) ==
-        metric_dispatch_.end())
-      return;
-
-    auto db_table_ids = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_ids.first == INVALID_OID) return;
-
     for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_DELETE])
-      metric->OnDelete(db_table_ids);
+      metric->OnTupleDelete(tile_group_id);
   };
 
   inline void CollectTableMemoryAlloc(oid_t database_id, oid_t table_id,
@@ -156,19 +112,19 @@ class ThreadLevelStatsCollector {
   inline void CollectIndexRead(oid_t database_id, oid_t index_id,
                                size_t num_read) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
-      metric->OnRead({database_id, index_id}, num_read);
+      metric->OnIndexRead({database_id, index_id}, num_read);
   };
   inline void CollectIndexUpdate(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_UPDATE])
-      metric->OnUpdate({database_id, index_id});
+      metric->OnIndexUpdate({database_id, index_id});
   };
   inline void CollectIndexInsert(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_INSERT])
-      metric->OnInsert({database_id, index_id});
+      metric->OnIndexInsert({database_id, index_id});
   };
   inline void CollectIndexDelete(oid_t database_id, oid_t index_id) {
     for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
-      metric->OnDelete({database_id, index_id});
+      metric->OnIndexDelete({database_id, index_id});
   };
 
   inline void CollectQueryBegin() {
@@ -204,17 +160,6 @@ class ThreadLevelStatsCollector {
     auto m = std::make_shared<metric>();
     metrics_.push_back(m);
     for (stats_event_type type : types) metric_dispatch_[type].push_back(m);
-  }
-
-  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
-      oid_t tile_group_id) {
-    auto tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-    if (tile_group == nullptr) {
-      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
-    }
-    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
-                                   tile_group->GetTableId());
   }
 
   using MetricList = std::vector<std::shared_ptr<Metric>>;

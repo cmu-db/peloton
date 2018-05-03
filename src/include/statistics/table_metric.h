@@ -15,10 +15,12 @@
 #include <sstream>
 #include <string>
 
+#include "catalog/manager.h"
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
 #include "statistics/memory_metric.h"
+#include "storage/tile_group.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -78,6 +80,7 @@ class TableMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
+
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 
@@ -97,20 +100,24 @@ class TableMetricRawData : public AbstractRawData {
 
 class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
-  inline void OnRead(std::pair<oid_t, oid_t> db_table_id,
+  inline void OnTupleRead(oid_t tile_group_id,
                      size_t num_read) override {
+    auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     GetRawData()->IncrementTableReads(db_table_id, num_read);
   }
 
-  inline void OnUpdate(std::pair<oid_t, oid_t> db_table_id) override {
+  inline void OnTupleUpdate(oid_t tile_group_id) override {
+    auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     GetRawData()->IncrementTableUpdates(db_table_id);
   }
 
-  inline void OnInsert(std::pair<oid_t, oid_t> db_table_id) override {
+  inline void OnTupleInsert(oid_t tile_group_id) override {
+    auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     GetRawData()->IncrementTableInserts(db_table_id);
   }
 
-  inline void OnDelete(std::pair<oid_t, oid_t> db_table_id) override {
+  inline void OnTupleDelete(oid_t tile_group_id) override {
+    auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     GetRawData()->IncrementTableDeletes(db_table_id);
   }
 
@@ -123,6 +130,17 @@ class TableMetric : public AbstractMetric<TableMetricRawData> {
                            size_t bytes) override {
     GetRawData()->DecrementTableMemAlloc(db_table_id, bytes);
   }
+  private:
+    inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+        oid_t tile_group_id) {
+      auto tile_group =
+          catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+      if (tile_group == nullptr) {
+        return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
+      }
+      return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
+                                     tile_group->GetTableId());
+    }
 };
 /**
  * Metric for the access and memory of a table

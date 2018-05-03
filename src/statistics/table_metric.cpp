@@ -17,6 +17,17 @@
 namespace peloton {
 namespace stats {
 
+void TableMetricRawData::Aggregate(AbstractRawData &other) {
+  auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
+  for (auto &entry : other_index_metric.counters_) {
+    auto &this_counter = counters_[entry.first];
+    auto &other_counter = entry.second;
+    for (size_t i = 0; i < NUM_COUNTERS; i++) {
+      this_counter[i] += other_counter[i];
+    }
+  }
+}
+
 TableMetricOld::TableMetricOld(MetricType type, oid_t database_id,
                                oid_t table_id)
     : AbstractMetricOld(type), database_id_(database_id), table_id_(table_id) {
@@ -37,17 +48,5 @@ void TableMetricOld::Aggregate(AbstractMetricOld &source) {
   table_access_.Aggregate(table_metric.GetTableAccess());
   table_memory_.Aggregate(table_metric.GetTableMemory());
 }
-
-void TableMetricRawData::Aggregate(AbstractRawData &other) {
-  auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
-  for (auto &entry : other_index_metric.counters_) {
-    auto &this_counter = counters_[entry.first];
-    auto &other_counter = entry.second;
-    for (size_t i = 0; i < NUM_COUNTERS; i++) {
-      this_counter[i] += other_counter[i];
-    }
-  }
-}
-
 }  // namespace stats
 }  // namespace peloton

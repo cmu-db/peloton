@@ -83,20 +83,20 @@ class IndexMetricRawData : public AbstractRawData {
 
 class IndexMetric : public AbstractMetric<IndexMetricRawData> {
  public:
-  inline void OnRead(std::pair<oid_t, oid_t> db_index_id,
+  inline void OnIndexRead(std::pair<oid_t, oid_t> db_index_id,
                      size_t num_read) override {
     GetRawData()->IncrementIndexReads(db_index_id, num_read);
   }
 
-  inline void OnUpdate(std::pair<oid_t, oid_t> db_index_id) override {
+  inline void OnIndexUpdate(std::pair<oid_t, oid_t> db_index_id) override {
     GetRawData()->IncrementIndexUpdates(db_index_id);
   }
 
-  inline void OnInsert(std::pair<oid_t, oid_t> db_index_id) override {
+  inline void OnIndexInsert(std::pair<oid_t, oid_t> db_index_id) override {
     GetRawData()->IncrementIndexInserts(db_index_id);
   }
 
-  inline void OnDelete(std::pair<oid_t, oid_t> db_index_id) override {
+  inline void OnIndexDelete(std::pair<oid_t, oid_t> db_index_id) override {
     GetRawData()->IncrementIndexDeletes(db_index_id);
   }
 };

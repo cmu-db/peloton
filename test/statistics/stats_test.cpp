@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "common/harness.h"
+#include "common/internal_types.h"
 #include "settings/settings_manager.h"
 
 #include <sys/resource.h>
@@ -45,7 +46,7 @@ class StatsTests : public PelotonTest {};
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
   settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
-                                    static_cast<int>(StatsType::ENABLE));
+                                    static_cast<int>(StatsModeType::ENABLE));
 
   auto &aggregator =
       peloton::stats::StatsAggregatorOld::GetInstance(stat_interval);
