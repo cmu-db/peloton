@@ -221,7 +221,37 @@ class ExpressionUtil {
                                              type::TypeId value_type,
                                              AbstractExpression *left,
                                              AbstractExpression *right) {
-    return new OperatorExpression(type, value_type, left, right);
+
+    if (left != nullptr && right != nullptr
+        && left->GetExpressionType() == ExpressionType::VALUE_CONSTANT
+        && right->GetExpressionType() == ExpressionType::VALUE_CONSTANT
+        && type >= ExpressionType::OPERATOR_PLUS && type <= ExpressionType::OPERATOR_UNARY_MINUS) {
+      auto left_value = left->Evaluate(nullptr, nullptr, nullptr);
+      auto right_value = right->Evaluate(nullptr, nullptr, nullptr);
+      type::Value new_value;
+      switch (type) {
+        case (ExpressionType::OPERATOR_PLUS):
+          new_value = left_value.Add(right_value);
+          break;
+        case (ExpressionType::OPERATOR_MINUS):
+          new_value = left_value.Subtract(right_value);
+          break;
+        case (ExpressionType::OPERATOR_MULTIPLY):
+          new_value = left_value.Multiply(right_value);
+          break;
+        case (ExpressionType::OPERATOR_DIVIDE):
+          new_value = left_value.Divide(right_value);
+          break;
+        case (ExpressionType::OPERATOR_MOD):
+          new_value = left_value.Modulo(right_value);
+          break;
+        default:
+          throw Exception("Invalid operator expression type.");
+          break;
+      }
+      return new ConstantValueExpression(new_value);
+    }
+      return new OperatorExpression(type, value_type, left, right);
   }
 
   static AbstractExpression *OperatorFactory(
