@@ -41,6 +41,8 @@ class LSPIIndexTuner {
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;
+  // Index configuration manager object - Manage the index configuration object
+  std::unique_ptr<CompressedIndexConfigManager> index_manager_;
   // RLSE model for computing immediate cost of an action
   std::unique_ptr<RLSEModel> rlse_model_;
   // LSTD model for computing

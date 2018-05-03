@@ -8,6 +8,8 @@ LSPIIndexTuner::LSPIIndexTuner(
     : db_name_(db_name) {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, cat, txn_manager));
+  index_manager_ = std::unique_ptr<CompressedIndexConfigManager>(
+      new CompressedIndexConfigManager());
   feat_len_ = index_config_->GetConfigurationCount();
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len_));
   lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len_));
@@ -21,8 +23,10 @@ void LSPIIndexTuner::Tune(
   std::vector<std::unique_ptr<boost::dynamic_bitset<>>> drop_candidates;
   // Step 1: Populate the add and drop candidates per query
   for (size_t i = 0; i < num_queries; i++) {
-    add_candidates.push_back(index_config_->AddCandidates(queries[i]));
-    drop_candidates.push_back(index_config_->DropCandidates(queries[i]));
+    add_candidates.push_back(
+        index_manager_->AddCandidates(*index_config_, queries[i]));
+    drop_candidates.push_back(
+        index_manager_->DropCandidates(*index_config_, queries[i]));
   }
   // Step 2: Update the RLSE model with the new samples
   for (size_t i = 0; i < num_queries; i++) {
@@ -68,7 +72,7 @@ void LSPIIndexTuner::ConstructQueryConfigFeature(
 
 void LSPIIndexTuner::ConstructConfigFeature(
     peloton::vector_eig &config_vec) const {
-  index_config_->ToCoveredEigen(config_vec);
+  index_manager_->ToCoveredEigen(*index_config_, config_vec);
 }
 
 // void LSPIIndexTuner::FindOptimal(vector_eig &optimal_next) const {

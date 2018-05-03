@@ -27,6 +27,8 @@ namespace peloton {
 namespace brain {
 
 class CompressedIndexConfigContainer {
+  friend class CompressedIndexConfigManager;
+
  public:
   /**
    * Constructor for CompressedIndexConfigContainer: Initialize
@@ -106,35 +108,6 @@ class CompressedIndexConfigContainer {
   void RemoveIndex(size_t offset);
 
   /**
-   * Given a SQLStatementList, generate the prefix closure from the first
-   * SQLStatement element
-   * @param query: query in question
-   * @return the prefix closure as a bitset
-   */
-  std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
-      const std::string &query);
-
-  /**
-   * @brief Convert an index triplet to an index object
-   */
-  std::shared_ptr<brain::IndexObject> ConvertIndexTriplet(
-      const planner::col_triplet &idx_triplet);
-
-  /**
-  * Given a SQLStatement, generate drop candidates
-  * @param sql_stmt: the SQLStatement
-  * @return the drop candidates
-  */
-  std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
-      const std::string &query);
-
-  /**
-  * @brief Return a bitset initialized using a list of indexes
-  */
-  std::unique_ptr<boost::dynamic_bitset<>> GenerateBitSet(
-      const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
-
-  /**
    * @brief Get the total number of possible indexes in current database
    */
   size_t GetConfigurationCount() const;
@@ -143,24 +116,6 @@ class CompressedIndexConfigContainer {
    * @brief Get the current index configuration as a bitset(read-only)
    */
   const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
-
-  /**
-   * @brief Get the Eigen vector/feature representation of the current index
-   * config bitset
-   */
-  void ToEigen(vector_eig &config_vec) const;
-
-  /**
-   * @brief Get the Eigen vector/feature representation of the covered index
-   * config
-   */
-  void ToCoveredEigen(vector_eig &config_vec) const;
-
-  /**
-   * @brief: converts query string to a binded sql-statement list
-   */
-  std::unique_ptr<parser::SQLStatementList> ToBindedSqlStmtList(
-      const std::string &query_string);
 
   std::string ToString() const;
 
@@ -215,11 +170,79 @@ class CompressedIndexConfigContainer {
   size_t next_table_offset_;
 
   std::unique_ptr<boost::dynamic_bitset<>> cur_index_config_;
+};
 
-  void AddIndex(boost::dynamic_bitset<> &bitmap,
+class CompressedIndexConfigManager {
+ public:
+  explicit CompressedIndexConfigManager()
+      : catalog_{catalog::Catalog::GetInstance()},
+        txn_manager_{&concurrency::TransactionManagerFactory::GetInstance()} {
+    catalog_->Bootstrap();
+  }
+  /**
+ * Given a SQLStatementList, generate the prefix closure from the first
+ * SQLStatement element
+ * @param container: input container
+ * @param query: query in question
+ * @return the prefix closure as a bitset
+ */
+  std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
+      const CompressedIndexConfigContainer &container,
+      const std::string &query);
+
+  /**
+  * Given a SQLStatement, generate drop candidates
+  * @param container: input container
+  * @param sql_stmt: the SQLStatement
+  * @return the drop candidates
+  */
+  std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
+      const CompressedIndexConfigContainer &container,
+      const std::string &query);
+
+  /**
+   * @brief Get the Eigen vector/feature representation of the current index
+   * @param container: input container
+   * config bitset
+   */
+  void ToEigen(const CompressedIndexConfigContainer &container,
+               vector_eig &config_vec) const;
+
+  /**
+   * @brief Get the Eigen vector/feature representation of the covered index
+   * config
+   */
+  void ToCoveredEigen(const CompressedIndexConfigContainer &container,
+                      vector_eig &config_vec) const;
+
+  /**
+   * @brief: converts query string to a binded sql-statement list
+   */
+  std::unique_ptr<parser::SQLStatementList> ToBindedSqlStmtList(
+      const std::string &database_name, const std::string &query_string);
+
+  /**
+  * @brief Return a bitset initialized using a list of indexes
+  */
+  std::unique_ptr<boost::dynamic_bitset<>> GenerateBitSet(
+      const CompressedIndexConfigContainer &container,
+      const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
+
+  /**
+   * @brief Convert an index triplet to an index object
+   */
+  std::shared_ptr<brain::IndexObject> ConvertIndexTriplet(
+      const planner::col_triplet &idx_triplet);
+
+  void AddIndex(const CompressedIndexConfigContainer &container,
+                boost::dynamic_bitset<> &bitmap,
                 const std::shared_ptr<IndexObject> &idx_object);
 
   void AddIndex(boost::dynamic_bitset<> &bitmap, size_t offset);
+
+ private:
+  catalog::Catalog *catalog_;
+  concurrency::TransactionManager *txn_manager_;
 };
 }
 }

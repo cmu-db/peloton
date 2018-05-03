@@ -164,18 +164,6 @@ void CompressedIndexConfigContainer::AddIndex(size_t offset) {
   cur_index_config_->set(offset);
 }
 
-void CompressedIndexConfigContainer::AddIndex(
-    boost::dynamic_bitset<> &bitmap,
-    const std::shared_ptr<IndexObject> &idx_object) {
-  size_t offset = GetGlobalOffset(idx_object);
-  bitmap.set(offset);
-}
-
-void CompressedIndexConfigContainer::AddIndex(boost::dynamic_bitset<> &bitmap,
-                                              size_t offset) {
-  bitmap.set(offset);
-}
-
 void CompressedIndexConfigContainer::RemoveIndex(
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
@@ -186,115 +174,6 @@ void CompressedIndexConfigContainer::RemoveIndex(size_t offset) {
   cur_index_config_->set(offset, false);
 }
 
-std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfigContainer::AddCandidates(const std::string &query) {
-  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(next_table_offset_));
-
-  auto txn = txn_manager_->BeginTransaction();
-  catalog_->GetDatabaseObject(database_name_, txn);
-  std::vector<planner::col_triplet> affected_cols_vector =
-      planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache, ToBindedSqlStmtList(query), database_name_);
-  txn_manager_->CommitTransaction(txn);
-
-  // Aggregate all columns in the same table
-  std::unordered_map<oid_t, brain::IndexObject> aggregate_map;
-
-  for (const auto &each_triplet : affected_cols_vector) {
-    const auto db_oid = std::get<0>(each_triplet);
-    const auto table_oid = std::get<1>(each_triplet);
-    const auto col_oid = std::get<2>(each_triplet);
-
-    if (aggregate_map.find(table_oid) == aggregate_map.end()) {
-      aggregate_map[table_oid] = brain::IndexObject();
-      aggregate_map.at(table_oid).db_oid = db_oid;
-      aggregate_map.at(table_oid).table_oid = table_oid;
-    }
-
-    aggregate_map.at(table_oid).column_oids.insert(col_oid);
-  }
-
-  const auto db_oid = aggregate_map.begin()->second.db_oid;
-
-  for (const auto it : aggregate_map) {
-    const auto table_oid = it.first;
-    const auto &column_oids = it.second.column_oids;
-    const auto table_offset = table_offset_map_.at(table_oid);
-
-    // Insert empty index
-    AddIndex(*result, table_offset);
-
-    // For each index, iterate through its columns
-    // and incrementally add the columns to the prefix closure of current table
-    std::vector<oid_t> col_oids;
-    for (const auto column_oid : column_oids) {
-      col_oids.push_back(column_oid);
-
-      // Insert prefix index
-      auto idx_new =
-          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      AddIndex(*result, idx_new);
-    }
-  }
-
-  return result;
-}
-
-std::shared_ptr<brain::IndexObject>
-CompressedIndexConfigContainer::ConvertIndexTriplet(
-    const planner::col_triplet &idx_triplet) {
-  const auto db_oid = std::get<0>(idx_triplet);
-  const auto table_oid = std::get<1>(idx_triplet);
-  const auto idx_oid = std::get<2>(idx_triplet);
-
-  auto txn = txn_manager_->BeginTransaction();
-  const auto db_obj = catalog_->GetDatabaseObject(db_oid, txn);
-  const auto table_obj = db_obj->GetTableObject(table_oid);
-  const auto idx_obj = table_obj->GetIndexObject(idx_oid);
-  const auto col_oids = idx_obj->GetKeyAttrs();
-  std::vector<oid_t> input_oids(col_oids);
-
-  txn_manager_->CommitTransaction(txn);
-
-  return std::make_shared<brain::IndexObject>(db_oid, table_oid, input_oids);
-}
-
-std::unique_ptr<parser::SQLStatementList>
-CompressedIndexConfigContainer::ToBindedSqlStmtList(
-    const std::string &query_string) {
-  auto txn = txn_manager_->BeginTransaction();
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  auto sql_stmt = sql_stmt_list->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name_);
-  bind_node_visitor.BindNameToNode(sql_stmt);
-  txn_manager_->CommitTransaction(txn);
-
-  return sql_stmt_list;
-}
-
-std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfigContainer::DropCandidates(const std::string &query) {
-  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(next_table_offset_));
-
-  auto sql_stmt_list = ToBindedSqlStmtList(query);
-  auto sql_stmt = sql_stmt_list->GetStatement(0);
-
-  auto txn = txn_manager_->BeginTransaction();
-  catalog_->GetDatabaseObject(database_name_, txn);
-  std::vector<planner::col_triplet> affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt,
-                                            true);
-  for (const auto &col_triplet : affected_indexes) {
-    auto idx_obj = ConvertIndexTriplet(col_triplet);
-    AddIndex(*result, idx_obj);
-  }
-  txn_manager_->CommitTransaction(txn);
-  return result;
-}
-
 size_t CompressedIndexConfigContainer::GetConfigurationCount() const {
   return next_table_offset_;
 }
@@ -302,42 +181,6 @@ size_t CompressedIndexConfigContainer::GetConfigurationCount() const {
 const boost::dynamic_bitset<>
     *CompressedIndexConfigContainer::GetCurrentIndexConfig() const {
   return cur_index_config_.get();
-}
-
-void CompressedIndexConfigContainer::ToEigen(vector_eig &config_vec) const {
-  // Note that the representation is reversed - but this should not affect
-  // anything
-  config_vec = vector_eig::Zero(GetConfigurationCount());
-  size_t config_id = cur_index_config_->find_first();
-  while (config_id != boost::dynamic_bitset<>::npos) {
-    config_vec[config_id] = 1.0;
-    config_id = cur_index_config_->find_next(config_id);
-  }
-}
-
-void CompressedIndexConfigContainer::ToCoveredEigen(
-    vector_eig &config_vec) const {
-  // Note that the representation is reversed - but this should not affect
-  // anything
-  config_vec = vector_eig::Zero(GetConfigurationCount());
-  for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
-       tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
-    auto next_tbl_offset_iter = std::next(tbl_offset_iter);
-    size_t start_idx = tbl_offset_iter->first;
-    size_t end_idx;
-    if (next_tbl_offset_iter == table_offset_reverse_map_.end()) {
-      end_idx = GetConfigurationCount();
-    } else {
-      end_idx = next_tbl_offset_iter->first;
-    }
-    size_t last_set_idx = start_idx;
-    while (last_set_idx < end_idx) {
-      size_t next_set_idx = cur_index_config_->find_next(last_set_idx);
-      if (next_set_idx >= end_idx) break;
-      last_set_idx = next_set_idx;
-    }
-    config_vec.segment(start_idx, last_set_idx - start_idx + 1).array() = 1.0;
-  }
 }
 
 std::string CompressedIndexConfigContainer::ToString() const {
@@ -373,16 +216,184 @@ std::string CompressedIndexConfigContainer::ToString() const {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfigContainer::GenerateBitSet(
-    const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
+CompressedIndexConfigManager::AddCandidates(
+    const CompressedIndexConfigContainer &container, const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(next_table_offset_));
+      new boost::dynamic_bitset<>(container.next_table_offset_));
 
-  for (const auto &idx_obj : idx_objs) {
-    AddIndex(*result, idx_obj);
+  auto txn = txn_manager_->BeginTransaction();
+  catalog_->GetDatabaseObject(container.database_name_, txn);
+  std::vector<planner::col_triplet> affected_cols_vector =
+      planner::PlanUtil::GetIndexableColumns(
+          txn->catalog_cache,
+          ToBindedSqlStmtList(container.database_name_, query),
+          container.database_name_);
+  txn_manager_->CommitTransaction(txn);
+
+  // Aggregate all columns in the same table
+  std::unordered_map<oid_t, brain::IndexObject> aggregate_map;
+
+  for (const auto &each_triplet : affected_cols_vector) {
+    const auto db_oid = std::get<0>(each_triplet);
+    const auto table_oid = std::get<1>(each_triplet);
+    const auto col_oid = std::get<2>(each_triplet);
+
+    if (aggregate_map.find(table_oid) == aggregate_map.end()) {
+      aggregate_map[table_oid] = brain::IndexObject();
+      aggregate_map.at(table_oid).db_oid = db_oid;
+      aggregate_map.at(table_oid).table_oid = table_oid;
+    }
+
+    aggregate_map.at(table_oid).column_oids.insert(col_oid);
+  }
+
+  const auto db_oid = aggregate_map.begin()->second.db_oid;
+
+  for (const auto it : aggregate_map) {
+    const auto table_oid = it.first;
+    const auto &column_oids = it.second.column_oids;
+    const auto table_offset = container.table_offset_map_.at(table_oid);
+
+    // Insert empty index
+    AddIndex(*result, table_offset);
+
+    // For each index, iterate through its columns
+    // and incrementally add the columns to the prefix closure of current table
+    std::vector<oid_t> col_oids;
+    for (const auto column_oid : column_oids) {
+      col_oids.push_back(column_oid);
+
+      // Insert prefix index
+      auto idx_new =
+          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+      AddIndex(container, *result, idx_new);
+    }
   }
 
   return result;
+}
+
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfigManager::DropCandidates(
+    const CompressedIndexConfigContainer &container, const std::string &query) {
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(container.next_table_offset_));
+
+  auto sql_stmt_list = ToBindedSqlStmtList(container.database_name_, query);
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+
+  auto txn = txn_manager_->BeginTransaction();
+  catalog_->GetDatabaseObject(container.database_name_, txn);
+  std::vector<planner::col_triplet> affected_indexes =
+      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt,
+                                            true);
+  for (const auto &col_triplet : affected_indexes) {
+    auto idx_obj = ConvertIndexTriplet(col_triplet);
+    AddIndex(container, *result, idx_obj);
+  }
+  txn_manager_->CommitTransaction(txn);
+  return result;
+}
+
+std::shared_ptr<brain::IndexObject>
+CompressedIndexConfigManager::ConvertIndexTriplet(
+    const planner::col_triplet &idx_triplet) {
+  const auto db_oid = std::get<0>(idx_triplet);
+  const auto table_oid = std::get<1>(idx_triplet);
+  const auto idx_oid = std::get<2>(idx_triplet);
+
+  auto txn = txn_manager_->BeginTransaction();
+  const auto db_obj = catalog_->GetDatabaseObject(db_oid, txn);
+  const auto table_obj = db_obj->GetTableObject(table_oid);
+  const auto idx_obj = table_obj->GetIndexObject(idx_oid);
+  const auto col_oids = idx_obj->GetKeyAttrs();
+  std::vector<oid_t> input_oids(col_oids);
+
+  txn_manager_->CommitTransaction(txn);
+
+  return std::make_shared<brain::IndexObject>(db_oid, table_oid, input_oids);
+}
+
+std::unique_ptr<parser::SQLStatementList>
+CompressedIndexConfigManager::ToBindedSqlStmtList(
+    const std::string &database_name, const std::string &query_string) {
+  auto txn = txn_manager_->BeginTransaction();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name);
+  bind_node_visitor.BindNameToNode(sql_stmt);
+  txn_manager_->CommitTransaction(txn);
+
+  return sql_stmt_list;
+}
+
+void CompressedIndexConfigManager::ToEigen(
+    const CompressedIndexConfigContainer &container,
+    vector_eig &config_vec) const {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  config_vec = vector_eig::Zero(container.next_table_offset_);
+  size_t config_id = container.cur_index_config_->find_first();
+  while (config_id != boost::dynamic_bitset<>::npos) {
+    config_vec[config_id] = 1.0;
+    config_id = container.cur_index_config_->find_next(config_id);
+  }
+}
+
+void CompressedIndexConfigManager::ToCoveredEigen(
+    const CompressedIndexConfigContainer &container,
+    vector_eig &config_vec) const {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  config_vec = vector_eig::Zero(container.next_table_offset_);
+  for (auto tbl_offset_iter = container.table_offset_reverse_map_.begin();
+       tbl_offset_iter != container.table_offset_reverse_map_.end();
+       ++tbl_offset_iter) {
+    auto next_tbl_offset_iter = std::next(tbl_offset_iter);
+    size_t start_idx = tbl_offset_iter->first;
+    size_t end_idx;
+    if (next_tbl_offset_iter == container.table_offset_reverse_map_.end()) {
+      end_idx = container.next_table_offset_;
+    } else {
+      end_idx = next_tbl_offset_iter->first;
+    }
+    size_t last_set_idx = start_idx;
+    while (last_set_idx < end_idx) {
+      size_t next_set_idx =
+          container.cur_index_config_->find_next(last_set_idx);
+      if (next_set_idx >= end_idx) break;
+      last_set_idx = next_set_idx;
+    }
+    config_vec.segment(start_idx, last_set_idx - start_idx + 1).array() = 1.0;
+  }
+}
+
+std::unique_ptr<boost::dynamic_bitset<>>
+CompressedIndexConfigManager::GenerateBitSet(
+    const CompressedIndexConfigContainer &container,
+    const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
+  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
+      new boost::dynamic_bitset<>(container.next_table_offset_));
+
+  for (const auto &idx_obj : idx_objs) {
+    AddIndex(container, *result, idx_obj);
+  }
+
+  return result;
+}
+
+void CompressedIndexConfigManager::AddIndex(
+    const CompressedIndexConfigContainer &container,
+    boost::dynamic_bitset<> &bitmap,
+    const std::shared_ptr<IndexObject> &idx_object) {
+  size_t offset = container.GetGlobalOffset(idx_object);
+  bitmap.set(offset);
+}
+
+void CompressedIndexConfigManager::AddIndex(boost::dynamic_bitset<> &bitmap,
+                                            size_t offset) {
+  bitmap.set(offset);
 }
 }
 }
