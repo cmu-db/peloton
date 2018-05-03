@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/alter_executor.h"
+
 #include "catalog/catalog.h"
 #include "catalog/table_catalog.h"
 #include "common/logger.h"
-#include "executor/alter_executor.h"
 #include "executor/executor_context.h"
 #include "storage/data_table.h"
 
