@@ -38,7 +38,7 @@ class LockManager {
   // Destructor
   ~LockManager() {
     // Iterate through mapped locks
-    std::pair<oid_t, boost::upgrade_mutex *> tmp;
+    std::pair<oid_t, std::shared_ptr<boost::upgrade_mutex> > tmp;
     std::vector<oid_t> v;
     BOOST_FOREACH (tmp, lock_map_) { v.push_back(tmp.first); }
 
@@ -81,14 +81,14 @@ class LockManager {
   boost::upgrade_mutex internal_rw_lock_;
 
   // Map to store RW_LOCK for different objects
-  std::map<oid_t, boost::upgrade_mutex *> lock_map_;
+  std::map<oid_t, std::shared_ptr<boost::upgrade_mutex> > lock_map_;
 
   // Get RW lock by oid
   boost::upgrade_mutex *GetLock(oid_t oid) {
     // Try to access the lock
     boost::upgrade_mutex *rw_lock;
     try {
-      rw_lock = lock_map_.at(oid);
+      rw_lock = lock_map_.at(oid).get();
     } catch (const std::out_of_range &oor) {
       return nullptr;
     }

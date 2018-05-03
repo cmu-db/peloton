@@ -26,14 +26,10 @@ class LockManagerTests : public PelotonTest {};
  * @brief Test basic functionality of lock manager
  */
 TEST_F(LockManagerTests, FunctionalityTest) {
-  // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
-  // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
-  // Try to unlock
   bool result2 = lm->UnlockShared((oid_t)1);
-  // Try to remove lock
   bool result3 = lm->RemoveLock((oid_t)1);
   EXPECT_TRUE(result0);
   EXPECT_TRUE(result1);
@@ -45,18 +41,12 @@ TEST_F(LockManagerTests, FunctionalityTest) {
  * @brief Test shared lock behaviour
  */
 TEST_F(LockManagerTests, LockSharedTest) {
-  // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
-  // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
-  // Try to lock shared
   bool result2 = lm->LockShared((oid_t)1);
-  // Try to lock shared
   bool result3 = lm->UnlockShared((oid_t)1);
-  // Try to lock shared
   bool result4 = lm->UnlockShared((oid_t)1);
-  // Try to remove lock
   bool result5 = lm->RemoveLock((oid_t)1);
   EXPECT_TRUE(result0);
   EXPECT_TRUE(result1);
@@ -70,22 +60,14 @@ TEST_F(LockManagerTests, LockSharedTest) {
  * @brief Test lock upgrade/downgrade behaviour
  */
 TEST_F(LockManagerTests, LockChangeTest) {
-  // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
-  // Try to lock shared
   bool result1 = lm->LockShared((oid_t)1);
-  // Try to lock change to exclusive
   bool result2 = lm->LockToExclusive((oid_t)1);
-  // Try to lock change to shared
   bool result3 = lm->LockToShared((oid_t)1);
-  // Try to lock shared
   bool result4 = lm->LockShared((oid_t)1);
-  // Try to lock shared
   bool result5 = lm->UnlockShared((oid_t)1);
-  // Try to lock shared
   bool result6 = lm->UnlockShared((oid_t)1);
-  // Try to remove lock
   bool result7 = lm->RemoveLock((oid_t)1);
   EXPECT_TRUE(result0);
   EXPECT_TRUE(result1);
@@ -122,7 +104,7 @@ TEST_F(LockManagerTests, DoubleRemoveTest) {
   bool result0 = lm->InitLock((oid_t)1, concurrency::LockManager::RW_LOCK);
   // Try to remove lock
   bool result1 = lm->RemoveLock((oid_t)1);
-  // Try to remove lock
+  // Try to remove lock again
   bool result2 = lm->RemoveLock((oid_t)1);
   EXPECT_TRUE(result0);
   EXPECT_TRUE(result1);
