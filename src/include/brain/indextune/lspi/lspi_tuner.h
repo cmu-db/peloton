@@ -33,6 +33,11 @@ class LSPIIndexTuner {
    */
   void Tune(const std::vector<std::string> &queries,
             const std::vector<double> &query_latencies);
+  void FindOptimalConfig(double max_cost,
+                         const boost::dynamic_bitset<> &curr_config_set,
+                         const boost::dynamic_bitset<>& add_candidate_set,
+                         const boost::dynamic_bitset<>& drop_candidate_set,
+                         boost::dynamic_bitset<>& optimal_config_set);
 
  private:
   // Database to tune
