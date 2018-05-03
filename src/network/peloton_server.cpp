@@ -18,6 +18,7 @@
 #include "network/peloton_rpc_handler_task.h"
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
+#include "statistics/stats_aggregator.h"
 
 #include "peloton_config.h"
 

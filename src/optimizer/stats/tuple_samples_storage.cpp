@@ -19,6 +19,7 @@
 #include "executor/seq_scan_executor.h"
 #include "optimizer/stats/tuple_sampler.h"
 #include "planner/insert_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace optimizer {

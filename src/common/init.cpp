@@ -22,6 +22,7 @@
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "settings/settings_manager.h"
+#include "storage/data_table.h"
 #include "threadpool/mono_queue_pool.h"
 #include "tuning/index_tuner.h"
 #include "tuning/layout_tuner.h"
@@ -78,6 +79,9 @@ void PelotonInit::Initialize() {
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
+
+  settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
+                                    static_cast<int>(StatsModeType::ENABLE));
 
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

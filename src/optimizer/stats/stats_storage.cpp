@@ -17,6 +17,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
+#include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
 

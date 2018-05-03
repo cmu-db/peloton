@@ -32,6 +32,7 @@
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "settings/settings_manager.h"
+#include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 #include "type/ephemeral_pool.h"
@@ -158,7 +159,7 @@ void Catalog::Bootstrap() {
   catalogs_.push_back(&TriggerCatalog::GetInstance(txn));
   catalogs_.push_back(&LanguageCatalog::GetInstance(txn));
   catalogs_.push_back(&ProcCatalog::GetInstance(txn));
-  
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
     catalogs_.push_back(&QueryHistoryCatalog::GetInstance(txn));
   }
@@ -1111,28 +1112,28 @@ void Catalog::InitializeFunctions() {
        * integer functions
        */
       AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
           internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},

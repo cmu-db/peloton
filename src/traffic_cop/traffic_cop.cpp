@@ -22,6 +22,7 @@
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
+#include "statistics/backend_stats_context.h"
 #include "threadpool/mono_queue_pool.h"
 
 namespace peloton {

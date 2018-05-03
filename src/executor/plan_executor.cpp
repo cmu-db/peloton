@@ -20,6 +20,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
+#include "statistics/backend_stats_context.h"
 #include "statistics/thread_level_stats_collector.h"
 #include "settings/settings_manager.h"
 #include "storage/tuple_iterator.h"
