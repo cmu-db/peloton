@@ -35,17 +35,18 @@ class CompressedIndexConfigUtil {
  * @param query: query in question
  * @return the prefix closure as a bitset
  */
-  static std::unique_ptr<boost::dynamic_bitset<>> AddCandidates(
-      CompressedIndexConfigContainer &container, const std::string &query);
-
+  static void AddCandidates(CompressedIndexConfigContainer &container,
+                            const std::string &query,
+                            boost::dynamic_bitset<> &add_candidates);
   /**
   * Given a SQLStatement, generate drop candidates
   * @param container: input container
   * @param sql_stmt: the SQLStatement
   * @return the drop candidates
   */
-  static std::unique_ptr<boost::dynamic_bitset<>> DropCandidates(
-      CompressedIndexConfigContainer &container, const std::string &query);
+  static void DropCandidates(CompressedIndexConfigContainer &container,
+                             const std::string &query,
+                             boost::dynamic_bitset<> &drop_candidates);
 
   /**
   * @brief Return a bitset initialized using a list of indexes
@@ -84,9 +85,9 @@ class CompressedIndexConfigUtil {
    * belongs(config) (ii) !(f(query) && belongs(config))?
    */
   static void ConstructQueryConfigFeature(
-      const CompressedIndexConfigContainer &container,
-      std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
-      std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
+      const boost::dynamic_bitset<> &curr_config_set,
+      const boost::dynamic_bitset<> &add_candidate_set,
+      const boost::dynamic_bitset<> &drop_candidate_set,
       vector_eig &query_config_vec);
 
  private:

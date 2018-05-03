@@ -15,17 +15,18 @@
 namespace peloton {
 namespace brain {
 
-std::unique_ptr<boost::dynamic_bitset<>>
+void
 CompressedIndexConfigUtil::AddCandidates(
-    CompressedIndexConfigContainer &container, const std::string &query) {
-  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(container.GetConfigurationCount()));
-
+    CompressedIndexConfigContainer &container, const std::string &query,
+    boost::dynamic_bitset<>& add_candidates) {
+  add_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
+  auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto txn = container.GetTransactionManager()->BeginTransaction();
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache, ToBindedSqlStmtList(container, query),
+          txn->catalog_cache,
+          std::move(sql_stmt_list),
           container.GetDatabaseName());
   container.GetTransactionManager()->CommitTransaction(txn);
 
@@ -54,7 +55,7 @@ CompressedIndexConfigUtil::AddCandidates(
     const auto table_offset = container.GetTableOffset(table_oid);
 
     // Insert empty index
-    result->set(table_offset);
+    add_candidates.set(table_offset);
 
     // For each index, iterate through its columns
     // and incrementally add the columns to the prefix closure of current table
@@ -65,18 +66,17 @@ CompressedIndexConfigUtil::AddCandidates(
       // Insert prefix index
       auto idx_new =
           std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
-      SetBit(container, *result, idx_new);
+      SetBit(container, add_candidates, idx_new);
     }
   }
-
-  return result;
 }
 
-std::unique_ptr<boost::dynamic_bitset<>>
+void
 CompressedIndexConfigUtil::DropCandidates(
-    CompressedIndexConfigContainer &container, const std::string &query) {
-  auto result = std::unique_ptr<boost::dynamic_bitset<>>(
-      new boost::dynamic_bitset<>(container.GetConfigurationCount()));
+    CompressedIndexConfigContainer &container,
+    const std::string &query,
+    boost::dynamic_bitset<>& drop_candidates) {
+  drop_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
 
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
@@ -88,10 +88,9 @@ CompressedIndexConfigUtil::DropCandidates(
                                             true);
   for (const auto &col_triplet : affected_indexes) {
     auto idx_obj = ConvertIndexTriplet(container, col_triplet);
-    SetBit(container, *result, idx_obj);
+    SetBit(container, drop_candidates, idx_obj);
   }
   container.GetTransactionManager()->CommitTransaction(txn);
-  return result;
 }
 
 std::shared_ptr<brain::IndexObject>
@@ -153,33 +152,32 @@ void CompressedIndexConfigUtil::SetBit(
 }
 
 void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
-    const CompressedIndexConfigContainer &container,
-    std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
-    std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
+    const boost::dynamic_bitset<> &curr_config_set,
+    const boost::dynamic_bitset<> &add_candidate_set,
+    const boost::dynamic_bitset<> &drop_candidate_set,
     vector_eig &query_config_vec) {
-  size_t num_configs = container.GetConfigurationCount();
-  auto curr_config_set = container.GetCurrentIndexConfig();
+  size_t num_configs = curr_config_set.size();
   query_config_vec = vector_eig::Zero(2 * num_configs);
   size_t offset_rec = 0;
-  size_t config_id_rec = add_candidates->find_first();
+  size_t config_id_rec = add_candidate_set.find_first();
   query_config_vec[offset_rec] = 1.0;
   while (config_id_rec != boost::dynamic_bitset<>::npos) {
-    if (curr_config_set->test(config_id_rec)) {
+    if (curr_config_set.test(config_id_rec)) {
       query_config_vec[offset_rec + config_id_rec] = 1.0f;
     } else {
       query_config_vec[offset_rec + config_id_rec] = -1.0f;
     }
-    config_id_rec = add_candidates->find_next(config_id_rec);
+    config_id_rec = add_candidate_set.find_next(config_id_rec);
   }
   size_t offset_drop = num_configs;
-  size_t config_id_drop = drop_candidates->find_first();
+  size_t config_id_drop = drop_candidate_set.find_first();
   query_config_vec[offset_drop] = 1.0;
   while (config_id_drop != boost::dynamic_bitset<>::npos) {
-    if (curr_config_set->test(config_id_drop)) {
+    if (curr_config_set.test(config_id_drop)) {
       query_config_vec[offset_drop + config_id_drop] = 1.0f;
     }
     // else case shouldnt happen
-    config_id_drop = drop_candidates->find_next(config_id_drop);
+    config_id_drop = drop_candidate_set.find_next(config_id_drop);
   }
 }
 
