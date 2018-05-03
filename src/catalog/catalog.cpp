@@ -1060,6 +1060,7 @@ ResultType Catalog::AlterTable(
                new_column_id < new_schema->GetColumnCount(); new_column_id++) {
             auto it = column_map.find(new_column_id);
             type::Value val;
+            auto cast_flag = false;
             if (it == column_map.end()) {
               // new column, set value to null
               val = type::ValueFactory::GetNullValueByType(
@@ -1070,10 +1071,18 @@ ResultType Catalog::AlterTable(
               val = result_tile->GetValue(i, it->second);
               if (new_schema->GetColumn(new_column_id).GetType() != old_schema->GetColumn(it->second).GetType()) {
                 //change the value's type
-                val = val.CastAs(new_schema->GetColumn(new_column_id).GetType());
+                LOG_TRACE("CASTED: %s TO %s", val.GetInfo().c_str(),new_schema->GetColumn(new_column_id).GetInfo()
+                    .c_str());
+                auto casted_val = val.CastAs(new_schema->GetColumn(new_column_id).GetType());
+                cast_flag = true;
+                tuple->SetValue(new_column_id, casted_val, pool_.get());
               }
             }
-            tuple->SetValue(new_column_id, val, pool_.get());
+            if (!cast_flag) {
+              tuple->SetValue(new_column_id, val, pool_.get());
+            } else {
+              LOG_TRACE("CASTED: %s", val.GetInfo().c_str());
+            }
           }
           // insert new tuple into new table
           planner::InsertPlan node(new_table, std::move(tuple));
@@ -1089,19 +1098,19 @@ ResultType Catalog::AlterTable(
       oid_t column_offset = 0;
       for (auto new_column : new_schema->GetColumns()) {
         catalog::ColumnCatalog::GetInstance()->InsertColumn(
-            table_oid, new_column.GetName(), column_offset,
+            new_table->GetOid(), new_column.GetName(), column_offset,
             new_column.GetOffset(), new_column.GetType(),
             new_column.IsInlined(), new_column.GetConstraints(), pool_.get(),
             txn);
         column_offset++;
       }
+      // Record table drop
+      // txn->RecordDrop(database_oid, old_table->GetOid(), INVALID_OID);
 
       // Final step of physical change should be moved to commit time
       database->ReplaceTableWithOid(table_oid, new_table);
 
-      // Record table drop
-      txn->RecordDrop(database_oid, table_oid, INVALID_OID);
-
+      LOG_TRACE("Alter table with oid %d", new_table->GetOid());
     } catch (CatalogException &e) {
       LOG_TRACE("Alter table failed.");
       return ResultType::FAILURE;
