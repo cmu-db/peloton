@@ -330,6 +330,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::TRIGGER: {
       return "TRIGGER";
     }
+    case CreateType::SCHEMA: {
+      return "SCHEMA";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for CreateType value '%d'",
@@ -353,6 +356,8 @@ CreateType StringToCreateType(const std::string &str) {
     return CreateType::CONSTRAINT;
   } else if (upper_str == "TRIGGER") {
     return CreateType::TRIGGER;
+  } else if (upper_str == "SCHEMA") {
+    return CreateType::SCHEMA;
   } else {
     throw ConversionException(StringUtil::Format(
         "No CreateType conversion from string '%s'", upper_str.c_str()));
@@ -384,6 +389,9 @@ std::string DropTypeToString(DropType type) {
     case DropType::TRIGGER: {
       return "TRIGGER";
     }
+    case DropType::SCHEMA: {
+      return "SCHEMA";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for DropType value '%d'",
@@ -407,6 +415,8 @@ DropType StringToDropType(const std::string &str) {
     return DropType::CONSTRAINT;
   } else if (upper_str == "TRIGGER") {
     return DropType::TRIGGER;
+  } else if (upper_str == "SCHEMA") {
+    return DropType::SCHEMA;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DropType conversion from string '%s'", upper_str.c_str()));
@@ -576,7 +586,7 @@ std::string QueryTypeToString(QueryType query_type) {
       return "EXECUTE";
     case QueryType::QUERY_SELECT:
       return "SELECT";
-    case QueryType::QUERY_EXPLAIN: 
+    case QueryType::QUERY_EXPLAIN:
       return "EXPLAIN";
     case QueryType::QUERY_OTHER:
     default:
@@ -624,20 +634,18 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
                                    const parser::SQLStatement *sql_stmt) {
   LOG_TRACE("%s", StatementTypeToString(stmt_type).c_str());
   static std::unordered_map<StatementType, QueryType, EnumHash<StatementType>>
-      type_map{
-          {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
-          {StatementType::PREPARE, QueryType::QUERY_PREPARE},
-          {StatementType::INSERT, QueryType::QUERY_INSERT},
-          {StatementType::UPDATE, QueryType::QUERY_UPDATE},
-          {StatementType::DELETE, QueryType::QUERY_DELETE},
-          {StatementType::COPY, QueryType::QUERY_COPY},
-          {StatementType::ANALYZE, QueryType::QUERY_ANALYZE},
-          {StatementType::ALTER, QueryType::QUERY_ALTER},
-          {StatementType::DROP, QueryType::QUERY_DROP},
-          {StatementType::SELECT, QueryType::QUERY_SELECT},
-          {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
-          {StatementType::EXPLAIN, QueryType::QUERY_EXPLAIN}
-      };
+      type_map{{StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
+               {StatementType::PREPARE, QueryType::QUERY_PREPARE},
+               {StatementType::INSERT, QueryType::QUERY_INSERT},
+               {StatementType::UPDATE, QueryType::QUERY_UPDATE},
+               {StatementType::DELETE, QueryType::QUERY_DELETE},
+               {StatementType::COPY, QueryType::QUERY_COPY},
+               {StatementType::ANALYZE, QueryType::QUERY_ANALYZE},
+               {StatementType::ALTER, QueryType::QUERY_ALTER},
+               {StatementType::DROP, QueryType::QUERY_DROP},
+               {StatementType::SELECT, QueryType::QUERY_SELECT},
+               {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
+               {StatementType::EXPLAIN, QueryType::QUERY_EXPLAIN}};
   QueryType query_type = QueryType::QUERY_OTHER;
   std::unordered_map<StatementType, QueryType,
                      EnumHash<StatementType>>::iterator it =

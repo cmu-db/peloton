@@ -765,7 +765,7 @@ TEST_F(PostgresParserTests, CreateSchemaTest) {
   auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
-  EXPECT_EQ("tt", create_stmt->schema_name);
+  EXPECT_EQ("tt", create_stmt->GetSchemaName());
 
   // Test default schema name
   query = "CREATE SCHEMA AUTHORIZATION joe";
@@ -775,7 +775,7 @@ TEST_F(PostgresParserTests, CreateSchemaTest) {
   create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
-  EXPECT_EQ("joe", create_stmt->schema_name);
+  EXPECT_EQ("joe", create_stmt->GetSchemaName());
 }
 
 TEST_F(PostgresParserTests, CreateViewTest) {
@@ -1048,7 +1048,7 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
 
 TEST_F(PostgresParserTests, DropTriggerTest) {
   auto parser = parser::PostgresParser::GetInstance();
-  std::string query = "DROP TRIGGER if_dist_exists ON films;";
+  std::string query = "DROP TRIGGER if_dist_exists ON peloton.films;";
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);

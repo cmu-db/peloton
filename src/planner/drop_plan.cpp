@@ -32,8 +32,16 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       drop_type = DropType::DB;
       break;
     }
+    case parser::DropStatement::EntityType::kSchema: {
+      database_name = parse_tree->GetDatabaseName();
+      schema_name = parse_tree->GetSchemaName();
+      missing = parse_tree->GetMissing();
+      drop_type = DropType::SCHEMA;
+      break;
+    }
     case parser::DropStatement::EntityType::kTable: {
       database_name = parse_tree->GetDatabaseName();
+      schema_name = parse_tree->GetSchemaName();
       table_name = parse_tree->GetTableName();
       missing = parse_tree->GetMissing();
       drop_type = DropType::TABLE;
@@ -43,12 +51,15 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       // note parse_tree->table_name is different from
       // parse_tree->GetTableName()
       database_name = parse_tree->GetDatabaseName();
+      schema_name = parse_tree->GetSchemaName();
       table_name = std::string(parse_tree->GetTriggerTableName());
       trigger_name = std::string(parse_tree->GetTriggerName());
       drop_type = DropType::TRIGGER;
       break;
     }
     case parser::DropStatement::EntityType::kIndex: {
+      database_name = parse_tree->GetDatabaseName();
+      schema_name = parse_tree->GetSchemaName();
       index_name = std::string(parse_tree->GetIndexName());
       drop_type = DropType::INDEX;
       break;

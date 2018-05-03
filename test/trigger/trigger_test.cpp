@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
-#include "storage/abstract_table.h"
-#include "common/harness.h"
 #include "trigger/trigger.h"
+#include "catalog/catalog.h"
+#include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/insert_plan.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "storage/abstract_table.h"
 
 namespace peloton {
 namespace test {
@@ -56,7 +56,7 @@ class TriggerTests : public PelotonTest {
         new executor::ExecutorContext(txn));
 
     // Create plans
-    planner::CreatePlan node(table_name, DEFAULT_DB_NAME,
+    planner::CreatePlan node(table_name, DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
                              std::move(table_schema), CreateType::TABLE);
 
     // Create executer
@@ -73,7 +73,7 @@ class TriggerTests : public PelotonTest {
     auto txn = txn_manager.BeginTransaction();
 
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, std::string(table_name), txn);
+        DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, std::string(table_name), txn);
 
     std::unique_ptr<executor::ExecutorContext> context(
         new executor::ExecutorContext(txn));
@@ -92,7 +92,7 @@ class TriggerTests : public PelotonTest {
 
     insert_node->insert_values.push_back(
         std::vector<std::unique_ptr<expression::AbstractExpression>>());
-    auto& values = insert_node->insert_values.at(0);
+    auto &values = insert_node->insert_values.at(0);
 
     values.push_back(std::unique_ptr<expression::AbstractExpression>(
         new expression::ConstantValueExpression(
@@ -120,7 +120,8 @@ class TriggerTests : public PelotonTest {
     // Bootstrap
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto parser = parser::PostgresParser::GetInstance();
-    catalog::Catalog::GetInstance()->Bootstrap();
+    // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous
+    // tests you can only call it once!
 
     std::unique_ptr<parser::SQLStatementList> stmt_list(
         parser.BuildParseTree(query).release());
@@ -146,8 +147,8 @@ class TriggerTests : public PelotonTest {
 
     // Check the effect of creation
     storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                          table_name, txn);
+        catalog::Catalog::GetInstance()->GetTableWithName(
+            DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(trigger_number, target_table->GetTriggerNumber());
     trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -225,13 +226,13 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
 
   // Create table
   CreateTableHelper();
 
   // Create statement (before row insert)
-
   std::string query =
       "CREATE TRIGGER b_r_insert_trigger "
       "BEFORE INSERT ON accounts "
@@ -274,8 +275,8 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -310,7 +311,8 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
 
   // Create table
   CreateTableHelper();
@@ -360,8 +362,8 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -390,7 +392,8 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
-  catalog::Catalog::GetInstance()->Bootstrap();
+  // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
+  // you can only call it once!
 
   // Create table
   CreateTableHelper();
@@ -463,8 +466,8 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
 
   auto txn = txn_manager.BeginTransaction();
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                        table_name, txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);
 
   trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();
@@ -501,5 +504,5 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}
-}
+}  // namespace test
+}  // namespace peloton

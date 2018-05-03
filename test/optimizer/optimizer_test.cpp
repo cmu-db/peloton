@@ -12,6 +12,7 @@
 
 #include "common/harness.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "common/statement.h"
@@ -19,23 +20,21 @@
 #include "executor/create_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
-#include "optimizer/optimizer.h"
-#include "parser/mock_sql_statement.h"
-#include "parser/postgresparser.h"
-#include "planner/create_plan.h"
-#include "planner/delete_plan.h"
-#include "planner/insert_plan.h"
-#include "planner/update_plan.h"
-#include "sql/testing_sql_util.h"
-#include "planner/seq_scan_plan.h"
-#include "planner/abstract_join_plan.h"
-#include "planner/hash_join_plan.h"
-#include "binder/bind_node_visitor.h"
-#include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
 #include "optimizer/mock_task.h"
 #include "optimizer/operators.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/rule_impls.h"
+#include "parser/mock_sql_statement.h"
+#include "parser/postgresparser.h"
+#include "planner/abstract_join_plan.h"
+#include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/hash_join_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
+#include "sql/testing_sql_util.h"
 #include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
@@ -120,11 +119,12 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  // NOTE: everytime we create a database, there will be 8 catalog tables inside
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            1);
+            1 + CATALOG_TABLES_COUNT);
 
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
@@ -159,7 +159,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            2);
+            2 + CATALOG_TABLES_COUNT);
 
   // Inserting a tuple to table_a
   traffic_cop.SetTcopTxnState(txn);
@@ -485,8 +485,8 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
   optimizer.GetMetadata().memo.Groups().emplace_back(root_group);
 
   auto required_prop = std::make_shared<PropertySet>(PropertySet());
-  auto root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), required_prop);
+  auto root_context = std::make_shared<OptimizeContext>(
+      &(optimizer.GetMetadata()), required_prop);
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   auto &timer = optimizer.GetMetadata().timer;

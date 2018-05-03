@@ -14,11 +14,12 @@
 
 #include <sstream>
 
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
-#include "catalog/table_catalog.h"
-#include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "storage/tuple.h"
 #include "type/value_factory.h"
 
@@ -32,6 +33,8 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
                      .ToString()),
       table_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::TABLE_OID)
                     .GetAs<oid_t>()),
+      schema_name(tile->GetValue(tupleId, IndexCatalog::ColumnId::SCHEMA_NAME)
+                      .ToString()),
       index_type(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_TYPE)
                      .GetAs<IndexType>()),
       index_constraint(
@@ -51,38 +54,18 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
-IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static IndexCatalog index_catalog{pg_catalog, pool, txn};
-  return &index_catalog;
-}
-
-IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool,
-                           concurrency::TransactionContext *txn)
+IndexCatalog::IndexCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_index
   AddIndex({0}, INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({1}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
+  AddIndex({1, 3}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
   AddIndex({2}, INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
-
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
 }
 
 IndexCatalog::~IndexCatalog() {}
@@ -113,6 +96,11 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
+  auto schema_name_column = catalog::Column(
+      type::TypeId::VARCHAR, max_name_size, "schema_name", false);
+  schema_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto index_type_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_type", true);
@@ -136,13 +124,15 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   indexed_attributes_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(
-      {index_id_column, index_name_column, table_id_column, index_type_column,
-       index_constraint_column, unique_keys, indexed_attributes_column}));
+      {index_id_column, index_name_column, table_id_column, schema_name_column,
+       index_type_column, index_constraint_column, unique_keys,
+       indexed_attributes_column}));
   return index_schema;
 }
 
 bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
-                               oid_t table_oid, IndexType index_type,
+                               oid_t table_oid, const std::string &schema_name,
+                               IndexType index_type,
                                IndexConstraintType index_constraint,
                                bool unique_keys, std::vector<oid_t> indekeys,
                                type::AbstractPool *pool,
@@ -154,28 +144,31 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   auto val0 = type::ValueFactory::GetIntegerValue(index_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(index_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(table_oid);
-  auto val3 = type::ValueFactory::GetIntegerValue(static_cast<int>(index_type));
-  auto val4 =
+  auto val3 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
+  auto val4 = type::ValueFactory::GetIntegerValue(static_cast<int>(index_type));
+  auto val5 =
       type::ValueFactory::GetIntegerValue(static_cast<int>(index_constraint));
-  auto val5 = type::ValueFactory::GetBooleanValue(unique_keys);
+  auto val6 = type::ValueFactory::GetBooleanValue(unique_keys);
 
   std::stringstream os;
   for (oid_t indkey : indekeys) os << std::to_string(indkey) << " ";
-  auto val6 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
+  auto val7 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
 
   tuple->SetValue(IndexCatalog::ColumnId::INDEX_OID, val0, pool);
   tuple->SetValue(IndexCatalog::ColumnId::INDEX_NAME, val1, pool);
   tuple->SetValue(IndexCatalog::ColumnId::TABLE_OID, val2, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_TYPE, val3, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_CONSTRAINT, val4, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::UNIQUE_KEYS, val5, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEXED_ATTRIBUTES, val6, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::SCHEMA_NAME, val3, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_TYPE, val4, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEX_CONSTRAINT, val5, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::UNIQUE_KEYS, val6, pool);
+  tuple->SetValue(IndexCatalog::ColumnId::INDEXED_ATTRIBUTES, val7, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
+bool IndexCatalog::DeleteIndex(oid_t index_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -214,8 +207,11 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto index_object =
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalogs(database_oid)
+                        ->GetTableCatalog();
+    auto table_object =
+        pg_table->GetTableObject(index_object->GetTableOid(), txn);
     PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
@@ -228,22 +224,27 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-    const std::string &index_name, concurrency::TransactionContext *txn) {
+    const std::string &index_name, const std::string &schema_name,
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
+  auto index_object =
+      txn->catalog_cache.GetCachedIndexObject(index_name, schema_name);
   if (index_object) {
     return index_object;
   }
 
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_INDEX_NAME;  // Index of index_name
+  oid_t index_offset =
+      IndexId::SKEY_INDEX_NAME;  // Index of index_name & schema_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(index_name, nullptr).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -252,8 +253,11 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto index_object =
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalogs(database_oid)
+                        ->GetTableCatalog();
+    auto table_object =
+        pg_table->GetTableObject(index_object->GetTableOid(), txn);
     PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
@@ -273,13 +277,16 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
  * @return  a vector of index catalog objects
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
+IndexCatalog::GetIndexObjects(oid_t table_oid,
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;
