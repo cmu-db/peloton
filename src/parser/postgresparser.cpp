@@ -22,6 +22,7 @@
 #include "expression/star_expression.h"
 #include "expression/subquery_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
 #include "parser/pg_list.h"
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
@@ -724,8 +725,9 @@ expression::AbstractExpression *PostgresParser::AExprTransform(A_Expr *root) {
 
   int type_id = static_cast<int>(target_type);
   if (type_id <= 6) {
-    result = new expression::OperatorExpression(
-        target_type, StringToTypeId("INVALID"), left_expr, right_expr);
+//    result = new expression::OperatorExpression(
+//        target_type, StringToTypeId("INVALID"), left_expr, right_expr);
+    result = expression::ExpressionUtil::OperatorFactory(target_type, StringToTypeId("INVALID"), left_expr, right_expr);
   } else if (((10 <= type_id) && (type_id <= 17)) || (type_id == 20)) {
     result = new expression::ComparisonExpression(target_type, left_expr,
                                                   right_expr);
