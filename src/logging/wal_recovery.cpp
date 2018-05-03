@@ -1,5 +1,6 @@
 
 
+#include "catalog/database_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/catalog_defaults.h"
 #include "type/ephemeral_pool.h"
@@ -150,6 +151,8 @@ void WalRecovery::ParseFromDisk(ReplayStage stage){
   delete[] buf;
 }
 
+
+
 bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple *tuple,
                                storage::DataTable *table, cid_t cur_cid,
                                ItemPointer location){
@@ -160,37 +163,34 @@ bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple 
   auto txn = txn_manager.BeginTransaction(IsolationLevelType::SERIALIZABLE);
 
   oid_t tile_group_id = location.block;
-  auto tg = table->GetTileGroupById(location.block);
+  auto tile_group = table->GetTileGroupById(location.block);
   auto tile_group_header =
           catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
-//  oid_t tuple_slot = location.offset;
-
   if(record_type==LogRecordType::TUPLE_INSERT){
 
-    PL_ASSERT(tg!= nullptr);
+    PL_ASSERT(tile_group != nullptr);
 
-    tg->CopyTuple(tuple, location.offset);
+    auto status = tile_group_header->GetEmptyTupleSlot(location.offset);
+
+    (void) status;
+
+    tile_group->CopyTuple(tuple, location.offset);
     bool result = table->InsertTuple(tuple, location, txn, &i);
 
     (void) result;
-
-    PL_ASSERT(result==true);
 
     tile_group_header->SetBeginCommitId(location.offset, cur_cid);
     tile_group_header->SetEndCommitId(location.offset, MAX_CID);
     tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
     tile_group_header->SetNextItemPointer(location.offset,
                                           INVALID_ITEMPOINTER);
-
     tile_group_header->SetIndirection(location.offset,i);
   }
 
   txn_manager.CommitTransaction(txn);
   return true;
 }
-
-
 
 void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   int start_offset = commited_txns_[txn_id].first;
@@ -201,14 +201,10 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 
   while(total_len > 0){
 
-//  LOG_INFO("length curr_offset = %d", curr_offset);
-
     CopySerializeInput length_decode((const void *)(log_buffer_+curr_offset), sizeof(int));
     int record_len = length_decode.ReadInt();
 
     curr_offset += sizeof(int);
-
-//  LOG_INFO("length curr_offset = %d, record_len = %d", curr_offset, record_len);
 
     CopySerializeInput record_decode((const void *)(log_buffer_+curr_offset), record_len);
 
@@ -225,21 +221,6 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
       max_epoch_id_ = epoch_id;
 
     switch(record_type){
-
-      case LogRecordType::TRANSACTION_BEGIN: {
-        break;
-      }
-
-      case LogRecordType::TRANSACTION_COMMIT: {
-        //(graghura): return probably?
-        break;
-      }
-
-      case LogRecordType::TRANSACTION_ABORT: {
-        LOG_ERROR("Should not be replaying an aborted transaction");
-        PL_ASSERT(false);
-      }
-
       case LogRecordType::TUPLE_INSERT: {
         oid_t database_id = (oid_t) record_decode.ReadLong();
         oid_t table_id = (oid_t) record_decode.ReadLong();
@@ -267,12 +248,17 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           tuple->SetValue(oid, val, pool.get());
         }
 
+
         if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
 
-          InstallCatalogTuple(record_type, tuple.get(), table, commit_id,
-                              location);
-        }
+          InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
 
+          if(table_id==DATABASE_CATALOG_OID) {
+              LOG_INFO("replaying database insert");
+              auto pg_database = catalog::DatabaseCatalog::GetInstance();
+              pg_database->GetNextOid();
+          }
+        }
         break;
       }
 
@@ -284,12 +270,26 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
         break;
       }
 
+
+      case LogRecordType::TRANSACTION_BEGIN: {
+        // NOOP
+        break;
+      }
+
+      case LogRecordType::TRANSACTION_COMMIT: {
+        //(graghura): return probably?
+        break;
+      }
+
+      case LogRecordType::TRANSACTION_ABORT: {
+        LOG_ERROR("Should not be replaying an aborted transaction");
+        PL_ASSERT(false);
+      }
+
       default:{
         break;
       }
     }
-
-
     curr_offset += record_len;
     total_len -= record_len + sizeof(int);
   }
@@ -297,7 +297,6 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 }
 
 void WalRecovery::ReplayAllTxns(){
-
 
   for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
     ReplaySingleTxn(it->first);
@@ -319,14 +318,11 @@ void WalRecovery::ReplayLogFile(){
   // Pass 1
   ParseFromDisk(ReplayStage::PASS_1);
 
-//  LOG_INFO("all_txns_len = %zu", all_txns_.size());
 
   for(auto it = all_txns_.begin(); it!=all_txns_.end(); it++){
 
     if(it->second.first != LogRecordType::TRANSACTION_COMMIT)
       continue;
-
-//    LOG_INFO("txn_id = %llu length = %d", it->first, it->second.second);
 
     auto offset_pair = std::make_pair(curr_txn_offset, curr_txn_offset);
     commited_txns_.insert(std::make_pair(it->first, offset_pair));
@@ -334,26 +330,11 @@ void WalRecovery::ReplayLogFile(){
     curr_txn_offset += it->second.second;
   }
 
-//  for(auto it = commited_txns_.begin(); it!=commited_txns_.end(); it++){
-//    LOG_INFO("txn_id = %llu offset = %d", it->first, it->second.first);
-//  }
-
   // Pass 2
   log_buffer_  = new char[log_buffer_size_];
   ParseFromDisk(ReplayStage::PASS_2);
 
   ReplayAllTxns();
-
-
-//  // DEBUG INFO
-//  for(auto it = commited_txns.begin(); it!=commited_txns.end(); it++){
-//    txn_id_t txn_id = it->first;
-//    int epoch_id = txn_id >> 32;
-//    int counter = txn_id & 0xFFFFFFFF;
-//    LOG_INFO("Replaying peloton txn : %llu, epoch %d, counter = %d", it->first, epoch_id, counter);
-//  }
-//
-//  LOG_INFO("buf_size = %zu", log_buffer_size);
 
 }
 
