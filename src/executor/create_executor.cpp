@@ -129,7 +129,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
     // Initialize table lock
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-        database_name, table_name, current_txn);
+        database_name, schema_name, table_name, current_txn);
 
     oid_t table_oid = table_object->GetTableOid();
     concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
@@ -240,7 +240,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   auto key_attrs = node.GetKeyAttrs();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, table_name, txn);
+      database_name, schema_name, table_name, txn);
 
   // Get table oid
   oid_t table_oid = table_object->GetTableOid();
