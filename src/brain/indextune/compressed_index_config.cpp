@@ -239,8 +239,8 @@ std::string CompressedIndexConfigContainer::ToString() const {
   return str_stream.str();
 }
 
-void CompressedIndexConfigContainer::ToEigen(const boost::dynamic_bitset<>& config_set,
-                                             vector_eig &config_vec) const {
+void CompressedIndexConfigContainer::ToEigen(
+    const boost::dynamic_bitset<> &config_set, vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
   PELOTON_ASSERT(config_set.size() == GetConfigurationCount());
@@ -264,8 +264,7 @@ void CompressedIndexConfigContainer::ToCoveredEigen(
 }
 
 void CompressedIndexConfigContainer::ToCoveredEigen(
-    const boost::dynamic_bitset<>& config_set,
-    vector_eig &config_vec) const {
+    const boost::dynamic_bitset<> &config_set, vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
   PELOTON_ASSERT(GetConfigurationCount() == config_set.size());
@@ -303,13 +302,17 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     // 1. unset current bit
     UnsetBit(current_bit);
 
-    // 2. drop its corresponding index in catalog
-    oid_t index_oid = index_id_reverse_map_.at(current_bit);
-    catalog_->DropIndex(index_oid, txn);
+    // Current bit is not an empty index (empty set)
+    if (table_offset_reverse_map_.find(current_bit) ==
+        table_offset_reverse_map_.end()) {
+      // 2. drop its corresponding index in catalog
+      oid_t index_oid = index_id_reverse_map_.at(current_bit);
+      catalog_->DropIndex(index_oid, txn);
 
-    // 3. erase its entry in the maps
-    index_id_reverse_map_.erase(current_bit);
-    index_id_map_.erase(index_oid);
+      // 3. erase its entry in the maps
+      index_id_reverse_map_.erase(current_bit);
+      index_id_map_.erase(index_oid);
+    }
   }
   txn_manager_->CommitTransaction(txn);
 
@@ -325,27 +328,31 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     // 1. set current bit
     SetBit(current_bit);
 
-    // 2. add its corresponding index in catalog
-    const auto new_index = GetIndex(current_bit);
-    const auto table_obj = db_obj->GetTableObject(new_index->table_oid);
-    const auto table_name = table_obj->GetTableName();
+    // Current bit is not an empty index (empty set)
+    if (table_offset_reverse_map_.find(current_bit) ==
+        table_offset_reverse_map_.end()) {
+      // 2. add its corresponding index in catalog
+      const auto new_index = GetIndex(current_bit);
+      const auto table_obj = db_obj->GetTableObject(new_index->table_oid);
+      const auto table_name = table_obj->GetTableName();
 
-    std::vector<oid_t> index_vector(new_index->column_oids.begin(),
-                                    new_index->column_oids.end());
+      std::vector<oid_t> index_vector(new_index->column_oids.begin(),
+                                      new_index->column_oids.end());
 
-    std::ostringstream stringStream;
-    stringStream << "automated_index_" << current_bit;
-    const std::string temp_index_name = stringStream.str();
+      std::ostringstream stringStream;
+      stringStream << "automated_index_" << current_bit;
+      const std::string temp_index_name = stringStream.str();
 
-    catalog_->CreateIndex(database_name_, table_name, index_vector,
-                          temp_index_name, false, IndexType::BWTREE, txn);
+      catalog_->CreateIndex(database_name_, table_name, index_vector,
+                            temp_index_name, false, IndexType::BWTREE, txn);
 
-    // 3. insert its entry in the maps
-    const auto index_object = table_obj->GetIndexObject(temp_index_name);
-    const auto index_oid = index_object->GetIndexOid();
+      // 3. insert its entry in the maps
+      const auto index_object = table_obj->GetIndexObject(temp_index_name);
+      const auto index_oid = index_object->GetIndexOid();
 
-    index_id_map_[index_oid] = current_bit;
-    index_id_reverse_map_[current_bit] = index_oid;
+      index_id_map_[index_oid] = current_bit;
+      index_id_reverse_map_[current_bit] = index_oid;
+    }
   }
 
   txn_manager_->CommitTransaction(txn);

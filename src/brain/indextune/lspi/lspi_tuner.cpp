@@ -59,7 +59,7 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   // Step 4: Update the LSPI model based on current most optimal query config
   lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
-  //  index_config_->AdjustIndexes(optimal_config_set);
+  index_config_->AdjustIndexes(optimal_config_set);
 }
 
 void LSPIIndexTuner::FindOptimalConfig(
