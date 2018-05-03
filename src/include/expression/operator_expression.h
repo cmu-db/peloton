@@ -34,10 +34,8 @@ class OperatorExpression : public AbstractExpression {
                      AbstractExpression *left, AbstractExpression *right)
       : AbstractExpression(type, type_id, left, right) {}
 
-  type::Value Evaluate(
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+  type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                       executor::ExecutorContext *context) const override {
     if (exp_type_ == ExpressionType::OPERATOR_NOT) {
       PELOTON_ASSERT(children_.size() == 1);
       type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
