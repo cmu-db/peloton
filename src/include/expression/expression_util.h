@@ -208,6 +208,15 @@ class ExpressionUtil {
   static AbstractExpression *ComparisonFactory(ExpressionType type,
                                                AbstractExpression *left,
                                                AbstractExpression *right) {
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type >= ExpressionType::COMPARE_EQUAL &&
+         type <= ExpressionType::COMPARE_GREATERTHANOREQUALTO)) {
+      auto cmp_expr = ComparisonExpression(type, left, right);
+      auto new_value = cmp_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
     return new ComparisonExpression(type, left, right);
   }
 
@@ -221,37 +230,25 @@ class ExpressionUtil {
                                              type::TypeId value_type,
                                              AbstractExpression *left,
                                              AbstractExpression *right) {
-
-    if (left != nullptr && right != nullptr
-        && left->GetExpressionType() == ExpressionType::VALUE_CONSTANT
-        && right->GetExpressionType() == ExpressionType::VALUE_CONSTANT
-        && type >= ExpressionType::OPERATOR_PLUS && type <= ExpressionType::OPERATOR_UNARY_MINUS) {
-      auto left_value = left->Evaluate(nullptr, nullptr, nullptr);
-      auto right_value = right->Evaluate(nullptr, nullptr, nullptr);
-      type::Value new_value;
-      switch (type) {
-        case (ExpressionType::OPERATOR_PLUS):
-          new_value = left_value.Add(right_value);
-          break;
-        case (ExpressionType::OPERATOR_MINUS):
-          new_value = left_value.Subtract(right_value);
-          break;
-        case (ExpressionType::OPERATOR_MULTIPLY):
-          new_value = left_value.Multiply(right_value);
-          break;
-        case (ExpressionType::OPERATOR_DIVIDE):
-          new_value = left_value.Divide(right_value);
-          break;
-        case (ExpressionType::OPERATOR_MOD):
-          new_value = left_value.Modulo(right_value);
-          break;
-        default:
-          throw Exception("Invalid operator expression type.");
-          break;
-      }
+    if (left != nullptr && right == nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type == ExpressionType::OPERATOR_NOT ||
+         type == ExpressionType::OPERATOR_IS_NULL ||
+         type == ExpressionType::OPERATOR_UNARY_MINUS)) {
+      OperatorExpression operator_expr(type, value_type, left, right);
+      auto new_value = operator_expr.Evaluate(nullptr, nullptr, nullptr);
       return new ConstantValueExpression(new_value);
     }
-      return new OperatorExpression(type, value_type, left, right);
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        expression::ExpressionUtil::IsOperatorExpression(type) &&
+        type < ExpressionType::OPERATOR_CAST) {
+      OperatorExpression operator_expr(type, value_type, left, right);
+      auto new_value = operator_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
+    return new OperatorExpression(type, value_type, left, right);
   }
 
   static AbstractExpression *OperatorFactory(
@@ -652,10 +649,10 @@ class ExpressionUtil {
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &l_column_exprs,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &r_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          r_column_exprs,
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
@@ -752,8 +749,9 @@ class ExpressionUtil {
       auto right_child = expr->GetModifiableChild(1);
 
       if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-        auto right_exp = (const expression::ConstantValueExpression
-                              *)(expr->GetModifiableChild(1));
+        auto right_exp =
+            (const expression::
+                 ConstantValueExpression *)(expr->GetModifiableChild(1));
         auto predicate_val = right_exp->GetValue();
         // Get the column id for this predicate
         auto left_exp =
