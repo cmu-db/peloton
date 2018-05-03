@@ -223,6 +223,15 @@ class ExpressionUtil {
   static AbstractExpression *ConjunctionFactory(ExpressionType type,
                                                 AbstractExpression *left,
                                                 AbstractExpression *right) {
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type == ExpressionType::CONJUNCTION_AND ||
+         type == ExpressionType::CONJUNCTION_OR)) {
+      ConjunctionExpression conj_expr(type, left, right);
+      auto new_value = conj_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
     return new ConjunctionExpression(type, left, right);
   }
 
