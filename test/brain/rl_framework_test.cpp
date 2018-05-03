@@ -12,6 +12,7 @@
 
 #include "brain/index_selection.h"
 #include "brain/indextune/compressed_index_config.h"
+#include "brain/indextune/compressed_index_config_util.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
@@ -204,7 +205,6 @@ TEST_F(RLFrameworkTest, BasicTest) {
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
   auto comp_idx_config = brain::CompressedIndexConfigContainer(database_name);
-  auto comp_idx_manager = brain::CompressedIndexConfigManager();
   // We expect 2**3 possible configurations
   EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
 
@@ -220,9 +220,9 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::string query_string =
       "UPDATE dummy_table_1 SET a = 0 WHERE b = 1 AND c = 2;";
   auto drop_candidates =
-      comp_idx_manager.DropCandidates(comp_idx_config, query_string);
+      brain::CompressedIndexConfigUtil::DropCandidates(comp_idx_config, query_string);
   auto add_candidates =
-      comp_idx_manager.AddCandidates(comp_idx_config, query_string);
+      brain::CompressedIndexConfigUtil::AddCandidates(comp_idx_config, query_string);
 
   auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
   auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
@@ -238,9 +238,9 @@ TEST_F(RLFrameworkTest, BasicTest) {
   std::vector<std::shared_ptr<brain::IndexObject>> drop_expect_indexes = {};
 
   auto add_expect_bitset =
-      comp_idx_manager.GenerateBitSet(comp_idx_config, add_expect_indexes);
+      brain::CompressedIndexConfigUtil::GenerateBitSet(comp_idx_config, add_expect_indexes);
   auto drop_expect_bitset =
-      comp_idx_manager.GenerateBitSet(comp_idx_config, drop_expect_indexes);
+      brain::CompressedIndexConfigUtil::GenerateBitSet(comp_idx_config, drop_expect_indexes);
 
   EXPECT_EQ(*add_expect_bitset, *add_candidates);
   EXPECT_EQ(*drop_expect_bitset, *drop_candidates);

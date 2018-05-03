@@ -6,6 +6,7 @@
 #include "brain/indextune/lspi/rlse.h"
 #include "brain/indextune/lspi/lstd.h"
 #include "brain/indextune/compressed_index_config.h"
+#include "brain/indextune/compressed_index_config_util.h"
 
 /**
  * Least-Squares Policy Iteration based Index tuning
@@ -41,40 +42,12 @@ class LSPIIndexTuner {
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;
-  // Index configuration manager object - Manage the index configuration object
-  std::unique_ptr<CompressedIndexConfigManager> index_manager_;
   // RLSE model for computing immediate cost of an action
   std::unique_ptr<RLSEModel> rlse_model_;
   // LSTD model for computing
   std::unique_ptr<LSTDModel> lstd_model_;
-  // Feature constructors
-  /**
-   * Constructs the feature vector representing the SQL query running on the
-   * current
-   * index configuration. This is done by using the following feature vector:
-   * = 0.0 if not in f(query)
-   * = 1.0 if in f(query) and belongs to current config
-   * = -1 if in f(query) but not in current config
-   * where f(query) is first recommended_index(query)(0->n), then
-   * drop_index(query)(n->2*n)
-   * @param add_candidates: add candidate suggestions
-   * @param drop_candidates: drop candidate suggestions
-   * @param query_config_vec: query configuration vector to construct
-   * // TODO: not in f(query) should split into:  (i)!f(query) &&
-   * belongs(config) (ii) !(f(query) && belongs(config))?
-   */
-  void ConstructQueryConfigFeature(
-      std::unique_ptr<boost::dynamic_bitset<>> &add_candidates,
-      std::unique_ptr<boost::dynamic_bitset<>> &drop_candidates,
-      vector_eig &query_config_vec) const;
-  /**
-   * Get the covered index configuration feature vector.
-   * The difference between this and `GetCurrentIndexConfig` is that
-   * all single column index configurations by a multicolumn index are
-   * considered covered and set to 1.
-   * @param config_vec: configuration vector to construct
-   */
-  void ConstructConfigFeature(vector_eig &config_vec) const;
+
+
 };
 }
 }
