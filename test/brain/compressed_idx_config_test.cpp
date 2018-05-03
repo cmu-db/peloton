@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// rl_framework_test.cpp
+// compressed_idx_config_test.cpp
 //
-// Identification: test/brain/rl_framework_test.cpp
+// Identification: test/brain/compressed_idx_config_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -28,9 +28,9 @@ namespace test {
 // RL Framework Tests
 //===--------------------------------------------------------------------===//
 
-class RLFrameworkTest : public PelotonTest {
+class CompressedIdxConfigTest : public PelotonTest {
  public:
-  RLFrameworkTest()
+  CompressedIdxConfigTest()
       : catalog_{catalog::Catalog::GetInstance()},
         txn_manager_{&concurrency::TransactionManagerFactory::GetInstance()} {}
 
@@ -187,7 +187,7 @@ class RLFrameworkTest : public PelotonTest {
   concurrency::TransactionManager *txn_manager_;
 };
 
-TEST_F(RLFrameworkTest, BasicTest) {
+TEST_F(CompressedIdxConfigTest, BasicTest) {
   std::string database_name = DEFAULT_DB_NAME;
   std::string table_name_1 = "dummy_table_1";
   std::string table_name_2 = "dummy_table_2";
@@ -222,8 +222,8 @@ TEST_F(RLFrameworkTest, BasicTest) {
   boost::dynamic_bitset<> drop_candidates, add_candidates;
   brain::CompressedIndexConfigUtil::DropCandidates(
       comp_idx_config, query_string, drop_candidates);
-  brain::CompressedIndexConfigUtil::AddCandidates(
-      comp_idx_config, query_string, add_candidates);
+  brain::CompressedIndexConfigUtil::AddCandidates(comp_idx_config, query_string,
+                                                  add_candidates);
 
   auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
   auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
