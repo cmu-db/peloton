@@ -15,7 +15,7 @@
 namespace peloton {
 namespace brain {
 
-CompressedIndexConfiguration::CompressedIndexConfiguration(
+CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const std::string &database_name, catalog::Catalog *catalog,
     concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
@@ -84,7 +84,7 @@ CompressedIndexConfiguration::CompressedIndexConfiguration(
   txn_manager_->CommitTransaction(txn);
 }
 
-size_t CompressedIndexConfiguration::GetLocalOffset(
+size_t CompressedIndexConfigContainer::GetLocalOffset(
     const oid_t table_oid, const std::set<oid_t> &column_oids) const {
   std::set<size_t> col_ids;
   const auto &col_id_map = table_id_map_.at(table_oid);
@@ -103,7 +103,7 @@ size_t CompressedIndexConfiguration::GetLocalOffset(
   return final_offset;
 }
 
-size_t CompressedIndexConfiguration::GetGlobalOffset(
+size_t CompressedIndexConfigContainer::GetGlobalOffset(
     const std::shared_ptr<brain::IndexObject> &index_obj) const {
   oid_t table_oid = index_obj->table_oid;
   const auto local_offset = GetLocalOffset(table_oid, index_obj->column_oids);
@@ -111,17 +111,17 @@ size_t CompressedIndexConfiguration::GetGlobalOffset(
   return table_offset + local_offset;
 }
 
-bool CompressedIndexConfiguration::IsSet(
+bool CompressedIndexConfigContainer::IsSet(
     const std::shared_ptr<brain::IndexObject> &index_obj) const {
   size_t offset = GetGlobalOffset(index_obj);
   return cur_index_config_->test(offset);
 }
 
-bool CompressedIndexConfiguration::IsSet(const size_t offset) const {
+bool CompressedIndexConfigContainer::IsSet(const size_t offset) const {
   return cur_index_config_->test(offset);
 }
 
-std::shared_ptr<brain::IndexObject> CompressedIndexConfiguration::GetIndex(
+std::shared_ptr<brain::IndexObject> CompressedIndexConfigContainer::GetIndex(
     size_t global_offset) const {
   size_t table_offset;
   auto it = table_offset_reverse_map_.lower_bound(global_offset);
@@ -154,40 +154,40 @@ std::shared_ptr<brain::IndexObject> CompressedIndexConfiguration::GetIndex(
   return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
 }
 
-void CompressedIndexConfiguration::AddIndex(
+void CompressedIndexConfigContainer::AddIndex(
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset);
 }
 
-void CompressedIndexConfiguration::AddIndex(size_t offset) {
+void CompressedIndexConfigContainer::AddIndex(size_t offset) {
   cur_index_config_->set(offset);
 }
 
-void CompressedIndexConfiguration::AddIndex(
+void CompressedIndexConfigContainer::AddIndex(
     boost::dynamic_bitset<> &bitmap,
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   bitmap.set(offset);
 }
 
-void CompressedIndexConfiguration::AddIndex(boost::dynamic_bitset<> &bitmap,
-                                            size_t offset) {
+void CompressedIndexConfigContainer::AddIndex(boost::dynamic_bitset<> &bitmap,
+                                              size_t offset) {
   bitmap.set(offset);
 }
 
-void CompressedIndexConfiguration::RemoveIndex(
+void CompressedIndexConfigContainer::RemoveIndex(
     const std::shared_ptr<IndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset, false);
 }
 
-void CompressedIndexConfiguration::RemoveIndex(size_t offset) {
+void CompressedIndexConfigContainer::RemoveIndex(size_t offset) {
   cur_index_config_->set(offset, false);
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::AddCandidates(const std::string &query) {
+CompressedIndexConfigContainer::AddCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -242,7 +242,7 @@ CompressedIndexConfiguration::AddCandidates(const std::string &query) {
 }
 
 std::shared_ptr<brain::IndexObject>
-CompressedIndexConfiguration::ConvertIndexTriplet(
+CompressedIndexConfigContainer::ConvertIndexTriplet(
     const planner::col_triplet &idx_triplet) {
   const auto db_oid = std::get<0>(idx_triplet);
   const auto table_oid = std::get<1>(idx_triplet);
@@ -261,7 +261,7 @@ CompressedIndexConfiguration::ConvertIndexTriplet(
 }
 
 std::unique_ptr<parser::SQLStatementList>
-CompressedIndexConfiguration::ToBindedSqlStmtList(
+CompressedIndexConfigContainer::ToBindedSqlStmtList(
     const std::string &query_string) {
   auto txn = txn_manager_->BeginTransaction();
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -275,7 +275,7 @@ CompressedIndexConfiguration::ToBindedSqlStmtList(
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::DropCandidates(const std::string &query) {
+CompressedIndexConfigContainer::DropCandidates(const std::string &query) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));
 
@@ -295,16 +295,16 @@ CompressedIndexConfiguration::DropCandidates(const std::string &query) {
   return result;
 }
 
-size_t CompressedIndexConfiguration::GetConfigurationCount() const {
+size_t CompressedIndexConfigContainer::GetConfigurationCount() const {
   return next_table_offset_;
 }
 
 const boost::dynamic_bitset<>
-    *CompressedIndexConfiguration::GetCurrentIndexConfig() const {
+    *CompressedIndexConfigContainer::GetCurrentIndexConfig() const {
   return cur_index_config_.get();
 }
 
-void CompressedIndexConfiguration::ToEigen(vector_eig &config_vec) const {
+void CompressedIndexConfigContainer::ToEigen(vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
   config_vec = vector_eig::Zero(GetConfigurationCount());
@@ -315,7 +315,8 @@ void CompressedIndexConfiguration::ToEigen(vector_eig &config_vec) const {
   }
 }
 
-void CompressedIndexConfiguration::ToCoveredEigen(vector_eig &config_vec) const {
+void CompressedIndexConfigContainer::ToCoveredEigen(
+    vector_eig &config_vec) const {
   // Note that the representation is reversed - but this should not affect
   // anything
   config_vec = vector_eig::Zero(GetConfigurationCount());
@@ -332,14 +333,14 @@ void CompressedIndexConfiguration::ToCoveredEigen(vector_eig &config_vec) const 
     size_t last_set_idx = start_idx;
     while (last_set_idx < end_idx) {
       size_t next_set_idx = cur_index_config_->find_next(last_set_idx);
-      if(next_set_idx >= end_idx) break;
+      if (next_set_idx >= end_idx) break;
       last_set_idx = next_set_idx;
     }
     config_vec.segment(start_idx, last_set_idx - start_idx + 1).array() = 1.0;
   }
 }
 
-std::string CompressedIndexConfiguration::ToString() const {
+std::string CompressedIndexConfigContainer::ToString() const {
   // First get the entire bitset
   std::stringstream str_stream;
   std::string bitset_str;
@@ -372,7 +373,7 @@ std::string CompressedIndexConfiguration::ToString() const {
 }
 
 std::unique_ptr<boost::dynamic_bitset<>>
-CompressedIndexConfiguration::GenerateBitSet(
+CompressedIndexConfigContainer::GenerateBitSet(
     const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(next_table_offset_));

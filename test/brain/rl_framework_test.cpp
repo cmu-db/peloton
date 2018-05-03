@@ -203,7 +203,7 @@ TEST_F(RLFrameworkTest, BasicTest) {
   // Put everything in the vector of index objects
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
 
-  auto comp_idx_config = brain::CompressedIndexConfiguration(database_name);
+  auto comp_idx_config = brain::CompressedIndexConfigContainer(database_name);
   // We expect 2**3 possible configurations
   EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
 

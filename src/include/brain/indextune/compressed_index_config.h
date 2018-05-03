@@ -26,14 +26,10 @@
 namespace peloton {
 namespace brain {
 
-// TODO: Maybe we should rename it to CompressedIndexConfigUtil
-// TODO: Maybe we should decouple the Manager and the bitset based
-// CompressedIndexConfig
-
-class CompressedIndexConfiguration {
+class CompressedIndexConfigContainer {
  public:
   /**
-   * Constructor for CompressedIndexConfiguration: Initialize
+   * Constructor for CompressedIndexConfigContainer: Initialize
    * (1) catalog pointer
    * (2) txn_manager pointer
    * One such configuration is for only one database.
@@ -42,7 +38,7 @@ class CompressedIndexConfiguration {
    * Finally, scan all tables again to generate current index configuration (a
    * bitset)
    */
-  explicit CompressedIndexConfiguration(
+  explicit CompressedIndexConfigContainer(
       const std::string &database_name, catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
