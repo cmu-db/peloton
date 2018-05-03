@@ -35,13 +35,13 @@ class RLSEModel{
    * For example in Index tuning this should represent the cost of
    * running the workload with the current Index config
    */
-  void Update(vector_eig feat_vector, double true_val);
+  void Update(const vector_eig& feat_vector, double true_val);
   /**
    * Predicts the dependent variable(y) given the independent variable(X)
    * @param feat_vector: X
    * @return: y
    */
-  double Predict(vector_eig feat_vector);
+  double Predict(const vector_eig& feat_vector) const;
  private:
   // feature length
   size_t feat_len_;

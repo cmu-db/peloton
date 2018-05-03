@@ -19,8 +19,8 @@ namespace brain{
 class LSTDModel{
  public:
   explicit LSTDModel(size_t feat_len, double variance_init=1e-3, double gamma=0.9999);
-  void Update(vector_eig state_feat_curr, vector_eig state_feat_next, double true_cost);
-  double Predict(vector_eig state_feat);
+  void Update(const vector_eig& state_feat_curr, const vector_eig& state_feat_next, double true_cost);
+  double Predict(const vector_eig& state_feat) const;
  private:
   // feature length
   size_t feat_len_;

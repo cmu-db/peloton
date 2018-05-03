@@ -42,8 +42,6 @@ class LSPIIndexTuner {
  private:
   // Database to tune
   std::string db_name_;
-  // Feature Length == All possible configurations
-  size_t feat_len_;
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;
@@ -51,6 +49,8 @@ class LSPIIndexTuner {
   std::unique_ptr<RLSEModel> rlse_model_;
   // LSTD model for computing
   std::unique_ptr<LSTDModel> lstd_model_;
+  // Previous config feature vector
+  vector_eig prev_config_vec;
 
 
 };

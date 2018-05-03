@@ -59,15 +59,6 @@ class CompressedIndexConfigUtil {
                      boost::dynamic_bitset<> &bitmap,
                      const std::shared_ptr<IndexObject> &idx_object);
 
-  /**
- * Get the covered index configuration feature vector.
- * The difference between this and `GetCurrentIndexConfig` is that
- * all single column index configurations by a multicolumn index are
- * considered covered and set to 1.
- * @param config_vec: configuration vector to construct
- */
-  static void ConstructConfigFeature(
-      const CompressedIndexConfigContainer &container, vector_eig &config_vec);
   // Feature constructors
   /**
    * Constructs the feature vector representing the SQL query running on the

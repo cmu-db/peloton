@@ -180,10 +180,5 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
     config_id_drop = drop_candidate_set.find_next(config_id_drop);
   }
 }
-
-void CompressedIndexConfigUtil::ConstructConfigFeature(
-    const CompressedIndexConfigContainer &container, vector_eig &config_vec) {
-  container.ToCoveredEigen(config_vec);
-}
 }
 }
