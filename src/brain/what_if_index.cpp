@@ -102,8 +102,9 @@ void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
       // Select can operate on more than 1 table.
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
+          //TODO[Siva]: Confirm this from Vamshi
           LOG_DEBUG("Table name is %s",
-                    sql_statement.select_stmt->from_table.get()
+                    sql_statement->from_table.get()
                         ->GetTableName()
                         .c_str());
           table_names.push_back(

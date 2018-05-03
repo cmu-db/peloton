@@ -33,11 +33,8 @@ const std::string IndexObject::ToString() const {
 }
 
 bool IndexObject::operator==(const IndexObject &obj) const {
-  if (db_oid == obj.db_oid && table_oid == obj.table_oid &&
-      column_oids == obj.column_oids) {
-    return true;
-  }
-  return false;
+  return (db_oid == obj.db_oid && table_oid == obj.table_oid &&
+      column_oids == obj.column_oids);
 }
 
 bool IndexObject::IsCompatible(std::shared_ptr<IndexObject> index) const {
@@ -86,7 +83,7 @@ void IndexConfiguration::AddIndexObject(
 
 size_t IndexConfiguration::GetIndexCount() const { return indexes_.size(); }
 
-bool IndexConfiguration::IsEmpty() const { return indexes_.size() == 0; }
+bool IndexConfiguration::IsEmpty() const { return indexes_.empty(); }
 
 const std::set<std::shared_ptr<IndexObject>> &IndexConfiguration::GetIndexes()
     const {
