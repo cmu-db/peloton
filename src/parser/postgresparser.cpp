@@ -1811,6 +1811,7 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
             std::unique_ptr<ColumnDefinition> col_def(
                 new ColumnDefinition(cmd->name, type_id));
             result->changed_type_columns->push_back(std::move(col_def));
+            break;
           }
           default: {
             throw NotImplementedException(StringUtil::Format(
