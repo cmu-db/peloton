@@ -91,7 +91,7 @@ bool DeleteExecutor::DExecute() {
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockShared(table_oid);
   if (!lock_success) {
-    LOG_WARN("Cannot obtain lock for the table, abort!");
+    LOG_TRACE("Cannot obtain lock for the table!");
   }
 
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),

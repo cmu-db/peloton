@@ -116,7 +116,10 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
     oid_t table_oid = table_object->GetTableOid();
     concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-    lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
+    bool success = lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
+    if (!success){
+      LOG_TRACE("Initialize lock in create table failed! oid is %u", table_oid);
+    }
 
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
@@ -232,7 +235,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockExclusive(table_oid);
   if (!lock_success) {
-    LOG_TRACE("Cannot obtain lock for the table, abort!");
+    LOG_TRACE("Cannot obtain lock for the table!");
   }
 
   // Create index in the catalog
@@ -243,7 +246,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   // Unlock the table being indexed
   bool unlock_success = lm->UnlockExclusive(table_oid);
   if (!unlock_success) {
-    LOG_TRACE("Cannot unlock the table, abort!");
+    LOG_TRACE("Cannot unlock the table!");
   }
   txn->SetResult(result);
 

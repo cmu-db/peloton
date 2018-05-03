@@ -35,8 +35,6 @@ void TestingIndexUtil::BasicTest(const IndexType index_type) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
-  LOG_DEBUG("BasicTest called. debug");
-
   // INDEX
   std::unique_ptr<index::Index, void (*)(index::Index *)> index(
       TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);

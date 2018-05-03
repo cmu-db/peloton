@@ -80,7 +80,6 @@ TEST_F(CreateTests, CreatingDB) {
   txn_manager.CommitTransaction(txn);
 }
 
-
 TEST_F(CreateTests, CreatingTable) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

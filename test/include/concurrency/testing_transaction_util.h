@@ -352,10 +352,12 @@ class TransactionThread {
       case TXN_OP_DROP_INDEX: {
         auto catalog = catalog::Catalog::GetInstance();
         auto tmp = catalog->DropIndex(index_name1, txn);
-        if (tmp == ResultType::SUCCESS)
+        if (tmp == ResultType::SUCCESS){
           schedule->drop_index_results.push_back(1);
-        else
+	}
+        else{
           schedule->drop_index_results.push_back(0);
+	}
         LOG_INFO("Txn %d Drop Index", schedule->schedule_id);
         break;
       }
