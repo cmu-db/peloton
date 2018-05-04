@@ -134,7 +134,7 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
       num_key, "UPDATE_TABLE", db_id, INVALID_OID, 1234, true));
 
-  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+  EXPECT_EQ(1, gc_manager.GetTableCount());
 
   gc_manager.StartGC(gc_threads);
 

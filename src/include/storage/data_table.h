@@ -146,6 +146,8 @@ class DataTable : public AbstractTable {
 
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
 
+  void DropTileGroup(const oid_t &tile_group_id);
+
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
       const std::size_t &tile_group_offset) const;
@@ -303,13 +305,19 @@ class DataTable : public AbstractTable {
                        concurrency::TransactionContext *transaction,
                        ItemPointer **index_entry_ptr);
 
-  inline static size_t GetActiveTileGroupCount() {
+  inline static size_t GetDefaultActiveTileGroupCount() {
     return default_active_tilegroup_count_;
   }
 
-  static void SetActiveTileGroupCount(const size_t active_tile_group_count) {
+  static void SetDefaultActiveTileGroupCount(const size_t active_tile_group_count) {
     default_active_tilegroup_count_ = active_tile_group_count;
   }
+
+  inline size_t GetActiveTileGroupCount() const { return active_tilegroup_count_; }
+
+  inline size_t GetTuplesPerTileGroup() const { return tuples_per_tilegroup_; }
+
+  bool IsActiveTileGroup(const oid_t &tile_group_id) const;
 
   inline static size_t GetActiveIndirectionArrayCount() {
     return default_active_indirection_array_count_;
