@@ -84,6 +84,8 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {
   oid_t database_oid = database->GetOid();
+    LOG_INFO("database_oid = %d", database_oid);
+    LOG_INFO("database name = %s", database->GetDBName().c_str());
   catalog_map_.emplace(database_oid,
                        std::shared_ptr<SystemCatalogs>(
                            new SystemCatalogs(database, pool_.get(), txn)));
