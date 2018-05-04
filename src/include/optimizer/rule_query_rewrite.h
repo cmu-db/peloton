@@ -19,6 +19,11 @@
 namespace peloton {
 namespace optimizer {
 
+/**
+ * Implements transitive predicates generation for
+ * LogicalGet nodes:
+ *   a = b AND b = c -> a = b AND b = c AND a = c
+ */
 class TransitivePredicatesLogicalGet : public Rule {
  public:
   TransitivePredicatesLogicalGet();
@@ -31,6 +36,11 @@ class TransitivePredicatesLogicalGet : public Rule {
                  OptimizeContext *context) const override;
 };
 
+/**
+ * Implements transitive predicates generation for
+ * LogicalFilter nodes:
+ *   a = b AND b = c -> a = b AND b = c AND a = c
+ */
 class TransitivePredicatesLogicalFilter : public Rule {
  public:
   TransitivePredicatesLogicalFilter();
@@ -43,6 +53,11 @@ class TransitivePredicatesLogicalFilter : public Rule {
                  OptimizeContext *context) const override;
 };
 
+/**
+ * Implements predicate simplification for
+ * LogicalFilter nodes:
+ *   a = a AND b = c -> b = c
+ */
 class SimplifyPredicatesLogicalFilter : public Rule {
  public:
   SimplifyPredicatesLogicalFilter();
