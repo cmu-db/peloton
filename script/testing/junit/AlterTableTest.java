@@ -33,6 +33,8 @@ public class AlterTableTest extends PLTestBase {
     private static final String SQL_RENAME_COLUMN =
             "ALTER TABLE foo RENAME year to month;";
 
+    private static final double EPSILON = 1e-6;
+
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -195,17 +197,30 @@ public class AlterTableTest extends PLTestBase {
 //    }
 
     /**
-     * Add a column to the table.
+     * Add a column to the table, and do some insertion.
      */
     @Test
     public void test_AddCol_Basic() throws SQLException {
-        String sql = "ALTER TABLE foo add month int;";
+        String sql = "ALTER TABLE foo ADD month int;";
         conn.createStatement().execute(sql);
         ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
         rs.next();
         checkRow(rs,
                 new String [] {"id", "year", "month"},
                 new int [] {5, 400, 0});
+        assertNoMoreRows(rs);
+
+        String sql2 = "INSERT INTO foo VALUES (6, 500, 1);";
+        conn.createStatement().execute(sql2);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
+                new String [] {"id", "year", "month"},
+                new int [] {5, 400, 0});
+        rs.next();
+        checkRow(rs,
+                new String [] {"id", "year", "month"},
+                new int [] {6, 500, 1});
         assertNoMoreRows(rs);
     }
 
@@ -234,6 +249,19 @@ public class AlterTableTest extends PLTestBase {
                 new String [] {"id"},
                 new int [] {5});
         assertNoMoreRows(rs);
+
+        String sql2 = "INSERT INTO foo VALUES (6);";
+        conn.createStatement().execute(sql2);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
+                new String [] {"id"},
+                new int [] {5});
+        rs.next();
+        checkRow(rs,
+                new String [] {"id"},
+                new int [] {6});
+        assertNoMoreRows(rs);
     }
 
     /**
@@ -258,7 +286,7 @@ public class AlterTableTest extends PLTestBase {
         ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
         rs.next();
         assertEquals(rs.getInt("id"), 5);
-        assertEquals(rs.getFloat("year"), 400, 1e-3);
+        assertEquals(rs.getFloat("year"), 400, EPSILON);
         assertNoMoreRows(rs);
 
         String sql2 = "INSERT INTO foo VALUES (6, 3.5);";
@@ -266,12 +294,11 @@ public class AlterTableTest extends PLTestBase {
         rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
         rs.next();
         assertEquals(rs.getInt("id"), 5);
-        assertEquals(rs.getFloat("year"), 400, 1e-3);
+        assertEquals(rs.getFloat("year"), 400, EPSILON);
         rs.next();
         assertEquals(rs.getInt("id"), 6);
-        assertEquals(rs.getFloat("year"), 3.5, 1e-3);
+        assertEquals(rs.getFloat("year"), 3.5, EPSILON);
         assertNoMoreRows(rs);
-
 
         String sql3 = "ALTER TABLE foo ALTER year TYPE int;";
         conn.createStatement().execute(sql3);
@@ -284,7 +311,6 @@ public class AlterTableTest extends PLTestBase {
         assertEquals(rs.getInt("year"), 3);
         assertNoMoreRows(rs);
     }
-
 
     /**
      * Alter column type from int to varchar and backwards.
@@ -305,6 +331,72 @@ public class AlterTableTest extends PLTestBase {
         rs.next();
         assertEquals(rs.getInt("id"), 5);
         assertEquals(rs.getInt("year"), 400);
+        assertNoMoreRows(rs);
+    }
+
+    /**
+     * Alter type to column that does not exist
+     */
+    @Test
+    public void test_AlterType_NonExist() throws SQLException {
+        String sql = "ALTER TABLE foo ALTER a TYPE int;";
+
+        thrown.expect(PSQLException.class);
+        conn.createStatement().execute(sql);
+    }
+
+    /**
+     * Alter to an unsupported column type
+     */
+    @Test
+    public void test_AlterType_UnSupported() throws SQLException {
+        String sql = "ALTER TABLE foo ALTER year TYPE non;";
+        thrown.expect(PSQLException.class);
+        conn.createStatement().execute(sql);
+    }
+
+    /**
+     * Add columns, drop columns, change column type in one sql statement
+     */
+    @Test
+    public void test_MultiOperation() throws SQLException {
+        String sql =
+            "ALTER TABLE foo ADD month INT, DROP year, ALTER id TYPE float;";
+        conn.createStatement().execute(sql);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getFloat("id"), 5, EPSILON);
+        assertEquals(rs.getInt("month"), 0);
+        assertNoMoreRows(rs);
+
+        String sql2 = "INSERT INTO foo VALUES (4.5, 3);";
+        conn.createStatement().execute(sql2);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getFloat("id"), 5, EPSILON);
+        assertEquals(rs.getInt("month"), 0);
+        rs.next();
+        assertEquals(rs.getFloat("id"), 4.5, EPSILON);
+        assertEquals(rs.getInt("month"), 3);
+        assertNoMoreRows(rs);
+    }
+
+    /**
+     * If multiple operations in one statement failed, schema will not change
+     */
+    @Test
+    public void test_MultiOperationFailed() throws SQLException {
+        String sql =
+          "ALTER TABLE foo ADD month int, DROP month, ALTER year TYPE float;";
+
+        thrown.expect(PSQLException.class);
+        conn.createStatement().execute(sql);
+
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
+                new String [] {"id", "year"},
+                new int [] {5, 400});
         assertNoMoreRows(rs);
     }
 }
