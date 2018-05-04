@@ -33,7 +33,9 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // Finally, combine all the candidate indexes 'Ci' into a larger
   // set to form a candidate set 'C' for the provided workload 'W'.
 
+  // The best indexes after every iteration
   IndexConfiguration candidate_indexes;
+  // Single column indexes that are useful for at least one quey
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
