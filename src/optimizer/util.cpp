@@ -101,12 +101,12 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 	  if (transitive_table.count(p_info) != 0) {
 	    auto potential_transitives_list = transitive_table[p_info];
 	    for (auto potential_transitive : potential_transitives_list) {
-	      auto transitive_predicate = predicate.expr->Copy();
-	      transitive_predicate->SetChild(i, potential_transitive);
+	      auto transitive_predicate = std::shared_ptr<expression::AbstractExpression>(predicate.expr->Copy());
+	      transitive_predicate->SetChild(i, potential_transitive->Copy());
 
 	      bool not_found = true;
 	      for (auto predicate2 : predicates) {
-		if (predicate2.expr->SymmetricEquals(*transitive_predicate)) {
+		if (predicate2.expr->SymmetricEquals(*transitive_predicate.get())) {
 		  not_found = false;
 		  break;
 		}
@@ -114,7 +114,7 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 
 	      if (not_found) {
 		for (auto predicate2 : new_predicates) {
-		  if (predicate2.expr->SymmetricEquals(*transitive_predicate)) {
+		  if (predicate2.expr->SymmetricEquals(*transitive_predicate.get())) {
 		    not_found = false;
 		    break;
 		  }
@@ -123,12 +123,10 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 
 	      if (not_found) {
 		std::unordered_set<std::string> table_alias_set;
-		expression::ExpressionUtil::GenerateTableAliasSet(transitive_predicate,
+		expression::ExpressionUtil::GenerateTableAliasSet(transitive_predicate.get(),
                                                       table_alias_set);
 
-		new_predicates.emplace_back(AnnotatedExpression(
-                    std::shared_ptr<expression::AbstractExpression>(transitive_predicate->Copy()),
-		        table_alias_set));
+		new_predicates.emplace_back(AnnotatedExpression(transitive_predicate, table_alias_set));
 	      }
 	    }
 	  }
