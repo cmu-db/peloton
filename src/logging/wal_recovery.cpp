@@ -312,7 +312,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           storage_manager->AddDatabaseToStorageManager(database);
 
           // update database oid to prevent oid reuse after recovery
-          pg_database->GetNextOid();
+          pg_database->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
 
         } else if (table_id == TABLE_CATALOG_OID) {
 
@@ -322,7 +322,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
 
           // update table oid to prevent oid reuse after recovery
-          catalog::TableCatalog::GetInstance()->GetNextOid();
+          catalog::TableCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
           tuple_table_create = std::move(tuple);
           pending_table_create = true;
 
@@ -334,7 +334,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
 
           // update column oid to prevent oid reuse after recovery
-          catalog::ColumnCatalog::GetInstance()->GetNextOid();
+          catalog::ColumnCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
 
           bool is_inline = true;
 
@@ -361,7 +361,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
         } else if (table_id == INDEX_CATALOG_OID) {
           LOG_INFO("REPLAYING INSERT TO PG_INDEX");
           indexes.push_back(std::move(tuple));
-          catalog::IndexCatalog::GetInstance()->GetNextOid();
+          catalog::IndexCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
         }
       } else {
 
@@ -378,6 +378,59 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           catalog::Manager::GetInstance().GetNextTileGroupId();
         }
       }
+    }
+
+    else if(record_type==LogRecordType::TUPLE_DELETE) {
+      LOG_INFO("Tuple Delete");
+
+      oid_t database_id = (oid_t)record_decode.ReadLong();
+      oid_t table_id = (oid_t)record_decode.ReadLong();
+
+      oid_t tg_block = (oid_t)record_decode.ReadLong();
+      oid_t tg_offset = (oid_t)record_decode.ReadLong();
+
+      auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+              database_id, table_id);
+      auto tg = table->GetTileGroupById(tg_block);
+
+      // This code might be useful on drop
+      if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
+        switch (table_id) {
+
+          case DATABASE_CATALOG_OID:{ //pg_database
+            // TODO(graghura): delete database
+          }
+
+          case TABLE_CATALOG_OID: {  // pg_table
+            auto db_oid = tg->GetValue(tg_offset, 2).GetAs<oid_t>();
+            auto table_oid = tg->GetValue(tg_offset, 0).GetAs<oid_t>();
+            auto database =
+                    storage::StorageManager::GetInstance()->GetDatabaseWithOid(
+                            db_oid);  // Getting database oid from pg_table
+            database->DropTableWithOid(table_oid);
+            break;
+          }
+
+          case INDEX_CATALOG_OID: { // pg_index
+            // TODO(graghura): delete index
+          }
+
+          case COLUMN_CATALOG_OID: { // pg_column
+            // TODO(graghura): delete column (I think schema updates are not supported now)
+          }
+
+        }
+      }
+
+      auto tuple_id = tg->DeleteTupleFromRecovery(commit_id, tg_offset);
+      table->IncreaseTupleCount(1);
+      if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+        if (table->GetTileGroupById(tg->GetTileGroupId() + 1).get() ==
+            nullptr)
+          table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId() + 1);
+        catalog::Manager::GetInstance().GetNextTileGroupId();
+      }
+      break;
     }
 
     else if(record_type==LogRecordType::TUPLE_UPDATE) {
