@@ -94,11 +94,6 @@ class Optimizer : public AbstractOptimizer {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
 
-  //set the namespace for the session
-  void SetSessionNamespace(const std::string session_namespace) {
-    session_namespace_ = std::move(session_namespace);
-  }
-
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
    *CREATE), set
@@ -158,7 +153,6 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
-  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 };
 
 }  // namespace optimizer

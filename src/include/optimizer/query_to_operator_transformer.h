@@ -66,7 +66,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(expression::ComparisonExpression *expr) override;
   void Visit(expression::OperatorExpression *expr) override;
 
-  std::string GetSessionNamespace() {
+  std::string GetSessionNamespace() const {
     return session_namespace_;
   }
 

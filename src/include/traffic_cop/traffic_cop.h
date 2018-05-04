@@ -146,8 +146,10 @@ class TrafficCop {
   }
 
   //set the session namespace for this session.
-  void SetTempSessionName(std::string temp_session_name) {
+  void SetTempSessionName(const std::string temp_session_name) {
     temp_session_name_ = std::move(temp_session_name);
+    //set the session namespace for the optimizer
+    optimizer_->SetSessionNamespace(temp_session_name);
   }
 
   //Used to drop all the temporary table created for this session
