@@ -1,6 +1,8 @@
 
+#include "index/index_factory.h"
 
-#include <include/catalog/column_catalog.h>
+#include "catalog/index_catalog.h"
+#include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -217,6 +219,9 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   int total_len = all_txns_[txn_id].second;
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
+  std::vector<std::unique_ptr<storage::Tuple>> indexes;
+
+
   bool pending_table_create;
   std::unique_ptr<storage::Tuple> tuple_table_create;
   std::vector<catalog::Column> columns;
@@ -355,7 +360,8 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 
         } else if (table_id == INDEX_CATALOG_OID) {
           LOG_INFO("REPLAYING INSERT TO PG_INDEX");
-
+          indexes.push_back(std::move(tuple));
+          catalog::IndexCatalog::GetInstance()->GetNextOid();
         }
       }
     }
@@ -383,6 +389,76 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 
   if(pending_table_create) {
     CreateTableOnRecovery(tuple_table_create, columns);
+  }
+
+
+  std::set<storage::DataTable *> tables_with_indexes;
+
+  // Index construction that was deferred from the read records phase
+  for (auto const &tup : indexes) {
+    LOG_INFO("Install Index");
+    std::vector<oid_t> key_attrs;
+    oid_t key_attr;
+    auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(
+                    IsolationLevelType::SERIALIZABLE);
+
+    auto table_catalog = catalog::TableCatalog::GetInstance();
+    auto table_object = table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(), txn);
+    auto database_oid = table_object->GetDatabaseOid();
+    auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+            database_oid, table_object->GetTableOid());
+    concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
+            txn);
+    auto tuple_schema = table->GetSchema();
+    std::stringstream iss(tup->GetValue(6).ToString());
+    while (iss >> key_attr) key_attrs.push_back(key_attr);
+    auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    key_schema->SetIndexedColumns(key_attrs);
+
+    index::IndexMetadata *index_metadata = new index::IndexMetadata(
+            tup->GetValue(1).ToString(), tup->GetValue(0).GetAs<oid_t>(),
+            table->GetOid(), database_oid,
+            static_cast<IndexType>(tup->GetValue(3).GetAs<oid_t>()),
+            static_cast<IndexConstraintType>(tup->GetValue(4).GetAs<oid_t>()),
+            tuple_schema, key_schema, key_attrs, tup->GetValue(4).GetAs<bool>());
+    std::shared_ptr<index::Index> index(
+            index::IndexFactory::GetIndex(index_metadata));
+    table->AddIndex(index);
+    tables_with_indexes.insert(table);
+    // Attributes must be changed once we have arraytype
+  }
+
+  // add tuples to index
+
+  for (storage::DataTable *table : tables_with_indexes) {
+    LOG_INFO("Install table_index");
+    auto schema = table->GetSchema();
+    size_t tg_count = table->GetTileGroupCount();
+    for (oid_t tg = 0; tg < tg_count; tg++) {
+      auto tile_group = table->GetTileGroup(tg);
+
+      for (int tuple_slot_id = START_OID; tuple_slot_id < DEFAULT_TUPLES_PER_TILEGROUP;
+           tuple_slot_id++) {
+        txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_slot_id);
+        if (tuple_txn_id != INVALID_TXN_ID) {
+          PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+          std::unique_ptr<storage::Tuple> t(new storage::Tuple(schema, true));
+          for (size_t col = 0; col < schema->GetColumnCount(); col++) {
+            t->SetValue(col, tile_group->GetValue(tuple_slot_id, col), pool.get());
+          }
+          ItemPointer p(tile_group->GetTileGroupId(), tuple_slot_id);
+          auto txn = concurrency::TransactionManagerFactory::GetInstance()
+                  .BeginTransaction(IsolationLevelType::SERIALIZABLE);
+          ItemPointer *ip = nullptr;
+          table->InsertInIndexes(t.get(), p, txn, &ip);
+          tile_group->GetHeader()->SetIndirection(tuple_slot_id, ip);
+          concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
+                  txn);
+        }
+      }
+
+
+    }
   }
 
 }

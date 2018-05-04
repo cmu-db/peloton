@@ -136,9 +136,12 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
- private:
+
+  // used by logger during recovery
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      oid_t table_oid, concurrency::TransactionContext *txn);
+          oid_t table_oid, concurrency::TransactionContext *txn);
+ private:
+
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, oid_t database_oid,
       concurrency::TransactionContext *txn);
