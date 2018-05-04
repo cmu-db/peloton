@@ -154,6 +154,12 @@ bool SeqScanExecutor::DExecute() {
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_++);
+
+      if (tile_group == nullptr) {
+        // tile group was freed so, continue to next tile group
+        continue;
+      }
+
       auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();

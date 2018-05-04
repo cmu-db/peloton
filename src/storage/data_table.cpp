@@ -85,6 +85,13 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   active_tile_groups_.resize(active_tilegroup_count_);
 
   active_indirection_arrays_.resize(active_indirection_array_count_);
+
+  // Register non-catalog tables for GC
+  if (is_catalog == false) {
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RegisterTable(table_oid, this);
+  }
+
   // Create tile groups.
   for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
@@ -1010,6 +1017,22 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   tile_group_count_++;
 
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
+}
+
+
+void DataTable::DropTileGroup(const oid_t &tile_group_id) {
+  tile_groups_.Update(tile_group_id, invalid_tile_group_id);
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  catalog_manager.DropTileGroup(tile_group_id);
+}
+
+bool DataTable::IsActiveTileGroup(const oid_t &tile_group_id) const {
+  for (auto tile_group : active_tile_groups_) {
+    if (tile_group_id == tile_group->GetTileGroupId()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
