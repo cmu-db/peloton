@@ -20,12 +20,28 @@ namespace peloton {
 namespace stats {
 
 void TableMetricRawData::Aggregate(AbstractRawData &other) {
-  auto &other_index_metric = dynamic_cast<TableMetricRawData &>(other);
-  for (auto &entry : other_index_metric.counters_) {
+  auto &other_table_data = dynamic_cast<TableMetricRawData &>(other);
+  // Collect counters
+  for (auto &entry : other_table_data.counters_) {
+    if (counters_.find(entry.first) == counters_.end())
+      counters_[entry.first] = std::vector<int64_t>(NUM_COUNTERS);
+
     auto &this_counter = counters_[entry.first];
     auto &other_counter = entry.second;
     for (size_t i = 0; i < NUM_COUNTERS; i++) {
       this_counter[i] += other_counter[i];
+    }
+  }
+
+  // Collect referenced TileGroups
+  for (auto &tile_groups : other_table_data.modified_tile_group_id_set_) {
+    if (modified_tile_group_id_set_.find(tile_groups.first) == modified_tile_group_id_set_.end())
+      modified_tile_group_id_set_[tile_groups.first] = std::unordered_set<oid_t>();
+
+    auto &this_set = modified_tile_group_id_set_[tile_groups.first];
+    auto &other_set = tile_groups.second;
+    for (auto tile_group_id : other_set) {
+      this_set.insert(tile_group_id);
     }
   }
 }
@@ -46,7 +62,7 @@ void TableMetricRawData::WriteToCatalog() {
     // since each aggregation period only knows the delta
     catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
         database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
-        counts[INSERT], counts[MEMORY_ALLOC], counts[MEMORY_USAGE], time_stamp,
+        counts[INSERT], counts[INLINE_MEMORY_ALLOC], counts[INLINE_MEMORY_USAGE], time_stamp,
         nullptr, txn);
   }
 

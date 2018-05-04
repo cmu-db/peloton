@@ -61,15 +61,15 @@ class BackendStatsContext {
   inline std::thread::id GetThreadId() { return thread_id_; }
 
   // Returns the table metric with the given database ID and table ID
-  TableMetric *GetTableMetric(oid_t database_id, oid_t table_id);
+  TableMetricOld * GetTableMetric(oid_t database_id, oid_t table_id);
 
   // Returns the database metric with the given database ID
-  DatabaseMetric *GetDatabaseMetric(oid_t database_id);
+  DatabaseMetricOld * GetDatabaseMetric(oid_t database_id);
 
   // Returns the index metric with the given database ID, table ID, and
   // index ID
-  IndexMetric *GetIndexMetric(oid_t database_id, oid_t table_id,
-                              oid_t index_id);
+  IndexMetricOld * GetIndexMetric(oid_t database_id, oid_t table_id,
+                                  oid_t index_id);
 
   // Returns the metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> &GetCompletedQueryMetrics() {
@@ -80,7 +80,7 @@ class BackendStatsContext {
   QueryMetric *GetOnGoingQueryMetric() { return ongoing_query_metric_.get(); }
 
   // Returns the latency metric
-  LatencyMetric &GetQueryLatencyMetric();
+  LatencyMetricOld &GetQueryLatencyMetric();
 
   // Increment the read stat for given tile group
   void IncrementTableReads(oid_t tile_group_id);
@@ -187,14 +187,14 @@ class BackendStatsContext {
   //===--------------------------------------------------------------------===//
 
   // Database metrics
-  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>>
+  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetricOld>>
       database_metrics_{};
 
   // Table metrics
-  std::unordered_map<oid_t, std::unique_ptr<TableMetric>> table_metrics_{};
+  std::unordered_map<oid_t, std::unique_ptr<TableMetricOld>> table_metrics_{};
 
   // Index metrics
-  CuckooMap<oid_t, std::shared_ptr<IndexMetric>> index_metrics_{};
+  CuckooMap<oid_t, std::shared_ptr<IndexMetricOld>> index_metrics_{};
 
   // Index oids
   std::unordered_set<oid_t> index_ids_;
@@ -215,7 +215,7 @@ class BackendStatsContext {
   std::thread::id thread_id_;
 
   // Latencies recorded by this worker
-  LatencyMetric txn_latencies_;
+  LatencyMetricOld txn_latencies_;
 
   // Whether this context is registered to the global aggregator
   bool is_registered_to_aggregator_;

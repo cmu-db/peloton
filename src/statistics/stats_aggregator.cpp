@@ -14,14 +14,12 @@
 #include <cinttypes>
 
 #include "catalog/catalog.h"
-#include "catalog/database_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index.h"
 #include "storage/storage_manager.h"
-#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace stats {
@@ -302,13 +300,13 @@ StatsAggregatorOld &StatsAggregatorOld::GetInstance(
   return stats_aggregator;
 }
 
-void StatsAggregator::ActiveCollect() {
+void StatsAggregatorOld::ActiveCollect() {
   // Collect memory stats
-  auto tile_group_manager = Catalog::Manager::GetInstance();
+  auto &tile_group_manager = catalog::Manager::GetInstance();
   for (auto it = tile_group_ids_.begin(); it != tile_group_ids_.end();) {
     oid_t tile_group_id = *it;
-    auto tile_group = tile_group_manager.GetTileGroupById(tile_group_id);
-    if (tile_group_id == nullptr) {
+    auto tile_group = tile_group_manager.GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) {
       it = tile_group_ids_.erase(it);
       continue;
     } else
@@ -316,7 +314,7 @@ void StatsAggregator::ActiveCollect() {
   }
   for (oid_t tile_group_id : tile_group_ids_) {
     auto tile_group =
-        Catalog::Manager::GetInstance().GetTileGroupById(tile_group_id);
+            tile_group_manager.GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
     }
   }
