@@ -61,11 +61,11 @@ public:
   }
 
   inline static size_t GetTransactionBufferSize() {
-    return settings::SettingsManager::GetInt(settings::SettingId::log_buffer_size);
+    return settings::SettingsManager::GetInt(settings::SettingId::transaction_buffer_size);
   }
 
   inline static size_t GetLoggerBufferSize() {
-    return settings::SettingsManager::GetInt(settings::SettingId::transaction_buffer_size);
+    return settings::SettingsManager::GetInt(settings::SettingId::log_buffer_size);
   }
 
   inline bool IsLoggingEnabled() { return enable_logging_; }
