@@ -85,7 +85,7 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
   std::vector<AnnotatedExpression> new_predicates;
 
   for (auto predicate : predicates) {
-    string exp_type = ExpressionTypeToString(predicate.expr->GetExpressionType());
+    std::string exp_type = ExpressionTypeToString(predicate.expr->GetExpressionType());
     if (exp_type.substr(0, 7) == "COMPARE") {
       auto expr = predicate.expr;
 
