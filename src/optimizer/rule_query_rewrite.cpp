@@ -46,14 +46,13 @@ bool TransitivePredicatesLogicalGet::Check(std::shared_ptr<OperatorExpression> i
 
 void TransitivePredicatesLogicalGet::Transform(
     std::shared_ptr<OperatorExpression> input,
-    UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
   LOG_TRACE("TransitivePredicatesLogicalGet::Transform");
 
   auto get = input->Op().As<LogicalGet>();
   auto &get_predicates = get->predicates;
 
-  LOG_DEBUG("---------- Number of predicates %d\n", int(get_predicates.size()));
   util::FillTransitiveTable(get_predicates, context->transitive_table);
   auto new_predicates = util::GenerateTransitivePredicates(get_predicates, context->transitive_table);
 
