@@ -85,7 +85,7 @@ TEST_F(TupleSamplesStorageTests, AddSamplesTableTest) {
           data_table->GetDatabaseOid(), data_table->GetOid());
   txn = txn_manager.BeginTransaction();
   storage::DataTable *samples_table = catalog->GetTableWithName(
-      SAMPLES_DB_NAME, DEFUALT_SCHEMA_NAME, samples_table_name, txn);
+      SAMPLES_DB_NAME, DEFAULT_SCHEMA_NAME, samples_table_name, txn);
   txn_manager.CommitTransaction(txn);
 
   EXPECT_TRUE(samples_table != nullptr);
