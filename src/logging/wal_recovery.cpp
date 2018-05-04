@@ -363,6 +363,20 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           indexes.push_back(std::move(tuple));
           catalog::IndexCatalog::GetInstance()->GetNextOid();
         }
+      } else {
+
+        LOG_INFO("REPLAYING INSERT TO NON CATALOG TABLE");
+
+        // insert tuple
+        auto tuple_id = tg->InsertTupleFromRecovery(commit_id, tg_offset, tuple.get());
+        table->IncreaseTupleCount(1);
+        if (tuple_id == tg->GetAllocatedTupleCount() - 1) {
+          // add a new tile group if the last slot has been taken
+          if (table->GetTileGroupById(tg->GetTileGroupId() + 1).get() ==
+              nullptr)
+            table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId() + 1);
+          catalog::Manager::GetInstance().GetNextTileGroupId();
+        }
       }
     }
 
@@ -429,7 +443,6 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   }
 
   // add tuples to index
-
   for (storage::DataTable *table : tables_with_indexes) {
     LOG_INFO("Install table_index");
     auto schema = table->GetSchema();
@@ -456,8 +469,6 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
                   txn);
         }
       }
-
-
     }
   }
 
