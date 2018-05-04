@@ -64,7 +64,7 @@ bool PopulateIndexExecutor::DExecute() {
       LOG_TRACE("Cannot obtain lock for the table, abort!");
     }
     else{
-      dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+      dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
     }
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
