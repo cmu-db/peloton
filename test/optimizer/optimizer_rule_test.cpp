@@ -29,7 +29,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/transitive_predicates.h"
+#include "optimizer/rule_query_rewrite.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
