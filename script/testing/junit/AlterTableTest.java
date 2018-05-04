@@ -14,6 +14,7 @@ import java.sql.*;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.postgresql.util.PSQLException;
+import static org.junit.Assert.assertEquals;
 
 public class AlterTableTest extends PLTestBase {
     private Connection conn;
@@ -193,4 +194,117 @@ public class AlterTableTest extends PLTestBase {
 //        conn2.commit();
 //    }
 
+    /**
+     * Add a column to the table.
+     */
+    @Test
+    public void test_AddCol_Basic() throws SQLException {
+        String sql = "ALTER TABLE foo add month int;";
+        conn.createStatement().execute(sql);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
+                new String [] {"id", "year", "month"},
+                new int [] {5, 400, 0});
+        assertNoMoreRows(rs);
+    }
+
+    /**
+     * Add a column to a name that already exists, should throw exception
+     */
+    @Test
+    public void test_AddCol_Exist() throws SQLException {
+        String sql = "ALTER TABLE foo ADD year int;";
+
+        // New column already exists
+        thrown.expect(PSQLException.class);
+        conn.createStatement().execute(sql);
+    }
+
+    /**
+     * Drop a column from the table.
+     */
+    @Test
+    public void test_DropCol_Basic() throws SQLException {
+        String sql = "ALTER TABLE foo DROP year;";
+        conn.createStatement().execute(sql);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        checkRow(rs,
+                new String [] {"id"},
+                new int [] {5});
+        assertNoMoreRows(rs);
+    }
+
+    /**
+     * Drop a column that does not exists, should throw exception
+     */
+    @Test
+    public void test_DropCol_NotExist() throws SQLException {
+        String sql = "ALTER TABLE foo DROP month;";
+
+        // Old column does not exist
+        thrown.expect(PSQLException.class);
+        conn.createStatement().execute(sql);
+    }
+
+    /**
+     * Alter column type from int to float and then alter to int again.
+     */
+    @Test
+    public void test_AlterType_Basic() throws SQLException {
+        String sql = "ALTER TABLE foo ALTER year TYPE float;";
+        conn.createStatement().execute(sql);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getInt("id"), 5);
+        assertEquals(rs.getFloat("year"), 400, 1e-3);
+        assertNoMoreRows(rs);
+
+        String sql2 = "INSERT INTO foo VALUES (6, 3.5);";
+        conn.createStatement().execute(sql2);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getInt("id"), 5);
+        assertEquals(rs.getFloat("year"), 400, 1e-3);
+        rs.next();
+        assertEquals(rs.getInt("id"), 6);
+        assertEquals(rs.getFloat("year"), 3.5, 1e-3);
+        assertNoMoreRows(rs);
+
+
+        String sql3 = "ALTER TABLE foo ALTER year TYPE int;";
+        conn.createStatement().execute(sql3);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getInt("id"), 5);
+        assertEquals(rs.getInt("year"), 400);
+        rs.next();
+        assertEquals(rs.getInt("id"), 6);
+        assertEquals(rs.getInt("year"), 3);
+        assertNoMoreRows(rs);
+    }
+
+
+    /**
+     * Alter column type from int to varchar and backwards.
+     */
+    @Test
+    public void test_AlterType_Varchar() throws SQLException {
+        String sql = "ALTER TABLE foo ALTER year TYPE varchar;";
+        conn.createStatement().execute(sql);
+        ResultSet rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getInt("id"), 5);
+        assertEquals(rs.getString("year"), Integer.toString(400));
+        assertNoMoreRows(rs);
+
+        String sql2 = "ALTER TABLE foo ALTER year TYPE int;";
+        conn.createStatement().execute(sql2);
+        rs = conn.createStatement().executeQuery(SQL_SELECT_STAR);
+        rs.next();
+        assertEquals(rs.getInt("id"), 5);
+        assertEquals(rs.getInt("year"), 400);
+        assertNoMoreRows(rs);
+    }
 }
