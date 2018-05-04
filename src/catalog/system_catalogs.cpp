@@ -83,6 +83,7 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
+    /*
   if (!pg_trigger_) {
     LOG_INFO("TriggerCatalog begin");
     pg_trigger_ = new TriggerCatalog(database_name, txn);
@@ -109,7 +110,7 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
     LOG_INFO("QueryMetricsCatalog begin");
     pg_query_metrics_ = new QueryMetricsCatalog(database_name, txn);
     LOG_INFO("QueryMetricsCatalog end");
-  }
+  }*/
 }
 
 }  // namespace catalog
