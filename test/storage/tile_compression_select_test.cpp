@@ -35,7 +35,7 @@ TEST_F(CompressionSelectTest, BasicTest) {
 	txn_manager.CommitTransaction(txn);
 	LOG_INFO("insert finish");
 	txn = txn_manager.BeginTransaction();
-	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, testTableName, txn);
+	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
 	auto TGiterator = new storage::TileGroupIterator(dataTable_object);
 	std::shared_ptr<storage::TileGroup> tg;
 
@@ -61,7 +61,7 @@ TEST_F(CompressionSelectTest, BasicTest) {
 
   txn = txn_manager.BeginTransaction();
 
-  dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, testTableName, txn);
+  dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
   TGiterator = new storage::TileGroupIterator(dataTable_object);
   while (TGiterator->HasNext()) {
 		TGiterator->Next(tg);

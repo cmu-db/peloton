@@ -57,7 +57,7 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 // delete data is enough
 DictEncodedTile::~DictEncodedTile(){
 	auto * str_ptrs = reinterpret_cast<const char**>(varlen_val_ptrs);
-	for (size_t element_idx = 0; element_idx < element_array.size(); element_idx++) {
+	for (size_t element_idx = 0; element_idx < dict.size(); element_idx++) {
 		delete str_ptrs[element_idx];
 	}
 	delete[] varlen_val_ptrs;
@@ -70,7 +70,8 @@ type::Value DictEncodedTile::GetValue(const oid_t tuple_offset, const oid_t colu
 			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
 		auto idx = idx_val.GetAs<uint8_t>();
-    return type::Value(element_array[idx]);
+		return type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
+		                                    original_schema.GetType(column_id), false);
 	} else {
 		return Tile::GetValue(tuple_offset, column_id);
 	}
@@ -88,7 +89,8 @@ type::Value DictEncodedTile::GetValueFast(const oid_t tuple_offset, const size_t
 			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
 		auto idx = idx_val.GetAs<uint8_t>();
-    return type::Value(element_array[idx]);
+		return type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
+		                                    original_schema.GetType(column_id), false);
 	} else {
 		return curr_val;
 	}
@@ -98,7 +100,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 	PELOTON_ASSERT(tile != nullptr);
 	if (is_dict_encoded) return;
 	SetAttributes(tile);
-
+	std::vector<type::Value> element_array;
 	LOG_DEBUG("dictionary encode, database_id: %d, table_id: %d, tile_group_id: %d"
 				", tile_id: %d", database_id, table_id, tile_group_id, tile_id);
 
@@ -114,10 +116,10 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 				type::Value curr_val;
 				if (curr_old_val.GetTypeId() == type::TypeId::VARBINARY) {
 					curr_val = type::ValueFactory::GetVarbinaryValue((const unsigned char*) curr_old_val.GetData(),
-					    curr_old_val.GetLength(), true);
+					    curr_old_val.GetLength(), false);
 				} else {
 					curr_val = type::ValueFactory::GetVarcharValue(curr_old_val.GetData(), 
-						curr_old_val.GetLength(), true);
+						curr_old_val.GetLength(), false);
 				}
 				// Since we use INTEGER as index, so the idx should take 4 bytes.
 				char idx_data[4];
@@ -151,8 +153,8 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 	}
 
 	// init varlen_val_ptrs
-	varlen_val_ptrs = new char[element_array.size() * sizeof(const char*)];
-	for (size_t element_idx = 0; element_idx < element_array.size(); element_idx++) {
+	varlen_val_ptrs = new char[dict.size() * sizeof(const char*)];
+	for (size_t element_idx = 0; element_idx < dict.size(); element_idx++) {
 		LOG_TRACE("element array [%zu] serialize to varlen_val_ptrs", element_idx);
 		element_array[element_idx].SerializeTo(varlen_val_ptrs + element_idx * sizeof(const char *), 
 			true, nullptr);
@@ -172,7 +174,8 @@ Tile* DictEncodedTile::DictDecode() {
       		for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
         		type::Value curr_val = Tile::GetValue(tuple_offset, column_idx);
         		auto idx = curr_val.GetAs<uint8_t>();
-        		type::Value actual_val = element_array[idx];
+        		type::Value actual_val = type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
+		                                    original_schema.GetType(column_idx), false);
        			new_data_vector[column_idx].push_back(actual_val);
       		}
     	} else {

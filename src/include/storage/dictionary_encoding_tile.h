@@ -121,9 +121,6 @@ class DictEncodedTile : public Tile {
 	}
 
  protected:
-
-	// the idx-string mapping
-  std::vector<type::Value> element_array;
 	// the string-idx mapping
   std::unordered_map<type::Value, uint8_t, type::Value::hash, type::Value::compress_equal_to> dict;
 	// columns being encoded
@@ -132,7 +129,7 @@ class DictEncodedTile : public Tile {
   catalog::Schema original_schema;
 	// original column offset
   std::map<size_t, oid_t> original_schema_offsets;
-  // element ptr
+  // element ptr, the idx-string mapping
   char *varlen_val_ptrs;
 };
 
