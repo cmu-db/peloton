@@ -27,15 +27,17 @@ namespace expression {
 class ConjunctionExpression : public AbstractExpression {
  public:
   ConjunctionExpression(ExpressionType type) : AbstractExpression(type) {}
-
+  /**
+   *  Use expression::ExpressionUtil::ConjunctionFactory instead of this
+   * constructor for constant folding.
+   * @param type Valid value:  CONJUNCTION_AND or CONJUNCTION_OR
+   */
   ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
       : AbstractExpression(type, type::TypeId::BOOLEAN, left, right) {}
 
-  type::Value Evaluate(
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+  type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                       executor::ExecutorContext *context) const override {
     PELOTON_ASSERT(children_.size() == 2);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
