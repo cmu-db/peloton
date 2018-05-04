@@ -262,51 +262,42 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
   // 2. GROUP BY (if present)
   // 3. ORDER BY (if present)
   // 4. all updated columns for UPDATE query.
-
-  union {
-    parser::SelectStatement *select_stmt;
-    parser::UpdateStatement *update_stmt;
-    parser::DeleteStatement *delete_stmt;
-    parser::InsertStatement *insert_stmt;
-  } sql_statement;
-
   switch (query->GetType()) {
-    case StatementType::INSERT:
-      sql_statement.insert_stmt =
-          dynamic_cast<parser::InsertStatement *>(query);
+    case StatementType::INSERT: {
+      auto insert_stmt = dynamic_cast<parser::InsertStatement *>(query);
       // If the insert is along with a select statement, i.e another table's
       // select output is fed into this table.
-      if (sql_statement.insert_stmt->select != nullptr) {
+      if (insert_stmt->select != nullptr) {
         IndexColsParseWhereHelper(
-            sql_statement.insert_stmt->select->where_clause.get(), indexes);
+          insert_stmt->select->where_clause.get(), indexes);
       }
       break;
+    }
 
-    case StatementType::DELETE:
-      sql_statement.delete_stmt =
-          dynamic_cast<parser::DeleteStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.delete_stmt->expr.get(), indexes);
+    case StatementType::DELETE: {
+      auto delete_stmt = dynamic_cast<parser::DeleteStatement *>(query);
+      IndexColsParseWhereHelper(delete_stmt->expr.get(), indexes);
       break;
+    }
 
-    case StatementType::UPDATE:
-      sql_statement.update_stmt =
-          dynamic_cast<parser::UpdateStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.update_stmt->where.get(),
-                                indexes);
+    case StatementType::UPDATE: {
+      auto update_stmt = dynamic_cast<parser::UpdateStatement *>(query);
+      IndexColsParseWhereHelper(update_stmt->where.get(), indexes);
       break;
+    }
 
-    case StatementType::SELECT:
-      sql_statement.select_stmt =
-          dynamic_cast<parser::SelectStatement *>(query);
-      IndexColsParseWhereHelper(sql_statement.select_stmt->where_clause.get(),
-                                indexes);
-      IndexColsParseOrderByHelper(sql_statement.select_stmt->order, indexes);
-      IndexColsParseGroupByHelper(sql_statement.select_stmt->group_by, indexes);
+    case StatementType::SELECT: {
+      auto select_stmt = dynamic_cast<parser::SelectStatement *>(query);
+      IndexColsParseWhereHelper(select_stmt->where_clause.get(), indexes);
+      IndexColsParseOrderByHelper(select_stmt->order, indexes);
+      IndexColsParseGroupByHelper(select_stmt->group_by, indexes);
       break;
+    }
 
-    default:
+    default: {
       LOG_ERROR("Cannot handle DDL statements");
       PELOTON_ASSERT(false);
+    }
   }
 }
 
