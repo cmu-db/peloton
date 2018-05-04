@@ -41,7 +41,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   txn = txn_manager.BeginTransaction();
   try {
     table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
+        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
   } catch (CatalogException &e) {
     table = nullptr;
   }
@@ -77,7 +77,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   txn = txn_manager.BeginTransaction();
   try {
     table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
+        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
   } catch (CatalogException &e) {
     txn_manager.CommitTransaction(txn);
     table = nullptr;

@@ -110,22 +110,20 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
     catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
-    test_table_oids.push_back(catalog
-                                  ->GetTableObject(test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i], txn)
-                                  ->GetTableOid());
+    test_table_oids.push_back(
+        catalog->GetTableObject(test_db_name, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, test_table_names[i],
+                                txn)->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
     catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
-    test_table_oids.push_back(catalog
-                                  ->GetTableObject(test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i], txn)
-                                  ->GetTableOid());
+    test_table_oids.push_back(
+        catalog->GetTableObject(test_db_name, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, test_table_names[i],
+                                txn)->GetTableOid());
   }
 }
 
@@ -138,9 +136,8 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   auto *table_schema = test_table.GetSchema();
   size_t curr_size = test_table.GetTupleCount();
 
-  auto col_val = [](uint32_t tuple_id, uint32_t col_id) {
-    return 10 * tuple_id + col_id;
-  };
+  auto col_val =
+      [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
 
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();

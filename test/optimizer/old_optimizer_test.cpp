@@ -75,7 +75,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "dept_name TEXT);");
 
   auto parse_tree = create_stmt->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
@@ -117,7 +118,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "(1,52,'hello_1');");
 
   parse_tree = insert_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
@@ -149,7 +151,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "CREATE INDEX saif ON department_table (student_id);");
 
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt, txn));
@@ -171,7 +174,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
 
   txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME,
+      "department_table", txn);
   // Expected 1 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
   txn_manager.CommitTransaction(txn);
@@ -186,7 +190,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
 
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt, txn);
@@ -203,7 +208,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_name = 'CS'");
 
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   update_plan = optimizer.BuildPelotonPlanTree(update_stmt, txn);
@@ -219,7 +225,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "DELETE FROM department_table WHERE student_id = 52");
 
   parse_tree = delete_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt, txn);
@@ -237,7 +244,8 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "DELETE FROM department_table WHERE dept_name = 'CS'");
 
   parse_tree = delete_stmt_seq->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
   auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq, txn);
