@@ -26,7 +26,8 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
       os << "Create type: Table" << std::endl;
       os << StringUtil::Indent(num_indent + 1)
          << StringUtil::Format("IF NOT EXISTS: %s",
-                               (if_not_exists) ? "True" : "False") << std::endl;
+                               (if_not_exists) ? "True" : "False")
+         << std::endl;
       os << StringUtil::Indent(num_indent + 1)
          << StringUtil::Format("Table name: %s", GetTableName().c_str());
       ;
@@ -62,7 +63,7 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
     case CreateStatement::CreateType::kSchema: {
       os << "Create type: Schema" << std::endl;
       os << StringUtil::Indent(num_indent + 1)
-         << StringUtil::Format("Schema name: %s", schema_name.c_str());
+         << StringUtil::Format("Schema name: %s", GetSchemaName().c_str());
       break;
     }
     case CreateStatement::CreateType::kView: {
@@ -100,7 +101,8 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
         }
       } else {
         os << StringUtil::Indent(num_indent + 1)
-           << "-> COLUMN REF : " << col->name << " "
+           << "-> COLUMN REF : " << col->name
+           << " "
            // << col->type << " not null : "
            << col->not_null << " primary : " << col->primary << " unique "
            << col->unique << " varlen " << col->varlen;

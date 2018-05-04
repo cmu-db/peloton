@@ -4,18 +4,19 @@
 //
 // tf_session_entity_input.cpp
 //
-// Identification: src/brain/tf_session_entity/tf_session_entity_input.cpp
+// Identification: src/brain/util/tf_session_entity/tf_session_entity_input.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/tf_session_entity/tf_session_entity_input.h"
+#include "brain/util/tf_session_entity/tf_session_entity_input.h"
 
 namespace peloton {
 namespace brain {
 TFSEIN_TEMPLATE_ARGUMENTS
-TFSEIN_TYPE::TfSessionEntityInput(const InputType& input, const std::string &op) {
+TFSEIN_TYPE::TfSessionEntityInput(const InputType &input,
+                                  const std::string &op) {
   this->placeholder_name_ = op;
   this->DetermineDataType();
   InputType input_for_tf = input;
@@ -41,8 +42,8 @@ TFSEIN_TYPE::TfSessionEntityInput(const std::vector<InputType> &input,
 
 // 2d vector
 TFSEIN_TEMPLATE_ARGUMENTS
-TFSEIN_TYPE::TfSessionEntityInput(const std::vector<std::vector<InputType>>& input,
-                                  const std::string &op) {
+TFSEIN_TYPE::TfSessionEntityInput(
+    const std::vector<std::vector<InputType>> &input, const std::string &op) {
   this->placeholder_name_ = op;
   this->DetermineDataType();
   int64_t dims[] = {static_cast<int64_t>(input.size()),
@@ -56,7 +57,8 @@ TFSEIN_TYPE::TfSessionEntityInput(const std::vector<std::vector<InputType>>& inp
 
 // raw flattened input
 TFSEIN_TEMPLATE_ARGUMENTS
-TFSEIN_TYPE::TfSessionEntityInput(InputType *input, const std::vector<int64_t>& dims,
+TFSEIN_TYPE::TfSessionEntityInput(InputType *input,
+                                  const std::vector<int64_t> &dims,
                                   const std::string &op) {
   this->placeholder_name_ = op;
   this->DetermineDataType();
@@ -73,7 +75,8 @@ TFSEIN_TYPE::TfSessionEntityInput(InputType *input, const std::vector<int64_t>& 
 
 // Flattens 2d inputs
 TFSEIN_TEMPLATE_ARGUMENTS
-InputType *TFSEIN_TYPE::Flatten(const std::vector<std::vector<InputType>>& elems) {
+InputType *TFSEIN_TYPE::Flatten(
+    const std::vector<std::vector<InputType>> &elems) {
   std::vector<InputType> flattened;
   for (auto row : elems) {
     for (float elem : row) {

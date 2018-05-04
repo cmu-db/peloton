@@ -95,11 +95,8 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      storage::StorageManager::GetInstance()
-          ->GetTableWithOid(op->table_->GetDatabaseOid(),
-                            op->table_->GetTableOid())
-          ->GetIndexWithOid(op->index_id),
-      op->key_column_id_list, op->expr_type_list, op->value_list, runtime_keys);
+      op->index_id, op->key_column_id_list, op->expr_type_list, op->value_list,
+      runtime_keys);
   output_plan_.reset(new planner::IndexScanPlan(
       storage::StorageManager::GetInstance()->GetTableWithOid(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
@@ -193,12 +190,12 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
   vector<oid_t> right_keys;
   for (auto &expr : op->left_keys) {
     PELOTON_ASSERT(children_expr_map_[0].find(expr.get()) !=
-              children_expr_map_[0].end());
+                   children_expr_map_[0].end());
     left_keys.push_back(children_expr_map_[0][expr.get()]);
   }
   for (auto &expr : op->right_keys) {
     PELOTON_ASSERT(children_expr_map_[1].find(expr.get()) !=
-              children_expr_map_[1].end());
+                   children_expr_map_[1].end());
     right_keys.emplace_back(children_expr_map_[1][expr.get()]);
   }
 
@@ -372,7 +369,8 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
   vector<oid_t> column_ids;
   for (oid_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto &output_expr = output_cols_[idx];
-    PELOTON_ASSERT(output_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(output_expr->GetExpressionType() ==
+                   ExpressionType::VALUE_TUPLE);
     auto output_tvexpr =
         reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 

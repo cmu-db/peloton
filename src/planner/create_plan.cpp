@@ -12,10 +12,10 @@
 
 #include "planner/create_plan.h"
 
-#include "expression/constant_value_expression.h"
-#include "storage/data_table.h"
 #include "common/internal_types.h"
 #include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace planner {
@@ -23,10 +23,12 @@ namespace planner {
 CreatePlan::CreatePlan(std::string database_name, CreateType c_type)
     : database_name(database_name), create_type(c_type) {}
 
-CreatePlan::CreatePlan(std::string table_name, std::string database_name,
+CreatePlan::CreatePlan(std::string table_name, std::string schema_name,
+                       std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
                        CreateType c_type)
     : table_name(table_name),
+      schema_name(schema_name),
       database_name(database_name),
       table_schema(schema.release()),
       create_type(c_type) {}
@@ -38,8 +40,17 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       database_name = std::string(parse_tree->GetDatabaseName());
       break;
     }
+
+    case parser::CreateStatement::CreateType::kSchema: {
+      create_type = CreateType::SCHEMA;
+      database_name = std::string(parse_tree->GetDatabaseName());
+      schema_name = std::string(parse_tree->GetSchemaName());
+      break;
+    }
+
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
+      schema_name = std::string(parse_tree->GetSchemaName());
       database_name = std::string(parse_tree->GetDatabaseName());
       std::vector<catalog::Column> columns;
       std::vector<catalog::Constraint> column_constraints;
@@ -146,6 +157,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       create_type = CreateType::INDEX;
       index_name = std::string(parse_tree->index_name);
       table_name = std::string(parse_tree->GetTableName());
+      schema_name = std::string(parse_tree->GetSchemaName());
       database_name = std::string(parse_tree->GetDatabaseName());
 
       // This holds the attribute names.
@@ -166,10 +178,12 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       unique = parse_tree->unique;
       break;
     }
+
     case parser::CreateStatement::CreateType::kTrigger: {
       create_type = CreateType::TRIGGER;
       trigger_name = std::string(parse_tree->trigger_name);
       table_name = std::string(parse_tree->GetTableName());
+      schema_name = std::string(parse_tree->GetSchemaName());
       database_name = std::string(parse_tree->GetDatabaseName());
 
       if (parse_tree->trigger_when) {

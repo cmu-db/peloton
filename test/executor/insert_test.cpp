@@ -17,8 +17,8 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/insert_executor.h"
 #include "executor/executor_context.h"
+#include "executor/insert_executor.h"
 #include "expression/constant_value_expression.h"
 #include "parser/insert_statement.h"
 #include "planner/insert_plan.h"
@@ -52,11 +52,12 @@ TEST_F(InsertTests, InsertRecord) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, "TEST_TABLE",
-                                               std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "TEST_TABLE",
+      std::move(table_schema), txn);
 
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "TEST_TABLE", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "TEST_TABLE", txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -83,13 +84,15 @@ TEST_F(InsertTests, InsertRecord) {
 
   insert_node->insert_values.push_back(
       std::vector<std::unique_ptr<expression::AbstractExpression>>());
-  auto& values_ptr = insert_node->insert_values[0];
+  auto &values_ptr = insert_node->insert_values[0];
 
   values_ptr.push_back(std::unique_ptr<expression::AbstractExpression>(
-      new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(70))));
+      new expression::ConstantValueExpression(
+          type::ValueFactory::GetIntegerValue(70))));
 
   values_ptr.push_back(std::unique_ptr<expression::AbstractExpression>(
-      new expression::ConstantValueExpression(type::ValueFactory::GetVarcharValue("Hello"))));
+      new expression::ConstantValueExpression(
+          type::ValueFactory::GetVarcharValue("Hello"))));
 
   insert_node->select.reset(new parser::SelectStatement());
 
@@ -113,16 +116,19 @@ TEST_F(InsertTests, InsertRecord) {
 
   insert_node->insert_values.push_back(
       std::vector<std::unique_ptr<expression::AbstractExpression>>());
-  auto& values_ptr2 = insert_node->insert_values[1];
+  auto &values_ptr2 = insert_node->insert_values[1];
 
   values_ptr2.push_back(std::unique_ptr<expression::AbstractExpression>(
-      new expression::ConstantValueExpression(type::ValueFactory::GetIntegerValue(100))));
+      new expression::ConstantValueExpression(
+          type::ValueFactory::GetIntegerValue(100))));
 
   values_ptr2.push_back(std::unique_ptr<expression::AbstractExpression>(
-      new expression::ConstantValueExpression(type::ValueFactory::GetVarcharValue("Hello"))));
+      new expression::ConstantValueExpression(
+          type::ValueFactory::GetVarcharValue("Hello"))));
 
-  insert_node->insert_values[0].at(0).reset(new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(90)));
+  insert_node->insert_values[0].at(0).reset(
+      new expression::ConstantValueExpression(
+          type::ValueFactory::GetIntegerValue(90)));
   planner::InsertPlan node3(table, &insert_node->columns,
                             &insert_node->insert_values);
   executor::InsertExecutor executor3(&node3, context.get());

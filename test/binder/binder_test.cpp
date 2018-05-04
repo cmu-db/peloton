@@ -17,21 +17,22 @@
 #include "common/harness.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/subquery_expression.h"
 #include "expression/function_expression.h"
+#include "expression/subquery_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "traffic_cop/traffic_cop.h"
 
+#include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
-#include "executor/testing_executor_util.h"
 
+using std::make_shared;
+using std::make_tuple;
 using std::string;
 using std::unique_ptr;
 using std::vector;
-using std::make_tuple;
 
 namespace peloton {
 namespace test {
@@ -39,8 +40,8 @@ namespace test {
 class BinderCorrectnessTest : public PelotonTest {
   virtual void SetUp() override {
     PelotonTest::SetUp();
-    auto catalog = catalog::Catalog::GetInstance();
-    catalog->Bootstrap();
+    catalog::Catalog::GetInstance();
+    // NOTE: Catalog::GetInstance()->Bootstrap(), you can only call it once!
     TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   }
 
@@ -77,9 +78,14 @@ void SetupTables(std::string database_name) {
     vector<ResultValue> result;
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
-    auto parse_tree = parser.BuildParseTree(sql);
+
+    auto parse_tree_list = parser.BuildParseTree(sql);
+    auto parse_tree = parse_tree_list->GetStatement(0);
+    auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name);
+    bind_node_visitor.BindNameToNode(parse_tree);
+
     statement->SetPlanTree(
-        optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
+        optimizer.BuildPelotonPlanTree(parse_tree_list, txn));
     TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params,
                                             result, result_format);
@@ -96,10 +102,11 @@ void SetupTables(std::string database_name) {
 }
 
 TEST_F(BinderCorrectnessTest, SelectStatementTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
+  catalog_ptr->Bootstrap();
 
   // Test regular table name
   LOG_INFO("Parsing sql query");
@@ -120,10 +127,14 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableA_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "a", txn)->GetOid();
-  oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "b", txn)->GetOid();
+  oid_t tableA_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "a", txn)
+                         ->GetOid();
+  oid_t tableB_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                         ->GetOid();
   txn_manager.CommitTransaction(txn);
 
   // Check select_list
@@ -240,7 +251,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 // test after UpdateStatement is changed
 
 TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
@@ -249,8 +260,10 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableB_oid =
-      catalog_ptr->GetTableWithName(default_database_name, "b", txn)->GetOid();
+  oid_t tableB_oid = catalog_ptr
+                         ->GetTableWithName(default_database_name,
+                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                         ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(
@@ -280,7 +293,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 }
 
 TEST_F(BinderCorrectnessTest, BindDepthTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
 
@@ -319,7 +332,8 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   auto exists_sub_expr_select =
       dynamic_cast<const expression::SubqueryExpression *>(exists_sub_expr)
           ->GetSubSelect();
-  auto exists_sub_expr_select_where = exists_sub_expr_select->where_clause.get();
+  auto exists_sub_expr_select_where =
+      exists_sub_expr_select->where_clause.get();
   auto exists_sub_expr_select_ele =
       exists_sub_expr_select->select_list[0].get();
   auto in_tv_expr = in_expr->GetChild(0);

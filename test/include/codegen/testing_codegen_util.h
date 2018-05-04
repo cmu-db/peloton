@@ -47,7 +47,7 @@ using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
 //===----------------------------------------------------------------------===//
 class PelotonCodeGenTest : public PelotonTest {
  public:
-  std::string test_db_name = "PELOTON_CODEGEN";
+  std::string test_db_name = "peloton_codegen";
   std::vector<std::string> test_table_names = {"table1", "table2", "table3",
                                                "table4", "table5"};
   std::vector<oid_t> test_table_oids;
