@@ -107,23 +107,23 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }

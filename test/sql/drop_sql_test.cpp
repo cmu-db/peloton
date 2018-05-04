@@ -41,7 +41,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   txn = txn_manager.BeginTransaction();
   try {
     table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test", txn);
+        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
   } catch (CatalogException &e) {
     table = nullptr;
   }
@@ -77,7 +77,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   txn = txn_manager.BeginTransaction();
   try {
     table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test", txn);
+        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
   } catch (CatalogException &e) {
     txn_manager.CommitTransaction(txn);
     table = nullptr;
@@ -114,7 +114,7 @@ TEST_F(DropSQLTests, DropIndexTest) {
   std::shared_ptr<catalog::IndexCatalogObject> index;
   txn = txn_manager.BeginTransaction();
   try {
-    index = pg_index->GetIndexObject("idx", DEFUALT_SCHEMA_NAME, txn);
+    index = pg_index->GetIndexObject("idx", DEFAULT_SCHEMA_NAME, txn);
 
   } catch (CatalogException &e) {
     index = nullptr;
@@ -128,7 +128,7 @@ TEST_F(DropSQLTests, DropIndexTest) {
 
   // Check if index is not in catalog
   txn = txn_manager.BeginTransaction();
-  index = pg_index->GetIndexObject("idx", DEFUALT_SCHEMA_NAME, txn);
+  index = pg_index->GetIndexObject("idx", DEFAULT_SCHEMA_NAME, txn);
   EXPECT_EQ(index, nullptr);
 
   //  Free the database just created

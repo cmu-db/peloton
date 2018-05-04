@@ -129,11 +129,11 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
   oid_t tableA_oid = catalog_ptr
                          ->GetTableWithName(default_database_name,
-                                            DEFUALT_SCHEMA_NAME, "a", txn)
+                                            DEFAULT_SCHEMA_NAME, "a", txn)
                          ->GetOid();
   oid_t tableB_oid = catalog_ptr
                          ->GetTableWithName(default_database_name,
-                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                                            DEFAULT_SCHEMA_NAME, "b", txn)
                          ->GetOid();
   txn_manager.CommitTransaction(txn);
 
@@ -262,7 +262,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
   oid_t tableB_oid = catalog_ptr
                          ->GetTableWithName(default_database_name,
-                                            DEFUALT_SCHEMA_NAME, "b", txn)
+                                            DEFAULT_SCHEMA_NAME, "b", txn)
                          ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";

@@ -125,7 +125,7 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME, "emp_db",
+  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME, "emp_db",
                            std::move(table_schema), CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
