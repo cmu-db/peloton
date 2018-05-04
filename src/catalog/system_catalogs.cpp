@@ -80,7 +80,7 @@ SystemCatalogs::~SystemCatalogs() {
  * @param   txn              TransactionContext
  */
 void SystemCatalogs::Bootstrap(const std::string &database_name,
-                               concurrency::TransactionContext *txn) {
+                              UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
     /*
