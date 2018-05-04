@@ -113,7 +113,7 @@ void LoggingUtil::CloseFile(std::fstream &fs) {
 int32_t LoggingUtil::ReadNBytesFromFile(std::fstream &fs, char *bytes_read,
                                      size_t n) {
 
-  PL_ASSERT(!fs.fail());
+  PELOTON_ASSERT(!fs.fail());
   fs.read(bytes_read, n);
   return (int32_t)fs.gcount();
 }

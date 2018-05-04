@@ -141,7 +141,7 @@ void WalRecovery::ParseLog(std::map<txn_id_t, LogRecordType> &all_txns){
           case LogRecordType::TRANSACTION_BEGIN:{
             if(all_txns.find(txn_id) != all_txns.end()){
               LOG_ERROR("Duplicate transaction");
-              PL_ASSERT(false);
+              PELOTON_ASSERT(false);
             }
             all_txns.insert(std::make_pair(txn_id, record_type));
             break;
@@ -165,8 +165,8 @@ void WalRecovery::ParseLog(std::map<txn_id_t, LogRecordType> &all_txns){
       }
     }
 
-    PL_MEMCPY(buf, buf+buf_curr, buf_rem);
-    PL_MEMSET(buf+buf_rem, 0, buf_size - buf_rem);
+    PELOTON_MEMCPY(buf, buf+buf_curr, buf_rem);
+    PELOTON_MEMSET(buf+buf_rem, 0, buf_size - buf_rem);
     buf_curr = buf_rem;
   }
 
