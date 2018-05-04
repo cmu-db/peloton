@@ -239,7 +239,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   // add core & non-core system catalog tables into database
-  LOG_INFO("begin bootstrap %s", database_name);
+  LOG_INFO("begin bootstrap %s", database_name.c_str());
   BootstrapSystemCatalogs(database, txn);
   catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
