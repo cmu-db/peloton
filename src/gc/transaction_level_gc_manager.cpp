@@ -370,11 +370,17 @@ void TransactionLevelGCManager::RecycleUnusedTupleSlot(const ItemPointer &locati
   // TODO: revisit queueing immutable ItemPointers
   // TODO: revisit dropping immutable tile groups
 
+  tile_group_header->IncrementGCReaders();
 
-    // If the tuple being reset no longer exists, just skip it
-    if (ResetTuple(location) == false) {
-      return;
-    }
+  // TODO: Ensure that immutable checks are compatible with GetRecycledTupleSlot's behavior
+  // Currently, we rely on GetRecycledTupleSlot to ignore immutable slots
+  // TODO: revisit queueing immutable ItemPointers
+  // TODO: revisit dropping immutable tile groups
+
+  // If the tuple being reset no longer exists, just skip it
+  if (ResetTuple(location) == false) {
+    return;
+  }
 
   auto recycle_queue = GetTableRecycleQueue(table_id);
   if (recycle_queue == nullptr) {

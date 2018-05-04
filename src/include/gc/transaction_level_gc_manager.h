@@ -183,12 +183,13 @@ class TransactionLevelGCManager : public GCManager {
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
   /**
-  * @brief Unlink and reclaim the tuples remained in a garbage collection
-  * thread when the Garbage Collector stops.
-  *
-  * @return No return value.
-  */
+ * @brief Unlink and reclaim the tuples remained in a garbage collection
+ * thread when the Garbage Collector stops.
+ *
+ * @return No return value.
+ */
   void ClearGarbage(int thread_id);
+
 
  private:
   inline unsigned int HashToThread(const size_t &thread_id) {
