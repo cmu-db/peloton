@@ -83,6 +83,10 @@ private:
                                    ItemPointer location);
 
 
+  void CreateTableOnRecovery(std::unique_ptr<storage::Tuple> &tuple,
+                                            std::vector<catalog::Column> &columns);
+
+
 
   //TODO(graghura): don't hardcode the path
   std::string logpath_ = "/tmp/log";

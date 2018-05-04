@@ -1,5 +1,7 @@
 
 
+#include <include/catalog/column_catalog.h>
+#include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/catalog_defaults.h"
@@ -192,15 +194,34 @@ bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple 
   return true;
 }
 
+void WalRecovery::CreateTableOnRecovery(std::unique_ptr<storage::Tuple> &tuple,
+                                        std::vector<catalog::Column> &columns){
+
+  // Getting database
+  auto database =
+          storage::StorageManager::GetInstance()->GetDatabaseWithOid(
+                  tuple->GetValue(2).GetAs<oid_t>());
+
+  // register table with catalog
+  database->AddTable(new storage::DataTable(
+          new catalog::Schema(columns), tuple->GetValue(1).ToString(),
+          database->GetOid(), tuple->GetValue(0).GetAs<oid_t>(),
+          DEFAULT_TUPLES_PER_TILEGROUP, true, false, false));
+
+  columns.clear();
+}
+
 void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   int start_offset = commited_txns_[txn_id].first;
   int curr_offset  = start_offset;
   int total_len = all_txns_[txn_id].second;
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
+  bool pending_table_create;
+  std::unique_ptr<storage::Tuple> tuple_table_create;
+  std::vector<catalog::Column> columns;
 
   while(total_len > 0){
-
     CopySerializeInput length_decode((const void *)(log_buffer_+curr_offset), sizeof(int));
     int record_len = length_decode.ReadInt();
 
@@ -220,78 +241,148 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
     else if(epoch_id>max_epoch_id_)
       max_epoch_id_ = epoch_id;
 
-    switch(record_type){
-      case LogRecordType::TUPLE_INSERT: {
-        oid_t database_id = (oid_t) record_decode.ReadLong();
-        oid_t table_id = (oid_t) record_decode.ReadLong();
-
-        oid_t tg_block = (oid_t) record_decode.ReadLong();
-        oid_t tg_offset = (oid_t) record_decode.ReadLong();
-
-        ItemPointer location(tg_block, tg_offset);
-        auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
-                database_id, table_id);
-        auto schema = table->GetSchema();
-        auto tg = table->GetTileGroupById(tg_block);
-
-        // Create the tile group if it does not exist
-        if (tg.get() == nullptr) {
-          table->AddTileGroupWithOidForRecovery(tg_block);
-          tg = table->GetTileGroupById(tg_block);
-          catalog::Manager::GetInstance().GetNextTileGroupId();
-        }
-
-        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-        for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
-          type::Value val = type::Value::DeserializeFrom(
-                  record_decode, schema->GetColumn(oid).GetType());
-          tuple->SetValue(oid, val, pool.get());
-        }
-
-
-        if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
-
-          InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
-
-          if(table_id==DATABASE_CATALOG_OID) {
-              LOG_INFO("replaying database insert");
-              auto pg_database = catalog::DatabaseCatalog::GetInstance();
-              pg_database->GetNextOid();
-          }
-        }
-        break;
-      }
-
-      case LogRecordType::TUPLE_UPDATE: {
-        break;
-      }
-
-      case LogRecordType::TUPLE_DELETE: {
-        break;
-      }
-
-
-      case LogRecordType::TRANSACTION_BEGIN: {
-        // NOOP
-        break;
-      }
-
-      case LogRecordType::TRANSACTION_COMMIT: {
-        //(graghura): return probably?
-        break;
-      }
-
-      case LogRecordType::TRANSACTION_ABORT: {
-        LOG_ERROR("Should not be replaying an aborted transaction");
-        PL_ASSERT(false);
-      }
-
-      default:{
-        break;
+    // complete table_creation if pending
+    if(record_type != LogRecordType::TUPLE_INSERT){
+      if(pending_table_create) {
+        CreateTableOnRecovery(tuple_table_create, columns);
+        pending_table_create = false;
       }
     }
+
+    if(record_type==LogRecordType::TUPLE_INSERT) {
+
+      oid_t database_id = (oid_t) record_decode.ReadLong();
+      oid_t table_id = (oid_t) record_decode.ReadLong();
+
+      if(database_id != CATALOG_DATABASE_OID || table_id != COLUMN_CATALOG_OID){
+        if(pending_table_create){
+          CreateTableOnRecovery(tuple_table_create, columns);
+          pending_table_create = false;
+        }
+      }
+
+      oid_t tg_block = (oid_t) record_decode.ReadLong();
+      oid_t tg_offset = (oid_t) record_decode.ReadLong();
+
+      ItemPointer location(tg_block, tg_offset);
+      auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+              database_id, table_id);
+      auto schema = table->GetSchema();
+      auto tg = table->GetTileGroupById(tg_block);
+
+      // Create the tile group if it does not exist
+      if (tg.get() == nullptr) {
+        table->AddTileGroupWithOidForRecovery(tg_block);
+        tg = table->GetTileGroupById(tg_block);
+        catalog::Manager::GetInstance().GetNextTileGroupId();
+      }
+
+      std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+      for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
+        type::Value val = type::Value::DeserializeFrom(
+                record_decode, schema->GetColumn(oid).GetType());
+        tuple->SetValue(oid, val, pool.get());
+      }
+
+      if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
+
+
+        if (table_id == DATABASE_CATALOG_OID) {
+
+          LOG_INFO("REPLAYING INSERT TO PG_DATABASE");
+
+          // insert tuple into pg_database
+          InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
+
+          auto storage_manager = storage::StorageManager::GetInstance();
+          auto pg_database  = catalog::DatabaseCatalog::GetInstance();
+
+          auto database_oid = tuple->GetValue(0).GetAs<oid_t>();
+          auto database_name = tuple->GetValue(1).ToString();
+
+          storage::Database *database = new storage::Database(database_oid);
+          database->setDBName(database_name);
+
+          // register database with storage manager
+          storage_manager->AddDatabaseToStorageManager(database);
+
+          // update database oid to prevent oid reuse after recovery
+          pg_database->GetNextOid();
+
+        } else if (table_id == TABLE_CATALOG_OID) {
+
+          LOG_INFO("REPLAYING INSERT TO PG_TABLE");
+
+          // insert table info into pg_table
+          InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
+
+          // update table oid to prevent oid reuse after recovery
+          catalog::TableCatalog::GetInstance()->GetNextOid();
+          tuple_table_create = std::move(tuple);
+          pending_table_create = true;
+
+        } else if (table_id == COLUMN_CATALOG_OID) {
+
+          LOG_INFO("REPLAYING INSERT TO PG_COLUMN");
+
+          // insert tuple into pg_column - one for every attribute in the schema
+          InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
+
+          // update column oid to prevent oid reuse after recovery
+          catalog::ColumnCatalog::GetInstance()->GetNextOid();
+
+          bool is_inline = true;
+
+          std::string typeId = tuple->GetValue(4).ToString();
+          type::TypeId column_type = StringToTypeId(typeId);
+
+          if (column_type == type::TypeId::VARCHAR ||
+              column_type == type::TypeId::VARBINARY) {
+              is_inline = false;
+          }
+
+          catalog::Column tmp_col(column_type,
+                                  type::Type::GetTypeSize(column_type),
+                                  tuple->GetValue(1).ToString(), is_inline,
+                                  tuple->GetValue(1).GetAs<oid_t>());
+
+          uint index = stoi(tuple->GetValue(2).ToString());
+
+          if (index >= columns.size()) {
+            columns.resize(index + 1);
+          }
+          columns[index] = tmp_col;
+
+        } else if (table_id == INDEX_CATALOG_OID) {
+          LOG_INFO("REPLAYING INSERT TO PG_INDEX");
+
+        }
+      }
+    }
+
+    else if(record_type==LogRecordType::TUPLE_UPDATE) {
+      LOG_INFO("Replaying TUPLE_UPDATE");
+    }
+
+    else if(record_type==LogRecordType::TRANSACTION_BEGIN) {
+      LOG_INFO("Replaying TXN_BEGIN");
+    }
+
+    else if(record_type==LogRecordType::TRANSACTION_COMMIT) {
+      LOG_INFO("Replaying TXN_COMMIT");
+    }
+
+    else if(record_type==LogRecordType::TRANSACTION_ABORT) {
+      LOG_ERROR("Shouldn't be replaying TXN_ABORT");
+      PL_ASSERT(false);
+    }
+
     curr_offset += record_len;
     total_len -= record_len + sizeof(int);
+  }
+
+  if(pending_table_create) {
+    CreateTableOnRecovery(tuple_table_create, columns);
   }
 
 }
