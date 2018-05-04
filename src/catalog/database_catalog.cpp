@@ -165,6 +165,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
       //search under public namespace
       return GetTableObjectHelper(table_name, DEFAULT_SCHEMA_NAME, cached_only);
     }
+    return table_object;
   }
   //search under a specific namespace
   return GetTableObjectHelper(table_name, schema_name, cached_only);
