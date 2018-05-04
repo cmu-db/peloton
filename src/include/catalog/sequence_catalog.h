@@ -40,8 +40,6 @@
 #include "catalog/catalog_defaults.h"
 #include "catalog/system_catalogs.h"
 
-#define SEQUENCE_CATALOG_NAME "pg_sequence"
-
 namespace peloton {
 
 namespace concurrency {
@@ -79,12 +77,12 @@ class SequenceCatalogObject {
   bool seq_cycle;         // Whether the sequence cycles
   concurrency::TransactionContext *txn_;
 
-  int64_t GetNextVal() {
-    return get_next_val();
-  };
+  int64_t seq_prev_val;
+
+  int64_t GetNextVal();
 
   int64_t GetCurrVal() {
-    return seq_curr_val;
+    return seq_prev_val;
   };
 
   void SetCurrVal(int64_t curr_val) {
@@ -94,7 +92,6 @@ class SequenceCatalogObject {
 
  private:
   int64_t seq_curr_val;
-  int64_t get_next_val();
 };
 
 class SequenceCatalog : public AbstractCatalog {
@@ -149,6 +146,32 @@ class SequenceCatalog : public AbstractCatalog {
 
  private:
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
+
+  void ValidateSequenceArguments(int64_t seq_increment, int64_t seq_max,
+     int64_t seq_min, int64_t seq_start) {
+    if (seq_min > seq_max) {
+        throw SequenceException(
+            StringUtil::Format(
+              "MINVALUE (%d) must be less than MAXVALUE (%d)", seq_min, seq_max));
+    }
+
+    if (seq_increment == 0) {
+        throw SequenceException(
+            StringUtil::Format("INCREMENT must not be zero"));
+    }
+
+    if (seq_increment > 0 && seq_start < seq_min) {
+        throw SequenceException(
+            StringUtil::Format(
+              "START value (%d) cannot be less than MINVALUE (%d)", seq_start, seq_min));
+    }
+
+    if (seq_increment < 0 && seq_start > seq_max) {
+        throw SequenceException(
+            StringUtil::Format(
+              "START value (%d) cannot be greater than MAXVALUE (%d)", seq_start, seq_max));
+    }
+  };
 };
 
 }  // namespace catalog

@@ -214,9 +214,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       seq_increment = parse_tree->seq_increment;
       seq_max_value = parse_tree->seq_max_value;
       seq_min_value = parse_tree->seq_min_value;
-      seq_cache = parse_tree->seq_cache;
       seq_cycle = parse_tree->seq_cycle;
-
       break;
     }
     default:

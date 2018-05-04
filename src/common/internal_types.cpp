@@ -560,6 +560,8 @@ std::string QueryTypeToString(QueryType query_type) {
       return "CREATE TRIGGER";
     case QueryType::QUERY_CREATE_SCHEMA:
       return "CREATE SCHEMA";
+    case QueryType::QUERY_CREATE_SEQUENCE:
+      return "CREATE SEQUENCE";
     case QueryType::QUERY_CREATE_VIEW:
       return "CREATE VIEW";
     case QueryType::QUERY_DROP:
@@ -621,6 +623,7 @@ QueryType StringToQueryType(const std::string &str) {
       {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
       {"CREATE SCHEMA", QueryType::QUERY_CREATE_SCHEMA},
       {"CREATE VIEW", QueryType::QUERY_CREATE_VIEW},
+      {"CREATE SEQUENCE", QueryType::QUERY_CREATE_SEQUENCE},
       {"OTHER", QueryType::QUERY_OTHER},
   };
   std::unordered_map<std::string, QueryType>::iterator it =

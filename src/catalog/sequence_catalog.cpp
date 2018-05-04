@@ -35,14 +35,16 @@ namespace catalog {
  * @exception throws SequenceException if the sequence exceeds the upper/lower
  * limit.
  */
-int64_t SequenceCatalogObject::get_next_val() {
+int64_t SequenceCatalogObject::GetNextVal() {
   int64_t result = seq_curr_val;
+  seq_prev_val = result;
   if (seq_increment > 0) {
     if ((seq_max >= 0 && seq_curr_val > seq_max - seq_increment) ||
         (seq_max < 0 && seq_curr_val + seq_increment > seq_max)) {
       if (!seq_cycle) {
         throw SequenceException(
-            StringUtil::Format("Sequence exceeds upper limit!"));
+            StringUtil::Format(
+              "nextval: reached maximum value of sequence %s (%ld)", seq_name.c_str(), seq_max));
       }
       seq_curr_val = seq_min;
     } else
@@ -52,7 +54,8 @@ int64_t SequenceCatalogObject::get_next_val() {
         (seq_min >= 0 && seq_curr_val + seq_increment < seq_min)) {
       if (!seq_cycle) {
         throw SequenceException(
-            StringUtil::Format("Sequence exceeds lower limit!"));
+            StringUtil::Format(
+              "nextval: reached minimum value of sequence %s (%ld)", seq_name.c_str(), seq_min));
       }
       seq_curr_val = seq_max;
     } else
@@ -91,7 +94,7 @@ SequenceCatalog::SequenceCatalog(const std::string &database_name,
 
 SequenceCatalog::~SequenceCatalog() {}
 
-/* @brief   Delete the sequence by name.
+/* @brief   Insert the sequence by name.
  * @param   database_oid  the databse_oid associated with the sequence
  * @param   sequence_name the name of the sequence
  * @param   seq_increment the increment per step of the sequence
@@ -113,9 +116,11 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
                                      concurrency::TransactionContext *txn) {
   LOG_DEBUG("Insert Sequence Database Oid: %u", database_oid);
   LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
+
+  ValidateSequenceArguments(seq_increment, seq_max, seq_min, seq_start);
   if (GetSequence(database_oid, sequence_name, txn) != nullptr) {
     throw SequenceException(
-        StringUtil::Format("Cannot insert Sequence with Duplicate Sequence Name: %s",
+        StringUtil::Format("Sequence %s already exists!",
                            sequence_name.c_str()));
   }
 
@@ -151,16 +156,14 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
  * @param   database_oid  the databse_oid associated with the sequence
  * @param   sequence_name the name of the sequence
  * @param   txn           current transaction
- * @return  ResultType::SUCCESS if the sequence exists, ResultType::FAILURE
+ * @return  ResultType::SUCCESS if the sequence exists, throw exception
  * otherwise.
  */
 ResultType SequenceCatalog::DropSequence(const std::string &database_name,
                                          const std::string &sequence_name,
                                          concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    LOG_TRACE("Do not have transaction to drop sequence: %s",
-              database_name.c_str());
-    return ResultType::FAILURE;
+    throw CatalogException("Transaction is invalid!");
   }
 
   auto database_object =
@@ -171,8 +174,9 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
       ->GetSequenceCatalog()
       ->GetSequenceOid(sequence_name, database_object->GetDatabaseOid(), txn);
   if (sequence_oid == INVALID_OID) {
-    LOG_TRACE("Cannot find sequence %s to drop!", sequence_name.c_str());
-    return ResultType::FAILURE;
+    throw SequenceException(
+        StringUtil::Format("Sequence %s does not exist!",
+                           sequence_name.c_str()));
   }
 
   LOG_INFO("sequence %d will be deleted!", sequence_oid);
@@ -210,8 +214,8 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
     oid_t database_oid, const std::string &sequence_name,
     concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
-      {ColumnId::SEQUENCE_OID, ColumnId::SEQUENCE_NAME,
-       ColumnId::SEQUENCE_START, ColumnId::SEQUENCE_INC, ColumnId::SEQUENCE_MAX,
+      {ColumnId::SEQUENCE_OID, ColumnId::SEQUENCE_START,
+       ColumnId::SEQUENCE_INC, ColumnId::SEQUENCE_MAX,
        ColumnId::SEQUENCE_MIN, ColumnId::SEQUENCE_CYCLE,
        ColumnId::SEQUENCE_VALUE});
   oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
@@ -222,7 +226,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   // the result is a vector of executor::LogicalTile
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  // carefull! the result tile could be null!
+  // careful! the result tile could be null!
   if (result_tiles == nullptr || result_tiles->size() == 0) {
     LOG_INFO("no sequence on database %d and %s", database_oid,
              sequence_name.c_str());
@@ -237,13 +241,13 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   auto new_sequence = std::make_shared<SequenceCatalogObject>(
       (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>(),
       database_oid,
-      (*result_tiles)[0]->GetValue(0, 1).ToString(),
+      sequence_name,
+      (*result_tiles)[0]->GetValue(0, 1).GetAs<int64_t>(),
       (*result_tiles)[0]->GetValue(0, 2).GetAs<int64_t>(),
       (*result_tiles)[0]->GetValue(0, 3).GetAs<int64_t>(),
       (*result_tiles)[0]->GetValue(0, 4).GetAs<int64_t>(),
-      (*result_tiles)[0]->GetValue(0, 5).GetAs<int64_t>(),
-      (*result_tiles)[0]->GetValue(0, 6).GetAs<bool>(),
-      (*result_tiles)[0]->GetValue(0, 7).GetAs<int64_t>(), txn);
+      (*result_tiles)[0]->GetValue(0, 5).GetAs<bool>(),
+      (*result_tiles)[0]->GetValue(0, 6).GetAs<int64_t>(), txn);
 
   return new_sequence;
 }
@@ -288,10 +292,7 @@ oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name,
   }
 
   PELOTON_ASSERT(result_tiles->size() == 1);
-  oid_t result;
-  result = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
-
-  return result;
+  return (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
 }
 
 }  // namespace catalog

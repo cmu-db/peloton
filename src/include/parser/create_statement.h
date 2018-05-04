@@ -265,13 +265,10 @@ class CreateStatement : public TableRefStatement {
 
   // attributes related to sequences
   std::string sequence_name;
-  std::unique_ptr<TableRef> table;  // deal with RangeVar
   int64_t seq_start = 1;
   int64_t seq_increment = 1;
   int64_t seq_max_value = LONG_MAX;
   int64_t seq_min_value = 1;
-  int64_t seq_cache;  // sequence cache size, probably won't be supported in
-                      // this project
   bool seq_cycle = false;
 };
 

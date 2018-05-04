@@ -314,6 +314,8 @@ bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
               ResultTypeToString(txn->GetResult()).c_str());
   }
 
+  // Notice this action will always return true, since any exception
+  // will be handled in CreateSequence function in SequencCatalog.
   return (true);
 }
 
