@@ -967,7 +967,6 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
       new CreateStatement(CreateStatement::CreateType::kTable);
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
-
   if (relation->relpersistence == 't') {
     result->is_temp_table = true;
   }

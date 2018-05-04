@@ -156,7 +156,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
-
+      tree->SetSessionNamespace(session_namespace_);
       // This is adapted from the simple optimizer
       auto create_plan =
           new planner::CreatePlan((parser::CreateStatement *)tree);
