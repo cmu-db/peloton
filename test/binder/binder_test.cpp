@@ -81,7 +81,8 @@ void SetupTables(std::string database_name) {
 
     auto parse_tree_list = parser.BuildParseTree(sql);
     auto parse_tree = parse_tree_list->GetStatement(0);
-    auto bind_node_visitor = binder::BindNodeVisitor(txn, database_name);
+    auto bind_node_visitor =
+        binder::BindNodeVisitor(txn, database_name, DEFAULT_SCHEMA_NAME);
     bind_node_visitor.BindNameToNode(parse_tree);
 
     statement->SetPlanTree(
@@ -113,8 +114,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, default_database_name));
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(
+      txn, default_database_name, DEFAULT_SCHEMA_NAME));
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
       "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -127,14 +128,12 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableA_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "a", txn)
-                         ->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableA_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    DEFAULT_SCHEMA_NAME, "a", txn)->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    DEFAULT_SCHEMA_NAME, "b", txn)->GetOid();
   txn_manager.CommitTransaction(txn);
 
   // Check select_list
@@ -192,7 +191,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   LOG_INFO("Checking duplicate alias and table name.");
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn, default_database_name));
+  binder.reset(new binder::BindNodeVisitor(txn, default_database_name,
+                                           DEFAULT_SCHEMA_NAME));
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement *>(
@@ -208,7 +208,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn, default_database_name));
+  binder.reset(new binder::BindNodeVisitor(txn, default_database_name,
+                                           DEFAULT_SCHEMA_NAME));
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement *>(
@@ -227,7 +228,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn, default_database_name));
+  binder.reset(new binder::BindNodeVisitor(txn, default_database_name,
+                                           DEFAULT_SCHEMA_NAME));
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement *>(
@@ -260,14 +262,13 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    DEFAULT_SCHEMA_NAME, "b", txn)->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
-  unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, default_database_name));
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(
+      txn, default_database_name, DEFAULT_SCHEMA_NAME));
 
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt = dynamic_cast<parser::DeleteStatement *>(
@@ -302,8 +303,8 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, default_database_name));
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(
+      txn, default_database_name, DEFAULT_SCHEMA_NAME));
   string selectSQL =
       "SELECT A.a1 FROM A WHERE A.a1 IN (SELECT b1 FROM B WHERE b1 = 2 AND b2 "
       "> (SELECT a1 FROM A WHERE a2 > 0)) "
@@ -351,8 +352,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
       in_sub_expr_select_where_right->GetChild(1);
   auto in_sub_expr_select_where_right_sub_select =
       dynamic_cast<const expression::SubqueryExpression *>(
-          in_sub_expr_select_where_right_sub)
-          ->GetSubSelect();
+          in_sub_expr_select_where_right_sub)->GetSubSelect();
   auto in_sub_expr_select_where_right_sub_select_where =
       in_sub_expr_select_where_right_sub_select->where_clause.get();
   auto in_sub_expr_select_where_right_sub_select_ele =
@@ -391,7 +391,7 @@ TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
   auto parse_tree = parser.BuildParseTree(function_sql);
   auto stmt = parse_tree->GetStatement(0);
   unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME));
   EXPECT_THROW(binder->BindNameToNode(stmt), peloton::Exception);
 
   function_sql = "SELECT substr('test123', 2, 3)";

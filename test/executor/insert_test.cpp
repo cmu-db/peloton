@@ -57,7 +57,8 @@ TEST_F(InsertTests, InsertRecord) {
       std::move(table_schema), txn);
 
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "TEST_TABLE", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "TEST_TABLE",
+      txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();

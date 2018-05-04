@@ -72,8 +72,9 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         TEST_TABLE_NAME, txn);
+  auto table =
+      catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, TEST_TABLE_NAME, txn);
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
@@ -181,8 +182,9 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         TEST_TABLE_NAME, txn);
+  auto table =
+      catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, TEST_TABLE_NAME, txn);
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();

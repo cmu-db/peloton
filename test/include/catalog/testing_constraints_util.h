@@ -138,8 +138,9 @@ class TestingConstraintsUtil {
     EXPECT_EQ(ResultType::SUCCESS, result);
 
     txn = txn_manager.BeginTransaction();
-    auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                           table_name, txn);
+    auto table =
+        catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                  DEFAULT_SCHEMA_NAME, table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_NE(nullptr, table);
 

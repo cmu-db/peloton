@@ -61,7 +61,7 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
 
   txn = txn_manager.BeginTransaction();
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         "test", txn);
+                                         DEFAULT_SCHEMA_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
@@ -112,7 +112,7 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
 
   txn = txn_manager.BeginTransaction();
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         "test", txn);
+                                         DEFAULT_SCHEMA_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();

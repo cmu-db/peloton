@@ -56,8 +56,9 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn = txn_manager.BeginTransaction();
   catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
                        std::move(table_schema), txn);
-  auto source_table = catalog->GetTableWithName(
-      TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table", txn);
+  auto source_table =
+      catalog->GetTableWithName(TEST_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, "test_table", txn);
   EXPECT_NE(source_table, nullptr);
   txn_manager.CommitTransaction(txn);
 
@@ -67,16 +68,16 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   source_col_ids.push_back(col_id);
 
   // create index on 'id'
-  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
-                       source_col_ids, "test_id_idx", false, IndexType::BWTREE,
-                       txn);
+  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME,
+                       "test_table", source_col_ids, "test_id_idx", false,
+                       IndexType::BWTREE, txn);
 
   // create index on 'id' and 'first_name'
   col_id = source_table->GetSchema()->GetColumnID(fname_column.column_name);
   source_col_ids.push_back(col_id);
 
-  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
-                       source_col_ids, "test_fname_idx", false,
+  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME,
+                       "test_table", source_col_ids, "test_fname_idx", false,
                        IndexType::BWTREE, txn);
   txn_manager.CommitTransaction(txn);
 
@@ -90,8 +91,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   // And two indexes on following columns:
   // 1) id
   // 2) id and first_name
-  auto table_object =
-      db_object->GetTableObject("test_table", DEFAULT_SCHEMA_NAME);
+  auto table_object = db_object->GetTableObject(
+      "test_table", DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME);
   EXPECT_NE(table_object, nullptr);
   oid_t id_idx_oid = table_object->GetIndexObject("test_id_idx")->GetIndexOid();
   oid_t fname_idx_oid =
@@ -204,8 +205,9 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
-  auto source_table = catalog->GetTableWithName(
-      TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table", txn);
+  auto source_table =
+      catalog->GetTableWithName(TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, "test_table", txn);
   txn_manager.CommitTransaction(txn);
 
   oid_t table_id = source_table->GetOid();
@@ -234,8 +236,9 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
-  auto source_table_job = catalog->GetTableWithName(
-      TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table_job", txn);
+  auto source_table_job =
+      catalog->GetTableWithName(TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, "test_table_job", txn);
   oid_t table_job_id = source_table_job->GetOid();
   oid_t age_col_oid =
       source_table_job->GetSchema()->GetColumnID(age_column.column_name);
@@ -258,7 +261,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, TEST_DB_COLUMNS);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(sql_stmt);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
