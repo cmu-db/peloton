@@ -91,6 +91,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
 
   // Create indexes on catalog tables, insert them into pg_index
   // actual index already added in
+    /*
   system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
@@ -156,6 +157,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1", TABLE_CATALOG_OID,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {TableCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
+      */
 
   // Insert records(default + pg_catalog namespace) into pg_namespace
   system_catalogs->GetSchemaCatalog()->InsertSchema(
@@ -239,9 +241,9 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   // add core & non-core system catalog tables into database
-//  LOG_INFO("begin bootstrap %s", database_name.c_str());
-//  BootstrapSystemCatalogs(database, txn);
-//  LOG_INFO("end bootstrap %s", database_name.c_str());
+  LOG_INFO("begin bootstrap %s", database_name.c_str());
+  BootstrapSystemCatalogs(database, txn);
+  LOG_INFO("end bootstrap %s", database_name.c_str());
   catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
