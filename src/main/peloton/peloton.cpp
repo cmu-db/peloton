@@ -13,7 +13,7 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
-#include <include/brain/catalog_sync_brain_job.h>
+#include "brain/catalog_sync_brain_job.h"
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
@@ -60,9 +60,8 @@ void RunPelotonBrain() {
   one_minute.tv_sec = 60;
   one_minute.tv_usec = 0;
 
-  auto example_task = [](peloton::brain::BrainEnvironment *) {
-    // TODO(tianyu): Replace with real address
-    capnp::EzRpcClient client("localhost:15445");
+  auto example_task = [](peloton::brain::BrainEnvironment *env) {
+    capnp::EzRpcClient &client = env->GetPelotonClient();
     PelotonService::Client peloton_service = client.getMain<PelotonService>();
     auto request = peloton_service.createIndexRequest();
     request.getRequest().setIndexKeys(42);

@@ -43,7 +43,7 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
                       "column_name       VARCHAR, "
                       "has_index         BOOLEAN,"
                       "PRIMARY KEY(database_id, table_id, column_id));",
-                      txn) { ;
+                      txn) {
   // non-unique key: (database_id, table_id)
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, COLUMN_STATS_CATALOG_NAME, {0, 1},

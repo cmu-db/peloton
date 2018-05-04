@@ -181,6 +181,7 @@ void PlanExecutor::ExecutePlan(
         ->GetQueryLatencyMetric()
         .RecordLatency();
     stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectQueryEnd();
+
   }
 }
 

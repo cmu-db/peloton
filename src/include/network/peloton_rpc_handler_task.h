@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include <include/concurrency/transaction_manager_factory.h>
+#include "concurrency/transaction_manager_factory.h"
 #include "capnp/ez-rpc.h"
 #include "capnp/message.h"
 #include "common/dedicated_thread_task.h"
