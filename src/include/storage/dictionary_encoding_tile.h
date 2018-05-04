@@ -128,7 +128,6 @@ class DictEncodedTile : public Tile {
   std::unordered_map<type::Value, uint8_t, type::Value::hash, type::Value::compress_equal_to> dict;
 	// columns being encoded
   std::map<oid_t, oid_t> dict_encoded_columns;
-//	std::set<oid_t> dict_encoded_columns;
 	// original schema
   catalog::Schema original_schema;
 	// original column offset

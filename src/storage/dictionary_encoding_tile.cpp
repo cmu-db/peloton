@@ -110,7 +110,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 		if (dict_encoded_columns.count(column_idx) > 0) {
 			LOG_DEBUG("encoding column %s", schema.GetColumn(column_idx).column_name.c_str());
 			for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
-				type::Value curr_old_val = tile->GetValue(tuple_offset, i);
+				type::Value curr_old_val = tile->GetValue(tuple_offset, column_idx);
 				type::Value curr_val;
 				if (curr_old_val.GetTypeId() == type::TypeId::VARBINARY) {
 					curr_val = type::ValueFactory::GetVarbinaryValue((const unsigned char*) curr_old_val.GetData(),
@@ -182,11 +182,11 @@ Tile* DictEncodedTile::DictDecode() {
     	}
 	}
 
-  	auto *new_tile = new Tile(backend_type, tile_group_header, *GetSchema(), tile_group, num_tuple_slots);
-  	for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
+	auto *new_tile = new Tile(backend_type, tile_group_header, *GetSchema(), tile_group, num_tuple_slots);
+  for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
 		for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
 			new_tile->SetValueFast(new_data_vector[column_idx][tuple_offset], tuple_offset, 
-				original_schema.GetOffset(column_idx), original_schema.IsInlined(i),
+				original_schema.GetOffset(column_idx), original_schema.IsInlined(column_idx),
 				type::Type::GetTypeSize(original_schema.GetType(column_idx)));
 		}
 	}

@@ -34,3 +34,14 @@ The core shit: GetColumnLayouts, columnLayouts (codegen/tile_group.cpp and h) an
 
 
 yes, it is fucking load column.
+
+
+
+varlen_ptrs: 0x00007f832515e8f0
+0x7f8325211790
+0x7f8325054540
+0x7f8325216530
+0x7f832515e908
+
+
+one thing, the codegen code may have use original tile schema

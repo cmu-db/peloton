@@ -27,17 +27,7 @@ TEST_F(CompressionSelectTest, BasicTest) {
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE foo(id integer, name varchar(32));");
-//  int i;
   std::string testTableName = "foo";
-//  std::string s = "'", t = "'";
-//  for (i = 0; i < 32; i++) {
-//    s += "a";
-//    t = s + "'";
-//    std::string os =
-//        "insert into foo values(" + std::to_string(i) + ", " + t + ");";
-//    TestingSQLUtil::ExecuteSQLQuery(os);
-//  }
-//  EXPECT_EQ(i, 32);
 
 	TestingSQLUtil::ExecuteSQLQuery("insert into foo values(1, 'taodai')");
 	TestingSQLUtil::ExecuteSQLQuery("insert into foo values(2, 'bohan')");
@@ -45,7 +35,6 @@ TEST_F(CompressionSelectTest, BasicTest) {
 	txn_manager.CommitTransaction(txn);
 	LOG_INFO("insert finish");
 	txn = txn_manager.BeginTransaction();
-//  auto database_object = catalog::DatabaseCatalog::GetInstance()->GetDatabaseObject(DEFAULT_DB_NAME, txn);
 	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, testTableName, txn);
 	auto TGiterator = new storage::TileGroupIterator(dataTable_object);
 	std::shared_ptr<storage::TileGroup> tg;
@@ -56,21 +45,6 @@ TEST_F(CompressionSelectTest, BasicTest) {
 			LOG_INFO("tile group not encoded. Encode now...");
 			tg->DictEncode();
 		}
-//		oid_t num_tile = tg->NumTiles();
-//		for (oid_t to = 0; to < num_tile; to++) {
-//			auto curr_tile = tg->GetTileReference(to);
-//			LOG_DEBUG("before curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
-//			std::shared_ptr<storage::Tile> encoded_tile =
-//				std::make_shared<storage::DictEncodedTile>(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr,
-//				curr_tile->GetAllocatedTupleCount());
-//			if (!curr_tile->IsDictEncoded()) {
-//				encoded_tile->DictEncode(curr_tile.get());
-//				LOG_DEBUG("encoded_tile isEncoded: %d, ptr: %p", encoded_tile->IsDictEncoded(), (void*) encoded_tile.get());
-//				tg->SetTile(to, encoded_tile);
-//			}
-//			curr_tile = tg->GetTileReference(to);
-//			LOG_DEBUG("after curr_tile id: %d, isEncoded: %d, ptr: %p", curr_tile->GetTileId(), curr_tile->IsDictEncoded(), (void *) curr_tile.get());
-//		}
 	}
 	delete TGiterator;
 
@@ -78,7 +52,6 @@ TEST_F(CompressionSelectTest, BasicTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 
-//  int rows_affected;
   std::ostringstream os;
   txn_manager.CommitTransaction(txn);
 
