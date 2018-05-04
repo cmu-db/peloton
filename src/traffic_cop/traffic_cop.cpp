@@ -613,7 +613,10 @@ void TrafficCop::DropTempTables() {
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  //drop all the temp tables under this namespace
   catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, temp_session_name_, txn);
+  //drop the schema
+  catalog::Catalog::GetInstance()->DropSchema(default_database_name_, temp_session_name_, txn);
   txn_manager.CommitTransaction(txn);
 }
 
