@@ -205,6 +205,12 @@ class ExpressionUtil {
     return new ConstantValueExpression(value);
   }
 
+  // Similar to the constructor of ComparisonExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original ComparisonExpression
+  // Constructor.
   static AbstractExpression *ComparisonFactory(ExpressionType type,
                                                AbstractExpression *left,
                                                AbstractExpression *right) {
@@ -220,6 +226,12 @@ class ExpressionUtil {
     return new ComparisonExpression(type, left, right);
   }
 
+  // Similar to the constructor of ConjunctionExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original ConjunctionExpression
+  // Constructor.
   static AbstractExpression *ConjunctionFactory(ExpressionType type,
                                                 AbstractExpression *left,
                                                 AbstractExpression *right) {
@@ -235,6 +247,12 @@ class ExpressionUtil {
     return new ConjunctionExpression(type, left, right);
   }
 
+  // Similar to the constructor of OperatorExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original OperatorExpression
+  // Constructor.
   static AbstractExpression *OperatorFactory(ExpressionType type,
                                              type::TypeId value_type,
                                              AbstractExpression *left,

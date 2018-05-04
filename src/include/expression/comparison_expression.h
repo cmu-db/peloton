@@ -24,7 +24,9 @@ namespace expression {
 class ComparisonExpression : public AbstractExpression {
  public:
   /**
-   * Comparison expression constructor
+   * Comparison expression constructor.
+   * Use expression::ExpressionUtil::ComparisonFactory instead of this
+   *constructor for constant folding.
    *
    * @param type The exact type of comparison (e.g., less-than, greater-than)
    * @param left The left side of the comparison
