@@ -43,17 +43,15 @@ class ThreadLevelStatsCollector {
    * @return the Collector for the calling thread
    */
   static ThreadLevelStatsCollector &GetCollectorForThread() {
-    static CollectorsMap collector_map;
     std::thread::id tid = std::this_thread::get_id();
-    return collector_map[tid];
+    return collector_map_[tid];
   }
 
   /**
    * @return A mapping from each thread to their assigned Collector
    */
   static CollectorsMap &GetAllCollectors() {
-    static CollectorsMap collector_map;
-    return collector_map;
+    return collector_map_;
   };
 
   ThreadLevelStatsCollector();
@@ -173,6 +171,8 @@ class ThreadLevelStatsCollector {
    */
   std::unordered_map<stats_event_type, MetricList, EnumHash<stats_event_type>>
       metric_dispatch_;
+
+  static CollectorsMap collector_map_;
 };
 
 }  // namespace stats

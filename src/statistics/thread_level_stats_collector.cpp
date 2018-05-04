@@ -13,6 +13,12 @@
 
 namespace peloton {
 namespace stats {
+using CollectorsMap =
+    tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
+                                  std::hash<std::thread::id>>;
+
+CollectorsMap ThreadLevelStatsCollector::collector_map_ = CollectorsMap();
+
 ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
   // TODO(tianyu): Write stats to register here
   if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(

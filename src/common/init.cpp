@@ -80,6 +80,7 @@ void PelotonInit::Initialize() {
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
 
+  // REMOVE LATER (Justin): force stats collection
   settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
                                     static_cast<int>(StatsModeType::ENABLE));
 

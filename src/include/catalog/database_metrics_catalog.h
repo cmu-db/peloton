@@ -27,7 +27,6 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
-#include "statistics/database_metric.h"
 
 #define DATABASE_METRICS_CATALOG_NAME "pg_database_metrics"
 

@@ -28,6 +28,7 @@
 #include "concurrency/transaction_context.h"
 #include "common/dedicated_thread_task.h"
 #include "thread_level_stats_collector.h"
+#include "type/ephemeral_pool.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

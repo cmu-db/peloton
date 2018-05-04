@@ -22,7 +22,7 @@ void CIRCULAR_BUFFER_TYPE::PushBack(ValueType value) {
 
 // Set the container capaciry
 CIRCULAR_BUFFER_TEMPLATE_ARGUMENTS
-void CIRCULAR_BUFFER_TYPE::SetCapaciry(size_t new_capacity) {
+void CIRCULAR_BUFFER_TYPE::SetCapacity(size_t new_capacity) {
   circular_buffer_.set_capacity(new_capacity);
 }
 
