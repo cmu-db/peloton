@@ -226,7 +226,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   oid_t database_oid = pg_database->GetNextOid();
 
   storage::Database *database = new storage::Database(database_oid);
-
+  LOG_INFO("get database");
   // TODO: This should be deprecated, dbname should only exists in pg_db
   database->setDBName(database_name);
   {
@@ -239,6 +239,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   // add core & non-core system catalog tables into database
+  LOG_INFO("begin bootstrap %s", database_name);
   BootstrapSystemCatalogs(database, txn);
   catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",

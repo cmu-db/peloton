@@ -217,7 +217,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
     std::string database_name, std::string schema_name, std::string table_name) {
   LOG_INFO("database name = %s", database_name.c_str());
-  LOG_INFO("table name = %s", table_name.c_str());
+
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
@@ -228,10 +228,12 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, value_column}));
 
+  LOG_INFO("schema name = %s", schema_name.c_str());
   auto catalog = catalog::Catalog::GetInstance();
   // Create Database and Table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  LOG_INFO("table name = %s", table_name.c_str());
   catalog->CreateDatabase(database_name, txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("create database %s", database_name.c_str());
