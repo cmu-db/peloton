@@ -72,8 +72,8 @@ class CompressedIdxConfigTest : public PelotonTest {
   }
 
   /**
-  * @brief Create a new table with schema (a INT, b INT, c INT).
-  */
+   * @brief Create a new table with schema (a INT, b INT, c INT).
+   */
   void CreateTable_B(const std::string &db_name,
                      const std::string &table_name) {
     auto a_column = catalog::Column(

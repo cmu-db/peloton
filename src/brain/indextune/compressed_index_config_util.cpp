@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// compressed_index_config.cpp
+// compressed_index_config_util.cpp
 //
-// Identification: src/brain/indextune/compressed_index_config.cpp
+// Identification: src/brain/indextune/compressed_index_config_util.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -15,19 +15,17 @@
 namespace peloton {
 namespace brain {
 
-void
-CompressedIndexConfigUtil::AddCandidates(
+void CompressedIndexConfigUtil::AddCandidates(
     CompressedIndexConfigContainer &container, const std::string &query,
-    boost::dynamic_bitset<>& add_candidates) {
+    boost::dynamic_bitset<> &add_candidates) {
   add_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto txn = container.GetTransactionManager()->BeginTransaction();
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
   std::vector<planner::col_triplet> affected_cols_vector =
-      planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache,
-          std::move(sql_stmt_list),
-          container.GetDatabaseName());
+      planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
+                                             std::move(sql_stmt_list),
+                                             container.GetDatabaseName());
   container.GetTransactionManager()->CommitTransaction(txn);
 
   // Aggregate all columns in the same table
@@ -71,11 +69,9 @@ CompressedIndexConfigUtil::AddCandidates(
   }
 }
 
-void
-CompressedIndexConfigUtil::DropCandidates(
-    CompressedIndexConfigContainer &container,
-    const std::string &query,
-    boost::dynamic_bitset<>& drop_candidates) {
+void CompressedIndexConfigUtil::DropCandidates(
+    CompressedIndexConfigContainer &container, const std::string &query,
+    boost::dynamic_bitset<> &drop_candidates) {
   drop_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
 
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
@@ -180,5 +176,5 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
     config_id_drop = drop_candidate_set.find_next(config_id_drop);
   }
 }
-}
-}
+}  // namespace brain
+}  // namespace peloton

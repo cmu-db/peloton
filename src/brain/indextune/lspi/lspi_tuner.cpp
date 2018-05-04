@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// lspi_tuner.cpp
+//
+// Identification: src/brain/indextune/lspi/lspi_tuner.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "brain/indextune/lspi/lspi_tuner.h"
 
 namespace peloton {
@@ -12,6 +24,7 @@ LSPIIndexTuner::LSPIIndexTuner(
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
   lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len));
   prev_config_vec = vector_eig::Zero(feat_len);
+  // Empty config
   prev_config_vec[0] = 1.0;
 }
 
@@ -59,7 +72,8 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   // Step 4: Update the LSPI model based on current most optimal query config
   lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
-  index_config_->AdjustIndexes(optimal_config_set);
+  // Still buggy will be fixed soon.
+  // index_config_->AdjustIndexes(optimal_config_set);
 }
 
 void LSPIIndexTuner::FindOptimalConfig(
@@ -90,7 +104,7 @@ void LSPIIndexTuner::FindOptimalConfig(
     index_id_rec = add_candidate_set.find_next(index_id_rec);
   }
   // Iterate through add candidates
-  size_t index_id_drop = add_candidate_set.find_first();
+  size_t index_id_drop = drop_candidate_set.find_first();
   while (index_id_drop != boost::dynamic_bitset<>::npos) {
     if (optimal_config_set.test(index_id_drop)) {
       // Make a copy of the current config
@@ -107,8 +121,8 @@ void LSPIIndexTuner::FindOptimalConfig(
       }
     }
     // We are done go to next
-    index_id_drop = add_candidate_set.find_next(index_id_drop);
+    index_id_drop = drop_candidate_set.find_next(index_id_drop);
   }
 }
-}
-}
+}  // namespace brain
+}  // namespace peloton

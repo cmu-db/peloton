@@ -2,21 +2,21 @@
 //
 //                         Peloton
 //
-// tensorflow_test.cpp
+// lspi_test.cpp
 //
-// Identification: test/brain/tensorflow_test.cpp
+// Identification: test/brain/lspi_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/indextune/lspi/rlse.h"
-#include "brain/indextune/lspi/lstd.h"
-#include "brain/util/eigen_util.h"
+#include <chrono>
 #include "brain/indextune/lspi/lspi_tuner.h"
+#include "brain/indextune/lspi/lstd.h"
+#include "brain/indextune/lspi/rlse.h"
+#include "brain/util/eigen_util.h"
 #include "common/harness.h"
 #include "sql/testing_sql_util.h"
-#include <chrono>
 
 namespace peloton {
 namespace test {
@@ -99,6 +99,8 @@ TEST_F(LSPITests, RLSETest) {
 }
 
 TEST_F(LSPITests, TuneTest) {
+  // Sanity test that all components are running
+  // Need more ri
   const std::string database_name = DEFAULT_DB_NAME;
   const std::string table_name = "dummy_table";
   const int num_rows = 200;
@@ -107,24 +109,31 @@ TEST_F(LSPITests, TuneTest) {
   CreateTable(table_name);
   InsertIntoTable(table_name, num_rows);
 
-  std::vector<std::string> query_strs;
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE a > 160 and a < 250");
-  query_strs.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE b > 190 and b < 250");
-  query_strs.push_back("UPDATE " + table_name +
-                       " SET a = 45 WHERE a < 1 or b > 4");
-
-  std::vector<double> query_latencies;
-  for (const auto &query_str : query_strs) {
-    auto latency = TimedExecuteQuery(query_str);
-    query_latencies.push_back(latency);
-  }
-
   brain::LSPIIndexTuner index_tuner(database_name);
 
-  index_tuner.Tune(query_strs, query_latencies);
+  std::vector<std::string> workload;
+  workload.push_back("SELECT * FROM " + table_name +
+                     " WHERE a > 160 and a < 250");
+  workload.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
+  workload.push_back("SELECT * FROM " + table_name +
+                     " WHERE b > 190 and b < 250");
+  workload.push_back("UPDATE " + table_name +
+                     " SET a = 45 WHERE a < 1 or b > 4");
+  int CATALOG_SYNC_INTERVAL = 2;
+
+  std::vector<double> query_latencies;
+  std::vector<std::string> query_strs;
+  for (size_t i = 1; i <= workload.size(); i++) {
+    auto query = workload[i - 1];
+    auto latency = TimedExecuteQuery(query);
+    query_strs.push_back(query);
+    query_latencies.push_back(latency);
+    if (i % CATALOG_SYNC_INTERVAL == 0) {
+      index_tuner.Tune(query_strs, query_latencies);
+      query_strs.clear();
+      query_latencies.clear();
+    }
+  }
 }
 
 }  // namespace test

@@ -14,12 +14,12 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include "brain/index_selection.h"
+#include "brain/util/eigen_util.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "brain/util/eigen_util.h"
 #include "planner/plan_util.h"
 
 namespace peloton {
@@ -69,10 +69,10 @@ class CompressedIndexConfigContainer {
   bool IsSet(const std::shared_ptr<brain::IndexObject> &index_obj) const;
 
   /**
-  * Check whether an index is in current configuration or not
-  * @param offset: the global offset of the index
-  * @return the bit for that index is set or not
-  */
+   * Check whether an index is in current configuration or not
+   * @param offset: the global offset of the index
+   * @return the bit for that index is set or not
+   */
   bool IsSet(const size_t offset) const;
 
   /**
@@ -139,7 +139,7 @@ class CompressedIndexConfigContainer {
    * @brief Get the Eigen vector/feature representation from the
    * provided config set
    */
-  void ToEigen(const boost::dynamic_bitset<>& config_set,
+  void ToEigen(const boost::dynamic_bitset<> &config_set,
                vector_eig &config_vec) const;
 
   /**
@@ -154,8 +154,9 @@ class CompressedIndexConfigContainer {
    * considered covered and set to 1.
    * @param config_vec: configuration vector to construct
    */
-  void ToCoveredEigen(const boost::dynamic_bitset<>& config_set,
+  void ToCoveredEigen(const boost::dynamic_bitset<> &config_set,
                       vector_eig &config_vec) const;
+
  private:
   std::string database_name_;
   catalog::Catalog *catalog_;
@@ -215,5 +216,5 @@ class CompressedIndexConfigContainer {
 
   std::unique_ptr<boost::dynamic_bitset<>> cur_index_config_;
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton

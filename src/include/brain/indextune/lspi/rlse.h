@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// rlse.h
+//
+// Identification: src/include/brain/indextune/lspi/rlse.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "brain/util/eigen_util.h"
@@ -9,13 +21,14 @@
  *  [2] Cost Model Oblivious DB Tuning by Basu et. al.
  * Used for efficiently estimating the immediate cost of executing
  * a query on a given configuration.
- * TODO(saatvik): The formula used below is a reproduction from the code of [2]. Some parts of
- * the formulation don't match whats present in the literature. Might be worth revisiting.
+ * TODO(saatvik): The formula used below is a reproduction from the code of [2].
+ * Some parts of the formulation don't match whats present in the literature.
+ * Might be worth revisiting.
  */
 
-namespace peloton{
-namespace brain{
-class RLSEModel{
+namespace peloton {
+namespace brain {
+class RLSEModel {
  public:
   /**
    * Constructor for RLSE model: Initializes the
@@ -25,7 +38,7 @@ class RLSEModel{
    * Any changes to feature length will need model reinitialization
    * explicitly by the user
    */
-  explicit RLSEModel(size_t feat_len, double variance_init=1e-3);
+  explicit RLSEModel(size_t feat_len, double variance_init = 1e-3);
   /**
    * Update model weights
    * @param feat_vector: Feature vector(X) - Independent variables
@@ -35,13 +48,14 @@ class RLSEModel{
    * For example in Index tuning this should represent the cost of
    * running the workload with the current Index config
    */
-  void Update(const vector_eig& feat_vector, double true_val);
+  void Update(const vector_eig &feat_vector, double true_val);
   /**
    * Predicts the dependent variable(y) given the independent variable(X)
    * @param feat_vector: X
    * @return: y
    */
-  double Predict(const vector_eig& feat_vector) const;
+  double Predict(const vector_eig &feat_vector) const;
+
  private:
   // feature length
   size_t feat_len_;
@@ -50,5 +64,5 @@ class RLSEModel{
   // parameters of model
   vector_eig weights_;
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton

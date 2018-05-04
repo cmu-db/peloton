@@ -357,5 +357,5 @@ void CompressedIndexConfigContainer::AdjustIndexes(
 
   txn_manager_->CommitTransaction(txn);
 }
-}
-}
+}  // namespace brain
+}  // namespace peloton

@@ -1,19 +1,30 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// lspi_tuner.h
+//
+// Identification: src/include/brain/indextune/lspi/lspi_tuner.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
-#include <string>
 #include <memory>
-#include "brain/util/eigen_util.h"
-#include "brain/indextune/lspi/rlse.h"
-#include "brain/indextune/lspi/lstd.h"
+#include <string>
 #include "brain/indextune/compressed_index_config.h"
 #include "brain/indextune/compressed_index_config_util.h"
+#include "brain/indextune/lspi/lstd.h"
+#include "brain/indextune/lspi/rlse.h"
+#include "brain/util/eigen_util.h"
 
 /**
  * Least-Squares Policy Iteration based Index tuning
  * (Derived from Cost Model Oblivious DB Tuning by Basu et. al.)
  * This can be extended to any configuration knob tuning problem.
  * For now, we assume one instance of the tuner per database.
- * We apply TD(0): V(St)=V(St)+α[Rt+1+γV(St+1)−V(St)] with alpha = 0.
  */
 namespace peloton {
 namespace brain {
@@ -52,5 +63,5 @@ class LSPIIndexTuner {
   // Previous config feature vector
   vector_eig prev_config_vec;
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton

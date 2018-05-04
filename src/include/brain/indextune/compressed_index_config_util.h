@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// compressed_index_config.h
+// compressed_index_config_util.h
 //
-// Identification: src/include/brain/indextune/compressed_index_config.h
+// Identification: src/include/brain/indextune/compressed_index_config_util.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -14,14 +14,14 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include "brain/index_selection.h"
+#include "brain/indextune/compressed_index_config.h"
+#include "brain/util/eigen_util.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "brain/util/eigen_util.h"
 #include "planner/plan_util.h"
-#include "brain/indextune/compressed_index_config.h"
 
 namespace peloton {
 namespace brain {
@@ -29,28 +29,28 @@ namespace brain {
 class CompressedIndexConfigUtil {
  public:
   /**
- * Given a SQLStatementList, generate the prefix closure from the first
- * SQLStatement element
- * @param container: input container
- * @param query: query in question
- * @return the prefix closure as a bitset
- */
+   * Given a SQLStatementList, generate the prefix closure from the first
+   * SQLStatement element
+   * @param container: input container
+   * @param query: query in question
+   * @return the prefix closure as a bitset
+   */
   static void AddCandidates(CompressedIndexConfigContainer &container,
                             const std::string &query,
                             boost::dynamic_bitset<> &add_candidates);
   /**
-  * Given a SQLStatement, generate drop candidates
-  * @param container: input container
-  * @param sql_stmt: the SQLStatement
-  * @return the drop candidates
-  */
+   * Given a SQLStatement, generate drop candidates
+   * @param container: input container
+   * @param sql_stmt: the SQLStatement
+   * @return the drop candidates
+   */
   static void DropCandidates(CompressedIndexConfigContainer &container,
                              const std::string &query,
                              boost::dynamic_bitset<> &drop_candidates);
 
   /**
-  * @brief Return a bitset initialized using a list of indexes
-  */
+   * @brief Return a bitset initialized using a list of indexes
+   */
   static std::unique_ptr<boost::dynamic_bitset<>> GenerateBitSet(
       const CompressedIndexConfigContainer &container,
       const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
@@ -96,5 +96,5 @@ class CompressedIndexConfigUtil {
       CompressedIndexConfigContainer &container,
       const planner::col_triplet &idx_triplet);
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton
