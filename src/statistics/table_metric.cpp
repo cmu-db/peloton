@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/table_metrics_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "statistics/table_metric.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
@@ -26,6 +28,26 @@ void TableMetricRawData::Aggregate(AbstractRawData &other) {
       this_counter[i] += other_counter[i];
     }
   }
+}
+
+void TableMetricRawData::WriteToCatalog() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
+
+  for (auto &entry : counters_) {
+    oid_t database_oid = entry.first.first;
+    oid_t table_oid = entry.first.second;
+    auto &counts = entry.second;
+    catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
+        database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
+        counts[INSERT], counts[MEMORY_ALLOC], counts[MEMORY_USAGE], time_stamp,
+        nullptr, txn);
+  }
+
+  txn_manager.CommitTransaction(txn);
 }
 
 TableMetricOld::TableMetricOld(MetricType type, oid_t database_id,

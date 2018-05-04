@@ -16,10 +16,12 @@
 #include <sstream>
 
 #include "catalog/manager.h"
+#include "catalog/database_metrics_catalog.h"
 #include "common/internal_types.h"
 #include "statistics/counter_metric.h"
 #include "statistics/abstract_metric.h"
 #include "storage/tile_group.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace stats {
@@ -44,21 +46,21 @@ class DatabaseMetricRawData : public AbstractRawData {
   }
 
   // TODO(tianyu) Implement
-  void WriteToCatalog() override {}
+  void WriteToCatalog() override;
 
   const std::string GetInfo() const override { return ""; }
 
  private:
-   inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
-       oid_t tile_group_id) {
-     auto tile_group =
-         catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-     if (tile_group == nullptr) {
-       return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
-     }
-     return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
-                                    tile_group->GetTableId());
-   }
+  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+      oid_t tile_group_id) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) {
+      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
+    }
+    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
+                                   tile_group->GetTableId());
+  }
   /**
    * Maps from database id to a pair of counters.
    *
@@ -79,7 +81,8 @@ class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
     oid_t database_id = GetDBTableIdFromTileGroupOid(tile_group_id).first;
     GetRawData()->IncrementTxnAborted(database_id);
   }
-private:
+
+ private:
   inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
       oid_t tile_group_id) {
     auto tile_group =

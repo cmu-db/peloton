@@ -75,12 +75,11 @@ class TableMetricRawData : public AbstractRawData {
   void Aggregate(AbstractRawData &other) override;
 
   // TODO(justin) -- actually implement
-  void WriteToCatalog() override {}
+  void WriteToCatalog() override;
 
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
-
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 
@@ -100,8 +99,7 @@ class TableMetricRawData : public AbstractRawData {
 
 class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
-  inline void OnTupleRead(oid_t tile_group_id,
-                     size_t num_read) override {
+  inline void OnTupleRead(oid_t tile_group_id, size_t num_read) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     GetRawData()->IncrementTableReads(db_table_id, num_read);
   }
@@ -130,17 +128,18 @@ class TableMetric : public AbstractMetric<TableMetricRawData> {
                            size_t bytes) override {
     GetRawData()->DecrementTableMemAlloc(db_table_id, bytes);
   }
-  private:
-    inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
-        oid_t tile_group_id) {
-      auto tile_group =
-          catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-      if (tile_group == nullptr) {
-        return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
-      }
-      return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
-                                     tile_group->GetTableId());
+
+ private:
+  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+      oid_t tile_group_id) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) {
+      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
     }
+    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
+                                   tile_group->GetTableId());
+  }
 };
 /**
  * Metric for the access and memory of a table
