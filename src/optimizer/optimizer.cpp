@@ -159,18 +159,20 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       // This is adapted from the simple optimizer
       auto create_plan =
           new planner::CreatePlan((parser::CreateStatement *)tree);
+      //set create plan session namespace
+      create_plan->SetSessionNamespace(session_namespace_);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(), session_namespace_,
             create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
         auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(), session_namespace_,
             create_stmt->GetTableName(), txn);
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
@@ -211,6 +213,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
           static_cast<parser::AnalyzeStatement *>(tree), txn));
+      parse_tree->session_namespace = session_namespace_;
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -218,6 +221,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
+      parse_tree->session_namespace = session_namespace_;
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
@@ -230,6 +234,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
   QueryToOperatorTransformer converter(txn);
+  converter.SetSessionNamespace(session_namespace_);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;

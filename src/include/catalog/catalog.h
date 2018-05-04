@@ -104,6 +104,7 @@ class Catalog {
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &schema_name,
+                         const std::string &session_namespace,
                          const std::string &table_name,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, bool unique_keys,
@@ -137,6 +138,7 @@ class Catalog {
   // Drop a table using table name
   ResultType DropTable(const std::string &database_name,
                        const std::string &schema_name,
+                       const std::string &session_namespace,
                        const std::string &table_name,
                        concurrency::TransactionContext *txn);
   // Drop a table, use this one in the future
@@ -162,6 +164,7 @@ class Catalog {
    * */
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &schema_name,
+                                       const std::string &session_namespace,
                                        const std::string &table_name,
                                        concurrency::TransactionContext *txn);
 
@@ -180,6 +183,7 @@ class Catalog {
    * */
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &database_name, const std::string &schema_name,
+      const std::string &session_namespace, const std::string session_namespace,
       const std::string &table_name, concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
@@ -189,6 +193,13 @@ class Catalog {
    * Using database oid to get system catalog object
    */
   std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
+
+
+  /*
+   * Drop all the temporary tables created during a session
+   */
+  void Catalog::DropTempTables(const std::string &session_namespace,
+                             concurrency::TransactionContext *txn)
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

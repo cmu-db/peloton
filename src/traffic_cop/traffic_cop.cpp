@@ -314,7 +314,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   try {
     // Run binder
     auto bind_node_visitor = binder::BindNodeVisitor(
-        tcop_txn_state_.top().first, default_database_name_);
+        tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
     auto plan = optimizer_->BuildPelotonPlanTree(
@@ -382,7 +382,7 @@ bool TrafficCop::BindParamsForCachePlan(
   }
   // Run binder
   auto bind_node_visitor = binder::BindNodeVisitor(tcop_txn_state_.top().first,
-                                                   default_database_name_);
+                                                   default_database_name_, temp_session_name_);
 
   std::vector<type::Value> param_values;
   for (const std::unique_ptr<expression::AbstractExpression> &param :
@@ -585,7 +585,7 @@ ResultType TrafficCop::ExecuteStatement(
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
           auto bind_node_visitor = binder::BindNodeVisitor(
-              tcop_txn_state_.top().first, default_database_name_);
+              tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
           bind_node_visitor.BindNameToNode(
               statement->GetStmtParseTreeList()->GetStatement(0));
           auto plan = optimizer_->BuildPelotonPlanTree(
@@ -607,6 +607,28 @@ ResultType TrafficCop::ExecuteStatement(
     error_message_ = e.what();
     return ResultType::FAILURE;
   }
+}
+
+void TrafficCop::DropTempTables() {
+  // begin a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropTempTables(session_namespace_, txn);
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  pg_catalog->DropTempTables(session_namespace_, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+void TrafficCop::CreateTempSchema() {
+  // begin a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropTempTables(session_namespace_, txn);
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  pg_catalog->DropTempTables(session_namespace_, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace tcop

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 #include "expression/constant_value_expression.h"
@@ -41,7 +42,7 @@ class CopyStatement : public SQLStatement {
   const std::string GetInfo() const override;
 
   std::unique_ptr<TableRef> cpy_table;
-
+  std::string session_namespace = DEFAULT_SCHEMA_NAME;
   CopyType type;
 
   std::string file_path;

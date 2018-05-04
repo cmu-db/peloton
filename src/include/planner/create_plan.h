@@ -78,6 +78,12 @@ class CreatePlan : public AbstractPlan {
 
   std::string GetSchemaName() const { return schema_name; }
 
+  std::string GetSessionNamespace() const { return session_namespace_; }
+
+  std::string SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
+
   std::string GetDatabaseName() const { return database_name; }
 
   catalog::Schema *GetSchema() const { return table_schema; }
@@ -126,6 +132,9 @@ class CreatePlan : public AbstractPlan {
 
   // namespace Name
   std::string schema_name;
+
+  //session namespace;
+  std::string session_namespace_;
 
   // Database Name
   std::string database_name;

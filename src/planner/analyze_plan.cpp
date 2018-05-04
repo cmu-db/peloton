@@ -46,7 +46,7 @@ AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
     column_names_.push_back((char *)name.c_str());
   if (!table_name_.empty()) {
     target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-        analyze_stmt->GetDatabaseName(), analyze_stmt->GetSchemaName(),
+        analyze_stmt->GetDatabaseName(), analyze_stmt->GetSchemaName(), session_namespace_,
         table_name_, txn);
   }
 }
