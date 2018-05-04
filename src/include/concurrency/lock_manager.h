@@ -30,11 +30,19 @@ namespace concurrency {
 class LockManager {
  public:
 
+  //===--------------------------------------------------------------------===//
+  // Safe lock
+  //===--------------------------------------------------------------------===//
+  // Initial one of these after initialed lock on oid
+  // Remember to initial it as local variable
+  // It will automatically unlock the corresponding lock when the current scope
+  // exits (since the unlock logic is in its destructor).
   class SafeLock {
    public:
     // Type of locked read write locks.
     enum RWLockType { SHARED, EXCLUSIVE, INVALID };
 
+    // Default Constructor
     SafeLock(){
       oid_ = INVALID_OID;
       type_ = RWLockType::INVALID;
@@ -45,11 +53,13 @@ class LockManager {
       type_ = type;
     }
 
+    // Set the oid and type for the lock
     void Set(oid_t oid, RWLockType type){
       oid_ = oid;
       type_ = type;
     }
 
+    // Unlock the given lock in the constructor
     ~SafeLock(){
       LockManager *lm = LockManager::GetInstance();
       if (type_ == RWLockType::EXCLUSIVE){
@@ -60,6 +70,7 @@ class LockManager {
       }
     }
 
+   // Members
    private:
     oid_t oid_;
     RWLockType type_;
@@ -117,6 +128,7 @@ class LockManager {
   boost::upgrade_mutex internal_rw_lock_;
 
   // Map to store RW_LOCK for different objects
+  // Changed to shared_ptr for safety reasons
   std::map<oid_t, std::shared_ptr<boost::upgrade_mutex> > lock_map_;
 
   // Get RW lock by oid
