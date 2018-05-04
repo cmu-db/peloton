@@ -99,7 +99,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
   // TODO: support multi-statement queries
   auto parse_tree = parse_tree_list->GetStatement(0);
-
+  parse_tree->SetSessionNamespace(session_namespace_);
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // Handle ddl statement
@@ -147,8 +147,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   switch (stmt_type) {
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
-      unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan((parser::DropStatement *)tree));
+      planner::DropPlan* drop_plan_from_parser = new planner::DropPlan((parser::DropStatement *)tree);
+      drop_plan_from_parser->SetSessionNamespace(session_namespace_);
+      unique_ptr<planner::AbstractPlan> drop_plan(drop_plan_from_parser);
       ddl_plan = move(drop_plan);
       break;
     }
@@ -211,9 +212,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
+      parser::AnalyzeStatement *analyze_parse_tree = static_cast<parser::AnalyzeStatement *>(tree);
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          static_cast<parser::AnalyzeStatement *>(tree), txn));
-      parse_tree->session_namespace = session_namespace_;
+          analyze_parse_tree, txn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -221,7 +222,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      parse_tree->session_namespace = session_namespace_;
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }

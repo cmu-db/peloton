@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "parser/create_statement.h"
 #include "planner/abstract_plan.h"
 
@@ -80,7 +81,7 @@ class CreatePlan : public AbstractPlan {
 
   std::string GetSessionNamespace() const { return session_namespace_; }
 
-  std::string SetSessionNamespace(const std::string session_namespace) {
+  void SetSessionNamespace(const std::string session_namespace) {
     session_namespace_ = std::move(session_namespace);
   }
 
@@ -134,7 +135,7 @@ class CreatePlan : public AbstractPlan {
   std::string schema_name;
 
   //session namespace;
-  std::string session_namespace_;
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 
   // Database Name
   std::string database_name;

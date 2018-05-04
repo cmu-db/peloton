@@ -68,7 +68,6 @@ class AnalyzeStatement : public SQLStatement {
 
   std::unique_ptr<parser::TableRef> analyze_table;
   std::vector<std::string> analyze_columns;
-  std::string session_namespace = DEFAULT_SCHEMA_NAME;
 
   const std::string INVALID_NAME = "";
 };

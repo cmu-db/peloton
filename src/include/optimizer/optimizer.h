@@ -158,7 +158,7 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
-  std::string session_namespace_ = DEFUALT_SCHEMA_NAME;
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 };
 
 }  // namespace optimizer

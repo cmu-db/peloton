@@ -41,10 +41,12 @@ class AnalyzePlan : public AbstractPlan {
   explicit AnalyzePlan(storage::DataTable *table);
 
   explicit AnalyzePlan(std::string table_name, std::string schema_name,
+                       std::string session_namespace,
                        std::string database_name,
                        concurrency::TransactionContext *txn);
 
   explicit AnalyzePlan(std::string table_name, std::string schema_name,
+                        std::string session_namespace,
                        std::string database_name,
                        std::vector<char *> column_names,
                        concurrency::TransactionContext *txn);

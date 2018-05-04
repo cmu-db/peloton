@@ -40,7 +40,7 @@ LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
                       "lanname        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, LANGUAGE_CATALOG_NAME, {1},
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME,CATALOG_SCHEMA_NAME, LANGUAGE_CATALOG_NAME, {1},
       LANGUAGE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 

@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <cstring>
 
-#include "catalog/catalog_default.h"
+#include "catalog/catalog_defaults.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 #include "network/peloton_server.h"

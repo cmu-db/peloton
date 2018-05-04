@@ -45,12 +45,12 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
                       txn) {
   // unique key: (database_id, table_id, column_id)
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
       {0, 1, 2}, COLUMN_STATS_CATALOG_NAME "_skey0", true, IndexType::BWTREE,
       txn);
   // non-unique key: (database_id, table_id)
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
       {0, 1}, COLUMN_STATS_CATALOG_NAME "_skey1", false, IndexType::BWTREE,
       txn);
 }

@@ -56,7 +56,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         if (parse_tree->is_temp_table) {
           schema_name = parse_tree->GetSessionNamespace();
         } else {
-          schema_name = DEFUALT_SCHEMA_NAME;
+          schema_name = DEFAULT_SCHEMA_NAME;
         }
       }
       database_name = std::string(parse_tree->GetDatabaseName());

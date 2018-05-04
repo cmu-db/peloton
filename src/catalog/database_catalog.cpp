@@ -147,6 +147,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     const std::string &table_name, const std::string &schema_name,
+    const std::string &session_namespace,
     bool cached_only) {
   //no schema specified
   if (schema_name.empty()) {
@@ -162,7 +163,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     auto table_object = pg_table->GetTableObject(table_name, session_namespace, txn);
     if (table_object == nullptr) {
       //search under public namespace
-      return GetTableObjectHelper(table_name, DEFUALT_SCHEMA_NAME, cached_only);
+      return GetTableObjectHelper(table_name, DEFAULT_SCHEMA_NAME, cached_only);
     }
   }
   //search under a specific namespace

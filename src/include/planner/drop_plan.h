@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "concurrency/transaction_context.h"
 #include "planner/abstract_plan.h"
 
@@ -64,6 +65,12 @@ class DropPlan : public AbstractPlan {
 
   bool IsMissing() const { return missing; }
 
+  std::string GetSessionNamespace() const { return session_namespace_; }
+
+  void SetSessionNamespace(const std::string &session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
+
  private:
   DropType drop_type = DropType::TABLE;
 
@@ -75,6 +82,9 @@ class DropPlan : public AbstractPlan {
 
   // namespace Name
   std::string schema_name;
+
+  //session namespace
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 
   std::string trigger_name;
   std::string index_name;
