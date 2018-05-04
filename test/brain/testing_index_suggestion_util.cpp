@@ -30,7 +30,8 @@ namespace index_suggestion {
  * Creates a database.
  * @param db_name
  */
-TestingIndexSuggestionUtil::TestingIndexSuggestionUtil(std::string db_name) : database_name_(db_name) {
+TestingIndexSuggestionUtil::TestingIndexSuggestionUtil(std::string db_name)
+    : database_name_(db_name) {
   srand(time(NULL));
   CreateDatabase();
 }
@@ -51,8 +52,8 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
  * @param schema schema of the table to be created
  * @param num_tuples number of tuples to be inserted with random values.
  */
-void TestingIndexSuggestionUtil::CreateAndInsertIntoTable(std::string table_name, TableSchema schema,
-                                                          long num_tuples) {
+void TestingIndexSuggestionUtil::CreateAndInsertIntoTable(
+    std::string table_name, TableSchema schema, long num_tuples) {
   // Create table.
   std::ostringstream s_stream;
   s_stream << "CREATE TABLE " << table_name << " (";
@@ -114,29 +115,31 @@ void TestingIndexSuggestionUtil::GenerateTableStats() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   optimizer::StatsStorage *stats_storage =
-    optimizer::StatsStorage::GetInstance();
+      optimizer::StatsStorage::GetInstance();
   ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
   PELOTON_ASSERT(result == ResultType::SUCCESS);
-  (void) result;
+  (void)result;
   txn_manager.CommitTransaction(txn);
 }
 
 /**
- * Factory method to create a hypothetical index object. The returned object can be used
+ * Factory method to create a hypothetical index object. The returned object can
+ * be used
  * in the catalog or catalog cache.
  * @param table_name
  * @param index_col_names
  * @return
  */
 std::shared_ptr<brain::IndexObject>
-TestingIndexSuggestionUtil::CreateHypotheticalIndex(std::string table_name, std::vector<std::string> index_col_names) {
+TestingIndexSuggestionUtil::CreateHypotheticalIndex(
+    std::string table_name, std::vector<std::string> index_col_names) {
   // We need transaction to get table object.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   // Get the existing table so that we can find its oid and the cols oids.
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-    database_name_, table_name, txn);
+      database_name_, table_name, txn);
   auto col_obj_pairs = table_object->GetColumnObjects();
 
   std::vector<oid_t> col_ids;
@@ -187,7 +190,6 @@ void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
   std::string create_str = "DROP TABLE " + table_name + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
-
 }
 }
 }
