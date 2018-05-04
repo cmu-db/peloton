@@ -242,16 +242,6 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       database_name, schema_name, table_name, txn);
 
-  // Get table oid
-  oid_t table_oid = table_object->GetTableOid();
-
-  // Lock the table being indexed
-  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  bool lock_success = lm->LockExclusive(table_oid);
-  if (!lock_success) {
-    LOG_TRACE("Cannot obtain lock for the table!");
-  }
-
   // Create index in the catalog
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
       database_name, schema_name, table_name, key_attrs, index_name,

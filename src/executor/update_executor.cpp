@@ -170,8 +170,12 @@ bool UpdateExecutor::DExecute() {
   // Lock the table (reader lock)
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
   if (!lock_success) {
-    LOG_TRACE("Cannot obtain lock for the table, abort!");
+    LOG_TRACE("Cannot obtain lock for the table!");
+  }
+  else{
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
   }
 
   auto executor_pool = executor_context_->GetPool();
@@ -220,11 +224,6 @@ bool UpdateExecutor::DExecute() {
       if (visibility != VisibilityType::OK) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
-        // Unlock the table
-        bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success) {
-          LOG_TRACE("Cannot unlock the table, abort!");
-        }
         return false;
       }
     }
@@ -267,11 +266,6 @@ bool UpdateExecutor::DExecute() {
         }
         // When fail, ownership release is done inside PerformUpdatePrimaryKey
         else {
-          // Unlock the table
-          bool unlock_success = lm->UnlockShared(table_oid);
-          if (!unlock_success) {
-            LOG_TRACE("Cannot unlock the table, abort!");
-          }
           return false;
         }
       }
@@ -312,11 +306,6 @@ bool UpdateExecutor::DExecute() {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           transaction_manager.SetTransactionResult(current_txn,
                                                    ResultType::FAILURE);
-          // Unlock the table
-          bool unlock_success = lm->UnlockShared(table_oid);
-          if (!unlock_success) {
-            LOG_TRACE("Cannot unlock the table, abort!");
-          }
           return false;
         }
 
@@ -330,11 +319,6 @@ bool UpdateExecutor::DExecute() {
           }
           // When fail, ownership release is done inside PerformUpdatePrimaryKey
           else {
-            // Unlock the table
-            bool unlock_success = lm->UnlockShared(table_oid);
-            if (!unlock_success) {
-              LOG_TRACE("Cannot unlock the table, abort!");
-            }
             return false;
           }
         }
@@ -387,11 +371,6 @@ bool UpdateExecutor::DExecute() {
             }
             transaction_manager.SetTransactionResult(current_txn,
                                                      ResultType::FAILURE);
-            // Unlock the table
-            bool unlock_success = lm->UnlockShared(table_oid);
-            if (!unlock_success) {
-              LOG_TRACE("Cannot unlock the table, abort!");
-            }
             return false;
           }
 
@@ -453,11 +432,6 @@ bool UpdateExecutor::DExecute() {
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
-        // Unlock the table
-        bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success) {
-          LOG_TRACE("Cannot unlock the table, abort!");
-        }
         return false;
       }
     }
@@ -478,11 +452,6 @@ bool UpdateExecutor::DExecute() {
       trigger_list->ExecTriggers(TriggerType::ON_COMMIT_UPDATE_STATEMENT,
                                  current_txn);
     }
-  }
-  // Unlock the table
-  bool unlock_success = lm->UnlockShared(table_oid);
-  if (!unlock_success) {
-    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }

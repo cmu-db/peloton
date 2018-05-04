@@ -29,8 +29,44 @@ namespace concurrency {
 
 class LockManager {
  public:
-  // Type of locks. Currently only supports RW_LOCK
-  enum LockType { LOCK, RW_LOCK, SPIN_LOCK };
+
+  class SafeLock {
+   public:
+    // Type of locked read write locks.
+    enum RWLockType { SHARED, EXCLUSIVE, INVALID };
+
+    SafeLock(){
+      oid_ = INVALID_OID;
+      type_ = RWLockType::INVALID;
+    };
+
+    SafeLock(oid_t oid, RWLockType type){
+      oid_ = oid;
+      type_ = type;
+    }
+
+    void Set(oid_t oid, RWLockType type){
+      oid_ = oid;
+      type_ = type;
+    }
+
+    ~SafeLock(){
+      LockManager *lm = LockManager::GetInstance();
+      if (type_ == RWLockType::EXCLUSIVE){
+        lm->UnlockExclusive(oid_);
+      }
+      else if (type_ == RWLockType::SHARED){
+        lm->UnlockShared(oid_);
+      }
+    }
+
+   private:
+    oid_t oid_;
+    RWLockType type_;
+  };
+
+  // Type of locks. Currently only support RWLOCK
+  enum LockType { RW_LOCK };
 
   // Constructor
   LockManager() {}

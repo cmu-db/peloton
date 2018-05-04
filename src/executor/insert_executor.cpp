@@ -79,8 +79,12 @@ bool InsertExecutor::DExecute() {
   // Lock the table (reader lock)
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
   if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
+  else{
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
@@ -101,11 +105,6 @@ bool InsertExecutor::DExecute() {
   // Inserting a logical tile.
   if (children_.size() == 1) {
     if (!children_[0]->Execute()) {
-      // Unlock the table
-      bool unlock_success = lm->UnlockShared(table_oid);
-      if (!unlock_success) {
-        LOG_TRACE("Cannot unlock the table, abort!");
-      }
       return false;
     }
 
@@ -141,11 +140,6 @@ bool InsertExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(current_txn,
                                                  peloton::ResultType::FAILURE);
-        // Unlock the table
-        bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success) {
-          LOG_TRACE("Cannot unlock the table, abort!");
-        }
         return false;
       }
 
@@ -170,11 +164,6 @@ bool InsertExecutor::DExecute() {
         trigger_list->ExecTriggers(TriggerType::ON_COMMIT_INSERT_STATEMENT,
                                    current_txn);
       }
-    }
-    // Unlock the table
-    bool unlock_success = lm->UnlockShared(table_oid);
-    if (!unlock_success) {
-      LOG_TRACE("Cannot unlock the table, abort!");
     }
     return true;
   }
@@ -266,11 +255,6 @@ bool InsertExecutor::DExecute() {
         LOG_TRACE("Failed to Insert. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
                                                  ResultType::FAILURE);
-        // Unlock the table
-        bool unlock_success = lm->UnlockShared(table_oid);
-        if (!unlock_success) {
-          LOG_TRACE("Cannot unlock the table, abort!");
-        }
         return false;
       }
 
@@ -328,18 +312,8 @@ bool InsertExecutor::DExecute() {
                                    current_txn);
       }
     }
-    // Unlock the table
-    bool unlock_success = lm->UnlockShared(table_oid);
-    if (!unlock_success) {
-      LOG_TRACE("Cannot unlock the table, abort!");
-    }
     done_ = true;
     return true;
-  }
-  // Unlock the table
-  bool unlock_success = lm->UnlockShared(table_oid);
-  if (!unlock_success) {
-    LOG_TRACE("Cannot unlock the table, abort!");
   }
   return true;
 }
