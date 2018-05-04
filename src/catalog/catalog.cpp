@@ -804,10 +804,9 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
  * @param txn the transaction Context
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::AlterTable(
-    UNUSED_ATTRIBUTE oid_t database_oid, UNUSED_ATTRIBUTE oid_t table_oid,
-    UNUSED_ATTRIBUTE std::unique_ptr<catalog::Schema> &new_schema,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
+                               std::unique_ptr<catalog::Schema> &new_schema,
+                               concurrency::TransactionContext *txn) {
   LOG_TRACE("AlterTable in Catalog");
 
   if (txn == nullptr)
@@ -864,7 +863,6 @@ ResultType Catalog::AlterTable(
             old_index->GetMetadata()->GetIndexType(),
             old_index->GetMetadata()->GetIndexConstraintType(),
             new_schema.get(),
-            // catalog::Schema::CopySchema(old_index->GetKeySchema()),
             catalog::Schema::CopySchema(new_schema.get(), new_key_attrs),
             new_key_attrs, old_index->GetMetadata()->HasUniqueKeys());
 
@@ -923,14 +921,20 @@ ResultType Catalog::AlterTable(
                   new_schema->GetColumn(new_column_id).GetType());
             } else {
               // otherwise, copy value in old table
-              // TODO: Change type if necessary
               val = result_tile->GetValue(i, it->second);
-              if (new_schema->GetColumn(new_column_id).GetType() != old_schema->GetColumn(it->second).GetType()) {
-                //change the value's type
-                val = val.CastAs(new_schema->GetColumn(new_column_id).GetType());
+              if (new_schema->GetColumn(new_column_id).GetType() !=
+                  old_schema->GetColumn(it->second).GetType()) {
+                // change the value's type
+                LOG_TRACE(
+                    "CASTED: %s TO %s", val.GetInfo().c_str(),
+                    new_schema->GetColumn(new_column_id).GetInfo().c_str());
+                auto casted_val =
+                    val.CastAs(new_schema->GetColumn(new_column_id).GetType());
+                tuple->SetValue(new_column_id, casted_val, pool_.get());
+              } else {
+                tuple->SetValue(new_column_id, val, pool_.get());
               }
             }
-            tuple->SetValue(new_column_id, val, pool_.get());
           }
           // insert new tuple into new table
           planner::InsertPlan node(new_table, std::move(tuple));
@@ -952,13 +956,13 @@ ResultType Catalog::AlterTable(
             txn);
         column_offset++;
       }
+      // TODO: Add gc logic
+      // txn->RecordDrop(database_oid, old_table->GetOid(), INVALID_OID);
 
       // Final step of physical change should be moved to commit time
       database->ReplaceTableWithOid(table_oid, new_table);
 
-      // Record table drop
-      txn->RecordDrop(database_oid, table_oid, INVALID_OID);
-
+      LOG_TRACE("Alter table with oid %d succeed.", table_oid);
     } catch (CatalogException &e) {
       LOG_TRACE("Alter table failed.");
       return ResultType::FAILURE;

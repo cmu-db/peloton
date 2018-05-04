@@ -114,13 +114,13 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
   }
   std::unique_ptr<catalog::Schema> temp_schema(
       catalog::Schema::CopySchema(old_schema, column_ids));
-
+  auto columns = temp_schema->GetColumns();
   // Step 2: change column type if exists
   for (auto change_pair : node.GetChangedTypeColumns()) {
     bool is_found = false;
     oid_t i = 0;
-    for (; i < temp_schema->GetColumnCount(); ++i) {
-      if (temp_schema->GetColumn(i).GetName() == change_pair.first) {
+    for (; i < columns.size(); ++i) {
+      if (columns[i].GetName() == change_pair.first) {
         is_found = true;
         break;
       }
@@ -131,7 +131,12 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       txn->SetResult(ResultType::FAILURE);
       return false;
     } else {
-      temp_schema->ChangeColumnType(i, change_pair.second);
+      columns[i].SetType(change_pair.second);
+      columns[i].SetInlined();
+      columns[i].SetLength(type::VarlenType::GetTypeSize(change_pair.second));
+
+      // TODO: decide VARCHAR's size when change type
+      // if (change_pair.second == type::TypeId::VARCHAR) {}
     }
   }
 
@@ -143,10 +148,8 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       add_columns.push_back(column);
     }
   }
-  std::unique_ptr<catalog::Schema> add_column_schema(
-      new catalog::Schema(add_columns));
   // Check if added column exists
-  for (auto new_column : add_column_schema->GetColumns()) {
+  for (auto new_column : add_columns) {
     for (auto old_column : old_schema->GetColumns()) {
       if (new_column.GetName() == old_column.GetName()) {
         LOG_TRACE("Add column failed: Column %s already exists",
@@ -156,10 +159,9 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       }
     }
   }
-
+  columns.insert(columns.end(), add_columns.begin(), add_columns.end());
   // Construct new schema
-  std::unique_ptr<catalog::Schema> new_schema(catalog::Schema::AppendSchema(
-      temp_schema.get(), add_column_schema.get()));
+  std::unique_ptr<catalog::Schema> new_schema(new catalog::Schema(columns));
 
   // Copy and replace table content to new schema in catalog
   ResultType result = catalog::Catalog::GetInstance()->AlterTable(

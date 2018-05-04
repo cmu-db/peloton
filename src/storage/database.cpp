@@ -112,6 +112,7 @@ storage::DataTable *Database::ReplaceTableWithOid(
     const oid_t table_oid, storage::DataTable *new_table) {
   {
     std::lock_guard<std::mutex> lock(database_mutex);
+    codegen::QueryCache::Instance().Remove(table_oid);
 
     oid_t table_offset = 0;
     for (auto table : tables) {
