@@ -19,6 +19,7 @@
 #include "expression/tuple_value_expression.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -54,7 +55,17 @@ bool PopulateIndexExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {
+    oid_t table_oid = target_table_->GetOid();
     //Get the output from seq_scan
+    concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+    bool lock_success = lm->LockExclusive(table_oid);
+    concurrency::LockManager::SafeLock dummy;
+    if (!lock_success) {
+      LOG_TRACE("Cannot obtain lock for the table, abort!");
+    }
+    else{
+      dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+    }
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
