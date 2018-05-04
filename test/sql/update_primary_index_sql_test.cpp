@@ -74,7 +74,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
   TestingSQLUtil::ExecuteSQLQuery("SELECT * from test", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
-  // Check the return value, it should not be changed
+  // Check the return value, it should be changed
   EXPECT_EQ(result[6][0], '5');
 
   // Perform normal update
