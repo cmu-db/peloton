@@ -53,7 +53,7 @@ class ComparisonExpression : public AbstractExpression {
    */
   AbstractExpression *Copy() const override;
 
-  bool SymmetricsEquals(const AbstractExpression &other) const override;
+  bool SymmetricEquals(const AbstractExpression &other) const override;
 
   void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 

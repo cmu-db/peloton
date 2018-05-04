@@ -75,8 +75,6 @@ void FillTransitiveTable(
 	  transitive_table[p_info].push_back(predicate_to_add);
 	}
       }
-
-      LOG_DEBUG("Predicate: %s \n------", expr->GetInfo().c_str());
     }
   }
 }
@@ -87,7 +85,8 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
   std::vector<AnnotatedExpression> new_predicates;
 
   for (auto predicate : predicates) {
-    if (predicate.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+    string exp_type = ExpressionTypeToString(predicate.expr->GetExpressionType());
+    if (exp_type.substr(0, 7) == "COMPARE") {
       auto expr = predicate.expr;
 
       PELOTON_ASSERT(expr->GetChildrenSize() == 2);
@@ -105,11 +104,9 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 	      auto transitive_predicate = predicate.expr->Copy();
 	      transitive_predicate->SetChild(i, potential_transitive);
 
-	      LOG_DEBUG("Possibly (%s, %s): %s", p_info.first.c_str(), p_info.second.c_str(), transitive_predicate->GetInfo().c_str());
 	      bool not_found = true;
 	      for (auto predicate2 : predicates) {
-		if (predicate2.expr->SymmetricsEquals(*transitive_predicate)) {
-		  LOG_DEBUG("Nop %s", predicate2.expr->GetInfo().c_str());
+		if (predicate2.expr->SymmetricEquals(*transitive_predicate)) {
 		  not_found = false;
 		  break;
 		}
@@ -117,8 +114,7 @@ std::vector<AnnotatedExpression> GenerateTransitivePredicates(
 
 	      if (not_found) {
 		for (auto predicate2 : new_predicates) {
-		  if (predicate2.expr->SymmetricsEquals(*transitive_predicate)) {
-		    LOG_DEBUG("Nop %s", predicate2.expr->GetInfo().c_str());
+		  if (predicate2.expr->SymmetricEquals(*transitive_predicate)) {
 		    not_found = false;
 		    break;
 		  }

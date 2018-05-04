@@ -177,7 +177,7 @@ class AbstractExpression : public Printable {
   virtual bool ExactlyEquals(const AbstractExpression &other) const;
   virtual hash_t HashForExactMatch() const;
 
-  virtual bool SymmetricsEquals(const AbstractExpression &other) const {
+  virtual bool SymmetricEquals(const AbstractExpression &other) const {
     return ExactlyEquals(other);
   }
 
