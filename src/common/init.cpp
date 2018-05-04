@@ -93,7 +93,6 @@ void PelotonInit::Initialize(std::string log_dir, std::string log_file, bool ena
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 
-  // TODO(gandeevan): start logger thread
   if(logging::LogManager::GetInstance().init(log_dir, log_file, enable_logging)) {
     LOG_DEBUG("logging enabled");
   } else {

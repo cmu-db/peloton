@@ -12,6 +12,7 @@
 #pragma once
 #include <fstream>
 #include <include/settings/settings_manager.h>
+#include "util/file_util.h"
 
 
 namespace peloton{
@@ -30,9 +31,20 @@ public:
       return false;
     }
     directory_ = log_dir;
+    log_file = log_file;
+
+    if (!peloton::FileUtil::Exists(log_dir)) {
+      boost::filesystem::path dir(log_dir.c_str());
+      try {
+        boost::filesystem::create_directory(dir);
+      }
+      catch (boost::filesystem::filesystem_error &e) {
+        LOG_DEBUG("Failed to create log directory %s. Reason %s", log_dir.c_str(), e.what());
+      }
+    }
 
     if(!logger_ofstream_.is_open()){
-      logger_ofstream_.open(log_dir+"/"+log_file, std::ofstream::out | std::ofstream::app);
+      logger_ofstream_.open(log_dir + "/" + log_file, std::ofstream::out | std::ofstream::app);
 
       if(!logger_ofstream_.fail()) {
         enable_logging_ = true;
@@ -58,7 +70,7 @@ public:
 
   inline bool IsLoggingEnabled() { return enable_logging_; }
   inline std::string GetDirectory() { return directory_; }
-  inline std::string GetLogFilePath() { return directory_+"/tmp"; }
+  inline std::string GetLogFilePath() { return directory_ + log_file_; }
   inline std::ofstream *GetFileStream() { return &logger_ofstream_; }
 
 //  TODO(gandeevan): support StartLogging and StopLogging
@@ -70,6 +82,7 @@ private:
   // NOTE: ofstream is not thread safe, might need to change it if more than one logger thread is used
   bool enable_logging_;
   std::string directory_;
+  std::string log_file_;
   std::ofstream logger_ofstream_;
 
 

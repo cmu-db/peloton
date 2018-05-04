@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <string>
+#include <include/settings/settings_manager.h>
 #pragma once
 
 namespace peloton {
@@ -25,7 +26,9 @@ extern ThreadPool thread_pool;
 
 class PelotonInit {
  public:
-  static void Initialize(std::string log_dir = "/tmp", std::string log_file = "log_file", bool enable_logging = true);
+  static void Initialize(std::string log_dir = settings::SettingsManager::GetString(settings::SettingId::log_directory_name),
+                         std::string log_file = settings::SettingsManager::GetString(settings::SettingId::log_file_name),
+                         bool enable_logging = true);
 
   static void Shutdown();
 

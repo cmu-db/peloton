@@ -131,6 +131,16 @@ SETTING_int(transaction_buffer_size,
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
+SETTING_string(log_directory_name,
+             "The relative path(name) to the directory where the WAL will be stored (default : ./logging)",
+             "./logging",
+             true, true)
+
+SETTING_string(log_file_name,
+							 "The name of the write ahead log file in the directory specified above (default : wal.log)",
+							 "wal.log",
+							 true, true)
+
 
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
