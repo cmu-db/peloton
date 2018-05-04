@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transitive_predicates.h
+// rule_query_rewrite.h
 //
-// Identification: src/include/optimizer/transitive_predicates.h
+// Identification: src/include/optimizer/rule_query_rewrite.h
 //
 // Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //

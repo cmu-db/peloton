@@ -29,7 +29,7 @@
 #include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
-#include "optimizer/transitive_predicates.h"
+#include "optimizer/rule_query_rewrite.h"
 #include "optimizer/optimizer_task_pool.h"
 #include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"

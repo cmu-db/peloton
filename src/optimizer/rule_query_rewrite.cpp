@@ -4,7 +4,7 @@
 //
 // transitive_predicates.cpp
 //
-// Identification: src/optimizer/transitive_predicates.cpp
+// Identification: src/optimizer/rule_query_rewrite.cpp
 //
 // Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
@@ -15,7 +15,7 @@
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
-#include "optimizer/transitive_predicates.h"
+#include "optimizer/rule_query_rewrite.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer_metadata.h"
 #include "optimizer/properties.h"

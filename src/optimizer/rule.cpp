@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/transitive_predicates.h"
+#include "optimizer/rule_query_rewrite.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/group_expression.h"
 
