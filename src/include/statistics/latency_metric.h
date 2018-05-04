@@ -39,16 +39,31 @@ struct LatencyMeasurements {
 
 class LatencyMetricRawData : public AbstractRawData {
   public:
+    // TODO (Justin): remove hard-coded constant
+    // Probably want agg structure to have more capacity
+    LatencyMetricRawData(size_t max_history = 100) {
+      latencies_.SetCapacity(max_history);
+    }
+
     inline void RecordLatency(const double val) {
       latencies_.PushBack(val);
     }
 
-    void Aggregate(AbstractRawData &other);
+    void Aggregate(AbstractRawData &other) {
+      auto &other_latency_metric = dynamic_cast<LatencyMetricRawData &>(other);
+      for (double next_latency : other_latency_metric.latencies_) {
+        latencies_.PushBack(next_latency);
+      }
+    }
 
     void WriteToCatalog();
   private:
     /**
-     * Calculate descriptive statistics on raw latency measurements
+     * @brief Calculate descriptive statistics on raw latency measurements.
+     *
+     * Should only be called by aggregator thread, after it has aggregated
+     * latencies from all worker threads.
+     * Only then does it make sense to calculate stats such as min, max, and percentiles.
      */
     LatencyMeasurements DescriptiveFromRaw();
 
