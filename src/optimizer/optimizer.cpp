@@ -169,7 +169,6 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
   }
 
   try {
-
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
                                     query_info.output_exprs);
     auto info_obj = std::unique_ptr<OptimizerPlanInfo>(new OptimizerPlanInfo());
