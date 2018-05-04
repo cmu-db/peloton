@@ -58,37 +58,37 @@ class ThreadLevelStatsCollector {
 
   // TODO(tianyu): fill arguments
   inline void CollectTransactionBegin() {
-    for (auto &metric : metric_dispatch_[stats_event_type::TXN_BEGIN])
+    for (auto &metric : metric_dispatch_[StatsEventType::TXN_BEGIN])
       metric->OnTransactionBegin();
   };
 
   inline void CollectTransactionCommit(oid_t tile_group_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TXN_COMMIT])
+    for (auto &metric : metric_dispatch_[StatsEventType::TXN_COMMIT])
       metric->OnTransactionCommit(tile_group_id);
   };
 
   inline void CollectTransactionAbort(oid_t tile_group_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TXN_ABORT])
+    for (auto &metric : metric_dispatch_[StatsEventType::TXN_ABORT])
       metric->OnTransactionAbort(tile_group_id);
   };
 
   inline void CollectTupleRead(oid_t tile_group_id, size_t num_read) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_READ])
+    for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_READ])
       metric->OnTupleRead(tile_group_id, num_read);
   };
 
   inline void CollectTupleUpdate(oid_t tile_group_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_UPDATE])
+    for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_UPDATE])
       metric->OnTupleUpdate(tile_group_id);
   };
 
   inline void CollectTupleInsert(oid_t tile_group_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_INSERT])
+    for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_INSERT])
       metric->OnTupleInsert(tile_group_id);
   };
 
   inline void CollectTupleDelete(oid_t tile_group_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::TUPLE_DELETE])
+    for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_DELETE])
       metric->OnTupleDelete(tile_group_id);
   };
 
@@ -96,41 +96,41 @@ class ThreadLevelStatsCollector {
                                       size_t bytes) {
     if (table_id == INVALID_OID || database_id == INVALID_OID) return;
 
-    for (auto &metric : metric_dispatch_[stats_event_type::TABLE_MEMORY_ALLOC])
+    for (auto &metric : metric_dispatch_[StatsEventType::TABLE_MEMORY_ALLOC])
       metric->OnMemoryAlloc({database_id, table_id}, bytes);
   };
 
   inline void CollectTableMemoryFree(oid_t database_id, oid_t table_id,
                                      size_t bytes) {
     if (table_id == INVALID_OID || database_id == INVALID_OID) return;
-    for (auto &metric : metric_dispatch_[stats_event_type::TABLE_MEMORY_FREE])
+    for (auto &metric : metric_dispatch_[StatsEventType::TABLE_MEMORY_FREE])
       metric->OnMemoryFree({database_id, table_id}, bytes);
   };
 
   inline void CollectIndexRead(oid_t database_id, oid_t index_id,
                                size_t num_read) {
-    for (auto &metric : metric_dispatch_[stats_event_type::INDEX_READ])
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_READ])
       metric->OnIndexRead({database_id, index_id}, num_read);
   };
   inline void CollectIndexUpdate(oid_t database_id, oid_t index_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::INDEX_UPDATE])
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_UPDATE])
       metric->OnIndexUpdate({database_id, index_id});
   };
   inline void CollectIndexInsert(oid_t database_id, oid_t index_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::INDEX_INSERT])
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_INSERT])
       metric->OnIndexInsert({database_id, index_id});
   };
   inline void CollectIndexDelete(oid_t database_id, oid_t index_id) {
-    for (auto &metric : metric_dispatch_[stats_event_type::INDEX_DELETE])
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_DELETE])
       metric->OnIndexDelete({database_id, index_id});
   };
 
   inline void CollectQueryBegin() {
-    for (auto &metric : metric_dispatch_[stats_event_type::QUERY_BEGIN])
+    for (auto &metric : metric_dispatch_[StatsEventType::QUERY_BEGIN])
       metric->OnQueryBegin();
   };
   inline void CollectQueryEnd() {
-    for (auto &metric : metric_dispatch_[stats_event_type::QUERY_END])
+    for (auto &metric : metric_dispatch_[StatsEventType::QUERY_END])
       metric->OnQueryEnd();
   };
 
@@ -154,10 +154,10 @@ class ThreadLevelStatsCollector {
    * @param types A list of event types to receive updates about.
    */
   template <typename metric>
-  void RegisterMetric(std::vector<stats_event_type> types) {
+  void RegisterMetric(std::vector<StatsEventType> types) {
     auto m = std::make_shared<metric>();
     metrics_.push_back(m);
-    for (stats_event_type type : types) metric_dispatch_[type].push_back(m);
+    for (StatsEventType type : types) metric_dispatch_[type].push_back(m);
   }
 
   using MetricList = std::vector<std::shared_ptr<Metric>>;
@@ -169,7 +169,7 @@ class ThreadLevelStatsCollector {
    * Mapping from each type of event to a list of metrics registered to
    * receive updates from that type of event.
    */
-  std::unordered_map<stats_event_type, MetricList, EnumHash<stats_event_type>>
+  std::unordered_map<StatsEventType, MetricList, EnumHash<StatsEventType>>
       metric_dispatch_;
 
   static CollectorsMap collector_map_;

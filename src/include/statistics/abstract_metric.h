@@ -155,6 +155,7 @@ class RawDataWrapper {
 template<typename DataType>
 class AbstractMetric : public Metric {
  public:
+  AbstractMetric(): raw_data_(new DataType()) {}
   /**
    * @see Metric
    *

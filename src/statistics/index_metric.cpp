@@ -44,8 +44,8 @@ void IndexMetricRawData::WriteToCatalog() {
 
     auto &counts = entry.second;
     catalog::IndexMetricsCatalog::GetInstance()->InsertIndexMetrics(
-        database_oid, table_oid, index_oid, counters_[READ], counters_[DELETE],
-        counters_[INSERT], time_stamp, nullptr, txn);
+        database_oid, table_oid, index_oid, counts[READ], counts[DELETE],
+        counts[INSERT], time_stamp, nullptr, txn);
   }
 
   txn_manager.CommitTransaction(txn);

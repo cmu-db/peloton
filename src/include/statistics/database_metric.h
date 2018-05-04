@@ -55,11 +55,8 @@ class DatabaseMetricRawData : public AbstractRawData {
       oid_t tile_group_id) {
     auto tile_group =
         catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-    if (tile_group == nullptr) {
-      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
-    }
-    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
-                                   tile_group->GetTableId());
+    if (tile_group == nullptr) return {INVALID_OID, INVALID_OID};
+    return {tile_group->GetDatabaseId(), tile_group->GetTableId()};
   }
   /**
    * Maps from database id to a pair of counters.
@@ -87,11 +84,8 @@ class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
       oid_t tile_group_id) {
     auto tile_group =
         catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-    if (tile_group == nullptr) {
-      return std::pair<oid_t, oid_t>(INVALID_OID, INVALID_OID);
-    }
-    return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
-                                   tile_group->GetTableId());
+    if (tile_group == nullptr) return {INVALID_OID, INVALID_OID};
+    return {tile_group->GetDatabaseId(), tile_group->GetTableId()};
   }
 };
 
@@ -124,8 +118,8 @@ class DatabaseMetricOld : public AbstractMetricOld {
 
   inline bool operator==(const DatabaseMetricOld &other) {
     return database_id_ == other.database_id_ &&
-           txn_committed_ == other.txn_committed_ &&
-           txn_aborted_ == other.txn_aborted_;
+        txn_committed_ == other.txn_committed_ &&
+        txn_aborted_ == other.txn_aborted_;
   }
 
   inline bool operator!=(const DatabaseMetricOld &other) {

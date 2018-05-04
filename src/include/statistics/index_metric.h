@@ -24,34 +24,25 @@
 namespace peloton {
 namespace stats {
 class IndexMetricRawData : public AbstractRawData {
+  // this serves as an index into each table's counter vector
+  enum CounterType { READ = 0, UPDATE, INSERT, DELETE };
+
  public:
   inline void IncrementIndexReads(std::pair<oid_t, oid_t> db_index_id,
                                   size_t num_read) {
-    auto entry = counters_.find(db_index_id);
-    if (entry == counters_.end())
-      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_index_id][READ] += num_read;
+    GetCounter(db_index_id, READ) += num_read;
   }
 
   inline void IncrementIndexUpdates(std::pair<oid_t, oid_t> db_index_id) {
-    auto entry = counters_.find(db_index_id);
-    if (entry == counters_.end())
-      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_index_id][UPDATE]++;
+    GetCounter(db_index_id, UPDATE)++;
   }
 
   inline void IncrementIndexInserts(std::pair<oid_t, oid_t> db_index_id) {
-    auto entry = counters_.find(db_index_id);
-    if (entry == counters_.end())
-      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_index_id][INSERT]++;
+    GetCounter(db_index_id, INSERT)++;
   }
 
   inline void IncrementIndexDeletes(std::pair<oid_t, oid_t> db_index_id) {
-    auto entry = counters_.find(db_index_id);
-    if (entry == counters_.end())
-      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_index_id][DELETE]++;
+    GetCounter(db_index_id, DELETE)++;
   }
 
   void Aggregate(AbstractRawData &other) override;
@@ -61,11 +52,17 @@ class IndexMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
+
+  inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_index_id,
+                             CounterType type) {
+    auto entry = counters_.find(db_index_id);
+    if (entry == counters_.end())
+      counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
+    return counters_[db_index_id][type];
+  }
+
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
-
-  // this serves as an index into each table's counter vector
-  enum CounterType { READ = 0, UPDATE, INSERT, DELETE };
 
   // should be number of possible CounterType values
   static const size_t NUM_COUNTERS = 4;
@@ -124,8 +121,8 @@ class IndexMetricOld : public AbstractMetricOld {
 
   inline bool operator==(const IndexMetricOld &other) {
     return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
-           index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
-           index_access_ == other.index_access_;
+        index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
+        index_access_ == other.index_access_;
   }
 
   inline bool operator!=(const IndexMetricOld &other) {

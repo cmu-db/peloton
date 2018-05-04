@@ -44,27 +44,27 @@ namespace peloton {
 namespace test {
 
 class TestingStatsUtil {
- public:
-  static void ShowTable(std::string database_name, std::string table_name);
-
-  static storage::Tuple PopulateTuple(const catalog::Schema *schema,
-                                      int first_col_val, int second_col_val,
-                                      int third_col_val, int fourth_col_val);
-
-  static void CreateTable(bool has_primary_key = true);
-
-  static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams(
-      std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
-      std::shared_ptr<uchar> &val_buf);
-
-  static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
-                                                  std::string val = "hello");
-
-  static std::shared_ptr<Statement> GetDeleteStmt();
-
-  static std::shared_ptr<Statement> GetUpdateStmt();
-
-  static void ParseAndPlan(Statement *statement, std::string sql);
+// public:
+//  static void ShowTable(std::string database_name, std::string table_name);
+//
+//  static storage::Tuple PopulateTuple(const catalog::Schema *schema,
+//                                      int first_col_val, int second_col_val,
+//                                      int third_col_val, int fourth_col_val);
+//
+//  static void CreateTable(bool has_primary_key = true);
+//
+//  static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams(
+//      std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
+//      std::shared_ptr<uchar> &val_buf);
+//
+//  static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
+//                                                  std::string val = "hello");
+//
+//  static std::shared_ptr<Statement> GetDeleteStmt();
+//
+//  static std::shared_ptr<Statement> GetUpdateStmt();
+//
+//  static void ParseAndPlan(Statement *statement, std::string sql);
 };
 
 }  // namespace test

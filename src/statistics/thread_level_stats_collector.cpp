@@ -25,17 +25,17 @@ ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
           settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
     // TODO(tianyi): Have more fine grained control for these metrics
     RegisterMetric<TableMetric>(
-        {stats_event_type::TUPLE_READ, stats_event_type::TUPLE_UPDATE,
-         stats_event_type::TUPLE_INSERT, stats_event_type::TUPLE_DELETE,
-         stats_event_type::TABLE_MEMORY_ALLOC,
-         stats_event_type::TABLE_MEMORY_FREE});
+        {StatsEventType::TUPLE_READ, StatsEventType::TUPLE_UPDATE,
+         StatsEventType::TUPLE_INSERT, StatsEventType::TUPLE_DELETE,
+         StatsEventType::TABLE_MEMORY_ALLOC,
+         StatsEventType::TABLE_MEMORY_FREE});
     RegisterMetric<IndexMetric>(
-        {stats_event_type::INDEX_READ, stats_event_type::INDEX_UPDATE,
-         stats_event_type::INDEX_INSERT, stats_event_type::INDEX_DELETE});
+        {StatsEventType::INDEX_READ, StatsEventType::INDEX_UPDATE,
+         StatsEventType::INDEX_INSERT, StatsEventType::INDEX_DELETE});
 
-    RegisterMetric<DatabaseMetric>({stats_event_type::TXN_BEGIN,
-                                    stats_event_type::TXN_COMMIT,
-                                    stats_event_type::TXN_ABORT});
+    RegisterMetric<DatabaseMetric>({StatsEventType::TXN_BEGIN,
+                                    StatsEventType::TXN_COMMIT,
+                                    StatsEventType::TXN_ABORT});
   }
 }
 }  // namespace stats
