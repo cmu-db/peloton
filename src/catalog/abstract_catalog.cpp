@@ -34,10 +34,7 @@
 #include "executor/plan_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
-<<<<<<< HEAD
 #include "executor/plan_executor.h"
-=======
->>>>>>> upstream/master
 
 #include "storage/database.h"
 #include "storage/storage_manager.h"

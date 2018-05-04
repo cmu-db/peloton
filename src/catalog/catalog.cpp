@@ -191,21 +191,12 @@ void Catalog::Bootstrap() {
   catalog_map_[CATALOG_DATABASE_OID]->Bootstrap(CATALOG_DATABASE_NAME, txn);
   // bootstrap other global catalog tables
   DatabaseMetricsCatalog::GetInstance(txn);
-<<<<<<< HEAD
-  TableMetricsCatalog::GetInstance(txn);
-  IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
-=======
->>>>>>> upstream/master
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
 
   // TODO: change pg_proc to per database
   ProcCatalog::GetInstance(txn);
-<<<<<<< HEAD
   SequenceCatalog::GetInstance(txn);
-=======
->>>>>>> upstream/master
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
