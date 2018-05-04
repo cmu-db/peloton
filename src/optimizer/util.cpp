@@ -162,6 +162,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       copy_stmt->cpy_table->GetDatabaseName(),
       copy_stmt->cpy_table->GetSchemaName(),
+      copy_stmt->session_namespace,
       copy_stmt->cpy_table->GetTableName(), txn);
   txn_manager.CommitTransaction(txn);
 

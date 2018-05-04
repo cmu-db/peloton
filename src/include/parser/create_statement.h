@@ -220,7 +220,8 @@ class CreateStatement : public TableRefStatement {
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
         type(type),
-        if_not_exists(false){};
+        if_not_exists(false),
+        is_temp_table(false){};
 
   virtual ~CreateStatement() {}
 
@@ -232,7 +233,7 @@ class CreateStatement : public TableRefStatement {
 
   CreateType type;
   bool if_not_exists;
-
+  bool is_temp_table;
   std::vector<std::unique_ptr<ColumnDefinition>> columns;
   std::vector<std::unique_ptr<ColumnDefinition>> foreign_keys;
 

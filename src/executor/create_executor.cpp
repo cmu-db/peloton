@@ -215,13 +215,15 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
+  std::string session_namespace = node.GetSessionNamespace();
   bool unique_flag = node.IsUnique();
   IndexType index_type = node.GetIndexType();
 
   auto key_attrs = node.GetKeyAttrs();
 
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, schema_name, table_name, key_attrs, index_name,
+      database_name, schema_name, session_namespace, 
+      table_name, key_attrs, index_name,
       unique_flag, index_type, txn);
   txn->SetResult(result);
 
@@ -241,10 +243,11 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   trigger::Trigger newTrigger(node);
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_name, table_name, txn);
 
   // durable trigger: insert the information of this trigger in the trigger
   // catalog table
@@ -268,7 +271,7 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // ask target table to update its trigger list variable
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          database_name, schema_name, table_name, txn);
+          database_name, schema_name, session_namespace, table_name, txn);
   target_table->UpdateTriggerListFromCatalog(txn);
 
   // hardcode SUCCESS result for txn

@@ -1050,6 +1050,7 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
     cmdline_options_[token] = value;
     if (token.compare("database") == 0) {
       traffic_cop_->SetDefaultDatabaseName(value);
+      traffic_cop_->CreateTempSchema();
     }
   }
 
