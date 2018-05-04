@@ -84,7 +84,9 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
   if (!pg_trigger_) {
+    LOG_INFO("TriggerCatalog begin");
     pg_trigger_ = new TriggerCatalog(database_name, txn);
+    LOG_INFO("TriggerCatalog end");
   }
 
   // if (!pg_proc) {
@@ -92,15 +94,21 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
   // }
 
   if (!pg_table_metrics_) {
+    LOG_INFO("TableMetricsCatalog begin");
     pg_table_metrics_ = new TableMetricsCatalog(database_name, txn);
+    LOG_INFO("TableMetricsCatalog end");
   }
 
   if (!pg_index_metrics_) {
+    LOG_INFO("IndexMetricsCatalog begin");
     pg_index_metrics_ = new IndexMetricsCatalog(database_name, txn);
+    LOG_INFO("IndexMetricsCatalog end");
   }
 
   if (!pg_query_metrics_) {
+    LOG_INFO("QueryMetricsCatalog begin");
     pg_query_metrics_ = new QueryMetricsCatalog(database_name, txn);
+    LOG_INFO("QueryMetricsCatalog end");
   }
 }
 
