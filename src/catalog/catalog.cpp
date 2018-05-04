@@ -764,6 +764,48 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   return ResultType::SUCCESS;
 }
 
+/*@brief   Drop Index on table
+ * @param   index_name      the name of the index to be dropped
+ * @param   txn            TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::DropIndex(std::string database_name, std::string index_name,
+                              std::string schema_name,
+                              concurrency::TransactionContext *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to drop index " +
+                           index_name);
+  // find index catalog object by looking up pg_index or read from cache using
+  // index_oid
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr)
+    throw CatalogException("Drop Index: database " + database_name +
+                           " does not exist");
+  auto database_oid = database_object->GetDatabaseOid();
+  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
+  auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
+  auto index_oid = index_object->GetIndexOid();
+  if (index_object == nullptr) {
+    throw CatalogException("Can't find index " + index_name +
+                           " to drop");
+  }
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto table = storage_manager->GetTableWithOid(database_oid,
+                                                index_object->GetTableOid());
+  // drop record in pg_index
+  pg_index->DeleteIndex(index_oid, txn);
+  LOG_TRACE("Successfully drop index %d for table %s", index_oid,
+            table->GetName().c_str());
+
+  // register index object in rw_object_set
+  table->GetIndexWithOid(index_oid);
+  txn->RecordDrop(database_oid, index_object->GetTableOid(), index_oid);
+
+  return ResultType::SUCCESS;
+}
+
 //===--------------------------------------------------------------------===//
 // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
 //===--------------------------------------------------------------------===//

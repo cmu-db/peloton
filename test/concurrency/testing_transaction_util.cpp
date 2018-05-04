@@ -215,7 +215,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 }
 
 storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
-    std::string database_name, std::string table_name) {
+    std::string database_name, std::string schema_name, std::string table_name) {
   LOG_INFO("database name = %s", database_name.c_str());
   LOG_INFO("table name = %s", table_name.c_str());
   auto id_column = catalog::Column(
@@ -237,12 +237,12 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
   LOG_INFO("create database %s", database_name.c_str());
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(database_name, table_name, std::move(table_schema), txn);
+  catalog->CreateTable(database_name, schema_name, table_name, std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("create table %s", table_name.c_str());
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(database_name, table_name, txn);
+  auto table = catalog->GetTableWithName(database_name, schema_name, table_name, txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("table name = %s", table->GetName().c_str());
   LOG_INFO("table oid = %d", table->GetOid());

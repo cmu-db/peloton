@@ -69,6 +69,7 @@
 #include "storage/tuple.h"
 #include "catalog/catalog_defaults.h"
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
 #include "common/internal_types.h"
 
 #include <assert.h>
@@ -131,6 +132,7 @@ class TestingTransactionUtil {
 
   static storage::DataTable *CreateTableWithoutIndex(
       std::string database_name = "TEST_DATABASE",
+      std::string schema_name = "TEST_SCHEMA",
       std::string table_name = "TEST_TABLE");
 
   // Create the same table as CreateTable with primary key constraints on id and
@@ -340,7 +342,7 @@ class TransactionThread {
         LOG_INFO("txn isolation level = %d",
                  static_cast<int>(txn->GetIsolationLevel()));
         auto tmp =
-            catalog->CreateIndex(database_name, table_name, key_attrs,
+            catalog->CreateIndex(database_name, schema_name, table_name, key_attrs,
                                  index_name1, false, IndexType::BWTREE, txn);
         if (tmp == ResultType::SUCCESS)
           schedule->create_index_results.push_back(1);
@@ -351,13 +353,13 @@ class TransactionThread {
       }
       case TXN_OP_DROP_INDEX: {
         auto catalog = catalog::Catalog::GetInstance();
-        auto tmp = catalog->DropIndex(index_name1, txn);
+        auto tmp =  catalog->DropIndex(database_name, index_name1, schema_name, txn);
         if (tmp == ResultType::SUCCESS){
           schedule->drop_index_results.push_back(1);
-	}
+        }
         else{
           schedule->drop_index_results.push_back(0);
-	}
+        }
         LOG_INFO("Txn %d Drop Index", schedule->schedule_id);
         break;
       }
@@ -382,6 +384,7 @@ class TransactionThread {
  private:
   const std::string index_name1 = "transaction_index_test_index1";
   const std::string database_name = "TEST_DATABASE";
+  const std::string schema_name = "TEST_SCHEMA";
   const std::string table_name = "TEST_TABLE";
   const std::vector<oid_t> key_attrs = {0};
 };
