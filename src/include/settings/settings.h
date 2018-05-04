@@ -116,6 +116,18 @@ SETTING_int(gc_num_threads,
             1, 128,
             true, true)
 
+SETTING_int(log_buffer_size,
+						"The default log buffer size (default: 512KB)",
+						512 * 1024,
+						1024, 1024 * 1024,
+						true, true)
+
+SETTING_int(transaction_buffer_size,
+						"The default log buffer size for each transaction (default: 16KB)",
+						16 * 1024,
+						512, 256 * 1024,
+						true, true)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//

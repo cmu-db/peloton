@@ -128,18 +128,6 @@ public:
     return LogRecord(log_type, old_pos, pos, current_eid, txn_id, current_cid);
   }
 
-//
-//  static LogRecord CreateTxnRecord(const LogRecordType log_type, const cid_t commit_id) {
-//    PELOTON_ASSERT(log_type == LogRecordType::TRANSACTION_BEGIN ||
-//              log_type == LogRecordType::TRANSACTION_COMMIT);
-//    return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_EID, commit_id);
-//  }
-//
-//  static LogRecord CreateEpochRecord(const LogRecordType log_type, const eid_t epoch_id) {
-//    PELOTON_ASSERT(log_type == LogRecordType::EPOCH_BEGIN ||
-//              log_type == LogRecordType::EPOCH_END);
-//    return LogRecord(log_type, INVALID_ITEMPOINTER, epoch_id, INVALID_CID);
-//  }
 };
 
 }  // namespace logging

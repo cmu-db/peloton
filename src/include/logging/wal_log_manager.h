@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 #include <fstream>
+#include <include/settings/settings_manager.h>
 
 
 namespace peloton{
@@ -47,8 +48,13 @@ public:
     return log_manager;
   }
 
-  inline static size_t GetTransactionBufferSize() { return transaction_buffer_threshold_; }
-  inline static size_t GetLoggerBufferSize() { return logger_buffer_threshold_; }
+  inline static size_t GetTransactionBufferSize() {
+    return settings::SettingsManager::GetInt(settings::SettingId::log_buffer_size);
+  }
+
+  inline static size_t GetLoggerBufferSize() {
+    return settings::SettingsManager::GetInt(settings::SettingId::transaction_buffer_size);
+  }
 
   inline bool IsLoggingEnabled() { return enable_logging_; }
   inline std::string GetDirectory() { return directory_; }
@@ -61,11 +67,7 @@ public:
 
 
 private:
-
-  const static size_t logger_buffer_threshold_ = 1024 * 512;  // 512 KB
-  const static size_t transaction_buffer_threshold_ = 1024 * 16; // 16 KB
-
-        // NOTE: ofstream is not thread safe, might need to change it if more than one logger thread is used
+  // NOTE: ofstream is not thread safe, might need to change it if more than one logger thread is used
   bool enable_logging_;
   std::string directory_;
   std::ofstream logger_ofstream_;
