@@ -288,6 +288,8 @@ class Value : public Printable {
     }
   };
 
+  // This comparator is for the dictionary encoding to add the feature that
+  // null is equal to null
   struct compress_equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
       if (x.GetTypeId() != y.GetTypeId())

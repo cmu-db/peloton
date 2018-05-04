@@ -62,7 +62,6 @@ class RuntimeFunctions {
     char *column;
     uint32_t stride;
     bool is_columnar;
-//    bool is_dict_encoded;
     char *element_array;
     bool is_dict_encoded;
   };

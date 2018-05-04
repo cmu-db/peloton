@@ -12,11 +12,7 @@
 
 #pragma once
 
-#include <mutex>
-#include <vector>
-#include <map>
 #include <string>
-#include <set>
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"

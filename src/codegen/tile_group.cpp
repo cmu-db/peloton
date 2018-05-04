@@ -124,9 +124,6 @@ codegen::Value TileGroup::LoadColumn(
       codegen->CreateInBoundsGEP(codegen.ByteType(), layout.col_start_ptr,
                                  codegen->CreateMul(tid, layout.col_stride));
 
-//	auto element_array = reinterpret_cast<std::vector<peloton::type::Value>*>(layout.element_array);
-//	LOG_TRACE("element array is null: %d", layout.element_array == nullptr);
-
   // The value, length and is_null check
   llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
 

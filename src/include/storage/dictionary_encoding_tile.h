@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tile.h
+// dictionary_encoding_tile.h
 //
-// Identification: src/include/storage/tile.h
+// Identification: src/include/storage/dictionary_encoding_tile.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,6 @@
 
 #include <mutex>
 #include <vector>
-#include <map>
 #include <string>
 #include <set>
 #include <unordered_map>
@@ -79,7 +78,7 @@ class DictEncodedTile : public Tile {
    */
 	// this function is used before GetValueFast which use
 	// original schema, so return original schema
-//  const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
+  //  const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
 
   /**
    * Returns value present at slot
@@ -97,29 +96,11 @@ class DictEncodedTile : public Tile {
                            const type::TypeId column_type,
                            const bool is_inlined) override ;
 
-  /**
-   * Sets value at tuple slot.
-   */
-   // same as tile, no need to override
-//  void SetValue(const type::Value &value, const oid_t tuple_offset,
-//                const oid_t column_id);
-
-  /*
-   * Faster way to set value
-   * By amortizing schema lookups
-   */
-   // also same as tile
-//  void SetValueFast(const type::Value &value, const oid_t tuple_offset,
-//                    const size_t column_offset, const bool is_inlined,
-//                    const size_t column_length);
-
-
-
   //===--------------------------------------------------------------------===//
   // Dictionary Encoding
   //===--------------------------------------------------------------------===//
 
-//	inline bool IsDictEncoded() const { return is_dict_encoded; }
+  //	inline bool IsDictEncoded() const { return is_dict_encoded; }
 
 	// given a tile, encode this tile in current tile
 	// when initializing this encoded tile, use original tile's schema
