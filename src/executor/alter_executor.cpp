@@ -131,16 +131,12 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       txn->SetResult(ResultType::FAILURE);
       return false;
     } else {
-      if (change_pair.second != type::TypeId::VARCHAR) {
-        columns[i].SetType(change_pair.second);
-        columns[i].SetLength(type::VarlenType::GetTypeSize(change_pair.second));
-      } else {
-        //TODO decide VARCHAR's size when change type
-        //It is broken now!
-        columns[i].SetType(change_pair.second);
-        //columns[i].SetLength(type::VarlenType::GetTypeSize(change_pair.second));
-        columns[i].SetInlined();
-      }
+      columns[i].SetType(change_pair.second);
+      columns[i].SetInlined();
+      columns[i].SetLength(type::VarlenType::GetTypeSize(change_pair.second));
+
+      // TODO: decide VARCHAR's size when change type
+      // if (change_pair.second == type::TypeId::VARCHAR) {}
     }
   }
 

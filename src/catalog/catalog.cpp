@@ -804,10 +804,9 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
  * @param txn the transaction Context
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::AlterTable(
-    UNUSED_ATTRIBUTE oid_t database_oid, UNUSED_ATTRIBUTE oid_t table_oid,
-    UNUSED_ATTRIBUTE std::unique_ptr<catalog::Schema> &new_schema,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
+                               std::unique_ptr<catalog::Schema> &new_schema,
+                               concurrency::TransactionContext *txn) {
   LOG_TRACE("AlterTable in Catalog");
 
   if (txn == nullptr)
@@ -864,7 +863,6 @@ ResultType Catalog::AlterTable(
             old_index->GetMetadata()->GetIndexType(),
             old_index->GetMetadata()->GetIndexConstraintType(),
             new_schema.get(),
-            // catalog::Schema::CopySchema(old_index->GetKeySchema()),
             catalog::Schema::CopySchema(new_schema.get(), new_key_attrs),
             new_key_attrs, old_index->GetMetadata()->HasUniqueKeys());
 
@@ -917,28 +915,25 @@ ResultType Catalog::AlterTable(
                new_column_id < new_schema->GetColumnCount(); new_column_id++) {
             auto it = column_map.find(new_column_id);
             type::Value val;
-            auto cast_flag = false;
             if (it == column_map.end()) {
               // new column, set value to null
               val = type::ValueFactory::GetNullValueByType(
                   new_schema->GetColumn(new_column_id).GetType());
             } else {
               // otherwise, copy value in old table
-              // TODO: Change type if necessary
               val = result_tile->GetValue(i, it->second);
-              if (new_schema->GetColumn(new_column_id).GetType() != old_schema->GetColumn(it->second).GetType()) {
-                //change the value's type
-                LOG_TRACE("CASTED: %s TO %s", val.GetInfo().c_str(),new_schema->GetColumn(new_column_id).GetInfo()
-                    .c_str());
-                auto casted_val = val.CastAs(new_schema->GetColumn(new_column_id).GetType());
-                cast_flag = true;
+              if (new_schema->GetColumn(new_column_id).GetType() !=
+                  old_schema->GetColumn(it->second).GetType()) {
+                // change the value's type
+                LOG_TRACE(
+                    "CASTED: %s TO %s", val.GetInfo().c_str(),
+                    new_schema->GetColumn(new_column_id).GetInfo().c_str());
+                auto casted_val =
+                    val.CastAs(new_schema->GetColumn(new_column_id).GetType());
                 tuple->SetValue(new_column_id, casted_val, pool_.get());
+              } else {
+                tuple->SetValue(new_column_id, val, pool_.get());
               }
-            }
-            if (!cast_flag) {
-              tuple->SetValue(new_column_id, val, pool_.get());
-            } else {
-              LOG_TRACE("CASTED: %s", val.GetInfo().c_str());
             }
           }
           // insert new tuple into new table
@@ -955,19 +950,19 @@ ResultType Catalog::AlterTable(
       oid_t column_offset = 0;
       for (auto new_column : new_schema->GetColumns()) {
         catalog::ColumnCatalog::GetInstance()->InsertColumn(
-            new_table->GetOid(), new_column.GetName(), column_offset,
+            table_oid, new_column.GetName(), column_offset,
             new_column.GetOffset(), new_column.GetType(),
             new_column.IsInlined(), new_column.GetConstraints(), pool_.get(),
             txn);
         column_offset++;
       }
-      // Record table drop
+      // TODO: Add gc logic
       // txn->RecordDrop(database_oid, old_table->GetOid(), INVALID_OID);
 
       // Final step of physical change should be moved to commit time
       database->ReplaceTableWithOid(table_oid, new_table);
 
-      LOG_TRACE("Alter table with oid %d", new_table->GetOid());
+      LOG_TRACE("Alter table with oid %d succeed.", table_oid);
     } catch (CatalogException &e) {
       LOG_TRACE("Alter table failed.");
       return ResultType::FAILURE;
