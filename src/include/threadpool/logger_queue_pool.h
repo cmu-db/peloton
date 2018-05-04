@@ -43,6 +43,7 @@ class LoggerQueuePool {
               num_workers_(num_workers),
               is_running_(false) {
       LOG_INFO("aaron: LoggerQueuePool");
+      PELOTON_ASSERT(num_workers == 1);
       logger_queue_.GenerateTokens(log_tokens_, kDefaultNumTokens);
     }
 
