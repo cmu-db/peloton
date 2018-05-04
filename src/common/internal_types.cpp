@@ -331,6 +331,7 @@ std::string CreateTypeToString(CreateType type) {
     }
     case CreateType::SEQUENCE: {
       return "SEQUENCE";
+    }
     case CreateType::SCHEMA: {
       return "SCHEMA";
     }

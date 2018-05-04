@@ -25,7 +25,6 @@ ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction,
                                  const std::string default_database_name)
     : transaction_(transaction), parameters_(std::move(parameters)),
       default_database_name_(default_database_name) {
-  LOG_DEBUG("ExecutorContext default db name: %s", default_database_name.c_str());
 }
 
 concurrency::TransactionContext *ExecutorContext::GetTransaction() const {

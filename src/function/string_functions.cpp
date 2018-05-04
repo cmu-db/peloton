@@ -228,8 +228,11 @@ uint32_t StringFunctions::Nextval(executor::ExecutorContext &ctx, const char *se
   auto database_object =
           catalog::Catalog::GetInstance()
                   ->GetDatabaseObject(ctx.GetDatabaseName(), ctx.GetTransaction());
-  catalog::SequenceCatalogObject* sequence_object = catalog::SequenceCatalog::GetInstance().
-          GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
+  catalog::SequenceCatalogObject* sequence_object =
+          catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_object->GetDatabaseOid())
+          ->GetSequenceCatalog()
+          ->GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
   if (sequence_object != nullptr) {
     return sequence_object->GetNextVal();
   } else {
@@ -244,8 +247,11 @@ uint32_t StringFunctions::Currval(executor::ExecutorContext &ctx, const char *se
   auto database_object =
           catalog::Catalog::GetInstance()
                   ->GetDatabaseObject(ctx.GetDatabaseName(), ctx.GetTransaction());
-  catalog::SequenceCatalogObject* sequence_object = catalog::SequenceCatalog::GetInstance().
-          GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
+  catalog::SequenceCatalogObject* sequence_object =
+          catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_object->GetDatabaseOid())
+          ->GetSequenceCatalog()
+          ->GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
   if (sequence_object != nullptr) {
     return sequence_object->GetCurrVal();
   } else {

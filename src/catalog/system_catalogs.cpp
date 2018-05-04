@@ -30,6 +30,7 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn)
     : pg_trigger_(nullptr),
+      pg_sequence_(nullptr),
       pg_table_metrics_(nullptr),
       pg_index_metrics_(nullptr),
       pg_query_metrics_(nullptr) {
@@ -69,6 +70,7 @@ SystemCatalogs::~SystemCatalogs() {
   delete pg_attribute_;
   delete pg_namespace_;
   if (pg_trigger_) delete pg_trigger_;
+  if (pg_sequence_) delete pg_sequence_;
   // if (pg_proc) delete pg_proc;
   if (pg_table_metrics_) delete pg_table_metrics_;
   if (pg_index_metrics_) delete pg_index_metrics_;
@@ -85,6 +87,10 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 
   if (!pg_trigger_) {
     pg_trigger_ = new TriggerCatalog(database_name, txn);
+  }
+
+  if (!pg_sequence_) {
+    pg_sequence_ = new SequenceCatalog(database_name, txn);
   }
 
   // if (!pg_proc) {

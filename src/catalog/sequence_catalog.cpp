@@ -59,24 +59,19 @@ int64_t SequenceCatalogObject::get_next_val() {
       seq_curr_val += seq_increment;
   }
 
-  // TODO: this will become visible after Mengran's team push the
-  // AbstractCatalog::UpdateWithIndexScan.
-  // Link for the function:
-  // https://github.com/camellyx/peloton/blob/master/src/catalog/abstract_catalog.cpp#L305
-  bool status = catalog::SequenceCatalog::GetInstance().UpdateNextVal(seq_oid, seq_curr_val, txn_);
+  bool status = Catalog::GetInstance()
+                ->GetSystemCatalogs(db_oid)
+                ->GetSequenceCatalog()
+                ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
   LOG_DEBUG("status of update pg_sequence: %d", status);
 
   return result;
 }
 
-SequenceCatalog &SequenceCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static SequenceCatalog sequence_catalog{txn};
-  return sequence_catalog;
-}
-
-SequenceCatalog::SequenceCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " SEQUENCE_CATALOG_NAME
+SequenceCatalog::SequenceCatalog(const std::string &database_name,
+                                concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                      "." CATALOG_SCHEMA_NAME "." SEQUENCE_CATALOG_NAME
                       " ("
                       "oid          INT NOT NULL PRIMARY KEY, "
                       "sqdboid      INT NOT NULL, "
@@ -89,7 +84,7 @@ SequenceCatalog::SequenceCatalog(concurrency::TransactionContext *txn)
                       "sqval        BIGINT NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, SEQUENCE_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, SEQUENCE_CATALOG_NAME,
       {ColumnId::DATABSE_OID, ColumnId::SEQUENCE_NAME},
       SEQUENCE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
@@ -171,8 +166,10 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
   auto database_object =
       Catalog::GetInstance()->GetDatabaseObject(database_name, txn);
 
-  oid_t sequence_oid = SequenceCatalog::GetInstance().GetSequenceOid(
-      sequence_name, database_object->GetDatabaseOid(), txn);
+  oid_t sequence_oid = Catalog::GetInstance()
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetSequenceCatalog()
+      ->GetSequenceOid(sequence_name, database_object->GetDatabaseOid(), txn);
   if (sequence_oid == INVALID_OID) {
     LOG_TRACE("Cannot find sequence %s to drop!", sequence_name.c_str());
     return ResultType::FAILURE;
@@ -239,6 +236,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   PELOTON_ASSERT(tuple_count == 1);
   auto new_sequence = std::make_shared<SequenceCatalogObject>(
       (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>(),
+      database_oid,
       (*result_tiles)[0]->GetValue(0, 1).ToString(),
       (*result_tiles)[0]->GetValue(0, 2).GetAs<int64_t>(),
       (*result_tiles)[0]->GetValue(0, 3).GetAs<int64_t>(),

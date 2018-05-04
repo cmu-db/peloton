@@ -38,6 +38,7 @@
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog_defaults.h"
+#include "catalog/system_catalogs.h"
 
 #define SEQUENCE_CATALOG_NAME "pg_sequence"
 
@@ -51,12 +52,13 @@ namespace catalog {
 
 class SequenceCatalogObject {
  public:
-  SequenceCatalogObject(oid_t seqoid, const std::string &name,
+  SequenceCatalogObject(oid_t seqoid, oid_t dboid, const std::string &name,
                         const int64_t seqstart, const int64_t seqincrement,
                         const int64_t seqmax, const int64_t seqmin,
                         const bool seqcycle, const int64_t seqval,
                         concurrency::TransactionContext *txn)
       : seq_oid(seqoid),
+        db_oid(dboid),
         seq_name(name),
         seq_start(seqstart),
         seq_increment(seqincrement),
@@ -67,6 +69,7 @@ class SequenceCatalogObject {
         seq_curr_val(seqval){};
 
   oid_t seq_oid;
+  oid_t db_oid;
   std::string seq_name;
   int64_t seq_start;      // Start value of the sequence
   int64_t seq_increment;  // Increment value of the sequence
@@ -76,7 +79,6 @@ class SequenceCatalogObject {
   bool seq_cycle;         // Whether the sequence cycles
   concurrency::TransactionContext *txn_;
 
-  std::mutex sequence_mutex;  // mutex for all operations
   int64_t GetNextVal() {
     return get_next_val();
   };
@@ -97,11 +99,9 @@ class SequenceCatalogObject {
 
 class SequenceCatalog : public AbstractCatalog {
  public:
+  SequenceCatalog(const std::string &database_name,
+                  concurrency::TransactionContext *txn);
   ~SequenceCatalog();
-
-  // Global Singleton
-  static SequenceCatalog &GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -142,11 +142,12 @@ class SequenceCatalog : public AbstractCatalog {
     SEQUENCE_VALUE = 8
   };
 
-  enum IndexId { PRIMARY_KEY = 0, DBOID_SEQNAME_KEY = 1 };
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    DBOID_SEQNAME_KEY = 1
+  };
 
  private:
-  SequenceCatalog(concurrency::TransactionContext *txn);
-
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
 };
 

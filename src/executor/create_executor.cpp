@@ -296,7 +296,10 @@ bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       database_name, txn);
 
-  catalog::SequenceCatalog::GetInstance().InsertSequence(
+  catalog::Catalog::GetInstance()
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetSequenceCatalog()
+      ->InsertSequence(
       database_object->GetDatabaseOid(), sequence_name,
       node.GetSequenceIncrement(), node.GetSequenceMaxValue(),
       node.GetSequenceMinValue(), node.GetSequenceStart(),
