@@ -80,7 +80,7 @@ const std::string ComparisonExpression::GetInfo() const {
   return os.str();
 }
 
-bool ComparisonExpression::SymmetricsEquals(const AbstractExpression &other) const {
+bool ComparisonExpression::SymmetricEquals(const AbstractExpression &other) const {
   PELOTON_ASSERT(children_.size() == 2);
 
   if (other.GetChildrenSize() != 2) {

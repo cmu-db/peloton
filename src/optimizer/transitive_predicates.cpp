@@ -35,7 +35,6 @@ TransitivePredicatesLogicalGet::TransitivePredicatesLogicalGet() {
   type_ = RuleType::TRANSITIVE_PREDICATES_LOGICAL_GET;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
-  LOG_DEBUG("Matching predicates LG");
 }
 
 bool TransitivePredicatesLogicalGet::Check(std::shared_ptr<OperatorExpression> input,
@@ -49,8 +48,7 @@ void TransitivePredicatesLogicalGet::Transform(
     std::shared_ptr<OperatorExpression> input,
     UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
-  LOG_TRACE("LogicalGet::Transform");
-  LOG_DEBUG("Transitive table size %d", int(context->transitive_table.size()));
+  LOG_TRACE("TransitivePredicatesLogicalGet::Transform");
 
   auto get = input->Op().As<LogicalGet>();
   auto &get_predicates = get->predicates;
@@ -106,16 +104,12 @@ void TransitivePredicatesLogicalFilter::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
   LOG_TRACE("TransitivePredicatesLogicalFilter::Transform");
-  LOG_DEBUG("Transitive table size %d", int(context->transitive_table.size()));
 
   auto filter = input->Op().As<LogicalFilter>();
   auto &filter_predicates = filter->predicates;
 
   util::FillTransitiveTable(filter_predicates, context->transitive_table);
   auto new_predicates = util::GenerateTransitivePredicates(filter_predicates, context->transitive_table);
-
-  LOG_DEBUG("---------- Number of predicates %d\n", int(filter_predicates.size()));
-  LOG_DEBUG("---------- Number of new predicates %d\n", int(new_predicates.size()));
 
   if (new_predicates.empty())
     return;
