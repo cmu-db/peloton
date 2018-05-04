@@ -38,11 +38,13 @@ void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
   // add/update the catalog reference to the tile group
   tile_group_locator_[oid] = location;
+  num_live_tile_groups_.fetch_add(1);
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   // drop the catalog reference to the tile group
   tile_group_locator_[oid] = empty_tile_group_;
+  num_live_tile_groups_.fetch_sub(1);
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {

@@ -302,7 +302,7 @@ TEST_F(UpdateSQLTests, HalloweenProblemTest) {
   storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetActiveTileGroupCount());
+            storage::DataTable::GetDefaultActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT, b INT)");
@@ -375,7 +375,7 @@ TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
   storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetActiveTileGroupCount());
+            storage::DataTable::GetDefaultActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
@@ -472,7 +472,7 @@ TEST_F(UpdateSQLTests, MultiTileGroupUpdateSQLTest) {
   storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetActiveTileGroupCount());
+            storage::DataTable::GetDefaultActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
