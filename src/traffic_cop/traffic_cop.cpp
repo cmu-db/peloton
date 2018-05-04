@@ -420,7 +420,7 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
       auto columns =
           static_cast<storage::DataTable *>(
               catalog::Catalog::GetInstance()->GetTableWithName(
-                  from_table->GetDatabaseName(), from_table->GetSchemaName(),
+                  from_table->GetDatabaseName(), from_table->GetSchemaName(), temp_session_name_,
                   from_table->GetTableName(), GetCurrentTxnState().first))
               ->GetSchema()
               ->GetColumns();
@@ -613,10 +613,7 @@ void TrafficCop::DropTempTables() {
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTempTables(session_namespace_, txn);
-  // initialize the catalog and add the default database, so we don't do this on
-  // the first query
-  pg_catalog->DropTempTables(session_namespace_, txn);
+  catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, temp_session_name_, txn);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -624,10 +621,7 @@ void TrafficCop::CreateTempSchema() {
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTempTables(session_namespace_, txn);
-  // initialize the catalog and add the default database, so we don't do this on
-  // the first query
-  pg_catalog->DropTempTables(session_namespace_, txn);
+  catalog::Catalog::GetInstance()->CreateSchema(default_database_name_, temp_session_name_, txn);
   txn_manager.CommitTransaction(txn);
 }
 

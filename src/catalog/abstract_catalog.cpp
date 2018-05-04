@@ -67,6 +67,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto catalog_table_name = create_plan->GetTableName();
   auto catalog_schema_name = create_plan->GetSchemaName();
   auto catalog_database_name = create_plan->GetDatabaseName();
+  auto catalog_session_namespace = create_plan->GetSessionNamespace();
   PELOTON_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
   // create catalog table
   Catalog::GetInstance()->CreateTable(
@@ -75,7 +76,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
 
   // get catalog table oid
   auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
-      catalog_database_name, catalog_schema_name, catalog_table_name, txn);
+      catalog_database_name, catalog_schema_name, catalog_session_namespace, catalog_table_name, txn);
 
   // set catalog_table_
   try {

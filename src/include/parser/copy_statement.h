@@ -42,7 +42,6 @@ class CopyStatement : public SQLStatement {
   const std::string GetInfo() const override;
 
   std::unique_ptr<TableRef> cpy_table;
-  std::string session_namespace = DEFAULT_SCHEMA_NAME;
   CopyType type;
 
   std::string file_path;

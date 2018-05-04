@@ -161,7 +161,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
   system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFUALT_SCHEMA_OID, DEFUALT_SCHEMA_NAME, pool_.get(), txn);
+      DEFUALT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
@@ -322,7 +322,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                            " to create table");
 
   // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object = database_object->GetTableObject(table_name, schema_name, schema_name);
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
                            " already exists");
@@ -372,7 +372,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     if (column.IsUnique()) {
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-      CreateIndex(database_name, schema_name, table_name, {column_id},
+      CreateIndex(database_name, schema_name, schema_name, table_name, {column_id},
                   index_name, true, IndexType::BWTREE, txn);
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
@@ -872,7 +872,7 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &schema_name,
-    const std::string &session_namespace, const std::string &session_namespace, 
+    const std::string &session_namespace,
     const std::string &table_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
@@ -936,8 +936,11 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 /**
  * Drop all the temporary tables associated with the namespace.
  */
-void Catalog::DropTempTables(const std::string &session_namespace,
+void Catalog::DropTempTables(const std::string &database_name,
+                             const std::string &session_namespace,
                              concurrency::TransactionContext *txn) {
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
   //get pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();

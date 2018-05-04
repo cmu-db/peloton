@@ -183,7 +183,7 @@ class Catalog {
    * */
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &database_name, const std::string &schema_name,
-      const std::string &session_namespace, const std::string session_namespace,
+      const std::string &session_namespace,
       const std::string &table_name, concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
@@ -198,8 +198,9 @@ class Catalog {
   /*
    * Drop all the temporary tables created during a session
    */
-  void Catalog::DropTempTables(const std::string &session_namespace,
-                             concurrency::TransactionContext *txn)
+  void DropTempTables(const std::string &database_name,
+                      const std::string &session_namespace,
+                      concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

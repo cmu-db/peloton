@@ -571,7 +571,7 @@ TableCatalog::GetTableObjects(const std::string &schema_name, concurrency::Trans
   //get all the table.
   auto tables = GetTableObjects(txn);
   std::vector<std::shared_ptr<TableCatalogObject>> result;
-  for (auto it : table_objects_cache) {
+  for (auto it : tables) {
     if (it.second->GetSchemaName() == schema_name) {
       result.push_back(it.second);
     }

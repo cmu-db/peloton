@@ -186,9 +186,10 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
   // drop trigger
   ResultType result =
       catalog::Catalog::GetInstance()

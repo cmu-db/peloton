@@ -45,6 +45,12 @@ class SQLStatement : public Printable {
 
   virtual StatementType GetType() const { return stmt_type; }
 
+  virtual inline void SetSessionNamespace(std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
+
+  virtual inline std::string GetSessionNamespace() const { return session_namespace_; }
+
   // Get a string representation for debugging
   virtual const std::string GetInfo(int num_indent) const;
 
@@ -58,6 +64,7 @@ class SQLStatement : public Printable {
 
  private:
   StatementType stmt_type;
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 };
 
 class TableRefStatement : public SQLStatement {
@@ -71,9 +78,6 @@ class TableRefStatement : public SQLStatement {
 
     if (table_info_->database_name.empty())
       table_info_->database_name = default_database_name;
-    // if schema name is not specified, then it's default value is "public"
-    if (table_info_->schema_name.empty())
-      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
   }
 
   virtual inline std::string GetTableName() const {

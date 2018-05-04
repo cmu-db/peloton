@@ -153,7 +153,7 @@ class TableCatalog : public AbstractCatalog {
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(concurrency::TransactionContext *txn);
   std::vector<std::shared_ptr<TableCatalogObject>>
-  TableCatalog::GetTableObjects(const std::string &schema_name, concurrency::TransactionContext *txn);
+  GetTableObjects(const std::string &schema_name, concurrency::TransactionContext *txn);
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
   enum ColumnId {

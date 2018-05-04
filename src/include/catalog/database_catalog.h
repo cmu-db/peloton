@@ -84,7 +84,7 @@ class DatabaseCatalogObject {
       const std::string &index_name, const std::string &schema_name);
 
   //helper to get table object
-  std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObjectHelper(
+  std::shared_ptr<TableCatalogObject> GetTableObjectHelper(
     const std::string &table_name, const std::string &schema_name, bool cached_only);
 
   // cache for table name to oid translation
