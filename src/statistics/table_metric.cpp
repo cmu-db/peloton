@@ -41,6 +41,9 @@ void TableMetricRawData::WriteToCatalog() {
     oid_t database_oid = entry.first.first;
     oid_t table_oid = entry.first.second;
     auto &counts = entry.second;
+    // TODO (Justin): currently incorrect, should actually read and then
+    // increment,
+    // since each aggregation period only knows the delta
     catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
         database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
         counts[INSERT], counts[MEMORY_ALLOC], counts[MEMORY_USAGE], time_stamp,

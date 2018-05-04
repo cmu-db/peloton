@@ -54,19 +54,9 @@ class IndexMetricRawData : public AbstractRawData {
     counters_[db_index_id][DELETE]++;
   }
 
-  void Aggregate(AbstractRawData &other) override {
-    auto &other_index_metric = dynamic_cast<IndexMetricRawData &>(other);
-    for (auto &entry : other_index_metric.counters_) {
-      auto &this_counter = counters_[entry.first];
-      auto &other_counter = entry.second;
-      for (size_t i = 0; i < NUM_COUNTERS; i++) {
-        this_counter[i] += other_counter[i];
-      }
-    }
-  }
+  void Aggregate(AbstractRawData &other) override;
 
-  // TODO(justin) -- actually implement
-  void WriteToCatalog() override {}
+  void WriteToCatalog() override;
 
   const std::string GetInfo() const override { return "index metric"; }
 
@@ -84,7 +74,7 @@ class IndexMetricRawData : public AbstractRawData {
 class IndexMetric : public AbstractMetric<IndexMetricRawData> {
  public:
   inline void OnIndexRead(std::pair<oid_t, oid_t> db_index_id,
-                     size_t num_read) override {
+                          size_t num_read) override {
     GetRawData()->IncrementIndexReads(db_index_id, num_read);
   }
 
