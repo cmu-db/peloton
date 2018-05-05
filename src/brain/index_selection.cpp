@@ -200,8 +200,6 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // Get the best m index configurations using the naive enumeration algorithm
   // The naive algorithm gets all the possible subsets of size <= m and then
   // returns the cheapest m indexes
-  PELOTON_ASSERT(context_.naive_enumeration_threshold_ <=
-                 indexes.GetIndexCount());
 
   // Define a set ordering of (index config, cost) and define the ordering in
   // the set
