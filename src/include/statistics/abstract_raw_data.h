@@ -8,7 +8,8 @@ namespace stats {
  * @brief An always-consistent storage unit for intermediate stats results.
  *
  * These objects hold raw data points processed by a metric on the thread-local
- * level. Entries into this object must be always consistent. (i.e. future entries
+ * level. Entries into this object must be always consistent. (i.e. future
+ *entries
  * should not rely on some early entries being in this object) This is because
  * an aggregator can come at any time and swap out the object for aggregation.
  *
@@ -32,7 +33,7 @@ class AbstractRawData : public Printable {
   /**
    * Fetch additional data based on current stats collections
    */
-  virtual void FetchData() {};
+  virtual void FetchData(){};
 
  protected:
   struct pair_hash {

@@ -313,8 +313,7 @@ void StatsAggregatorOld::ActiveCollect() {
       it++;
   }
   for (oid_t tile_group_id : tile_group_ids_) {
-    auto tile_group =
-            tile_group_manager.GetTileGroup(tile_group_id);
+    auto tile_group = tile_group_manager.GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
     }
   }

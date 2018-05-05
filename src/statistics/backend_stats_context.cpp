@@ -199,7 +199,8 @@ void BackendStatsContext::AddTileGroup(oid_t tile_group_id) {
   tile_group_channel_.AddMessage(tile_group_id);
 }
 
-StatsChannel<oid_t, OidAggrReducer>& BackendStatsContext::GetTileGroupChannel() {
+StatsChannel<oid_t, OidAggrReducer> &
+BackendStatsContext::GetTileGroupChannel() {
   return tile_group_channel_;
 }
 

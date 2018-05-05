@@ -38,54 +38,55 @@ struct LatencyMeasurements {
 };
 
 class LatencyMetricRawData : public AbstractRawData {
-  public:
-    // TODO (Justin): remove hard-coded constant
-    // Probably want agg structure to have more capacity
-    LatencyMetricRawData(size_t max_history = 100) {
-      latencies_.SetCapacity(max_history);
+ public:
+  // TODO (Justin): remove hard-coded constant
+  // Probably want agg structure to have more capacity
+  LatencyMetricRawData(size_t max_history = 100) {
+    latencies_.SetCapacity(max_history);
+  }
+
+  inline void RecordLatency(const double val) { latencies_.PushBack(val); }
+
+  void Aggregate(AbstractRawData &other) {
+    auto &other_latency_metric = dynamic_cast<LatencyMetricRawData &>(other);
+    for (double next_latency : other_latency_metric.latencies_) {
+      latencies_.PushBack(next_latency);
     }
+  }
 
-    inline void RecordLatency(const double val) {
-      latencies_.PushBack(val);
-    }
+  void WriteToCatalog();
 
-    void Aggregate(AbstractRawData &other) {
-      auto &other_latency_metric = dynamic_cast<LatencyMetricRawData &>(other);
-      for (double next_latency : other_latency_metric.latencies_) {
-        latencies_.PushBack(next_latency);
-      }
-    }
+ private:
+  /**
+   * @brief Calculate descriptive statistics on raw latency measurements.
+   *
+   * Should only be called by aggregator thread, after it has aggregated
+   * latencies from all worker threads.
+   * Only then does it make sense to calculate stats such as min, max, and
+   *percentiles.
+   */
+  LatencyMeasurements DescriptiveFromRaw();
 
-    void WriteToCatalog();
-  private:
-    /**
-     * @brief Calculate descriptive statistics on raw latency measurements.
-     *
-     * Should only be called by aggregator thread, after it has aggregated
-     * latencies from all worker threads.
-     * Only then does it make sense to calculate stats such as min, max, and percentiles.
-     */
-    LatencyMeasurements DescriptiveFromRaw();
-
-    // Circular buffer with capacity N that stores the <= N
-    // most recent latencies collected
-    CircularBuffer<double> latencies_;
+  // Circular buffer with capacity N that stores the <= N
+  // most recent latencies collected
+  CircularBuffer<double> latencies_;
 };
 
 class LatencyMetric : public AbstractMetric<LatencyMetricRawData> {
-  public:
-    inline void OnQueryBegin() {
-      timer_ms_.Reset();
-      timer_ms_.Start();
-    }
+ public:
+  inline void OnQueryBegin() {
+    timer_ms_.Reset();
+    timer_ms_.Start();
+  }
 
-    inline void OnQueryEnd() {
-      timer_ms_.Stop();
-      GetRawData()->RecordLatency(timer_ms_.GetDuration());
-    }
-  private:
-    // Timer for timing individual latencies
-    Timer<std::ratio<1, 1000>> timer_ms_;
+  inline void OnQueryEnd() {
+    timer_ms_.Stop();
+    GetRawData()->RecordLatency(timer_ms_.GetDuration());
+  }
+
+ private:
+  // Timer for timing individual latencies
+  Timer<std::ratio<1, 1000>> timer_ms_;
 };
 
 /**

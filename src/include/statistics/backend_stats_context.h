@@ -61,15 +61,15 @@ class BackendStatsContext {
   inline std::thread::id GetThreadId() { return thread_id_; }
 
   // Returns the table metric with the given database ID and table ID
-  TableMetricOld * GetTableMetric(oid_t database_id, oid_t table_id);
+  TableMetricOld *GetTableMetric(oid_t database_id, oid_t table_id);
 
   // Returns the database metric with the given database ID
-  DatabaseMetricOld * GetDatabaseMetric(oid_t database_id);
+  DatabaseMetricOld *GetDatabaseMetric(oid_t database_id);
 
   // Returns the index metric with the given database ID, table ID, and
   // index ID
-  IndexMetricOld * GetIndexMetric(oid_t database_id, oid_t table_id,
-                                  oid_t index_id);
+  IndexMetricOld *GetIndexMetric(oid_t database_id, oid_t table_id,
+                                 oid_t index_id);
 
   // Returns the metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> &GetCompletedQueryMetrics() {
@@ -155,7 +155,7 @@ class BackendStatsContext {
 
   void AddTileGroup(oid_t tile_group);
 
-  StatsChannel<oid_t, OidAggrReducer>& GetTileGroupChannel();
+  StatsChannel<oid_t, OidAggrReducer> &GetTileGroupChannel();
 
   // Initialize the query stat
   void InitQueryMetric(const std::shared_ptr<Statement> statement,
@@ -227,7 +227,8 @@ class BackendStatsContext {
   common::synchronization::SpinLatch index_id_lock;
 
   // Channel collecting oid of newly created TileGroups
-  StatsChannel<oid_t, OidAggrReducer> tile_group_channel_{TILE_GROUP_CHANNEL_SIZE};
+  StatsChannel<oid_t, OidAggrReducer> tile_group_channel_{
+      TILE_GROUP_CHANNEL_SIZE};
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
@@ -237,8 +238,8 @@ class BackendStatsContext {
   void CompleteQueryMetric();
 
   // Get the mapping table of backend stat context for each thread
-  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-      &GetBackendContextMap(void);
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+  GetBackendContextMap(void);
 };
 
 }  // namespace stats

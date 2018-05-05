@@ -72,17 +72,16 @@ class TableMetricRawData : public AbstractRawData {
     counters_[db_table_id][INLINE_MEMORY_ALLOC] -= bytes;
   }
 
-  inline void AddModifiedTileGroup(std::pair<oid_t, oid_t> db_table_id, oid_t tile_group_id){
+  inline void AddModifiedTileGroup(std::pair<oid_t, oid_t> db_table_id,
+                                   oid_t tile_group_id) {
     auto tile_group_set = modified_tile_group_id_set_.find(db_table_id);
     if (tile_group_set == modified_tile_group_id_set_.end())
       modified_tile_group_id_set_[db_table_id] = std::unordered_set<oid_t>();
 
     modified_tile_group_id_set_[db_table_id].insert(tile_group_id);
-
   }
 
   void Aggregate(AbstractRawData &other) override;
-
 
   // TODO(justin) -- actually implement
   void WriteToCatalog() override;
@@ -90,7 +89,8 @@ class TableMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
   /**
-   * Fetch Usage for inlined tile memory and both allocation and usage for varlen pool
+   * Fetch Usage for inlined tile memory and both allocation and usage for
+   * varlen pool
    */
   void FetchData() override;
 
@@ -113,36 +113,35 @@ class TableMetricRawData : public AbstractRawData {
   // should be number of possible CounterType values
   static const size_t NUM_COUNTERS = 8;
 
-  std::unordered_map<std::pair<oid_t, oid_t>, std::unordered_set<oid_t>, pair_hash>
-    modified_tile_group_id_set_;
-
+  std::unordered_map<std::pair<oid_t, oid_t>, std::unordered_set<oid_t>,
+                     pair_hash> modified_tile_group_id_set_;
 };
 
 class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
   inline void OnTupleRead(oid_t tile_group_id, size_t num_read) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_id.second == INVALID_OID)  return;
+    if (db_table_id.second == INVALID_OID) return;
     GetRawData()->IncrementTableReads(db_table_id, num_read);
   }
 
   inline void OnTupleUpdate(oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_id.second == INVALID_OID)  return;
+    if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);
     GetRawData()->IncrementTableUpdates(db_table_id);
   }
 
   inline void OnTupleInsert(oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_id.second == INVALID_OID)  return;
+    if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);
     GetRawData()->IncrementTableInserts(db_table_id);
   }
 
   inline void OnTupleDelete(oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
-    if (db_table_id.second == INVALID_OID)  return;
+    if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);
     GetRawData()->IncrementTableDeletes(db_table_id);
   }

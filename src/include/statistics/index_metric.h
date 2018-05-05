@@ -52,7 +52,6 @@ class IndexMetricRawData : public AbstractRawData {
   const std::string GetInfo() const override { return "index metric"; }
 
  private:
-
   inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_index_id,
                              CounterType type) {
     auto entry = counters_.find(db_index_id);
@@ -121,8 +120,8 @@ class IndexMetricOld : public AbstractMetricOld {
 
   inline bool operator==(const IndexMetricOld &other) {
     return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
-        index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
-        index_access_ == other.index_access_;
+           index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
+           index_access_ == other.index_access_;
   }
 
   inline bool operator!=(const IndexMetricOld &other) {

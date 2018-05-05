@@ -37,8 +37,10 @@ void TableMetricRawData::Aggregate(AbstractRawData &other) {
 
   // Collect referenced TileGroups
   for (auto &tile_groups : other_table_data.modified_tile_group_id_set_) {
-    if (modified_tile_group_id_set_.find(tile_groups.first) == modified_tile_group_id_set_.end())
-      modified_tile_group_id_set_[tile_groups.first] = std::unordered_set<oid_t>();
+    if (modified_tile_group_id_set_.find(tile_groups.first) ==
+        modified_tile_group_id_set_.end())
+      modified_tile_group_id_set_[tile_groups.first] =
+          std::unordered_set<oid_t>();
 
     auto &this_set = modified_tile_group_id_set_[tile_groups.first];
     auto &other_set = tile_groups.second;
@@ -57,17 +59,20 @@ void TableMetricRawData::FetchData() {
     auto &db_table_id = entry.first;
     auto &tile_group_ids = entry.second;
 
-    // Begin a txn to avoid concurrency issue (i.e. Other people delete the table)
+    // Begin a txn to avoid concurrency issue (i.e. Other people delete the
+    // table)
     auto txn = txn_manager.BeginTransaction();
     try {
-      auto tb_object = pg_catalog->GetTableObject(db_table_id.first, db_table_id.second, txn);
+      auto tb_object = pg_catalog->GetTableObject(db_table_id.first,
+                                                  db_table_id.second, txn);
     } catch (CatalogException &e) {
       txn_manager.CommitTransaction(txn);
       continue;
     }
-    size_t inline_tuple_size = storage_manager
-        ->GetTableWithOid(db_table_id.first, db_table_id.second)
-        ->GetSchema()->GetLength();
+    size_t inline_tuple_size =
+        storage_manager->GetTableWithOid(db_table_id.first, db_table_id.second)
+            ->GetSchema()
+            ->GetLength();
     txn_manager.CommitTransaction(txn);
 
     for (oid_t tile_group_id : tile_group_ids) {
@@ -75,13 +80,16 @@ void TableMetricRawData::FetchData() {
       if (tile_group == nullptr) continue;
 
       // Collect inline table
-      counters_[db_table_id][INLINE_MEMORY_USAGE] += tile_group->GetActiveTupleCount() * (inline_tuple_size + storage::TileGroupHeader::header_entry_size);
-
+      counters_[db_table_id][INLINE_MEMORY_USAGE] +=
+          tile_group->GetActiveTupleCount() *
+          (inline_tuple_size + storage::TileGroupHeader::header_entry_size);
 
       // Colelct Varlen Memory stats
       for (size_t i = 0; i < tile_group->NumTiles(); i++) {
-        counters_[db_table_id][VARLEN_MEMORY_ALLOC] += tile_group->GetTile(i)->GetPool()->GetMemoryAlloc();
-        counters_[db_table_id][VARLEN_MEMORY_USAGE] += tile_group->GetTile(i)->GetPool()->GetMemoryUsage();
+        counters_[db_table_id][VARLEN_MEMORY_ALLOC] +=
+            tile_group->GetTile(i)->GetPool()->GetMemoryAlloc();
+        counters_[db_table_id][VARLEN_MEMORY_USAGE] +=
+            tile_group->GetTile(i)->GetPool()->GetMemoryUsage();
       }
     }
   }
@@ -103,8 +111,8 @@ void TableMetricRawData::WriteToCatalog() {
     // since each aggregation period only knows the delta
     catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
         database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
-        counts[INSERT], counts[INLINE_MEMORY_ALLOC], counts[INLINE_MEMORY_USAGE], time_stamp,
-        nullptr, txn);
+        counts[INSERT], counts[INLINE_MEMORY_ALLOC],
+        counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);
   }
 
   txn_manager.CommitTransaction(txn);

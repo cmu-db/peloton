@@ -118,8 +118,8 @@ class DatabaseMetricOld : public AbstractMetricOld {
 
   inline bool operator==(const DatabaseMetricOld &other) {
     return database_id_ == other.database_id_ &&
-        txn_committed_ == other.txn_committed_ &&
-        txn_aborted_ == other.txn_aborted_;
+           txn_committed_ == other.txn_committed_ &&
+           txn_aborted_ == other.txn_aborted_;
   }
 
   inline bool operator!=(const DatabaseMetricOld &other) {
