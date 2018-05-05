@@ -173,7 +173,7 @@ bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple 
 
   if(record_type==LogRecordType::TUPLE_INSERT){
 
-    PL_ASSERT(tile_group != nullptr);
+    PELOTON_ASSERT(tile_group != nullptr);
 
     auto status = tile_group_header->GetEmptyTupleSlot(location.offset);
 
@@ -447,7 +447,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
 
     else if(record_type==LogRecordType::TRANSACTION_ABORT) {
       LOG_ERROR("Shouldn't be replaying TXN_ABORT");
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
     }
 
     curr_offset += record_len;
@@ -507,7 +507,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
            tuple_slot_id++) {
         txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_slot_id);
         if (tuple_txn_id != INVALID_TXN_ID) {
-          PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+          PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
           std::unique_ptr<storage::Tuple> t(new storage::Tuple(schema, true));
           for (size_t col = 0; col < schema->GetColumnCount(); col++) {
             t->SetValue(col, tile_group->GetValue(tuple_slot_id, col), pool.get());
