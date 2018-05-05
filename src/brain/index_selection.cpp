@@ -40,19 +40,19 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
   // Start the index selection.
   for (unsigned long i = 0; i < context_.num_iterations_; i++) {
-    LOG_DEBUG("******* Iteration %ld **********", i);
-    LOG_DEBUG("Candidate Indexes Before: %s",
+    LOG_TRACE("******* Iteration %ld **********", i);
+    LOG_TRACE("Candidate Indexes Before: %s",
               candidate_indexes.ToString().c_str());
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
-    LOG_DEBUG("Admissible Indexes: %s", admissible_indexes.ToString().c_str());
-    LOG_DEBUG("Candidate Indexes After: %s",
+    LOG_TRACE("Admissible Indexes: %s", admissible_indexes.ToString().c_str());
+    LOG_TRACE("Candidate Indexes After: %s",
               candidate_indexes.ToString().c_str());
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.num_indexes_);
-    LOG_DEBUG("Top Candidate Indexes: %s",
+    LOG_TRACE("Top Candidate Indexes: %s",
               candidate_indexes.ToString().c_str());
 
     candidate_indexes = top_candidate_indexes;
@@ -84,12 +84,11 @@ void IndexSelection::GenerateCandidateIndexes(
       IndexConfiguration pruned_ai;
       PruneUselessIndexes(ai, wi, pruned_ai);
       // Candidate config for the single-column indexes is the union of
-      // candidates for each
-      // query.
+      // candidates for each query.
       candidate_config.Merge(pruned_ai);
     }
   } else {
-    LOG_DEBUG("Pruning multi-column indexes");
+    LOG_TRACE("Pruning multi-column indexes");
     IndexConfiguration pruned_ai;
     PruneUselessIndexes(candidate_config, workload, pruned_ai);
     candidate_config.Set(pruned_ai);
@@ -113,11 +112,10 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       auto c1 = ComputeCost(c, w);
       auto c2 = ComputeCost(empty_config, w);
-      LOG_DEBUG("Cost with index %s is %lf", c.ToString().c_str(), c1);
-      LOG_DEBUG("Cost without is %lf", c2);
+      LOG_TRACE("Cost with index %s is %lf", c.ToString().c_str(), c1);
+      LOG_TRACE("Cost without is %lf", c2);
 
       if (c1 < c2) {
-        LOG_TRACE("Useful");
         is_useful = true;
         break;
       }
@@ -307,7 +305,7 @@ void IndexSelection::IndexColsParseWhereHelper(
     const expression::AbstractExpression *where_expr,
     IndexConfiguration &config) {
   if (where_expr == nullptr) {
-    LOG_DEBUG("No Where Clause Found");
+    LOG_TRACE("No Where Clause Found");
     return;
   }
   auto expr_type = where_expr->GetExpressionType();
@@ -367,7 +365,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
     std::unique_ptr<parser::GroupByDescription> &group_expr,
     IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
-    LOG_DEBUG("Group by expression not present");
+    LOG_TRACE("Group by expression not present");
     return;
   }
   auto &columns = group_expr->columns;
@@ -382,7 +380,7 @@ void IndexSelection::IndexColsParseOrderByHelper(
     std::unique_ptr<parser::OrderDescription> &order_expr,
     IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
-    LOG_DEBUG("Order by expression not present");
+    LOG_TRACE("Order by expression not present");
     return;
   }
   auto &exprs = order_expr->exprs;

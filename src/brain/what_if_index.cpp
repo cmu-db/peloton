@@ -30,7 +30,7 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
   // Find all the tables that are referenced in the parsed query.
   std::vector<std::string> tables_used;
   GetTablesReferenced(query, tables_used);
-  LOG_DEBUG("Tables referenced count: %ld", tables_used.size());
+  LOG_TRACE("Tables referenced count: %ld", tables_used.size());
 
   // TODO [vamshi]: Improve this loop.
   // Load the indexes into the cache for each table so that the optimizer uses
@@ -48,16 +48,16 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
       if (index->table_oid == table_object->GetTableOid()) {
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
-        LOG_DEBUG("Created a new hypothetical index %d on table: %d",
+        LOG_TRACE("Created a new hypothetical index %d on table: %d",
                   index_catalog_obj->GetIndexOid(),
                   index_catalog_obj->GetTableOid());
         for (auto col : index_catalog_obj->GetKeyAttrs()) {
           (void)col;  // for debug mode.
-          LOG_DEBUG("Cols: %d", col);
+          LOG_TRACE("Cols: %d", col);
         }
       }
     }
-    LOG_DEBUG("Index Catalog Objects inserted: %ld",
+    LOG_TRACE("Index Catalog Objects inserted: %ld",
               table_object->GetIndexObjects().size());
   }
 
@@ -65,9 +65,9 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
   optimizer::Optimizer optimizer;
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query, txn);
 
-  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
-  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
-  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
+  LOG_TRACE("Query: %s", query->GetInfo().c_str());
+  LOG_TRACE("Hypothetical config: %s", config.ToString().c_str());
+  LOG_TRACE("Got cost %lf", opt_info_obj->cost);
 
   txn_manager.CommitTransaction(txn);
   return opt_info_obj;
@@ -103,7 +103,7 @@ void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
           //TODO[Siva]: Confirm this from Vamshi
-          LOG_DEBUG("Table name is %s",
+          LOG_TRACE("Table name is %s",
                     sql_statement->from_table.get()
                         ->GetTableName()
                         .c_str());
