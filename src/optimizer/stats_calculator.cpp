@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// cost_and_stats_calculator.h
+// stats_calculator.cpp
 //
 // Identification: src/optimizer/stats_calculator.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -143,7 +143,8 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
       column_stats = std::make_shared<ColumnStats>(
           *left_child_group->GetStats(tv_expr->GetColFullName()));
     } else {
-      PELOTON_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      PELOTON_ASSERT(
+          right_child_group->HasColumnStats(tv_expr->GetColFullName()));
       column_stats = std::make_shared<ColumnStats>(
           *right_child_group->GetStats(tv_expr->GetColFullName()));
     }

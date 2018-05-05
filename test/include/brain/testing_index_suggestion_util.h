@@ -51,7 +51,7 @@ class TestingIndexSuggestionUtil {
 
   // Inserts specified number of tuples into the table with random values.
   void InsertIntoTable(std::string table_name, TableSchema schema,
-                                long num_tuples);
+                       long num_tuples);
 
   // Creates a new table with the provided schema.
   void CreateTable(std::string table_name, TableSchema schema);
@@ -61,7 +61,6 @@ class TestingIndexSuggestionUtil {
   // offset of the table.
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols);
-
 
  private:
   std::string database_name_;

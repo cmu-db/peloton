@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/rule_impls.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -387,7 +387,7 @@ void GetToIndexScan::Transform(
       std::vector<type::Value> index_value_list;
       std::unordered_set<oid_t> index_col_set(
           index_object->GetKeyAttrs().begin(),
-          index_object->GetKeyAttrs().end()); 
+          index_object->GetKeyAttrs().end());
       // If the first index key column present in the predicate's column id map
       // then we would let the cost model to decide if we want to use the index
       const auto &key_attr_list = index_object->GetKeyAttrs();

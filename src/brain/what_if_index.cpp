@@ -73,8 +73,9 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   return opt_info_obj;
 }
 
-void WhatIfIndex::GetTablesReferenced(std::shared_ptr<parser::SQLStatement> query,
-                                      std::vector<std::string> &table_names) {
+void WhatIfIndex::GetTablesReferenced(
+    std::shared_ptr<parser::SQLStatement> query,
+    std::vector<std::string> &table_names) {
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
@@ -102,11 +103,9 @@ void WhatIfIndex::GetTablesReferenced(std::shared_ptr<parser::SQLStatement> quer
       // Select can operate on more than 1 table.
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
-          //TODO[Siva]: Confirm this from Vamshi
+          // TODO[Siva]: Confirm this from Vamshi
           LOG_TRACE("Table name is %s",
-                    sql_statement->from_table.get()
-                        ->GetTableName()
-                        .c_str());
+                    sql_statement->from_table.get()->GetTableName().c_str());
           table_names.push_back(
               sql_statement->from_table.get()->GetTableName());
           break;

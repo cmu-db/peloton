@@ -45,9 +45,9 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   testing_util.CreateTable(table_name, schema);
   testing_util.InsertIntoTable(table_name, schema, num_rows)
 
-  // Form the query.
-  std::string query("SELECT a from " + table_name +
-                    " WHERE b = 100 and c = 5;");
+      // Form the query.
+      std::string query("SELECT a from " + table_name +
+                        " WHERE b = 100 and c = 5;");
   LOG_INFO("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
@@ -63,14 +63,15 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   // Get the first statement.
-  auto sql_statement = std::shared_ptr<parser::SQLStatement>
-    (stmt_list.get()->PassOutStatement(0));
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+      stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
   txn_manager.CommitTransaction(txn);
 
   // 1. Get the optimized plan tree without the indexes (sequential scan)
-  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config, DEFAULT_DB_NAME);
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement, config, DEFAULT_DB_NAME);
   auto cost_without_index = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
@@ -120,9 +121,9 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   testing_util.CreateTable(table_name, schema);
   testing_util.InsertIntoTable(table_name, schema, num_rows)
 
-  // Form the query
-  std::string query("SELECT a from " + table_name +
-                    " WHERE b = 200 and c = 100;");
+      // Form the query
+      std::string query("SELECT a from " + table_name +
+                        " WHERE b = 200 and c = 100;");
   LOG_INFO("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
@@ -138,8 +139,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
       new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   // Get the first statement.
-  auto sql_statement = std::shared_ptr<parser::SQLStatement>
-    (stmt_list.get()->PassOutStatement(0));
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+      stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
   txn_manager.CommitTransaction(txn);
@@ -211,9 +212,9 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   testing_util.CreateTable(table_name, schema);
   testing_util.InsertIntoTable(table_name, schema, num_rows)
 
-  // Form the query.
-  std::string query("SELECT a from " + table_name +
-                    " WHERE b = 500 AND e = 100;");
+      // Form the query.
+      std::string query("SELECT a from " + table_name +
+                        " WHERE b = 500 AND e = 100;");
   LOG_INFO("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
@@ -229,8 +230,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
       new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   // Get the first statement.
-  auto sql_statement = std::shared_ptr<parser::SQLStatement>
-    (stmt_list.get()->PassOutStatement(0));
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+      stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
   txn_manager.CommitTransaction(txn);

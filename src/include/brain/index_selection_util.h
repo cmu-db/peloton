@@ -55,7 +55,8 @@ struct HypotheticalIndexObject {
   /**
    * @brief - Constructor
    */
-  HypotheticalIndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids)
+  HypotheticalIndexObject(oid_t db_oid, oid_t table_oid,
+                          std::vector<oid_t> &col_oids)
       : db_oid(db_oid), table_oid(table_oid) {
     for (auto col : col_oids) column_oids.insert(col);
   }
@@ -101,7 +102,8 @@ class IndexConfiguration {
   /**
    * @brief - Constructor
    */
-  IndexConfiguration(std::set<std::shared_ptr<HypotheticalIndexObject>> &index_obj_set)
+  IndexConfiguration(
+      std::set<std::shared_ptr<HypotheticalIndexObject>> &index_obj_set)
       : indexes_(index_obj_set) {}
 
   /**
@@ -177,18 +179,21 @@ class IndexObjectPool {
   /**
    * @brief - Return the shared pointer of the object from the global
    */
-  std::shared_ptr<HypotheticalIndexObject> GetIndexObject(HypotheticalIndexObject &obj);
+  std::shared_ptr<HypotheticalIndexObject> GetIndexObject(
+      HypotheticalIndexObject &obj);
 
   /**
    * @brief - Add the object to the pool of index objects
    * if the object already exists, return the shared pointer
    * else create the object, add it to the pool and return the shared pointer
    */
-  std::shared_ptr<HypotheticalIndexObject> PutIndexObject(HypotheticalIndexObject &obj);
+  std::shared_ptr<HypotheticalIndexObject> PutIndexObject(
+      HypotheticalIndexObject &obj);
 
  private:
   // The mapping from the object to the shared pointer
-  std::unordered_map<HypotheticalIndexObject, std::shared_ptr<HypotheticalIndexObject>,
+  std::unordered_map<HypotheticalIndexObject,
+                     std::shared_ptr<HypotheticalIndexObject>,
                      IndexObjectHasher> map_;
 };
 
@@ -214,7 +219,8 @@ class Workload {
   /**
    * @brief - Constructor
    */
-  Workload(std::shared_ptr<parser::SQLStatement> query, std::string database_name)
+  Workload(std::shared_ptr<parser::SQLStatement> query,
+           std::string database_name)
       : sql_queries_({query}), database_name(database_name) {}
 
   /**
@@ -227,7 +233,8 @@ class Workload {
   /**
    * @brief - Return the queries
    */
-  inline const std::vector<std::shared_ptr<parser::SQLStatement>> &GetQueries() {
+  inline const std::vector<std::shared_ptr<parser::SQLStatement>>
+      &GetQueries() {
     return sql_queries_;
   }
 

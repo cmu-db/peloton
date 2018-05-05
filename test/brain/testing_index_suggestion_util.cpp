@@ -48,7 +48,8 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
  * @param table_name
  * @param schema
  */
-void TestingIndexSuggestionUtil::CreateTable(std::string table_name, TableSchema schema) {
+void TestingIndexSuggestionUtil::CreateTable(std::string table_name,
+                                             TableSchema schema) {
   // Create table.
   std::ostringstream s_stream;
   s_stream << "CREATE TABLE " << table_name << " (";
@@ -82,7 +83,9 @@ void TestingIndexSuggestionUtil::CreateTable(std::string table_name, TableSchema
  * @param schema schema of the table to be created
  * @param num_tuples number of tuples to be inserted with random values.
  */
-void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name, TableSchema schema, long num_tuples) {
+void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name,
+                                                 TableSchema schema,
+                                                 long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;
@@ -163,7 +166,8 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   }
   PELOTON_ASSERT(col_ids.size() == index_col_names.size());
 
-  auto obj_ptr = new brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
+  auto obj_ptr =
+      new brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
   auto index_obj = std::shared_ptr<brain::HypotheticalIndexObject>(obj_ptr);
 
   txn_manager.CommitTransaction(txn);
@@ -194,6 +198,6 @@ void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
-} // namespace index_suggestion
-} // namespace test
-} // namespace peloton
+}  // namespace index_suggestion
+}  // namespace test
+}  // namespace peloton

@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// cost_and_stats_calculator.h
+// stats_calculator.h
 //
 // Identification: src/include/optimizer/stats_calculator.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

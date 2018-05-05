@@ -32,16 +32,19 @@ const std::string HypotheticalIndexObject::ToString() const {
   return str_stream.str();
 }
 
-bool HypotheticalIndexObject::operator==(const HypotheticalIndexObject &obj) const {
+bool HypotheticalIndexObject::operator==(
+    const HypotheticalIndexObject &obj) const {
   return (db_oid == obj.db_oid && table_oid == obj.table_oid &&
-      column_oids == obj.column_oids);
+          column_oids == obj.column_oids);
 }
 
-bool HypotheticalIndexObject::IsCompatible(std::shared_ptr<HypotheticalIndexObject> index) const {
+bool HypotheticalIndexObject::IsCompatible(
+    std::shared_ptr<HypotheticalIndexObject> index) const {
   return (db_oid == index->db_oid) && (table_oid == index->table_oid);
 }
 
-HypotheticalIndexObject HypotheticalIndexObject::Merge(std::shared_ptr<HypotheticalIndexObject> index) {
+HypotheticalIndexObject HypotheticalIndexObject::Merge(
+    std::shared_ptr<HypotheticalIndexObject> index) {
   HypotheticalIndexObject result;
   result.db_oid = db_oid;
   result.table_oid = table_oid;
@@ -85,8 +88,8 @@ size_t IndexConfiguration::GetIndexCount() const { return indexes_.size(); }
 
 bool IndexConfiguration::IsEmpty() const { return indexes_.empty(); }
 
-const std::set<std::shared_ptr<HypotheticalIndexObject>> &IndexConfiguration::GetIndexes()
-    const {
+const std::set<std::shared_ptr<HypotheticalIndexObject>>
+    &IndexConfiguration::GetIndexes() const {
   return indexes_;
 }
 
@@ -121,7 +124,8 @@ void IndexConfiguration::Clear() { indexes_.clear(); }
 // IndexObjectPool
 //===--------------------------------------------------------------------===//
 
-std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::GetIndexObject(HypotheticalIndexObject &obj) {
+std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::GetIndexObject(
+    HypotheticalIndexObject &obj) {
   auto ret = map_.find(obj);
   if (ret != map_.end()) {
     return ret->second;
@@ -129,7 +133,8 @@ std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::GetIndexObject(Hypothe
   return nullptr;
 }
 
-std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(HypotheticalIndexObject &obj) {
+std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(
+    HypotheticalIndexObject &obj) {
   auto index_s_ptr = GetIndexObject(obj);
   if (index_s_ptr != nullptr) return index_s_ptr;
   HypotheticalIndexObject *index_copy = new HypotheticalIndexObject();
