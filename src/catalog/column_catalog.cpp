@@ -256,7 +256,8 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
  * @brief Rename the column name to a new name.
  * @ return whether the update succeed
  */
-bool ColumnCatalog::RenameColumn(oid_t table_oid,
+bool ColumnCatalog::RenameColumn(oid_t database_oid,
+                                 oid_t table_oid,
                                  const std::string &column_name,
                                  const std::string &new_name,
                                  concurrency::TransactionContext *txn) {
@@ -275,7 +276,7 @@ bool ColumnCatalog::RenameColumn(oid_t table_oid,
   oid_t index_offset = IndexId::PRIMARY_KEY;
 
   auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+      Catalog::GetInstance()->GetTableObject(database_oid, table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
   return UpdateWithIndexScan(update_columns, update_values, scan_values,

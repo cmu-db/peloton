@@ -48,6 +48,7 @@ AlterPlan::AlterPlan(const std::string &database_name,
 AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
   table_name = std::string(parse_tree->GetTableName());
   database_name = std::string(parse_tree->GetDatabaseName());
+  schema_name = std::string(parse_tree->GetSchemaName());
   switch (parse_tree->type) {
     case parser::AlterTableStatement::AlterTableType::RENAME: {
       old_names_.emplace_back(std::string{parse_tree->oldName});

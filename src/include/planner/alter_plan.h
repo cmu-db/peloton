@@ -100,6 +100,8 @@ class AlterPlan : public AbstractPlan {
   // return true if the alter plan is rename statement
   bool IsRename() const { return this->type == AlterType::RENAME; }
 
+  // return schema name
+  std::string GetSchemaName() const { return this->schema_name; }
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
@@ -110,6 +112,8 @@ class AlterPlan : public AbstractPlan {
   // Database Name
   std::string database_name;
 
+  // Schema Name
+  std::string schema_name;
   // Schema delta, define the column txn want to add
   std::unique_ptr<catalog::Schema> added_columns;
   // dropped_column, define the column you want to drop

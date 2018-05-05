@@ -1796,6 +1796,9 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
         result->table_info_.get()->database_name =
             strdup(relation->catalogname);
       }
+      if (relation->schemaname) {
+        result->table_info_.get()->schema_name = strdup(relation->schemaname);
+      }
       if (newRoot->subname) {
         result->oldName = strdup(newRoot->subname);
       }
@@ -1822,6 +1825,9 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
       if (relation->catalogname) {
         result->table_info_.get()->database_name =
             strdup(relation->catalogname);
+      }
+      if (relation->schemaname) {
+        result->table_info_.get()->schema_name = strdup(relation->schemaname);
       }
 
       for (auto cell = newRoot->cmds->head; cell != NULL; cell = cell->next) {
