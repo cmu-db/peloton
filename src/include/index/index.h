@@ -442,6 +442,8 @@ class Index : public Printable {
     indexed_tile_group_offset++;
   }
 
+  // TODO: add logic to protect index from being read during index build
+
  protected:
   explicit Index(IndexMetadata *schema);
 
@@ -470,6 +472,8 @@ class Index : public Printable {
 
   // This is used by index tuner
   std::atomic<size_t> indexed_tile_group_offset;
+
+  // TODO: add variable to protect index from being read during index build
 };
 
 }  // namespace index

@@ -56,7 +56,10 @@ bool PopulateIndexExecutor::DExecute() {
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {
     oid_t table_oid = target_table_->GetOid();
-    //Get the output from seq_scan
+
+    // Lock the table to exclusive
+    // TODO: add non-blocking version. Need to add some identifier
+    // for switching between blocking/non-blocking.
     concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
     bool lock_success = lm->LockExclusive(table_oid);
     concurrency::LockManager::SafeLock dummy;
@@ -66,6 +69,8 @@ bool PopulateIndexExecutor::DExecute() {
     else{
       dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
     }
+
+    // Get the output from seq_scan
     while (children_[0]->Execute()) {
       child_tiles_.emplace_back(children_[0]->GetOutput());
     }
