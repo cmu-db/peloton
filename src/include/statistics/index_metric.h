@@ -60,6 +60,8 @@ class IndexMetricRawData : public AbstractRawData {
     return counters_[db_index_id][type];
   }
 
+  // map from (database_oid, index_oid) pair to vector of counters,
+  // where CounterType enum describes what kind of counter is kept at what index
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 

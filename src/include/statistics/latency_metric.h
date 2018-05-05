@@ -54,6 +54,8 @@ class LatencyMetricRawData : public AbstractRawData {
     }
   }
 
+  // Computes descriptive statistics on the aggregated latencies,
+  // then writes these computed values to the catalog.
   void WriteToCatalog();
 
  private:
@@ -67,7 +69,7 @@ class LatencyMetricRawData : public AbstractRawData {
    */
   LatencyMeasurements DescriptiveFromRaw();
 
-  // Circular buffer with capacity N that stores the <= N
+  // Circular buffer with capacity N that stores up to the N
   // most recent latencies collected
   CircularBuffer<double> latencies_;
 };

@@ -45,7 +45,6 @@ class DatabaseMetricRawData : public AbstractRawData {
     }
   }
 
-  // TODO(tianyu) Implement
   void WriteToCatalog() override;
 
   const std::string GetInfo() const override { return ""; }
