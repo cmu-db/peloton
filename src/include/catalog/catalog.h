@@ -89,6 +89,9 @@ class Catalog {
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::TransactionContext *txn);
 
+  ResultType CreateDatabaseWithoutIndex(const std::string &database_name,
+                                        concurrency::TransactionContext *txn);
+
   // Create a schema(namespace)
   ResultType CreateSchema(const std::string &database_name,
                           const std::string &schema_name,
@@ -117,6 +120,7 @@ class Catalog {
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
+
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
