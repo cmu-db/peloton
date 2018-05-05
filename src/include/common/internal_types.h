@@ -633,7 +633,8 @@ enum class DropType {
   INDEX = 3,                  // index drop type
   CONSTRAINT = 4,             // constraint drop type
   TRIGGER = 5,                // trigger drop type
-  SCHEMA = 6,                 // trigger drop type
+  SCHEMA = 6,                 // schema drop type
+  SEQUENCE = 7,               // sequence drop type
 };
 std::string DropTypeToString(DropType type);
 DropType StringToDropType(const std::string &str);

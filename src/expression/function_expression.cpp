@@ -49,8 +49,10 @@ type::Value FunctionExpression::Evaluate(
   for (auto &child : children_) {
     child_values.push_back(child->Evaluate(tuple1, tuple2, context));
   }
-  uint64_t ctx = (uint64_t)context;
-  child_values.push_back(type::ValueFactory::GetBigIntValue(ctx));
+  if (func_name_ == "nextval" || func_name_ == "currval") {
+    uint64_t ctx = (uint64_t)context;
+    child_values.push_back(type::ValueFactory::GetBigIntValue(ctx));
+  }
 
   type::Value ret = func_.impl(child_values);
 

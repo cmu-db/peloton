@@ -24,7 +24,7 @@ class PlanUtil;
 }  // namespace planner
 
 namespace function {
-class OldEngineStringFunctions;
+class SequenceFunctions;
 }  // namespace function
 
 namespace catalog {
@@ -44,7 +44,7 @@ class CatalogCache {
   friend class IndexCatalogObject;
   friend class planner::PlanUtil;
   friend class SequenceCatalogObject;
-  friend class function::OldEngineStringFunctions;
+  friend class function::SequenceFunctions;
 
  public:
   CatalogCache() {}

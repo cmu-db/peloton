@@ -67,7 +67,6 @@ int64_t SequenceCatalogObject::GetNextVal() {
                 ->GetSequenceCatalog()
                 ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
   LOG_DEBUG("status of update pg_sequence: %d", status);
-  void(status);
   return result;
 }
 

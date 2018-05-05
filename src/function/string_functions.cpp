@@ -14,8 +14,6 @@
 
 #include "common/macros.h"
 #include "executor/executor_context.h"
-#include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
 
 namespace peloton {
 namespace function {
