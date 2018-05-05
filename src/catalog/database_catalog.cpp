@@ -310,10 +310,10 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
   auto constant_expr_1 = new expression::ConstantValueExpression(
       val1);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(constant_expr_0));
-  values.push_back(ExpressionPtr(constant_expr_1));
+  values.emplace_back(ExpressionPtr(constant_expr_0));
+  values.emplace_back(ExpressionPtr(constant_expr_1));
 
   return InsertTupleWithCompiledPlan(&tuples, txn);
 }

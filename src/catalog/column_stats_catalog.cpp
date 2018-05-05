@@ -98,20 +98,21 @@ bool ColumnStatsCatalog::InsertColumnStats(
       type::ValueFactory::GetVarcharValue(column_name);
   type::Value val_has_index = type::ValueFactory::GetBooleanValue(has_index);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
+//  tuples.push_back(std::vector<ExpressionPtr>());
   auto &values = tuples[0];
 
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_db_id)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_table_id)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_column_id)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_num_row)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_cardinality)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_frac_null)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_common_val)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_common_freq)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_hist_bounds)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_column_name)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val_has_index)));
+  values.emplace_back(new expression::ConstantValueExpression(val_db_id));
+  values.emplace_back(new expression::ConstantValueExpression(val_table_id));
+  values.emplace_back(new expression::ConstantValueExpression(val_column_id));
+  values.emplace_back(new expression::ConstantValueExpression(val_num_row));
+  values.emplace_back(new expression::ConstantValueExpression(val_cardinality));
+  values.emplace_back(new expression::ConstantValueExpression(val_frac_null));
+  values.emplace_back(new expression::ConstantValueExpression(val_common_val));
+  values.emplace_back(new expression::ConstantValueExpression(val_common_freq));
+  values.emplace_back(new expression::ConstantValueExpression(val_hist_bounds));
+  values.emplace_back(new expression::ConstantValueExpression(val_column_name));
+  values.emplace_back(new expression::ConstantValueExpression(val_has_index));
 
   // Insert the tuple into catalog table
   return InsertTupleWithCompiledPlan(&tuples, txn);

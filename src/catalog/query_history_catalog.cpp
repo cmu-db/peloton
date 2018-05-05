@@ -57,11 +57,11 @@ bool QueryHistoryCatalog::InsertQueryHistory(
   auto constant_expr_2 = new expression::ConstantValueExpression(
       val2);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(constant_expr_0));
-  values.push_back(ExpressionPtr(constant_expr_1));
-  values.push_back(ExpressionPtr(constant_expr_2));
+  values.emplace_back(constant_expr_0);
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
 
   return InsertTupleWithCompiledPlan(&tuples, txn);
 }

@@ -85,16 +85,16 @@ bool ZoneMapCatalog::InsertColumnStatistics(
  auto constant_type_expr = new expression::ConstantValueExpression(
    val_type);
 
- tuples.push_back(std::vector<ExpressionPtr>());
+ tuples.emplace_back();
  auto &values = tuples[0];
 
- values.push_back(ExpressionPtr(constant_db_id_expr));
- values.push_back(ExpressionPtr(constant_table_id_expr));
- values.push_back(ExpressionPtr(constant_tile_group_id_expr));
- values.push_back(ExpressionPtr(constant_column_id_expr));
- values.push_back(ExpressionPtr(constant_minimum_expr));
- values.push_back(ExpressionPtr(constant_maximum_expr));
- values.push_back(ExpressionPtr(constant_type_expr));
+ values.emplace_back(constant_db_id_expr);
+ values.emplace_back(constant_table_id_expr);
+ values.emplace_back(constant_tile_group_id_expr);
+ values.emplace_back(constant_column_id_expr);
+ values.emplace_back(constant_minimum_expr);
+ values.emplace_back(constant_maximum_expr);
+ values.emplace_back(constant_type_expr);
 
  return InsertTupleWithCompiledPlan(&tuples, txn);
 }

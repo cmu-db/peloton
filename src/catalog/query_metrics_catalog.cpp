@@ -56,7 +56,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
     concurrency::TransactionContext *txn) {
 
   std::vector<std::vector<ExpressionPtr>> tuples;
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
@@ -84,32 +84,32 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   auto val11 = type::ValueFactory::GetIntegerValue(cpu_time);
   auto val12 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val0)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val1)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val2)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val3)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val4)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val5)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val6)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val7)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val8)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val9)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val10)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val11)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val12)));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val0));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val1));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val2));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val3));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val4));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val5));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val6));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val7));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val8));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val9));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val10));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val11));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val12));
 
   // Insert the tuple
   return InsertTupleWithCompiledPlan(&tuples, txn);

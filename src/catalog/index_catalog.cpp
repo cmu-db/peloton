@@ -173,16 +173,16 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   auto constant_expr_7 = new expression::ConstantValueExpression(
     val7);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(constant_expr_0));
-  values.push_back(ExpressionPtr(constant_expr_1));
-  values.push_back(ExpressionPtr(constant_expr_2));
-  values.push_back(ExpressionPtr(constant_expr_3));
-  values.push_back(ExpressionPtr(constant_expr_4));
-  values.push_back(ExpressionPtr(constant_expr_5));
-  values.push_back(ExpressionPtr(constant_expr_6));
-  values.push_back(ExpressionPtr(constant_expr_7));
+  values.emplace_back(constant_expr_0);
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
+  values.emplace_back(constant_expr_3);
+  values.emplace_back(constant_expr_4);
+  values.emplace_back(constant_expr_5);
+  values.emplace_back(constant_expr_6);
+  values.emplace_back(constant_expr_7);
 
   // Insert the tuple
   return InsertTupleWithCompiledPlan(&tuples, txn);

@@ -69,7 +69,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
 
   (void) pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
@@ -81,22 +81,22 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   auto val6 = fire_condition;
   auto val7 = timestamp;
 
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val0)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val1)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val2)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val3)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val4)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val5)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val6)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val7)));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val0));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val1));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val2));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val3));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val4));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val5));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val6));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val7));
 
   // Insert the tuple
   return InsertTupleWithCompiledPlan(&tuples, txn);

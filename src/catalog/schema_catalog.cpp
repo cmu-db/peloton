@@ -84,10 +84,10 @@ bool SchemaCatalog::InsertSchema(oid_t schema_oid,
   auto val0 = type::ValueFactory::GetIntegerValue(schema_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val0)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val1)));
+  values.emplace_back(new expression::ConstantValueExpression(val0));
+  values.emplace_back(new expression::ConstantValueExpression(val1));
 
   // Insert the tuple
   return InsertTupleWithCompiledPlan(&tuples, txn);

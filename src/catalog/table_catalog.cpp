@@ -413,13 +413,14 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
     val4);
 
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+//  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(constant_expr_0));
-  values.push_back(ExpressionPtr(constant_expr_1));
-  values.push_back(ExpressionPtr(constant_expr_2));
-  values.push_back(ExpressionPtr(constant_expr_3));
-  values.push_back(ExpressionPtr(constant_expr_4));
+  values.emplace_back(constant_expr_0);
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
+  values.emplace_back(constant_expr_3);
+  values.emplace_back(constant_expr_4);
 
   return InsertTupleWithCompiledPlan(&tuples, txn);
 }

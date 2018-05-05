@@ -52,17 +52,17 @@ bool LanguageCatalog::InsertLanguage(const std::string &lanname,
                                      concurrency::TransactionContext *txn) {
   (void) pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
 
   oid_t language_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(language_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(lanname);
 
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val0)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val1)));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val0));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val1));
 
   // Insert the tuple
   return InsertTupleWithCompiledPlan(&tuples, txn);

@@ -67,14 +67,14 @@ bool TableMetricsCatalog::InsertTableMetrics(
   auto constant_expr_6 = new expression::ConstantValueExpression(
       val6);
 
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
-  values.push_back(ExpressionPtr(constant_expr_1));
-  values.push_back(ExpressionPtr(constant_expr_2));
-  values.push_back(ExpressionPtr(constant_expr_3));
-  values.push_back(ExpressionPtr(constant_expr_4));
-  values.push_back(ExpressionPtr(constant_expr_5));
-  values.push_back(ExpressionPtr(constant_expr_6));
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
+  values.emplace_back(constant_expr_3);
+  values.emplace_back(constant_expr_4);
+  values.emplace_back(constant_expr_5);
+  values.emplace_back(constant_expr_6);
 
   return InsertTupleWithCompiledPlan(&tuples, txn);
 }

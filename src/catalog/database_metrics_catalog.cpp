@@ -48,7 +48,7 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
     concurrency::TransactionContext *txn) {
   (void) pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
-  tuples.push_back(std::vector<ExpressionPtr>());
+  tuples.emplace_back();
   auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
@@ -56,14 +56,14 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
   auto val2 = type::ValueFactory::GetIntegerValue(txn_aborted);
   auto val3 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val0)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val1)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val2)));
-  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
-      val3)));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val0));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val1));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val2));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val3));
 
 
   // Insert the tuple into catalog table
