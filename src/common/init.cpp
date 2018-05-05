@@ -99,10 +99,10 @@ void PelotonInit::Initialize() {
     }
   }
 
-  logging::LogManager::GetInstance().DoRecovery();
-
-
-
+  bool enable_recovery = settings::SettingsManager::GetBool(settings::SettingId::enable_recovery);
+  if(enable_recovery){
+    logging::LogManager::GetInstance().DoRecovery();
+  }
 
   threadpool::LoggerQueuePool::GetInstance().Startup();
 
