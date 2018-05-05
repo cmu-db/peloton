@@ -51,9 +51,6 @@ class JoinAssociativity : public Rule {
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                  OptimizeContext *context) const override;
- private:
-  bool StrongPredicate(std::shared_ptr<OperatorExpression> plan,
-                       OptimizeContext *context) const;
 };
 
 //===--------------------------------------------------------------------===//

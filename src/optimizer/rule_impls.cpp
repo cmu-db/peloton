@@ -111,6 +111,13 @@ bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
   auto parent_join = expr->Op().As<LogicalJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = expr->Children();
   auto child_join = children[0]->Op().As<LogicalJoin>();
+  auto middle = children[0]->Children()[1];
+  // Get Alias sets
+  auto &memo = context->metadata->memo;
+  auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
+  const auto &middle_group_aliases_set =
+      memo.GetGroupByID(middle_group_id)->GetTableAliases();
+
   if (parent_join->type == JoinType::INNER) {
     if (child_join->type == JoinType::INNER || child_join->type == JoinType::RIGHT) {
       return true;
@@ -119,15 +126,32 @@ bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
     if (child_join->type == JoinType::INNER) {
       return true;
     } else if (child_join->type == JoinType::LEFT || child_join->type == JoinType::OUTER) {
-      return StrongPredicate(expr, context);
+      return util::StrongPredicates(parent_join->join_predicates,
+                                   middle_group_aliases_set);
     }
   } else if (parent_join->type == JoinType::RIGHT) {
     if (child_join->type == JoinType::RIGHT) {
-      return StrongPredicate(expr, context);
+      return util::StrongPredicates(child_join->join_predicates,
+                                   middle_group_aliases_set);
     }
   } else if (parent_join->type == JoinType::OUTER) {
-    if (child_join->type == JoinType::RIGHT || child_join->type == JoinType::OUTER) {
-      return StrongPredicate(expr, context);
+    if (child_join->type == JoinType::RIGHT) {
+      return util::StrongPredicates(child_join->join_predicates,
+                                   middle_group_aliases_set);
+    } else if (child_join->type == JoinType::OUTER) {
+      auto parent_join_predicates = 
+          std::vector<AnnotatedExpression>(parent_join->join_predicates);
+      auto child_join_predicates =
+          std::vector<AnnotatedExpression>(child_join->join_predicates);
+
+      std::vector<AnnotatedExpression> check_predicates;
+      check_predicates.insert(check_predicates.end(), 
+                              parent_join_predicates.begin(),
+                              parent_join_predicates.end());
+      check_predicates.insert(check_predicates.end(),
+                              child_join_predicates.begin(),
+                              child_join_predicates.end());
+      return util::StrongPredicates(check_predicates, middle_group_aliases_set);
     }
   }
   return false;
@@ -212,15 +236,6 @@ void JoinAssociativity::Transform(
   new_parent_join->PushChild(new_child_join);
 
   transformed.push_back(new_parent_join);
-}
-
-// TODO: some associativity rules can only be applied when the predicate is strong
-// To check if the predicate is strong or not is non-trivial
-bool JoinAssociativity::StrongPredicate(std::shared_ptr<OperatorExpression> expr,
-                                        OptimizeContext *context) const {
-  (void)context;
-  (void)expr;
-  return false;
 }
 
 //===--------------------------------------------------------------------===//

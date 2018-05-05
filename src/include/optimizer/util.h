@@ -19,6 +19,8 @@
 #include "expression/abstract_expression.h"
 #include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
+#include "optimizer/optimize_context.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 
@@ -166,6 +168,26 @@ void ExtractEquiJoinKeys(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys,
     const std::unordered_set<std::string> &left_alias,
     const std::unordered_set<std::string> &right_alias);
+
+/**
+ * @brief Given an operator expression and context information, check if it
+ *  is strong predicate w.r.t to one table 
+ *  A predicate p is strong w.r.t S if the fact that all attributes from S are
+ *  NULL implies that p evaluates to false
+ *  It is used in AssociativityRule transforms when certain joins are applied
+ */
+bool StrongPredicates(
+    std::vector<AnnotatedExpression> predicates,
+    const std::unordered_set<std::string> &middle_group_aliases_set);
+
+/** 
+ * @brief Replace the tuple_value_expression in given expression which
+ * contains table in middle_group_aliases_set with constant_value_expression
+ * with FALSE value
+ */
+void ReplaceWithNull(
+    std::shared_ptr<expression::AbstractExpression> expr,
+    const std::unordered_set<std::string> &middle_group_aliases_set);
 
 }  // namespace util
 }  // namespace optimizer

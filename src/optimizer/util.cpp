@@ -18,6 +18,7 @@
 #include "planner/copy_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace optimizer {
@@ -246,6 +247,52 @@ void ExtractEquiJoinKeys(
           right_keys.emplace_back(l_tv_expr->Copy());
         }
       }
+    }
+  }
+}
+
+bool StrongPredicates(
+    std::vector<AnnotatedExpression> predicates,
+    const std::unordered_set<std::string> &middle_group_aliases_set) {
+  for (auto predicate : predicates) {
+    // create a copy of original predicate.
+    auto copy_expr = std::shared_ptr<expression::AbstractExpression>(predicate.expr->Copy());
+    LOG_DEBUG("AnnotatedExp: %s", copy_expr->GetInfo().c_str());
+    // replace tuple_value_expression from predicate which contains table in
+    // middle_group_aliases_set with FALSE constant value
+    ReplaceWithNull(copy_expr, middle_group_aliases_set);
+
+    // TODO: some expressions cannot be evaluated with no executor context given
+    bool ret = copy_expr->Evaluate(nullptr, nullptr, nullptr).IsFalse();
+    if(ret){
+      return true;
+    }
+  }
+  return false;
+}
+
+void ReplaceWithNull(
+    std::shared_ptr<expression::AbstractExpression> expr,
+    const std::unordered_set<std::string> &middle_group_aliases_set) {
+  if (expr->GetChildrenSize() == 0) {
+    return;
+  }
+  for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
+    auto child_expr = expr->GetModifiableChild(i);
+    // Check if its an TupleValueExpression
+    if (child_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+//      auto val_type = child->GetValueType();
+      LOG_DEBUG("Tuple value expression found in child");
+      auto child_tv_expr = dynamic_cast<expression::TupleValueExpression *>(child_expr);
+      if (middle_group_aliases_set.find(child_tv_expr->GetTableName()) != middle_group_aliases_set.end()) {
+        LOG_DEBUG("ads");
+        expr->SetChild(i, expression::ExpressionUtil::ConstantValueFactory(
+            type::ValueFactory::GetBooleanValue(false)));
+      } else {
+        expr->SetChild(i, expression::ExpressionUtil::ConstantValueFactory(
+            type::ValueFactory::GetBooleanValue(true)));
+      }
+      ReplaceWithNull(std::shared_ptr<expression::AbstractExpression>(child_expr), middle_group_aliases_set);
     }
   }
 }
