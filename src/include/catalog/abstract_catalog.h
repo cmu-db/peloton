@@ -35,7 +35,7 @@ namespace storage {
 class Database;
 class DataTable;
 class Tuple;
-}
+}  // namespace storage
 
 namespace catalog {
 
@@ -62,12 +62,6 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::TransactionContext *txn);
 
-  bool UpdateWithIndexScan(std::vector<oid_t> update_columns,
-                           std::vector<type::Value> update_values,
-                           std::vector<type::Value> scan_values,
-                           oid_t index_offset,
-                           concurrency::TransactionContext *txn);
-
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
@@ -77,6 +71,12 @@ class AbstractCatalog {
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);
+
+  bool UpdateWithIndexScan(std::vector<oid_t> update_columns,
+                           std::vector<type::Value> update_values,
+                           std::vector<type::Value> scan_values,
+                           oid_t index_offset,
+                           concurrency::TransactionContext *txn);
 
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,
@@ -88,7 +88,8 @@ class AbstractCatalog {
 
   // Maximum column name size for catalog schemas
   static const size_t max_name_size = 64;
-
+  // which database catalog table is stored int
+  oid_t database_oid;
   // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
 

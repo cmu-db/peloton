@@ -144,19 +144,17 @@ parser::TableRef *PostgresParser::RangeVarTransform(RangeVar *root) {
   parser::TableRef *result =
       new parser::TableRef(StringToTableReferenceType("name"));
   result->table_info_.reset(new parser::TableInfo());
-
-  if (root->schemaname) {
-    result->schema = root->schemaname;
-    result->table_info_->database_name = root->schemaname;
-  }
-
   // parse alias
   result->alias = AliasTransform(root->alias);
-
+  // add table name
   if (root->relname) {
     result->table_info_->table_name = root->relname;
   }
-
+  // add schema(namespace) name
+  if (root->schemaname) {
+    result->table_info_->schema_name = root->schemaname;
+  }
+  // add database name
   if (root->catalogname) {
     result->table_info_->database_name = root->catalogname;
   }
@@ -973,9 +971,12 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
+  if (relation->schemaname) {
+    result->table_info_->schema_name = relation->schemaname;
+  }
   if (relation->catalogname) {
     result->table_info_->database_name = relation->catalogname;
-  };
+  }
 
   std::unordered_set<std::string> primary_keys;
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
@@ -1213,6 +1214,8 @@ parser::SQLStatement *PostgresParser::CreateIndexTransform(IndexStmt *root) {
   }
   result->table_info_.reset(new TableInfo());
   result->table_info_->table_name = root->relation->relname;
+  if (root->relation->schemaname)
+    result->table_info_->schema_name = root->relation->schemaname;
   result->index_name = root->idxname;
   return result;
 }
@@ -1263,7 +1266,8 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
 
   result->table_info_.reset(new TableInfo());
   result->table_info_->table_name = root->relation->relname;
-
+  if (root->relation->schemaname)
+    result->table_info_->schema_name = root->relation->schemaname;
   result->trigger_name = root->trigname;
 
   return result;
@@ -1288,8 +1292,10 @@ parser::SQLStatement *PostgresParser::CreateSchemaTransform(
     CreateSchemaStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kSchema);
+  result->table_info_.reset(new parser::TableInfo());
+
   if (root->schemaname != nullptr) {
-    result->schema_name = root->schemaname;
+    result->table_info_->schema_name = root->schemaname;
   }
   result->if_not_exists = root->if_not_exists;
   if (root->authrole != nullptr) {
@@ -1299,7 +1305,7 @@ parser::SQLStatement *PostgresParser::CreateSchemaTransform(
       // Peloton do not need the authrole, the only usage is when no schema name
       // is specified
       if (root->schemaname == nullptr) {
-        result->schema_name = role->rolename;
+        result->table_info_->schema_name = role->rolename;
       }
     } else {
       delete result;
@@ -1377,12 +1383,23 @@ parser::DropStatement *PostgresParser::DropDatabaseTransform(
 parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kTable);
   result->SetMissing(root->missing_ok);
+
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
     LOG_TRACE("%d", ((Node *)(table_list->head->data.ptr_value))->type);
-    table_info->table_name =
-        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
+    // if schema name is specified, which means you are using the syntax like
+    // DROP INDEX/TABLE A.B where A is schema name and B is table/index name
+    if (table_list->length == 2) {
+      table_info->schema_name =
+          reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
+      table_info->table_name =
+          reinterpret_cast<value *>(table_list->head->next->data.ptr_value)
+              ->val.str;
+    } else {
+      table_info->table_name =
+          reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
+    }
     result->table_info_.reset(table_info);
     break;
   }
@@ -1393,10 +1410,24 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kTrigger);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  result->SetTriggerTableName(
-      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
+  // first, set trigger name
   result->SetTriggerName(
-      reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str);
+      reinterpret_cast<value *>(list->tail->data.ptr_value)->val.str);
+  TableInfo *table_info = new TableInfo{};
+  // if schema name is specified, which means you are using the syntax like
+  // DROP TRIGGER A.B.C where A is schema name, B is table name and C is trigger
+  // name
+  if (list->length == 3) {
+    table_info->schema_name =
+        reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
+    table_info->table_name =
+        reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str;
+  } else if (list->length == 2) {
+    table_info->table_name =
+        reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
+  }
+
+  result->table_info_.reset(table_info);
   return result;
 }
 
@@ -1404,10 +1435,12 @@ parser::DropStatement *PostgresParser::DropSchemaTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kSchema);
   result->SetCascade(root->behavior == DropBehavior::DROP_CASCADE);
   result->SetMissing(root->missing_ok);
+
+  result->table_info_.reset(new parser::TableInfo());
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
-    result->SetSchemaName(
-        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str);
+    result->table_info_->schema_name =
+        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
     break;
   }
   return result;
@@ -1418,8 +1451,19 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kIndex);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  result->SetIndexName(
-      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
+  // if schema name is specified, which means you are using the syntax like
+  // DROP INDEX/TABLE A.B where A is schema name and B is table/index name
+  if (list->length == 2) {
+    TableInfo *table_info = new TableInfo{};
+    table_info->schema_name =
+        reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
+    result->SetIndexName(
+        reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str);
+    result->table_info_.reset(table_info);
+  } else {
+    result->SetIndexName(
+        reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
+  }
   return result;
 }
 

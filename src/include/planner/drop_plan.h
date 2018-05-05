@@ -41,6 +41,7 @@ class DropPlan : public AbstractPlan {
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
     returned_string += " Table name:     " + table_name;
+    returned_string += " Schema name : " + schema_name;
     returned_string += " Database name : " + database_name;
     return returned_string;
   }
@@ -52,6 +53,8 @@ class DropPlan : public AbstractPlan {
   std::string GetDatabaseName() const { return database_name; }
 
   std::string GetTableName() const { return table_name; }
+
+  std::string GetSchemaName() const { return schema_name; }
 
   std::string GetTriggerName() const { return trigger_name; }
 
@@ -69,6 +72,9 @@ class DropPlan : public AbstractPlan {
 
   // Database Name
   std::string database_name;
+
+  // namespace Name
+  std::string schema_name;
 
   std::string trigger_name;
   std::string index_name;

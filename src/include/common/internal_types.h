@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
+#include <unistd.h>
 #include <bitset>
 #include <climits>
 #include <cstdint>
@@ -21,16 +22,15 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <unistd.h>
 
-#include "tbb/concurrent_vector.h"
 #include "tbb/concurrent_unordered_set.h"
+#include "tbb/concurrent_vector.h"
 
-#include "parser/pg_trigger.h"
-#include "type/type_id.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "container/cuckoo_map.h"
+#include "parser/pg_trigger.h"
+#include "type/type_id.h"
 
 // Impose Row-major to avoid confusion
 #define EIGEN_DEFAULT_TO_ROW_MAJOR
@@ -60,7 +60,6 @@ class ItemPointerComparator;
 
 #define INVALID_RATIO -1
 
-#define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default_database"
 
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
@@ -617,7 +616,8 @@ enum class CreateType {
   TABLE = 2,                  // table create type
   INDEX = 3,                  // index create type
   CONSTRAINT = 4,             // constraint create type
-  TRIGGER = 5                 // trigger create type
+  TRIGGER = 5,                // trigger create type
+  SCHEMA = 6,                 // schema create type
 };
 std::string CreateTypeToString(CreateType type);
 CreateType StringToCreateType(const std::string &str);
@@ -633,7 +633,8 @@ enum class DropType {
   TABLE = 2,                  // table drop type
   INDEX = 3,                  // index drop type
   CONSTRAINT = 4,             // constraint drop type
-  TRIGGER = 5                 // trigger drop type
+  TRIGGER = 5,                // trigger drop type
+  SCHEMA = 6,                 // trigger drop type
 };
 std::string DropTypeToString(DropType type);
 DropType StringToDropType(const std::string &str);
@@ -1230,7 +1231,8 @@ typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
-                                      ItemPointerComparator> WriteSet;
+                                      ItemPointerComparator>
+    WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
@@ -1402,12 +1404,12 @@ typedef std::unordered_map<
 // TODO(boweic): use raw ptr
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<expression::AbstractExpression *, unsigned,
-                           expression::ExprHasher,
-                           expression::ExprEqualCmp> ExprMap;
+                           expression::ExprHasher, expression::ExprEqualCmp>
+    ExprMap;
 // Used in optimizer to speed up expression comparsion
 typedef std::unordered_set<expression::AbstractExpression *,
-                           expression::ExprHasher,
-                           expression::ExprEqualCmp> ExprSet;
+                           expression::ExprHasher, expression::ExprEqualCmp>
+    ExprSet;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

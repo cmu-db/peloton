@@ -15,7 +15,7 @@
 //
 // Schema: (column offset: column_name)
 // 0: oid (pkey)
-// 1: tgrelid   : table_name
+// 1: tgrelid   : table_oid
 // 2: tgname    : trigger_name
 // 3: tgfoid    : function_oid
 // 4: tgtype    : trigger_type
@@ -47,10 +47,9 @@ namespace catalog {
 
 class TriggerCatalog : public AbstractCatalog {
  public:
+  TriggerCatalog(const std::string &database_name,
+                 concurrency::TransactionContext *txn);
   ~TriggerCatalog();
-
-  // Global Singleton
-  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -61,8 +60,7 @@ class TriggerCatalog : public AbstractCatalog {
                      type::Value timestamp, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
-  ResultType DropTrigger(const std::string &database_name,
-                         const std::string &table_name,
+  ResultType DropTrigger(const oid_t database_oid, const oid_t table_oid,
                          const std::string &trigger_name,
                          concurrency::TransactionContext *txn);
 
@@ -74,7 +72,8 @@ class TriggerCatalog : public AbstractCatalog {
   // of the same type
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggersByType(
-      oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn);
+      oid_t table_oid, int16_t trigger_type,
+      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
@@ -97,8 +96,6 @@ class TriggerCatalog : public AbstractCatalog {
   };
 
  private:
-  TriggerCatalog(concurrency::TransactionContext *txn);
-
   oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
 
   enum IndexId {

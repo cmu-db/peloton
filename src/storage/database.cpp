@@ -67,14 +67,6 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   return nullptr;
 }
 
-storage::DataTable *Database::GetTableWithName(
-    const std::string &table_name) const {
-  for (auto table : tables)
-    if (table->GetName() == table_name) return table;
-  throw CatalogException("Table '" + table_name + "' does not exist");
-  return nullptr;
-}
-
 void Database::DropTableWithOid(const oid_t table_oid) {
   {
     std::lock_guard<std::mutex> lock(database_mutex);

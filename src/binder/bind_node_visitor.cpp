@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "expression/expression_util.h"
 #include "binder/bind_node_visitor.h"
-#include "expression/star_expression.h"
 #include "catalog/catalog.h"
+#include "expression/expression_util.h"
+#include "expression/star_expression.h"
 #include "type/type_id.h"
 
 #include "expression/aggregate_expression.h"
@@ -21,8 +21,8 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/star_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/subquery_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace binder {
@@ -155,8 +155,8 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>(nullptr);
   node->TryBindDatabaseName(default_database_name_);
-  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
-                            node->GetTableName(), txn_);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetSchemaName(),
+                            node->GetTableName(), node->GetTableName(), txn_);
 
   if (node->expr != nullptr) {
     node->expr->Accept(this);
@@ -174,8 +174,8 @@ void BindNodeVisitor::Visit(parser::CreateStatement *node) {
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
   context_ = std::make_shared<BinderContext>(nullptr);
-  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
-                            node->GetTableName(), txn_);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetSchemaName(),
+                            node->GetTableName(), node->GetTableName(), txn_);
   if (node->select != nullptr) {
     node->select->Accept(this);
   }
