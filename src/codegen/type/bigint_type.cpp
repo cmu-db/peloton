@@ -14,10 +14,12 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
+#include "codegen/proxy/sequence_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/decimal_type.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/type/varchar_type.h"
 #include "common/exception.h"
 #include "type/limits.h"
 #include "util/string_util.h"
@@ -503,6 +505,47 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+// Nextval
+struct Nextval : public TypeSystem::UnaryOperatorHandleNull {
+    bool SupportsType(const Type &type) const override {
+      return type.GetSqlType() == Varchar::Instance();
+    }
+
+    Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+      return BigInt::Instance();
+    }
+
+    Value Impl(CodeGen &codegen, const Value &val,
+               const TypeSystem::InvocationContext &ctx) const override {
+      llvm::Value *executor_ctx = ctx.executor_context;
+      llvm::Value *raw_ret =
+              codegen.Call(SequenceFunctionsProxy::Nextval,
+                           {executor_ctx, val.GetValue()});
+      return Value{BigInt::Instance(), raw_ret};
+    }
+};
+
+// Currval
+struct Currval : public TypeSystem::UnaryOperatorHandleNull {
+    bool SupportsType(const Type &type) const override {
+      return type.GetSqlType() == Varchar::Instance();
+    }
+
+    Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+      return BigInt::Instance();
+    }
+
+    Value Impl(CodeGen &codegen, const Value &val,
+               const TypeSystem::InvocationContext &ctx) const override {
+      llvm::Value *executor_ctx = ctx.executor_context;
+      llvm::Value *raw_ret =
+              codegen.Call(SequenceFunctionsProxy::Currval,
+                           {executor_ctx, val.GetValue()});
+      return Value{BigInt::Instance(), raw_ret};
+    }
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Function tables
@@ -538,12 +581,16 @@ Abs kAbsOp;
 Ceil kCeilOp;
 Floor kFloorOp;
 Sqrt kSqrt;
+Nextval kNextval;
+Currval kCurrval;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Abs, kAbsOp},
     {OperatorId::Ceil, kCeilOp},
     {OperatorId::Floor, kFloorOp},
-    {OperatorId::Sqrt, kSqrt}};
+    {OperatorId::Sqrt, kSqrt},
+    {OperatorId::Nextval, kNextval},
+    {OperatorId::Currval, kCurrval}};
 
 // Binary operations
 Add kAddOp;

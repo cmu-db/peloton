@@ -234,19 +234,5 @@ type::Value OldEngineStringFunctions::Lower(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
   throw Exception{"Lower not implemented in old engine"};
 }
-
-type::Value OldEngineStringFunctions::Nextval(
-        UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
-    executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
-  uint32_t ret = StringFunctions::Nextval(*ctx, args[0].GetAs<const char *>());
-  return type::ValueFactory::GetIntegerValue(ret);
-}
-
-type::Value OldEngineStringFunctions::Currval(
-        UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
-  executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
-  uint32_t ret = StringFunctions::Currval(*ctx, args[0].GetAs<const char *>());
-  return type::ValueFactory::GetIntegerValue(ret);
-}
 }  // namespace function
 }  // namespace peloton

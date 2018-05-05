@@ -16,7 +16,6 @@
 #include "executor/executor_context.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
-#include "catalog/sequence_catalog.h"
 
 namespace peloton {
 namespace function {
@@ -221,43 +220,6 @@ uint32_t StringFunctions::Length(
     UNUSED_ATTRIBUTE const char *str, uint32_t length) {
   PELOTON_ASSERT(str != nullptr);
   return length;
-}
-
-uint32_t StringFunctions::Nextval(executor::ExecutorContext &ctx, const char *sequence_name) {
-  PELOTON_ASSERT(sequence_name != nullptr);
-  auto database_object =
-          catalog::Catalog::GetInstance()
-                  ->GetDatabaseObject(ctx.GetDatabaseName(), ctx.GetTransaction());
-  catalog::SequenceCatalogObject* sequence_object =
-          catalog::Catalog::GetInstance()
-          ->GetSystemCatalogs(database_object->GetDatabaseOid())
-          ->GetSequenceCatalog()
-          ->GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
-  if (sequence_object != nullptr) {
-    return sequence_object->GetNextVal();
-  } else {
-    throw SequenceException(
-            StringUtil::Format("Sequence not exists!"));
-  }
-}
-
-
-uint32_t StringFunctions::Currval(executor::ExecutorContext &ctx, const char *sequence_name) {
-  PELOTON_ASSERT(sequence_name != nullptr);
-  auto database_object =
-          catalog::Catalog::GetInstance()
-                  ->GetDatabaseObject(ctx.GetDatabaseName(), ctx.GetTransaction());
-  catalog::SequenceCatalogObject* sequence_object =
-          catalog::Catalog::GetInstance()
-          ->GetSystemCatalogs(database_object->GetDatabaseOid())
-          ->GetSequenceCatalog()
-          ->GetSequence(database_object->GetDatabaseOid(), sequence_name, ctx.GetTransaction()).get();
-  if (sequence_object != nullptr) {
-    return sequence_object->GetCurrVal();
-  } else {
-    throw SequenceException(
-            StringUtil::Format("Sequence not exists!"));
-  }
 }
 
 }  // namespace function
