@@ -251,6 +251,46 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
+
+ResultType Catalog::CreateDatabaseWithoutIndex(const std::string &database_name,
+                                   concurrency::TransactionContext *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to create database " +
+                           database_name);
+
+  auto pg_database = DatabaseCatalog::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  // Check if a database with the same name exists
+  auto database_object = pg_database->GetDatabaseObject(database_name, txn);
+  if (database_object != nullptr)
+    throw CatalogException("Database " + database_name + " already exists");
+
+  // Create actual database
+  oid_t database_oid = pg_database->GetNextOid();
+
+  storage::Database *database = new storage::Database(database_oid);
+  LOG_INFO("get database");
+  // TODO: This should be deprecated, dbname should only exists in pg_db
+  database->setDBName(database_name);
+  {
+    std::lock_guard<std::mutex> lock(catalog_mutex);
+    storage_manager->AddDatabaseToStorageManager(database);
+  }
+  // put database object into rw_object_set
+  txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
+  // Insert database record into pg_db
+  pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
+
+  // add core & non-core system catalog tables into database
+  LOG_INFO("begin bootstrap %s", database_name.c_str());
+  BootstrapSystemCatalogs(database, txn);
+  LOG_INFO("end bootstrap %s", database_name.c_str());
+  catalog_map_[database_oid]->Bootstrap(database_name, txn);
+  LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
+            database_name.c_str());
+  return ResultType::SUCCESS;
+}
+
 /*@brief   create schema(namespace)
  * @param   database_name    the database which the namespace belongs to
  * @param   schema_name      name of the schema

@@ -234,7 +234,7 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("table name = %s", table_name.c_str());
-  catalog->CreateDatabase(database_name, txn);
+  catalog->CreateDatabaseWithoutIndex(database_name, txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("create database %s", database_name.c_str());
 
