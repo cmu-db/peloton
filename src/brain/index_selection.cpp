@@ -160,7 +160,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   double global_min_cost = ComputeCost(indexes, workload);
   double cur_min_cost = global_min_cost;
   double cur_cost;
-  std::shared_ptr<IndexObject> best_index;
+  std::shared_ptr<HypotheticalIndexObject> best_index;
 
   // go through till you get top k indexes
   while (current_index_count < k) {
@@ -399,7 +399,7 @@ void IndexSelection::IndexObjectPoolInsertHelper(
   auto col_oid = std::get<2>(tuple_oid);
 
   // Add the object to the pool.
-  IndexObject iobj(db_oid, table_oid, col_oid);
+  HypotheticalIndexObject iobj(db_oid, table_oid, col_oid);
   auto pool_index_obj = context_.pool_.GetIndexObject(iobj);
   if (!pool_index_obj) {
     pool_index_obj = context_.pool_.PutIndexObject(iobj);
@@ -447,8 +447,8 @@ void IndexSelection::GenerateMultiColumnIndexes(
   CrossProduct(config, single_column_indexes, result);
 }
 
-std::shared_ptr<IndexObject> IndexSelection::AddConfigurationToPool(
-    IndexObject object) {
+std::shared_ptr<HypotheticalIndexObject> IndexSelection::AddConfigurationToPool(
+    HypotheticalIndexObject object) {
   return context_.pool_.PutIndexObject(object);
 }
 

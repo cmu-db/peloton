@@ -115,7 +115,7 @@ class IndexSelection {
    * the pool. Otherwise create one and return.
    * Currently, this is used only for unit testing
    */
-  std::shared_ptr<IndexObject> AddConfigurationToPool(IndexObject object);
+  std::shared_ptr<HypotheticalIndexObject> AddConfigurationToPool(HypotheticalIndexObject object);
 
  private:
   /**
