@@ -26,6 +26,7 @@
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
 #include "codegen/query_cache.h"
+#include <condition_variable>
 
 namespace peloton {
 namespace test {

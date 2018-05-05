@@ -195,6 +195,15 @@ void BackendStatsContext::DecreaseTableMemoryUsage(oid_t database_id,
   table_metric->GetTableMemory().DecreaseUsage(bytes);
 }
 
+void BackendStatsContext::AddTileGroup(oid_t tile_group_id) {
+  tile_group_channel_.AddMessage(tile_group_id);
+}
+
+StatsChannel<oid_t, OidAggrReducer> &
+BackendStatsContext::GetTileGroupChannel() {
+  return tile_group_channel_;
+}
+
 void BackendStatsContext::IncrementIndexReads(size_t read_count,
                                               index::IndexMetadata *metadata) {
   oid_t index_id = metadata->GetOid();

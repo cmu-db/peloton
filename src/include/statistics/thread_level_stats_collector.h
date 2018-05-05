@@ -50,9 +50,7 @@ class ThreadLevelStatsCollector {
   /**
    * @return A mapping from each thread to their assigned Collector
    */
-  static CollectorsMap &GetAllCollectors() {
-    return collector_map_;
-  };
+  static CollectorsMap &GetAllCollectors() { return collector_map_; };
 
   ThreadLevelStatsCollector();
 

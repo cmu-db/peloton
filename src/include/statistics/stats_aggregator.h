@@ -79,7 +79,10 @@ class StatsAggregator : public DedicatedThreadTask {
         for (size_t i = 0; i < acc.size(); i++)
           acc[i]->Aggregate(*data_block[i]);
     }
-    for (auto &raw_data : acc) raw_data->WriteToCatalog();
+    for (auto &raw_data : acc) {
+      raw_data->FetchData();
+      raw_data->WriteToCatalog();
+    }
   }
 
  private:
@@ -161,6 +164,9 @@ class StatsAggregatorOld {
   // Stores all aggregated stats
   BackendStatsContext aggregated_stats_;
 
+  // Set of tile groups
+  std::unordered_set<oid_t> tile_group_ids_;
+
   // Protect register and unregister of BackendStatsContext*
   std::mutex stats_mutex_{};
 
@@ -215,6 +221,11 @@ class StatsAggregatorOld {
 
   // Aggregate stats periodically
   void RunAggregator();
+
+  /**
+   * @brief Actively collect stats
+   */
+  void ActiveCollect();
 };
 
 }  // namespace stats

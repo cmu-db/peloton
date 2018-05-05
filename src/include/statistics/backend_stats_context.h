@@ -6,7 +6,7 @@
 //
 // Identification: src/statistics/backend_stats_context.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,10 +24,13 @@
 #include "statistics/database_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
+#include "statistics/oid_aggr_reducer.h"
 #include "statistics/query_metric.h"
+#include "statistics/stats_channel.h"
 #include "statistics/table_metric.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
+#define TILE_GROUP_CHANNEL_SIZE 10000
 
 namespace peloton {
 
@@ -150,6 +153,10 @@ class BackendStatsContext {
   void DecreaseTableMemoryUsage(oid_t database_id, oid_t table_id,
                                 int64_t bytes);
 
+  void AddTileGroup(oid_t tile_group);
+
+  StatsChannel<oid_t, OidAggrReducer> &GetTileGroupChannel();
+
   // Initialize the query stat
   void InitQueryMetric(const std::shared_ptr<Statement> statement,
                        const std::shared_ptr<QueryMetric::QueryParams> params);
@@ -218,6 +225,10 @@ class BackendStatsContext {
 
   // Index oid spin lock
   common::synchronization::SpinLatch index_id_lock;
+
+  // Channel collecting oid of newly created TileGroups
+  StatsChannel<oid_t, OidAggrReducer> tile_group_channel_{
+      TILE_GROUP_CHANNEL_SIZE};
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
