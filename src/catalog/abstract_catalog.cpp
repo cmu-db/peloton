@@ -92,11 +92,6 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   }
 }
 
-/*@brief   insert tuple(reord) helper function
- * @param   tuple     tuple to be inserted
- * @param   txn       TransactionContext
- * @return  Whether insertion is Successful
- */
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                                   concurrency::TransactionContext *txn) {
   if (txn == nullptr)
@@ -131,11 +126,7 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   return this_p_status.m_result == peloton::ResultType::SUCCESS;
 }
 
-/*@brief   insert tuple(reord) using compiled plan
-* @param   insert_values     tuples to be inserted
-* @param   txn       TransactionContext
-* @return  Whether insertion is Successful
-*/
+
 bool AbstractCatalog::InsertTupleWithCompiledPlan(const std::vector<std::vector<
   std::unique_ptr<expression::AbstractExpression>>> *insert_values,
                                   concurrency::TransactionContext *txn) {
@@ -182,12 +173,6 @@ bool AbstractCatalog::InsertTupleWithCompiledPlan(const std::vector<std::vector<
 }
 
 
-/*@brief   Delete a tuple using index scan
- * @param   index_offset  Offset of index for scan
- * @param   values        Values for search
- * @param   txn           TransactionContext
- * @return  Whether deletion is Successful
- */
 bool AbstractCatalog::DeleteWithIndexScan(
     oid_t index_offset, std::vector<type::Value> values,
     concurrency::TransactionContext *txn) {
@@ -231,13 +216,6 @@ bool AbstractCatalog::DeleteWithIndexScan(
   return status;
 }
 
-
-/*@brief   Delete a tuple using sequential scan
-* @param   column_offsets  Offset of seq scan
-* @param   predicate        Predicate used in the seq scan
-* @param   txn           TransactionContext
-* @return  Whether deletion is Successful
-*/
 bool AbstractCatalog::DeleteWithCompiledSeqScan(
   std::vector<oid_t> column_offsets,
   expression::AbstractExpression *predicate,
@@ -285,16 +263,6 @@ bool AbstractCatalog::DeleteWithCompiledSeqScan(
  return ret.m_result == peloton::ResultType::SUCCESS;
 }
 
-
-
-
-/*@brief   Index scan helper function
- * @param   column_offsets    Column ids for search (projection)
- * @param   index_offset      Offset of index for scan
- * @param   values            Values for search
- * @param   txn               TransactionContext
- * @return  Unique pointer of vector of logical tiles
- */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(
     std::vector<oid_t> column_offsets, oid_t index_offset,
@@ -336,15 +304,7 @@ AbstractCatalog::GetResultWithIndexScan(
   return result_tiles;
 }
 
-/*@brief   Sequential scan helper function
- * NOTE: try to use efficient index scan instead of sequential scan, but you
- * shouldn't build too many indexes on one catalog table
- * @param   column_offsets    Column ids for search (projection)
- * @param   predicate         predicate for this sequential scan query
- * @param   txn               TransactionContext
- *
- * @return  Unique pointer of vector of logical tiles
- */
+
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
@@ -371,15 +331,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   return result_tiles;
 }
 
-/*@brief   Complied Sequential scan helper function
-* NOTE: try to use efficient index scan instead of sequential scan, but you
-* shouldn't build too many indexes on one catalog table
-* @param   column_offsets    Column ids for search (projection)
-* @param   predicate         predicate for this sequential scan query
-* @param   txn               TransactionContext
-*
-* @return  Unique pointer of vector of logical tiles
-*/
+
 std::vector<codegen::WrappedTuple>
 AbstractCatalog::GetResultWithCompiledSeqScan(
     std::vector<oid_t> column_offsets,
@@ -421,15 +373,6 @@ AbstractCatalog::GetResultWithCompiledSeqScan(
   return buffer.GetOutputTuples();
 }
 
-/*@brief   Add index on catalog table
- * @param   key_attrs    indexed column offset(position)
- * @param   index_oid    index id(global unique)
- * @param   index_name   index name(global unique)
- * @param   index_constraint     index constraints
- * @return  Unique pointer of vector of logical tiles
- * Note: Use catalog::Catalog::CreateIndex() if you can, only ColumnCatalog and
- * IndexCatalog should need this
- */
 void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
                                oid_t index_oid, const std::string &index_name,
                                IndexConstraintType index_constraint) {
@@ -457,13 +400,7 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
   LOG_TRACE("Successfully created index '%s' for table '%d'",
             index_name.c_str(), (int)catalog_table_->GetOid());
 }
-/*@brief   Update specific columns using compiled sequential scan
- * @param   update_columns    Columns to be updated
- * @param   update_values     Values to be updated
- * @param   column_offsets    columns used for seq scan
- * @param   predicate         Predicate used in the seq scan
- * @return  true if successfully executes
- */
+
 bool AbstractCatalog::UpdateWithCompiledSeqScan(
   std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
   std::vector<oid_t> column_offsets, expression::AbstractExpression *predicate,
@@ -534,13 +471,7 @@ bool AbstractCatalog::UpdateWithCompiledSeqScan(
      return ret.m_result == peloton::ResultType::SUCCESS;
 }
 
-/*@brief   Update specific columns using index scan
- * @param   update_columns    Columns to be updated
- * @param   update_values     Values to be updated
- * @param   scan_values       Value to be scaned (used in index scan)
- * @param   index_offset      Offset of index for scan
- * @return  true if successfully executes
- */
+
 bool AbstractCatalog::UpdateWithIndexScan(
     std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
     std::vector<type::Value> scan_values, oid_t index_offset,

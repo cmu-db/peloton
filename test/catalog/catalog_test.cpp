@@ -61,37 +61,40 @@ TEST_F(CatalogTests, CreatingDatabase) {
                           ->GetDBName());
   txn_manager.CommitTransaction(txn);
 }
-//
-//TEST_F(CatalogTests, CreateThenDropTable) {
-// auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-// auto txn = txn_manager.BeginTransaction();
-// auto id_column = catalog::Column(
-//   type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-//   "id", true);
-// id_column.AddConstraint(
-//   catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
-// auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
-//
-// std::unique_ptr<catalog::Schema> table_schema(
-//   new catalog::Schema({id_column, name_column}));
-//
-// catalog::Catalog::GetInstance()->CreateTable(
-//   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
-//
-// auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-//   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
-//
-// EXPECT_NE(table_object, nullptr);
-// EXPECT_EQ(table_object->GetTableName(), "emp_table");
-//
-// catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
-//                                            "emp_table", txn);
-// auto table_object_1 = catalog::Catalog::GetInstance()->GetTableObject(
-//   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
-// EXPECT_EQ(nullptr, table_object_1);
-// txn_manager.CommitTransaction(txn);
-//}
-//
+
+/**
+ * Create and drop the same table in the same transaction
+ */
+TEST_F(CatalogTests, CreateThenDropTable) {
+ auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+ auto txn = txn_manager.BeginTransaction();
+ auto id_column = catalog::Column(
+   type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+   "id", true);
+ id_column.AddConstraint(
+   catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
+ auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
+
+ std::unique_ptr<catalog::Schema> table_schema(
+   new catalog::Schema({id_column, name_column}));
+
+ catalog::Catalog::GetInstance()->CreateTable(
+   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
+
+ auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
+
+ EXPECT_NE(table_object, nullptr);
+ EXPECT_EQ(table_object->GetTableName(), "emp_table");
+
+ catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
+                                            "emp_table", txn);
+ auto table_object_1 = catalog::Catalog::GetInstance()->GetTableObject(
+   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
+ EXPECT_EQ(nullptr, table_object_1);
+ txn_manager.CommitTransaction(txn);
+}
+
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

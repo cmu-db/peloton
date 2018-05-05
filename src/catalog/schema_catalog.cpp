@@ -78,6 +78,7 @@ bool SchemaCatalog::InsertSchema(oid_t schema_oid,
                                  type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
+  (void)pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(schema_oid);
