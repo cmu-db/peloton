@@ -55,6 +55,7 @@ void *LoggingTest(int port) {
     txn2.exec("INSERT INTO employee VALUES (1, 'Aaron Tian');");
     txn2.exec("INSERT INTO employee VALUES (2, 'Gandeevan Raghuraman');");
     txn2.exec("INSERT INTO employee VALUES (3, 'Anirudh Kanjani');");
+    txn2.commit();
 
   } catch (const std::exception &e) {
     LOG_INFO("[LoggingTest] Exception occurred: %s", e.what());
@@ -64,7 +65,7 @@ void *LoggingTest(int port) {
 }
 
 TEST_F(LoggingTests, LoggingTest) {
-  peloton::PelotonInit::Initialize("/tmp", "test_log_file");
+  peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer server;
 
