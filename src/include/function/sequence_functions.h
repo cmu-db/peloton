@@ -32,6 +32,7 @@ class SequenceFunctions {
   // Currval will return the current value of the given sequence
   static uint32_t Currval(executor::ExecutorContext &ctx, const char *sequence_name);
 
+  // Wrapper function used for AddBuiltin Functions
   static type::Value _Nextval(const std::vector<type::Value> &args);
   static type::Value _Currval(const std::vector<type::Value> &args);
 };

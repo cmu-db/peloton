@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// string_functions.cpp
+// sequence_functions.cpp
 //
-// Identification: src/function/string_functions.cpp
+// Identification: src/function/sequence_functions.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -24,7 +24,11 @@
 namespace peloton {
 namespace function {
 
-// The next value of the sequence
+/*@brief   The actual implementation to get the incremented value for the specified sequence
+ * @param   sequence name, executor context
+ * @return  the next value for the sequence
+ * @exception the sequence does not exist
+ */
 uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
                                    const char *sequence_name) {
   PELOTON_ASSERT(sequence_name != nullptr);
@@ -56,11 +60,15 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
     return val;
   } else {
     throw SequenceException(
-            StringUtil::Format("relation \"%s\" does not exist", sequence_name));
+            StringUtil::Format("Sequence \"%s\" does not exist", sequence_name.c_str()));
   }
 }
 
-// The next value of the sequence
+/*@brief   The actual implementation to get the current value for the specified sequence
+ * @param   sequence name, executor context
+ * @return  the current value of a sequence
+ * @exception either the sequence does not exist, or 'call nextval before currval'
+ */
 uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
                                    const char *sequence_name) {
   PELOTON_ASSERT(sequence_name != nullptr);
@@ -75,13 +83,13 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
     return sequence_object->GetCurrVal();
   } else {
     throw SequenceException(
-            StringUtil::Format("relation \"%s\" does not exist", sequence_name));
+            StringUtil::Format("Sequence \"%s\" does not exist", sequence_name.c_str()));
   }
 }
 
-/*@brief   get the incremented value for the specified sequence
+/*@brief   The wrapper function to get the incremented value for the specified sequence
  * @param   sequence name, executor context
- * @return  nextval
+ * @return  the result of executing NextVal
  */
 type::Value SequenceFunctions::_Nextval(const std::vector<type::Value> &args) {
   executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
@@ -89,9 +97,9 @@ type::Value SequenceFunctions::_Nextval(const std::vector<type::Value> &args) {
   return type::ValueFactory::GetIntegerValue(ret);
 }
 
-/*@brief   get the current value for the specified sequence
+/*@brief   The wrapper function to get the current value for the specified sequence
  * @param   sequence name, executor context
- * @return  currval
+ * @return  the result of executing CurrVal
  */
 type::Value SequenceFunctions::_Currval(const std::vector<type::Value> &args) {
   executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
