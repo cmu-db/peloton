@@ -6,7 +6,7 @@
 //
 // Identification: test/tuning/layout_tuner_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Databa e Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

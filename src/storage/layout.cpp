@@ -139,6 +139,37 @@ oid_t Layout::GetTileIdFromColumnId(oid_t column_id) const {
   return tile_offset;
 }
 
+tile_map_type Layout::GetTileMap() const {
+  tile_map_type tile_map;
+
+  if (layout_type_ == LayoutType::ROW) {
+    // Row store layout, hence all columns are contained in tile 0.
+    // The column_offset is always the same as column_id.
+    tile_map[0] = {};
+    for (oid_t column_id = 0; column_id < num_columns_; column_id++) {
+      tile_map[0].emplace_back(column_id, column_id);
+    }
+  } else if (layout_type_ == LayoutType::COLUMN) {
+    // Column store layout, hence all columns are contained in separate tiles.
+    // The column_offset within the tile is always 0.
+    for (oid_t column_id = 0; column_id < num_columns_; column_id++) {
+      tile_map[column_id] = {std::make_pair(column_id, 0)};
+    }
+  } else {
+    // Hybrid layout, hence figure out the mapping from the column_layout_.
+    for (auto entry : column_layout_) {
+      auto column_id = entry.first;
+      auto tile_id = entry.second.first;
+      auto column_offset = entry.second.second;
+      if (tile_map.find(tile_id) == tile_map.end()) {
+        tile_map[tile_id] = {};
+      }
+      tile_map[tile_id].emplace_back(column_id, column_offset);
+    }
+  }
+  return tile_map;
+}
+
 oid_t Layout::GetTileColumnOffset(oid_t column_id) const {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);

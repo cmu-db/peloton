@@ -70,7 +70,6 @@ class RuntimeFunctions {
 
   // Get the column configuration for every column in the tile group
   static void GetTileGroupLayout(const storage::TileGroup *tile_group,
-                                 const catalog::Schema *schema,
                                  ColumnLayoutInfo *infos, uint32_t num_cols);
 
   static void ThrowDivideByZeroException();

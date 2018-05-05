@@ -235,9 +235,11 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  // NOTE: everytime we create a database, there will be 9 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables
+  // inside. Additionally, we create 3 tables for the test.
+  oid_t expected_table_count = CATALOG_TABLES_COUNT + 3;
   EXPECT_EQ(
-      CATALOG_TABLES_COUNT + 3,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
@@ -250,8 +252,10 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table", DEFAULT_SCHEMA_NAME);
+  // Decrement expected_table_count to account for the dropped table.
+  expected_table_count--;
   EXPECT_EQ(
-      CATALOG_TABLES_COUNT + 2,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -262,9 +266,8 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
                    "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn),
                CatalogException);
-  //
   EXPECT_EQ(
-      CATALOG_TABLES_COUNT + 2,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -274,7 +277,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    "emp_db", DEFAULT_SCHEMA_NAME, "void_table", txn),
                CatalogException);
   EXPECT_EQ(
-      CATALOG_TABLES_COUNT + 2,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -282,8 +285,10 @@ TEST_F(CatalogTests, DroppingTable) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
                                              "emp_table", txn);
+  // Account for the dropped table.
+  expected_table_count--;
   EXPECT_EQ(
-      CATALOG_TABLES_COUNT + 1,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }
@@ -317,7 +322,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   // Create database.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(db_name, txn);
+  EXPECT_EQ(ResultType::SUCCESS, catalog->CreateDatabase(db_name, txn));
 
   // Create table.
   auto val0 = catalog::Column(type::TypeId::INTEGER,
@@ -334,15 +339,19 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
                               "val3", true);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({val0, val1, val2, val3}));
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn);
+  EXPECT_EQ(ResultType::SUCCESS,
+            catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
+                                 std::move(table_schema), txn));
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
+  auto database_oid =
+      catalog->GetDatabaseObject(db_name, txn)->GetDatabaseOid();
+  auto table_object =
+      catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto table_oid = table_object->GetTableOid();
   auto table =
       catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
-  auto table_oid = table->GetOid();
-  auto database_oid = table->GetDatabaseOid();
   txn_manager.CommitTransaction(txn);
 
   // Change default layout.

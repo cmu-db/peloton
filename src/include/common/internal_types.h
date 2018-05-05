@@ -1406,6 +1406,11 @@ typedef std::unordered_set<expression::AbstractExpression *,
  */
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
+/* tile_map_type used to store the mapping between a tile and its columns
+ * <tile index> to vector{<original column index, tile column offset>}
+ */
+typedef std::map<oid_t, std::vector<std::pair<oid_t, oid_t>>> tile_map_type;
+
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
 //===--------------------------------------------------------------------===//

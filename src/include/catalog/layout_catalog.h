@@ -39,11 +39,6 @@ namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
  public:
-  // Global Singleton, only the first call requires passing parameters.
-  static LayoutCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr,
-      concurrency::TransactionContext *txn = nullptr);
 
   LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                 concurrency::TransactionContext *txn);

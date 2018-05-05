@@ -88,15 +88,12 @@ llvm::Value *TileGroup::GetTileGroupId(CodeGen &codegen,
 std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
     CodeGen &codegen, llvm::Value *tile_group_ptr,
     llvm::Value *column_layout_infos) const {
-  llvm::Value *schema_ptr =
-      codegen->CreateIntToPtr(codegen.Const64((int64_t)&schema_),
-                              SchemaProxy::GetType(codegen)->getPointerTo());
 
   // Call RuntimeFunctions::GetTileGroupLayout()
   uint32_t num_cols = schema_.GetColumnCount();
-  codegen.Call(RuntimeFunctionsProxy::GetTileGroupLayout,
-               {tile_group_ptr, schema_ptr, column_layout_infos,
-                codegen.Const32(num_cols)});
+  codegen.Call(
+      RuntimeFunctionsProxy::GetTileGroupLayout,
+      {tile_group_ptr, column_layout_infos, codegen.Const32(num_cols)});
 
   // Collect <start, stride, is_columnar> triplets of all columns
   std::vector<TileGroup::ColumnLayout> layouts;

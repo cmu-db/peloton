@@ -53,7 +53,7 @@ namespace catalog {
 // Reserved schema oid
 // "public" for default schema, and "pg_catalog" schema for catalog tables
 #define CATALOG_SCHEMA_OID (0 | SCHEMA_OID_MASK)
-#define DEFUALT_SCHEMA_OID (1 | SCHEMA_OID_MASK)
+#define DEFAULT_SCHEMA_OID (1 | SCHEMA_OID_MASK)
 #define CATALOG_SCHEMA_NAME "pg_catalog"
 #define DEFAULT_SCHEMA_NAME "public"
 

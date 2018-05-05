@@ -162,7 +162,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
   system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFUALT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
+      DEFAULT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
@@ -561,15 +561,6 @@ ResultType Catalog::CreateIndex(
   return ResultType::SUCCESS;
 }
 
-/*
- * @brief   create a new layout for a table
- * @param   database_oid  database to which the table belongs to
- * @param   table_oid     table to which the layout has to be added
- * @param   column_map    column_map of the new layout to be created
- * @param   txn           TransactionContext
- * @return  shared_ptr    shared_ptr to the newly created layout in case of
- *                        success. nullptr in case of failure.
- */
 std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
     oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
     concurrency::TransactionContext *txn) {
@@ -594,16 +585,6 @@ std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
   return new_layout;
 }
 
-/*
- * @brief   create a new layout for a table and make it the deafult if
- *          if the creating is successsful.
- * @param   database_oid  database to which the table belongs to
- * @param   table_oid     table to which the layout has to be added
- * @param   column_map    column_map of the new layout to be created
- * @param   txn           TransactionContext
- * @return  shared_ptr    shared_ptr to the newly created layout in case of
- *                        success. nullptr in case of failure.
- */
 std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
     oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
     concurrency::TransactionContext *txn) {
@@ -830,14 +811,6 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   return ResultType::SUCCESS;
 }
 
-/*@brief   Drop layout
- * tile_groups
- * @param   database_oid    the database to which the table belongs
- * @param   table_oid       the table to which the layout belongs
- * @param   layout_oid      the layout to be dropped
- * @param   txn             TransactionContext
- * @return  TransactionContext ResultType(SUCCESS or FAILURE)
- */
 ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
                                oid_t layout_oid,
                                concurrency::TransactionContext *txn) {

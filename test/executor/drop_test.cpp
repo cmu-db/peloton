@@ -106,19 +106,23 @@ TEST_F(DropTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables
+  // inside. In this test case, we have created two additional tables.
+  oid_t expeected_table_count = CATALOG_TABLES_COUNT + 2;
   EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
                 ->GetTableObjects()
                 .size(),
-            (CATALOG_TABLES_COUNT + 2));
+            expeected_table_count);
 
   // Now dropping the table using the executor
   catalog->DropTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
                      txn);
+  // Account for the dropped table.
+  expeected_table_count--;
   EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
                 ->GetTableObjects()
                 .size(),
-            (CATALOG_TABLES_COUNT + 1));
+            expeected_table_count);
 
   // free the database just created
   catalog->DropDatabaseWithName(TEST_DB_NAME, txn);

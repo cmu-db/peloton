@@ -51,7 +51,6 @@ PROXY(RuntimeFunctions) {
 
 TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);
 TYPE_BUILDER(AbstractExpression, expression::AbstractExpression);
-TYPE_BUILDER(Schema, catalog::Schema);
 
 }  // namespace codegen
 }  // namespace peloton

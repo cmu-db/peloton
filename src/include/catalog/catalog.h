@@ -120,12 +120,29 @@ class Catalog {
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
 
-  // Create a new layout
+  /**
+   * @brief   create a new layout for a table
+   * @param   database_oid  database to which the table belongs to
+   * @param   table_oid     table to which the layout has to be added
+   * @param   column_map    column_map of the new layout to be created
+   * @param   txn           TransactionContext
+   * @return  shared_ptr    shared_ptr to the newly created layout in case of
+   *                        success. nullptr in case of failure.
+   */
   std::shared_ptr<const storage::Layout> CreateLayout(
       oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
       concurrency::TransactionContext *txn);
 
-  // Create a new layout and set it as the default for the table
+  /**
+   * @brief   create a new layout for a table and make it the default if
+   *          if the creating is successsful.
+   * @param   database_oid  database to which the table belongs to
+   * @param   table_oid     table to which the layout has to be added
+   * @param   column_map    column_map of the new layout to be created
+   * @param   txn           TransactionContext
+   * @return  shared_ptr    shared_ptr to the newly created layout in case of
+   *                        success. nullptr in case of failure.
+   */
   std::shared_ptr<const storage::Layout> CreateDefaultLayout(
       oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
       concurrency::TransactionContext *txn);
@@ -158,7 +175,14 @@ class Catalog {
   ResultType DropIndex(oid_t database_oid, oid_t index_oid,
                        concurrency::TransactionContext *txn);
 
-  // Delete a layout using its database_oid, table_oid and layout_oid
+  /** @brief   Drop layout
+   * tile_groups
+   * @param   database_oid    the database to which the table belongs
+   * @param   table_oid       the table to which the layout belongs
+   * @param   layout_oid      the layout to be dropped
+   * @param   txn             TransactionContext
+   * @return  ResultType(SUCCESS or FAILURE)
+   */
   ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
                         concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//

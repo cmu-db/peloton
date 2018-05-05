@@ -92,7 +92,10 @@ class Layout : public Printable {
   /** @brief  Returns the number of columns in the layout. */
   oid_t GetColumnCount() const { return num_columns_; }
 
-  /** @brief  Constructs the schema for the given layout.  Thid function
+  /** @brief Returns the tile-columns map for each tile in the TileGroup. */
+  tile_map_type GetTileMap() const;
+
+  /** @brief  Constructs the schema for the given layout.  This function
    *          is used only in TempTables and LogicalTiles.
    */
   std::vector<catalog::Schema> GetLayoutSchemas(

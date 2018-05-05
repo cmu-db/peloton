@@ -338,7 +338,7 @@ TableCatalog::TableCatalog(
 bool TableCatalogObject::InsertLayout(
     std::shared_ptr<const storage::Layout> layout) {
   // Invalid object
-  if (layout == nullptr) {
+  if (!layout || (layout->GetOid() == INVALID_OID)) {
     return false;
   }
 
