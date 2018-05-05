@@ -89,9 +89,9 @@ TEST_F(CatalogTests, CreateThenDropTable) {
 
  catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
                                             "emp_table", txn);
- auto table_object_1 = catalog::Catalog::GetInstance()->GetTableObject(
-   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
- EXPECT_EQ(nullptr, table_object_1);
+ EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
+           "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn),
+                      CatalogException);
  txn_manager.CommitTransaction(txn);
 }
 
