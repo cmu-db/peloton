@@ -54,6 +54,9 @@ class CostCalculator : public AbstractCostCalculator {
   double SortCost();
   double GroupByCost();
 
+  /* Checks if keys for a join child only reference one table */
+  bool IsBaseTable(const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys);
+
   GroupExpression *gexpr_;
   Memo *memo_;
   concurrency::TransactionContext *txn_;
