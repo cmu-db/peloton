@@ -116,25 +116,22 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       catalog::Schema::CopySchema(old_schema, column_ids));
   auto columns = temp_schema->GetColumns();
   // Step 2: change column type if exists
-  for (auto change_pair : node.GetChangedTypeColumns()) {
+  for (auto &change_col : node.GetChangedTypeColumns().get()->GetColumns()) {
     bool is_found = false;
     oid_t i = 0;
     for (; i < columns.size(); ++i) {
-      if (columns[i].GetName() == change_pair.first) {
+      if (columns[i].GetName() == change_col.GetName()) {
         is_found = true;
         break;
       }
     }
     if (!is_found) {
       LOG_TRACE("Change column type failed: Column %s does not exists",
-                change_pair.first.c_str());
+                change_col.GetName().c_str());
       txn->SetResult(ResultType::FAILURE);
       return false;
     } else {
-      columns[i].SetType(change_pair.second);
-      columns[i].SetInlined();
-      columns[i].SetLength(type::VarlenType::GetTypeSize(change_pair.second));
-
+      columns[i] = std::move(change_col);
       // TODO: decide VARCHAR's size when change type
       // if (change_pair.second == type::TypeId::VARCHAR) {}
     }
@@ -143,10 +140,8 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
   // Step 3: append add column to new schema
   // construct add column schema
   std::vector<catalog::Column> add_columns;
-  for (size_t i = 0; i < node.GetAddedColumns().size(); ++i) {
-    for (auto column : node.GetAddedColumns()[i]->GetColumns()) {
-      add_columns.push_back(column);
-    }
+  for (auto column : node.GetAddedColumns()->GetColumns()) {
+    add_columns.push_back(column);
   }
   // Check if added column exists
   for (auto new_column : add_columns) {

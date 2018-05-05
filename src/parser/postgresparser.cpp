@@ -1846,15 +1846,16 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
           }
           case AT_AlterColumnType: {
             ColumnDef *def = (ColumnDef *)cmd->def;
-            TypeName *type_name = def->typeName;
-            char *name = (reinterpret_cast<value *>(
-                              type_name->names->tail->data.ptr_value)
-                              ->val.str);
-            LOG_TRACE("DATA Type is :%s", name);
-            auto type_id = ColumnDefinition::StrToDataType(name);
-            std::unique_ptr<ColumnDefinition> col_def(
-                new ColumnDefinition(cmd->name, type_id));
-            result->changed_type_columns->push_back(std::move(col_def));
+            def->colname = cmd->name;
+            parser::CreateStatement tmp_statement(
+                parser::CreateStatement::CreateType::kTable);
+            LOG_TRACE("Adding change type column");
+            ColumnDefTransform(reinterpret_cast<ColumnDef *>(def),
+                               &tmp_statement);
+            for (size_t i = 0; i < tmp_statement.columns.size();i++){
+              result->changed_type_columns->emplace_back(std::move(tmp_statement.columns[i]));
+            }
+            LOG_TRACE("adding end");
             break;
           }
           default: {
