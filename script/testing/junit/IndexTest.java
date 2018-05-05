@@ -61,12 +61,16 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread insert tuples
      */
     @Test
-    public void test_create_insert() throws SQLException {
+    public void test_create_insert() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -74,8 +78,12 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -99,12 +107,16 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread update tuples
      */
     @Test
-    public void test_1Tuple_CS_1() throws SQLException {
+    public void test_1Tuple_CS_1() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -112,8 +124,12 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -137,12 +153,16 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread delete tuples
      */
     @Test
-    public void test_1Tuple_CS_2() throws SQLException {
+    public void test_1Tuple_CS_2() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -150,8 +170,12 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                  Statement stmt = conn.createStatement();
-                  stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
+                try {
+                    Statement stmt = conn.createStatement();
+                    stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
