@@ -92,9 +92,6 @@ class ArtIndex : public Index {
   }
 
   // TODO(pmenon): Implement me
-  size_t GetMemoryFootprint() override { return 0; }
-
-  // TODO(pmenon): Implement me
   bool NeedGC() override { return false; }
 
   // TODO(pmenon): Implement me

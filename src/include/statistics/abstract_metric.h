@@ -75,6 +75,8 @@ class Metric {
   virtual void OnIndexDelete(std::pair<oid_t, oid_t>){};
   virtual void OnMemoryAlloc(std::pair<oid_t, oid_t>, size_t){};
   virtual void OnMemoryFree(std::pair<oid_t, oid_t>, size_t){};
+  virtual void OnMemoryUsage(std::pair<oid_t, oid_t>, size_t){};
+  virtual void OnMemoryReclaim(std::pair<oid_t, oid_t>, size_t){};
   virtual void OnQueryBegin(){};
   virtual void OnQueryEnd(){};
 

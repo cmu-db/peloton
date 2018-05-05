@@ -123,6 +123,30 @@ class ThreadLevelStatsCollector {
       metric->OnIndexDelete({database_id, index_id});
   };
 
+  inline void CollectIndexMemoryAlloc(oid_t database_id, oid_t index_id,
+                                      size_t bytes) {
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_ALLOC])
+      metric->OnMemoryAlloc({database_id, index_id}, bytes);
+  };
+
+  inline void CollectIndexMemoryUsage(oid_t database_id, oid_t index_id,
+                                      size_t bytes) {
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_USAGE])
+      metric->OnMemoryUsage({database_id, index_id}, bytes);
+  };
+
+  inline void CollectIndexMemoryFree(oid_t database_id, oid_t index_id,
+                                     size_t bytes) {
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_FREE])
+      metric->OnMemoryFree({database_id, index_id}, bytes);
+  };
+
+  inline void CollectIndexMemoryReclaim(oid_t database_id, oid_t index_id,
+                                        size_t bytes) {
+    for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_RECLAIM])
+      metric->OnMemoryReclaim({database_id, index_id}, bytes);
+  };
+
   inline void CollectQueryBegin() {
     for (auto &metric : metric_dispatch_[StatsEventType::QUERY_BEGIN])
       metric->OnQueryBegin();

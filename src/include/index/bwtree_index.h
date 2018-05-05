@@ -23,17 +23,13 @@
 
 #include "index/bwtree.h"
 
-#define BWTREE_INDEX_TYPE BWTreeIndex <KeyType, \
-                                       ValueType, \
-                                       KeyComparator, \
-                                       KeyEqualityChecker, \
-                                       KeyHashFunc, \
-                                       ValueEqualityChecker, \
-                                       ValueHashFunc>
+#define BWTREE_INDEX_TYPE                                            \
+  BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker, \
+              KeyHashFunc, ValueEqualityChecker, ValueHashFunc>
 
 namespace peloton {
 namespace index {
-  
+
 /**
  * BW tree-based index implementation.
  *
@@ -44,23 +40,14 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType,
-          typename ValueType,
-          typename KeyComparator,
-          typename KeyEqualityChecker,
-          typename KeyHashFunc,
-          typename ValueEqualityChecker,
-          typename ValueHashFunc>
+template <typename KeyType, typename ValueType, typename KeyComparator,
+          typename KeyEqualityChecker, typename KeyHashFunc,
+          typename ValueEqualityChecker, typename ValueHashFunc>
 class BWTreeIndex : public Index {
   friend class IndexFactory;
 
-  using MapType = BwTree<KeyType,
-                         ValueType,
-                         KeyComparator,
-                         KeyEqualityChecker,
-                         KeyHashFunc,
-                         ValueEqualityChecker,
-                         ValueHashFunc>;
+  using MapType = BwTree<KeyType, ValueType, KeyComparator, KeyEqualityChecker,
+                         KeyHashFunc, ValueEqualityChecker, ValueHashFunc>;
 
  public:
   BWTreeIndex(IndexMetadata *metadata);
@@ -71,24 +58,21 @@ class BWTreeIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, ItemPointer *value) override;
 
-  bool CondInsertEntry(const storage::Tuple *key,
-                       ItemPointer *value,
+  bool CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
                        std::function<bool(const void *)> predicate) override;
 
   void Scan(const std::vector<type::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
-            ScanDirectionType scan_direction,
-            std::vector<ValueType> &result,
+            ScanDirectionType scan_direction, std::vector<ValueType> &result,
             const ConjunctionScanPredicate *csp_p) override;
-            
+
   void ScanLimit(const std::vector<type::Value> &values,
                  const std::vector<oid_t> &key_column_ids,
                  const std::vector<ExpressionType> &expr_types,
                  ScanDirectionType scan_direction,
                  std::vector<ValueType> &result,
-                 const ConjunctionScanPredicate *csp_p,
-                 uint64_t limit,
+                 const ConjunctionScanPredicate *csp_p, uint64_t limit,
                  uint64_t offset) override;
 
   void ScanAllKeys(std::vector<ValueType> &result) override;
@@ -98,17 +82,12 @@ class BWTreeIndex : public Index {
 
   std::string GetTypeName() const override;
 
-  // TODO: Implement this
-  size_t GetMemoryFootprint() override { return 0; }
-  
-  bool NeedGC() override {
-    return container.NeedGarbageCollection();
-  }
+  bool NeedGC() override { return container.NeedGarbageCollection(); }
 
   void PerformGC() override {
     LOG_INFO("Bw-Tree Garbage Collection!");
     container.PerformGarbageCollection();
-    
+
     return;
   }
 
@@ -117,7 +96,7 @@ class BWTreeIndex : public Index {
   KeyComparator comparator;
   KeyEqualityChecker equals;
   KeyHashFunc hash_func;
-  
+
   // container
   MapType container;
 };

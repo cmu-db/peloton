@@ -353,40 +353,6 @@ class Index : public Printable {
   virtual void PerformGC() = 0;
 
   //////////////////////////////////////////////////////////////////////////////
-  /// Stats
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @brief Increase the number of tuples in the index by the provided amount
-   */
-  void IncreaseNumberOfTuplesBy(size_t amount);
-
-  /**
-   * @brief Decrease the number of tuples in the index by the provided amount
-   */
-  void DecreaseNumberOfTuplesBy(size_t amount);
-
-  /**
-   * @brief Set the number of tuples in the index
-   */
-  void SetNumberOfTuples(size_t num_tuples);
-
-  /**
-   * @brief Return the number of tuples in the index
-   */
-  size_t GetNumberOfTuples() const;
-
-  /**
-   * @brief Returns if the index is dirty. WTF that means is unknown.
-   */
-  bool IsDirty() const;
-
-  /**
-   * @brief No idea. Reset some dirty flag?
-   */
-  void ResetDirty();
-
-  //////////////////////////////////////////////////////////////////////////////
   /// Utilities
   //////////////////////////////////////////////////////////////////////////////
 
@@ -426,13 +392,6 @@ class Index : public Printable {
 
   type::AbstractPool *GetPool() const { return pool; }
 
-  /**
-   * @brief Calculate the total number of bytes used by this index
-   *
-   * @return The number of bytes this index occupies
-   */
-  virtual size_t GetMemoryFootprint() = 0;
-
   // Get the indexed tile group offset
   virtual size_t GetIndexedTileGroupOff() {
     return indexed_tile_group_offset.load();
@@ -452,12 +411,6 @@ class Index : public Printable {
   IndexMetadata *metadata;
 
   oid_t index_oid = INVALID_OID;
-
-  // access counters
-  int lookup_counter;
-  int insert_counter;
-  int delete_counter;
-  int update_counter;
 
   // number of tuples
   size_t number_of_tuples = 0;

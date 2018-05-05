@@ -25,7 +25,14 @@ namespace peloton {
 namespace stats {
 class IndexMetricRawData : public AbstractRawData {
   // this serves as an index into each table's counter vector
-  enum CounterType { READ = 0, UPDATE, INSERT, DELETE };
+  enum CounterType {
+    READ = 0,
+    UPDATE,
+    INSERT,
+    DELETE,
+    MEMORY_ALLOC,
+    MEMORY_USAGE
+  };
 
  public:
   inline void IncrementIndexReads(std::pair<oid_t, oid_t> db_index_id,
@@ -45,6 +52,26 @@ class IndexMetricRawData : public AbstractRawData {
     GetCounter(db_index_id, DELETE)++;
   }
 
+  inline void IncrementIndexMemoryAlloc(std::pair<oid_t, oid_t> db_index_id,
+                                        size_t bytes) {
+    GetCounter(db_index_id, MEMORY_ALLOC) += bytes;
+  }
+
+  inline void DecrementIndexMemoryAlloc(std::pair<oid_t, oid_t> db_index_id,
+                                        size_t bytes) {
+    GetCounter(db_index_id, MEMORY_ALLOC) -= bytes;
+  }
+
+  inline void IncrementIndexMemoryUsage(std::pair<oid_t, oid_t> db_index_id,
+                                        size_t bytes) {
+    GetCounter(db_index_id, MEMORY_USAGE) += bytes;
+  }
+
+  inline void DecrementIndexMemoryUsage(std::pair<oid_t, oid_t> db_index_id,
+                                        size_t bytes) {
+    GetCounter(db_index_id, MEMORY_USAGE) -= bytes;
+  }
+
   void Aggregate(AbstractRawData &other) override;
 
   void WriteToCatalog() override;
@@ -53,7 +80,7 @@ class IndexMetricRawData : public AbstractRawData {
 
  private:
   inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_index_id,
-                             CounterType type) {
+                              CounterType type) {
     auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
       counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
@@ -66,7 +93,7 @@ class IndexMetricRawData : public AbstractRawData {
       counters_;
 
   // should be number of possible CounterType values
-  static const size_t NUM_COUNTERS = 4;
+  static const size_t NUM_COUNTERS = 6;
 };
 
 class IndexMetric : public AbstractMetric<IndexMetricRawData> {
@@ -87,6 +114,19 @@ class IndexMetric : public AbstractMetric<IndexMetricRawData> {
   inline void OnIndexDelete(std::pair<oid_t, oid_t> db_index_id) override {
     GetRawData()->IncrementIndexDeletes(db_index_id);
   }
+  inline void OnMemoryAlloc(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+    GetRawData()->IncrementIndexMemoryAlloc(db_index_id, bytes);
+  };
+  inline void OnMemoryFree(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+    GetRawData()->DecrementIndexMemoryAlloc(db_index_id, bytes);
+  };
+  inline void OnMemoryUsage(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+    GetRawData()->IncrementIndexMemoryUsage(db_index_id, bytes);
+  };
+  inline void OnMemoryReclaim(std::pair<oid_t, oid_t> db_index_id,
+                              size_t bytes) {
+    GetRawData()->DecrementIndexMemoryUsage(db_index_id, bytes);
+  };
 };
 /**
  * Metric of index accesses and other index-specific metrics.
