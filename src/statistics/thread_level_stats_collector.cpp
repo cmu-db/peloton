@@ -4,7 +4,7 @@
 //
 // thread_level_stats_collector.cpp
 //
-// Identification: src/statistics/thread_level_stats_collector.cpp
+// Identification: src/include/statistics/thread_level_stats_collector.cpp
 //
 // Copyright (c) 2017-2018, Carnegie Mellon University Database Group
 //

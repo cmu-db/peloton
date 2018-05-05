@@ -6,7 +6,7 @@
 //
 // Identification: test/container/lock_free_array_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,8 +14,6 @@
 
 #include "common/harness.h"
 
-// TODO remove this when finish testing
-#include "tbb/concurrent_vector.h"
 
 namespace peloton {
 namespace test {

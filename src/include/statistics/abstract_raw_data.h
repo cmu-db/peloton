@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// abstract_raw_data.h
+//
+// Identification: src/inlcude/statistics/abstract_raw_data.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 #include <boost/functional/hash.hpp>
 #include "common/printable.h"

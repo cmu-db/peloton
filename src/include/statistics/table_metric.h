@@ -4,9 +4,9 @@
 //
 // table_metric.h
 //
-// Identification: src/statistics/table_metric.h
+// Identification: src/include/statistics/table_metric.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
