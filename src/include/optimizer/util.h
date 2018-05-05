@@ -183,12 +183,11 @@ bool StrongPredicates(
 /** 
  * @brief Replace the tuple_value_expression in given expression which
  * contains table in middle_group_aliases_set with constant_value_expression
- * with FALSE value
+ * with NULL value
  */
-void ReplaceWithNull(
-    std::shared_ptr<expression::AbstractExpression> expr,
+expression::AbstractExpression* PredicateEvaluate(
+    expression::AbstractExpression* expr,
     const std::unordered_set<std::string> &middle_group_aliases_set);
-
 }  // namespace util
 }  // namespace optimizer
 }  // namespace peloton
