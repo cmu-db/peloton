@@ -84,8 +84,9 @@ class Optimizer : public AbstractOptimizer {
       const std::string default_database_name,
       concurrency::TransactionContext *txn) override;
 
+  // Used by What-if API
   std::unique_ptr<OptimizerPlanInfo> GetOptimizedPlanInfo(
-      parser::SQLStatement *parsed_statement,
+      std::shared_ptr<parser::SQLStatement> parsed_statement,
       concurrency::TransactionContext *txn);
 
   void OptimizeLoop(int root_group_id,
