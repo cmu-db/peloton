@@ -31,7 +31,8 @@ class DropStatement : public TableRefStatement {
     kIndex,
     kView,
     kPreparedStatement,
-    kTrigger
+    kTrigger,
+    kSequence
   };
 
   DropStatement(EntityType type)
@@ -81,6 +82,13 @@ class DropStatement : public TableRefStatement {
 
   std::string GetTriggerTableName() { return GetTableName(); }
 
+  std::string &GetSequenceName() { return sequence_name_; }
+
+  void SetSequenceName(std::string &sequence_name) {
+    sequence_name_ = sequence_name;
+  }
+  void SetSequenceName(char *sequence_name) {  sequence_name_ = sequence_name; }
+
   virtual ~DropStatement() {}
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
@@ -105,6 +113,9 @@ class DropStatement : public TableRefStatement {
 
   // drop trigger
   std::string trigger_name_;
+
+  // drop sequence
+  std::string sequence_name_;
 };
 
 }  // namespace parser

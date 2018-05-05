@@ -62,11 +62,11 @@ int64_t SequenceCatalogObject::GetNextVal() {
       seq_curr_val += seq_increment;
   }
 
-  bool status = Catalog::GetInstance()
-                ->GetSystemCatalogs(db_oid)
-                ->GetSequenceCatalog()
-                ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
-  LOG_DEBUG("status of update pg_sequence: %d", status);
+  // bool status = Catalog::GetInstance()
+  //               ->GetSystemCatalogs(db_oid)
+  //               ->GetSequenceCatalog()
+  //               ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
+  // LOG_DEBUG("status of update pg_sequence: %d", status);
   return result;
 }
 

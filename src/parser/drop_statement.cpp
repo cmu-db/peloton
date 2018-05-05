@@ -66,6 +66,14 @@ const std::string DropStatement::GetInfo(int num_indent) const {
          << "Trigger name: " << trigger_name_;
       break;
     }
+    case kSequence: {
+      os << "DropType: Sequence\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << "Sequence database name: " << GetDatabaseName() << std::endl;
+      os << StringUtil::Indent(num_indent + 1)
+         << "Sequence name: " << sequence_name_;
+      break;
+    }
   }
   os << std::endl;
   os << StringUtil::Indent(num_indent + 1)

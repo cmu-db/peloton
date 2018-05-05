@@ -64,6 +64,13 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       drop_type = DropType::INDEX;
       break;
     }
+    // case parser::DropStatement::EntityType::kSequence: {
+    //   database_name = parse_tree->GetDatabaseName();
+    //   sequence_name = parse_tree->GetSequenceName();
+    //   drop_type = DropType::SEQUENCE;
+    //   break;
+    // }
+
     default: { LOG_ERROR("Not supported Drop type"); }
   }
 }
