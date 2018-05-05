@@ -17,14 +17,13 @@
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "settings/settings_manager.h"
 #include "index/index.h"
+#include "settings/settings_manager.h"
 #include "storage/database.h"
+#include "storage/storage_manager.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "storage/storage_manager.h"
 #include "threadpool/mono_queue_pool.h"
-
 
 namespace peloton {
 namespace gc {
@@ -43,7 +42,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
 
   PELOTON_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
-            storage::TileGroupHeader::GetReservedSize());
+                 storage::TileGroupHeader::GetReservedSize());
 
   // Reclaim the varlen pool
   CheckAndReclaimVarlenColumns(tile_group, location.offset);
@@ -90,12 +89,11 @@ void TransactionLevelGCManager::RecycleTransaction(
     concurrency::TransactionContext *txn) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
 
-  epoch_manager.ExitEpoch(txn->GetThreadId(),
-                          txn->GetEpochId());
+  epoch_manager.ExitEpoch(txn->GetThreadId(), txn->GetEpochId());
 
-  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY && \
+  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY &&
       txn->GetResult() != ResultType::SUCCESS && txn->IsGCSetEmpty() != true) {
-        txn->SetEpochId(epoch_manager.GetNextEpochId());
+    txn->SetEpochId(epoch_manager.GetNextEpochId());
   }
 
   // Add the transaction context to the lock-free queue
@@ -108,7 +106,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // check if any garbage can be unlinked from indexes.
   // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
-  std::vector<concurrency::TransactionContext* > garbages;
+  std::vector<concurrency::TransactionContext *> garbages;
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
@@ -135,20 +133,20 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // Log the query into query_history_catalog
     if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-      if(query_strings.size() != 0) {
+      if (query_strings.size() != 0) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
-        for(auto query_string: query_strings) {
+        for (auto query_string : query_strings) {
           pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
-          });        
+          });
         }
       }
     }
 
     // Deallocate the Transaction Context of transactions that don't involve
     // any garbage collection
-    if (txn_ctx->GetIsolationLevel() == IsolationLevelType::READ_ONLY || \
+    if (txn_ctx->GetIsolationLevel() == IsolationLevelType::READ_ONLY ||
         txn_ctx->IsGCSetEmpty()) {
       delete txn_ctx;
       continue;
@@ -215,7 +213,7 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
 
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(
-    concurrency::TransactionContext* txn_ctx) {
+    concurrency::TransactionContext *txn_ctx) {
   for (auto &entry : *(txn_ctx->GetGCSetPtr().get())) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
@@ -277,6 +275,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
     auto index = table->GetIndexWithOid(index_oid);
     PELOTON_ASSERT(index != nullptr);
     table->DropIndexWithOid(index_oid);
+    LOG_DEBUG("GCing index %u", index_oid);
   }
 
   delete txn_ctx;
@@ -387,8 +386,8 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-              type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL);
+                   type == GCVersionType::COMMIT_INS_DEL ||
+                   type == GCVersionType::ABORT_INS_DEL);
 
     // attempt to unlink the version from all the indexes.
     for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {

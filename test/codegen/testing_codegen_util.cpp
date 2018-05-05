@@ -16,14 +16,14 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/query_cache.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/plan_executor.h"
 #include "executor/executor_context.h"
+#include "executor/plan_executor.h"
 #include "expression/comparison_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
-#include "codegen/query_cache.h"
 
 namespace peloton {
 namespace test {
@@ -107,21 +107,25 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
-    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
-                                                      test_table_names[i],
-                                                      txn)->GetTableOid());
+    test_table_oids.push_back(catalog
+                                  ->GetTableObject(test_db_name,
+                                                   DEFUALT_SCHEMA_NAME,
+                                                   test_table_names[i], txn)
+                                  ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
-    catalog->CreateTable(test_db_name, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup);
-    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
-                                                      test_table_names[i],
-                                                      txn)->GetTableOid());
+    test_table_oids.push_back(catalog
+                                  ->GetTableObject(test_db_name,
+                                                   DEFUALT_SCHEMA_NAME,
+                                                   test_table_names[i], txn)
+                                  ->GetTableOid());
   }
 }
 
@@ -134,8 +138,9 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   auto *table_schema = test_table.GetSchema();
   size_t curr_size = test_table.GetTupleCount();
 
-  auto col_val =
-      [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
+  auto col_val = [](uint32_t tuple_id, uint32_t col_id) {
+    return 10 * tuple_id + col_id;
+  };
 
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();

@@ -12,15 +12,15 @@
 
 #include <memory>
 
+#include "catalog/catalog.h"
+#include "catalog/column.h"
+#include "catalog/schema.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/schema.h"
-#include "catalog/column.h"
-#include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
-#include "optimizer/stats/table_stats_collector.h"
 #include "optimizer/stats/column_stats_collector.h"
+#include "optimizer/stats/table_stats_collector.h"
 #include "sql/testing_sql_util.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -46,7 +46,7 @@ TEST_F(TableStatsCollectorTests, BasicTests) {
 TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -60,7 +60,8 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+                                         "test", txn);
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
@@ -88,7 +89,7 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
 TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   // Boostrap database
   auto catalog = catalog::Catalog::GetInstance();
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -110,7 +111,8 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+                                         "test", txn);
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
@@ -119,20 +121,20 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   EXPECT_EQ(stats.GetActiveTupleCount(), nrow);
 
   // Varchar stats
-  ColumnStatsCollector* b_stats = stats.GetColumnStats(1);
+  ColumnStatsCollector *b_stats = stats.GetColumnStats(1);
   EXPECT_EQ(b_stats->GetFracNull(), 0);
   EXPECT_EQ(b_stats->GetCardinality(), 2);
   EXPECT_EQ((b_stats->GetHistogramBound()).size(),
             0);  // varchar has no histogram dist
 
   // Double stats
-  ColumnStatsCollector* c_stats = stats.GetColumnStats(2);
+  ColumnStatsCollector *c_stats = stats.GetColumnStats(2);
   EXPECT_EQ(c_stats->GetFracNull(), 0);
   EXPECT_EQ(c_stats->GetCardinality(), 1);
   EXPECT_EQ(c_stats->GetHistogramBound().size() + 1, 1);
 
   // Timestamp stats
-  ColumnStatsCollector* d_stats = stats.GetColumnStats(3);
+  ColumnStatsCollector *d_stats = stats.GetColumnStats(3);
   EXPECT_EQ(d_stats->GetFracNull(), 0);
   EXPECT_EQ(d_stats->GetCardinality(), 2);
   EXPECT_EQ(d_stats->GetHistogramBound().size() + 1, 2);

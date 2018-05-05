@@ -10,43 +10,42 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <cstdlib>
 #include <ctime>
+#include <memory>
+#include <vector>
 
 #include "common/harness.h"
 #include "executor/mock_executor.h"
 
-#include "common/internal_types.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/schema.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "common/exception.h"
+#include "common/internal_types.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
+#include "executor/delete_executor.h"
+#include "executor/executor_context.h"
+#include "executor/insert_executor.h"
 #include "executor/logical_tile.h"
-#include "storage/tile_group.h"
-#include "storage/tile_group_factory.h"
-#include "storage/tuple.h"
-#include "storage/data_table.h"
-#include "storage/table_factory.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
+#include "expression/expression_util.h"
 #include "index/index_factory.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/project_info.h"
-#include "executor/executor_context.h"
-#include "executor/delete_executor.h"
-#include "executor/insert_executor.h"
-#include "executor/seq_scan_executor.h"
-#include "executor/update_executor.h"
-#include "expression/expression_util.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tuple.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 using ::testing::IsNull;
 using ::testing::NotNull;
@@ -61,7 +60,7 @@ namespace peloton {
 namespace catalog {
 class Column;
 class Manager;
-}
+}  // namespace catalog
 
 namespace concurrency {
 class Transaction;
@@ -70,14 +69,14 @@ class Transaction;
 namespace executor {
 class AbstractExecutor;
 class LogicalTile;
-}
+}  // namespace executor
 
 namespace storage {
 class Backend;
 class TileGroup;
 class DataTable;
 class Tuple;
-}
+}  // namespace storage
 
 namespace planner {
 class ProjectInfo;
@@ -92,18 +91,17 @@ namespace test {
 
 class TestingConstraintsUtil {
  public:
-
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable(
       std::vector<std::vector<catalog::Constraint>> constraints,
       std::vector<catalog::MultiConstraint> multi_constraints) {
     const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-    storage::DataTable *table = TestingConstraintsUtil::CreateTable(
-        constraints, multi_constraints);
+    storage::DataTable *table =
+        TestingConstraintsUtil::CreateTable(constraints, multi_constraints);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    TestingConstraintsUtil::PopulateTable(txn, table,
-                                          tuple_count * DEFAULT_TILEGROUP_COUNT);
+    TestingConstraintsUtil::PopulateTable(
+        txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT);
     txn_manager.CommitTransaction(txn);
 
     return table;
@@ -114,7 +112,6 @@ class TestingConstraintsUtil {
       std::vector<std::vector<catalog::Constraint>> constraints,
       UNUSED_ATTRIBUTE std::vector<catalog::MultiConstraint> multi_constraints,
       UNUSED_ATTRIBUTE bool indexes = true) {
-
     // Create the database
     auto catalog = catalog::Catalog::GetInstance();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -126,83 +123,84 @@ class TestingConstraintsUtil {
     // are going to need for this test
     std::vector<catalog::Column> columns;
     for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
-      columns.push_back(TestingConstraintsUtil::GetColumnInfo(i, constraints[i]));
+      columns.push_back(
+          TestingConstraintsUtil::GetColumnInfo(i, constraints[i]));
     }
     std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
     std::string table_name(CONSTRAINTS_TEST_TABLE);
 
     // Create table.
     txn = txn_manager.BeginTransaction();
-    auto result = catalog->CreateTable(DEFAULT_DB_NAME,
-                                       table_name,
-                                       std::move(table_schema),
-                                       txn,
-                                       false);
+    auto result =
+        catalog->CreateTable(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name,
+                             std::move(table_schema), txn, false);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(ResultType::SUCCESS, result);
 
     txn = txn_manager.BeginTransaction();
-    auto db = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-    storage::DataTable *table = db->GetTableWithName(table_name);
+    auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+                                           table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_NE(nullptr, table);
 
-//    if (indexes == true) {
-//      // PRIMARY INDEX
-//      std::vector<oid_t> key_attrs;
-//
-//      auto tuple_schema = table->GetSchema();
-//      catalog::Schema *key_schema;
-//      index::IndexMetadata *index_metadata;
-//      bool unique;
-//
-//      key_attrs = {0};
-//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-//      key_schema->SetIndexedColumns(key_attrs);
-//
-//      unique = true;
-//
-//      index_metadata = new index::IndexMetadata(
-//          "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
-//          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
-//          key_schema, key_attrs, unique);
-//
-//      std::shared_ptr<index::Index> pkey_index(
-//          index::IndexFactory::GetIndex(index_metadata));
-//
-//      table->AddIndex(pkey_index);
-//
-//      // SECONDARY INDEX
-//      key_attrs = {0, 1};
-//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-//      key_schema->SetIndexedColumns(key_attrs);
-//
-//      unique = false;
-//      index_metadata = new index::IndexMetadata(
-//          "secondary_btree_index", 124, table->GetOid(),
-//          table->GetDatabaseOid(), IndexType::BWTREE,
-//          IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-//          unique);
-//      std::shared_ptr<index::Index> sec_index(
-//          index::IndexFactory::GetIndex(index_metadata));
-//
-//      table->AddIndex(sec_index);
-//
-//      // SECONDARY INDEX - UNIQUE INDEX
-//      key_attrs = {3};
-//      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-//      key_schema->SetIndexedColumns(key_attrs);
-//
-//      unique = false;
-//      index_metadata = new index::IndexMetadata(
-//          "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
-//          IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
-//          key_schema, key_attrs, unique);
-//      std::shared_ptr<index::Index> unique_index(
-//          index::IndexFactory::GetIndex(index_metadata));
-//
-//      table->AddIndex(unique_index);
-//    }
+    //    if (indexes == true) {
+    //      // PRIMARY INDEX
+    //      std::vector<oid_t> key_attrs;
+    //
+    //      auto tuple_schema = table->GetSchema();
+    //      catalog::Schema *key_schema;
+    //      index::IndexMetadata *index_metadata;
+    //      bool unique;
+    //
+    //      key_attrs = {0};
+    //      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    //      key_schema->SetIndexedColumns(key_attrs);
+    //
+    //      unique = true;
+    //
+    //      index_metadata = new index::IndexMetadata(
+    //          "primary_btree_index", 123, table->GetOid(),
+    //          table->GetDatabaseOid(), IndexType::BWTREE,
+    //          IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema,
+    //          key_attrs, unique);
+    //
+    //      std::shared_ptr<index::Index> pkey_index(
+    //          index::IndexFactory::GetIndex(index_metadata));
+    //
+    //      table->AddIndex(pkey_index);
+    //
+    //      // SECONDARY INDEX
+    //      key_attrs = {0, 1};
+    //      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    //      key_schema->SetIndexedColumns(key_attrs);
+    //
+    //      unique = false;
+    //      index_metadata = new index::IndexMetadata(
+    //          "secondary_btree_index", 124, table->GetOid(),
+    //          table->GetDatabaseOid(), IndexType::BWTREE,
+    //          IndexConstraintType::DEFAULT, tuple_schema, key_schema,
+    //          key_attrs, unique);
+    //      std::shared_ptr<index::Index> sec_index(
+    //          index::IndexFactory::GetIndex(index_metadata));
+    //
+    //      table->AddIndex(sec_index);
+    //
+    //      // SECONDARY INDEX - UNIQUE INDEX
+    //      key_attrs = {3};
+    //      key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    //      key_schema->SetIndexedColumns(key_attrs);
+    //
+    //      unique = false;
+    //      index_metadata = new index::IndexMetadata(
+    //          "unique_btree_index", 125, table->GetOid(),
+    //          table->GetDatabaseOid(), IndexType::BWTREE,
+    //          IndexConstraintType::UNIQUE, tuple_schema, key_schema,
+    //          key_attrs, unique);
+    //      std::shared_ptr<index::Index> unique_index(
+    //          index::IndexFactory::GetIndex(index_metadata));
+    //
+    //      table->AddIndex(unique_index);
+    //    }
 
     return table;
   };
@@ -247,15 +245,15 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Delete all tuples from a table */
-//  static bool ExecuteTruncate(concurrency::TransactionContext *transaction,
-//                              storage::DataTable *table) {
-//    std::unique_ptr<executor::ExecutorContext> context(
-//        new executor::ExecutorContext(transaction));
-//    planner::DeletePlan node(table, true);
-//    executor::DeleteExecutor executor(&node, context.get());
-//    executor.Init();
-//    return executor.Execute();
-//  };
+  //  static bool ExecuteTruncate(concurrency::TransactionContext *transaction,
+  //                              storage::DataTable *table) {
+  //    std::unique_ptr<executor::ExecutorContext> context(
+  //        new executor::ExecutorContext(transaction));
+  //    planner::DeletePlan node(table, true);
+  //    executor::DeleteExecutor executor(&node, context.get());
+  //    executor.Init();
+  //    return executor.Execute();
+  //  };
 
   /** @brief Insert a tuple with 1 columns' value specified */
   static bool ExecuteMultiInsert(concurrency::TransactionContext *transaction,
@@ -311,11 +309,11 @@ class TestingConstraintsUtil {
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3) {
     std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(transaction));
+        new executor::ExecutorContext(transaction));
 
     // Make tuple
     std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
+        new storage::Tuple(table->GetSchema(), true));
 
     auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
     tuple->SetValue(0, col1, testing_pool);
@@ -329,8 +327,6 @@ class TestingConstraintsUtil {
     executor::InsertExecutor executor(&node, context.get());
     return executor.Execute();
   };
-
-
 
   static void PopulateTable(concurrency::TransactionContext *transaction,
                             storage::DataTable *table, int num_rows) {
@@ -356,49 +352,41 @@ class TestingConstraintsUtil {
       auto col4 = type::ValueFactory::GetVarcharValue(
           std::to_string(PopulatedValue(populate_value, 3)));
 
-      TestingConstraintsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
-                                          col4);
+      TestingConstraintsUtil::ExecuteInsert(transaction, table, col1, col2,
+                                            col3, col4);
     }
   };
 
-  static catalog::Column GetColumnInfo(int index,
-                                       std::vector<catalog::Constraint> constraints) {
+  static catalog::Column GetColumnInfo(
+      int index, std::vector<catalog::Constraint> constraints) {
     catalog::Column column;
     switch (index) {
       // COL_A
       case 0: {
-        column = catalog::Column(
-            type::TypeId::INTEGER,
-            type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "col_a",
-            true);
+        column = catalog::Column(type::TypeId::INTEGER,
+                                 type::Type::GetTypeSize(type::TypeId::INTEGER),
+                                 "col_a", true);
         break;
       }
       // COL_B
       case 1: {
-        column = catalog::Column(
-            type::TypeId::INTEGER,
-            type::Type::GetTypeSize(type::TypeId::INTEGER),
-            "col_b",
-            true);
+        column = catalog::Column(type::TypeId::INTEGER,
+                                 type::Type::GetTypeSize(type::TypeId::INTEGER),
+                                 "col_b", true);
         break;
       }
       // COL_C
       case 2: {
-        column = catalog::Column(
-            type::TypeId::DECIMAL,
-            type::Type::GetTypeSize(type::TypeId::DECIMAL),
-            "col_c",
-            true);
+        column = catalog::Column(type::TypeId::DECIMAL,
+                                 type::Type::GetTypeSize(type::TypeId::DECIMAL),
+                                 "col_c", true);
         break;
       }
       // COL_D
       case 3: {
-        column = catalog::Column(
-            type::TypeId::VARCHAR,
-            25,  // Column length.
-            "col_d",
-            false);
+        column = catalog::Column(type::TypeId::VARCHAR,
+                                 25,  // Column length.
+                                 "col_d", false);
         break;
       }
       default: {

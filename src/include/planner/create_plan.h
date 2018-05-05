@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "planner/abstract_plan.h"
 #include "parser/create_statement.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace catalog {
@@ -50,11 +50,13 @@ struct ForeignKeyInfo {
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  
+
   // This construnctor is for Create Database Test used only
   explicit CreatePlan(std::string database_name, CreateType c_type);
 
-  explicit CreatePlan(std::string table_name, std::string database_name,
+  // This construnctor is for copy() used only
+  explicit CreatePlan(std::string table_name, std::string schema_name,
+                      std::string database_name,
                       std::unique_ptr<catalog::Schema> schema,
                       CreateType c_type);
 
@@ -66,13 +68,15 @@ class CreatePlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new CreatePlan(
-        table_name, database_name,
+        table_name, schema_name, database_name,
         std::unique_ptr<catalog::Schema>(table_schema), create_type));
   }
 
   std::string GetIndexName() const { return index_name; }
 
   std::string GetTableName() const { return table_name; }
+
+  std::string GetSchemaName() const { return schema_name; }
 
   std::string GetDatabaseName() const { return database_name; }
 
@@ -86,7 +90,9 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
-  inline std::vector<ForeignKeyInfo> GetForeignKeys() const { return foreign_keys; }
+  inline std::vector<ForeignKeyInfo> GetForeignKeys() const {
+    return foreign_keys;
+  }
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
   void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
@@ -108,15 +114,18 @@ class CreatePlan : public AbstractPlan {
 
   int16_t GetTriggerType() const { return trigger_type; }
 
-protected:
-    // This is a helper method for extracting foreign key information
-    // and storing it in an internal struct.
-    void ProcessForeignKeyConstraint(const std::string &table_name,
-                                     const parser::ColumnDefinition *col);
+ protected:
+  // This is a helper method for extracting foreign key information
+  // and storing it in an internal struct.
+  void ProcessForeignKeyConstraint(const std::string &table_name,
+                                   const parser::ColumnDefinition *col);
 
  private:
   // Table Name
   std::string table_name;
+
+  // namespace Name
+  std::string schema_name;
 
   // Database Name
   std::string database_name;

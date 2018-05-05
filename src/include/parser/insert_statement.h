@@ -39,6 +39,10 @@ class InsertStatement : public SQLStatement {
     table_ref_->TryBindDatabaseName(default_database_name);
   }
 
+  inline std::string GetSchemaName() const {
+    return table_ref_->GetSchemaName();
+  }
+
   inline std::string GetDatabaseName() const {
     return table_ref_->GetDatabaseName();
   }

@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "common/internal_types.h"
+#include "catalog/catalog_defaults.h"
 #include "common/macros.h"
 #include "common/printable.h"
 #include "common/sql_node_visitor.h"
@@ -30,9 +30,9 @@ namespace parser {
 
 struct TableInfo {
   ~TableInfo() {}
-
+  // member variables
   std::string table_name;
-
+  std::string schema_name;
   std::string database_name;
 };
 
@@ -71,10 +71,18 @@ class TableRefStatement : public SQLStatement {
 
     if (table_info_->database_name.empty())
       table_info_->database_name = default_database_name;
+    // if schema name is not specified, then it's default value is "public"
+    if (table_info_->schema_name.empty())
+      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
   }
 
   virtual inline std::string GetTableName() const {
     return table_info_->table_name;
+  }
+
+  // Get the name of the schema(namespace) of this table
+  virtual inline std::string GetSchemaName() const {
+    return table_info_->schema_name;
   }
 
   // Get the name of the database of this table
