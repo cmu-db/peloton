@@ -24,6 +24,7 @@
 #include "storage/tile.h"
 #include "storage/storage_manager.h"
 #include "catalog/foreign_key.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -62,7 +63,6 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     bool is_owner, storage::TileGroup *tile_group,
     storage::TileGroupHeader *tile_group_header, oid_t physical_tuple_id,
     ItemPointer &old_location) {
-
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -122,19 +122,17 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   if (target_table_->GetForeignKeySrcCount() > 0) {
     storage::Tuple prev_tuple(target_table_schema, true);
     // Get a copy of the old tuple
-    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+    for (oid_t column_itr = 0;
+         column_itr < target_table_schema->GetColumnCount(); column_itr++) {
       type::Value val = (old_tuple.GetValue(column_itr));
       prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
     }
 
-    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
-                                                    &new_tuple,
-                                                    current_txn,
-                                                    executor_context_,
-                                                    true) == false)
-    {
+    if (target_table_->CheckForeignKeySrcAndCascade(
+            &prev_tuple, &new_tuple, current_txn, executor_context_, true) ==
+        false) {
       transaction_manager.SetTransactionResult(current_txn,
-                                              peloton::ResultType::FAILURE);
+                                               peloton::ResultType::FAILURE);
       return false;
     }
   }
@@ -167,6 +165,18 @@ bool UpdateExecutor::DExecute() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
+
+  oid_t table_oid = target_table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
+  if (!lock_success) {
+    LOG_TRACE("Cannot obtain lock for the table!");
+  }
+  else{
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+  }
 
   auto executor_pool = executor_context_->GetPool();
   auto target_table_schema = target_table_->GetSchema();

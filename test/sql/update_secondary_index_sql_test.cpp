@@ -67,6 +67,13 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   // Check the return value
   EXPECT_EQ(result[0][0], '2');
 
+  // test update result, see if original entry not accessible
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=20", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  // Check the return value
+  EXPECT_EQ(result.size(), 0);
+
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);

@@ -13,6 +13,8 @@
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
@@ -208,6 +210,50 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     ExecuteInsert(txn, table, i, 0);
   }
   txn_manager.CommitTransaction(txn);
+
+  return table;
+}
+
+storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
+    std::string database_name, std::string schema_name, std::string table_name) {
+  LOG_INFO("database name = %s", database_name.c_str());
+
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
+  auto value_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "value", true);
+
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, value_column}));
+
+  LOG_INFO("schema name = %s", schema_name.c_str());
+  auto catalog = catalog::Catalog::GetInstance();
+  // Create Database and Table
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  LOG_INFO("table name = %s", table_name.c_str());
+  catalog->CreateDatabaseWithoutIndex(database_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create database %s", database_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  catalog->CreateSchema(database_name, schema_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create schema %s", schema_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  catalog->CreateTable(database_name, schema_name, table_name, std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create table %s", table_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
+  auto table = catalog->GetTableWithName(database_name, schema_name, table_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("table name = %s", table->GetName().c_str());
+  LOG_INFO("table oid = %d", table->GetOid());
+  LOG_INFO("database oid = %d", table->GetDatabaseOid());
 
   return table;
 }

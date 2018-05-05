@@ -25,6 +25,7 @@
 #include "storage/tuple.h"
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -72,6 +73,18 @@ bool InsertExecutor::DExecute() {
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
     return false;
+  }
+
+  oid_t table_oid = target_table->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
+  if (!lock_success) {
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
+  else{
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",

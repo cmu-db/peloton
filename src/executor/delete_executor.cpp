@@ -30,6 +30,7 @@
 #include "trigger/trigger.h"
 #include "catalog/table_catalog.h"
 #include "parser/pg_trigger.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -85,6 +86,18 @@ bool DeleteExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  oid_t table_oid = target_table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
+  if (!lock_success) {
+    LOG_TRACE("Cannot obtain lock for the table!");
+  }
+  else{
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+  }
+
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
 
@@ -137,20 +150,18 @@ bool DeleteExecutor::DExecute() {
     storage::Tuple prev_tuple(target_table_->GetSchema(), true);
 
     // Get a copy of the old tuple
-    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+    for (oid_t column_itr = 0;
+         column_itr < target_table_schema->GetColumnCount(); column_itr++) {
       type::Value val = (old_tuple.GetValue(column_itr));
       prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
     }
 
     // Check the foreign key source table
-    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
-                                                    nullptr,
-                                                    current_txn,
-                                                    executor_context_,
-                                                    false) == false)
-    {
+    if (target_table_->CheckForeignKeySrcAndCascade(
+            &prev_tuple, nullptr, current_txn, executor_context_, false) ==
+        false) {
       transaction_manager.SetTransactionResult(current_txn,
-                                              peloton::ResultType::FAILURE);
+                                               peloton::ResultType::FAILURE);
       return false;
     }
 

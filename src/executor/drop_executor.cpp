@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "common/statement_cache_manager.h"
 #include "executor/executor_context.h"
+#include "concurrency/lock_manager.h"
 
 namespace peloton {
 namespace executor {
@@ -172,10 +173,14 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
               ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
+      // Remove table lock
+      concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+      lm->RemoveLock(table_id);
     }
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
+
   return false;
 }
 
@@ -215,8 +220,19 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   return false;
 }
 
+/**
+ * @brief   Drop an index.
+ * @details Drop an index. Will delete the corresponding entry from catalog, and
+ * the data structure of index itself will be garbage collected. Note that
+ * phantom
+ * could happen while dropping the index.
+ * @param   node    current planner node
+ * @param   txn     current transaction
+ * @return  bool    always false
+ */
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
+  // Get the name of index and the index in catalog.
   std::string index_name = node.GetIndexName();
   std::string schema_name = node.GetSchemaName();
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
@@ -224,6 +240,7 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
   if (database_object == nullptr) {
     throw CatalogException("Index name " + index_name + " cannot be found");
   }
+
 
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
@@ -238,6 +255,7 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
       database_object->GetDatabaseOid(), index_object->GetIndexOid(), txn);
   txn->SetResult(result);
 
+  // Invalidate statement cache if drop successful.
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping Index Succeeded! Index name: %s", index_name.c_str());
     if (StatementCacheManager::GetStmtCacheManager().get()) {

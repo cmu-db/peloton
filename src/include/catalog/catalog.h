@@ -89,6 +89,9 @@ class Catalog {
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::TransactionContext *txn);
 
+  ResultType CreateDatabaseWithoutIndex(const std::string &database_name,
+                                        concurrency::TransactionContext *txn);
+
   // Create a schema(namespace)
   ResultType CreateSchema(const std::string &database_name,
                           const std::string &schema_name,
@@ -118,6 +121,7 @@ class Catalog {
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
 
+
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -145,6 +149,10 @@ class Catalog {
   // Drop an index, using its index_oid
   ResultType DropIndex(oid_t database_oid, oid_t index_oid,
                        concurrency::TransactionContext *txn);
+  // Drop an index, using its name
+  ResultType DropIndex(std::string database_name, std::string index_name,
+                      std::string schema_name,
+                      concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
