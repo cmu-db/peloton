@@ -148,6 +148,11 @@ SETTING_bool(enable_logging,
 						 true,
 						 false, false)
 
+SETTING_bool(enable_recovery,
+             "Enable recovery for DB persistence (default: false)",
+             false,
+             false, false)
+
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
 //===----------------------------------------------------------------------===//
