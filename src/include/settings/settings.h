@@ -221,6 +221,11 @@ SETTING_int(task_execution_timeout,
 	    1000, 60000,
 	    true, true)
 
+SETTING_bool(transitive_predicates,
+             "Enable transitive predicates optimization (default: true)",
+             true,
+             true, true)
+
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
