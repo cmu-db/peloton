@@ -583,10 +583,6 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       }
     }
 
-    // this version needs to be reclaimed by the GC.
-    // if the version differs from the previous one in some columns where
-    // secondary indexes are built on, then we need to unlink the previous
-    // version from the secondary index.
   } else if (type == GCVersionType::ABORT_UPDATE) {
     // the gc'd version is a newly created version.
     // if the version differs from the previous one in some columns where

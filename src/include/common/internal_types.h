@@ -1227,7 +1227,8 @@ enum class GCVersionType {
   COMMIT_INS_DEL,  // a version that is inserted and deleted during txn commit.
   ABORT_UPDATE,    // a version that is updated during txn abort.
   ABORT_INSERT,    // a version that is inserted during txn abort.
-  ABORT_INS_DEL,   // a version that is inserted and deleted during txn commit.
+  ABORT_INS_DEL,   // a version that is inserted and deleted during txn abort.
+  TOMBSTONE,       // a version that signifies that the tuple has been deleted.
   TOMBSTONE,       // tombstone version that signifies that the tuple has been
                    // deleted
 };

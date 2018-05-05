@@ -400,7 +400,6 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
     LOG_TRACE("Index constraint violated");
     return false;
   }
-
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
             (*index_entry_ptr)->offset == location.offset);
 
@@ -507,9 +506,11 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
         if (index == nullptr) continue;
         index_schema = index->GetKeySchema();
         indexed_columns = index_schema->GetIndexedColumns();
-        std::unique_ptr<storage::Tuple> delete_key(new storage::Tuple(index_schema, true));
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
         delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-        bool delete_res = index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        UNUSED_ATTRIBUTE bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
         PELOTON_ASSERT(delete_res == true);
       }
       *index_entry_ptr = nullptr;
