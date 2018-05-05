@@ -312,7 +312,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  for (auto tuple : result_tuples) {
+  for (auto &tuple : result_tuples) {
     auto column_object = std::make_shared<ColumnCatalogObject>(tuple);
     table_object->InsertColumnObject(column_object);
   }

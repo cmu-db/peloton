@@ -114,8 +114,8 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
   PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tuples.size() == 1) {
-    ret.reset(new LanguageCatalogObject(result_tuples[0]));
+  if (!result_tuples.empty()) {
+    ret.reset(new LanguageCatalogObject(std::move(result_tuples[0])));
   }
 
   return ret;
@@ -144,8 +144,8 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
   PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tuples.size() == 1) {
-    ret.reset(new LanguageCatalogObject(result_tuples[0]));
+  if (!result_tuples.empty()) {
+    ret.reset(new LanguageCatalogObject(std::move(result_tuples[0])));
   }
 
   return ret;

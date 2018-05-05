@@ -151,7 +151,7 @@ std::string SettingsCatalog::GetSettingValue(
 
   std::string config_value = "";
   PELOTON_ASSERT(result_tuples.size() <= 1);
-  if (result_tuples.size() != 0) {
+  if (!result_tuples.empty()) {
     config_value = (result_tuples[0]).GetValue(static_cast<int>(ColumnId::VALUE)).ToString();
   }
 

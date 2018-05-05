@@ -17,7 +17,7 @@
 // 0: oid (pkey)
 // 1: tgrelid   : table_oid
 // 2: tgname    : trigger_name
-// 3: tgfoid    : function_name
+// 3: tgfname    : function_name
 // 4: tgtype    : trigger_type
 // 5: tgargs    : function_arguemnts
 // 6: tgqual    : fire_condition

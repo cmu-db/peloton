@@ -382,7 +382,7 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
 
-  for (auto tuple : result_tuples) {
+  for (auto &tuple : result_tuples) {
     auto index_object = std::make_shared<IndexCatalogObject>(tuple);
     table_object->InsertIndexObject(index_object);
   }

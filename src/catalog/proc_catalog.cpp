@@ -130,7 +130,7 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
   PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
-  if (result_tuples.size() == 1) {
+  if (!result_tuples.empty()) {
     ret.reset(new ProcCatalogObject(result_tuples[0], txn));
   }
 
@@ -177,10 +177,10 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
   std::vector<codegen::WrappedTuple> result_tuples =
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
-  PELOTON_ASSERT(result_tuples.size() <= 1);
+  PELOTON_ASSERT(result_tuples.size() <= 1); // unique
 
   std::unique_ptr<ProcCatalogObject> ret;
-  if (result_tuples.size() == 1) {
+  if (!result_tuples.empty()) {
     ret.reset(new ProcCatalogObject(result_tuples[0], txn));
   }
 

@@ -32,7 +32,7 @@ TriggerCatalog::TriggerCatalog(const std::string &database_name,
                           "oid          INT NOT NULL PRIMARY KEY, "
                           "tgrelid      INT NOT NULL, "
                           "tgname       VARCHAR NOT NULL, "
-                          "tgfoid       VARCHAR, "
+                          "tgfname       VARCHAR, "
                           "tgtype       INT NOT NULL, "
                           "tgargs       VARCHAR, "
                           "tgqual       VARBINARY, "
@@ -160,13 +160,11 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   oid_t trigger_oid = INVALID_OID;
-  if (result_tuples.size() == 0) {
-    // LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
+  if (result_tuples.empty()) {
+     LOG_INFO("trigger %s doesn't exist", trigger_name.c_str());
   } else {
-    PELOTON_ASSERT(result_tuples.size() <= 1);
-    if (result_tuples.size() != 0) {
-      trigger_oid = result_tuples[0].GetValue(0).GetAs<oid_t>();
-    }
+    PELOTON_ASSERT(result_tuples.size() == 1); // unique
+    trigger_oid = result_tuples[0].GetValue(0).GetAs<oid_t>();
   }
 
   return trigger_oid;
@@ -259,13 +257,13 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
   std::unique_ptr<trigger::TriggerList> new_trigger_list{
       new trigger::TriggerList()};
 
-  for (unsigned int i = 0; i < result_tuples.size(); i++) {
+  for (auto &tuple : result_tuples) {
     // create a new trigger instance
-    trigger::Trigger new_trigger(result_tuples[i].GetValue(ColumnId::TRIGGER_NAME).ToString(),
+    trigger::Trigger new_trigger(tuple.GetValue(ColumnId::TRIGGER_NAME).ToString(),
                                  trigger_type,
-                                 result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
-                                 result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
-                                 result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
+                                 tuple.GetValue(ColumnId::FUNCTION_NAME).ToString(),
+                                 tuple.GetValue(ColumnId::FUNCTION_ARGS).ToString(),
+                                 tuple.GetValue(ColumnId::FIRE_CONDITION).GetData());
     new_trigger_list->AddTrigger(std::move(new_trigger));
   }
 
@@ -300,13 +298,13 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
   std::unique_ptr<trigger::TriggerList> new_trigger_list{
       new trigger::TriggerList()};
 
-  for (unsigned int i = 0; i < result_tuples.size(); i++) {
+  for (auto &tuple : result_tuples) {
     // create a new trigger instance
-    trigger::Trigger new_trigger(result_tuples[i].GetValue(ColumnId::TRIGGER_NAME).ToString(),
-                                 result_tuples[i].GetValue(ColumnId::TRIGGER_TYPE).GetAs<int16_t>(),
-                                 result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
-                                 result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
-                                 result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
+    trigger::Trigger new_trigger(tuple.GetValue(ColumnId::TRIGGER_NAME).ToString(),
+                                 tuple.GetValue(ColumnId::TRIGGER_TYPE).GetAs<int16_t>(),
+                                 tuple.GetValue(ColumnId::FUNCTION_NAME).ToString(),
+                                 tuple.GetValue(ColumnId::FUNCTION_ARGS).ToString(),
+                                 tuple.GetValue(ColumnId::FIRE_CONDITION).GetData());
     new_trigger_list->AddTrigger(std::move(new_trigger));
   }
 

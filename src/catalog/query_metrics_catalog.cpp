@@ -199,7 +199,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
 
   stats::QueryMetric::QueryParamBuf param_types;
   PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
-  if (result_tuples.size() != 0) {
+  if (!result_tuples.empty()) {
     auto param_types_value = result_tuples[0].GetValue(ColumnId::PARAM_TYPES);
     param_types.buf = const_cast<uchar *>(
         reinterpret_cast<const uchar *>(param_types_value.GetData()));
@@ -254,7 +254,7 @@ int64_t QueryMetricsCatalog::GetNumParams(
 
   int64_t num_params = 0;
   PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
-  if (result_tuples.size() != 0) {
+  if (!result_tuples.empty()) {
     num_params = result_tuples[0].GetValue(ColumnId::NUM_PARAMS)
                      .GetAs<int>();  // After projection left 1 column
   }

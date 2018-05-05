@@ -231,7 +231,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
-  if (result_tuples.size() == 0) {
+  if (result_tuples.empty()) {
     return nullptr;
   }
 
@@ -300,14 +300,14 @@ size_t ColumnStatsCatalog::GetTableStats(
       GetResultWithCompiledSeqScan(column_ids, predicate, txn);
 
   size_t tuple_count = result_tuples.size();
-  LOG_DEBUG("Tuple count: %lu", tuple_count);
+
   if (tuple_count == 0) {
     return 0;
   }
 
   type::Value num_rows, cardinality, frac_null, most_common_vals,
       most_common_freqs, hist_bounds, column_name, has_index;
-  for (auto tuple : result_tuples) {
+  for (auto &tuple : result_tuples) {
     num_rows = tuple.GetValue(ColumnId::NUM_ROWS);
     cardinality = tuple.GetValue(ColumnId::CARDINALITY);
     frac_null = tuple.GetValue(ColumnId::FRAC_NULL);
