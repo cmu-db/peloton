@@ -12,6 +12,8 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include <condition_variable>
+
 #include "catalog/table_catalog.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/value_proxy.h"
