@@ -23,16 +23,15 @@ namespace planner {
 AlterPlan::AlterPlan(
     const std::string &database_name, const std::string &table_name,
     const std::vector<std::string> &dropped_columns,
-    UNUSED_ATTRIBUTE const std::vector<std::unique_ptr<catalog::Schema>>
-        &added_columns_,
+    const std::unique_ptr<catalog::Schema> &added_columns,
+    const std::unique_ptr<catalog::Schema> &changed_type_columns,
     AlterType a_type)
     : table_name(table_name),
       database_name(database_name),
       dropped_columns(dropped_columns),
       type(a_type) {
-  //        for (size_t i=0;i<added_columns.size();i++){
-  //          this->added_columns.push_back(std::move(added_columns_[i]));
-  //        }
+          this->added_columns = std::unique_ptr<catalog::Schema>(new catalog::Schema(*added_columns));
+          this->changed_type_columns = std::unique_ptr<catalog::Schema>(new catalog::Schema(*changed_type_columns));
 }
 
 AlterPlan::AlterPlan(const std::string &database_name,
@@ -85,17 +84,25 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
         }
         columns.emplace_back(column);
       }
-      added_columns.emplace_back(
-          std::unique_ptr<catalog::Schema>(new catalog::Schema(columns)));
-
+      added_columns = std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+      columns.clear();
       // deal with change column types
       for (size_t i = 0; i < (*parse_tree->changed_type_columns).size(); i++) {
         auto &tmp = (*parse_tree->changed_type_columns)[i];
-        type::TypeId val =
-            parser::ColumnDefinition::GetValueType(tmp.get()->type);
-        std::string name = tmp.get()->name;
-        changed_type_columns.emplace_back(std::make_pair(name, val));
+        type::TypeId val = parser::ColumnDefinition::GetValueType(tmp.get()->type);
+        bool is_inline = (val == type::TypeId::VARCHAR) ? false : true;
+        auto column = catalog::Column(
+            val, type::Type::GetTypeSize(val),
+            std::string((*parse_tree->changed_type_columns)[i].get()->name),
+            is_inline);
+        if ((*parse_tree->changed_type_columns)[i].get()->not_null) {
+          catalog::Constraint constraint(ConstraintType::NOTNULL,
+                                         "con_not_null");
+          column.AddConstraint(constraint);
+        }
+        columns.emplace_back(column);
       }
+      changed_type_columns = std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
       break;
     }
     default:

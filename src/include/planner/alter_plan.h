@@ -36,7 +36,8 @@ class AlterPlan : public AbstractPlan {
   explicit AlterPlan(
       const std::string &database_name, const std::string &table_name,
       const std::vector<std::string> &dropped_columns,
-      const std::vector<std::unique_ptr<catalog::Schema>> &added_columns,
+      const std::unique_ptr<catalog::Schema> &added_columns,
+      const std::unique_ptr<catalog::Schema> &changed_type_columns,
       AlterType a_type);
   explicit AlterPlan(const std::string &database_name,
                      const std::string &table_name,
@@ -61,7 +62,7 @@ class AlterPlan : public AbstractPlan {
     switch (this->type) {
       case AlterType::ALTER:
         return std::unique_ptr<AbstractPlan>(new AlterPlan(
-            database_name, table_name, dropped_columns, added_columns, type));
+            database_name, table_name, dropped_columns, added_columns, changed_type_columns, type));
       case AlterType::RENAME:
         return std::unique_ptr<AbstractPlan>(new AlterPlan(
             database_name, table_name, old_names_, new_names_, type));
@@ -75,7 +76,7 @@ class AlterPlan : public AbstractPlan {
 
   std::string GetDatabaseName() const { return database_name; }
 
-  const std::vector<std::unique_ptr<catalog::Schema>> &GetAddedColumns() const {
+  const std::unique_ptr<catalog::Schema> &GetAddedColumns() const {
     return added_columns;
   }
 
@@ -83,7 +84,7 @@ class AlterPlan : public AbstractPlan {
     return dropped_columns;
   }
 
-  const std::vector<std::pair<std::string, type::TypeId>> &
+  const std::unique_ptr<catalog::Schema> &
   GetChangedTypeColumns() const {
     return changed_type_columns;
   };
@@ -110,11 +111,11 @@ class AlterPlan : public AbstractPlan {
   std::string database_name;
 
   // Schema delta, define the column txn want to add
-  std::vector<std::unique_ptr<catalog::Schema>> added_columns;
+  std::unique_ptr<catalog::Schema> added_columns;
   // dropped_column, define the column you want to drop
   std::vector<std::string> dropped_columns;
   // changed-type columns, define the column you want to change type
-  std::vector<std::pair<std::string, type::TypeId>> changed_type_columns;
+  std::unique_ptr<catalog::Schema> changed_type_columns;
   // used for store rename function data
   std::vector<std::string> old_names_;
   std::vector<std::string> new_names_;
