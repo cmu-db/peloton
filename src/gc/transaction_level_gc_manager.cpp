@@ -235,8 +235,8 @@ void TransactionLevelGCManager::AddToRecycleMap(
       continue;
     }
 
-    storage::DataTable *table;
-    tables_->Find(tile_group->GetTableId(), table);
+    auto table = storage::StorageManager::GetInstance()->GetTableWithOid(tile_group->GetDatabaseId(), tile_group->GetTableId());
+
     if (table == nullptr) {
       // Guard against the table being dropped out from under us
       continue;
@@ -341,20 +341,17 @@ void TransactionLevelGCManager::AddToRecycleMap(
 
 // This function currently replicates a lot functionality in AddToRecyleMap
 // These will likely be merged in later PR
-void TransactionLevelGCManager::RecycleUnusedTupleSlot(const ItemPointer &location) {
+void TransactionLevelGCManager::RecycleUnusedTupleSlot(storage::DataTable *table, const ItemPointer &location) {
+  if (table == nullptr) {
+    return;
+  }
+
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
 
   // a table may be deconstructed because of a DROP TABLE request
   if (tile_group == nullptr) {
     // try to process any remaining tile groups from this txn
-    return;
-  }
-
-  storage::DataTable *table;
-  tables_->Find(tile_group->GetTableId(), table);
-  if (table == nullptr) {
-    // Guard against the table being dropped out from under us
     return;
   }
 
@@ -423,18 +420,15 @@ void TransactionLevelGCManager::RecycleUnusedTupleSlot(const ItemPointer &locati
 
 // returns a free tuple slot that can now be recycled/reused, if one exists
 // called by data_table.
-ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(const oid_t &table_id) {
-
+ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(storage::DataTable *table) {
+  if (table == nullptr) {
+    return INVALID_ITEMPOINTER;
+  }
+  auto table_id = table->GetOid();
   std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
 
   if (recycle_queues_->Find(table_id, recycle_queue) == false) {
     // Table does not have a recycle queue, likely a catalog table
-    return INVALID_ITEMPOINTER;
-  }
-
-  storage::DataTable *table;
-  tables_->Find(table_id, table);
-  if (table == nullptr) {
     return INVALID_ITEMPOINTER;
   }
 
