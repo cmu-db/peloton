@@ -87,7 +87,7 @@ public class IndexTest extends PLTestBase {
         thread2.join();
 	
 	    Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.execute("SELECT * FROM tbl WHERE c1 < 0;");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 0;");
         rs.next();
 	    checkRow(rs,
 		 new String [] {"c1", "c2"},
@@ -125,7 +125,7 @@ public class IndexTest extends PLTestBase {
         thread2.join();
 
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.execute("SELECT * FROM tbl WHERE c1 < 0;");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 0;");
         rs.next();
         checkRow(rs,
          new String [] {"c1", "c2"},
@@ -163,7 +163,7 @@ public class IndexTest extends PLTestBase {
         thread2.join();
 
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.execute("SELECT * FROM tbl WHERE c1 < 2;");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 2;");
         rs.next();
         checkRow(rs,
          new String [] {"c1", "c2"},
