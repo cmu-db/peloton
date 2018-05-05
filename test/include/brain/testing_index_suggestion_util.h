@@ -49,16 +49,19 @@ class TestingIndexSuggestionUtil {
   TestingIndexSuggestionUtil(std::string db_name);
   ~TestingIndexSuggestionUtil();
 
-  // Creates a new table with the provided schema.
   // Inserts specified number of tuples into the table with random values.
-  void CreateAndInsertIntoTable(std::string table_name, TableSchema schema,
+  void InsertIntoTable(std::string table_name, TableSchema schema,
                                 long num_tuples);
+
+  // Creates a new table with the provided schema.
+  void CreateTable(std::string table_name, TableSchema schema);
 
   // Factory method
   // Returns a what-if index on the columns at the given
   // offset of the table.
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols);
+
 
  private:
   std::string database_name_;
