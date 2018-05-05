@@ -127,7 +127,7 @@ void TestingIndexSuggestionUtil::GenerateTableStats() {
  * @param index_col_names
  * @return
  */
-std::shared_ptr<brain::IndexObject>
+std::shared_ptr<brain::HypotheticalIndexObject>
 TestingIndexSuggestionUtil::CreateHypotheticalIndex(
     std::string table_name, std::vector<std::string> index_col_names) {
   // We need transaction to get table object.
@@ -157,8 +157,8 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   }
   PELOTON_ASSERT(col_ids.size() == index_col_names.size());
 
-  auto obj_ptr = new brain::IndexObject(database_oid, table_oid, col_ids);
-  auto index_obj = std::shared_ptr<brain::IndexObject>(obj_ptr);
+  auto obj_ptr = new brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
+  auto index_obj = std::shared_ptr<brain::HypotheticalIndexObject>(obj_ptr);
 
   txn_manager.CommitTransaction(txn);
   return index_obj;

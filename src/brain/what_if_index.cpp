@@ -143,7 +143,7 @@ void WhatIfIndex::GetTablesReferenced(std::shared_ptr<parser::SQLStatement> quer
 }
 
 std::shared_ptr<catalog::IndexCatalogObject>
-WhatIfIndex::CreateIndexCatalogObject(IndexObject *index_obj) {
+WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
   // Create an index name:
   // index_<database_name>_<table_name>_<col_oid1>_<col_oid2>_...
   std::ostringstream index_name_oss;

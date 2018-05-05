@@ -31,7 +31,7 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 // Class to represent a (hypothetical) index
-struct IndexObject {
+struct HypotheticalIndexObject {
   // the OID of the database
   oid_t db_oid;
   // the OID of the table
@@ -42,12 +42,12 @@ struct IndexObject {
   /**
    * @brief - Constructor
    */
-  IndexObject(){};
+  HypotheticalIndexObject(){};
 
   /**
    * @brief - Constructor
    */
-  IndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid)
+  HypotheticalIndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid)
       : db_oid(db_oid), table_oid(table_oid) {
     column_oids.insert(col_oid);
   }
@@ -55,7 +55,7 @@ struct IndexObject {
   /**
    * @brief - Constructor
    */
-  IndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids)
+  HypotheticalIndexObject(oid_t db_oid, oid_t table_oid, std::vector<oid_t> &col_oids)
       : db_oid(db_oid), table_oid(table_oid) {
     for (auto col : col_oids) column_oids.insert(col);
   }
@@ -63,18 +63,18 @@ struct IndexObject {
   /**
    * @brief - Equality operator of the index object
    */
-  bool operator==(const IndexObject &obj) const;
+  bool operator==(const HypotheticalIndexObject &obj) const;
 
   /**
    * @brief - Checks whether the 2 indexes can be merged to make a multi column
    * index. Return true if they are in the same database and table, else false
    */
-  bool IsCompatible(std::shared_ptr<IndexObject> index) const;
+  bool IsCompatible(std::shared_ptr<HypotheticalIndexObject> index) const;
 
   /**
    * @brief - Merges the 2 index objects to make a multi column index
    */
-  IndexObject Merge(std::shared_ptr<IndexObject> index);
+  HypotheticalIndexObject Merge(std::shared_ptr<HypotheticalIndexObject> index);
 
   const std::string ToString() const;
 };
@@ -85,7 +85,7 @@ struct IndexObject {
 
 // Hasher for the IndexObject
 struct IndexObjectHasher {
-  size_t operator()(const IndexObject &obj) const {
+  size_t operator()(const HypotheticalIndexObject &obj) const {
     return std::hash<std::string>()(obj.ToString());
   }
 };
@@ -101,7 +101,7 @@ class IndexConfiguration {
   /**
    * @brief - Constructor
    */
-  IndexConfiguration(std::set<std::shared_ptr<IndexObject>> &index_obj_set)
+  IndexConfiguration(std::set<std::shared_ptr<HypotheticalIndexObject>> &index_obj_set)
       : indexes_(index_obj_set) {}
 
   /**
@@ -117,12 +117,12 @@ class IndexConfiguration {
   /**
    * @brief - Adds an index into the configuration
    */
-  void AddIndexObject(std::shared_ptr<IndexObject> index_info);
+  void AddIndexObject(std::shared_ptr<HypotheticalIndexObject> index_info);
 
   /**
    * @brief - Removes an index from the configuration
    */
-  void RemoveIndexObject(std::shared_ptr<IndexObject> index_info);
+  void RemoveIndexObject(std::shared_ptr<HypotheticalIndexObject> index_info);
 
   /**
    * @brief - Returns the number of indexes in the configuration
@@ -138,7 +138,7 @@ class IndexConfiguration {
   /**
    * @brief - Returns the indexes in the configuration
    */
-  const std::set<std::shared_ptr<IndexObject>> &GetIndexes() const;
+  const std::set<std::shared_ptr<HypotheticalIndexObject>> &GetIndexes() const;
 
   /**
    * @brief - Equality operator of the index configurations
@@ -156,7 +156,7 @@ class IndexConfiguration {
 
  private:
   // The set of hypothetical indexes in the configuration
-  std::set<std::shared_ptr<IndexObject>> indexes_;
+  std::set<std::shared_ptr<HypotheticalIndexObject>> indexes_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -177,18 +177,18 @@ class IndexObjectPool {
   /**
    * @brief - Return the shared pointer of the object from the global
    */
-  std::shared_ptr<IndexObject> GetIndexObject(IndexObject &obj);
+  std::shared_ptr<HypotheticalIndexObject> GetIndexObject(HypotheticalIndexObject &obj);
 
   /**
    * @brief - Add the object to the pool of index objects
    * if the object already exists, return the shared pointer
    * else create the object, add it to the pool and return the shared pointer
    */
-  std::shared_ptr<IndexObject> PutIndexObject(IndexObject &obj);
+  std::shared_ptr<HypotheticalIndexObject> PutIndexObject(HypotheticalIndexObject &obj);
 
  private:
   // The mapping from the object to the shared pointer
-  std::unordered_map<IndexObject, std::shared_ptr<IndexObject>,
+  std::unordered_map<HypotheticalIndexObject, std::shared_ptr<HypotheticalIndexObject>,
                      IndexObjectHasher> map_;
 };
 
