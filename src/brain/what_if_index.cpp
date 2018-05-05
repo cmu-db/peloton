@@ -20,7 +20,7 @@ namespace brain {
 unsigned long WhatIfIndex::index_seq_no = 0;
 
 std::unique_ptr<optimizer::OptimizerPlanInfo>
-WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
+WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
                                     IndexConfiguration &config,
                                     std::string database_name) {
   // Need transaction for fetching catalog information.
@@ -73,32 +73,32 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
   return opt_info_obj;
 }
 
-void WhatIfIndex::GetTablesReferenced(parser::SQLStatement *query,
+void WhatIfIndex::GetTablesReferenced(std::shared_ptr<parser::SQLStatement> query,
                                       std::vector<std::string> &table_names) {
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
   switch (query->GetType()) {
     case StatementType::INSERT: {
-      auto sql_statement = dynamic_cast<parser::InsertStatement *>(query);
+      auto sql_statement = dynamic_cast<parser::InsertStatement *>(query.get());
       table_names.push_back(sql_statement->table_ref_->GetTableName());
       break;
     }
 
     case StatementType::DELETE: {
-      auto sql_statement = dynamic_cast<parser::DeleteStatement *>(query);
+      auto sql_statement = dynamic_cast<parser::DeleteStatement *>(query.get());
       table_names.push_back(sql_statement->table_ref->GetTableName());
       break;
     }
 
     case StatementType::UPDATE: {
-      auto sql_statement = dynamic_cast<parser::UpdateStatement *>(query);
+      auto sql_statement = dynamic_cast<parser::UpdateStatement *>(query.get());
       table_names.push_back(sql_statement->table->GetTableName());
       break;
     }
 
     case StatementType::SELECT: {
-      auto sql_statement = dynamic_cast<parser::SelectStatement *>(query);
+      auto sql_statement = dynamic_cast<parser::SelectStatement *>(query.get());
       // Select can operate on more than 1 table.
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {

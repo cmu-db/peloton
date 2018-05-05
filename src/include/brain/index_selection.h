@@ -65,7 +65,7 @@ class IndexSelection {
   /**
    * @brief Gets the indexable columns of a given query
    */
-  void GetAdmissibleIndexes(parser::SQLStatement *query,
+  void GetAdmissibleIndexes(std::shared_ptr<parser::SQLStatement> query,
                             IndexConfiguration &indexes);
 
   /**
@@ -186,7 +186,7 @@ class IndexSelection {
    * @param - config: returns a new index object here
    */
   void IndexObjectPoolInsertHelper(
-      const std::tuple<oid_t, oid_t, oid_t> tuple_col,
+      const std::tuple<oid_t, oid_t, oid_t> &tuple_col,
       IndexConfiguration &config);
 
   /**

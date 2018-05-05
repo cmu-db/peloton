@@ -251,7 +251,7 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   }
 }
 
-void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
+void IndexSelection::GetAdmissibleIndexes(std::shared_ptr<parser::SQLStatement> query,
                                           IndexConfiguration &indexes) {
   // Find out the indexable columns of the given workload.
   // The following rules define what indexable columns are:
@@ -264,7 +264,7 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
   // 4. all updated columns for UPDATE query.
   switch (query->GetType()) {
     case StatementType::INSERT: {
-      auto insert_stmt = dynamic_cast<parser::InsertStatement *>(query);
+      auto insert_stmt = dynamic_cast<parser::InsertStatement *>(query.get());
       // If the insert is along with a select statement, i.e another table's
       // select output is fed into this table.
       if (insert_stmt->select != nullptr) {
@@ -275,19 +275,19 @@ void IndexSelection::GetAdmissibleIndexes(parser::SQLStatement *query,
     }
 
     case StatementType::DELETE: {
-      auto delete_stmt = dynamic_cast<parser::DeleteStatement *>(query);
+      auto delete_stmt = dynamic_cast<parser::DeleteStatement *>(query.get());
       IndexColsParseWhereHelper(delete_stmt->expr.get(), indexes);
       break;
     }
 
     case StatementType::UPDATE: {
-      auto update_stmt = dynamic_cast<parser::UpdateStatement *>(query);
+      auto update_stmt = dynamic_cast<parser::UpdateStatement *>(query.get());
       IndexColsParseWhereHelper(update_stmt->where.get(), indexes);
       break;
     }
 
     case StatementType::SELECT: {
-      auto select_stmt = dynamic_cast<parser::SelectStatement *>(query);
+      auto select_stmt = dynamic_cast<parser::SelectStatement *>(query.get());
       IndexColsParseWhereHelper(select_stmt->where_clause.get(), indexes);
       IndexColsParseOrderByHelper(select_stmt->order, indexes);
       IndexColsParseGroupByHelper(select_stmt->group_by, indexes);
@@ -392,7 +392,7 @@ void IndexSelection::IndexColsParseOrderByHelper(
 }
 
 void IndexSelection::IndexObjectPoolInsertHelper(
-    const std::tuple<oid_t, oid_t, oid_t> tuple_oid,
+    const std::tuple<oid_t, oid_t, oid_t> &tuple_oid,
     IndexConfiguration &config) {
   auto db_oid = std::get<0>(tuple_oid);
   auto table_oid = std::get<1>(tuple_oid);
@@ -413,7 +413,7 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
   auto queries = workload.GetQueries();
   for (auto query : queries) {
     std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
-                                                                   query};
+                                                                   query.get()};
     if (context_.memo_.find(state) != context_.memo_.end()) {
       cost += context_.memo_[state];
     } else {
