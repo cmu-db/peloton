@@ -54,8 +54,18 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
 
   bool inserted = container.Insert(index_key, value);
   if (inserted) {
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+    auto &stats_collector =
+        stats::ThreadLevelStatsCollector::GetCollectorForThread();
+    stats_collector.CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+
+    // TODO: The memory collection here is just an inaccurate estimation
+    // Those who is familiar with the code base for index implementation should
+    // insert these lines to accurate place with correct values
+    size_t memory = key->GetLength() + 8;  // key size + item pointer size
+    stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
+    stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
   }
 
   LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
@@ -79,8 +89,18 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   // it is unnecessary for us to allocate memory
   bool removed = container.Delete(index_key, value);
   if (removed) {
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexDelete(metadata->GetDatabaseOid(), GetOid());
+    auto &stats_collector =
+        stats::ThreadLevelStatsCollector::GetCollectorForThread();
+    stats_collector.CollectIndexDelete(metadata->GetDatabaseOid(), GetOid());
+
+    // TODO: The memory collection here is just an inaccurate estimation
+    // Those who is familiar with the code base for index implementation should
+    // insert these lines to accurate place with correct values
+    size_t memory = key->GetLength() + 8;  // key size + item pointer size
+    stats_collector.CollectIndexMemoryFree(metadata->GetDatabaseOid(), GetOid(),
+                                           memory);
+    stats_collector.CollectIndexMemoryReclaim(metadata->GetDatabaseOid(),
+                                              GetOid(), memory);
   }
 
   LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
@@ -112,8 +132,18 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
     assert(inserted == false);
   }
   if (inserted) {
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+    auto &stats_collector =
+        stats::ThreadLevelStatsCollector::GetCollectorForThread();
+    stats_collector.CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+
+    // TODO: The memory collection here is just an inaccurate estimation
+    // Those who is familiar with the code base for index implementation should
+    // insert these lines to accurate place with correct values
+    size_t memory = key->GetLength() + 8;  // key size + item pointer size
+    stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
+    stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
   }
 
   return inserted;
