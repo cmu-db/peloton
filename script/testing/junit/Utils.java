@@ -1,4 +1,5 @@
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,15 +15,21 @@ public class Utils {
     public static void assertResultsSetEqual(ResultSet results, ExpectedResult expectedResult) throws SQLException {
         int rows = expectedResult.getRows();
         int columns = expectedResult.getColumns();
+        ResultSetMetaData rsmd = results.getMetaData();
+        int columnsNumber = rsmd.getColumnCount();
+        assertEquals(columns, columnsNumber);
 
         for (int i = 0; i < rows; i++) {
             assertTrue(results.next());
             for (int j = 0; j < columns; j++) {
+
                 String returnedString = results.getString(j + 1);
+                String expected = expectedResult.getItemAtIndex(i, j);
+
                 if (returnedString == null) {
-                    assertEquals(expectedResult.getItemAtIndex(i, j), "null");
+                    assertEquals(expected, "null");
                 } else {
-                    assertTrue(results.getString(j + 1).equals(expectedResult.getItemAtIndex(i, j)));
+                    assertEquals(returnedString,expected);
                 }
             }
         }
@@ -53,7 +60,17 @@ class ExpectedResult {
     }
 
     public String getItemAtIndex(int row, int column) {
-        return this.rows.get(row)[column];
+        String ret = this.rows.get(row)[column];
+        if (ret == null) {
+            for (int i = 0; i < this.rows.size(); i++) {
+                for (int j = 0; j < this.rows.get(i).length; j++) {
+                    System.out.print(this.rows.get(i)[j] + "|");
+                }
+                System.out.println();
+            }
+            throw new RuntimeException("Should not return NULL");
+        }
+        return ret;
     }
 
     private List<String[]> rows;
