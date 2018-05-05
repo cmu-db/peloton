@@ -65,10 +65,18 @@ bool ArtIndex::InsertEntry(const storage::Tuple *key, ItemPointer *value) {
   container_.insert(tree_key, reinterpret_cast<TID>(value), thread_info);
 
   // Update stats
-  IncreaseNumberOfTuplesBy(1);
-  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexInsert(
-      metadata->GetDatabaseOid(), GetOid());
+  auto &stats_collector =
+      stats::ThreadLevelStatsCollector::GetCollectorForThread();
+  stats_collector.CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
 
+  // TODO: The memory collection here is just an inaccurate estimation
+  // Those who is familiar with the code base for index implementation should
+  // insert these lines to accurate place with correct values
+  size_t memory = key->GetLength() + 8;  // key size + item pointer size
+  stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(), GetOid(),
+                                          memory);
+  stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(), GetOid(),
+                                          memory);
   return true;
 }
 
@@ -84,10 +92,18 @@ bool ArtIndex::DeleteEntry(const storage::Tuple *key, ItemPointer *value) {
 
   if (removed) {
     // Update stats
-    DecreaseNumberOfTuplesBy(1);
+    auto &stats_collector =
+        stats::ThreadLevelStatsCollector::GetCollectorForThread();
+    stats_collector.CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
 
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexDelete(metadata->GetDatabaseOid(), GetOid());
+    // TODO: The memory collection here is just an inaccurate estimation
+    // Those who is familiar with the code base for index implementation should
+    // insert these lines to accurate place with correct values
+    size_t memory = key->GetLength() + 8;  // key size + item pointer size
+    stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
+    stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
   }
 
   return removed;
@@ -106,9 +122,18 @@ bool ArtIndex::CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
 
   if (inserted) {
     // Update stats
-    IncreaseNumberOfTuplesBy(1);
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+    auto &stats_collector =
+        stats::ThreadLevelStatsCollector::GetCollectorForThread();
+    stats_collector.CollectIndexInsert(metadata->GetDatabaseOid(), GetOid());
+
+    // TODO: The memory collection here is just an inaccurate estimation
+    // Those who is familiar with the code base for index implementation should
+    // insert these lines to accurate place with correct values
+    size_t memory = key->GetLength() + 8;  // key size + item pointer size
+    stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
+    stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(),
+                                            GetOid(), memory);
   }
 
   return inserted;
