@@ -10,20 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "sql/testing_sql_util.h"
 #include "gtest/gtest.h"
+#include "sql/testing_sql_util.h"
 
 #include "catalog/testing_constraints_util.h"
 
-#include "common/internal_types.h"
 #include "catalog/catalog.h"
-#include "concurrency/testing_transaction_util.h"
-#include "planner/plan_util.h"
-#include "planner/create_plan.h"
-#include "executor/executors.h"
 #include "catalog/foreign_key.h"
-#include "parser/postgresparser.h"
+#include "common/internal_types.h"
+#include "concurrency/testing_transaction_util.h"
+#include "executor/executors.h"
 #include "optimizer/optimizer.h"
+#include "parser/postgresparser.h"
+#include "planner/create_plan.h"
+#include "planner/plan_util.h"
 
 #define DEFAULT_VALUE 11111
 
@@ -54,12 +54,13 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Set all of the columns to be NOT NULL
   std::vector<std::vector<catalog::Constraint>> constraints;
   for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
-    constraints.push_back({ catalog::Constraint(ConstraintType::NOTNULL,
-                                                "notnull_constraint") });
+    constraints.push_back(
+        {catalog::Constraint(ConstraintType::NOTNULL, "notnull_constraint")});
   }
   std::vector<catalog::MultiConstraint> multi_constraints;
   storage::DataTable *data_table =
-      TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
+      TestingConstraintsUtil::CreateAndPopulateTable(constraints,
+                                                     multi_constraints);
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -68,14 +69,12 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
       type::ValueFactory::GetIntegerValue(1),
       type::ValueFactory::GetIntegerValue(22),
       type::ValueFactory::GetDecimalValue(3.33),
-      type::ValueFactory::GetVarcharValue("4444")
-  };
+      type::ValueFactory::GetVarcharValue("4444")};
   std::vector<type::Value> null_values = {
       type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER),
       type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER),
       type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL),
-      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)
-  };
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
 
   // Test1: Insert a tuple with column that satisfies the requirement
   auto txn = txn_manager.BeginTransaction();
@@ -103,8 +102,8 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
     }
     EXPECT_TRUE(hasException);
     txn_manager.CommitTransaction(txn);
-  } // FOR
-  
+  }  // FOR
+
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
@@ -120,22 +119,23 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
     // COL_A
     if (i == 0) {
       constraints.push_back(
-          { catalog::Constraint(ConstraintType::PRIMARY, "pkey") });
+          {catalog::Constraint(ConstraintType::PRIMARY, "pkey")});
     }
     // COL_B
     else if (i == 1) {
       catalog::Constraint default_const(ConstraintType::DEFAULT, "default");
       default_const.addDefaultValue(
           type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
-      constraints.push_back({ });
+      constraints.push_back({});
     }
     // COL_C + COL_D
     else {
-      constraints.push_back({ });
+      constraints.push_back({});
     }
   }
   std::vector<catalog::MultiConstraint> multi_constraints;
-  TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
+  TestingConstraintsUtil::CreateAndPopulateTable(constraints,
+                                                 multi_constraints);
 
   // Bootstrap
   std::vector<ResultValue> result;
@@ -146,17 +146,17 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   // Test1: Insert a tuple without the second column defined
   // It should get set with the default value
   std::string sql = StringUtil::Format(
-                    "INSERT INTO %s (col_a, col_c, col_d) "
-                    "VALUES (9999, 2.2, 'xxx');", CONSTRAINTS_TEST_TABLE);
-  auto status = TestingSQLUtil::ExecuteSQLQuery(
-      sql, result, tuple_descriptor, rows_affected, error_message
-  );
+      "INSERT INTO %s (col_a, col_c, col_d) "
+      "VALUES (9999, 2.2, 'xxx');",
+      CONSTRAINTS_TEST_TABLE);
+  auto status = TestingSQLUtil::ExecuteSQLQuery(sql, result, tuple_descriptor,
+                                                rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
 
   sql = StringUtil::Format("SELECT col_d FROM %s WHERE col_a = 9999",
                            CONSTRAINTS_TEST_TABLE);
-  status = TestingSQLUtil::ExecuteSQLQuery(
-      sql, result, tuple_descriptor, rows_affected, error_message);
+  status = TestingSQLUtil::ExecuteSQLQuery(sql, result, tuple_descriptor,
+                                           rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
   std::string resultStr = TestingSQLUtil::GetResultValueAsString(result, 0);
   LOG_INFO("OUTPUT:\n%s", resultStr.c_str());
@@ -179,7 +179,8 @@ TEST_F(ConstraintsTests, CHECKTest) {
   type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
   constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
   column1.AddConstraint(constraints);
-  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(),
+            constraints.GetInfo().c_str());
   catalog::Schema *table_schema = new catalog::Schema({column1});
   std::string table_name("TEST_TABLE");
   bool own_schema = true;
@@ -230,15 +231,17 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
   auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
   column1.AddConstraint(constraints);
-  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(),
+            constraints.GetInfo().c_str());
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
-  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, table_name,
+  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME,
+                                               DEFUALT_SCHEMA_NAME, table_name,
                                                std::move(table_schema), txn);
+  storage::DataTable *table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);
-  storage::Database *database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  storage::DataTable *table = database->GetTableWithName(table_name);
 
   // table->AddUNIQUEIndex();
 
@@ -288,7 +291,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 }
 #endif
 
-//TEST_F(ConstraintsTests, MULTIUNIQUETest) {
+// TEST_F(ConstraintsTests, MULTIUNIQUETest) {
 //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 //  auto catalog = catalog::Catalog::GetInstance();
 //  auto txn = txn_manager.BeginTransaction();
@@ -368,7 +371,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  txn_manager.CommitTransaction(txn);
 //}
 
-//TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
+// TEST_F(ConstraintsTests, ForeignKeySingleInsertTest) {
 //  // First, initial 2 tables like following
 //  //     TABLE A -- src table          TABLE B -- sink table
 //  // a int(primary, ref B)  b int      b int(primary)  c int
@@ -393,8 +396,9 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //
 //  auto constraints = catalog::Constraint(ConstraintType::PRIMARY, "primary1");
 //  column1.AddConstraint(constraints);
-//  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
-//  std::unique_ptr<catalog::Schema> tableA_schema(
+//  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(),
+//  constraints.GetInfo().c_str()); std::unique_ptr<catalog::Schema>
+//  tableA_schema(
 //      new catalog::Schema({column1, column2}));
 //
 //  catalog->CreateTable(db_name, table_a_name, std::move(tableA_schema), txn);
@@ -413,9 +417,10 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  auto table_b = catalog->GetTableWithName(db_name, table_b_name);
 //
 //  oid_t sink_table_id = table_b->GetOid();
-//  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
-//  std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("a") };
-//  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
+//  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b")
+//  }; std::vector<oid_t> source_col_ids = {
+//  table_a->GetSchema()->GetColumnID("a") }; catalog::ForeignKey *foreign_key =
+//  new catalog::ForeignKey(
 //      sink_table_id, sink_col_ids, source_col_ids,
 //      FKConstrActionType::NOACTION,
 //      FKConstrActionType::NOACTION,
@@ -463,7 +468,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  delete foreign_key;
 //}
 
-//TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
+// TEST_F(ConstraintsTests, ForeignKeyMultiInsertTest) {
 //  // First, initial 2 tables like following
 //  //     TABLE A -- src table          TABLE B -- sink table
 //  // a int(primary, ref B)  b int      b int(primary)  c int
@@ -498,7 +503,8 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  cols.push_back(0);
 //  cols.push_back(1);
 //  auto mc =
-//      catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1", cols);
+//      catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1",
+//      cols);
 //  LOG_DEBUG("%s MULTI CONSTRAINTS %s %s", peloton::DOUBLE_STAR.c_str(),
 // peloton::DOUBLE_STAR.c_str(), mc.GetInfo().c_str());
 //
@@ -514,9 +520,10 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //
 //  // Create foreign key tableA.B -> tableB.B
 //  oid_t sink_table_id = table_b->GetOid();
-//  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
-//  std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("b") };
-//  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
+//  std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b")
+//  }; std::vector<oid_t> source_col_ids = {
+//  table_a->GetSchema()->GetColumnID("b") }; catalog::ForeignKey *foreign_key =
+//  new catalog::ForeignKey(
 //      sink_table_id, sink_col_ids, source_col_ids,
 //      FKConstrActionType::RESTRICT,
 //      FKConstrActionType::CASCADE,

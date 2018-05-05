@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// pg_query
+// pg_query(per database, name become primary key)
 //
 // Schema: (column offset: column_name)
 // 0: name (pkey)
-// 1: database_oid (pkey)
+// 1: database_id(pkey)
 // 2: num_params
 // 3: param_types
 // 4: param_formats
@@ -28,8 +28,6 @@
 // 11: cpu_time
 // 12: time_stamp
 //
-// Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,11 +43,9 @@ namespace catalog {
 
 class QueryMetricsCatalog : public AbstractCatalog {
  public:
+  QueryMetricsCatalog(const std::string &database_name,
+                      concurrency::TransactionContext *txn);
   ~QueryMetricsCatalog();
-
-  // Global Singleton
-  static QueryMetricsCatalog *GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -63,19 +59,18 @@ class QueryMetricsCatalog : public AbstractCatalog {
                           int64_t inserts, int64_t latency, int64_t cpu_time,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteQueryMetrics(const std::string &name, oid_t database_oid,
+  bool DeleteQueryMetrics(const std::string &name,
                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   stats::QueryMetric::QueryParamBuf GetParamTypes(
-      const std::string &name, oid_t database_oid,
-      concurrency::TransactionContext *txn);
-  int64_t GetNumParams(const std::string &name, oid_t database_oid,
+      const std::string &name, concurrency::TransactionContext *txn);
+  int64_t GetNumParams(const std::string &name,
                        concurrency::TransactionContext *txn);
-  // TODO: add more if needed
-
+  // TODO: In theory, we don't need database_oid
+  // but now we store all the query metrics under default database "peloton"
   enum ColumnId {
     NAME = 0,
     DATABASE_OID = 1,
@@ -94,10 +89,8 @@ class QueryMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  QueryMetricsCatalog(concurrency::TransactionContext *txn);
-
   enum IndexId {
-    SECONDARY_KEY_0 = 0,
+    PRIMARY_KEY = 0,
     // Add new indexes here in creation order
   };
 };

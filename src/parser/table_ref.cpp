@@ -22,6 +22,7 @@ const std::string TableRef::GetInfo(int num_indent) const {
   std::ostringstream os;
   switch (type) {
     case TableReferenceType::NAME:
+      os << StringUtil::Indent(num_indent) << GetSchemaName() << std::endl;
       os << StringUtil::Indent(num_indent) << GetTableName() << std::endl;
       break;
 
