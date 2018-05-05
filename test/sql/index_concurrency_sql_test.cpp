@@ -46,13 +46,13 @@ void CreateIndex() {
 
 void InsertTuple() {
   LOG_TRACE("insert tuple");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (10000, 10000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (-1, -1);");
   LOG_TRACE("insert tuple complete");
 }
 
 void UpdateTuple() {
   LOG_TRACE("update tuple");
-  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a = 10000 WHERE a = 0;");
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a = -1 WHERE a = 0;");
   LOG_TRACE("update tuple complete");
 }
 
@@ -78,15 +78,15 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndInsertTest) {
   int rows_changed;
 
   LOG_TRACE("select");
-  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
+  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 1;",
   result, tuple_descriptor, rows_changed,
   error_message);
   LOG_TRACE("select complete");
 
   // Check the return value
-  // Should be: 9999
+  // Should be: 0
   EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ("9999", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
 
   std::thread thread1(CreateIndex);
   std::thread thread2(InsertTuple);
@@ -95,16 +95,15 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndInsertTest) {
   thread2.join();
 
   LOG_TRACE("select");
-  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
+  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 0;",
                                   result, tuple_descriptor, rows_changed,
                                   error_message);
   LOG_TRACE("select complete");
 
   // Check the return value
-  // Should be: 9999, 10000
+  // Should be: -1
   EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ("9999", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("10000", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("-1", TestingSQLUtil::GetResultValueAsString(result, 0));
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
@@ -131,16 +130,15 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndUpdateTest) {
   thread2.join();
 
   LOG_TRACE("select");
-  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
+  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 0;",
                                   result, tuple_descriptor, rows_changed,
                                   error_message);
   LOG_TRACE("select complete");
 
   // Check the return value
-  // Should be: 9999, 0
+  // Should be: -1
   EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ("9999", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("-1", TestingSQLUtil::GetResultValueAsString(result, 0));
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
