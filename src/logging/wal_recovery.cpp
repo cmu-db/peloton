@@ -20,7 +20,7 @@ namespace logging{
 
 void WalRecovery::StartRecovery(){
 
-  if(!LoggingUtil::OpenFile(logpath_.c_str(),
+  if(!LoggingUtil::OpenFile(log_path_.c_str(),
                             std::ifstream::in, fstream_)) {
 
     LOG_ERROR("Recovery failed");
@@ -542,7 +542,6 @@ void WalRecovery::ReplayAllTxns(){
 
 
 void WalRecovery::ReplayLogFile(){
-
 
   size_t curr_txn_offset = 0;
 

@@ -42,7 +42,6 @@ class LoggerQueuePool {
             : logger_queue_(kDefaultLoggerQueueSize),
               num_workers_(num_workers),
               is_running_(false) {
-      LOG_INFO("aaron: LoggerQueuePool");
       PELOTON_ASSERT(num_workers == 1);
       logger_queue_.GenerateTokens(log_tokens_, kDefaultNumTokens);
     }
@@ -58,7 +57,6 @@ class LoggerQueuePool {
 
 
     void Startup() {
-      LOG_INFO("aaron: LoggerQueuePoolStartup");
       is_running_ = true;
 
       for (size_t i = 0; i < num_workers_; i++) {
@@ -67,7 +65,6 @@ class LoggerQueuePool {
     }
 
     void Shutdown() {
-      LOG_INFO("aaron: LoggerQueuePoolShutdown");
       is_running_ = false;
 
       for (auto &logger : loggers_) {

@@ -61,7 +61,8 @@ private:
 
 
 public:
-    WalRecovery() :
+    WalRecovery(std::string logpath) :
+      log_path_(logpath),
       max_epoch_id_(INVALID_EID),
       log_buffer_size_(0),
       log_buffer_(nullptr) {}
@@ -87,9 +88,7 @@ private:
                                             std::vector<catalog::Column> &columns);
 
 
-
-  //TODO(graghura): don't hardcode the path
-  std::string logpath_ = "/tmp/log";
+  std::string log_path_;
   std::fstream fstream_;
 
   eid_t max_epoch_id_;

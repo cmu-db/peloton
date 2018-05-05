@@ -31,7 +31,7 @@ namespace peloton {
 
 ThreadPool thread_pool;
 
-void PelotonInit::Initialize(std::string log_dir, std::string log_file, bool enable_logging) {
+void PelotonInit::Initialize(bool enable_logging) {
   CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
           settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
@@ -92,13 +92,15 @@ void PelotonInit::Initialize(std::string log_dir, std::string log_file, bool ena
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 
-  logging::LogManager::GetInstance().DoRecovery();
-
   if(enable_logging){
-    if(!logging::LogManager::GetInstance().init(log_dir, log_file)){
+    if(!logging::LogManager::GetInstance().init()){
       LOG_ERROR("LogManager Initialization failed");
     }
   }
+
+  logging::LogManager::GetInstance().DoRecovery();
+
+
 
 
   threadpool::LoggerQueuePool::GetInstance().Startup();

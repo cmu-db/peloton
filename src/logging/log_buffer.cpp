@@ -20,7 +20,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
   size_t start = log_buffer_.Position();
   log_buffer_.WriteInt(0);
 
-  LOG_INFO("aaron: WriteRecord %ld", start);
 
   LogRecordType type = record.GetType();
   log_buffer_.WriteEnumInSingleByte(
@@ -114,7 +113,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
   int32_t length = log_buffer_.Position() - start - sizeof(int32_t);
   log_buffer_.WriteIntAt(start, length);
-  LOG_INFO("aaron: RecordLength %d", length);
 }
 
 }

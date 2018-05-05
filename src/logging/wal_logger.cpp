@@ -49,7 +49,6 @@ bool WalLogger::IsFlushNeeded(bool pending_buffers){
 void WalLogger::FlushToDisk(){
 
   if(disk_buffer_->GetSize()==0){
-    LOG_INFO("aaron: disk_buffer_->GetSize()==0");
     return;
   }
 
@@ -60,7 +59,6 @@ void WalLogger::FlushToDisk(){
     PELOTON_ASSERT(false);
   }
 
-  LOG_INFO("aaron: stream->flush()");
   stream->flush();
 
   if(stream->fail()){

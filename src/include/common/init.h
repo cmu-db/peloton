@@ -26,9 +26,7 @@ extern ThreadPool thread_pool;
 
 class PelotonInit {
  public:
-  static void Initialize(std::string log_dir = settings::SettingsManager::GetString(settings::SettingId::log_directory_name),
-                         std::string log_file = settings::SettingsManager::GetString(settings::SettingId::log_file_name),
-                         bool enable_logging = true);
+  static void Initialize(bool enable_logging = true);
 
   static void Shutdown();
 
