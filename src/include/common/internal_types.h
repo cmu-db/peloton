@@ -1229,8 +1229,6 @@ enum class GCVersionType {
   ABORT_INSERT,    // a version that is inserted during txn abort.
   ABORT_INS_DEL,   // a version that is inserted and deleted during txn abort.
   TOMBSTONE,       // a version that signifies that the tuple has been deleted.
-  TOMBSTONE,       // tombstone version that signifies that the tuple has been
-                   // deleted
 };
 std::string GCVersionTypeToString(GCVersionType type);
 GCVersionType StringToGCVersionType(const std::string &str);
