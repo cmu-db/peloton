@@ -193,7 +193,6 @@ bool InsertExecutor::DExecute() {
         tuple = node.GetTuple(insert_itr);
 
         if (tuple == nullptr) {
-          LOG_INFO("tuple is null");
           storage_tuple.reset(new storage::Tuple(schema, true));
 
           // read from values
@@ -255,7 +254,6 @@ bool InsertExecutor::DExecute() {
         values.push_back(new_tuple->GetValue(col_id));
       }
 
-//      LOG_INFO("Perform insert is being called");
       transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
 
       LOG_TRACE("Number of tuples in table after insert: %lu",
