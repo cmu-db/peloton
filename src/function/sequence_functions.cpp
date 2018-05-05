@@ -60,7 +60,7 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
     return val;
   } else {
     throw SequenceException(
-            StringUtil::Format("Sequence \"%s\" does not exist", sequence_name.c_str()));
+            StringUtil::Format("Sequence \"%s\" does not exist", sequence_name));
   }
 }
 
@@ -82,8 +82,22 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
   if (sequence_object != nullptr) {
     return sequence_object->GetCurrVal();
   } else {
-    throw SequenceException(
-            StringUtil::Format("Sequence \"%s\" does not exist", sequence_name.c_str()));
+    // get sequence from catalog
+    sequence_object =
+            catalog::Catalog::GetInstance()
+                    ->GetSystemCatalogs(database_oid)
+                    ->GetSequenceCatalog()
+                    ->GetSequence(database_oid, sequence_name, txn);
+    if (sequence_object != nullptr) {
+      // nextval not called brefore
+      throw SequenceException(
+              StringUtil::Format("Nextval never called for sequence \"%s\"",
+                      sequence_name));
+    } else {
+      // sequence does not exist
+      throw SequenceException(
+              StringUtil::Format("Sequence \"%s\" does not exist", sequence_name));
+    }
   }
 }
 
