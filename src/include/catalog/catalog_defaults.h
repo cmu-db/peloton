@@ -32,6 +32,7 @@ namespace catalog {
 #define TABLE_CATALOG_NAME "pg_table"
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
+#define SEQUENCE_CATALOG_NAME "pg_sequence"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100

@@ -1352,20 +1352,16 @@ parser::SQLStatement *PostgresParser::CreateSequenceTransform(
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kSequence);
   result->sequence_name = std::string(root->sequence->relname);
-  result->table.reset(
-      RangeVarTransform(reinterpret_cast<RangeVar *>(root->sequence)));
-  parse_sequence_params(root->options, result);
+  ParseSequenceParams(root->options, result);
   return result;
 }
 
-void PostgresParser::parse_sequence_params(List *options,
+void PostgresParser::ParseSequenceParams(List *options,
                                            parser::CreateStatement *result) {
   DefElem *start_value = NULL;
-  // DefElem    *restart_value = NULL;
   DefElem *increment_by = NULL;
   DefElem *max_value = NULL;
   DefElem *min_value = NULL;
-  DefElem *cache_value = NULL;
   DefElem *is_cycled = NULL;
   if (!options) return;
 
@@ -1378,51 +1374,45 @@ void PostgresParser::parse_sequence_params(List *options,
         throw ParserException(
             "Redundant definition of increment in defining sequence");
       increment_by = defel;
-      result->seq_increment = get_long_in_defel(increment_by);
+      result->seq_increment = GetLongInDefElem(increment_by);
     } else if (strcmp(defel->defname, "start") == 0) {
       if (start_value)
         throw ParserException(
             "Redundant definition of start in defining sequence");
       start_value = defel;
-      result->seq_start = get_long_in_defel(start_value);
+      result->seq_start = GetLongInDefElem(start_value);
     } else if (strcmp(defel->defname, "maxvalue") == 0) {
       if (max_value)
         throw ParserException(
             "Redundant definition of max in defining sequence");
       max_value = defel;
-      result->seq_max_value = get_long_in_defel(max_value);
+      result->seq_max_value = GetLongInDefElem(max_value);
     } else if (strcmp(defel->defname, "minvalue") == 0) {
       if (min_value)
         throw ParserException(
             "Redundant definition of min in defining sequence");
       min_value = defel;
-      result->seq_min_value = get_long_in_defel(min_value);
-    } else if (strcmp(defel->defname, "cache") == 0) {
-      if (cache_value)
-        throw ParserException(
-            "Redundant definition of cache in defining sequence");
-      cache_value = defel;
-      result->seq_cache = get_long_in_defel(cache_value);
+      result->seq_min_value = GetLongInDefElem(min_value);
     } else if (strcmp(defel->defname, "cycle") == 0) {
       if (is_cycled)
         throw ParserException(
             "Redundant definition of cycle in defining sequence");
       is_cycled = defel;
-      result->seq_cycle = (bool)get_long_in_defel(is_cycled);
+      result->seq_cycle = (bool)GetLongInDefElem(is_cycled);
     }
-    // TODO: support owned_by
-    // else if (strcmp(defel->defname, "owned_by") == 0)
-    // {
-    // 	// if (*owned_by)
-    // 	// 	ereport(ERROR,
-    // 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
-    // 	// 			 errmsg("conflicting or redundant options"),
-    // 	// 			 parser_errposition(pstate, defel->location)));
-    // 	*owned_by = defGetQualifiedName(defel);
-    // }
     else
       throw ParserException(
           StringUtil::Format("option \"%s\" not recognized\n", defel->defname));
+  }
+
+  // manually set the start value for a sequence
+  if (!start_value) {
+    if(result->seq_increment < 0 && max_value){
+      result->seq_start = result->seq_max_value;
+    }
+    else if (result->seq_increment > 0 && min_value){
+      result->seq_start = result->seq_min_value;
+    }
   }
 }
 

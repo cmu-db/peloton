@@ -14,6 +14,7 @@
 
 #include "parser/create_statement.h"
 #include "planner/abstract_plan.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace catalog {

@@ -31,6 +31,7 @@
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/string_functions.h"
+#include "function/sequence_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "settings/settings_manager.h"
@@ -1210,13 +1211,13 @@ void Catalog::InitializeFunctions() {
               "nextval", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
               internal_lang, "Nextval",
               function::BuiltInFuncType{OperatorId::Nextval,
-                                        function::OldEngineStringFunctions::Nextval},
+                                        function::SequenceFunctions::_Nextval},
               txn);
       AddBuiltinFunction(
               "currval", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
               internal_lang, "Currval",
               function::BuiltInFuncType{OperatorId::Currval,
-                                        function::OldEngineStringFunctions::Currval},
+                                        function::SequenceFunctions::_Currval},
               txn);
 
 

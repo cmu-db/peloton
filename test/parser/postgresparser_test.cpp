@@ -1079,10 +1079,6 @@ TEST_F(PostgresParserTests, CreateSequenceTest) {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  if (!stmt_list->is_valid) {
-    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
-              stmt_list->error_line, stmt_list->error_col);
-  }
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_sequence_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));

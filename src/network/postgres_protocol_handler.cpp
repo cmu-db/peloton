@@ -1222,6 +1222,7 @@ void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
     case QueryType::QUERY_CREATE_DB:
     case QueryType::QUERY_CREATE_INDEX:
     case QueryType::QUERY_CREATE_TRIGGER:
+    case QueryType::QUERY_CREATE_SEQUENCE:
     case QueryType::QUERY_PREPARE:
       break;
     default:

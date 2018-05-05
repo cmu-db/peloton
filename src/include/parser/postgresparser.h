@@ -294,10 +294,10 @@ class PostgresParser {
   // transform helper for subquery expressions
   static expression::AbstractExpression *SubqueryExprTransform(SubLink *node);
 
-  static void parse_sequence_params(List *options,
+  static void ParseSequenceParams(List *options,
                                     parser::CreateStatement *result);
 
-  static int64_t get_long_in_defel(DefElem *defel) {
+  static int64_t GetLongInDefElem(DefElem *defel) {
     return (int64_t)((reinterpret_cast<value *>(defel->arg))->val.ival);
   };
 };
