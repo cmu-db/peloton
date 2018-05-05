@@ -57,7 +57,7 @@ class TestingIndexSuggestionUtil {
   // Factory method
   // Returns a what-if index on the columns at the given
   // offset of the table.
-  std::shared_ptr<brain::IndexObject> CreateHypotheticalIndex(
+  std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols);
 
  private:
