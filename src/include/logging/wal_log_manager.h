@@ -68,8 +68,11 @@ public:
   }
 
   inline bool IsLoggingEnabled() { return enable_logging_; }
+
   inline std::string GetDirectory() { return log_dir_; }
   inline std::string GetLogFilePath() { return log_dir_ + "/" + log_file_; }
+
+
 
   inline void DoRecovery(){
     WalRecovery* wr = new WalRecovery(GetLogFilePath());

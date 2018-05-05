@@ -133,7 +133,7 @@ void WalRecovery::ParseFromDisk(ReplayStage stage){
             int copy_len = record_len + sizeof(record_len);
             int curr_offset = commited_txns_[txn_id].second;
 
-            LOG_INFO("txn %llu writing from %d to %d", txn_id, curr_offset, curr_offset+copy_len-1);
+            LOG_INFO("txn %lu writing from %d to %d", txn_id, curr_offset, curr_offset+copy_len-1);
 
             PELOTON_MEMCPY(log_buffer_+curr_offset, buf+buf_curr, copy_len);
             commited_txns_[txn_id].second += copy_len;
@@ -222,7 +222,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
   std::vector<std::unique_ptr<storage::Tuple>> indexes;
 
 
-  bool pending_table_create;
+  bool pending_table_create = false;
   std::unique_ptr<storage::Tuple> tuple_table_create;
   std::vector<catalog::Column> columns;
 

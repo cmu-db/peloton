@@ -32,7 +32,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
   switch (type) {
     case LogRecordType::TUPLE_INSERT: {
-//      LOG_INFO("inserting tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -47,14 +46,12 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
       peloton::type::Value *values_array = reinterpret_cast<peloton::type::Value *>(record.GetValuesArray());
       for (uint32_t i = 0; i < record.GetNumValues(); i++) {
-        //TODO(akanjani): Check if just copying the offset info will perform better
         values_array[i].SerializeTo(log_buffer_);
       }
 
       break;
     }
     case LogRecordType::TUPLE_DELETE: {
-//      LOG_INFO("Deleting tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -69,7 +66,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       break;
     }
     case LogRecordType::TUPLE_UPDATE: {
-//      LOG_INFO("Updating tuple");
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto old_tuple_pos = record.GetOldItemPointer();
@@ -90,7 +86,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       peloton::type::Value *values_array = reinterpret_cast<peloton::type::Value *>(record.GetValuesArray());
       TargetList *offsets = record.GetOffsets();
       for (uint32_t i = 0; i < record.GetNumValues(); i++) {
-        //TODO(akanjani): Check if just copying the offset info will perform better
         log_buffer_.WriteInt(((*offsets)[i]).first);
         values_array[i].SerializeTo(log_buffer_);
       }
