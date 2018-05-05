@@ -12,17 +12,19 @@
 
 #pragma once
 
-#include "optimizer/operator_visitor.h"
+#include "optimizer/abstract_cost_calculator.h"
 
 namespace peloton {
 namespace optimizer {
 
 class Memo;
-// Derive cost for a physical group expressionh
-class CostCalculator : public OperatorVisitor {
+// Derive cost for a physical group expression
+class CostCalculator : public AbstractCostCalculator {
  public:
+  CostCalculator(){};
+
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
-                       concurrency::TransactionContext *txn);
+                       concurrency::TransactionContext *txn) override;
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -51,6 +53,9 @@ class CostCalculator : public OperatorVisitor {
   double HashCost();
   double SortCost();
   double GroupByCost();
+
+  /* Checks if keys for a join child only reference one table */
+  bool IsBaseTable(const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys);
 
   GroupExpression *gexpr_;
   Memo *memo_;

@@ -59,11 +59,24 @@ class ColumnStats {
 
   bool is_basetable;
 
-  std::string ToString() {
+  std::string ToString(bool verbose = false) {
     std::ostringstream os;
     os << "column_id :" << column_id << "\n"
        << "column_name :" << column_name << "\n"
        << "num_rows :" << num_rows << "\n";
+
+    if (verbose) {
+      os << "cardinality: " << cardinality << "\n"
+         << "frac_null: " << frac_null << "\n";
+
+      if (!most_common_vals.empty()) {
+        os << "most common value: " << most_common_vals[0] << "\n";
+      }
+
+      if (!most_common_freqs.empty()) {
+        os << "most common freq: " << most_common_freqs[0] << "\n";
+      }
+    }
     return os.str();
   }
 
