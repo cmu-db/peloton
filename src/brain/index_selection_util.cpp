@@ -141,7 +141,7 @@ std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(Hypothe
 
 Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     : database_name(database_name) {
-  LOG_DEBUG("Initializing workload with %ld queries", queries.size());
+  LOG_TRACE("Initializing workload with %ld queries", queries.size());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
@@ -152,7 +152,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
 
   // Parse and bind every query. Store the results in the workload vector.
   for (auto query : queries) {
-    LOG_DEBUG("Query: %s", query.c_str());
+    LOG_TRACE("Query: %s", query.c_str());
 
     // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
