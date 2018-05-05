@@ -63,6 +63,8 @@ namespace peloton {
 // level.")
 #endif
 
+#define LOG_LEVEL LOG_LEVEL_ALL
+
 // For compilers which do not support __FUNCTION__
 #if !defined(__FUNCTION__) && !defined(__GNUC__)
 #define __FUNCTION__ ""
