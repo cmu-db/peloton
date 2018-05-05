@@ -26,7 +26,7 @@ extern ThreadPool thread_pool;
 
 class PelotonInit {
  public:
-  static void Initialize(bool enable_logging = true);
+  static void Initialize();
 
   static void Shutdown();
 

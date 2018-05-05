@@ -141,6 +141,12 @@ SETTING_string(log_file_name,
 							 "wal.log",
 							 true, true)
 
+// Enable logging. The default value is true for testing purposes
+// TODO(graghura): logging should be turned off by default
+SETTING_bool(enable_logging,
+						 "Enable logging for DB persistence (default: true)",
+						 true,
+						 false, false)
 
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING

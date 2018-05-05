@@ -31,7 +31,7 @@ namespace peloton {
 
 ThreadPool thread_pool;
 
-void PelotonInit::Initialize(bool enable_logging) {
+void PelotonInit::Initialize() {
   CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
           settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
@@ -92,6 +92,7 @@ void PelotonInit::Initialize(bool enable_logging) {
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 
+  bool enable_logging = settings::SettingsManager::GetBool(settings::SettingId::enable_logging);
   if(enable_logging){
     if(!logging::LogManager::GetInstance().init()){
       LOG_ERROR("LogManager Initialization failed");
