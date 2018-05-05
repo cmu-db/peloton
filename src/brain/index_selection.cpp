@@ -133,6 +133,8 @@ void IndexSelection::Enumerate(IndexConfiguration &indexes,
   // Get the cheapest indexes through exhaustive search upto a threshold
   ExhaustiveEnumeration(indexes, top_indexes, workload);
 
+  LOG_INFO("ExhaustiveEnumeration: %lu", top_indexes.GetIndexCount());
+
   // Get all the remaining indexes which can be part of our optimal set
   auto remaining_indexes = indexes - top_indexes;
 
@@ -153,7 +155,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // Else S = S U {I}
   // 4. If |S| = k then exit
 
-  size_t current_index_count = context_.naive_enumeration_threshold_;
+  size_t current_index_count = indexes.GetIndexCount();
 
   if (current_index_count >= k) return;
 
@@ -201,6 +203,9 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // The naive algorithm gets all the possible subsets of size <= m and then
   // returns the cheapest m indexes
 
+  auto max_num_indexes = std::min(context_.naive_enumeration_threshold_,
+                                  context_.num_indexes_);
+
   // Define a set ordering of (index config, cost) and define the ordering in
   // the set
   std::set<std::pair<IndexConfiguration, double>, IndexConfigComparator>
@@ -225,8 +230,7 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
 
       // If the size of the subset reaches our threshold, add to result set
       // instead of adding to the running list
-      if (new_element.GetIndexCount() >=
-          context_.naive_enumeration_threshold_) {
+      if (new_element.GetIndexCount() >= max_num_indexes) {
         result_index_config.emplace(new_element,
             ComputeCost(new_element, workload));
       } else {
@@ -244,9 +248,10 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
 
   // Since the insertion into the sets ensures the order of cost, get the first
   // m configurations
-  for (auto index_pair : result_index_config) {
-    top_indexes.Merge(index_pair.first);
-  }
+  if (result_index_config.empty())
+    return;
+  auto best_m_index = result_index_config.begin()->first;
+  top_indexes.Merge(best_m_index);
 }
 
 void IndexSelection::GetAdmissibleIndexes(std::shared_ptr<parser::SQLStatement> query,

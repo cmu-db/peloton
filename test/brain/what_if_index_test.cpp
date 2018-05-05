@@ -42,7 +42,8 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
                  {"d", TupleValueType::INTEGER}});
 
   TestingIndexSuggestionUtil util(db_name);
-  util.CreateAndInsertIntoTable(table_name, t, num_rows);
+  testing_util.CreateTable(table_name, schema);
+  testing_util.InsertIntoTable(table_name, schema, num_rows)
 
   // Form the query.
   std::string query("SELECT a from " + table_name +
@@ -116,7 +117,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
                  {"c", TupleValueType::INTEGER},
                  {"d", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil util(db_name);
-  util.CreateAndInsertIntoTable(table_name, t, num_rows);
+  testing_util.CreateTable(table_name, schema);
+  testing_util.InsertIntoTable(table_name, schema, num_rows)
 
   // Form the query
   std::string query("SELECT a from " + table_name +
@@ -206,7 +208,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                  {"e", TupleValueType::INTEGER},
                  {"f", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil util(db_name);
-  util.CreateAndInsertIntoTable(table_name, t, num_rows);
+  testing_util.CreateTable(table_name, schema);
+  testing_util.InsertIntoTable(table_name, schema, num_rows)
 
   // Form the query.
   std::string query("SELECT a from " + table_name +

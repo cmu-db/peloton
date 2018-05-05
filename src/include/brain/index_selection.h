@@ -31,7 +31,7 @@ struct IndexConfigComparator {
     // Order by cost. If cost is same, then by the number of indexes
     // Unless the configuration is exactly the same, get some ordering
     return ((s1.second < s2.second) ||
-            (s1.first.GetIndexCount() < s2.first.GetIndexCount()) ||
+            (s1.first.GetIndexCount() > s2.first.GetIndexCount()) ||
             (s1.first.ToString() < s2.first.ToString()));
   }
 

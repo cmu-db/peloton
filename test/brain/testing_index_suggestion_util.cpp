@@ -44,13 +44,11 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
 }
 
 /**
- * Creates a new table and inserts specified number of tuples.
+ * Create a new table.s
  * @param table_name
- * @param schema schema of the table to be created
- * @param num_tuples number of tuples to be inserted with random values.
+ * @param schema
  */
-void TestingIndexSuggestionUtil::CreateAndInsertIntoTable(
-    std::string table_name, TableSchema schema, long num_tuples) {
+void TestingIndexSuggestionUtil::CreateTable(std::string table_name, TableSchema schema) {
   // Create table.
   std::ostringstream s_stream;
   s_stream << "CREATE TABLE " << table_name << " (";
@@ -76,7 +74,15 @@ void TestingIndexSuggestionUtil::CreateAndInsertIntoTable(
   }
   s_stream << ");";
   TestingSQLUtil::ExecuteSQLQuery(s_stream.str());
+}
 
+/**
+ * Inserts specified number of tuples.
+ * @param table_name
+ * @param schema schema of the table to be created
+ * @param num_tuples number of tuples to be inserted with random values.
+ */
+void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name, TableSchema schema, long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;
