@@ -13,10 +13,7 @@
 #include "brain/testing_index_suggestion_util.h"
 #include "brain/what_if_index.h"
 #include "common/harness.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/table_stats.h"
 #include "sql/testing_sql_util.h"
 #include "planner/index_scan_plan.h"
 
@@ -62,7 +59,7 @@ void TestingIndexSuggestionUtil::CreateAndInsertIntoTable(
     s_stream << " ";
     switch (schema.cols[i].second) {
       case FLOAT:
-        s_stream << "FLOAT";
+        s_stream << "VARCHAR";
         break;
       case INTEGER:
         s_stream << "INT";
@@ -190,6 +187,7 @@ void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
   std::string create_str = "DROP TABLE " + table_name + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
-}
-}
-}
+
+} // namespace index_suggestion
+} // namespace test
+} // namespace peloton

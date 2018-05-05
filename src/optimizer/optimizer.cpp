@@ -141,18 +141,18 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 // Return an optimized physical query tree for the given parse tree along
 // with the cost.
 std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
-    parser::SQLStatement *parsed_statement,
+    std::shared_ptr<parser::SQLStatement> parsed_statement,
     concurrency::TransactionContext *txn) {
   metadata_.txn = txn;
 
   // Generate initial operator tree to work with from the parsed
   // statement object.
   std::shared_ptr<GroupExpression> g_expr =
-      InsertQueryTree(parsed_statement, txn);
+      InsertQueryTree(parsed_statement.get(), txn);
   GroupID root_id = g_expr->GetGroupID();
 
   // Get the physical properties of the final plan that must be enforced
-  auto query_info = GetQueryInfo(parsed_statement);
+  auto query_info = GetQueryInfo(parsed_statement.get());
 
   // Start with the base expression and explore all the possible transformations
   // and add them to the local context.

@@ -209,54 +209,25 @@ class Workload {
    * and
    * add SQLStatements.
    */
-  Workload(std::vector<std::string> &queries, std::string database_name)
-      : database_name(database_name) {
-    LOG_DEBUG("Initializing workload with %ld queries", queries.size());
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto parser = parser::PostgresParser::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-
-    std::unique_ptr<binder::BindNodeVisitor> binder(
-        new binder::BindNodeVisitor(txn, database_name));
-
-    // Parse and bind every query. Store the results in the workload vector.
-    for (auto it = queries.begin(); it != queries.end(); it++) {
-      auto query = *it;
-      LOG_DEBUG("Query: %s", query.c_str());
-
-      auto stmt_list = parser::PostgresParser::ParseSQLString(query);
-      PELOTON_ASSERT(stmt_list->is_valid);
-
-      auto stmt = stmt_list->GetStatement(0);
-      PELOTON_ASSERT(stmt->GetType() != StatementType::INVALID);
-
-      // Bind the query
-      binder->BindNameToNode(stmt);
-
-      AddQuery(stmt);
-    }
-
-    txn_manager.CommitTransaction(txn);
-  }
+  Workload(std::vector<std::string> &queries, std::string database_name);
 
   /**
    * @brief - Constructor
    */
-  Workload(parser::SQLStatement *query, std::string database_name)
+  Workload(std::shared_ptr<parser::SQLStatement> query, std::string database_name)
       : sql_queries_({query}), database_name(database_name) {}
 
   /**
    * @brief - Add a query into the workload
    */
-  inline void AddQuery(parser::SQLStatement *query) {
+  inline void AddQuery(std::shared_ptr<parser::SQLStatement> query) {
     sql_queries_.push_back(query);
   }
 
   /**
    * @brief - Return the queries
    */
-  inline const std::vector<parser::SQLStatement *> &GetQueries() {
+  inline const std::vector<std::shared_ptr<parser::SQLStatement>> &GetQueries() {
     return sql_queries_;
   }
 
@@ -274,8 +245,7 @@ class Workload {
   };
 
  private:
-  // A vertor of the parsed SQLStatements of the queries
-  std::vector<parser::SQLStatement *> sql_queries_;
+  std::vector<std::shared_ptr<parser::SQLStatement>> sql_queries_;
   std::string database_name;
 };
 
