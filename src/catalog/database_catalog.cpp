@@ -28,17 +28,6 @@ namespace peloton {
 namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(
-    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
-    : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
-                        .ToString()),
-      table_objects_cache(),
-      table_name_cache(),
-      valid_table_objects(false),
-      txn(txn) {}
-
-DatabaseCatalogObject::DatabaseCatalogObject(
     codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn)
     : database_oid(
           wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)

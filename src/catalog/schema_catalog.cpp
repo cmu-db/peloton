@@ -26,14 +26,6 @@
 namespace peloton {
 namespace catalog {
 
-SchemaCatalogObject::SchemaCatalogObject(executor::LogicalTile *tile,
-                                         concurrency::TransactionContext *txn)
-    : schema_oid(tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_OID)
-                     .GetAs<oid_t>()),
-      schema_name(
-          tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_NAME).ToString()),
-      txn(txn) {}
-
 SchemaCatalogObject::SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
                                          concurrency::TransactionContext *txn)
     : schema_oid(wrapped_tuple.GetValue(SchemaCatalog::ColumnId::SCHEMA_OID)

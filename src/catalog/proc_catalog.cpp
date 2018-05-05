@@ -25,16 +25,6 @@ namespace catalog {
 
 #define PROC_CATALOG_NAME "pg_proc"
 
-ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
-                                     concurrency::TransactionContext *txn)
-    : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
-      name_(tile->GetValue(0, 1).GetAs<const char *>()),
-      ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
-      arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char *>())),
-      lang_oid_(tile->GetValue(0, 4).GetAs<oid_t>()),
-      src_(tile->GetValue(0, 5).GetAs<const char *>()),
-      txn_(txn) {}
-
 ProcCatalogObject::ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
                                      concurrency::TransactionContext *txn)
     : oid_(wrapped_tuple.GetValue(0).GetAs<oid_t>()),

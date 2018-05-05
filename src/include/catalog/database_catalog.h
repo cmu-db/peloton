@@ -41,8 +41,6 @@ class DatabaseCatalogObject {
   friend class CatalogCache;
 
  public:
-  DatabaseCatalogObject(executor::LogicalTile *tile,
-                        concurrency::TransactionContext *txn);
   DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
                         concurrency::TransactionContext *txn);
 

@@ -22,10 +22,6 @@
 namespace peloton {
 namespace catalog {
 
-LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
-    : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
-      lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
-
 LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple tuple)
     : lang_oid_(tuple.GetValue(0).GetAs<oid_t>()),
       lang_name_(tuple.GetValue(1).GetAs<const char *>()) {}

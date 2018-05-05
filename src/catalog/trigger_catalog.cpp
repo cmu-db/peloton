@@ -266,7 +266,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
                                  result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
                                  result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
                                  result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
-    new_trigger_list->AddTrigger(new_trigger);
+    new_trigger_list->AddTrigger(std::move(new_trigger));
   }
 
   return new_trigger_list;
@@ -307,7 +307,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
                                  result_tuples[i].GetValue(ColumnId::FUNCTION_NAME).ToString(),
                                  result_tuples[i].GetValue(ColumnId::FUNCTION_ARGS).ToString(),
                                  result_tuples[i].GetValue(ColumnId::FIRE_CONDITION).GetData());
-    new_trigger_list->AddTrigger(new_trigger);
+    new_trigger_list->AddTrigger(std::move(new_trigger));
   }
 
   return new_trigger_list;

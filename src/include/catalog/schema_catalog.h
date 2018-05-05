@@ -35,9 +35,6 @@ class SchemaCatalogObject {
   friend class DatabaseCatalogObject;
 
  public:
-  SchemaCatalogObject(executor::LogicalTile *tile,
-                      concurrency::TransactionContext *txn);
-
   SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
                       concurrency::TransactionContext *txn);
 

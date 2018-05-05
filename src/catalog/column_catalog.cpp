@@ -25,26 +25,6 @@
 namespace peloton {
 namespace catalog {
 
-ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
-                                         int tupleId)
-    : table_oid(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
-                    .GetAs<oid_t>()),
-      column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
-                      .ToString()),
-      column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<uint32_t>()),
-      column_offset(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<uint32_t>()),
-      column_type(StringToTypeId(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
-              .ToString())),
-      is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
-                     .GetAs<bool>()),
-      is_primary(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY)
-                     .GetAs<bool>()),
-      is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
-                      .GetAs<bool>()) {}
 
 ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple)
     : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)

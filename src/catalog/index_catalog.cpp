@@ -28,34 +28,6 @@
 namespace peloton {
 namespace catalog {
 
-IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
-    : index_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_OID)
-                    .GetAs<oid_t>()),
-      index_name(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_NAME)
-                     .ToString()),
-      table_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::TABLE_OID)
-                    .GetAs<oid_t>()),
-      schema_name(tile->GetValue(tupleId, IndexCatalog::ColumnId::SCHEMA_NAME)
-                      .ToString()),
-      index_type(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_TYPE)
-                     .GetAs<IndexType>()),
-      index_constraint(
-          tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT)
-              .GetAs<IndexConstraintType>()),
-      unique_keys(tile->GetValue(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS)
-                      .GetAs<bool>()) {
-  std::string attr_str =
-      tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES)
-          .ToString();
-  std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
-  std::string tok;
-
-  while (std::getline(ss, tok, ' ')) {
-    key_attrs.push_back(std::stoi(tok));
-  }
-  LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
-}
-
 IndexCatalogObject::IndexCatalogObject(codegen::WrappedTuple wrapped_tuple)
     : index_oid(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_OID)
                     .GetAs<oid_t>()),
