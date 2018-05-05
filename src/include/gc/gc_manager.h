@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
@@ -65,11 +66,14 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  virtual void RecycleUnusedTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE, const ItemPointer &location UNUSED_ATTRIBUTE) {}
+
+  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE,
+                             storage::DataTable *table UNUSED_ATTRIBUTE) {}
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 

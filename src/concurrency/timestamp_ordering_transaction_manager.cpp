@@ -682,6 +682,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 }
 
+// Performs Delete on a tuple that was created by the current transaction, and never
+// installed into the database
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
   PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
@@ -855,6 +857,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // the gc should be responsible for recycling the newer empty version.
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_DELETE;
+
+      gc_set->operator[](new_version.block)[new_version.offset] =
+          GCVersionType::TOMBSTONE;
 
       log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
@@ -1057,7 +1062,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
       // add the version to gc set.
       gc_set->operator[](new_version.block)[new_version.offset] =
-          GCVersionType::ABORT_DELETE;
+          GCVersionType::TOMBSTONE;
 
     } else if (tuple_entry.second == RWType::INSERT) {
       tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
