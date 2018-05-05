@@ -947,7 +947,7 @@ std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
  * @param txn the transaction Context
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
+ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid, const std::string &schema_name,
                                std::unique_ptr<catalog::Schema> &new_schema,
                                concurrency::TransactionContext *txn) {
   LOG_TRACE("AlterTable in Catalog");
@@ -960,6 +960,7 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
     try {
       auto old_table = database->GetTableWithOid(table_oid);
       auto old_schema = old_table->GetSchema();
+      auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
 
       // Step 1: build empty table with new schema
       bool own_schema = true;
@@ -968,14 +969,12 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
           database_oid, table_oid,
           catalog::Schema::CopySchema(new_schema.get()), old_table->GetName(),
           DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-
       // Step 2: Copy indexes
-      auto old_index_oids =
-          IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
+      auto old_index_oids = pg_index->GetIndexObjects(table_oid, txn);
       for (auto index_oid_pair : old_index_oids) {
         oid_t index_oid = index_oid_pair.first;
         // delete record in pg_index
-        IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
+        pg_index->DeleteIndex(index_oid, txn);
         // Check if all indexed columns still exists
         auto old_index = old_table->GetIndexWithOid(index_oid);
         bool index_exist = true;
@@ -1014,14 +1013,13 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
         new_table->AddIndex(new_index);
 
         // reinsert record into pg_index
-        IndexCatalog::GetInstance()->InsertIndex(
-            index_oid, old_index->GetName(), table_oid,
+        pg_index->InsertIndex(
+            index_oid, old_index->GetName(), table_oid, schema_name,
             old_index->GetMetadata()->GetIndexType(),
             old_index->GetMetadata()->GetIndexConstraintType(),
             old_index->GetMetadata()->HasUniqueKeys(), new_key_attrs,
             pool_.get(), txn);
       }
-
       std::unique_ptr<executor::ExecutorContext> context(
           new executor::ExecutorContext(txn, {}));
       // Step 3: build column mapping between old table and new table
@@ -1089,10 +1087,12 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid,
       // Step 5: delete all the column(attribute) records in pg_attribute
       // and reinsert them using new schema(column offset needs to change
       // accordingly)
-      catalog::ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
+      auto pg_attributes =
+          catalog_map_[database_oid]->GetColumnCatalog();
+      pg_attributes->DeleteColumns(table_oid, txn);
       oid_t column_offset = 0;
       for (auto new_column : new_schema->GetColumns()) {
-        catalog::ColumnCatalog::GetInstance()->InsertColumn(
+        pg_attributes->InsertColumn(
             table_oid, new_column.GetName(), column_offset,
             new_column.GetOffset(), new_column.GetType(),
             new_column.IsInlined(), new_column.GetConstraints(), pool_.get(),
@@ -1143,20 +1143,10 @@ ResultType Catalog::AddColumn(
  * @return TransactionContext ResultType(SUCCESS or FAILURE)
  */
 
-ResultType Catalog::DropColumn(const std::string &database_name,
-                               const std::string &table_name,
-                               const std::vector<std::string> &columns,
-                               concurrency::TransactionContext *txn) {
-  try {
-    oid_t table_oid = Catalog::GetInstance()
-                          ->GetTableObject(database_name, table_name, txn)
-                          ->GetTableOid();
-    for (std::string name : columns) {
-      catalog::ColumnCatalog::GetInstance()->DeleteColumn(table_oid, name, txn);
-    }
-  } catch (CatalogException &e) {
-    return ResultType::FAILURE;
-  }
+ResultType Catalog::DropColumn(UNUSED_ATTRIBUTE const std::string &database_name,
+                               UNUSED_ATTRIBUTE const std::string &table_name,
+                               UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
+                               UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
   return ResultType::SUCCESS;
 }
 
@@ -1172,6 +1162,7 @@ ResultType Catalog::RenameColumn(const std::string &database_name,
                                  const std::string &table_name,
                                  const std::string &old_name,
                                  const std::string &new_name,
+                                 const std::string &schema_name,
                                  concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Change Column requires transaction.");
@@ -1185,7 +1176,7 @@ ResultType Catalog::RenameColumn(const std::string &database_name,
 
   try {
     // Get table from the name
-    auto table = Catalog::GetInstance()->GetTableWithName(database_name,
+    auto table = Catalog::GetInstance()->GetTableWithName(database_name, schema_name,
                                                           table_name, txn);
     auto schema = table->GetSchema();
 
@@ -1206,10 +1197,15 @@ ResultType Catalog::RenameColumn(const std::string &database_name,
 
     // Modify the pg_table
     oid_t table_oid = Catalog::GetInstance()
-                          ->GetTableObject(database_name, table_name, txn)
+                          ->GetTableObject(database_name, schema_name, table_name, txn)
                           ->GetTableOid();
-    bool res = catalog::ColumnCatalog::GetInstance()->RenameColumn(
-        table_oid, old_name, new_name, txn);
+    oid_t database_oid = Catalog::GetInstance()
+                          ->GetTableObject(database_name, schema_name, table_name, txn)
+                          ->GetDatabaseOid();
+    auto pg_attributes =
+        catalog_map_[database_oid]->GetColumnCatalog();
+    bool res = pg_attributes->RenameColumn(
+        database_oid, table_oid, old_name, new_name, txn);
     if (!res) {
       throw CatalogException("Change Column name failed.");
     }

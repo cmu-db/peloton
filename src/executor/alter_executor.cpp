@@ -60,11 +60,12 @@ bool AlterExecutor::RenameColumn(
     peloton::concurrency::TransactionContext *txn) {
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();
+  auto schema_name = node.GetSchemaName();
   auto new_column_name = node.GetNewName();
   auto old_column_name = node.GetOldName();
 
   ResultType result = catalog::Catalog::GetInstance()->RenameColumn(
-      database_name, table_name, old_column_name, new_column_name, txn);
+      database_name, table_name, old_column_name, new_column_name, schema_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -82,14 +83,14 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
                                peloton::concurrency::TransactionContext *txn) {
   auto database_name = node.GetDatabaseName();
   auto table_name = node.GetTableName();
-
+  auto schema_name = node.GetSchemaName();
   auto table_catalog_obj = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, table_name, txn);
+      database_name, schema_name, table_name, txn);
   oid_t database_oid = table_catalog_obj->GetDatabaseOid();
   oid_t table_oid = table_catalog_obj->GetTableOid();
 
   auto old_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name, txn);
+      database_name, schema_name, table_name, txn);
   auto old_schema = old_table->GetSchema();
   std::vector<oid_t> column_ids;
 
@@ -160,7 +161,7 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
 
   // Copy and replace table content to new schema in catalog
   ResultType result = catalog::Catalog::GetInstance()->AlterTable(
-      database_oid, table_oid, new_schema, txn);
+      database_oid, table_oid, schema_name, new_schema, txn);
   txn->SetResult(result);
 
   switch (txn->GetResult()) {

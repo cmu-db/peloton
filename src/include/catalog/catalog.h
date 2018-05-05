@@ -192,7 +192,7 @@ class Catalog {
   //===--------------------------------------------------------------------===//
   // ALTER TABLE
   //===--------------------------------------------------------------------===//
-  ResultType AlterTable(oid_t database_oid, oid_t table_oid,
+  ResultType AlterTable(oid_t database_oid, oid_t table_oid, const std::string &schema_name,
                         std::unique_ptr<catalog::Schema> &new_schema,
                         concurrency::TransactionContext *txn);
 
@@ -210,6 +210,7 @@ class Catalog {
                           const std::string &table_name,
                           const std::string &old_name,
                           const std::string &new_name,
+                          const std::string &schema_name,
                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
