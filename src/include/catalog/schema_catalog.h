@@ -38,6 +38,9 @@ class SchemaCatalogObject {
   SchemaCatalogObject(executor::LogicalTile *tile,
                       concurrency::TransactionContext *txn);
 
+  SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                      concurrency::TransactionContext *txn);
+
   inline oid_t GetSchemaOid() { return schema_oid; }
   inline const std::string &GetSchemaName() { return schema_name; }
 

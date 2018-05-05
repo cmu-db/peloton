@@ -20,6 +20,8 @@
 #include "storage/database.h"
 #include "storage/tuple.h"
 #include "type/value_factory.h"
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
@@ -30,6 +32,14 @@ SchemaCatalogObject::SchemaCatalogObject(executor::LogicalTile *tile,
                      .GetAs<oid_t>()),
       schema_name(
           tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_NAME).ToString()),
+      txn(txn) {}
+
+SchemaCatalogObject::SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                         concurrency::TransactionContext *txn)
+    : schema_oid(wrapped_tuple.GetValue(SchemaCatalog::ColumnId::SCHEMA_OID)
+                     .GetAs<oid_t>()),
+      schema_name(
+          wrapped_tuple.GetValue(SchemaCatalog::ColumnId::SCHEMA_NAME).ToString()),
       txn(txn) {}
 
 SchemaCatalog::SchemaCatalog(
@@ -76,27 +86,38 @@ bool SchemaCatalog::InsertSchema(oid_t schema_oid,
                                  type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(schema_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
 
-  tuple->SetValue(SchemaCatalog::ColumnId::SCHEMA_OID, val0, pool);
-  tuple->SetValue(SchemaCatalog::ColumnId::SCHEMA_NAME, val1, pool);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val0)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(val1)));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool SchemaCatalog::DeleteSchema(const std::string &schema_name,
                                  concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of schema_name
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *schema_name_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::SCHEMA_NAME);
+  schema_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::SCHEMA_NAME);
+
+
+  expression::AbstractExpression *schema_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
+  expression::AbstractExpression *schema_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, schema_name_expr, schema_name_const_expr);
+
+  return DeleteWithCompiledSeqScan(column_ids, schema_name_equality_expr, txn);
 }
 
 std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
@@ -106,17 +127,26 @@ std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
   }
   // get from pg_namespace, index scan
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of database_name
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *schema_name_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::SCHEMA_NAME);
+  schema_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::SCHEMA_NAME);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+
+  expression::AbstractExpression *schema_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
+  expression::AbstractExpression *schema_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, schema_name_expr, schema_name_const_expr);
+
+
+  auto result_tuples = GetResultWithCompiledSeqScan(column_ids, schema_name_equality_expr, txn);
+
+  if (result_tuples.size() == 1) {
     auto schema_object =
-        std::make_shared<SchemaCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<SchemaCatalogObject>(result_tuples[0], txn);
     // TODO: we don't have cache for schema object right now
     return schema_object;
   }
