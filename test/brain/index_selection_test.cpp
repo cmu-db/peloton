@@ -249,75 +249,75 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   // Table: 1
   // Column: 1
   auto a11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, 1));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, 1));
   // Column: 2
   auto b11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, 2));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, 2));
   // Column: 3
   auto c11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, 3));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, 3));
   // Column: 1, 2
   cols = {1, 2};
   auto ab11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, cols));
   // Column: 1, 3
   cols = {1, 3};
   auto ac11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, cols));
   // Column: 2, 3
   cols = {2, 3};
   auto bc11 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 1, cols));
 
   // Database: 1
   // Table: 2
   // Column: 1
   auto a12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, 1));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, 1));
   // Column: 2
   auto b12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, 2));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, 2));
   // Column: 3
   auto c12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, 3));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, 3));
   // Column: 2, 3
   cols = {2, 3};
   auto bc12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, cols));
   // Column: 1, 3
   cols = {1, 3};
   auto ac12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, cols));
   // Column: 1, 2 3
   cols = {1, 2, 3};
   auto abc12 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(1, 2, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1, 2, cols));
 
   // Database: 2
   // Table: 1
   // Column: 1
   auto a21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, 1));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, 1));
   // Column: 2
   auto b21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, 2));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, 2));
   // Column: 3
   auto c21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, 3));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, 3));
   // Column: 1, 2
   cols = {1, 2};
   auto ab21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, cols));
   // Column: 1, 3
   cols = {1, 3};
   auto ac21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, cols));
   // Column: 1, 2 3
   cols = {1, 2, 3};
   auto abc21 =
-      index_selection.AddConfigurationToPool(brain::IndexObject(2, 1, cols));
+      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 1, cols));
 
-  std::set<std::shared_ptr<brain::IndexObject>> indexes;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> indexes;
 
   indexes = {a11, b11, c11, a12, b12, c12, a21, b21, c21};
   single_column_indexes = {indexes};

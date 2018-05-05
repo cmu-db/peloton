@@ -154,11 +154,10 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
   for (auto query : queries) {
     LOG_DEBUG("Query: %s", query.c_str());
 
-    // Create a unique_ptr to free this pointer at the end of this loop 
+    // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
-    auto stmt_list = parser::PostgresParser::ParseSQLString(query);
-    // auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
-        // parser::PostgresParser::ParseSQLString(query));
+    auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
+        parser::PostgresParser::ParseSQLString(query));
     PELOTON_ASSERT(stmt_list->is_valid);
     // TODO[vamshi]: Only one query for now.
     PELOTON_ASSERT(stmt_list->GetNumStatements() == 1);
@@ -168,7 +167,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     // Release the unique ptr from the stmt list to avoid freeing at the end of
     // this loop iteration.
     auto stmt = stmt_list->PassOutStatement(0);
-    auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.get());
+    auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.release());
     PELOTON_ASSERT(stmt_shared->GetType() != StatementType::INVALID);
 
     // Bind the query
