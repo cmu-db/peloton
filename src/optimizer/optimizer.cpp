@@ -69,11 +69,13 @@ void Optimizer::OptimizeLoop(int root_group_id,
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   metadata_.SetTaskPool(task_stack.get());
 
-  // Apply query rewrite rules
-  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
-                                      RewriteRuleSetName::TRANSITIVE_PREDICATES));
+  if (root_context->metadata->enable_transitive_predicates_) {
+    // Apply query rewrite rules
+    task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+					RewriteRuleSetName::TRANSITIVE_PREDICATES));
 
-  ExecuteTaskStack(*task_stack, root_group_id, root_context);
+    ExecuteTaskStack(*task_stack, root_group_id, root_context);
+  }
 
   // Apply query rewrite rules
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,
