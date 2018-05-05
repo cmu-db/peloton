@@ -41,7 +41,7 @@ void CreateAndLoadTable() {
 void CreateIndex() {
   LOG_WARN("create index");
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(a);");
-  LOG_WARN("create index compelete");
+  LOG_WARN("create index complete");
 }
 
 void InsertTuple() {
@@ -75,15 +75,28 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndInsertTest) {
   std::string error_message;
   int rows_changed;
 
+  LOG_WARN("select");
+  TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
+  result, tuple_descriptor, rows_changed,
+  error_message);
+  LOG_WARN("select complete");
+
+  // Check the return value
+  // Should be: 9999
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("9999", TestingSQLUtil::GetResultValueAsString(result, 0));
+
   std::thread thread1(CreateIndex);
   std::thread thread2(InsertTuple);
 
   thread1.join();
   thread2.join();
 
+  LOG_WARN("select");
   TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
                                   result, tuple_descriptor, rows_changed,
                                   error_message);
+  LOG_WARN("select complete");
 
   // Check the return value
   // Should be: 9999, 10000
@@ -115,9 +128,11 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndUpdateTest) {
   thread1.join();
   thread2.join();
 
+  LOG_WARN("select");
   TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a > 9998;",
                                   result, tuple_descriptor, rows_changed,
                                   error_message);
+  LOG_WARN("select complete");
 
   // Check the return value
   // Should be: 9999, 0
@@ -149,9 +164,11 @@ TEST_F(IndexConcurrencySQLTests, CreateIndexAndDeleteTest) {
   thread1.join();
   thread2.join();
 
+  LOG_WARN("select");
   TestingSQLUtil::ExecuteSQLQuery("SELECT b FROM test WHERE a < 2;",
                                   result, tuple_descriptor, rows_changed,
                                   error_message);
+LOG_WARN("select complete");
 
   // Check the return value
   // Should be: 1
