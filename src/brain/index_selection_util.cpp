@@ -151,13 +151,14 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
       new binder::BindNodeVisitor(txn, database_name));
 
   // Parse and bind every query. Store the results in the workload vector.
-  for (auto it = queries.begin(); it != queries.end(); it++) {
-    auto query = *it;
+  for (auto query : queries) {
     LOG_DEBUG("Query: %s", query.c_str());
 
-    // Create a unique_ptr to free this pointer at the end of this loop iteration.
-    auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
-        parser::PostgresParser::ParseSQLString(query));
+    // Create a unique_ptr to free this pointer at the end of this loop 
+    // iteration.
+    auto stmt_list = parser::PostgresParser::ParseSQLString(query);
+    // auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
+        // parser::PostgresParser::ParseSQLString(query));
     PELOTON_ASSERT(stmt_list->is_valid);
     // TODO[vamshi]: Only one query for now.
     PELOTON_ASSERT(stmt_list->GetNumStatements() == 1);
@@ -166,13 +167,14 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     // these queries will be referenced by multiple objects later.
     // Release the unique ptr from the stmt list to avoid freeing at the end of
     // this loop iteration.
-    auto stmt = std::shared_ptr<parser::SQLStatement>(stmt_list->PassOutStatement(0).get());
-    PELOTON_ASSERT(stmt->GetType() != StatementType::INVALID);
+    auto stmt = stmt_list->PassOutStatement(0);
+    auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.get());
+    PELOTON_ASSERT(stmt_shared->GetType() != StatementType::INVALID);
 
     // Bind the query
-    binder->BindNameToNode(stmt.get());
+    binder->BindNameToNode(stmt_shared.get());
 
-    AddQuery(stmt);
+    AddQuery(stmt_shared);
   }
 
   txn_manager.CommitTransaction(txn);

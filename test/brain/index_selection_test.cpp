@@ -158,9 +158,9 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   query_strs.push_back("SELECT * FROM " + table_name +
                        " WHERE a = 160 and a = 250");
   query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE b = 190 and b = 250");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE a = 190 and b = 250");
+                       " WHERE c = 190 and c = 250");
+  query_strs.push_back("SELECT a,b,c FROM " + table_name +
+                       " WHERE a = 190 and c = 250");
 
   brain::Workload workload(query_strs, database_name);
   EXPECT_EQ(workload.Size(), query_strs.size());
@@ -204,6 +204,27 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // Indexes help reduce the cost of the queries, so they get selected.
   EXPECT_EQ(candidate_config.GetIndexCount(),2);
+
+  // auto admissible_indexes = admissible_config.GetIndexes();
+  // auto candidate_indexes = candidate_config.GetIndexes();
+
+  // Columns - a and c
+  // std::set<oid_t> expected_cols = {0,2};
+
+  // for (auto col : expected_cols) {
+  //   std::set<oid_t> cols = {col};
+  //   bool found = false;
+  //   for (auto index : admissible_indexes) {
+  //     found |= (index->column_oids == cols);
+  //   }
+  //   EXPECT_TRUE(found);
+
+  //   found = false;
+  //   for (auto index : candidate_indexes) {
+  //     found |= (index->column_oids == cols);
+  //   }
+  //   EXPECT_TRUE(found);
+  // }
 
   DropTable(table_name);
   DropDatabase(database_name);
