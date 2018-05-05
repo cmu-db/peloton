@@ -65,6 +65,10 @@ bool DropExecutor::DExecute() {
       result = DropIndex(node, current_txn);
       break;
     }
+    case DropType::SEQUENCE:{
+      result = DropSequence(node, current_txn);
+      break;
+    }
     default: {
       throw NotImplementedException(
           StringUtil::Format("Drop type %d not supported yet.\n", dropType));
@@ -214,6 +218,44 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   }
   return false;
 }
+
+bool DropExecutor::DropSequence(const planner::DropPlan &node,
+                               concurrency::TransactionContext *txn) {
+  std::string database_name = node.GetDatabaseName();
+  std::string schema_name = node.GetSchemaName();
+  std::string table_name = node.GetTableName();
+  std::string trigger_name = node.GetTriggerName();
+
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      database_name, schema_name, table_name, txn);
+  // drop trigger
+  ResultType result =
+      catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(table_object->GetDatabaseOid())
+          ->GetTriggerCatalog()
+          ->DropTrigger(table_object->GetDatabaseOid(),
+                        table_object->GetTableOid(), trigger_name, txn);
+  txn->SetResult(result);
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_DEBUG("Dropping trigger succeeded!");
+
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      oid_t table_id = table_object->GetTableOid();
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
+          table_id);
+    }
+  } else if (txn->GetResult() == ResultType::FAILURE && node.IsMissing()) {
+    txn->SetResult(ResultType::SUCCESS);
+    LOG_TRACE("Dropping trigger Succeeded!");
+  } else if (txn->GetResult() == ResultType::FAILURE && !node.IsMissing()) {
+    LOG_TRACE("Dropping trigger Failed!");
+  } else {
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
+  return false;
+}
+
+
 
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
