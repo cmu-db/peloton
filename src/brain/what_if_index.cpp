@@ -38,7 +38,7 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   for (auto table_name : tables_used) {
     // Load the tables into cache.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-        database_name, table_name, txn);
+        database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
     table_object->EvictAllIndexObjects();
@@ -159,7 +159,7 @@ WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
       new catalog::IndexCatalogObject(index_seq_no++, index_name_oss.str(),
                                       index_obj->table_oid, IndexType::BWTREE,
                                       IndexConstraintType::DEFAULT, false,
-                                      index_obj->column_oids));
+                                      std::vector<oid_t>(index_obj->column_oids.begin(), index_obj->column_oids.end())));
   return index_cat_obj;
 }
 

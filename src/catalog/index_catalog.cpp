@@ -57,9 +57,7 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
 IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
-                                       bool unique_keys, std::vector<oid_t> key_attrs) {
-                                       bool unique_keys,
-                                       std::set<oid_t> key_attrs)
+                                       bool unique_keys, std::vector<oid_t> key_attrs)
     : index_oid(index_oid),
       index_name(index_name),
       table_oid(table_oid),
@@ -68,16 +66,9 @@ IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
       unique_keys(unique_keys),
       key_attrs(std::vector<oid_t>(key_attrs.begin(), key_attrs.end())) {}
 
-IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static IndexCatalog index_catalog{pg_catalog, pool, txn};
-  return &index_catalog;
-}
-
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool,
-                           concurrency::TransactionContext *txn)
+                           UNUSED_ATTRIBUTE type::AbstractPool *pool,
+                           UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_index

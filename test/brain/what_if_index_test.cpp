@@ -36,18 +36,18 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   std::string db_name = DEFAULT_DB_NAME;
   int num_rows = 100;
 
-  TableSchema t({{"a", TupleValueType::INTEGER},
-                 {"b", TupleValueType::INTEGER},
-                 {"c", TupleValueType::INTEGER},
-                 {"d", TupleValueType::INTEGER}});
+  TableSchema schema({{"a", TupleValueType::INTEGER},
+                      {"b", TupleValueType::INTEGER},
+                      {"c", TupleValueType::INTEGER},
+                      {"d", TupleValueType::INTEGER}});
 
-  TestingIndexSuggestionUtil util(db_name);
+  TestingIndexSuggestionUtil testing_util(db_name);
   testing_util.CreateTable(table_name, schema);
-  testing_util.InsertIntoTable(table_name, schema, num_rows)
+  testing_util.InsertIntoTable(table_name, schema, num_rows);
 
-      // Form the query.
-      std::string query("SELECT a from " + table_name +
-                        " WHERE b = 100 and c = 5;");
+  // Form the query.
+  std::string query("SELECT a from " + table_name +
+                    " WHERE b = 100 and c = 5;");
   LOG_INFO("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
@@ -79,7 +79,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   // 2. Get the optimized plan tree with 1 hypothetical indexes (indexes)
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"b"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"b"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
@@ -90,7 +90,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   // 3. Get the optimized plan tree with 2 hypothetical indexes (indexes)
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"c"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"c"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
@@ -113,13 +113,13 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   std::string db_name = DEFAULT_DB_NAME;
   int num_rows = 1000;
 
-  TableSchema t({{"a", TupleValueType::INTEGER},
-                 {"b", TupleValueType::INTEGER},
-                 {"c", TupleValueType::INTEGER},
-                 {"d", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil util(db_name);
+  TableSchema schema({{"a", TupleValueType::INTEGER},
+                      {"b", TupleValueType::INTEGER},
+                      {"c", TupleValueType::INTEGER},
+                      {"d", TupleValueType::INTEGER}});
+  TestingIndexSuggestionUtil testing_util(db_name);
   testing_util.CreateTable(table_name, schema);
-  testing_util.InsertIntoTable(table_name, schema, num_rows)
+  testing_util.InsertIntoTable(table_name, schema, num_rows);
 
       // Form the query
       std::string query("SELECT a from " + table_name +
@@ -153,7 +153,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   // Insert hypothetical catalog objects
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"a", "c"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"a", "c"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
@@ -164,7 +164,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"a", "b"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"a", "b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
@@ -174,7 +174,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"b", "c"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"b", "c"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_3 = result->cost;
@@ -184,7 +184,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"b"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(table_name, {"b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_4 = result->cost;
@@ -202,15 +202,15 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   std::string db_name = DEFAULT_DB_NAME;
   int num_rows = 1000;
 
-  TableSchema t({{"a", TupleValueType::INTEGER},
-                 {"b", TupleValueType::INTEGER},
-                 {"c", TupleValueType::INTEGER},
-                 {"d", TupleValueType::INTEGER},
-                 {"e", TupleValueType::INTEGER},
-                 {"f", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil util(db_name);
+  TableSchema schema({{"a", TupleValueType::INTEGER},
+                      {"b", TupleValueType::INTEGER},
+                      {"c", TupleValueType::INTEGER},
+                      {"d", TupleValueType::INTEGER},
+                      {"e", TupleValueType::INTEGER},
+                      {"f", TupleValueType::INTEGER}});
+  TestingIndexSuggestionUtil testing_util(db_name);
   testing_util.CreateTable(table_name, schema);
-  testing_util.InsertIntoTable(table_name, schema, num_rows)
+  testing_util.InsertIntoTable(table_name, schema, num_rows);
 
       // Form the query.
       std::string query("SELECT a from " + table_name +
@@ -244,8 +244,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
 
   // Insert hypothetical catalog objects
   // Index on cols a, b, c, d, e.
-  config.AddIndexObject(
-      util.CreateHypotheticalIndex(table_name, {"a", "b", "c", "d", "e"}));
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
+      table_name, {"a", "b", "c", "d", "e"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
@@ -257,7 +257,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
 
   config.Clear();
   config.AddIndexObject(
-      util.CreateHypotheticalIndex(table_name, {"a", "c", "d", "f"}));
+      testing_util.CreateHypotheticalIndex(table_name, {"a", "c", "d", "f"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_2 = result->cost;
@@ -268,7 +268,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
 
   config.Clear();
   config.AddIndexObject(
-      util.CreateHypotheticalIndex(table_name, {"a", "b", "d", "e"}));
+      testing_util.CreateHypotheticalIndex(table_name, {"a", "b", "d", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_3 = result->cost;
@@ -279,7 +279,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
 
   config.Clear();
   config.AddIndexObject(
-      util.CreateHypotheticalIndex(table_name, {"b", "c", "e"}));
+      testing_util.CreateHypotheticalIndex(table_name, {"b", "c", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_4 = result->cost;
@@ -290,7 +290,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
 
   config.Clear();
   config.AddIndexObject(
-      util.CreateHypotheticalIndex(table_name, {"b", "c", "d", "e"}));
+      testing_util.CreateHypotheticalIndex(table_name, {"b", "c", "d", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_5 = result->cost;
@@ -300,7 +300,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   EXPECT_GT(cost_without_index, cost_with_index_5);
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"b", "e"}));
+  config.AddIndexObject(
+      testing_util.CreateHypotheticalIndex(table_name, {"b", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_6 = result->cost;
@@ -311,7 +312,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   EXPECT_GT(cost_with_index_4, cost_with_index_6);
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"e"}));
+  config.AddIndexObject(
+      testing_util.CreateHypotheticalIndex(table_name, {"e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_7 = result->cost;
@@ -321,7 +323,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   EXPECT_GT(cost_with_index_7, cost_with_index_6);
 
   config.Clear();
-  config.AddIndexObject(util.CreateHypotheticalIndex(table_name, {"b"}));
+  config.AddIndexObject(
+      testing_util.CreateHypotheticalIndex(table_name, {"b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME);
   auto cost_with_index_8 = result->cost;
