@@ -214,7 +214,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       bool unnamed = false;
       auto status = traffic_cop_->ExecuteStatement(
           traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
+          result_format_, traffic_cop_->GetResult(), thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
@@ -246,7 +246,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
           traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       auto status = traffic_cop_->ExecuteStatement(
           traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
+          result_format_, traffic_cop_->GetResult(), thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
@@ -760,7 +760,6 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(
 
   traffic_cop_->SetStatement(portal->GetStatement());
 
-  auto param_stat = portal->GetParamStat();
   if (traffic_cop_->GetStatement().get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse(
@@ -775,7 +774,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(
 
   auto status = traffic_cop_->ExecuteStatement(
       traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-      param_stat, result_format_, traffic_cop_->GetResult(), thread_id);
+      result_format_, traffic_cop_->GetResult(), thread_id);
   if (traffic_cop_->GetQueuing()) {
     return ProcessResult::PROCESSING;
   }

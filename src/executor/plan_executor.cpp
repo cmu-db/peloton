@@ -21,7 +21,6 @@
 #include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "statistics/backend_stats_context.h"
-#include "statistics/thread_level_stats_collector.h"
 #include "settings/settings_manager.h"
 #include "storage/tuple_iterator.h"
 
@@ -149,14 +148,6 @@ void PlanExecutor::ExecutePlan(
   PELOTON_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
-  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetQueryLatencyMetric()
-        .StartTimer();
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectQueryBegin();
-  }
-
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
 
@@ -173,15 +164,6 @@ void PlanExecutor::ExecutePlan(
     LOG_ERROR("Error thrown during execution: %s",
               result.m_error_message.c_str());
     on_complete(result, {});
-  }
-
-  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsModeType::ENABLE) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetQueryLatencyMetric()
-        .RecordLatency();
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectQueryEnd();
-
   }
 }
 
