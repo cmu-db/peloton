@@ -93,7 +93,6 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
 
   // Create indexes on catalog tables, insert them into pg_index
   // actual index already added in
-    /*
   system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
@@ -159,7 +158,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1", TABLE_CATALOG_OID,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {TableCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
-      */
+
 
   // Insert records(default + pg_catalog namespace) into pg_namespace
   system_catalogs->GetSchemaCatalog()->InsertSchema(
