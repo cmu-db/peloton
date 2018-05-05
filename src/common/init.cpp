@@ -49,7 +49,7 @@ void PelotonInit::Initialize() {
   }
 
   int parallelism = (CONNECTION_THREAD_COUNT + 3) / 4;
-  storage::DataTable::SetDefaultActiveTileGroupCount(parallelism);
+  storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 
   // start epoch.

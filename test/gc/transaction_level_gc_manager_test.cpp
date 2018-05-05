@@ -922,7 +922,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
-  auto table = database->GetTableWithName("test");
+  auto table = database->GetTable(0);
   TestingTransactionUtil::AddSecondaryIndex(table);
 
   EXPECT_EQ(0, GetNumRecycledTuples(table));
