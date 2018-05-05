@@ -89,53 +89,53 @@ class IndexSelectionTest : public PelotonTest {
  * @brief Verify if admissible index count is correct for a given
  * query workload.
  */
-// TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
-//   // Parameters
-//   std::string table_name = "dummy_table";
-//   std::string database_name = DEFAULT_DB_NAME;
-//   size_t max_cols = 2;
-//   size_t enumeration_threshold = 2;
-//   size_t num_indexes = 10;
+TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
+  // Parameters
+  std::string table_name = "dummy_table";
+  std::string database_name = DEFAULT_DB_NAME;
+  size_t max_cols = 2;
+  size_t enumeration_threshold = 2;
+  size_t num_indexes = 10;
 
-//   CreateDatabase(database_name);
-//   CreateTable(table_name);
+  CreateDatabase(database_name);
+  CreateTable(table_name);
 
-//   // Form the query strings
-//   std::vector<std::string> query_strs;
-//   std::vector<int> admissible_indexes;
-//   query_strs.push_back("SELECT * FROM " + table_name +
-//                        " WHERE a < 1 or b > 4 GROUP BY a");
-//   admissible_indexes.push_back(2);
-//   query_strs.push_back("SELECT a, b, c FROM " + table_name +
-//                        " WHERE a < 1 or b > 4 ORDER BY a");
-//   admissible_indexes.push_back(2);
-//   query_strs.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
-//   admissible_indexes.push_back(2);
-//   query_strs.push_back("UPDATE " + table_name +
-//                        " SET a = 45 WHERE a < 1 or b > 4");
-//   admissible_indexes.push_back(2);
+  // Form the query strings
+  std::vector<std::string> query_strs;
+  std::vector<int> admissible_indexes;
+  query_strs.push_back("SELECT * FROM " + table_name +
+                       " WHERE a < 1 or b > 4 GROUP BY a");
+  admissible_indexes.push_back(2);
+  query_strs.push_back("SELECT a, b, c FROM " + table_name +
+                       " WHERE a < 1 or b > 4 ORDER BY a");
+  admissible_indexes.push_back(2);
+  query_strs.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
+  admissible_indexes.push_back(2);
+  query_strs.push_back("UPDATE " + table_name +
+                       " SET a = 45 WHERE a < 1 or b > 4");
+  admissible_indexes.push_back(2);
 
-//   // Create a new workload
-//   brain::Workload workload(query_strs, database_name);
-//   EXPECT_GT(workload.Size(), 0);
+  // Create a new workload
+  brain::Workload workload(query_strs, database_name);
+  EXPECT_GT(workload.Size(), 0);
 
-//   // Verify the admissible indexes.
-//   auto queries = workload.GetQueries();
-//   for (unsigned long i = 0; i < queries.size(); i++) {
-//     brain::Workload w(queries[i], workload.GetDatabaseName());
-//     brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
+  // Verify the admissible indexes.
+  auto queries = workload.GetQueries();
+  for (unsigned long i = 0; i < queries.size(); i++) {
+    brain::Workload w(queries[i], workload.GetDatabaseName());
+    brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
 
-//     brain::IndexConfiguration ic;
-//     is.GetAdmissibleIndexes(queries[i], ic);
-//     LOG_TRACE("Admissible indexes %ld, %s", i, ic.ToString().c_str());
+    brain::IndexConfiguration ic;
+    is.GetAdmissibleIndexes(queries[i], ic);
+    LOG_TRACE("Admissible indexes %ld, %s", i, ic.ToString().c_str());
 
-//     auto indexes = ic.GetIndexes();
-//     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
-//   }
+    auto indexes = ic.GetIndexes();
+    EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
+  }
 
-//   DropTable(table_name);
-//   DropDatabase(database_name);
-// }
+  DropTable(table_name);
+  DropDatabase(database_name);
+}
 
 /**
  * @brief Tests the first iteration of the candidate index generation
@@ -205,26 +205,26 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationSingleColTest) {
   // Indexes help reduce the cost of the queries, so they get selected.
   EXPECT_EQ(candidate_config.GetIndexCount(),2);
 
-  // auto admissible_indexes = admissible_config.GetIndexes();
-  // auto candidate_indexes = candidate_config.GetIndexes();
+  auto admissible_indexes = admissible_config.GetIndexes();
+  auto candidate_indexes = candidate_config.GetIndexes();
 
   // Columns - a and c
-  // std::set<oid_t> expected_cols = {0,2};
+  std::set<oid_t> expected_cols = {0,2};
 
-  // for (auto col : expected_cols) {
-  //   std::set<oid_t> cols = {col};
-  //   bool found = false;
-  //   for (auto index : admissible_indexes) {
-  //     found |= (index->column_oids == cols);
-  //   }
-  //   EXPECT_TRUE(found);
+  for (auto col : expected_cols) {
+    std::set<oid_t> cols = {col};
+    bool found = false;
+    for (auto index : admissible_indexes) {
+      found |= (index->column_oids == cols);
+    }
+    EXPECT_TRUE(found);
 
-  //   found = false;
-  //   for (auto index : candidate_indexes) {
-  //     found |= (index->column_oids == cols);
-  //   }
-  //   EXPECT_TRUE(found);
-  // }
+    found = false;
+    for (auto index : candidate_indexes) {
+      found |= (index->column_oids == cols);
+    }
+    EXPECT_TRUE(found);
+  }
 
   DropTable(table_name);
   DropDatabase(database_name);
