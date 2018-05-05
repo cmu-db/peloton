@@ -79,7 +79,10 @@ class StatsAggregator : public DedicatedThreadTask {
         for (size_t i = 0; i < acc.size(); i++)
           acc[i]->Aggregate(*data_block[i]);
     }
-    for (auto &raw_data : acc) raw_data->WriteToCatalog();
+    for (auto &raw_data : acc) {
+      raw_data->FetchData();
+      raw_data->WriteToCatalog();
+    }
   }
 
  private:

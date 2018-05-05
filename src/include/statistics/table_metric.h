@@ -89,6 +89,11 @@ class TableMetricRawData : public AbstractRawData {
 
   const std::string GetInfo() const override { return "index metric"; }
 
+  /**
+   * Fetch Usage for inlined tile memory and both allocation and usage for varlen pool
+   */
+  void FetchData() override;
+
  private:
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
@@ -107,7 +112,6 @@ class TableMetricRawData : public AbstractRawData {
 
   // should be number of possible CounterType values
   static const size_t NUM_COUNTERS = 8;
-
 
   std::unordered_map<std::pair<oid_t, oid_t>, std::unordered_set<oid_t>, pair_hash>
     modified_tile_group_id_set_;

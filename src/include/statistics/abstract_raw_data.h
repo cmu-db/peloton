@@ -29,6 +29,11 @@ class AbstractRawData : public Printable {
    */
   virtual void WriteToCatalog() = 0;
 
+  /**
+   * Fetch additional data based on current stats collections
+   */
+  virtual void FetchData() {};
+
  protected:
   struct pair_hash {
     template <class T1, class T2>
