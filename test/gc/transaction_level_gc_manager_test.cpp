@@ -270,7 +270,6 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
-  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 
 //  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
@@ -284,6 +283,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
+  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
 //// Scenario:  Failed Insert (due to insert failure (e.g. index rejects insert
