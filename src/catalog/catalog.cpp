@@ -285,7 +285,7 @@ ResultType Catalog::CreateDatabaseWithoutIndex(const std::string &database_name,
   LOG_INFO("begin bootstrap %s", database_name.c_str());
   BootstrapSystemCatalogs(database, txn);
   LOG_INFO("end bootstrap %s", database_name.c_str());
-  catalog_map_[database_oid]->Bootstrap(database_name, txn);
+//  catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
   return ResultType::SUCCESS;
