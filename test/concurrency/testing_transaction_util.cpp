@@ -239,6 +239,11 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
   LOG_INFO("create database %s", database_name.c_str());
 
   txn = txn_manager.BeginTransaction();
+  catalog->CreateSchema(database_name, schema_name, txn);
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("create schema %s", schema_name.c_str());
+
+  txn = txn_manager.BeginTransaction();
   catalog->CreateTable(database_name, schema_name, table_name, std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("create table %s", table_name.c_str());
