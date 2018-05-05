@@ -57,9 +57,6 @@ class TransactionLevelGCManager : public GCManager {
 
     recycle_queues_ = std::make_shared<peloton::CuckooMap<
         oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>>(INITIAL_MAP_SIZE);
-
-    tables_ = std::make_shared<peloton::CuckooMap<
-        oid_t, storage::DataTable *>>(INITIAL_TABLE_SIZE);
   }
 
   virtual ~TransactionLevelGCManager() {}
@@ -121,12 +118,12 @@ class TransactionLevelGCManager : public GCManager {
   virtual void RecycleTransaction(
       concurrency::TransactionContext *txn) override;
 
-  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
+  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
 
   // Returns an unused TupleSlot to GCManager (in the case of an insertion failure)
-  virtual void RecycleUnusedTupleSlot(const ItemPointer &location) override;
+  virtual void RecycleUnusedTupleSlot(storage::DataTable *table, const ItemPointer &location) override;
 
-  virtual void RegisterTable(oid_t table_id, storage::DataTable *table) override {
+  virtual void RegisterTable(oid_t table_id, storage::DataTable *table UNUSED_ATTRIBUTE) override {
 
     // Insert a new entry for the table
     if (recycle_queues_->Contains(table_id)) {
@@ -135,11 +132,9 @@ class TransactionLevelGCManager : public GCManager {
     auto recycle_queue = std::make_shared<
         peloton::LockFreeQueue<ItemPointer>>(RECYCLE_QUEUE_START_SIZE);
     recycle_queues_->Insert(table_id, recycle_queue);
-    tables_->Insert(table_id, table);
   }
 
   virtual void DeregisterTable(const oid_t &table_id) override {
-    tables_->Erase(table_id);
     recycle_queues_->Erase(table_id);
   }
 
@@ -238,9 +233,6 @@ class TransactionLevelGCManager : public GCManager {
   // map of tables to recycle queues
   std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
       peloton::LockFreeQueue<ItemPointer>>>> recycle_queues_;
-
-  // maps a table id to a pointer to that table
-  std::shared_ptr<peloton::CuckooMap<oid_t, storage::DataTable *>> tables_;
 };
 }
 }  // namespace peloton
