@@ -67,7 +67,7 @@ int64_t SequenceCatalogObject::GetNextVal() {
                 ->GetSequenceCatalog()
                 ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
   LOG_DEBUG("status of update pg_sequence: %d", status);
-
+  void(status);
   return result;
 }
 
@@ -238,6 +238,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   PELOTON_ASSERT(result_tiles->size() == 1);
   size_t tuple_count = (*result_tiles)[0]->GetTupleCount();
   PELOTON_ASSERT(tuple_count == 1);
+  (void) tuple_count;
   auto new_sequence = std::make_shared<SequenceCatalogObject>(
       (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>(),
       database_oid,
