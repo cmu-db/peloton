@@ -73,7 +73,7 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
   // Still buggy will be fixed soon.
-  // index_config_->AdjustIndexes(optimal_config_set);
+  index_config_->AdjustIndexes(optimal_config_set);
 }
 
 void LSPIIndexTuner::FindOptimalConfig(

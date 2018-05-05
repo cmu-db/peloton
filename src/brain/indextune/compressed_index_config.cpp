@@ -318,10 +318,6 @@ void CompressedIndexConfigContainer::AdjustIndexes(
 
   const auto add_bitset = new_bitset - ori_bitset;
 
-  txn = txn_manager_->BeginTransaction();
-
-  const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
-
   for (size_t current_bit = add_bitset.find_first();
        current_bit != boost::dynamic_bitset<>::npos;
        current_bit = drop_bitset.find_next(current_bit)) {
@@ -331,10 +327,13 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     // Current bit is not an empty index (empty set)
     if (table_offset_reverse_map_.find(current_bit) ==
         table_offset_reverse_map_.end()) {
+      txn = txn_manager_->BeginTransaction();
+
       // 2. add its corresponding index in catalog
       const auto new_index = GetIndex(current_bit);
-      const auto table_obj = db_obj->GetTableObject(new_index->table_oid);
-      const auto table_name = table_obj->GetTableName();
+      const auto table_name = catalog_->GetDatabaseObject(database_name_, txn)
+                                  ->GetTableObject(new_index->table_oid)
+                                  ->GetTableName();
 
       std::vector<oid_t> index_vector(new_index->column_oids.begin(),
                                       new_index->column_oids.end());
@@ -346,16 +345,22 @@ void CompressedIndexConfigContainer::AdjustIndexes(
       catalog_->CreateIndex(database_name_, table_name, index_vector,
                             temp_index_name, false, IndexType::BWTREE, txn);
 
+      txn_manager_->CommitTransaction(txn);
+
+      txn = txn_manager_->BeginTransaction();
+
       // 3. insert its entry in the maps
-      const auto index_object = table_obj->GetIndexObject(temp_index_name);
+      const auto index_object = catalog_->GetDatabaseObject(database_name_, txn)
+                                    ->GetTableObject(new_index->table_oid)
+                                    ->GetIndexObject(temp_index_name);
       const auto index_oid = index_object->GetIndexOid();
+
+      txn_manager_->CommitTransaction(txn);
 
       index_id_map_[index_oid] = current_bit;
       index_id_reverse_map_[current_bit] = index_oid;
     }
   }
-
-  txn_manager_->CommitTransaction(txn);
 }
 }  // namespace brain
 }  // namespace peloton
