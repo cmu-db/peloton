@@ -477,7 +477,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
       if (current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
-        LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+        LOG_TRACE("Submitting log buffer %p", current_txn->GetLogBuffer());
         /* insert to the queue */
         threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(
                 current_txn->GetLogToken(), current_txn->GetLogBuffer());
