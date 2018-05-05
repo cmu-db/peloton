@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "common/macros.h"
 #include "common/synchronization/spin_latch.h"
@@ -28,16 +28,14 @@ namespace type {
 class EphemeralPool : public AbstractPool {
 public:
 
-  EphemeralPool(){
-
-  }
+  EphemeralPool() : mem_comsume_{0} {}
 
   // Destroy this pool, and all memory it owns.
   ~EphemeralPool(){
 
     pool_lock_.Lock();
-    for(auto location: locations_){
-      delete[] location;
+    for(auto &entry: locations_){
+      delete[] entry.first;
     }
     pool_lock_.Unlock();
 
@@ -50,7 +48,8 @@ public:
     auto location = new char[size];
 
     pool_lock_.Lock();
-    locations_.insert(location);
+    locations_[location] = size;
+    mem_comsume_ += size;
     pool_lock_.Unlock();
 
     return location;
@@ -60,19 +59,39 @@ public:
   void Free(UNUSED_ATTRIBUTE void *ptr) {
     char *cptr = (char *) ptr;
     pool_lock_.Lock();
+    size_t block_size = locations_[cptr];
+    mem_comsume_ -= block_size;
     locations_.erase(cptr);
     pool_lock_.Unlock();
     delete [] cptr;
   }
 
+  /**
+   * @see AbstractPool
+   */
+  inline size_t GetMemoryAlloc () override {
+    return mem_comsume_.load();
+  };
+
+  /**
+   * @see AbstractPool
+   */
+  inline size_t GetMemoryUsage () override {
+      return mem_comsume_.load();
+  };
+
 public:
 
   // Location list
-  std::unordered_set<char*> locations_;
+  std::unordered_map<char*, size_t> locations_;
 
   // Spin lock protecting location list
   common::synchronization::SpinLatch pool_lock_;
 
+  /**
+   * Memory usage as well as allocation
+   */
+  std::atomic<size_t> mem_comsume_;
 };
 
 }  // namespace type

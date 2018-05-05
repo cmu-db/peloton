@@ -33,6 +33,19 @@ public:
   // Returns the provided chunk of memory back into the pool
   virtual void Free(void *ptr) = 0;
 
+
+  /**
+   * Get how many bytes are allocated in the pool
+   * @return bytes that are allocated
+   */
+  virtual size_t GetMemoryAlloc() = 0;
+
+  /**
+   * Get how many bytes are allocated and used in the pool
+   * @return bytes that are used
+   */
+  virtual size_t GetMemoryUsage() = 0;
+
 };
 
 }  // namespace type
