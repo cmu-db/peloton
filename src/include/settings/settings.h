@@ -174,10 +174,11 @@ SETTING_int(port, "Peloton port (default: 15721)", 15721, 1024, 65535, false,
                         "assuming one plan has been found (default 5000)",
                         5000, 1000, 60000, true, true)
 
-                SETTING_string(
-                    cost_calculator,
-                    "The cost calculator (cost model) used by the optimizer",
-                    "CostCalculator", false, false)
+                SETTING_string(cost_calculator,
+                               "The cost calculator (cost model) used by the "
+                               "optimizer. Options currently are "
+                               "(CostCalculator, PostgresCostCalculator)",
+                               "CostCalculator", false, false)
 
     //===----------------------------------------------------------------------===//
     // GENERAL

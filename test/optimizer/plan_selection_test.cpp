@@ -77,7 +77,7 @@ class PlanSelectionTest : public PelotonTest {
   std::shared_ptr<planner::AbstractPlan> PerformTransactionAndGetPlan(
       const std::string &query) {
     auto cost_calculator =
-        AbstractCostCalculatorUniqPtr(new peloton::optimizer::CostCalculator());
+        AbstractCostCalculatorUniqPtr(new peloton::optimizer::CostCalculator);
     return PerformTransactionAndGetPlan(query, std::move(cost_calculator));
   }
 

@@ -13,7 +13,6 @@
 #pragma once
 
 #include "optimizer/abstract_cost_calculator.h"
-#include "optimizer/cost_calculator_factory.h"
 
 namespace peloton {
 namespace optimizer {
@@ -24,40 +23,36 @@ class CostCalculator : public AbstractCostCalculator {
  public:
   CostCalculator(){};
 
-  double CalculateCost(GroupExpression *gexpr, Memo *memo,
-                       concurrency::TransactionContext *txn) override;
+  virtual double CalculateCost(GroupExpression *gexpr, Memo *memo,
+                               concurrency::TransactionContext *txn) override;
 
-  void Visit(const DummyScan *) override;
-  void Visit(const PhysicalSeqScan *) override;
-  void Visit(const PhysicalIndexScan *) override;
-  void Visit(const QueryDerivedScan *) override;
-  void Visit(const PhysicalOrderBy *) override;
-  void Visit(const PhysicalLimit *) override;
-  void Visit(const PhysicalInnerNLJoin *) override;
-  void Visit(const PhysicalLeftNLJoin *) override;
-  void Visit(const PhysicalRightNLJoin *) override;
-  void Visit(const PhysicalOuterNLJoin *) override;
-  void Visit(const PhysicalInnerHashJoin *) override;
-  void Visit(const PhysicalLeftHashJoin *) override;
-  void Visit(const PhysicalRightHashJoin *) override;
-  void Visit(const PhysicalOuterHashJoin *) override;
-  void Visit(const PhysicalInsert *) override;
-  void Visit(const PhysicalInsertSelect *) override;
-  void Visit(const PhysicalDelete *) override;
-  void Visit(const PhysicalUpdate *) override;
-  void Visit(const PhysicalHashGroupBy *) override;
-  void Visit(const PhysicalSortGroupBy *) override;
-  void Visit(const PhysicalDistinct *) override;
-  void Visit(const PhysicalAggregate *) override;
+  virtual void Visit(const DummyScan *) override;
+  virtual void Visit(const PhysicalSeqScan *) override;
+  virtual void Visit(const PhysicalIndexScan *) override;
+  virtual void Visit(const QueryDerivedScan *) override;
+  virtual void Visit(const PhysicalOrderBy *) override;
+  virtual void Visit(const PhysicalLimit *) override;
+  virtual void Visit(const PhysicalInnerNLJoin *) override;
+  virtual void Visit(const PhysicalLeftNLJoin *) override;
+  virtual void Visit(const PhysicalRightNLJoin *) override;
+  virtual void Visit(const PhysicalOuterNLJoin *) override;
+  virtual void Visit(const PhysicalInnerHashJoin *) override;
+  virtual void Visit(const PhysicalLeftHashJoin *) override;
+  virtual void Visit(const PhysicalRightHashJoin *) override;
+  virtual void Visit(const PhysicalOuterHashJoin *) override;
+  virtual void Visit(const PhysicalInsert *) override;
+  virtual void Visit(const PhysicalInsertSelect *) override;
+  virtual void Visit(const PhysicalDelete *) override;
+  virtual void Visit(const PhysicalUpdate *) override;
+  virtual void Visit(const PhysicalHashGroupBy *) override;
+  virtual void Visit(const PhysicalSortGroupBy *) override;
+  virtual void Visit(const PhysicalDistinct *) override;
+  virtual void Visit(const PhysicalAggregate *) override;
 
  private:
   double HashCost();
   double SortCost();
   double GroupByCost();
-
-  /* Checks if keys for a join child only reference one table */
-  bool IsBaseTable(
-      const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys);
 
   GroupExpression *gexpr_;
   Memo *memo_;
@@ -67,5 +62,3 @@ class CostCalculator : public AbstractCostCalculator {
 
 }  // namespace optimizer
 }  // namespace peloton
-
-// REGISTER_COST_MODEL(peloton::optimizer::CostCalculator);
