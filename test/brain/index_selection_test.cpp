@@ -50,13 +50,13 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   size_t enumeration_threshold = 2;
   size_t num_indexes = 10;
 
-  TableSchema schema({{"a", TupleValueType::INTEGER},
-                      {"b", TupleValueType::INTEGER},
-                      {"c", TupleValueType::INTEGER},
-                      {"d", TupleValueType::INTEGER}});
+  TableSchema schema(table_name, {{"a", TupleValueType::INTEGER},
+                                  {"b", TupleValueType::INTEGER},
+                                  {"c", TupleValueType::INTEGER},
+                                  {"d", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil testing_util(database_name);
-  testing_util.CreateTable(table_name, schema);
-  testing_util.InsertIntoTable(table_name, schema, num_tuples);
+  testing_util.CreateTable(schema);
+  testing_util.InsertIntoTable(schema, num_tuples);
 
   // Form the query strings
   std::vector<std::string> query_strs;
@@ -96,31 +96,27 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
  * algorithm i.e. generating single column candidate indexes per query.
  */
 TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
-  std::string table_name = "table1";
   std::string database_name = DEFAULT_DB_NAME;
 
+  // Config knobs
   size_t max_cols = 1;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 10;
   int num_rows = 2000;
 
-  TableSchema schema({{"a", TupleValueType::INTEGER},
-                      {"b", TupleValueType::INTEGER},
-                      {"c", TupleValueType::INTEGER},
-                      {"d", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil testing_util(database_name);
-  testing_util.CreateTable(table_name, schema);
+  auto config =
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::A);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
 
-  // Form the query strings
-  std::vector<std::string> query_strs;
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE a = 160 and a = 250");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE c = 190 and c = 250");
-  query_strs.push_back("SELECT a, b, c FROM " + table_name +
-                       " WHERE a = 190 and c = 250");
-  brain::Workload workload(query_strs, database_name);
-  EXPECT_EQ(workload.Size(), query_strs.size());
+  // Create all the required tables for this workloads.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+  }
+
+  brain::Workload workload(query_strings, database_name);
+  EXPECT_EQ(workload.Size(), query_strings.size());
 
   // Generate candidate configurations.
   // The table doesn't have any tuples, so the admissible indexes won't help
@@ -144,8 +140,10 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   // EXPECT_EQ(candidate_config.GetIndexCount(), 0);
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
 
-  // Insert some tuples into the table.
-  testing_util.InsertIntoTable(table_name, schema, num_rows);
+  // Insert tuples into the tables.
+  for (auto table_schema : table_schemas) {
+    testing_util.InsertIntoTable(table_schema, num_rows);
+  }
 
   candidate_config.Clear();
   admissible_config.Clear();
@@ -165,7 +163,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   auto candidate_indexes = candidate_config.GetIndexes();
 
   // Columns - a and c
-  std::set<oid_t> expected_cols = {0,2};
+  std::set<oid_t> expected_cols = {0, 2};
 
   for (auto col : expected_cols) {
     std::set<oid_t> cols = {col};
@@ -201,92 +199,74 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   // Database: 1
   // Table: 1
   // Column: 1
-  auto a11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, 1));
+  auto a11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, 1));
   // Column: 2
-  auto b11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, 2));
+  auto b11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, 2));
   // Column: 3
-  auto c11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, 3));
+  auto c11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, 3));
   // Column: 1, 2
   cols = {1, 2};
-  auto ab11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, cols));
+  auto ab11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, cols));
   // Column: 1, 3
   cols = {1, 3};
-  auto ac11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, cols));
+  auto ac11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, cols));
   // Column: 2, 3
   cols = {2, 3};
-  auto bc11 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          1, cols));
+  auto bc11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, cols));
 
   // Database: 1
   // Table: 2
   // Column: 1
-  auto a12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, 1));
+  auto a12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, 1));
   // Column: 2
-  auto b12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, 2));
+  auto b12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, 2));
   // Column: 3
-  auto c12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, 3));
+  auto c12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, 3));
   // Column: 2, 3
   cols = {2, 3};
-  auto bc12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, cols));
+  auto bc12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
   // Column: 1, 3
   cols = {1, 3};
-  auto ac12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, cols));
+  auto ac12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
   // Column: 1, 2 3
   cols = {1, 2, 3};
-  auto abc12 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(1,
-          2, cols));
+  auto abc12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
 
   // Database: 2
   // Table: 1
   // Column: 1
-  auto a21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2,
-          1, 1));
+  auto a21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, 1));
   // Column: 2
-  auto b21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2,
-          1, 2));
+  auto b21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, 2));
   // Column: 3
-  auto c21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2,
-          1, 3));
+  auto c21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, 3));
   // Column: 1, 2
   cols = {1, 2};
-  auto ab21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2,
-          1, cols));
+  auto ab21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, cols));
   // Column: 1, 3
   cols = {1, 3};
-  auto ac21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2,
-          1, cols));
+  auto ac21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, cols));
   // Column: 1, 2 3
   cols = {1, 2, 3};
-  auto abc21 =
-      index_selection.AddConfigurationToPool(brain::HypotheticalIndexObject(2, 
-          1, cols));
+  auto abc21 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(2, 1, cols));
 
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> indexes;
 
@@ -325,44 +305,35 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * workload.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest) {
-  std::string table_name = "dummy_table";
   std::string database_name = DEFAULT_DB_NAME;
 
-  int num_rows = 2000;                   // number of rows to be inserted.
+  int num_rows = 2000;  // number of rows to be inserted.
 
-  TableSchema schema({{"a", TupleValueType::INTEGER},
-                      {"b", TupleValueType::INTEGER},
-                      {"c", TupleValueType::INTEGER},
-                      {"d", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil testing_util(database_name);
-  testing_util.CreateTable(table_name, schema);
+  auto config =
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::B);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
 
-  // Form the query strings
-  std::vector<std::string> query_strs;
-  query_strs.push_back("SELECT * FROM " + table_name + " WHERE a = 160");
-  query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 190");
-  query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE a = 190 and b = 250");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE b = 190 and c = 250");
-  brain::Workload workload(query_strs, database_name);
-  EXPECT_EQ(workload.Size(), query_strs.size());
+  // Create and populate tables.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+    testing_util.InsertIntoTable(table_schema, num_rows);
+  }w
 
-  // Insert some dummy tuples into the table.
-  testing_util.InsertIntoTable(table_name, schema, num_rows);
+  brain::Workload workload(query_strings, database_name);
+  EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
-
   /** Test 1
    * Choose only 1 index with 1 column
    * it should choose {B}
    */
-  size_t max_index_cols = 1;             // multi-column index limit
-  size_t enumeration_threshold = 2;      // naive enumeration threshold
-  size_t num_indexes = 1;                // top num_indexes will be returned.
+  size_t max_index_cols = 1;         // multi-column index limit
+  size_t enumeration_threshold = 2;  // naive enumeration threshold
+  size_t num_indexes = 1;            // top num_indexes will be returned.
   brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                           num_indexes};
+                              num_indexes};
 
   is.GetBestIndexes(best_config);
 
@@ -381,7 +352,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 2;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -399,7 +370,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 1;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -417,7 +388,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 2;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -436,7 +407,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 4;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -455,7 +426,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 1;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -475,7 +446,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 4;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -484,43 +455,33 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   EXPECT_EQ(best_config.GetIndexCount(), 2);
 
   EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}, {1, 2}}));
-
 }
 
 /**
  * @brief end-to-end test which takes in a workload of queries
  * and spits out the set of indexes that are the best ones for more
- * complex workloads. 
+ * complex workloads.
  */
 TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
-  std::string table_name = "dummy_table";
   std::string database_name = DEFAULT_DB_NAME;
+  int num_rows = 2000;  // number of rows to be inserted.
 
-  int num_rows = 2000;                   // number of rows to be inserted.
-
-  TableSchema schema({{"a", TupleValueType::INTEGER},
-                      {"b", TupleValueType::INTEGER},
-                      {"c", TupleValueType::INTEGER},
-                      {"d", TupleValueType::INTEGER}});
   TestingIndexSuggestionUtil testing_util(database_name);
-  testing_util.CreateTable(table_name, schema);
+  auto config =
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::C);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
 
-  // Form the query strings
-  std::vector<std::string> query_strs;
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE a = 160 and b = 199 and c = 1009");
-  query_strs.push_back("SELECT * FROM " + table_name + 
-                       " WHERE b = 190 and a = 677 and c = 987");
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE b = 81 and c = 123 and a = 122");
-  brain::Workload workload(query_strs, database_name);
-  EXPECT_EQ(workload.Size(), query_strs.size());
+  // Create and populate tables.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+    testing_util.InsertIntoTable(table_schema, num_rows);
+  }
 
-  // Insert some dummy tuples into the table.
-  testing_util.InsertIntoTable(table_name, schema, num_rows);
+  brain::Workload workload(query_strings, database_name);
+  EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
-
   /** Test 1
    * Choose only 1 index with up to 3 column
    * it should choose {ABC}
@@ -529,7 +490,7 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   size_t enumeration_threshold = 2;
   size_t num_indexes = 1;
   brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                           num_indexes};
+                              num_indexes};
 
   is.GetBestIndexes(best_config);
 
@@ -541,10 +502,6 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   // TODO[Siva]: This test is broken
   // EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1, 2}}));
 
-
-  query_strs.push_back("SELECT * FROM " + table_name +
-                       " WHERE b = 81 and c = 123 and d = 122");
-
   /** Test 2
    * Choose only 2 indexes with up to 3 column
    * it should choose {ABC} and {BCD}
@@ -553,7 +510,7 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   enumeration_threshold = 2;
   num_indexes = 2;
   is = {workload, max_index_cols, enumeration_threshold, num_indexes};
-                           
+
   is.GetBestIndexes(best_config);
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
@@ -562,7 +519,8 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   EXPECT_EQ(best_config.GetIndexCount(), 2);
 
   // TODO[Siva]: This test is broken
-  // EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1, 2}, {1, 2, 3}}));
+  // EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1, 2}, {1, 2,
+  // 3}}));
 }
 
 }  // namespace test

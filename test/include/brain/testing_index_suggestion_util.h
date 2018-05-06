@@ -25,20 +25,29 @@ namespace index_suggestion {
 enum TupleValueType { INTEGER, FLOAT, STRING };
 
 /**
+ * Represents workload types used in the test cases.
+ */
+enum QueryStringsWorkloadType { A = 1, B = 2, C = 3, D = 4 };
+
+/**
  * Represents the schema for creating tables in the test cases.
  */
 class TableSchema {
  public:
   std::vector<std::pair<std::string, TupleValueType>> cols;
   std::unordered_map<std::string, long> col_offset_map;
+  std::string table_name;
 
-  TableSchema(std::vector<std::pair<std::string, TupleValueType>> columns) {
+  TableSchema(){};
+  TableSchema(std::string table_name,
+              std::vector<std::pair<std::string, TupleValueType>> columns) {
     auto i = 0UL;
     for (auto col : columns) {
       cols.push_back(col);
       col_offset_map[col.first] = i;
       i++;
     }
+    this->table_name = table_name;
   }
 };
 
@@ -60,23 +69,20 @@ class TestingIndexSuggestionUtil {
 
   /**
    * Inserts specified number of tuples.
-   * @param table_name
    * @param schema schema of the table to be created
    * @param num_tuples number of tuples to be inserted with random values.
    */
-  void InsertIntoTable(std::string table_name, TableSchema schema,
-                       long num_tuples);
+  void InsertIntoTable(TableSchema schema, long num_tuples);
 
   /**
    * Create a new table.s
-   * @param table_name
    * @param schema
    */
-  void CreateTable(std::string table_name, TableSchema schema);
-
+  void CreateTable(TableSchema schema);
 
   /**
-   * Factory method to create a hypothetical index object. The returned object can
+   * Factory method to create a hypothetical index object. The returned object
+   * can
    * be used
    * in the catalog or catalog cache.
    * @param table_name
@@ -86,7 +92,6 @@ class TestingIndexSuggestionUtil {
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols);
 
-  
   /**
    * Check whether the given indexes are the same as the expected ones
    * @param chosen_indexes
@@ -94,6 +99,16 @@ class TestingIndexSuggestionUtil {
    */
   bool CheckIndexes(brain::IndexConfiguration chosen_indexes,
                     std::set<std::set<oid_t>> expected_indexes);
+
+  /**
+   * Return a micro workload
+   * This function returns queries and the respective table schemas
+   * User of this function must create all of the returned tables.
+   * @param workload_type type of the workload to be returned
+   * @return workload query strings along with the table schema
+   */
+  std::pair<std::vector<TableSchema>, std::vector<std::string>>
+  GetQueryStringsWorkload(QueryStringsWorkloadType workload_type);
 
  private:
   std::string database_name_;

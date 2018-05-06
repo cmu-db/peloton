@@ -36,24 +36,88 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
   DropDatabase();
 }
 
+std::pair<std::vector<TableSchema>, std::vector<std::string>>
+TestingIndexSuggestionUtil::GetQueryStringsWorkload(
+    QueryStringsWorkloadType type) {
+  std::vector<std::string> query_strs;
+  std::vector<TableSchema> table_schemas;
+  std::string table_name;
+  // Procedure to add a new workload:
+  // 1. Create all the table schemas required for the workload queries.
+  // 2. Create all the required workload query strings.
+  switch (type) {
+    case A:
+      table_name = "dummy1";
+      table_schemas.emplace_back(
+          table_name,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGER},
+              {"c", TupleValueType::INTEGER},
+              {"d", TupleValueType::INTEGER}});
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE a = 160 and a = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE c = 190 and c = 250");
+      query_strs.push_back("SELECT a, b, c FROM " + table_name +
+                           " WHERE a = 190 and c = 250");
+      break;
+    case B:
+      table_name = "dummy2";
+      table_schemas.emplace_back(
+          table_name,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGER},
+              {"c", TupleValueType::INTEGER},
+              {"d", TupleValueType::INTEGER}});
+      query_strs.push_back("SELECT * FROM " + table_name + " WHERE a = 160");
+      query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 190");
+      query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE a = 190 and b = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 190 and c = 250");
+      break;
+    case C:
+      table_name = "dummy3";
+      table_schemas.emplace_back(
+          table_name,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGER},
+              {"c", TupleValueType::INTEGER},
+              {"d", TupleValueType::INTEGER}});
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE a = 160 and b = 199 and c = 1009");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 190 and a = 677 and c = 987");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 81 and c = 123 and a = 122");
+      break;
+    default:
+      PELOTON_ASSERT(false);
+  }
+  return std::make_pair(table_schemas, query_strs);
+}
+
 // Creates a new table with the provided schema.
-void TestingIndexSuggestionUtil::CreateTable(std::string table_name,
-                                             TableSchema schema) {
+void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
   // Create table.
   std::ostringstream s_stream;
-  s_stream << "CREATE TABLE " << table_name << " (";
+  s_stream << "CREATE TABLE " << schema.table_name << " (";
   for (auto i = 0UL; i < schema.cols.size(); i++) {
     s_stream << schema.cols[i].first;
     s_stream << " ";
     switch (schema.cols[i].second) {
       case FLOAT:
-        s_stream << "VARCHAR";
+        s_stream << "FLOAT";
         break;
       case INTEGER:
         s_stream << "INT";
         break;
       case STRING:
-        s_stream << "STR";
+        s_stream << "VARCHAR";
         break;
       default:
         PELOTON_ASSERT(false);
@@ -70,12 +134,12 @@ void TestingIndexSuggestionUtil::CreateTable(std::string table_name,
 bool TestingIndexSuggestionUtil::CheckIndexes(
     brain::IndexConfiguration chosen_indexes,
     std::set<std::set<oid_t>> expected_indexes) {
-  if(chosen_indexes.GetIndexCount() != expected_indexes.size()) return false;
+  if (chosen_indexes.GetIndexCount() != expected_indexes.size()) return false;
 
   for (auto expected_columns : expected_indexes) {
     bool found = false;
     for (auto chosen_index : chosen_indexes.GetIndexes()) {
-      if(chosen_index->column_oids == expected_columns) {
+      if (chosen_index->column_oids == expected_columns) {
         found = true;
         break;
       }
@@ -86,13 +150,12 @@ bool TestingIndexSuggestionUtil::CheckIndexes(
 }
 
 // Inserts specified number of tuples into the table with random values.
-void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name,
-                                                 TableSchema schema,
+void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
                                                  long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;
-    oss << "INSERT INTO " << table_name << " VALUES (";
+    oss << "INSERT INTO " << schema.table_name << " VALUES (";
     for (auto i = 0UL; i < schema.cols.size(); i++) {
       auto type = schema.cols[i].second;
       switch (type) {
