@@ -18,7 +18,6 @@
 
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
-#include "statistics/access_metric.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -127,78 +126,6 @@ class IndexMetric : public AbstractMetric<IndexMetricRawData> {
                               size_t bytes) {
     GetRawData()->DecrementIndexMemoryUsage(db_index_id, bytes);
   };
-};
-/**
- * Metric of index accesses and other index-specific metrics.
- */
-class IndexMetricOld : public AbstractMetricOld {
- public:
-  typedef std::string IndexKey;
-
-  IndexMetricOld(MetricType type, oid_t database_id, oid_t table_id,
-                 oid_t index_id);
-
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
-  // Returns a metric containing the counts of all
-  // accesses to this index
-  inline AccessMetric &GetIndexAccess() { return index_access_; }
-
-  inline std::string GetName() { return index_name_; }
-
-  inline oid_t GetDatabaseId() { return database_id_; }
-
-  inline oid_t GetTableId() { return table_id_; }
-
-  inline oid_t GetIndexId() { return index_id_; }
-
-  //===--------------------------------------------------------------------===//
-  // HELPER METHODS
-  //===--------------------------------------------------------------------===//
-
-  inline void Reset() { index_access_.Reset(); }
-
-  inline bool operator==(const IndexMetricOld &other) {
-    return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
-           index_id_ == other.index_id_ && index_name_ == other.index_name_ &&
-           index_access_ == other.index_access_;
-  }
-
-  inline bool operator!=(const IndexMetricOld &other) {
-    return !(*this == other);
-  }
-
-  void Aggregate(AbstractMetricOld &source);
-
-  inline const std::string GetInfo() const {
-    std::stringstream ss;
-    ss << "INDEXES: " << std::endl;
-    ss << index_name_ << "(OID=" << index_id_ << "): ";
-    ss << index_access_.GetInfo();
-    return ss.str();
-  }
-
- private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  // The database ID of this index
-  oid_t database_id_;
-
-  // The table ID of this index
-  oid_t table_id_;
-
-  // The ID of this index
-  oid_t index_id_;
-
-  // The name of this index
-  std::string index_name_;
-
-  // Counts the number of index entries accessed
-  AccessMetric index_access_{MetricType::ACCESS};
 };
 
 }  // namespace stats

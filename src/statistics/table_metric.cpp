@@ -4,7 +4,7 @@
 //
 // table_metric.cpp
 //
-// Identification: src/include/statistics/table_metric.cpp
+// Identification: src/statistics/table_metric.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -118,25 +118,5 @@ void TableMetricRawData::WriteToCatalog() {
   txn_manager.CommitTransaction(txn);
 }
 
-TableMetricOld::TableMetricOld(MetricType type, oid_t database_id,
-                               oid_t table_id)
-    : AbstractMetricOld(type), database_id_(database_id), table_id_(table_id) {
-  try {
-    auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
-        database_id, table_id);
-    table_name_ = table->GetName();
-    for (auto &ch : table_name_) ch = toupper(ch);
-  } catch (CatalogException &e) {
-    table_name_ = "";
-  }
-}
-
-void TableMetricOld::Aggregate(AbstractMetricOld &source) {
-  assert(source.GetType() == MetricType::TABLE);
-
-  TableMetricOld &table_metric = static_cast<TableMetricOld &>(source);
-  table_access_.Aggregate(table_metric.GetTableAccess());
-  table_memory_.Aggregate(table_metric.GetTableMemory());
-}
 }  // namespace stats
 }  // namespace peloton

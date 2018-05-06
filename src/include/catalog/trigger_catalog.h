@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// query_metrics_catalog.h
+// trigger_catalog.h
 //
 // Identification: src/include/catalog/trigger_catalog.h
 //

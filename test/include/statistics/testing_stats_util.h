@@ -29,7 +29,6 @@
 #include "index/index_factory.h"
 #include "parser/postgresparser.h"
 #include "planner/insert_plan.h"
-#include "statistics/query_metric.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "storage/table_factory.h"

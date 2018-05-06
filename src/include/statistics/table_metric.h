@@ -18,8 +18,6 @@
 #include "catalog/manager.h"
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
-#include "statistics/access_metric.h"
-#include "statistics/memory_metric.h"
 #include "storage/tile_group.h"
 #include "util/string_util.h"
 
@@ -167,82 +165,6 @@ class TableMetric : public AbstractMetric<TableMetricRawData> {
     return std::pair<oid_t, oid_t>(tile_group->GetDatabaseId(),
                                    tile_group->GetTableId());
   }
-};
-/**
- * Metric for the access and memory of a table
- */
-class TableMetricOld : public AbstractMetricOld {
- public:
-  typedef std::string TableKey;
-
-  TableMetricOld(MetricType type, oid_t database_id, oid_t table_id);
-
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
-  inline AccessMetric &GetTableAccess() { return table_access_; }
-
-  inline MemoryMetric &GetTableMemory() { return table_memory_; }
-
-  inline std::string GetName() { return table_name_; }
-
-  inline oid_t GetDatabaseId() { return database_id_; }
-
-  inline oid_t GetTableId() { return table_id_; }
-
-  //===--------------------------------------------------------------------===//
-  // HELPER FUNCTIONS
-  //===--------------------------------------------------------------------===//
-
-  inline void Reset() {
-    table_access_.Reset();
-    table_memory_.Reset();
-  }
-
-  inline bool operator==(const TableMetricOld &other) {
-    return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
-           table_name_ == other.table_name_ &&
-           table_access_ == other.table_access_;
-  }
-
-  inline bool operator!=(const TableMetricOld &other) {
-    return !(*this == other);
-  }
-
-  void Aggregate(AbstractMetricOld &source);
-
-  inline const std::string GetInfo() const {
-    std::stringstream ss;
-    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
-    ss << "  TABLE " << table_name_ << "(OID=";
-    ss << table_id_ << ")" << std::endl;
-    ;
-    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
-    ss << table_access_.GetInfo() << std::endl;
-    ss << table_memory_.GetInfo() << std::endl;
-    return ss.str();
-  }
-
- private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  // The database ID of this table
-  oid_t database_id_;
-
-  // The ID of this table
-  oid_t table_id_;
-
-  // The name of this table
-  std::string table_name_;
-
-  // The number of tuple accesses
-  AccessMetric table_access_{MetricType::ACCESS};
-
-  // The memory stats of table
-  MemoryMetric table_memory_{MetricType::MEMORY};
 };
 
 }  // namespace stats

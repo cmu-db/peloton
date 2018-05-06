@@ -16,7 +16,6 @@
 #include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/harness.h"
 #include "common/logger.h"

@@ -424,7 +424,6 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
 
   // Get statement info generated in PARSE message
   std::shared_ptr<Statement> statement;
-  stats::QueryMetric::QueryParamBuf param_type_buf;
 
   statement = statement_cache_.GetStatement(statement_name);
 
@@ -449,14 +448,6 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     skipped_stmt_ = true;
     skipped_query_string_ = "";
     return;
-  }
-
-  // UNNAMED STATEMENT
-  if (statement_name.empty()) {
-    param_type_buf = unnamed_stmt_param_types_;
-    // NAMED STATEMENT
-  } else {
-    param_type_buf = statement_param_types_[statement_name];
   }
 
   const auto &query_string = statement->GetQueryString();
@@ -516,7 +507,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   // Construct a portal.
   // Notice that this will move param_values so no value will be left there.
   auto portal =
-      new Portal(portal_name, statement, std::move(param_values), param_stat);
+      new Portal(portal_name, statement, std::move(param_values));
   std::shared_ptr<Portal> portal_reference(portal);
 
   auto itr = portals_.find(portal_name);

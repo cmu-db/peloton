@@ -4,7 +4,7 @@
 //
 // abstract_metric.h
 //
-// Identification: src/inlcude/statistics/abstract_metric.h
+// Identification: src/include/statistics/abstract_metric.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -23,20 +23,6 @@
 
 namespace peloton {
 namespace stats {
-// TODO(tianyu): Remove this
-class AbstractMetricOld : public Printable {
- public:
-  AbstractMetricOld(MetricType type_);
-  virtual ~AbstractMetricOld();
-  const inline MetricType &GetType() const { return type_; }
-  virtual void Reset() = 0;
-  virtual const std::string GetInfo() const = 0;
-  virtual void Aggregate(AbstractMetricOld &source) = 0;
-
- private:
-  // The type this metric belongs to
-  MetricType type_;
-};
 /**
  * @brief Interface representing a metric.
  * A metric is defined to be some piece of logic that processes events generated

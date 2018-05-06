@@ -18,7 +18,6 @@
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager.h"
 #include "settings/settings_manager.h"
-#include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
 
 namespace peloton {

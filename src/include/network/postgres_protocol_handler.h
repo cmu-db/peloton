@@ -218,16 +218,6 @@ class PostgresProtocolHandler : public ProtocolHandler {
   // packets ready for read
   size_t pkt_cntr_;
 
-  // Manage parameter types for unnamed statement
-  stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
-
-  // Parameter types for statements
-  // Warning: the data in the param buffer becomes invalid when the value
-  // stored
-  // in stat table is destroyed
-  std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
-      statement_param_types_;
-
   std::unordered_map<std::string, std::string> cmdline_options_;
 
   //===--------------------------------------------------------------------===//
