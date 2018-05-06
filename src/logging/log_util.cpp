@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/logging_util.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_til.cpp
+//
+// Identification: src/logging/log_til.cpp
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <sys/stat.h>
 #include <dirent.h>

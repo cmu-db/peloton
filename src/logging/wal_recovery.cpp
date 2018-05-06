@@ -1,7 +1,18 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_recovery.cpp
+//
+// Identification: src/logging/wal_recovery.cpp
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
-#include <include/catalog/catalog.h>
 #include "index/index_factory.h"
 
+#include "catalog/catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
