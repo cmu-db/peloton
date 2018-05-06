@@ -13,6 +13,7 @@
 #pragma once
 
 #include "optimizer/abstract_cost_calculator.h"
+#include "optimizer/cost_calculator_factory.h"
 
 namespace peloton {
 namespace optimizer {
@@ -55,7 +56,8 @@ class CostCalculator : public AbstractCostCalculator {
   double GroupByCost();
 
   /* Checks if keys for a join child only reference one table */
-  bool IsBaseTable(const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys);
+  bool IsBaseTable(
+      const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys);
 
   GroupExpression *gexpr_;
   Memo *memo_;
@@ -65,3 +67,5 @@ class CostCalculator : public AbstractCostCalculator {
 
 }  // namespace optimizer
 }  // namespace peloton
+
+// REGISTER_COST_MODEL(peloton::optimizer::CostCalculator);

@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by nate on 4/8/18.
+//                         Peloton
 //
+// abstract_cost_calculator.h
+//
+// Identification: src/include/optimizer/abstract_cost_calculator.h
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

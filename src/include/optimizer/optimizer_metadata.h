@@ -14,6 +14,7 @@
 
 #include "common/timer.h"
 #include "optimizer/cost_calculator.h"
+#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/memo.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/rule.h"
@@ -28,13 +29,16 @@ namespace optimizer {
 class OptimizerTaskPool;
 class RuleSet;
 
+using SettingsManager = settings::SettingsManager;
+using SettingId = settings::SettingId;
+
 class OptimizerMetadata {
  public:
   OptimizerMetadata()
-      : cost_calculator(
-            std::unique_ptr<AbstractCostCalculator>(new CostCalculator())),
-        timeout_limit(settings::SettingsManager::GetInt(
-            settings::SettingId::task_execution_timeout)),
+      : cost_calculator(CostCalculatorFactory::CreateCostCalculator(
+            SettingsManager::GetString(SettingId::cost_calculator))),
+        timeout_limit(
+            SettingsManager::GetInt(SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
 
   OptimizerMetadata(std::unique_ptr<AbstractCostCalculator> cost_calculator)
