@@ -37,6 +37,7 @@
 #include "optimizer/operators.h"
 #include "optimizer/rule_impls.h"
 #include "traffic_cop/traffic_cop.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace test {

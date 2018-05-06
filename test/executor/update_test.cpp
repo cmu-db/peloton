@@ -42,6 +42,7 @@
 #include "planner/plan_util.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "traffic_cop/traffic_cop.h"

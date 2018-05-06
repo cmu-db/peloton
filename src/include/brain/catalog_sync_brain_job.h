@@ -22,7 +22,6 @@
 #include "catalog/schema.h"
 #include "type/value_factory.h"
 #include "catalog/query_history_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 
 namespace peloton {
 namespace brain {

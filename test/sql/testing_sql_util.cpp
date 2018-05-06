@@ -79,7 +79,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+                                              result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -174,7 +174,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+                                              result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -213,7 +213,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+                                              result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();

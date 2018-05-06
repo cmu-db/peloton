@@ -24,6 +24,7 @@
 #include "parser/postgresparser.h"
 #include "planner/drop_plan.h"
 #include "planner/plan_util.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace test {

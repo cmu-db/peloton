@@ -22,6 +22,7 @@
 #include "expression/constant_value_expression.h"
 #include "parser/insert_statement.h"
 #include "planner/insert_plan.h"
+#include "storage/data_table.h"
 #include "type/value_factory.h"
 
 namespace peloton {

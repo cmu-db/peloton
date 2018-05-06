@@ -51,9 +51,6 @@ class TestingStatsUtil {
 
   static void CreateTable(bool has_primary_key = true);
 
-  static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams(
-      std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
-      std::shared_ptr<uchar> &val_buf);
 
   static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
                                                   std::string val = "hello");

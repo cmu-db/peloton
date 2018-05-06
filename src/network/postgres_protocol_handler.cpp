@@ -502,8 +502,6 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     // executor context.
   }
 
-  std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-
   // Construct a portal.
   // Notice that this will move param_values so no value will be left there.
   auto portal =

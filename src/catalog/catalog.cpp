@@ -20,7 +20,6 @@
 #include "catalog/language_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/query_history_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
@@ -153,7 +152,6 @@ void Catalog::Bootstrap() {
   catalogs_.push_back(DatabaseMetricsCatalog::GetInstance(txn));
   catalogs_.push_back(TableMetricsCatalog::GetInstance(txn));
   catalogs_.push_back(IndexMetricsCatalog::GetInstance(txn));
-  catalogs_.push_back(QueryMetricsCatalog::GetInstance(txn));
   // TODO(tianyu): WTF?
   catalogs_.push_back(&SettingsCatalog::GetInstance(txn));
   catalogs_.push_back(&TriggerCatalog::GetInstance(txn));

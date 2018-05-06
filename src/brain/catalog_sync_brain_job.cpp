@@ -32,9 +32,6 @@ std::string CatalogSyncBrainJob::FetchCatalogQuery(catalog::AbstractCatalog *cat
   if (catalog->GetName() == QUERY_HISTORY_CATALOG_NAME)
     return "SELECT * FROM pg_catalog." + std::string(QUERY_HISTORY_CATALOG_NAME)
         + " WHERE timestamp > " + std::to_string(last_history_timestamp_);
-  else if (catalog->GetName() == QUERY_METRICS_CATALOG_NAME)
-    return "SELECT * FROM pg_catalog." + std::string(QUERY_METRICS_CATALOG_NAME)
-        + " WHERE time_stamp > " + std::to_string(last_metric_timestamp_);
   else
     return "SELECT * FROM pg_catalog." + catalog->GetName();
 }
@@ -45,10 +42,6 @@ void CatalogSyncBrainJob::UpdateTimestamp(catalog::AbstractCatalog *catalog,
       && field.name() == std::string("timestamp"))
     last_history_timestamp_ =
         std::max(last_history_timestamp_, field.as<int64_t>());
-  if (catalog->GetName() == QUERY_METRICS_CATALOG_NAME
-      && field.name() == std::string("time_stamp"))
-    last_metric_timestamp_ =
-        std::max(last_metric_timestamp_, field.as<int64_t>());
 }
 
 void CatalogSyncBrainJob::SyncCatalog(catalog::AbstractCatalog *catalog,

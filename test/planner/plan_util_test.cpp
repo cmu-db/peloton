@@ -20,6 +20,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
 #include "parser/postgresparser.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 
 #include "planner/plan_util.h"

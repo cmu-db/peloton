@@ -20,7 +20,7 @@
 #include "planner/create_plan.h"
 #include "planner/order_by_plan.h"
 #include "sql/testing_sql_util.h"
-
+#include "storage/data_table.h"
 using std::vector;
 using std::unordered_set;
 using std::string;

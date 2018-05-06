@@ -78,34 +78,6 @@ storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
-std::shared_ptr<stats::QueryMetric::QueryParams>
-TestingStatsUtil::GetQueryParams(std::shared_ptr<uchar> &type_buf,
-                                 std::shared_ptr<uchar> &format_buf,
-                                 std::shared_ptr<uchar> &val_buf) {
-  // Type
-  uchar *type_buf_data = new uchar[1];
-  type_buf_data[0] = 'x';
-  type_buf.reset(type_buf_data);
-  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
-
-  // Format
-  uchar *format_buf_data = new uchar[1];
-  format_buf_data[0] = 'y';
-  format_buf.reset(format_buf_data);
-  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
-
-  // Value
-  uchar *val_buf_data = new uchar[1];
-  val_buf_data[0] = 'z';
-  val_buf.reset(val_buf_data);
-  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
-
-  // Construct a query param object
-  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
-      new stats::QueryMetric::QueryParams(format, type, val, 1));
-  return query_params;
-}
-
 void TestingStatsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 

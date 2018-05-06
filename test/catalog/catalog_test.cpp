@@ -20,6 +20,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "storage/storage_manager.h"
+#include "storage/database.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -94,18 +95,6 @@ TEST_F(CatalogTests, CreatingTable) {
   //   oid_t time_stamp =
   //       catalog::DatabaseMetricsCatalog::GetInstance()->GetTimeStamp(2, txn);
 
-  // inset meaningless tuple into QUERY_METRICS_CATALOG and check
-  stats::QueryMetric::QueryParamBuf param;
-  param.len = 1;
-  param.buf = (unsigned char *)pool->Allocate(1);
-  *param.buf = 'a';
-  catalog::QueryMetricsCatalog::GetInstance()->InsertQueryMetrics(
-      "a query", 1, 1, param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
-      txn);
-  auto param1 = catalog::QueryMetricsCatalog::GetInstance()->GetParamTypes(
-      "a query", 1, txn);
-  EXPECT_EQ(1, param1.len);
-  EXPECT_EQ('a', *param1.buf);
 
   EXPECT_EQ("name", catalog::Catalog::GetInstance()
                         ->GetDatabaseWithName("EMP_DB", txn)

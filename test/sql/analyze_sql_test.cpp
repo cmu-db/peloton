@@ -21,6 +21,7 @@
 #include "optimizer/stats/stats_storage.h"
 #include "planner/create_plan.h"
 #include "common/internal_types.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace test {
