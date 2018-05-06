@@ -37,6 +37,7 @@
 #include "planner/create_function_plan.h"
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/explain_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/populate_index_plan.h"
 #include "planner/projection_plan.h"
@@ -103,10 +104,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // Handle ddl statement
-  bool is_ddl_stmt;
-  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
-  if (is_ddl_stmt) {
-    return move(ddl_plan);
+  auto util_plan = HandleUtilStatement(parse_tree, txn);
+  if (util_plan != nullptr) {
+    return move(util_plan);
   }
 
   metadata_.txn = txn;
@@ -138,11 +138,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
 void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
-unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
-    parser::SQLStatement *tree, bool &is_ddl_stmt,
-    concurrency::TransactionContext *txn) {
+unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
+    parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
-  is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
     case StatementType::DROP: {
@@ -221,8 +219,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
+    case StatementType::EXPLAIN: {
+      LOG_TRACE("Adding Explain plan...");
+      // Pass the sql statement to explain to the plan node
+      ddl_plan.reset(new planner::ExplainPlan(
+          static_cast<parser::ExplainStatement *>(tree)->real_sql_stmt.get()));
+    }
     default:
-      is_ddl_stmt = false;
+      break;
   }
   return ddl_plan;
 }
@@ -238,29 +242,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper =
-      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-         std::unique_ptr<parser::OrderDescription> &order_info,
-         std::vector<expression::AbstractExpression *> &output_exprs,
-         std::shared_ptr<PropertySet> &physical_props) {
-        // Extract output column
-        for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper = [](
+      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+      std::unique_ptr<parser::OrderDescription> &order_info,
+      std::vector<expression::AbstractExpression *> &output_exprs,
+      std::shared_ptr<PropertySet> &physical_props) {
+    // Extract output column
+    for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-        // Extract sort property
-        if (order_info != nullptr) {
-          std::vector<expression::AbstractExpression *> sort_exprs;
-          std::vector<bool> sort_ascending;
-          for (auto &expr : order_info->exprs) {
-            sort_exprs.push_back(expr.get());
-          }
-          for (auto &type : order_info->types) {
-            sort_ascending.push_back(type == parser::kOrderAsc);
-          }
-          if (!sort_exprs.empty())
-            physical_props->AddProperty(
-                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-        }
-      };
+    // Extract sort property
+    if (order_info != nullptr) {
+      std::vector<expression::AbstractExpression *> sort_exprs;
+      std::vector<bool> sort_ascending;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
+      if (!sort_exprs.empty())
+        physical_props->AddProperty(
+            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+    }
+  };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
@@ -278,8 +282,7 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:
-      ;
+    default:;
   }
 
   return QueryInfo(output_exprs, physical_props);

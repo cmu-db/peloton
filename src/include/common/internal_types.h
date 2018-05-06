@@ -596,6 +596,7 @@ enum class PlanNodeType {
   RESULT = 70,
   COPY = 71,
   CREATE_FUNC = 72,
+  EXPLAIN = 73,
 
   // Test
   MOCK = 80
