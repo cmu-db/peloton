@@ -172,32 +172,32 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
     auto group = GetMetadata().memo.GetGroupByID(root_id);
     auto best_expr = group->GetBestExpression(query_info.physical_props);
 
-    // TODO[vamshi]: Comment this code out. Only for debugging.
-    // Find out the index scan plan cols.
-    std::deque<GroupID> queue;
-    queue.push_back(root_id);
-    while (queue.size() != 0) {
-      auto front = queue.front();
-      queue.pop_front();
-      auto group = GetMetadata().memo.GetGroupByID(front);
-      auto best_expr = group->GetBestExpression(query_info.physical_props);
-
-      PELOTON_ASSERT(best_expr->Op().IsPhysical());
-      if (best_expr->Op().GetType() == OpType::IndexScan) {
-        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
-        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
-        LOG_DEBUG("Index Scan on %s",
-                  index_scan_op->table_->GetTableName().c_str());
-        for (auto col : index_scan_op->key_column_id_list) {
-          (void)col;  // for debug mode
-          LOG_DEBUG("Col: %d", col);
-        }
-      }
-
-      for (auto child_grp : best_expr->GetChildGroupIDs()) {
-        queue.push_back(child_grp);
-      }
-    }
+//    // TODO[vamshi]: Comment this code out. Only for debugging.
+//    // Find out the index scan plan cols.
+//    std::deque<GroupID> queue;
+//    queue.push_back(root_id);
+//    while (queue.size() != 0) {
+//      auto front = queue.front();
+//      queue.pop_front();
+//      auto group = GetMetadata().memo.GetGroupByID(front);
+//      auto best_expr = group->GetBestExpression(query_info.physical_props);
+//
+//      PELOTON_ASSERT(best_expr->Op().IsPhysical());
+//      if (best_expr->Op().GetType() == OpType::IndexScan) {
+//        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
+//        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
+//        LOG_DEBUG("Index Scan on %s",
+//                  index_scan_op->table_->GetTableName().c_str());
+//        for (auto col : index_scan_op->key_column_id_list) {
+//          (void)col;  // for debug mode
+//          LOG_DEBUG("Col: %d", col);
+//        }
+//      }
+//
+//      for (auto child_grp : best_expr->GetChildGroupIDs()) {
+//        queue.push_back(child_grp);
+//      }
+//    }
 
     info_obj->cost = best_expr->GetCost(query_info.physical_props);
     info_obj->plan = std::move(best_plan);
