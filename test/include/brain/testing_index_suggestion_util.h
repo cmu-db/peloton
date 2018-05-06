@@ -31,6 +31,7 @@ class TableSchema {
  public:
   std::vector<std::pair<std::string, TupleValueType>> cols;
   std::unordered_map<std::string, long> col_offset_map;
+
   TableSchema(std::vector<std::pair<std::string, TupleValueType>> columns) {
     auto i = 0UL;
     for (auto col : columns) {
@@ -46,29 +47,76 @@ class TableSchema {
  */
 class TestingIndexSuggestionUtil {
  public:
+  /**
+   * Creates a database.
+   * @param db_name
+   */
   TestingIndexSuggestionUtil(std::string db_name);
+
+  /**
+   * Drops all tables and the database.
+   */
   ~TestingIndexSuggestionUtil();
 
-  // Inserts specified number of tuples into the table with random values.
+  /**
+   * Inserts specified number of tuples.
+   * @param table_name
+   * @param schema schema of the table to be created
+   * @param num_tuples number of tuples to be inserted with random values.
+   */
   void InsertIntoTable(std::string table_name, TableSchema schema,
                        long num_tuples);
 
-  // Creates a new table with the provided schema.
+  /**
+   * Create a new table.s
+   * @param table_name
+   * @param schema
+   */
   void CreateTable(std::string table_name, TableSchema schema);
 
-  // Factory method
-  // Returns a what-if index on the columns at the given
-  // offset of the table.
+
+  /**
+   * Factory method to create a hypothetical index object. The returned object can
+   * be used
+   * in the catalog or catalog cache.
+   * @param table_name
+   * @param index_col_names
+   * @return
+   */
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols);
+
+  
+  /**
+   * Check whether the given indexes are the same as the expected ones
+   * @param chosen_indexes
+   * @param expected_indexes
+   */
+  bool CheckIndexes(brain::IndexConfiguration chosen_indexes,
+                    std::set<std::set<oid_t>> expected_indexes);
 
  private:
   std::string database_name_;
   std::unordered_map<std::string, TableSchema> tables_created_;
 
+  /**
+   * Create the database
+   */
   void CreateDatabase();
+
+  /**
+   * Drop the database
+   */
   void DropDatabase();
+
+  /**
+   * Drop the table
+   */
   void DropTable(std::string table_name);
+
+  /**
+   * Generate stats for all the tables in the system.
+   */
   void GenerateTableStats();
 };
 }

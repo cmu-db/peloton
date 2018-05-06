@@ -23,19 +23,12 @@ namespace test {
 
 namespace index_suggestion {
 
-/**
- * Creates a database.
- * @param db_name
- */
 TestingIndexSuggestionUtil::TestingIndexSuggestionUtil(std::string db_name)
     : database_name_(db_name) {
   srand(time(NULL));
   CreateDatabase();
 }
 
-/**
- * Drops all tables and the database.
- */
 TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
   for (auto it = tables_created_.begin(); it != tables_created_.end(); it++) {
     DropTable(it->first);
@@ -43,11 +36,7 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
   DropDatabase();
 }
 
-/**
- * Create a new table.s
- * @param table_name
- * @param schema
- */
+// Creates a new table with the provided schema.
 void TestingIndexSuggestionUtil::CreateTable(std::string table_name,
                                              TableSchema schema) {
   // Create table.
@@ -77,12 +66,26 @@ void TestingIndexSuggestionUtil::CreateTable(std::string table_name,
   TestingSQLUtil::ExecuteSQLQuery(s_stream.str());
 }
 
-/**
- * Inserts specified number of tuples.
- * @param table_name
- * @param schema schema of the table to be created
- * @param num_tuples number of tuples to be inserted with random values.
- */
+// Check whether the given indexes are the same as the expected ones
+bool TestingIndexSuggestionUtil::CheckIndexes(
+    brain::IndexConfiguration chosen_indexes,
+    std::set<std::set<oid_t>> expected_indexes) {
+  if(chosen_indexes.GetIndexCount() != expected_indexes.size()) return false;
+
+  for (auto expected_columns : expected_indexes) {
+    bool found = false;
+    for (auto chosen_index : chosen_indexes.GetIndexes()) {
+      if(chosen_index->column_oids == expected_columns) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+// Inserts specified number of tuples into the table with random values.
 void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name,
                                                  TableSchema schema,
                                                  long num_tuples) {
@@ -114,9 +117,6 @@ void TestingIndexSuggestionUtil::InsertIntoTable(std::string table_name,
   GenerateTableStats();
 }
 
-/**
- * Generate stats for all the tables in the system.
- */
 void TestingIndexSuggestionUtil::GenerateTableStats() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -128,14 +128,9 @@ void TestingIndexSuggestionUtil::GenerateTableStats() {
   txn_manager.CommitTransaction(txn);
 }
 
-/**
- * Factory method to create a hypothetical index object. The returned object can
- * be used
- * in the catalog or catalog cache.
- * @param table_name
- * @param index_col_names
- * @return
- */
+// Factory method
+// Returns a what-if index on the columns at the given
+// offset of the table.
 std::shared_ptr<brain::HypotheticalIndexObject>
 TestingIndexSuggestionUtil::CreateHypotheticalIndex(
     std::string table_name, std::vector<std::string> index_col_names) {
@@ -174,25 +169,16 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   return index_obj;
 }
 
-/**
- * Create the database
- */
 void TestingIndexSuggestionUtil::CreateDatabase() {
   std::string create_db_str = "CREATE DATABASE " + database_name_ + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_db_str);
 }
 
-/**
- * Drop the database
- */
 void TestingIndexSuggestionUtil::DropDatabase() {
   std::string create_str = "DROP DATABASE " + database_name_ + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
-/**
- * Drop the table
- */
 void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
   std::string create_str = "DROP TABLE " + table_name + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
