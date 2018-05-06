@@ -17,6 +17,7 @@
 
 #include "codegen/codegen.h"
 #include "common/exception.h"
+#include "util/math_util.h"
 
 namespace peloton {
 namespace codegen {
@@ -37,10 +38,11 @@ BytecodeFunction BytecodeBuilder::CreateBytecodeFunction(
   BytecodeBuilder builder(code_context, function);
   builder.AnalyseFunction();
 
-  if (use_naive_register_allocator)
+  if (use_naive_register_allocator) {
     builder.PerformNaiveRegisterAllocation();
-  else
+  } else {
     builder.PerformGreedyRegisterAllocation();
+  }
 
   builder.TranslateFunction();
   builder.Finalize();
@@ -54,22 +56,23 @@ Opcode BytecodeBuilder::GetOpcodeForTypeAllTypes(Opcode untyped_op,
 
   // This function highly depends on the macros in bytecode_instructions.def!
 
-  if (type == code_context_.bool_type_ || type == code_context_.int8_type_)
+  if (type == code_context_.bool_type_ || type == code_context_.int8_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 0);
-  else if (type == code_context_.int16_type_)
+  } else if (type == code_context_.int16_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 1);
-  else if (type == code_context_.int32_type_)
+  } else if (type == code_context_.int32_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 2);
-  else if (type == code_context_.int64_type_ ||
-           type == code_context_.char_ptr_type_ || type->isPointerTy())
+  } else if (type == code_context_.int64_type_ ||
+             type == code_context_.char_ptr_type_ || type->isPointerTy()) {
     return BytecodeFunction::GetOpcodeFromId(id + 3);
-  else if (type == code_context_.float_type_)
+  } else if (type == code_context_.float_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 4);
-  else if (type == code_context_.double_type_)
+  } else if (type == code_context_.double_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 5);
-  else
+  } else {
     throw NotSupportedException("llvm type not supported: " +
                                 CodeGen::Dump(type));
+  }
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeIntTypes(Opcode untyped_op,
@@ -78,18 +81,19 @@ Opcode BytecodeBuilder::GetOpcodeForTypeIntTypes(Opcode untyped_op,
 
   // This function highly depends on the macros in bytecode_instructions.def!
 
-  if (type == code_context_.bool_type_ || type == code_context_.int8_type_)
+  if (type == code_context_.bool_type_ || type == code_context_.int8_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 0);
-  else if (type == code_context_.int16_type_)
+  } else if (type == code_context_.int16_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 1);
-  else if (type == code_context_.int32_type_)
+  } else if (type == code_context_.int32_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 2);
-  else if (type == code_context_.int64_type_ ||
-           type == code_context_.char_ptr_type_ || type->isPointerTy())
+  } else if (type == code_context_.int64_type_ ||
+             type == code_context_.char_ptr_type_ || type->isPointerTy()) {
     return BytecodeFunction::GetOpcodeFromId(id + 3);
-  else
+  } else {
     throw NotSupportedException("llvm type not supported: " +
                                 CodeGen::Dump(type));
+  }
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeFloatTypes(Opcode untyped_op,
@@ -99,13 +103,14 @@ Opcode BytecodeBuilder::GetOpcodeForTypeFloatTypes(Opcode untyped_op,
   // This function highly depends on the macros in bytecode_instructions.def!
 
   // float is missing!
-  if (type == code_context_.float_type_)
+  if (type == code_context_.float_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 0);
-  if (type == code_context_.double_type_)
+  } else if (type == code_context_.double_type_) {
     return BytecodeFunction::GetOpcodeFromId(id + 1);
-  else
+  } else {
     throw NotSupportedException("llvm type not supported: " +
                                 CodeGen::Dump(type));
+  }
 }
 
 Opcode BytecodeBuilder::GetOpcodeForTypeSizeIntTypes(Opcode untyped_op,
@@ -117,12 +122,16 @@ Opcode BytecodeBuilder::GetOpcodeForTypeSizeIntTypes(Opcode untyped_op,
   switch (code_context_.GetTypeSize(type)) {
     case 1:
       return BytecodeFunction::GetOpcodeFromId(id + 0);
+
     case 2:
       return BytecodeFunction::GetOpcodeFromId(id + 1);
+
     case 4:
       return BytecodeFunction::GetOpcodeFromId(id + 2);
+
     case 8:
       return BytecodeFunction::GetOpcodeFromId(id + 3);
+
     default:
       throw NotSupportedException("llvm type size not supported: " +
                                   CodeGen::Dump(type));
@@ -135,9 +144,9 @@ Instruction &BytecodeBuilder::InsertBytecodeInstruction(
   PELOTON_ASSERT(opcode != Opcode::undefined);
 
   // calculate number of required instruction slots
-  const size_t number_instruction_slots =
-      ((2 * (1 + args.size())) + sizeof(instr_slot_t) - 1) /
-      sizeof(instr_slot_t);
+  // args.size() + 1 because of the Opcode
+  const size_t number_instruction_slots = MathUtil::DivRoundUp(
+      sizeof(uint16_t) * (1 + args.size()), sizeof(instr_slot_t));
 
   bytecode_function_.bytecode_.insert(bytecode_function_.bytecode_.end(),
                                       number_instruction_slots, 0);
@@ -167,11 +176,10 @@ Instruction &BytecodeBuilder::InsertBytecodeInstruction(
 ExternalCallInstruction &BytecodeBuilder::InsertBytecodeExternalCallInstruction(
     const llvm::Instruction *llvm_instruction, index_t call_context,
     void *function) {
-  // calculate number of slots and assert it is 2 (this way we recognise if any
-  // size changes)
-  const size_t number_instruction_slots =
-      (sizeof(ExternalCallInstruction) + sizeof(instr_slot_t) - 1) /
-      sizeof(instr_slot_t);
+  // calculate number of required instructionsslots and assert it is 2
+  // (this way we recognise if any unintended size changes)
+  const size_t number_instruction_slots = MathUtil::DivRoundUp(
+      sizeof(ExternalCallInstruction), sizeof(instr_slot_t));
   PELOTON_ASSERT(number_instruction_slots == 2);
 
   bytecode_function_.bytecode_.insert(bytecode_function_.bytecode_.end(),
@@ -180,9 +188,12 @@ ExternalCallInstruction &BytecodeBuilder::InsertBytecodeExternalCallInstruction(
   ExternalCallInstruction instruction = {
       Opcode::call_external, call_context,
       reinterpret_cast<void (*)(void)>(function)};
-  *reinterpret_cast<ExternalCallInstruction *>(
-      &*(bytecode_function_.bytecode_.end() - number_instruction_slots)) =
-      instruction;
+
+  instr_slot_t *instruction_slot =
+      &*(bytecode_function_.bytecode_.end() - number_instruction_slots);
+  ExternalCallInstruction *call_instruction_slot =
+      reinterpret_cast<ExternalCallInstruction *>(instruction_slot);
+  *call_instruction_slot = instruction;
 
   AddInstructionToTrace(llvm_instruction, number_instruction_slots);
 
@@ -195,9 +206,9 @@ InternalCallInstruction &BytecodeBuilder::InsertBytecodeInternalCallInstruction(
     const llvm::Instruction *llvm_instruction, index_t sub_function,
     index_t dest_slot, size_t number_arguments) {
   // calculate number of required instruction slots
-  const size_t number_instruction_slots =
-      ((2 * (4 + number_arguments)) + sizeof(instr_slot_t) - 1) /
-      sizeof(instr_slot_t);
+  // number_arguments + 4 because of the number of fixed arguments
+  // (see structure of InternalCallInstruction)
+  const size_t number_instruction_slots = MathUtil::DivRoundUp(sizeof(uint16_t) * (4 + number_arguments), InternalCallInstructionslot_t));
 
   bytecode_function_.bytecode_.insert(bytecode_function_.bytecode_.end(),
                                       number_instruction_slots, 0);
@@ -234,13 +245,16 @@ BytecodeBuilder::value_index_t BytecodeBuilder::GetValueIndex(
   auto result = value_mapping_.find(value);
 
   // If the index already exists, just return it
-  if (result != value_mapping_.end()) return result->second;
+  if (result != value_mapping_.end()) {
+    return result->second;
+  }
 
   // Otherwise create a new index
 
   // Special case for constants
-  if (auto *llvm_constant = llvm::dyn_cast<llvm::Constant>(value))
+  if (auto *llvm_constant = llvm::dyn_cast<llvm::Constant>(value)) {
     return GetConstantIndex(llvm_constant);
+  }
 
   value_index_t value_index = value_liveness_.size();
   value_mapping_[value] = value_index;
@@ -307,8 +321,9 @@ value_t BytecodeBuilder::GetConstantValue(
 BytecodeBuilder::value_index_t BytecodeBuilder::GetConstantIndex(
     const llvm::Constant *constant) {
   auto value_mapping_result = value_mapping_.find(constant);
-  if (value_mapping_result != value_mapping_.end())
+  if (value_mapping_result != value_mapping_.end()) {
     return value_mapping_result->second;
+  }
 
   value_t value = GetConstantValue(constant);
   value_index_t value_index;
@@ -360,10 +375,11 @@ void BytecodeBuilder::ExtendValueLiveness(
     return;
   }
 
-  if (instruction_index < value_liveness_[value_index].first)
+  if (instruction_index < value_liveness_[value_index].first) {
     value_liveness_[value_index].first = instruction_index;
-  else if (instruction_index > value_liveness_[value_index].second)
+  } else if (instruction_index > value_liveness_[value_index].second) {
     value_liveness_[value_index].second = instruction_index;
+  }
 }
 
 index_t BytecodeBuilder::GetTemporaryValueSlot(const llvm::BasicBlock *bb) {
@@ -430,8 +446,9 @@ bool BytecodeBuilder::BasicBlockIsRPOSucc(const llvm::BasicBlock *bb,
   // reverse post order (RPO)
   for (size_t i = 0; i < bb_reverse_post_order_.size() - 1; i++) {
     if (bb_reverse_post_order_[i] == bb &&
-        bb_reverse_post_order_[i + 1] == succ)
+        bb_reverse_post_order_[i + 1] == succ) {
       return true;
+    }
   }
 
   return false;
@@ -475,8 +492,9 @@ void BytecodeBuilder::AnalyseFunction() {
       bool is_non_zero_gep = false;
       if (instruction->getOpcode() == llvm::Instruction::GetElementPtr &&
           !llvm::cast<llvm::GetElementPtrInst>(instruction)
-               ->hasAllZeroIndices())
+               ->hasAllZeroIndices()) {
         is_non_zero_gep = true;
+      }
 
       // PHI-Handling:
       // We do not process the PHI instructions directly, but at the end of a
@@ -485,7 +503,9 @@ void BytecodeBuilder::AnalyseFunction() {
       // will insert the mov instructions when we resolve the PHIs later.
 
       // Skip PHI instructions
-      if (instruction->getOpcode() == llvm::Instruction::PHI) continue;
+      if (instruction->getOpcode() == llvm::Instruction::PHI) {
+        continue;
+      }
 
       // If next instruction is a terminator instruction, process
       // PHIs of succeeding basic blocks first
@@ -573,14 +593,16 @@ void BytecodeBuilder::AnalyseFunction() {
           // but we want to skip this one
           auto *call_instruction = llvm::dyn_cast<llvm::CallInst>(instruction);
           if (call_instruction != nullptr &&
-              call_instruction->getCalledFunction() == &*operand)
+              call_instruction->getCalledFunction() == &*operand) {
             continue;
+          }
 
           // Exception 3: constant operands from GEP and extractvalue are not
           // needed, as they get encoded in the instruction itself
           if (instruction->getOpcode() == llvm::Instruction::GetElementPtr ||
-              instruction->getOpcode() == llvm::Instruction::ExtractValue)
+              instruction->getOpcode() == llvm::Instruction::ExtractValue) {
             continue;
+          }
 
           // USE: extend liveness of constant value
           ExtendValueLiveness(operand, instruction_index);
@@ -698,11 +720,14 @@ void BytecodeBuilder::PerformNaiveRegisterAllocation() {
   // iterate over other entries, which are already sorted
   for (value_index_t i = 0; i < value_liveness_.size(); ++i) {
     // skip values that are never used (get assigned to dummy slot)
-    if (value_liveness_[i].first == value_liveness_[i].second) continue;
+    if (value_liveness_[i].first == value_liveness_[i].second) {
+      continue;
+    }
 
     // some values (constants, function arguments) are processed already
-    if (value_slots_[i] == 0)
+    if (value_slots_[i] == 0) {
       value_slots_[i] = reg++ + 1;  // + 1 because 0 is dummy slot
+    }
   }
 
   number_value_slots_ = reg + 1;
@@ -765,7 +790,9 @@ void BytecodeBuilder::PerformGreedyRegisterAllocation() {
   // iterate over other entries, which are already sorted
   for (value_index_t i = 0; i < value_liveness_.size(); ++i) {
     // skip values that are never used
-    if (value_liveness_[i].first == value_liveness_[i].second) continue;
+    if (value_liveness_[i].first == value_liveness_[i].second) {
+      continue;
+    }
 
     if (value_slots_[i] == 0) {
       value_slots_[i] = findEmptyRegister(value_liveness_[i]) +
@@ -976,8 +1003,9 @@ void BytecodeBuilder::ProcessPHIsForBasicBlock(const llvm::BasicBlock *bb) {
                llvm::dyn_cast<llvm::PHINode>(&*instruction_iterator);
            ++instruction_iterator) {
         if (GetValueSlot(phi_node) ==
-            GetValueSlot(phi_node->getIncomingValueForBlock(bb)))
+            GetValueSlot(phi_node->getIncomingValueForBlock(bb))) {
           continue;
+        }
 
         InsertBytecodeInstruction(
             phi_node, Opcode::phi_mov,
@@ -1074,8 +1102,9 @@ void BytecodeBuilder::TranslateReturn(const llvm::Instruction *instruction) {
   // but no one will every pick up that value.
 
   index_t return_slot = 0;
-  if (return_instruction->getNumOperands() > 0)
+  if (return_instruction->getNumOperands() > 0) {
     return_slot = GetValueSlot(return_instruction->getOperand(0));
+  }
 
   InsertBytecodeInstruction(instruction, Opcode::ret,
                             std::vector<index_t>{return_slot});
@@ -1222,7 +1251,9 @@ void BytecodeBuilder::TranslateGetElementPtr(
 
   // If the GEP translates to a nop, the values have been already merged
   // during the analysis pass
-  if (gep_instruction->hasAllZeroIndices()) return;
+  if (gep_instruction->hasAllZeroIndices()) {
+    return;
+  }
 
   // The offset is an immediate constant, not a slot index
   // instruction is created here, but offset will be filled in later,
@@ -1330,50 +1361,56 @@ void BytecodeBuilder::TranslateFloatIntCast(
   Opcode opcode = Opcode::undefined;
 
   if (instruction->getOpcode() == llvm::Instruction::FPToSI) {
-    if (cast_instruction->getOperand(0)->getType() == code_context_.float_type_)
+    if (cast_instruction->getOperand(0)->getType() ==
+        code_context_.float_type_) {
       opcode = GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::floattosi),
                                         cast_instruction->getType());
-    else if (cast_instruction->getOperand(0)->getType() ==
-             code_context_.double_type_)
+    } else if (cast_instruction->getOperand(0)->getType() ==
+               code_context_.double_type_) {
       opcode = GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::doubletosi),
                                         cast_instruction->getType());
-    else
+    } else {
       throw NotSupportedException("unsupported cast instruction");
+    }
 
   } else if (instruction->getOpcode() == llvm::Instruction::FPToUI) {
-    if (cast_instruction->getOperand(0)->getType() == code_context_.float_type_)
+    if (cast_instruction->getOperand(0)->getType() ==
+        code_context_.float_type_) {
       opcode = GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::floattoui),
                                         cast_instruction->getType());
-    else if (cast_instruction->getOperand(0)->getType() ==
-             code_context_.double_type_)
+    } else if (cast_instruction->getOperand(0)->getType() ==
+               code_context_.double_type_) {
       opcode = GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::doubletoui),
                                         cast_instruction->getType());
-    else
+    } else {
       throw NotSupportedException("unsupported cast instruction");
+    }
 
   } else if (instruction->getOpcode() == llvm::Instruction::SIToFP) {
-    if (cast_instruction->getType() == code_context_.float_type_)
+    if (cast_instruction->getType() == code_context_.float_type_) {
       opcode =
           GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::sitofloat),
                                    cast_instruction->getOperand(0)->getType());
-    else if (cast_instruction->getType() == code_context_.double_type_)
+    } else if (cast_instruction->getType() == code_context_.double_type_) {
       opcode =
           GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::sitodouble),
                                    cast_instruction->getOperand(0)->getType());
-    else
+    } else {
       throw NotSupportedException("unsupported cast instruction");
+    }
 
   } else if (instruction->getOpcode() == llvm::Instruction::UIToFP) {
-    if (cast_instruction->getType() == code_context_.float_type_)
+    if (cast_instruction->getType() == code_context_.float_type_) {
       opcode =
           GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::uitofloat),
                                    cast_instruction->getOperand(0)->getType());
-    else if (cast_instruction->getType() == code_context_.double_type_)
+    } else if (cast_instruction->getType() == code_context_.double_type_) {
       opcode =
           GetOpcodeForTypeIntTypes(GET_FIRST_INT_TYPES(Opcode::uitodouble),
                                    cast_instruction->getOperand(0)->getType());
-    else
+    } else {
       throw NotSupportedException("unsupported cast instruction");
+    }
 
   } else {
     throw NotSupportedException("unsupported cast instruction");
@@ -1404,16 +1441,22 @@ void BytecodeBuilder::TranslateIntExt(const llvm::Instruction *instruction) {
   if (instruction->getOpcode() == llvm::Instruction::SExt) {
     if (src_type_size == 1 && dest_type_size == 2) {
       opcode = Opcode::sext_i8_i16;
+
     } else if (src_type_size == 1 && dest_type_size == 4) {
       opcode = Opcode::sext_i8_i32;
+
     } else if (src_type_size == 1 && dest_type_size == 8) {
       opcode = Opcode::sext_i8_i64;
+
     } else if (src_type_size == 2 && dest_type_size == 4) {
       opcode = Opcode::sext_i16_i32;
+
     } else if (src_type_size == 2 && dest_type_size == 8) {
       opcode = Opcode::sext_i16_i64;
+
     } else if (src_type_size == 4 && dest_type_size == 8) {
       opcode = Opcode::sext_i32_i64;
+
     } else {
       throw NotSupportedException("unsupported sext instruction");
     }
@@ -1422,16 +1465,22 @@ void BytecodeBuilder::TranslateIntExt(const llvm::Instruction *instruction) {
              instruction->getOpcode() == llvm::Instruction::IntToPtr) {
     if (src_type_size == 1 && dest_type_size == 2) {
       opcode = Opcode::zext_i8_i16;
+
     } else if (src_type_size == 1 && dest_type_size == 4) {
       opcode = Opcode::zext_i8_i32;
+
     } else if (src_type_size == 1 && dest_type_size == 8) {
       opcode = Opcode::zext_i8_i64;
+
     } else if (src_type_size == 2 && dest_type_size == 4) {
       opcode = Opcode::zext_i16_i32;
+
     } else if (src_type_size == 2 && dest_type_size == 8) {
       opcode = Opcode::zext_i16_i64;
+
     } else if (src_type_size == 4 && dest_type_size == 8) {
       opcode = Opcode::zext_i32_i64;
+
     } else {
       throw NotSupportedException("unsupported zext instruction");
     }
@@ -1453,9 +1502,10 @@ void BytecodeBuilder::TranslateFloatTruncExt(
   auto dest_type = cast_instruction->getDestTy();
 
   if (src_type == dest_type) {
-    if (GetValueSlot(instruction) != GetValueSlot(instruction->getOperand(0)))
+    if (GetValueSlot(instruction) != GetValueSlot(instruction->getOperand(0))) {
       InsertBytecodeInstruction(instruction, Opcode::nop_mov,
                                 {instruction, instruction->getOperand(0)});
+    }
     return;
   }
 
@@ -1563,9 +1613,10 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
 
     if (function_name.find("llvm.memcpy") == 0) {
       if (call_instruction->getOperand(2)->getType() !=
-          code_context_.int64_type_)
+          code_context_.int64_type_) {
         throw NotSupportedException(
             "memcpy with different size type than i64 not supported");
+      }
 
       InsertBytecodeInstruction(
           call_instruction, Opcode::llvm_memcpy,
@@ -1604,12 +1655,15 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
       PELOTON_ASSERT(overflow_results_mapping_.find(call_instruction) !=
                      overflow_results_mapping_.end());
 
-      if (overflow_results_mapping_[call_instruction].first != nullptr)
+      if (overflow_results_mapping_[call_instruction].first != nullptr) {
         result =
             GetValueSlot(overflow_results_mapping_[call_instruction].first);
-      if (overflow_results_mapping_[call_instruction].second != nullptr)
+      }
+
+      if (overflow_results_mapping_[call_instruction].second != nullptr) {
         overflow =
             GetValueSlot(overflow_results_mapping_[call_instruction].second);
+      }
 
       if (function_name.substr(5, 4) == "uadd") {
         opcode = GetOpcodeForTypeIntTypes(
@@ -1640,9 +1694,10 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
            GetValueSlot(call_instruction->getOperand(1))});
 
     } else if (function_name.find("llvm.x86.sse42.crc32") == 0) {
-      if (call_instruction->getType() != code_context_.int64_type_)
+      if (call_instruction->getType() != code_context_.int64_type_) {
         throw NotSupportedException(
             "sse42.crc32 with different size type than i64 not supported");
+      }
 
       InsertBytecodeInstruction(
           call_instruction, Opcode::llvm_sse42_crc32,
@@ -1658,8 +1713,9 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
         std::vector<const llvm::Value *> args;
         args.reserve(call_instruction->getNumArgOperands());
 
-        if (!instruction->getType()->isVoidTy())
+        if (!instruction->getType()->isVoidTy()) {
           args.push_back(call_instruction);
+        }
 
         for (unsigned int i = 0; i < call_instruction->getNumArgOperands();
              i++) {
@@ -1686,8 +1742,9 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
         // (function activation time) to create the libffi call interface.
 
         index_t dest_slot = 0;
-        if (!instruction->getType()->isVoidTy())
+        if (!instruction->getType()->isVoidTy()) {
           dest_slot = GetValueSlot(call_instruction);
+        }
 
         size_t arguments_num = call_instruction->getNumArgOperands();
         ExternalCallContext call_context{
@@ -1718,8 +1775,9 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
     // Internal function call to another IR function in this code context
 
     index_t dest_slot = 0;
-    if (!instruction->getType()->isVoidTy())
+    if (!instruction->getType()->isVoidTy()) {
       dest_slot = GetValueSlot(call_instruction);
+    }
 
     // Translate the bytecode function we want to call
     index_t sub_function_index;
@@ -1771,7 +1829,9 @@ void BytecodeBuilder::TranslateExtractValue(
   // Skip, if this ExtractValue instruction belongs to an overflow operation
   auto call_result = overflow_results_mapping_.find(
       llvm::cast<llvm::CallInst>(instruction->getOperand(0)));
-  if (call_result != overflow_results_mapping_.end()) return;
+  if (call_result != overflow_results_mapping_.end()) {
+    return;
+  }
 
   // Get value type
   llvm::Type *type = extract_instruction->getAggregateOperand()->getType();
