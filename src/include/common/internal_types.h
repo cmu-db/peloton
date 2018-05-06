@@ -715,7 +715,8 @@ enum class QueryType {
   QUERY_CREATE_SCHEMA = 22,
   QUERY_CREATE_VIEW = 23,
   QUERY_EXPLAIN = 24,
-  QUERY_CREATE_SEQUENCE = 25
+  QUERY_CREATE_SEQUENCE = 25,
+  QUERY_DROP_SEQUENCE = 26
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);

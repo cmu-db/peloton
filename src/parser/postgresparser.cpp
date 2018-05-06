@@ -1422,6 +1422,8 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
       return DropTableTransform(root);
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
+    case ObjectType::OBJECT_SEQUENCE:
+      return DropSequenceTransform(root);
     case ObjectType::OBJECT_INDEX:
       return DropIndexTransform(root);
     case ObjectType::OBJECT_SCHEMA:
@@ -1492,6 +1494,16 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
   }
 
   result->table_info_.reset(table_info);
+  return result;
+}
+
+parser::DropStatement *PostgresParser::DropSequenceTransform(DropStmt *root) {
+  auto result = new DropStatement(DropStatement::EntityType::kSequence);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List *>(cell->data.ptr_value);
+  // first, set sequence name
+  result->SetSequenceName(
+      reinterpret_cast<value *>(list->tail->data.ptr_value)->val.str);
   return result;
 }
 

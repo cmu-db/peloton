@@ -60,8 +60,8 @@ class DropExecutor : public AbstractExecutor {
   bool DropIndex(const planner::DropPlan &node,
                  concurrency::TransactionContext *txn);
   
-  // bool DropSequence(const planner::DropPlan &node,
-  //                  concurrency::TransactionContext *txn);
+  bool DropSequence(const planner::DropPlan &node,
+                   concurrency::TransactionContext *txn);
 
  private:
   ExecutorContext *context_;
