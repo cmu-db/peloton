@@ -12,15 +12,10 @@
 
 #include "optimizer/cost_calculator.h"
 
-#include <cmath>
-#include <include/expression/tuple_value_expression.h>
-
 #include "catalog/table_catalog.h"
 #include "optimizer/memo.h"
-#include "optimizer/operators.h"
 #include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/table_stats.h"
 
 namespace peloton {
 namespace optimizer {
@@ -86,77 +81,12 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightNLJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterNLJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
-
-
-  for (auto &pred : op->join_predicates) {
-    for (auto &table : pred.table_alias_set) {
-      LOG_DEBUG("%s", table.c_str());
-    }
-  }
-
-  for (auto &key : op->left_keys) {
-    LOG_DEBUG("%s", key->GetInfo().c_str());
-  }
-
-  for (auto &key : op->right_keys) {
-    LOG_DEBUG("%s", key->GetInfo().c_str());
-  }
-
-  LOG_DEBUG("Left IBT: %d Right IBT: %d", IsBaseTable(op->left_keys), IsBaseTable(op->right_keys));
-
-  auto bucket_size_frac = 1.0;
-
-  // Assuming you build table on right relation
-  if (IsBaseTable(op->right_keys)) {
-    auto right_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
-
-    // Iterate over all keys, take the largest fraction (smallest bucket sizes)
-    //TODO: Add more estimate adjustments from postgres
-    for (auto &expr : op->right_keys) {
-
-      auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(expr.get());
-      auto stats = right_group->GetStats(tv_expr->GetColFullName());
-
-      if (stats == nullptr) continue;
-      LOG_DEBUG("%s", stats->ToString(true).c_str());
-
-      //TODO: num_buckets. Need to find this constant
-      auto num_buckets = 10;
-
-      /* Average frequency of values, taken from Postgres */
-      auto avgfreq = (1.0 - stats->frac_null) / stats->cardinality;
-
-      double frac_est;
-
-      if (stats->cardinality > num_buckets) {
-        frac_est = 1.0 / num_buckets;
-      } else {
-        frac_est = 1.0 / stats->cardinality;
-      }
-
-      // Adjust for skew
-      if (avgfreq > 0.0 &&
-          !stats->most_common_vals.empty() &&
-          !stats->most_common_freqs.empty() &&
-          stats->most_common_freqs[0] > avgfreq) {
-        frac_est *= stats->most_common_freqs[0] / avgfreq;
-      }
-
-      // Clamp the bucket frac estimate (taken from postgres)
-      if (frac_est < 1.0e-6) {
-        frac_est = 1.0e-6;
-      } else if (frac_est > 1.0) {
-        frac_est = 1.0;
-      }
-      bucket_size_frac = std::min(bucket_size_frac, frac_est);
-    }
-  }
-
   auto left_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
   auto right_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-  output_cost_ = (left_child_rows * (right_child_rows * bucket_size_frac)) * DEFAULT_TUPLE_COST;
+
+  output_cost_ = (left_child_rows + right_child_rows) * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightHashJoin *op) {}
@@ -208,23 +138,6 @@ double CostCalculator::GroupByCost() {
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
   // O(tuple)
   return child_num_rows * DEFAULT_TUPLE_COST;
-}
-
-
-// Might be better to implement this using groups as opposed to table names
-bool CostCalculator::IsBaseTable(const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys) {
-
-  std::unordered_set<std::string> seen_set;
-
-  for (auto &expr : keys) {
-    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE) continue;
-
-    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(expr.get());
-    seen_set.insert(tv_expr->GetTableName());
-  }
-
-  return seen_set.size() == 1;
-
 }
 
 }  // namespace optimizer

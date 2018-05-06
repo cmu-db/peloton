@@ -12,6 +12,7 @@
 
 #include "optimizer/cost_calculator_factory.h"
 #include "optimizer/cost_calculator.h"
+#include "optimizer/postgres_cost_calculator.h"
 
 #include "common/exception.h"
 
@@ -23,6 +24,8 @@ CostCalculatorFactory::CreateCostCalculator(
     const std::string &cost_model_name) {
   if (cost_model_name == "CostCalculator") {
     return std::unique_ptr<AbstractCostCalculator>(new CostCalculator);
+  } else if (cost_model_name == "PostgresCostCalculator") {
+    return std::unique_ptr<AbstractCostCalculator>(new PostgresCostCalculator);
   } else {
     throw OptimizerException("Could not create cost calculator: `" +
                              cost_model_name + "`");
