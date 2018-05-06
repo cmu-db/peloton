@@ -92,24 +92,12 @@ void PostgresCostCalculator::Visit(
 void PostgresCostCalculator::Visit(
     UNUSED_ATTRIBUTE const PhysicalOuterNLJoin *op) {}
 
+
+/* The main idea of this cost estimate is that the comparisons done is the outer table (probe side) times tuples
+ * bucket. Thus, we estimate attempt to estimate the bucket size in a similar manner to postgres.
+ */
 void PostgresCostCalculator::Visit(
     UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
-  for (auto &pred : op->join_predicates) {
-    for (auto &table : pred.table_alias_set) {
-      LOG_DEBUG("%s", table.c_str());
-    }
-  }
-
-  for (auto &key : op->left_keys) {
-    LOG_DEBUG("%s", key->GetInfo().c_str());
-  }
-
-  for (auto &key : op->right_keys) {
-    LOG_DEBUG("%s", key->GetInfo().c_str());
-  }
-
-  LOG_DEBUG("Left IBT: %d Right IBT: %d", IsBaseTable(op->left_keys),
-            IsBaseTable(op->right_keys));
 
   auto bucket_size_frac = 1.0;
 
@@ -125,13 +113,9 @@ void PostgresCostCalculator::Visit(
       auto stats = right_group->GetStats(tv_expr->GetColFullName());
 
       if (stats == nullptr) continue;
-      LOG_DEBUG("%s", stats->ToString(true).c_str());
 
-      // TODO: num_buckets. Need to find this constant
-      auto num_buckets = 10;
-
-      /* Average frequency of values, taken from Postgres */
-      auto avgfreq = (1.0 - stats->frac_null) / stats->cardinality;
+      // TODO: A new hash join PR uses 256 as default so we're using this for now and hardcoding it here
+      auto num_buckets = 256.0;
 
       double frac_est;
 
@@ -140,6 +124,9 @@ void PostgresCostCalculator::Visit(
       } else {
         frac_est = 1.0 / stats->cardinality;
       }
+
+      /* Average frequency of values, taken from Postgres */
+      auto avgfreq = (1.0 - stats->frac_null) / stats->cardinality;
 
       // Adjust for skew
       if (avgfreq > 0.0 && !stats->most_common_vals.empty() &&
