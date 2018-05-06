@@ -35,8 +35,8 @@ void Query::Execute(executor::ExecutorContext &executor_context,
   llvm::Type *runtime_state_type = query_state_.FinalizeType(codegen);
   size_t parameter_size = codegen.SizeOf(runtime_state_type);
   PELOTON_ASSERT((parameter_size % 8 == 0) &&
-            parameter_size >= sizeof(FunctionArguments) &&
-            "parameter size not multiple of 8");
+                 parameter_size >= sizeof(FunctionArguments) &&
+                 "parameter size not multiple of 8");
 
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
@@ -118,7 +118,7 @@ void Query::Compile(CompileStats *stats) {
   }
 }
 
-bool Query::ExecuteNative(FunctionArguments *function_arguments,
+void Query::ExecuteNative(FunctionArguments *function_arguments,
                           RuntimeStats *stats) {
   // Start timer
   Timer<std::milli> timer;
@@ -171,11 +171,9 @@ bool Query::ExecuteNative(FunctionArguments *function_arguments,
     timer.Stop();
     stats->tear_down_ms = timer.GetDuration();
   }
-
-  return true;
 }
 
-bool Query::ExecuteInterpreter(FunctionArguments *function_arguments,
+void Query::ExecuteInterpreter(FunctionArguments *function_arguments,
                                RuntimeStats *stats) {
   LOG_INFO("Using codegen interpreter to execute plan");
 
@@ -251,9 +249,6 @@ bool Query::ExecuteInterpreter(FunctionArguments *function_arguments,
     timer.Stop();
     stats->tear_down_ms = timer.GetDuration();
   }
-
-  // TODO(marcel): return value
-  return true;
 }
 
 }  // namespace codegen

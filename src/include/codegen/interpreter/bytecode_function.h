@@ -19,9 +19,10 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Type.h"
+
+namespace llvm {
+class Instruction;
+}  // namespace llvm
 
 namespace peloton {
 namespace codegen {
@@ -235,19 +236,22 @@ class BytecodeFunction {
   template <typename return_type, typename... arg_types>
   static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
       UNUSED_ATTRIBUTE return_type (*func)(arg_types...)) {
-    return (std::is_void<return_type>::value) ? sizeof...(arg_types) : sizeof...(arg_types) + 1;
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types)
+                                              : sizeof...(arg_types) + 1;
   }
 
   template <typename return_type, typename class_type, typename... arg_types>
   static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
       UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...)) {
-    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1 : sizeof...(arg_types) + 2;
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1
+                                              : sizeof...(arg_types) + 2;
   }
 
   template <typename return_type, typename class_type, typename... arg_types>
   static constexpr ALWAYS_INLINE inline size_t GetFunctionRequiredArgSlotsNum(
       UNUSED_ATTRIBUTE return_type (class_type::*func)(arg_types...) const) {
-    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1 : sizeof...(arg_types) + 2;
+    return (std::is_void<return_type>::value) ? sizeof...(arg_types) + 1
+                                              : sizeof...(arg_types) + 2;
   }
 
   /**

@@ -36,7 +36,7 @@ class FunctionBuilder;
 
 namespace interpreter {
 class BytecodeBuilder;
-}
+}  // namespace interpreter
 
 //===----------------------------------------------------------------------===//
 // The context where all generated LLVM query code resides. We create a context
@@ -89,21 +89,22 @@ class CodeContext {
   /// Retrieve the raw function pointer to the provided compiled LLVM function
   FuncPtr GetRawFunctionPointer(llvm::Function *fn) const;
 
-  // Get the number of bytes that are needed to store this type
+  /// Get the number of bytes that are needed to store this type
   size_t GetTypeSize(llvm::Type *type) const;
 
-  // Get the number of bits that are needed to store this type
+  /// Get the number of bits that are needed to store this type
   size_t GetTypeSizeInBits(llvm::Type *type) const;
 
-  // Get the number of bytes between two elements of this type
-  // This also includes the padding
+  /// Get the number of bytes between two elements of this type
+  /// This also includes the padding
   size_t GetTypeAllocSize(llvm::Type *type) const;
 
-  // Get the number of bits between two elements of this type
-  // This also includes the padding
+  /// Get the number of bits between two elements of this type
+  /// This also includes the padding
   size_t GetTypeAllocSizeInBits(llvm::Type *type) const;
 
   /// Dump the contents of all the code in this context
+  /// Attention: this function may change the IR!
   void DumpContents() const;
 
   //////////////////////////////////////////////////////////////////////////////

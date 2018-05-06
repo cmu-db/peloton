@@ -121,11 +121,11 @@ class Query {
   explicit Query(const planner::AbstractPlan &query_plan);
 
   // Execute the query as native code (must already be compiled)
-  bool ExecuteNative(FunctionArguments *function_arguments,
+  void ExecuteNative(FunctionArguments *function_arguments,
                      RuntimeStats *stats);
 
   // Execute the query using the interpreter
-  bool ExecuteInterpreter(FunctionArguments *function_arguments,
+  void ExecuteInterpreter(FunctionArguments *function_arguments,
                           RuntimeStats *stats);
 
  private:

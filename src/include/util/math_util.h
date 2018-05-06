@@ -25,12 +25,8 @@ class MathUtil {
    * Performs a division of two integer values and rounds up the result.
    * Calculation is made using a trick with integer division.
    */
-  template <typename type_t>
-  static ALWAYS_INLINE inline type_t DivRoundUp(type_t numerator,
-                                                type_t denominator) {
-    static_assert(std::is_integral<type_t>::value,
-                  "type of DivRoundUp must be integral type");
-
+  static ALWAYS_INLINE inline size_t DivRoundUp(size_t numerator,
+                                                size_t denominator) {
     // division must be integer division
     return (numerator + denominator - 1) / denominator;
   }

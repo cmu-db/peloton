@@ -20,8 +20,8 @@
 #include "codegen/execution_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
-#include "expression/constant_value_expression.h"
 #include "expression/comparison_expression.h"
+#include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/binding_context.h"
 #include "storage/data_table.h"
@@ -68,10 +68,10 @@ class PelotonCodeGenTest : public PelotonTest {
   PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
                      peloton::LayoutType layout_type = LayoutType::ROW);
 
-  typedef struct {
+  struct CodeGenStats {
     codegen::QueryCompiler::CompileStats compile_stats;
     codegen::Query::RuntimeStats runtime_stats;
-  } CodeGenStats;
+  };
 
   virtual ~PelotonCodeGenTest();
 

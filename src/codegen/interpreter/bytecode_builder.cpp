@@ -208,7 +208,8 @@ InternalCallInstruction &BytecodeBuilder::InsertBytecodeInternalCallInstruction(
   // calculate number of required instruction slots
   // number_arguments + 4 because of the number of fixed arguments
   // (see structure of InternalCallInstruction)
-  const size_t number_instruction_slots = MathUtil::DivRoundUp(sizeof(uint16_t) * (4 + number_arguments), InternalCallInstructionslot_t));
+  const size_t number_instruction_slots = MathUtil::DivRoundUp(
+      sizeof(uint16_t) * (4 + number_arguments), sizeof(instr_slot_t));
 
   bytecode_function_.bytecode_.insert(bytecode_function_.bytecode_.end(),
                                       number_instruction_slots, 0);
@@ -296,7 +297,7 @@ value_t BytecodeBuilder::GetConstantValue(
         double value_double = llvm::cast<llvm::ConstantFP>(constant)
                                   ->getValueAPF()
                                   .convertToDouble();
-        ;
+
         return *reinterpret_cast<value_t *>(&value_double);
       }
 
@@ -1729,8 +1730,8 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
         // external
         // function call
 
-      // lookup function pointer in code context
-      void *raw_pointer = code_context_.LookupBuiltin(function_name).second;
+        // lookup function pointer in code context
+        void *raw_pointer = code_context_.LookupBuiltin(function_name).second;
 
         if (raw_pointer == nullptr) {
           throw NotSupportedException("could not find external function: " +

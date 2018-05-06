@@ -15,8 +15,6 @@
 #include <ffi.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/IR/CFG.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/Support/raw_ostream.h>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -25,6 +23,17 @@
 #include <vector>
 
 #include "codegen/interpreter/bytecode_function.h"
+
+namespace llvm {
+class Instruction;
+class Function;
+class Value;
+class BasicBlock;
+class Type;
+class Constant;
+class CallInst;
+class ExtractValueInst;
+}  // namespace llvm
 
 namespace peloton {
 namespace codegen {
