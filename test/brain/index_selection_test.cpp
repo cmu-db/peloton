@@ -71,6 +71,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   admissible_indexes.push_back(2);
   query_strs.push_back("UPDATE " + table_name +
                        " SET a = 45 WHERE a < 1 or b > 4");
+
   admissible_indexes.push_back(2);
 
   // Create a new workload
@@ -319,7 +320,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
   for (auto table_schema : table_schemas) {
     testing_util.CreateTable(table_schema);
     testing_util.InsertIntoTable(table_schema, num_rows);
-  }w
+  }
 
   brain::Workload workload(query_strings, database_name);
   EXPECT_EQ(workload.Size(), query_strings.size());
