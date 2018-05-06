@@ -1,10 +1,12 @@
 
+#include <include/catalog/catalog.h>
 #include "index/index_factory.h"
 
 #include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "catalog/catalog_defaults.h"
 #include "type/ephemeral_pool.h"
@@ -322,7 +324,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
 
           // update table oid to prevent oid reuse after recovery
-          catalog::TableCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
+          catalog::Catalog::GetInstance()->GetSystemCatalogs(CATALOG_DATABASE_OID)->GetTableCatalog()->GetNextOid();
           tuple_table_create = std::move(tuple);
           pending_table_create = true;
 
@@ -334,7 +336,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
           InstallCatalogTuple(record_type, tuple.get(), table, commit_id, location);
 
           // update column oid to prevent oid reuse after recovery
-          catalog::ColumnCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
+          catalog::Catalog::GetInstance()->GetSystemCatalogs(CATALOG_DATABASE_OID)->GetColumnCatalog()->GetNextOid();
 
           bool is_inline = true;
 
@@ -361,7 +363,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
         } else if (table_id == INDEX_CATALOG_OID) {
           LOG_INFO("REPLAYING INSERT TO PG_INDEX");
           indexes.push_back(std::move(tuple));
-          catalog::IndexCatalog::GetInstance()->GetNextOid();  // TODO(graghura): This is a hack, rewrite !!!
+          catalog::Catalog::GetInstance()->GetSystemCatalogs(CATALOG_DATABASE_OID)->GetIndexCatalog()->GetNextOid();
         }
       } else {
 
@@ -469,7 +471,8 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
     auto txn = concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(
                     IsolationLevelType::SERIALIZABLE);
 
-    auto table_catalog = catalog::TableCatalog::GetInstance();
+    auto table_catalog = catalog::Catalog::GetInstance()->
+      GetSystemCatalogs(CATALOG_DATABASE_OID)->GetTableCatalog();
     auto table_object = table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(), txn);
     auto database_oid = table_object->GetDatabaseOid();
     auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
