@@ -23,9 +23,14 @@ namespace planner {
 class PlanUtil;
 }  // namespace planner
 
+namespace function {
+class SequenceFunctions;
+}  // namespace function
+
 namespace catalog {
 
 class DatabaseCatalogObject;
+class SequenceCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
 
@@ -38,6 +43,8 @@ class CatalogCache {
   friend class TableCatalogObject;
   friend class IndexCatalogObject;
   friend class planner::PlanUtil;
+  friend class SequenceCatalogObject;
+  friend class function::SequenceFunctions;
 
  public:
   CatalogCache() {}
@@ -60,11 +67,25 @@ class CatalogCache {
   bool EvictDatabaseObject(oid_t database_oid);
   bool EvictDatabaseObject(const std::string &database_name);
 
+  // sequence catalog cache interface
+  bool InsertSequenceObject(
+          std::shared_ptr<SequenceCatalogObject> sequence_object);
+  bool EvictSequenceObject(const std::string &sequence_name,
+          oid_t database_oid);
+  std::shared_ptr<SequenceCatalogObject> GetSequenceObject(
+          const std::string &sequence_name, oid_t database_oid);
+  std::size_t GetHashKey(std::string sequence_name, oid_t database_oid);
+
   // cache for database catalog object
   std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
       database_objects_cache;
   std::unordered_map<std::string, std::shared_ptr<DatabaseCatalogObject>>
       database_name_cache;
+
+  // cache for sequence catalog object
+  std::unordered_map<std::size_t, std::shared_ptr<SequenceCatalogObject>>
+      sequence_objects_cache;
+
 };
 
 }  // namespace catalog

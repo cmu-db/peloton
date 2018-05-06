@@ -284,12 +284,10 @@ expression::AbstractExpression *PostgresParser::ColumnRefTransform(
                 ->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string(
-                (reinterpret_cast<value *>(fields->head->next->data.ptr_value))
-                    ->val.str),
-            std::string(
-                (reinterpret_cast<value *>(fields->head->data.ptr_value))
-                    ->val.str));
+            std::string((reinterpret_cast<value *>(
+                             fields->head->next->data.ptr_value))->val.str),
+            std::string((reinterpret_cast<value *>(
+                             fields->head->data.ptr_value))->val.str));
       }
       break;
     }
@@ -488,9 +486,8 @@ expression::AbstractExpression *PostgresParser::TypeCastTransform(
   }
 
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   type::VarlenType temp(StringToTypeId("INVALID"));
   result = new expression::ConstantValueExpression(
       temp.CastAs(source_value, ColumnDefinition::StrToValueType(name)));
@@ -556,8 +553,8 @@ expression::AbstractExpression *PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-std::vector<std::unique_ptr<expression::AbstractExpression>>
-    *PostgresParser::TargetTransform(List *root) {
+std::vector<std::unique_ptr<expression::AbstractExpression>> *
+PostgresParser::TargetTransform(List *root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
@@ -863,9 +860,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 void PostgresParser::ColumnDefTransform(ColumnDef *root,
                                         parser::CreateStatement *stmt) {
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::ColumnDefinition *result = nullptr;
 
   parser::ColumnDefinition::DataType data_type =
@@ -1056,9 +1052,8 @@ parser::FuncParameter *PostgresParser::FunctionParameterTransform(
     FunctionParameter *root) {
   parser::FuncParameter::DataType data_type;
   TypeName *type_name = root->argType;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::FuncParameter *result = nullptr;
 
   // Transform parameter type
@@ -1352,12 +1347,83 @@ parser::SQLStatement *PostgresParser::CreateViewTransform(ViewStmt *root) {
   return result;
 }
 
+parser::SQLStatement *PostgresParser::CreateSequenceTransform(
+    CreateSeqStmt *root) {
+  parser::CreateStatement *result =
+      new parser::CreateStatement(CreateStatement::kSequence);
+  result->sequence_name = std::string(root->sequence->relname);
+  ParseSequenceParams(root->options, result);
+  return result;
+}
+
+void PostgresParser::ParseSequenceParams(List *options,
+                                           parser::CreateStatement *result) {
+  DefElem *start_value = NULL;
+  DefElem *increment_by = NULL;
+  DefElem *max_value = NULL;
+  DefElem *min_value = NULL;
+  DefElem *is_cycled = NULL;
+  if (!options) return;
+
+  ListCell *option;
+  for (option = options->head; option != NULL; option = lnext(option)) {
+    DefElem *defel = (DefElem *)lfirst(option);
+
+    if (strcmp(defel->defname, "increment") == 0) {
+      if (increment_by)
+        throw ParserException(
+            "Redundant definition of increment in defining sequence");
+      increment_by = defel;
+      result->seq_increment = GetLongInDefElem(increment_by);
+    } else if (strcmp(defel->defname, "start") == 0) {
+      if (start_value)
+        throw ParserException(
+            "Redundant definition of start in defining sequence");
+      start_value = defel;
+      result->seq_start = GetLongInDefElem(start_value);
+    } else if (strcmp(defel->defname, "maxvalue") == 0) {
+      if (max_value)
+        throw ParserException(
+            "Redundant definition of max in defining sequence");
+      max_value = defel;
+      result->seq_max_value = GetLongInDefElem(max_value);
+    } else if (strcmp(defel->defname, "minvalue") == 0) {
+      if (min_value)
+        throw ParserException(
+            "Redundant definition of min in defining sequence");
+      min_value = defel;
+      result->seq_min_value = GetLongInDefElem(min_value);
+    } else if (strcmp(defel->defname, "cycle") == 0) {
+      if (is_cycled)
+        throw ParserException(
+            "Redundant definition of cycle in defining sequence");
+      is_cycled = defel;
+      result->seq_cycle = (bool)GetLongInDefElem(is_cycled);
+    }
+    else
+      throw ParserException(
+          StringUtil::Format("option \"%s\" not recognized\n", defel->defname));
+  }
+
+  // manually set the start value for a sequence
+  if (!start_value) {
+    if(result->seq_increment < 0 && max_value){
+      result->seq_start = result->seq_max_value;
+    }
+    else if (result->seq_increment > 0 && min_value){
+      result->seq_start = result->seq_min_value;
+    }
+  }
+}
+
 parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   switch (root->removeType) {
     case ObjectType::OBJECT_TABLE:
       return DropTableTransform(root);
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
+    case ObjectType::OBJECT_SEQUENCE:
+      return DropSequenceTransform(root);
     case ObjectType::OBJECT_INDEX:
       return DropIndexTransform(root);
     case ObjectType::OBJECT_SCHEMA:
@@ -1428,6 +1494,16 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
   }
 
   result->table_info_.reset(table_info);
+  return result;
+}
+
+parser::DropStatement *PostgresParser::DropSequenceTransform(DropStmt *root) {
+  auto result = new DropStatement(DropStatement::EntityType::kSequence);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List *>(cell->data.ptr_value);
+  // first, set sequence name
+  result->SetSequenceName(
+      reinterpret_cast<value *>(list->tail->data.ptr_value)->val.str);
   return result;
 }
 
@@ -1559,8 +1635,8 @@ std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
 // parsenode and transfers it into Peloton AbstractExpression.
 // This is a vector pointer of vector pointers because one InsertStmt can insert
 // multiple tuples.
-std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-    *PostgresParser::ValueListsTransform(List *root) {
+std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+PostgresParser::ValueListsTransform(List *root) {
   auto result = new std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
@@ -1671,8 +1747,8 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PELOTON_ASSERT(select_stmt->valuesLists != NULL);
-    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-        *insert_values = nullptr;
+    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+        insert_values = nullptr;
     try {
       insert_values = ValueListsTransform(select_stmt->valuesLists);
     } catch (Exception e) {
@@ -1807,6 +1883,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result =
           CreateSchemaTransform(reinterpret_cast<CreateSchemaStmt *>(stmt));
       break;
+    case T_CreateSeqStmt:
+      result = CreateSequenceTransform(reinterpret_cast<CreateSeqStmt *>(stmt));
+      break;
     case T_ViewStmt:
       result = CreateViewTransform(reinterpret_cast<ViewStmt *>(stmt));
       break;
@@ -1887,8 +1966,8 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>>
-    *PostgresParser::UpdateTargetTransform(List *root) {
+std::vector<std::unique_ptr<parser::UpdateClause>> *
+PostgresParser::UpdateTargetTransform(List *root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();

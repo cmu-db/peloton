@@ -42,12 +42,16 @@ expression::FunctionExpression::FunctionExpression(
 
 type::Value FunctionExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-    UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
+    executor::ExecutorContext *context) const {
   std::vector<type::Value> child_values;
 
   PELOTON_ASSERT(func_.impl != nullptr);
   for (auto &child : children_) {
     child_values.push_back(child->Evaluate(tuple1, tuple2, context));
+  }
+  if (func_name_ == "nextval" || func_name_ == "currval") {
+    uint64_t ctx = (uint64_t)context;
+    child_values.push_back(type::ValueFactory::GetBigIntValue(ctx));
   }
 
   type::Value ret = func_.impl(child_values);

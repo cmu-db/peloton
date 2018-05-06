@@ -30,7 +30,8 @@ namespace executor {
 class ExecutorContext {
  public:
   explicit ExecutorContext(concurrency::TransactionContext *transaction,
-                           codegen::QueryParameters parameters = {});
+                           codegen::QueryParameters parameters = {},
+                           std::string default_database_name = "");
 
   DISALLOW_COPY_AND_MOVE(ExecutorContext);
 
@@ -44,6 +45,8 @@ class ExecutorContext {
 
   type::EphemeralPool *GetPool();
 
+  std::string GetDatabaseName() const;
+
   // Number of processed tuples during execution
   uint32_t num_processed = 0;
 
@@ -54,6 +57,8 @@ class ExecutorContext {
   codegen::QueryParameters parameters_;
   // Temporary memory pool for allocations done during execution
   std::unique_ptr<type::EphemeralPool> pool_;
+  // Default database name
+  std::string default_database_name_;
 };
 
 }  // namespace executor

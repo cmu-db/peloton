@@ -20,6 +20,7 @@ namespace peloton {
 namespace function {
 
 class OldEngineStringFunctions {
+
  public:
   // ASCII code of the first character of the argument.
   static type::Value Ascii(const std::vector<type::Value> &args);

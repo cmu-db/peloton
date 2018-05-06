@@ -36,8 +36,8 @@ static void CompileAndExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
-    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
-        on_complete) {
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)> on_complete,
+    std::string default_database_name) {
   LOG_TRACE("Compiling and executing query ...");
 
   // Perform binding
@@ -51,7 +51,8 @@ static void CompileAndExecutePlan(
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn,
-                                    codegen::QueryParameters(*plan, params)));
+                                    codegen::QueryParameters(*plan, params),
+                                    default_database_name));
 
   // Compile the query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
@@ -87,12 +88,13 @@ static void InterpretPlan(
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
     std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
-        on_complete) {
+        on_complete,
+    std::string default_database_name) {
   executor::ExecutionResult result;
   std::vector<ResultValue> values;
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn, params));
+      new executor::ExecutorContext(txn, params, default_database_name));
 
   bool status;
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -142,8 +144,8 @@ void PlanExecutor::ExecutePlan(
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
-    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
-        on_complete) {
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)> on_complete,
+    std::string default_database_name) {
   PELOTON_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
@@ -152,9 +154,9 @@ void PlanExecutor::ExecutePlan(
 
   try {
     if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
-      CompileAndExecutePlan(plan, txn, params, on_complete);
+      CompileAndExecutePlan(plan, txn, params, on_complete, default_database_name);
     } else {
-      InterpretPlan(plan, txn, params, result_format, on_complete);
+      InterpretPlan(plan, txn, params, result_format, on_complete, default_database_name);
     }
   } catch (Exception &e) {
     ExecutionResult result;

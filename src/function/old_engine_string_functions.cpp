@@ -18,7 +18,9 @@
 
 #include "executor/executor_context.h"
 #include "function/string_functions.h"
-#include "type/value_factory.h"
+#include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 namespace function {
@@ -234,6 +236,5 @@ type::Value OldEngineStringFunctions::Lower(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
   throw Exception{"Lower not implemented in old engine"};
 }
-
 }  // namespace function
 }  // namespace peloton

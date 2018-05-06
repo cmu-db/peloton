@@ -191,9 +191,10 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   };
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
-  pool.SubmitTask([plan, txn, &params, &result_format, on_complete] {
+  std::string default_database_name = default_database_name_;
+  pool.SubmitTask([plan, txn, &params, &result_format, on_complete, default_database_name] {
     executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
-                                        on_complete);
+                                        on_complete, default_database_name);
   });
 
   is_queuing_ = true;

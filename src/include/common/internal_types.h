@@ -616,6 +616,7 @@ enum class CreateType {
   CONSTRAINT = 4,             // constraint create type
   TRIGGER = 5,                // trigger create type
   SCHEMA = 6,                 // schema create type
+  SEQUENCE = 7                // sequencce create type
 };
 std::string CreateTypeToString(CreateType type);
 CreateType StringToCreateType(const std::string &str);
@@ -632,7 +633,8 @@ enum class DropType {
   INDEX = 3,                  // index drop type
   CONSTRAINT = 4,             // constraint drop type
   TRIGGER = 5,                // trigger drop type
-  SCHEMA = 6,                 // trigger drop type
+  SCHEMA = 6,                 // schema drop type
+  SEQUENCE = 7,               // sequence drop type
 };
 std::string DropTypeToString(DropType type);
 DropType StringToDropType(const std::string &str);
@@ -712,7 +714,9 @@ enum class QueryType {
   QUERY_CREATE_TRIGGER = 21,
   QUERY_CREATE_SCHEMA = 22,
   QUERY_CREATE_VIEW = 23,
-  QUERY_EXPLAIN = 24
+  QUERY_EXPLAIN = 24,
+  QUERY_CREATE_SEQUENCE = 25,
+  QUERY_DROP_SEQUENCE = 26
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
@@ -1094,6 +1098,8 @@ enum class OperatorId : uint32_t {
   DateTrunc,
   Like,
   Now,
+  Nextval,
+  Currval,
 
   // Add more operators here, before the last "Invalid" entry
   Invalid

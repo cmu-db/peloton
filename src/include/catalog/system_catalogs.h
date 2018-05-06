@@ -21,6 +21,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/sequence_catalog.h"
 
 namespace peloton {
 
@@ -34,6 +35,7 @@ class SchemaCatalog;
 class TableCatalog;
 class IndexCatalog;
 class ColumnCatalog;
+class SequenceCatalog;
 
 class SystemCatalogs {
  public:
@@ -86,6 +88,13 @@ class SystemCatalogs {
     return pg_trigger_;
   }
 
+  SequenceCatalog *GetSequenceCatalog() {
+    if (!pg_sequence_) {
+      throw CatalogException("Sequence catalog catalog has not been initialized");
+    }
+    return pg_sequence_;
+  }
+
   TableMetricsCatalog *GetTableMetricsCatalog() {
     if (!pg_table_metrics_) {
       throw CatalogException("Table metrics catalog has not been initialized");
@@ -114,6 +123,8 @@ class SystemCatalogs {
   IndexCatalog *pg_index_;
 
   TriggerCatalog *pg_trigger_;
+  SequenceCatalog *pg_sequence_;
+
   // ProcCatalog *pg_proc;
   TableMetricsCatalog *pg_table_metrics_;
   IndexMetricsCatalog *pg_index_metrics_;

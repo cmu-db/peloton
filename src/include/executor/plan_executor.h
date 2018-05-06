@@ -61,7 +61,8 @@ class PlanExecutor {
       const std::vector<type::Value> &params,
       const std::vector<int> &result_format,
       std::function<void(executor::ExecutionResult,
-                         std::vector<ResultValue> &&)> on_complete);
+                         std::vector<ResultValue> &&)> on_complete,
+      std::string default_database_name="");
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked
