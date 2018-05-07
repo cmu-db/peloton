@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
-#include "catalog/schema.h"
+#include <memory>
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "codegen/runtime_functions.h"
@@ -32,11 +31,6 @@ PROXY(ColumnLayoutInfo) {
 
 PROXY(AbstractExpression) {
   DECLARE_MEMBER(0, char[sizeof(expression::AbstractExpression)], opaque);
-  DECLARE_TYPE;
-};
-
-PROXY(Schema) {
-  DECLARE_MEMBER(0, char[sizeof(catalog::Schema)], opaque);
   DECLARE_TYPE;
 };
 
