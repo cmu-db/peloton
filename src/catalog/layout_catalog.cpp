@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// layout_catalog.h
+// layout_catalog.cpp
 //
-// Identification: src/include/catalog/layout_catalog.cpp
+// Identification: src/catalog/layout_catalog.cpp
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

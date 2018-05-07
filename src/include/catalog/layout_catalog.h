@@ -10,21 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// pg_layout
-//
-// Schema: (column offset: column_name)
-// 0: table_oid (pkey)
-// 1: layout_oid (pkey)
-// 2: num_columns (number of columns in the layout)
-// 3: column_map (map column_oid to <tile_offset, tile_column_oid>)
-//
-// Indexes: (index offset: indexed columns)
-// 0: table_oid & layout_oid (unique & primary key)
-// 1: table_oid (non-unique)
-//
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "catalog/abstract_catalog.h"

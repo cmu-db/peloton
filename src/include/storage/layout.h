@@ -6,7 +6,7 @@
 //
 // Identification: src/include/storage/layout.h
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,9 +27,14 @@ namespace peloton {
 
 namespace catalog {
 class Schema;
-}
+} // namespace catalog
 
 namespace storage {
+
+/** @brief used to store the mapping between a tile and its columns
+ * <tile index> to vector{<original column index, tile column offset>}
+ */
+typedef std::map<oid_t, std::vector<std::pair<oid_t, oid_t>>> tile_map_type;
 
 /**
  * @brief   Class to store the physical layout of a TileGroup.
@@ -62,12 +67,10 @@ class Layout : public Printable {
   Layout(const column_map_type &column_map, oid_t layout_oid);
 
   /** @brief  Check whether this layout is a row store. */
-  inline bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
+  bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
 
   /** @brief  Check whether this layout is a column store. */
-  inline bool IsColumnStore() const {
-    return (layout_type_ == LayoutType::COLUMN);
-  }
+  bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
 
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }

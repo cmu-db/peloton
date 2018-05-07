@@ -88,7 +88,6 @@ llvm::Value *TileGroup::GetTileGroupId(CodeGen &codegen,
 std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
     CodeGen &codegen, llvm::Value *tile_group_ptr,
     llvm::Value *column_layout_infos) const {
-
   // Call RuntimeFunctions::GetTileGroupLayout()
   uint32_t num_cols = schema_.GetColumnCount();
   codegen.Call(

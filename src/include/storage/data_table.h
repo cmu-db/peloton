@@ -249,12 +249,12 @@ class DataTable : public AbstractTable {
 
   void ClearLayoutSamples();
 
-  inline void SetDefaultLayout(std::shared_ptr<const Layout> new_layout) {
+  void SetDefaultLayout(std::shared_ptr<const Layout> new_layout) {
     PELOTON_ASSERT(new_layout->GetColumnCount() == schema->GetColumnCount());
     default_layout_ = new_layout;
   }
 
-  inline void ResetDefaultLayout(LayoutType type = LayoutType::ROW) {
+  void ResetDefaultLayout(LayoutType type = LayoutType::ROW) {
     PELOTON_ASSERT((type == LayoutType::ROW) || (type == LayoutType::COLUMN));
     default_layout_ = std::shared_ptr<const Layout>(
         new const Layout(schema->GetColumnCount(), type));
@@ -438,8 +438,8 @@ class DataTable : public AbstractTable {
   bool dirty_ = false;
 
   // Last used layout_oid. Used while creating new layouts
-  // Initialized to COLUMN_STORE_OID since its the highest predfeined value.
-  std::atomic<oid_t> current_layout_oid_ = ATOMIC_VAR_INIT(COLUMN_STORE_OID);
+  // Initialized to COLUMN_STORE_OID since its the highest predefined value.
+  std::atomic<oid_t> current_layout_oid_;
 
   //===--------------------------------------------------------------------===//
   // TUNING MEMBERS

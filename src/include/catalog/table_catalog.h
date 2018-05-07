@@ -39,7 +39,7 @@ namespace peloton {
 
 namespace storage {
 class Layout;
-}
+} // namespace storage
 
 namespace catalog {
 
