@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/drop_statement.h"
-#include "util/string_util.h"
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include "util/string_util.h"
 
 namespace peloton {
 namespace parser {
@@ -38,7 +38,7 @@ const std::string DropStatement::GetInfo(int num_indent) const {
     case kSchema: {
       os << "DropType: Schema\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Schema name: " << schema_name_;
+         << "Schema name: " << GetSchemaName();
       break;
     }
     case kIndex: {
@@ -61,7 +61,7 @@ const std::string DropStatement::GetInfo(int num_indent) const {
     case kTrigger: {
       os << "DropType: Trigger\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Trigger table name: " << table_name_of_trigger_ << std::endl;
+         << "Trigger table name: " << GetTableName() << std::endl;
       os << StringUtil::Indent(num_indent + 1)
          << "Trigger name: " << trigger_name_;
       break;

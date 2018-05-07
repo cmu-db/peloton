@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/zone_map_catalog.h"
 
 #include "catalog/catalog.h"
+#include "common/internal_types.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -27,14 +26,15 @@ namespace catalog {
 // but #796 is still not merged when I am writing this code and I really
 // am sorry to do this. When PelotonMain() becomes a reality, I will
 // fix this for sure.
-ZoneMapCatalog *ZoneMapCatalog::GetInstance(concurrency::TransactionContext *txn) {
+ZoneMapCatalog *ZoneMapCatalog::GetInstance(
+    concurrency::TransactionContext *txn) {
   static ZoneMapCatalog zone_map_catalog{txn};
   return &zone_map_catalog;
 }
 
 ZoneMapCatalog::ZoneMapCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." ZONE_MAP_CATALOG_NAME
+                      "." CATALOG_SCHEMA_NAME "." ZONE_MAP_CATALOG_NAME
                       " ("
                       "database_id    INT NOT NULL, "
                       "table_id       INT NOT NULL, "
@@ -45,8 +45,9 @@ ZoneMapCatalog::ZoneMapCatalog(concurrency::TransactionContext *txn)
                       "type           VARCHAR);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, ZONE_MAP_CATALOG_NAME, {0, 1, 2, 3},
-      ZONE_MAP_CATALOG_NAME "_skey0", true, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, ZONE_MAP_CATALOG_NAME,
+      {0, 1, 2, 3}, ZONE_MAP_CATALOG_NAME "_skey0", true, IndexType::BWTREE,
+      txn);
 }
 
 ZoneMapCatalog::~ZoneMapCatalog() {}
@@ -68,8 +69,10 @@ bool ZoneMapCatalog::InsertColumnStatistics(
 
   tuple->SetValue(static_cast<int>(ColumnId::DATABASE_ID), val_db_id, nullptr);
   tuple->SetValue(static_cast<int>(ColumnId::TABLE_ID), val_table_id, nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::TILE_GROUP_ID), val_tile_group_id, nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::COLUMN_ID), val_column_id, nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::TILE_GROUP_ID), val_tile_group_id,
+                  nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::COLUMN_ID), val_column_id,
+                  nullptr);
   tuple->SetValue(static_cast<int>(ColumnId::MINIMUM), val_minimum, pool);
   tuple->SetValue(static_cast<int>(ColumnId::MAXIMUM), val_maximum, pool);
   tuple->SetValue(static_cast<int>(ColumnId::TYPE), val_type, pool);
@@ -78,36 +81,32 @@ bool ZoneMapCatalog::InsertColumnStatistics(
   return return_val;
 }
 
-bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
-                                            oid_t tile_group_id,
-                                            oid_t column_id,
-                                            concurrency::TransactionContext *txn) {
+bool ZoneMapCatalog::DeleteColumnStatistics(
+    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
+    concurrency::TransactionContext *txn) {
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values({
-    type::ValueFactory::GetIntegerValue(database_id),
-    type::ValueFactory::GetIntegerValue(table_id),
-    type::ValueFactory::GetIntegerValue(tile_group_id),
-    type::ValueFactory::GetIntegerValue(column_id)
-  });
+  std::vector<type::Value> values(
+      {type::ValueFactory::GetIntegerValue(database_id),
+       type::ValueFactory::GetIntegerValue(table_id),
+       type::ValueFactory::GetIntegerValue(tile_group_id),
+       type::ValueFactory::GetIntegerValue(column_id)});
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
 std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids(
-      {static_cast<int>(ColumnId::MINIMUM), 
-       static_cast<int>(ColumnId::MAXIMUM), 
-       static_cast<int>(ColumnId::TYPE)});
+  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::MINIMUM),
+                                 static_cast<int>(ColumnId::MAXIMUM),
+                                 static_cast<int>(ColumnId::TYPE)});
 
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
 
-  std::vector<type::Value> values({
-    type::ValueFactory::GetIntegerValue(database_id),
-    type::ValueFactory::GetIntegerValue(table_id),
-    type::ValueFactory::GetIntegerValue(tile_group_id),
-    type::ValueFactory::GetIntegerValue(column_id)
-  });
+  std::vector<type::Value> values(
+      {type::ValueFactory::GetIntegerValue(database_id),
+       type::ValueFactory::GetIntegerValue(table_id),
+       type::ValueFactory::GetIntegerValue(tile_group_id),
+       type::ValueFactory::GetIntegerValue(column_id)});
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);

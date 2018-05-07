@@ -18,10 +18,10 @@
 #include "codegen/codegen.h"
 #include "codegen/counting_consumer.h"
 #include "codegen/function_builder.h"
-#include "codegen/query_parameters.h"
 #include "codegen/lang/if.h"
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
+#include "codegen/query_parameters.h"
 #include "codegen/testing_codegen_util.h"
 #include "codegen/util/bloom_filter.h"
 #include "common/timer.h"
@@ -167,7 +167,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
   ASSERT_TRUE(code_context.Compile());
 
-  typedef void (*ftype)(codegen::util::BloomFilter *bloom_filter, int *, int,
+  typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
                         int *);
   ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
@@ -213,7 +213,8 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   int curr_size = 0;
   std::vector<int> numbers;
   std::unordered_set<int> number_set;
-  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, table1_name, txn);
+  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+                                           table1_name, txn);
   while (curr_size < table1_target_size) {
     // Find a unique random number
     int random;
@@ -233,7 +234,8 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   LOG_INFO("Finish populating test1");
 
   // Load the inner table which contains twice tuples as the outer table
-  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, table2_name, txn);
+  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+                                           table2_name, txn);
   unsigned outer_table_cardinality = numbers.size() * outer_to_inner_ratio;
   for (unsigned i = 0; i < outer_table_cardinality; i++) {
     int number;
@@ -332,7 +334,7 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
   }
   auto *catalog = catalog::Catalog::GetInstance();
   catalog->CreateTable(
-      DEFAULT_DB_NAME, table_name,
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name,
       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)), txn);
 }
 
