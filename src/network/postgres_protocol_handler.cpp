@@ -859,7 +859,6 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 }
 
 void PostgresProtocolHandler::GetResult() {
-  traffic_cop_->ExecuteStatementPlanGetResult();
   auto status = traffic_cop_->ExecuteStatementGetResult();
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:

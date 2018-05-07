@@ -97,9 +97,8 @@ TEST_F(CopyTests, Copying) {
 
     if (traffic_cop.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
-      traffic_cop.ExecuteStatementPlanGetResult();
+      traffic_cop.ExecuteStatementGetResult();
       status = traffic_cop.p_status_;
-      traffic_cop.SetQueuing(false);
     }
 
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);

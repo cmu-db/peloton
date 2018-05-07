@@ -104,7 +104,6 @@ class TrafficCop {
 
   ResultType CommitQueryHelper();
 
-  void ExecuteStatementPlanGetResult();
 
   ResultType ExecuteStatementGetResult();
 
@@ -135,8 +134,6 @@ class TrafficCop {
     param_values_ = std::move(param_values);
   }
 
-  std::vector<type::Value> &GetParamVal() { return param_values_; }
-
   std::string &GetErrorMessage() { return error_message_; }
 
   void SetQueuing(bool is_queuing) { is_queuing_ = is_queuing; }
@@ -148,10 +145,6 @@ class TrafficCop {
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);
   }
-
-  // TODO: this member variable should be in statement_ after parser part
-  // finished
-  std::string query_;
 
  private:
   bool is_queuing_;

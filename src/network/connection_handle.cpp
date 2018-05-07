@@ -692,7 +692,6 @@ Transition ConnectionHandle::GetResult() {
     PELOTON_ASSERT(false);
   }
   protocol_handler_->GetResult();
-  traffic_cop_.SetQueuing(false);
   return Transition::PROCEED;
 }
 }  // namespace network

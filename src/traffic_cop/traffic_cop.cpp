@@ -133,10 +133,38 @@ ResultType TrafficCop::AbortQueryHelper() {
 
 ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
-            ResultTypeToString(p_status_.m_result).c_str());
+          ResultTypeToString(p_status_.m_result).c_str());
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
+
+  if (p_status_.m_result == ResultType::FAILURE) return p_status_.m_result;
+
+  auto txn_result = GetCurrentTxnState().first->GetResult();
+  if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
+    LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
+              single_statement_txn_, ResultTypeToString(txn_result).c_str());
+    switch (txn_result) {
+      case ResultType::SUCCESS:
+        // Commit single statement
+        LOG_TRACE("Commit Transaction");
+        p_status_.m_result = CommitQueryHelper();
+        break;
+
+      case ResultType::FAILURE:
+      default:
+        // Abort
+        LOG_TRACE("Abort Transaction");
+        if (single_statement_txn_) {
+          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          p_status_.m_result = AbortQueryHelper();
+        } else {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          p_status_.m_result = ResultType::ABORTED;
+        }
+    }
+  }
+
   return p_status_.m_result;
 }
 
@@ -201,35 +229,6 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
             tcop_txn_state_.size());
   return p_status_;
-}
-
-void TrafficCop::ExecuteStatementPlanGetResult() {
-  if (p_status_.m_result == ResultType::FAILURE) return;
-
-  auto txn_result = GetCurrentTxnState().first->GetResult();
-  if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
-    LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
-              single_statement_txn_, ResultTypeToString(txn_result).c_str());
-    switch (txn_result) {
-      case ResultType::SUCCESS:
-        // Commit single statement
-        LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper();
-        break;
-
-      case ResultType::FAILURE:
-      default:
-        // Abort
-        LOG_TRACE("Abort Transaction");
-        if (single_statement_txn_) {
-          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status_.m_result = AbortQueryHelper();
-        } else {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          p_status_.m_result = ResultType::ABORTED;
-        }
-    }
-  }
 }
 
 /*
