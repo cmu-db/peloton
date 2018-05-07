@@ -156,7 +156,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
   protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
 
-  LOG_INFO("query type = %d", query_type);
+  LOG_INFO("query type = %d", static_cast<int>(query_type));
 
   switch (query_type) {
     case QueryType::QUERY_PREPARE: {
