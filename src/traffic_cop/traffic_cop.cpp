@@ -44,7 +44,7 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
-  results_.clear();
+  result_.clear();
   param_values_.clear();
   setRowsAffected(0);
 }
@@ -543,12 +543,18 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
-ResultType TrafficCop::ExecuteStatement(
-    const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
-    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<ResultValue> &result,
-    size_t thread_id) {
+ResultType TrafficCop::ExecuteStatement(std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+                                        const std::vector<int> &result_format,
+                                        size_t thread_id) {
+  return ExecuteStatement(statement_, param_values_, param_stats, result_format, result_, thread_id);
+}
+
+ResultType TrafficCop::ExecuteStatement(const std::shared_ptr<Statement> &statement,
+                                        const std::vector<type::Value> &params,
+                                        std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+                                        const std::vector<int> &result_format,
+                                        std::vector<ResultValue> &result,
+                                        size_t thread_id) {
   // TODO(Tianyi) Further simplify this API
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {

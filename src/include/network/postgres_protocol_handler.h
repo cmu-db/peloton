@@ -215,9 +215,6 @@ class PostgresProtocolHandler : public ProtocolHandler {
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
-  // packets ready for read
-  size_t pkt_cntr_;
-
   // Manage parameter types for unnamed statement
   stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
 

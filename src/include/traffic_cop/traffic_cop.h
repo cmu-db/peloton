@@ -65,12 +65,16 @@ class TrafficCop {
   void Reset();
 
   // Execute a statement
-  ResultType ExecuteStatement(
-      const std::shared_ptr<Statement> &statement,
-      const std::vector<type::Value> &params, const bool unnamed,
-      std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-      const std::vector<int> &result_format, std::vector<ResultValue> &result,
-      size_t thread_id = 0);
+  ResultType ExecuteStatement(std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+                                          const std::vector<int> &result_format,
+                                          size_t thread_id);
+
+  ResultType ExecuteStatement(const std::shared_ptr<Statement> &statement,
+                              const std::vector<type::Value> &params,
+                              std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+                              const std::vector<int> &result_format,
+                              std::vector<ResultValue> &result,
+                              size_t thread_id);
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
   executor::ExecutionResult ExecuteHelper(
@@ -155,8 +159,6 @@ class TrafficCop {
   std::string error_message_;
 
   std::vector<type::Value> param_values_;
-
-  std::vector<ResultValue> results_;
 
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;

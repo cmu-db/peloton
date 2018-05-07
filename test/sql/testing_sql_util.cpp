@@ -76,12 +76,15 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   }
   // ExecuteStatment
   std::vector<type::Value> param_values;
-  bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+  auto status = traffic_cop_.ExecuteStatement(statement,
+                                              param_values,
+                                              nullptr,
+                                              result_format,
+                                              result,
+                                              0);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -177,12 +180,15 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   }
   // ExecuteStatment
   std::vector<type::Value> param_values;
-  bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+  auto status = traffic_cop_.ExecuteStatement(statement,
+                                              param_values,
+                                              nullptr,
+                                              result_format,
+                                              result,
+                                              0);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -216,12 +222,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   }
   // ExecuteStatment
   std::vector<type::Value> param_values;
-  bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result);
+  auto status = traffic_cop_.ExecuteStatement(statement,
+                                              param_values,
+                                              nullptr,
+                                              result_format,
+                                              result,
+                                              0);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
