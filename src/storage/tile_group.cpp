@@ -394,8 +394,6 @@ void TileGroup::SerializeTo(SerializeOutput &out) {
     out.WriteInt(column_offset);
     out.WriteInt(tile_offset);
     out.WriteInt(tile_column_offset);
-    LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-    		column_offset, tile_offset, tile_column_offset);
   }
 }
 
@@ -410,7 +408,7 @@ std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
   std::vector<catalog::Schema> schemas;
   for (oid_t schema_idx = 0; schema_idx < tile_schema_count; schema_idx++) {
     auto tile_schema = catalog::Schema::DeserializeFrom(in);
-    schemas.push_back(*(tile_schema.get()));
+    schemas.push_back(*tile_schema);
   }
 
   column_map_type column_map;
@@ -420,8 +418,6 @@ std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
     oid_t tile_offset = in.ReadInt();
     oid_t tile_column_offset = in.ReadInt();
     column_map[column_offset] = std::make_pair(tile_offset, tile_column_offset);
-    LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-    		column_offset, tile_offset, tile_column_offset);
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
