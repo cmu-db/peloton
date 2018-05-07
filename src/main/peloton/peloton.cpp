@@ -6,7 +6,7 @@
 //
 // Identification: src/main/peloton/peloton.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,8 +36,9 @@ int RunPelotonServer() {
 
     peloton_server.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
-    //log error message and mark failure
-    peloton::LOG_ERROR("Cannot start server. Failure detail : %s\n", exception.GetMessage().c_str());
+    // log error message and mark failure
+    peloton::LOG_ERROR("Cannot start server. Failure detail : %s\n",
+                       exception.GetMessage().c_str());
     return_code = EXIT_FAILURE;
   }
 
@@ -45,7 +46,6 @@ int RunPelotonServer() {
   peloton::PelotonInit::Shutdown();
   return return_code;
 }
-
 
 int RunPelotonBrain() {
   // TODO(tianyu): boot up other peloton resources as needed here
@@ -75,7 +75,6 @@ int RunPelotonBrain() {
 }
 
 int main(int argc, char *argv[]) {
-
   // Parse the command line flags
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
@@ -88,19 +87,20 @@ int main(int argc, char *argv[]) {
   try {
     // Print settings
     if (peloton::settings::SettingsManager::GetBool(
-      peloton::settings::SettingId::display_settings)) {
+            peloton::settings::SettingId::display_settings)) {
       auto &settings = peloton::settings::SettingsManager::GetInstance();
       settings.ShowInfo();
     }
   } catch (peloton::SettingsException &exception) {
-    peloton::LOG_ERROR("Cannot load settings. Failed with %s\n", exception.GetMessage().c_str());
-    return EXIT_FAILURE; // TODO: Use an enum with exit error codes
+    peloton::LOG_ERROR("Cannot load settings. Failed with %s\n",
+                       exception.GetMessage().c_str());
+    return EXIT_FAILURE;  // TODO: Use an enum with exit error codes
   }
 
   int exit_code = 0;
   if (peloton::settings::SettingsManager::GetBool(
-      peloton::settings::SettingId::brain))
-    exit_code =  RunPelotonBrain();
+          peloton::settings::SettingId::brain))
+    exit_code = RunPelotonBrain();
   else
     exit_code = RunPelotonServer();
   return exit_code;
