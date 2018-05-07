@@ -140,14 +140,14 @@ void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
     parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
-  unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
+  unique_ptr<planner::AbstractPlan> util_plan = nullptr;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
           new planner::DropPlan((parser::DropStatement *)tree));
-      ddl_plan = move(drop_plan);
+      util_plan = move(drop_plan);
       break;
     }
 
@@ -158,7 +158,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       auto create_plan =
           new planner::CreatePlan((parser::CreateStatement *)tree);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
-      ddl_plan = move(child_CreatePlan);
+      util_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
@@ -184,14 +184,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
         std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
             new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
 
-        child_SeqScanPlan->AddChild(std::move(ddl_plan));
-        ddl_plan = std::move(child_SeqScanPlan);
+        child_SeqScanPlan->AddChild(std::move(util_plan));
+        util_plan = std::move(child_SeqScanPlan);
         // Create a plan to add data to index
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
             new planner::PopulateIndexPlan(target_table, column_ids));
-        child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
+        child_PopulateIndexPlan->AddChild(std::move(util_plan));
         create_plan->SetKeyAttrs(column_ids);
-        ddl_plan = std::move(child_PopulateIndexPlan);
+        util_plan = std::move(child_PopulateIndexPlan);
       }
       break;
     }
@@ -203,32 +203,32 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       unique_ptr<planner::AbstractPlan> create_func_plan(
           new planner::CreateFunctionPlan(
               (parser::CreateFunctionStatement *)tree));
-      ddl_plan = move(create_func_plan);
+      util_plan = move(create_func_plan);
     } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
           static_cast<parser::AnalyzeStatement *>(tree), txn));
-      ddl_plan = move(analyze_plan);
+      util_plan = move(analyze_plan);
       break;
     }
     case StatementType::COPY: {
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
+      util_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
     case StatementType::EXPLAIN: {
       LOG_TRACE("Adding Explain plan...");
       // Pass the sql statement to explain to the plan node
-      ddl_plan.reset(new planner::ExplainPlan(
+      util_plan.reset(new planner::ExplainPlan(
           static_cast<parser::ExplainStatement *>(tree)->real_sql_stmt.get()));
     }
     default:
       break;
   }
-  return ddl_plan;
+  return util_plan;
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(

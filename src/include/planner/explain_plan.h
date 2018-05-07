@@ -5,7 +5,7 @@
 //
 // explain_plan.h
 //
-// Identification: src/include/planner/analyze_plan.h
+// Identification: src/include/planner/explain_plan.h
 //
 // Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
