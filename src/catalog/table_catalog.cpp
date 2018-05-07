@@ -349,7 +349,6 @@ bool TableCatalogObject::InsertLayout(
     return false;
   }
 
-  valid_layout_objects_ = true;
   layout_objects_.insert(std::make_pair(layout_id, layout));
   return true;
 }
