@@ -10,16 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// pg_query
-//
-// Schema: (column offset: column_name)
-// 0: query_string
-// 1: fingerprint
-// 2: timestamp
-//
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -46,6 +36,10 @@ class QueryHistoryCatalog : public AbstractCatalog {
                           type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
 
+  std::unique_ptr<std::vector<std::pair<uint64_t, std::string>>>
+  GetQueryStringsAfterTimestamp(const uint64_t start_timestamp,
+                                concurrency::TransactionContext *txn);
+
   enum ColumnId {
     QUERY_STRING = 0,
     FINGERPRINT = 1,
@@ -57,6 +51,11 @@ class QueryHistoryCatalog : public AbstractCatalog {
 
   // Pool to use for variable length strings
   type::EphemeralPool pool_;
+
+  enum IndexId {
+    SECONDARY_KEY_0 = 0,
+    // Add new indexes here in creation order
+  };
 };
 
 }  // namespace catalog
