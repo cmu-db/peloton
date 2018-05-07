@@ -18,6 +18,7 @@
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
 #include "brain/brain.h"
+#include "brain/index_suggestion_task.h"
 
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
@@ -64,7 +65,11 @@ int RunPelotonBrain() {
     auto response = request.send().wait(client.getWaitScope());
   };
 
-  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test", example_task);
+  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test",
+                                                    example_task);
+  brain.RegisterJob<peloton::brain::SimpleBrainJob>(
+      &peloton::brain::IndexSuggestionTask::interval, "index_suggestion",
+      peloton::brain::IndexSuggestionTask::Task);
   brain.Run();
   return 0;
 }
