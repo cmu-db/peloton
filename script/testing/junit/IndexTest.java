@@ -35,7 +35,7 @@ public class IndexTest extends PLTestBase {
         Statement stmt = conn.createStatement();
         stmt.execute(SQL_DROP_TABLE);
         stmt.execute(SQL_CREATE_TABLE);
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100; i++) {
             stmt.execute("INSERT INTO tbl VALUES (" + i + ", " + i + ");");
         }
         System.out.println("init database complete");
@@ -69,8 +69,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("create index");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.close();
+                    c.close();
                     System.out.println("create index complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -84,8 +87,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("insert tuple");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
+                    stmt.close();
+                    c.close();
                     System.out.println("insert tuple complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -123,8 +129,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("create index");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.close();
+                    c.close();
                     System.out.println("create index complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -138,8 +147,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("update tuple");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
+                    stmt.close();
+                    c.close();
                     System.out.println("update tuple complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -177,8 +189,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("create index");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.close();
+                    c.close();
                     System.out.println("create index complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -192,8 +207,11 @@ public class IndexTest extends PLTestBase {
             public void run() {
                 try {
                     System.out.println("delete tuple");
-                    Statement stmt = conn.createStatement();
+                    Connection c = makeDefaultConnection();
+                    Statement stmt = c.createStatement();
                     stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
+                    stmt.close();
+                    c.close();
                     System.out.println("delete tuple complete");
                 } catch (SQLException e) {
                     e.printStackTrace();
