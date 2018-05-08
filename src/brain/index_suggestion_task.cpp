@@ -80,10 +80,16 @@ void IndexSuggestionTask::CreateIndexRPC(brain::HypotheticalIndexObject *index) 
   // TODO: Remove hardcoded database name and server end point.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
+
   auto request = peloton_service.createIndexRequest();
   request.getRequest().setDatabaseOid(index->db_oid);
   request.getRequest().setTableOid(index->table_oid);
-  request.getRequest().setKeyAttrOids(&index->column_oids[0]);
+
+  auto col_list = request.getRequest().initKeyAttrOids(index->column_oids.size());
+  for (auto i=0UL; i<index->column_oids.size(); i++) {
+    col_list.set(i, index->column_oids[i]);
+  }
+
   PELOTON_ASSERT(index->column_oids.size() > 0);
   auto response = request.send().wait(client.getWaitScope());
 }

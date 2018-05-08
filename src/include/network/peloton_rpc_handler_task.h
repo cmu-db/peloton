@@ -15,6 +15,7 @@
 #include "capnp/message.h"
 #include "common/dedicated_thread_task.h"
 #include "common/logger.h"
+#include "common/internal_types.h"
 #include "kj/debug.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 
@@ -26,7 +27,13 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     LOG_DEBUG("Received rpc to create index");
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto table_oid = request.getParams().getRequest().getTableOid();
-    std::vector<oid_t> col_oids(request.getParams().getRequest().getKeyAttrOids());
+    auto col_oids = request.getParams().getRequest().getKeyAttrOids();
+    LOG_DEBUG("Database oid: %d", database_oid);
+    LOG_DEBUG("Table oid: %d", table_oid);
+    for (auto col: col_oids) {
+      LOG_DEBUG("Col oid: %d", col);
+    }
+    // TODO: Create Index
     return kj::READY_NOW;
   }
 };
