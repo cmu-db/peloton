@@ -35,7 +35,8 @@ class CSVScanPlan : public AbstractScan {
    * @param file_name The file path
    * @param cols Information of the columns expected in each row of the CSV
    */
-  CSVScanPlan(std::string file_name, std::vector<ColumnInfo> &&cols);
+  CSVScanPlan(std::string file_name, std::vector<ColumnInfo> &&cols,
+              char delimiter = ',', char quote = '"', char escape = '"');
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -50,6 +51,10 @@ class CSVScanPlan : public AbstractScan {
   const std::string &GetFileName() const { return file_name_; }
 
   void GetAttributes(std::vector<const AttributeInfo *> &ais) const override;
+
+  char GetDelimiterChar() const { return delimiter_; }
+  char GetQuoteChar() const { return quote_; }
+  char GetEscapeChar() const { return escape_; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -68,6 +73,10 @@ class CSVScanPlan : public AbstractScan {
  private:
   const std::string file_name_;
 
+  char delimiter_;
+  char quote_;
+  char escape_;
+
   std::vector<std::unique_ptr<planner::AttributeInfo>> attributes_;
 };
 
@@ -78,8 +87,12 @@ class CSVScanPlan : public AbstractScan {
 ////////////////////////////////////////////////////////////////////////////////
 
 inline CSVScanPlan::CSVScanPlan(std::string file_name,
-                                std::vector<CSVScanPlan::ColumnInfo> &&cols)
-    : file_name_(std::move(file_name)) {
+                                std::vector<CSVScanPlan::ColumnInfo> &&cols,
+                                char delimiter, char quote, char escape)
+    : file_name_(std::move(file_name)),
+      delimiter_(delimiter),
+      quote_(quote),
+      escape_(escape) {
   for (const auto &col : cols) {
     std::unique_ptr<planner::AttributeInfo> attribute{
         new planner::AttributeInfo()};

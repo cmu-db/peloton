@@ -12,16 +12,17 @@
 
 #include "codegen/proxy/csv_scanner_proxy.h"
 
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(CSVScanner, "util::CSVScanner", MEMBER(file_path), MEMBER(callback),
-            MEMBER(opaque_callback_state), MEMBER(cols), MEMBER(cols_view));
+DEFINE_TYPE(CSVScanner, "util::CSVScanner", MEMBER(opaque1), MEMBER(cols),
+            MEMBER(opaque2));
 
 DEFINE_TYPE(CSVScannerColumn, "util::CSVScanner::Column", MEMBER(type),
-            MEMBER(ptr),  MEMBER(len), MEMBER(is_null));
+            MEMBER(ptr), MEMBER(len), MEMBER(is_null));
 
 DEFINE_METHOD(peloton::codegen::util, CSVScanner, Init);
 DEFINE_METHOD(peloton::codegen::util, CSVScanner, Destroy);

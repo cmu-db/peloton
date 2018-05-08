@@ -12,9 +12,11 @@
 
 #pragma once
 
+#include "codegen/proxy/pool_proxy.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "codegen/util/csv_scanner.h"
+#include "util/file.h"
 
 namespace peloton {
 namespace codegen {
@@ -28,11 +30,12 @@ PROXY(CSVScannerColumn) {
 };
 
 PROXY(CSVScanner) {
-  DECLARE_MEMBER(0, char[sizeof(std::string)], file_path);
-  DECLARE_MEMBER(1, char[sizeof(util::CSVScanner::Callback)], callback);
-  DECLARE_MEMBER(2, void *, opaque_callback_state);
-  DECLARE_MEMBER(3, char[sizeof(std::vector<util::CSVScanner::Column>)], cols);
-  DECLARE_MEMBER(4, util::CSVScanner::Column *, cols_view);
+  DECLARE_MEMBER(0, char[sizeof(codegen::util::CSVScanner) -
+                         sizeof(util::CSVScanner::Column *) -
+                         sizeof(util::CSVScanner::Stats) - 4],
+                 opaque1);
+  DECLARE_MEMBER(1, util::CSVScanner::Column *, cols);
+  DECLARE_MEMBER(2, char[sizeof(util::CSVScanner::Stats) + 4], opaque2);
   DECLARE_TYPE;
 
   DECLARE_METHOD(Init);

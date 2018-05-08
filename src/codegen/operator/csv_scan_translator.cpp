@@ -39,6 +39,7 @@ void CSVScanTranslator::InitializeState() {
 
   // Arguments
   auto *scanner_ptr = LoadStatePtr(scanner_id_);
+  auto *exec_ctx_ptr = GetCompilationContext().GetExecutorContextPtr();
   auto *file_path = codegen.ConstString(scan_.GetFileName(), "filePath");
   auto *output_col_types = ConstructColumnDescriptor();
   auto *runtime_state_ptr = codegen->CreatePointerCast(
@@ -50,12 +51,15 @@ void CSVScanTranslator::InitializeState() {
       codegen.Const32(static_cast<uint32_t>(out_cols.size()));
 
   auto *consumer_func = codegen->CreatePointerCast(
-      consumer_func_, proxy::TypeBuilder<void(*)(void *)>::GetType(codegen));
+      consumer_func_, proxy::TypeBuilder<void (*)(void *)>::GetType(codegen));
 
   // Call
   codegen.Call(CSVScannerProxy::Init,
-               {scanner_ptr, file_path, output_col_types, num_output_cols,
-                consumer_func, runtime_state_ptr});
+               {scanner_ptr, exec_ctx_ptr, file_path, output_col_types,
+                num_output_cols, consumer_func, runtime_state_ptr,
+                codegen.Const8(scan_.GetDelimiterChar()),
+                codegen.Const8(scan_.GetQuoteChar()),
+                codegen.Const8(scan_.GetEscapeChar())});
 }
 
 void CSVScanTranslator::DefineAuxiliaryFunctions() {
