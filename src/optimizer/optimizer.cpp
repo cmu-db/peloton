@@ -222,9 +222,10 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
     case StatementType::EXPLAIN: {
       LOG_TRACE("Adding Explain plan...");
       // Pass the sql statement to explain to the plan node
-      auto *explain_parse_tree = static_cast<parser::ExplainStatement *>(tree);
+      auto *explain_parse_tree =
+          reinterpret_cast<parser::ExplainStatement *>(tree);
       util_plan.reset(
-          new planner::ExplainPlan(explain_parse_tree->real_sql_stmt.get(),
+          new planner::ExplainPlan(std::move(explain_parse_tree->real_sql_stmt),
                                    explain_parse_tree->default_database_name));
     }
     default:

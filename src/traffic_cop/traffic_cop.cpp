@@ -133,7 +133,7 @@ ResultType TrafficCop::AbortQueryHelper() {
 
 ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
-          ResultTypeToString(p_status_.m_result).c_str());
+            ResultTypeToString(p_status_.m_result).c_str());
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
@@ -441,7 +441,15 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
 std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfo> tuple_descriptor;
-  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
+  // EXPLAIN returns a the query plan string as a tuple
+  if (sql_stmt->GetType() == StatementType::EXPLAIN) {
+    tuple_descriptor.push_back(
+        GetColumnFieldForValueType("Query Plan", type::TypeId::VARCHAR));
+    return tuple_descriptor;
+  }
+  if (sql_stmt->GetType() != StatementType::SELECT) {
+    return tuple_descriptor;
+  }
   auto select_stmt = (parser::SelectStatement *)sql_stmt;
 
   // TODO: this is a hack which I don't have time to fix now
@@ -542,18 +550,19 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
-ResultType TrafficCop::ExecuteStatement(std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-                                        const std::vector<int> &result_format,
-                                        size_t thread_id) {
-  return ExecuteStatement(statement_, param_values_, param_stats, result_format, result_, thread_id);
+ResultType TrafficCop::ExecuteStatement(
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, size_t thread_id) {
+  return ExecuteStatement(statement_, param_values_, param_stats, result_format,
+                          result_, thread_id);
 }
 
-ResultType TrafficCop::ExecuteStatement(const std::shared_ptr<Statement> &statement,
-                                        const std::vector<type::Value> &params,
-                                        std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-                                        const std::vector<int> &result_format,
-                                        std::vector<ResultValue> &result,
-                                        size_t thread_id) {
+ResultType TrafficCop::ExecuteStatement(
+    const std::shared_ptr<Statement> &statement,
+    const std::vector<type::Value> &params,
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, std::vector<ResultValue> &result,
+    size_t thread_id) {
   // TODO(Tianyi) Further simplify this API
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {

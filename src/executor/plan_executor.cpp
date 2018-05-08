@@ -339,7 +339,7 @@ executor::AbstractExecutor *BuildExecutorTree(
     case PlanNodeType::EXPLAIN:
       child_executor = 
           new executor::ExplainExecutor(plan, executor_context);
-
+      break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
                 PlanNodeTypeToString(plan_node_type).c_str());

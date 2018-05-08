@@ -41,7 +41,7 @@ bool ExplainExecutor::DExecute() {
 
   parser::SQLStatement *sql_stmt = node.GetSQLStatement();
 
-  // LOG_TRACE("Analyzing column size %lu", target_columns.size());
+  LOG_TRACE("EXPLAIN : %s", sql_stmt->GetInfo().c_str());
 
   auto current_txn = executor_context_->GetTransaction();
 
@@ -65,7 +65,7 @@ bool ExplainExecutor::DExecute() {
   SetOutput(LogicalTileFactory::WrapTiles({dest_tile}));
 
   LOG_TRACE("Explain finished!");
-  return false;
+  return true;
 }
 
 }  // namespace executor

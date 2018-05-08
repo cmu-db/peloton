@@ -1391,6 +1391,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::ANALYZE: {
       return ("ANALYZE");
     }
+    case PlanNodeType::EXPLAIN: {
+      return ("EXPLAIN");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for PlanNodeType value '%d'",
