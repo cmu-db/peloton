@@ -82,9 +82,7 @@ class TestingIndexSuggestionUtil {
 
   /**
    * Factory method to create a hypothetical index object. The returned object
-   * can
-   * be used
-   * in the catalog or catalog cache.
+   * can be used in the catalog or catalog cache.
    * @param table_name
    * @param index_col_names
    * @return
@@ -98,7 +96,7 @@ class TestingIndexSuggestionUtil {
    * @param expected_indexes
    */
   bool CheckIndexes(brain::IndexConfiguration chosen_indexes,
-                    std::set<std::set<oid_t>> expected_indexes);
+                    std::set<std::vector<oid_t>> expected_indexes);
 
   /**
    * Return a micro workload

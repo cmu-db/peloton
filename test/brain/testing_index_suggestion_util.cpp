@@ -204,7 +204,7 @@ void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
 // Check whether the given indexes are the same as the expected ones
 bool TestingIndexSuggestionUtil::CheckIndexes(
     brain::IndexConfiguration chosen_indexes,
-    std::set<std::set<oid_t>> expected_indexes) {
+    std::set<std::vector<oid_t>> expected_indexes) {
   if (chosen_indexes.GetIndexCount() != expected_indexes.size()) return false;
 
   for (auto expected_columns : expected_indexes) {

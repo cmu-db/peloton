@@ -152,8 +152,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // 3. If Cost (S U {I}) >= Cost(S) then exit
   // Else S = S U {I}
   // 4. If |S| = k then exit
-  LOG_TRACE("Starting with the following index: %s", indexes.ToString().c_str());
+  // LOG_INFO("Starting with the following index: %s",
+            // indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
+
+  // LOG_INFO("At start: #indexes chosen : %zu, #num_indexes: %zu", current_index_count, k);
 
   if (current_index_count >= k) return;
 
@@ -170,6 +173,8 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes = indexes;
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
+      // LOG_INFO("Considering this index: %s \n with cost: %lf",
+                // best_index->ToString().c_str(), cur_cost);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -178,7 +183,8 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
-      LOG_TRACE("Adding the following index: %s", best_index->ToString().c_str());
+      // LOG_INFO("Adding the following index: %s",
+                // best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
@@ -186,12 +192,12 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
       // we are done with all remaining indexes
       if (remaining_indexes.GetIndexCount() == 0) {
-        LOG_TRACE("Breaking because nothing more");
+        // LOG_INFO("Breaking because nothing more");
         break;
       }
     } else {  // we did not find any better index to add to our current
               // configuration
-      LOG_TRACE("Breaking because nothing better found");
+      // LOG_TRACE("Breaking because nothing better found");
       break;
     }
   }
@@ -246,6 +252,11 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
                              running_index_config.end());
   // Remove the starting empty set that we added
   result_index_config.erase({empty, 0.0});
+
+  // for (auto index : result_index_config) {
+    // LOG_INFO("ExhaustiveEnumeration: Index: %s, Cost: %lf", 
+             // index.first.ToString().c_str(), index.second);
+  // }
 
   // Since the insertion into the sets ensures the order of cost, get the first
   // m configurations

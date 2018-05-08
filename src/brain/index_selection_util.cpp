@@ -50,7 +50,9 @@ HypotheticalIndexObject HypotheticalIndexObject::Merge(
   result.table_oid = table_oid;
   result.column_oids = column_oids;
   for (auto column : index->column_oids) {
-    result.column_oids.insert(column);
+    if (std::find(column_oids.begin(), column_oids.end(), column) 
+            == column_oids.end())
+      result.column_oids.push_back(column);
   }
   return result;
 }
