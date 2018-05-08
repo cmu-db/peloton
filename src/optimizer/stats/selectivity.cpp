@@ -84,7 +84,7 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
   auto column_stats = table_stats->GetColumnStats(condition.column_name);
   //  LOG_INFO("column name %s", condition.column_name);
   if (std::isnan(value) || column_stats == nullptr) {
-    LOG_DEBUG("Calculate selectivity: return null");
+    LOG_TRACE("Calculate selectivity: return null");
     return DEFAULT_SELECTIVITY;
   }
 
