@@ -39,21 +39,32 @@ class ExplainPlan : public AbstractPlan {
   ExplainPlan(ExplainPlan &&) = delete;
   ExplainPlan &operator=(ExplainPlan &&) = delete;
 
-  explicit ExplainPlan(parser::SQLStatement *sql_stmt) : sql_stmt(sql_stmt){};
+  explicit ExplainPlan(parser::SQLStatement *sql_stmt,
+                       std::string default_database_name)
+      : sql_stmt_(sql_stmt), default_database_name_(default_database_name){};
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::EXPLAIN; }
 
   const std::string GetInfo() const { return "Explain table"; }
 
   inline std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new ExplainPlan(sql_stmt));
+    return std::unique_ptr<AbstractPlan>(
+        new ExplainPlan(sql_stmt_, default_database_name_));
   }
+
+  parser::SQLStatement *GetSQLStatement() const { return sql_stmt_; }
+
+  std::string GetDatabaseName() const { return default_database_name_; }
 
  private:
   /**
    * @brief The SQL statement to explain (owned by the AST)
    */
-  parser::SQLStatement *sql_stmt;
+  parser::SQLStatement *sql_stmt_;
+  /**
+   * @brief The database name to be used in the binder
+   */
+  std::string default_database_name_;
 };
 
 }  // namespace planner
