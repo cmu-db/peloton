@@ -137,7 +137,7 @@ void WhatIfIndex::GetTablesReferenced(
           break;
         }
         case TableReferenceType::SELECT: {
-          GetTablesReferenced(std::make_shared(sql_statement->from_table->select), table_names);
+          GetTablesReferenced(std::shared_ptr<parser::SQLStatement>(sql_statement->from_table->select), table_names);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {
