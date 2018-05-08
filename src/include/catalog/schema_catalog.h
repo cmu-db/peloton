@@ -53,6 +53,7 @@ class SchemaCatalogObject {
 class SchemaCatalog : public AbstractCatalog {
   friend class SchemaCatalogObject;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   SchemaCatalog(storage::Database *peloton, type::AbstractPool *pool,

@@ -35,6 +35,10 @@ namespace index {
 class Index;
 }  // namespace index
 
+namespace logging {
+class TimestampCheckpointManager;
+}  // namespace logging
+
 namespace storage {
 class Database;
 class DataTable;
@@ -72,6 +76,8 @@ struct FunctionData {
 };
 
 class Catalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   // Global Singleton
   static Catalog *GetInstance();
@@ -188,7 +194,11 @@ class Catalog {
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
 
-<<<<<<< HEAD
+  /*
+   * Using database oid to get system catalog object
+   */
+  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
+
   //===--------------------------------------------------------------------===//
   // CHECK EXISTENCE WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
@@ -199,21 +209,17 @@ class Catalog {
 
   // check existence of table with table_name using txn.
   bool ExistTableByName(const std::string &database_name,
+                        const std::string &schema_name,
                         const std::string &table_name,
                         concurrency::TransactionContext *txn);
 
   // check existence of index with index_name using txn.
   bool ExistIndexByName(const std::string &database_name,
+                        const std::string &schema_name,
                         const std::string &table_name,
                         const std::string &index_name,
                         concurrency::TransactionContext *txn);
 
-=======
-  /*
-   * Using database oid to get system catalog object
-   */
-  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
->>>>>>> master
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

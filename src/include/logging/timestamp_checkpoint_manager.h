@@ -98,12 +98,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   void PerformCheckpointing();
 
   // checkpointing for the user tables
-  void CreateUserTableCheckpoint(const cid_t begin_cid,
+  void CreateCheckpoint(const cid_t begin_cid,
                                  concurrency::TransactionContext *txn);
-
-  // checkpointing for the catalog tables
-  void CreateCatalogTableCheckpoint(const cid_t begin_cid,
-                                    concurrency::TransactionContext *txn);
 
   // read table data and write it down to checkpoint data file
   void CheckpointingTableData(const storage::DataTable *table,

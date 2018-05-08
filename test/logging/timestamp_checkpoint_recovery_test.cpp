@@ -49,12 +49,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // check an uncommitted table does not exist
   EXPECT_FALSE(
-      catalog->ExistTableByName(DEFAULT_DB_NAME, "out_of_checkpoint", txn));
+      catalog->ExistTableByName(DEFAULT_DB_NAME, "public", "out_of_checkpoint_test", txn));
 
   // check all tables in the default database
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
-  for (auto table_catalog_pair : default_db_catalog->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
+  for (auto table_catalog : default_db_catalog->GetTableObjects(
+  		(std::string)DEFUALT_SCHEMA_NAME)) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
@@ -200,7 +200,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         if (foreign_key->GetConstraintName() ==
             "FK_checkpoint_constraint_test->checkpoint_table_test") {
           auto sink_table_catalog =
-              default_db_catalog->GetTableObject("checkpoint_table_test", txn);
+              default_db_catalog->GetTableObject("checkpoint_table_test", "public",
+              		txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
           EXPECT_EQ(sink_table_catalog->GetTableOid(),
                     foreign_key->GetSinkTableOid());
@@ -222,7 +223,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         else if (foreign_key->GetConstraintName() ==
                  "FK_checkpoint_constraint_test->checkpoint_index_test") {
           auto sink_table_catalog =
-              default_db_catalog->GetTableObject("checkpoint_index_test", txn);
+              default_db_catalog->GetTableObject("checkpoint_index_test", "public",
+              		txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
           EXPECT_EQ(sink_table_catalog->GetTableOid(),
                     foreign_key->GetSinkTableOid());
@@ -486,6 +488,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result1);
 
+  /*
   // output created table information to verify checkpoint recovery
   auto txn2 = txn_manager.BeginTransaction();
   auto default_db_catalog2 = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn2);
@@ -524,6 +527,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     }
   }
   txn_manager.CommitTransaction(txn2);
+  */
 
   // PRIMARY KEY (2 column: pid1, pid2)
   LOG_INFO("PRIMARY KEY (2 columns) check");

@@ -156,17 +156,21 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
       "INSERT INTO checkpoint_table_test VALUES (3, 0.0, 'xxxx');");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
+  /*
   // output created table information to verify checkpoint recovery
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto storage = storage::StorageManager::GetInstance();
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  LOG_INFO("Database %d %s", default_db_catalog->GetDatabaseOid(),
+  		default_db_catalog->GetDatabaseName().c_str());
   for (auto table_catalog_pair : default_db_catalog->GetTableObjects()) {
     auto table_catalog = table_catalog_pair.second;
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
-    LOG_INFO("Table %d %s\n%s", table_catalog->GetTableOid(),
+    LOG_INFO("Table %d %s.%s\n%s", table_catalog->GetTableOid(),
+    		table_catalog->GetSchemaName().c_str(),
     		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
 
     for (auto column_pair : table_catalog->GetColumnObjects()) {
@@ -177,7 +181,18 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
       		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
     }
   }
+
+  auto catalog_db_catalog = catalog->GetDatabaseObject(CATALOG_DATABASE_NAME, txn);
+  LOG_INFO("Database %d %s", catalog_db_catalog->GetDatabaseOid(),
+  		catalog_db_catalog->GetDatabaseName().c_str());
+  for (auto table_catalog_pair : catalog_db_catalog->GetTableObjects()) {
+    auto table_catalog = table_catalog_pair.second;
+    LOG_INFO("Table %d %s.%s", table_catalog->GetTableOid(),
+    		table_catalog->GetSchemaName().c_str(),
+    		table_catalog->GetTableName().c_str());
+  }
   txn_manager.CommitTransaction(txn);
+  */
 
   // generate table and data that will be out of checkpointing.
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
@@ -207,21 +222,27 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 
   // test files created by this checkpointing
   // prepare file check
-  auto txn2 = txn_manager.BeginTransaction();
-	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto storage = storage::StorageManager::GetInstance();
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   eid_t checkpointed_epoch = checkpoint_manager.GetRecoveryCheckpointEpoch();
   std::string checkpoint_dir = "./data/checkpoints/" + std::to_string(checkpointed_epoch);
   EXPECT_TRUE(logging::LoggingUtil::CheckDirectoryExistence(checkpoint_dir.c_str()));
 
   // check user table file
-	auto default_db_catalog2 = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn2);
-  for (auto table_catalog_pair : default_db_catalog2->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
+	auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  for (auto table_catalog : default_db_catalog->GetTableObjects(
+  		(std::string)DEFUALT_SCHEMA_NAME)) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
     FileHandle table_file;
     std::string file = checkpoint_dir + "/" + "checkpoint_" +
     		default_db_catalog->GetDatabaseName() + "_" + table_catalog->GetTableName();
+
+    LOG_INFO("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
+    		table_catalog->GetTableName().c_str());
 
   	// open table file
     // table 'out_of_checkpoint_test' is not targeted for the checkpoint
@@ -378,7 +399,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
     logging::LoggingUtil::CloseFile(table_file);
   }
 
-  txn_manager.CommitTransaction(txn2);
+  txn_manager.CommitTransaction(txn);
 
   PelotonInit::Shutdown();
 }
