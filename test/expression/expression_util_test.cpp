@@ -101,7 +101,9 @@ TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
       expression::ExpressionUtil::ConjunctionFactory(
           ExpressionType::CONJUNCTION_AND, exp1->Copy(), exp2->Copy());
   EXPECT_EQ(CmpBool::CmpTrue, cmp->GetValue().CompareEquals(exp2->GetValue()));
-  delete exp1, exp2, cmp;
+  delete exp1;
+  delete exp2;
+  delete cmp;
 
   auto exp3 = (expression::ConstantValueExpression *)
       expression::ExpressionUtil::ConstantValueFactory(
@@ -117,7 +119,8 @@ TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
           ExpressionType::CONJUNCTION_OR, exp3, exp4);
   EXPECT_EQ(CmpBool::CmpFalse,
             cmp2->GetValue().CompareEquals(exp5->GetValue()));
-  delete cmp2, exp5;
+  delete cmp2;
+  delete exp5;
 }
 
 // Make sure that we can traverse a tree
