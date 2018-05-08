@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/brain/index_selection_util.h>
 #include "include/brain/index_suggestion_task.h"
 #include "catalog/query_history_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 
@@ -25,7 +25,7 @@ struct timeval IndexSuggestionTask::interval {
 
 uint64_t IndexSuggestionTask::last_timestamp = 0;
 
-uint64_t IndexSuggestionTask::tuning_threshold = 10;
+uint64_t IndexSuggestionTask::tuning_threshold = 60;
 
 void IndexSuggestionTask::Task(BrainEnvironment *env) {
   (void)env;
@@ -48,9 +48,13 @@ void IndexSuggestionTask::Task(BrainEnvironment *env) {
     // Run the index selection.
     // Create RPC for index creation on the server side.
 
-    // TODO 3)
     // Update the last_timestamp to the be the latest query's timestamp in
     // the current workload, so that we fetch the new queries next time.
+    // TODO[vamshi]: Make this efficient. Currently assuming that the latest
+    // query
+    // can be anywhere in the vector. if the latest query is always at the
+    // end, then we can avoid scan over all the queries.
+    last_timestamp = GetLatestQueryTimestamp(queries.get());
   } else {
     LOG_INFO("Tuning - not this time");
   }
@@ -69,6 +73,17 @@ void IndexSuggestionTask::SendIndexCreateRPCToServer(std::string table_name,
   // TODO: Set index keys for Multicolumn indexes.
   request.getRequest().setIndexKeys(keys[0]);
   auto response = request.send().wait(client.getWaitScope());
+}
+
+uint64_t IndexSuggestionTask::GetLatestQueryTimestamp(
+    std::vector<std::pair<uint64_t, std::string>> *queries) {
+  uint64_t latest_time = 0;
+  for (auto query : *queries) {
+    if (query.first > latest_time) {
+      latest_time = query.first;
+    }
+  }
+  return latest_time;
 }
 }
 }

@@ -33,6 +33,8 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
                       "fingerprint    VARCHAR NOT NULL, "
                       "timestamp      TIMESTAMP NOT NULL);",
                       txn) {
+  
+  // Secondary index on timestamp
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, QUERY_HISTORY_CATALOG_NAME,
       {2}, QUERY_HISTORY_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
@@ -63,6 +65,8 @@ bool QueryHistoryCatalog::InsertQueryHistory(
 std::unique_ptr<std::vector<std::pair<uint64_t, std::string>>>
 QueryHistoryCatalog::GetQueryStringsAfterTimestamp(
     const uint64_t start_timestamp, concurrency::TransactionContext *txn) {
+  
+  // Get both timestamp and query string in the result.
   std::vector<oid_t> column_ids({ColumnId::TIMESTAMP, ColumnId::QUERY_STRING});
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
