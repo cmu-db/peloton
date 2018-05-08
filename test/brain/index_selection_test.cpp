@@ -463,6 +463,44 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
  * and spits out the set of indexes that are the best ones for more
  * complex workloads.
  */
+TEST_F(IndexSelectionTest, IndexSelectionTest2) {
+  std::string database_name = DEFAULT_DB_NAME;
+  int num_rows = 1000;  // number of rows to be inserted.
+
+  TestingIndexSuggestionUtil testing_util(database_name);
+  auto config =
+    testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
+
+  // Create and populate tables.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+    testing_util.InsertIntoTable(table_schema, num_rows);
+  }
+
+  brain::Workload workload(query_strings, database_name);
+  EXPECT_EQ(workload.Size(), query_strings.size());
+
+  brain::IndexConfiguration best_config;
+
+  size_t max_index_cols = 3;
+  size_t enumeration_threshold = 2;
+  size_t num_indexes = 2;
+  brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
+                              num_indexes};
+
+  is.GetBestIndexes(best_config);
+  LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_INFO("Best Index Count: %ld", best_config.GetIndexCount());
+  EXPECT_EQ(best_config.GetIndexCount(), 1);
+}
+
+/**
+ * @brief end-to-end test which takes in a workload of queries
+ * and spits out the set of indexes that are the best ones for more
+ * complex workloads.
+ */
 TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
