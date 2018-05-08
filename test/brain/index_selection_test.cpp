@@ -348,6 +348,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
+  brain::IndexConfiguration expected_config;
   /** Test 1
    * Choose only 1 index with 1 column
    * it should choose {B}
@@ -363,9 +365,13 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 2
    * Choose 2 indexes with 1 column
@@ -381,9 +387,14 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0}, {1}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 3
    * Choose 1 index with up to 2 columns
@@ -399,9 +410,13 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 0}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 4
    * Choose 2 indexes with up to 2 columns
@@ -417,9 +432,14 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}, {1, 2}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 5
    * Choose 4 indexes with up to 2 columns
@@ -436,9 +456,14 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}, {1, 2}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 6
    * Choose 1 index with up to 3 columns
@@ -455,9 +480,13 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 0}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   // TODO[Siva]: This test non-determinstically fails :(
   /** Test 7
@@ -472,12 +501,17 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}, {1, 2}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 }
 
 /**
@@ -486,6 +520,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
  * complex workloads.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest2) {
+  // TODO[Siva]: This test non-determinstically fails :( comparator issues
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 1000;  // number of rows to be inserted.
 
@@ -505,6 +540,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
+  brain::IndexConfiguration expected_config;
 
   size_t max_index_cols = 3;
   size_t enumeration_threshold = 2;
@@ -513,10 +550,19 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
                               num_indexes};
 
   is.GetBestIndexes(best_config);
+
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{2, 0}, {3, 1, 0}}));
+  
+  EXPECT_EQ(2, best_config.GetIndexCount());
+
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("d_student", {"id", "name"}, &is),
+      testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa"},
+          &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 }
 
 /**
@@ -525,6 +571,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
  * complex workloads.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest3) {
+  // TODO[Siva]: This test non-determinstically fails :( comparator issues
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
@@ -544,6 +591,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
+  brain::IndexConfiguration expected_config;
   /** Test 1
    * Choose only 1 index with up to 3 column
    * it should choose {AB}
@@ -560,9 +609,13 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy3", {"a", "b"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 
   /** Test 2
    * Choose only 2 indexes with up to 3 column
@@ -580,10 +633,14 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  // TODO[Siva]: This test is broken
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0}, {0, 1}}));
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy3", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy3", {"a"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
 }
 
 }  // namespace test

@@ -269,7 +269,8 @@ void TestingIndexSuggestionUtil::GenerateTableStats() {
 // offset of the table.
 std::shared_ptr<brain::HypotheticalIndexObject>
 TestingIndexSuggestionUtil::CreateHypotheticalIndex(
-    std::string table_name, std::vector<std::string> index_col_names) {
+    std::string table_name, std::vector<std::string> index_col_names,
+    brain::IndexSelection *is) {
   // We need transaction to get table object.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -284,12 +285,12 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   auto table_oid = table_object->GetTableOid();
 
   // Find the column oids.
-  for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
+  for (auto col_name : index_col_names) {
+    for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
     LOG_DEBUG("Table id: %d, Column id: %d, Offset: %d, Name: %s",
               it->second->GetTableOid(), it->second->GetColumnId(),
               it->second->GetColumnOffset(),
               it->second->GetColumnName().c_str());
-    for (auto col_name : index_col_names) {
       if (col_name == it->second->GetColumnName()) {
         col_ids.push_back(it->second->GetColumnId());
       }
@@ -297,9 +298,16 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   }
   PELOTON_ASSERT(col_ids.size() == index_col_names.size());
 
-  auto obj_ptr =
-      new brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
-  auto index_obj = std::shared_ptr<brain::HypotheticalIndexObject>(obj_ptr);
+  std::shared_ptr<brain::HypotheticalIndexObject> index_obj;
+
+  if (is == nullptr) {
+    auto obj_ptr =
+        new brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
+    index_obj = std::shared_ptr<brain::HypotheticalIndexObject>(obj_ptr);
+  } else {
+    auto obj = brain::HypotheticalIndexObject(database_oid, table_oid, col_ids);
+    index_obj = is->AddConfigurationToPool(obj);
+  }
 
   txn_manager.CommitTransaction(txn);
   return index_obj;
