@@ -80,7 +80,6 @@ TEST_F(UDFTest, ComplexExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // Create a txn
   txn = txn_manager.BeginTransaction();
@@ -137,7 +136,6 @@ TEST_F(UDFTest, IfElseExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // Create a txn
   txn = txn_manager.BeginTransaction();
@@ -196,7 +194,6 @@ TEST_F(UDFTest, RecursiveFunctionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // Create a txn
   txn = txn_manager.BeginTransaction();

@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cinttypes>
-#include "include/threadpool/mono_queue_pool.h"
 #include "concurrency/timestamp_ordering_transaction_manager.h"
+#include <cinttypes>
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -29,11 +29,13 @@
 namespace peloton {
 namespace concurrency {
 
-common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpinLatchField(
+common::synchronization::SpinLatch *
+TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  return (common::synchronization::SpinLatch *)
-            (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  return (
+      common::synchronization::SpinLatch
+          *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
 cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
@@ -228,8 +230,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
 
       // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-          StatsType::INVALID) {
+      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+              settings::SettingId::stats_mode)) != StatsType::INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
             location.block);
       }
@@ -242,8 +244,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
       current_txn->RecordRead(location);
 
       // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-          StatsType::INVALID) {
+      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+              settings::SettingId::stats_mode)) != StatsType::INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
             location.block);
       }
@@ -285,8 +287,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // if we have already owned the version.
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-          StatsType::INVALID) {
+      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+              settings::SettingId::stats_mode)) != StatsType::INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
             location.block);
       }
@@ -299,8 +301,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
           current_txn->RecordRead(location);
 
           // Increment table read op stats
-          if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode))
-              != StatsType::INVALID) {
+          if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+                  settings::SettingId::stats_mode)) != StatsType::INVALID) {
             stats::BackendStatsContext::GetInstance()->IncrementTableReads(
                 location.block);
           }
@@ -319,8 +321,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // current_txn->RecordRead(location);
 
         // Increment table read op stats
-        if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode))
-            != StatsType::INVALID) {
+        if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+                settings::SettingId::stats_mode)) != StatsType::INVALID) {
           stats::BackendStatsContext::GetInstance()->IncrementTableReads(
               location.block);
         }
@@ -335,9 +337,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //////////////////////////////////////////////////////////
   else {
     PELOTON_ASSERT(current_txn->GetIsolationLevel() ==
-                  IsolationLevelType::SERIALIZABLE ||
-              current_txn->GetIsolationLevel() ==
-                  IsolationLevelType::REPEATABLE_READS);
+                       IsolationLevelType::SERIALIZABLE ||
+                   current_txn->GetIsolationLevel() ==
+                       IsolationLevelType::REPEATABLE_READS);
 
     oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
@@ -378,11 +380,11 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // if we have already owned the version.
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
-                    current_txn->GetCommitId() ||
-                GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
+                         current_txn->GetCommitId() ||
+                     GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
       // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-          StatsType::INVALID) {
+      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+              settings::SettingId::stats_mode)) != StatsType::INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTableReads(
             location.block);
       }
@@ -398,8 +400,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
           current_txn->RecordRead(location);
 
           // Increment table read op stats
-          if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode))
-              != StatsType::INVALID) {
+          if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+                  settings::SettingId::stats_mode)) != StatsType::INVALID) {
             stats::BackendStatsContext::GetInstance()->IncrementTableReads(
                 location.block);
           }
@@ -415,16 +417,16 @@ bool TimestampOrderingTransactionManager::PerformRead(
         // if the current transaction has already owned this tuple,
         // then perform read directly.
         PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
-                      current_txn->GetCommitId() ||
-                  GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
+                           current_txn->GetCommitId() ||
+                       GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
 
         // this version must already be in the read/write set.
         // so no need to update read set.
         // current_txn->RecordRead(location);
 
         // Increment table read op stats
-        if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode))
-            != StatsType::INVALID) {
+        if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+                settings::SettingId::stats_mode)) != StatsType::INVALID) {
           stats::BackendStatsContext::GetInstance()->IncrementTableReads(
               location.block);
         }
@@ -449,7 +451,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   // check MVCC info
   // the tuple slot must be empty.
-  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
+                 INVALID_TXN_ID);
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
@@ -490,8 +493,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
 
   // Increment table insert op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableInserts(
         location.block);
   }
@@ -521,17 +524,18 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // if we can perform update, then we must have already locked the older
   // version.
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-            transaction_id);
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                .IsNull() == true);
+                 transaction_id);
+  PELOTON_ASSERT(
+      tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() ==
+      true);
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-            INVALID_TXN_ID);
+                 INVALID_TXN_ID);
   PELOTON_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-            MAX_CID);
+                 MAX_CID);
   PELOTON_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
-            MAX_CID);
+                 MAX_CID);
 
   // if the executor doesn't call PerformUpdate after AcquireOwnership,
   // no one will possibly release the write lock acquired by this txn.
@@ -601,8 +605,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
 
   // Increment table update op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
         new_location.block);
   }
@@ -623,7 +627,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
       manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-            current_txn->GetTransactionId());
+                 current_txn->GetTransactionId());
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
@@ -662,8 +666,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // in this case, nothing needs to be performed.
 
   // Increment table update op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
         location.block);
   }
@@ -672,7 +676,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
+                 IsolationLevelType::READ_ONLY);
 
   ItemPointer old_location = location;
 
@@ -690,24 +695,26 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
-            current_txn->GetCommitId());
+  PELOTON_ASSERT(
+      GetLastReaderCommitId(tile_group_header, old_location.offset) ==
+      current_txn->GetCommitId());
 
   // if we can perform delete, then we must have already locked the older
   // version.
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-            transaction_id);
+                 transaction_id);
   // we must be deleting the latest version.
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                .IsNull() == true);
+  PELOTON_ASSERT(
+      tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() ==
+      true);
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-            INVALID_TXN_ID);
+                 INVALID_TXN_ID);
   PELOTON_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-            MAX_CID);
+                 MAX_CID);
   PELOTON_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
-            MAX_CID);
+                 MAX_CID);
 
   // Set up double linked list
   tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
@@ -771,8 +778,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 
   // Increment table delete op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
         old_location.block);
   }
@@ -781,7 +788,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
 // called when the current transaction creates a new version and then deletes that version.
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
+                 IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -790,7 +798,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-            current_txn->GetTransactionId());
+                 current_txn->GetTransactionId());
   PELOTON_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
@@ -828,8 +836,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 
   // Increment table delete op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
         location.block);
   }
@@ -837,8 +845,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 ResultType TimestampOrderingTransactionManager::CommitTransaction(
     TransactionContext *const current_txn, std::function<void(ResultType)> task_callback) {
-
-  LOG_DEBUG("Committing peloton txn : %" PRId64, current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %" PRId64,
+            current_txn->GetTransactionId());
 
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
@@ -873,14 +881,16 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   }
 
   oid_t database_id = 0;
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-    if (!rw_set.IsEmpty()) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    for (const auto &tuple_entry : rw_set.GetConstIterator()) {
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
-      auto rw_set_lt = rw_set.GetConstIterator();
-      const auto tile_group_id = rw_set_lt.begin()->first.block;
+      const auto tile_group_id = tuple_entry.first.block;
       database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      if (database_id != CATALOG_DATABASE_OID) {
+        break;
+      }
     }
   }
 
@@ -969,7 +979,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
     } else if (tuple_entry.second == RWType::INSERT) {
       PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-                current_txn->GetTransactionId());
+                     current_txn->GetTransactionId());
       // set the begin commit id to persist insert
       tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
       tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -983,7 +993,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
     } else if (tuple_entry.second == RWType::INS_DEL) {
       PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-                current_txn->GetTransactionId());
+                     current_txn->GetTransactionId());
 
       tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
       tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -1033,8 +1043,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   this->EndTransaction(current_txn);
 
   // Increment # txns committed metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
             database_id);
   }
@@ -1047,7 +1057,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn, std::function<void(ResultType)> task_callback) {
 
   // a pre-declared read-only transaction will never abort.
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
+                 IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
@@ -1069,14 +1080,16 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   }
 
   oid_t database_id = 0;
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-    if (!rw_set.IsEmpty()) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    for (const auto &tuple_entry : rw_set.GetConstIterator()) {
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
-      auto rw_set_lt = rw_set.GetConstIterator();
-      const auto tile_group_id = rw_set_lt.begin()->first.block;
+      const auto tile_group_id = tuple_entry.first.block;
       database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      if (database_id != CATALOG_DATABASE_OID) {
+        break;
+      }
     }
   }
 
@@ -1109,8 +1122,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // we need to unlink it by resetting the item pointers.
 
       // this must be the latest version of a version chain.
-      PELOTON_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
-                    .IsNull() == true);
+      PELOTON_ASSERT(
+          new_tile_group_header->GetPrevItemPointer(new_version.offset)
+              .IsNull() == true);
 
       PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
       // if we updated the latest version.
@@ -1157,8 +1171,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // we need to unlink it by resetting the item pointers.
 
       // this must be the latest version of a version chain.
-      PELOTON_ASSERT(new_tile_group_header->GetPrevItemPointer(new_version.offset)
-                    .IsNull() == true);
+      PELOTON_ASSERT(
+          new_tile_group_header->GetPrevItemPointer(new_version.offset)
+              .IsNull() == true);
 
       // if we updated the latest version.
       // We must first adjust the head pointer
@@ -1248,13 +1263,13 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   this->EndTransaction(current_txn);
 
   // Increment # txns aborted metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
   }
 
   return result;
 }
 
-}  // namespace storage
+}  // namespace concurrency
 }  // namespace peloton

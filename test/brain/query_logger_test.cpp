@@ -13,8 +13,8 @@
 #include "common/harness.h"
 
 #include "brain/query_logger.h"
-#include "sql/testing_sql_util.h"
 #include "settings/settings_manager.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {

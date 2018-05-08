@@ -12,8 +12,8 @@
 
 #include "optimizer/util.h"
 
-#include "concurrency/transaction_manager_factory.h"
 #include "catalog/query_metrics_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
 #include "planner/copy_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -161,6 +161,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       copy_stmt->cpy_table->GetDatabaseName(),
+      copy_stmt->cpy_table->GetSchemaName(),
       copy_stmt->cpy_table->GetTableName(), txn);
   txn_manager.CommitTransaction(txn);
 
@@ -178,7 +179,8 @@ std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
 ConstructSelectElementMap(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
   std::unordered_map<std::string,
-                     std::shared_ptr<expression::AbstractExpression>> res;
+                     std::shared_ptr<expression::AbstractExpression>>
+      res;
   for (auto &expr : select_list) {
     std::string alias;
     if (!expr->alias.empty()) {

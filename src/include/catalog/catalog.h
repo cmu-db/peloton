@@ -24,6 +24,7 @@ class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
+class SystemCatalogs;
 }  // namespace catalog
 
 namespace concurrency {
@@ -88,19 +89,21 @@ class Catalog {
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::TransactionContext *txn);
 
+  // Create a schema(namespace)
+  ResultType CreateSchema(const std::string &database_name,
+                          const std::string &schema_name,
+                          concurrency::TransactionContext *txn);
+
   // Create a table in a database
   ResultType CreateTable(
-      const std::string &database_name, const std::string &table_name,
-      std::unique_ptr<catalog::Schema>, concurrency::TransactionContext *txn,
-      bool is_catalog = false,
+      const std::string &database_name, const std::string &schema_name,
+      const std::string &table_name, std::unique_ptr<catalog::Schema>,
+      concurrency::TransactionContext *txn, bool is_catalog = false,
       oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
-  // Create the primary key index for a table, don't call this function outside
-  // catalog.cpp
-  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
-                                concurrency::TransactionContext *txn);
   // Create index for a table
   ResultType CreateIndex(const std::string &database_name,
+                         const std::string &schema_name,
                          const std::string &table_name,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, bool unique_keys,
@@ -109,6 +112,7 @@ class Catalog {
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
+                         const std::string &schema_name,
                          const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
@@ -125,18 +129,21 @@ class Catalog {
   ResultType DropDatabaseWithOid(oid_t database_oid,
                                  concurrency::TransactionContext *txn);
 
+  // Drop a schema(namespace) using schema name
+  ResultType DropSchema(const std::string &database_name,
+                        const std::string &schema_name,
+                        concurrency::TransactionContext *txn);
+
   // Drop a table using table name
   ResultType DropTable(const std::string &database_name,
+                       const std::string &schema_name,
                        const std::string &table_name,
                        concurrency::TransactionContext *txn);
   // Drop a table, use this one in the future
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::TransactionContext *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t index_oid, concurrency::TransactionContext *txn);
-
-  // Drop an index, using its index name
-  ResultType DropIndex(const std::string &index_name,
+  ResultType DropIndex(oid_t database_oid, oid_t index_oid,
                        concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
@@ -149,11 +156,12 @@ class Catalog {
   storage::Database *GetDatabaseWithName(
       const std::string &db_name, concurrency::TransactionContext *txn) const;
 
-  /* Check table from pg_table with table_name using txn,
+  /* Check table from pg_table with table_name & schema_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
   storage::DataTable *GetTableWithName(const std::string &database_name,
+                                       const std::string &schema_name,
                                        const std::string &table_name,
                                        concurrency::TransactionContext *txn);
 
@@ -171,11 +179,16 @@ class Catalog {
    * throw exception and abort txn if not exists/invisible
    * */
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &database_name, const std::string &table_name,
-      concurrency::TransactionContext *txn);
+      const std::string &database_name, const std::string &schema_name,
+      const std::string &table_name, concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
+
+  /*
+   * Using database oid to get system catalog object
+   */
+  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -215,10 +228,21 @@ class Catalog {
  private:
   Catalog();
 
+  void BootstrapSystemCatalogs(storage::Database *database,
+                               concurrency::TransactionContext *txn);
+
+  // Create the primary key index for a table, don't call this function outside
+  // catalog.cpp
+  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
+                                const std::string &schema_name,
+                                concurrency::TransactionContext *txn);
+
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;
-
   std::mutex catalog_mutex;
+  // key: database oid
+  // value: SystemCatalog object(including pg_table, pg_index and pg_attribute)
+  std::unordered_map<oid_t, std::shared_ptr<SystemCatalogs>> catalog_map_;
 };
 
 }  // namespace catalog
