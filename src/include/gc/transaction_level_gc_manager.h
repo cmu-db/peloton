@@ -135,9 +135,7 @@ class TransactionLevelGCManager : public GCManager {
   // Returns an empty, recycled tuple slot that can be used for insertion
   virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
 
-  // TODO: Revisit, maybe get rid of this?
-  // Returns an unused TupleSlot to GCManager (in the case of an insertion failure)
-  virtual void RecycleUnusedTupleSlot(storage::DataTable *table, const ItemPointer &location) override;
+  virtual void RecycleTupleSlot(const ItemPointer &location) override;
 
   virtual void RegisterTable(oid_t table_id) override {
 
@@ -194,10 +192,10 @@ class TransactionLevelGCManager : public GCManager {
   // iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
-  void UnlinkVersions(concurrency::TransactionContext *txn_ctx);
+  void RemoveVersionsFromIndexes(concurrency::TransactionContext *txn_ctx);
 
   // this function unlinks a specified version from the index.
-  void UnlinkVersion(const ItemPointer location, const GCVersionType type);
+  void RemoveVersionFromIndexes(const ItemPointer location, GCVersionType type);
 
   // iterates through immutable tile group queue and purges all tile groups
   // from the recycles queues

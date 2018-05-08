@@ -351,7 +351,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     // is in the table already, need to give the ItemPointer back to the
     // GCManager
     auto &gc_manager = gc::GCManagerFactory::GetInstance();
-    gc_manager.RecycleUnusedTupleSlot(this, location);
+    gc_manager.RecycleTupleSlot(location);
 
     return INVALID_ITEMPOINTER;
   }

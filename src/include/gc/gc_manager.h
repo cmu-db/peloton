@@ -70,7 +70,7 @@ class GCManager {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RecycleUnusedTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE, const ItemPointer &location UNUSED_ATTRIBUTE) {}
+  virtual void RecycleTupleSlot(const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
   virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE) {}
 
