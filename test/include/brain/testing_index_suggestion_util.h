@@ -13,6 +13,7 @@
 #pragma once
 
 #include "brain/index_selection_util.h"
+#include "brain/index_selection.h"
 
 namespace peloton {
 namespace test {
@@ -88,7 +89,8 @@ class TestingIndexSuggestionUtil {
    * @return
    */
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
-      std::string table_name, std::vector<std::string> cols);
+      std::string table_name, std::vector<std::string> cols,
+      brain::IndexSelection *is = nullptr);
 
   /**
    * Check whether the given indexes are the same as the expected ones
