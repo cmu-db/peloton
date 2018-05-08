@@ -88,7 +88,7 @@ void CSVScanTranslator::DefineAuxiliaryFunctions() {
 
     // Load the pointer to the columns view
     auto *cols = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-        CSVScannerProxy::GetType(codegen), LoadStatePtr(scanner_id_), 0, 4));
+        CSVScannerProxy::GetType(codegen), LoadStatePtr(scanner_id_), 0, 1));
 
     // For each column, call the type's input function to read the input value
     for (uint32_t i = 0; i < output_attributes.size(); i++) {

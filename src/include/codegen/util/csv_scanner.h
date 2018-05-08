@@ -60,7 +60,7 @@ class CSVScanner {
     codegen::type::Type col_type;
 
     // A pointer to where the next value of this column is
-    char *ptr;
+    const char *ptr;
 
     // The number of bytes
     uint32_t len;
@@ -202,6 +202,7 @@ class CSVScanner {
 
   // The columns
   Column *cols_;
+  uint32_t num_cols_;
 
   // Statistics
   Stats stats_;

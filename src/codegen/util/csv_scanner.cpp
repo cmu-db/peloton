@@ -41,13 +41,13 @@ CSVScanner::CSVScanner(peloton::type::AbstractPool &pool,
       quote_(quote),
       escape_(escape),
       func_(func),
-      opaque_state_(opaque_state) {
+      opaque_state_(opaque_state),
+      num_cols_(num_cols) {
   // Make column array
-  cols_ = static_cast<CSVScanner::Column *>(
-      memory_.Allocate(sizeof(CSVScanner::Column) * num_cols));
+  cols_ = static_cast<Column *>(memory_.Allocate(sizeof(Column) * num_cols_));
 
   // Initialize the columns
-  for (uint32_t i = 0; i < num_cols; i++) {
+  for (uint32_t i = 0; i < num_cols_; i++) {
     cols_[i].col_type = col_types[i];
     cols_[i].ptr = nullptr;
     cols_[i].len = 0;
@@ -237,8 +237,21 @@ const char *CSVScanner::NextLine() {
   }
 }
 
-void CSVScanner::ProduceCSV(UNUSED_ATTRIBUTE const char *line) {
-  // TODO: me
+void CSVScanner::ProduceCSV(const char *line) {
+  // At this point, we have a well-formed line. Let's pull out pointers to the
+  // columns.
+
+  const auto *iter = line;
+  for (uint32_t col_idx = 0; col_idx < num_cols_; col_idx++) {
+    const char *start = iter;
+    for (; *iter != 0 && *iter != delimiter_; iter++) {}
+    cols_[col_idx].ptr = start;
+    cols_[col_idx].len = static_cast<uint32_t>(iter - start);
+    cols_[col_idx].is_null = (cols_[col_idx].len == 0);
+    iter++;
+  }
+
+  // Invoke callback
   func_(opaque_state_);
 }
 
