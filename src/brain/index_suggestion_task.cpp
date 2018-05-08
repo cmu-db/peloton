@@ -83,6 +83,7 @@ void IndexSuggestionTask::CreateIndexRPC(brain::HypotheticalIndexObject *index) 
   auto request = peloton_service.createIndexRequest();
   request.getRequest().setDatabaseOid(index->db_oid);
   request.getRequest().setTableOid(index->table_oid);
+  request.getRequest().setKeyAttrOids(&index->column_oids[0]);
   PELOTON_ASSERT(index->column_oids.size() > 0);
   auto response = request.send().wait(client.getWaitScope());
 }

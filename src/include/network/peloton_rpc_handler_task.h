@@ -22,8 +22,11 @@ namespace peloton {
 namespace network {
 class PelotonRpcServerImpl final : public PelotonService::Server {
  protected:
-  kj::Promise<void> createIndex(CreateIndexContext) override {
+  kj::Promise<void> createIndex(CreateIndexContext request) override {
     LOG_DEBUG("Received rpc to create index");
+    auto database_oid = request.getParams().getRequest().getDatabaseOid();
+    auto table_oid = request.getParams().getRequest().getTableOid();
+    std::vector<oid_t> col_oids(request.getParams().getRequest().getKeyAttrOids());
     return kj::READY_NOW;
   }
 };
