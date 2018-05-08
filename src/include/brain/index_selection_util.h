@@ -37,7 +37,7 @@ struct HypotheticalIndexObject {
   // the OID of the table
   oid_t table_oid;
   // OIDs of each column in the index
-  std::set<oid_t> column_oids;
+  std::vector<oid_t> column_oids;
 
   /**
    * @brief - Constructor
@@ -49,7 +49,7 @@ struct HypotheticalIndexObject {
    */
   HypotheticalIndexObject(oid_t db_oid, oid_t table_oid, oid_t col_oid)
       : db_oid(db_oid), table_oid(table_oid) {
-    column_oids.insert(col_oid);
+    column_oids.push_back(col_oid);
   }
 
   /**
@@ -57,9 +57,7 @@ struct HypotheticalIndexObject {
    */
   HypotheticalIndexObject(oid_t db_oid, oid_t table_oid,
                           std::vector<oid_t> &col_oids)
-      : db_oid(db_oid), table_oid(table_oid) {
-    for (auto col : col_oids) column_oids.insert(col);
-  }
+      : db_oid(db_oid), table_oid(table_oid), column_oids(col_oids) {}
 
   /**
    * @brief - Equality operator of the index object

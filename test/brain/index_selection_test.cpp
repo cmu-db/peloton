@@ -167,7 +167,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   std::set<oid_t> expected_cols = {0, 2};
 
   for (auto col : expected_cols) {
-    std::set<oid_t> cols = {col};
+    std::vector<oid_t> cols = {col};
     bool found = false;
     for (auto index : admissible_indexes) {
       found |= (index->column_oids == cols);
@@ -220,6 +220,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   cols = {2, 3};
   auto bc11 = index_selection.AddConfigurationToPool(
       brain::HypotheticalIndexObject(1, 1, cols));
+  // Column: 2, 1
+  cols = {2, 1};
+  auto ba11 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 1, cols));
 
   // Database: 1
   // Table: 2
@@ -240,9 +244,25 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   cols = {1, 3};
   auto ac12 = index_selection.AddConfigurationToPool(
       brain::HypotheticalIndexObject(1, 2, cols));
-  // Column: 1, 2 3
+  // Column: 3, 1
+  cols = {3, 1};
+  auto ca12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
+  // Column: 3, 2
+  cols = {3, 2};
+  auto cb12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
+  // Column: 1, 2, 3
   cols = {1, 2, 3};
   auto abc12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
+  // Column: 2, 3, 1
+  cols = {2, 3, 1};
+  auto bca12 = index_selection.AddConfigurationToPool(
+      brain::HypotheticalIndexObject(1, 2, cols));
+  // Column: 1, 3, 2
+  cols = {1, 3, 2};
+  auto acb12 = index_selection.AddConfigurationToPool(
       brain::HypotheticalIndexObject(1, 2, cols));
 
   // Database: 2
@@ -264,7 +284,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   cols = {1, 3};
   auto ac21 = index_selection.AddConfigurationToPool(
       brain::HypotheticalIndexObject(2, 1, cols));
-  // Column: 1, 2 3
+  // Column: 1, 2, 3
   cols = {1, 2, 3};
   auto abc21 = index_selection.AddConfigurationToPool(
       brain::HypotheticalIndexObject(2, 1, cols));
@@ -281,8 +301,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
                                              result);
 
   // candidates union (candidates * single_column_indexes)
-  indexes = {a11,  b11,  bc12, ac12,  c12,  a21, abc21,  // candidates
-             ab11, ac11, bc11, abc12, ab21, ac21};       // crossproduct
+  indexes = {// candidates
+             a11,  b11,  bc12, ac12,  c12,  a21, abc21,
+             // crossproduct
+             ab11, ac11, ba11, bc11, bca12, acb12, ca12, cb12, ab21, ac21};
   expected = {indexes};
 
   auto chosen_indexes = result.GetIndexes();
@@ -305,7 +327,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * and spits out the set of indexes that are the best ones for the
  * workload.
  */
-TEST_F(IndexSelectionTest, IndexSelectionTest) {
+TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   std::string database_name = DEFAULT_DB_NAME;
 
   int num_rows = 2000;  // number of rows to be inserted.
@@ -365,7 +387,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   /** Test 3
    * Choose 1 index with up to 2 columns
-   * it should choose {BC}
+   * it should choose {BA}
    */
   max_index_cols = 2;
   enumeration_threshold = 2;
@@ -379,7 +401,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   EXPECT_EQ(best_config.GetIndexCount(), 1);
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 2}}));
+  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 0}}));
 
   /** Test 4
    * Choose 2 indexes with up to 2 columns
@@ -420,7 +442,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   /** Test 6
    * Choose 1 index with up to 3 columns
-   * it should choose {BC}
+   * it should choose {BA}
    * more indexes / columns donot give any added benefit
    */
   max_index_cols = 3;
@@ -435,7 +457,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   EXPECT_EQ(best_config.GetIndexCount(), 1);
 
-  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 2}}));
+  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{1, 0}}));
 
   // TODO[Siva]: This test non-determinstically fails :(
   /** Test 7
@@ -450,7 +472,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(best_config.GetIndexCount(), 2);
@@ -491,9 +513,10 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
                               num_indexes};
 
   is.GetBestIndexes(best_config);
-  LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_INFO("Best Index Count: %ld", best_config.GetIndexCount());
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  EXPECT_EQ(best_config.GetIndexCount(), 2);
+  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{2, 0}, {3, 1, 0}}));
 }
 
 /**
@@ -501,7 +524,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
  * and spits out the set of indexes that are the best ones for more
  * complex workloads.
  */
-TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
+TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
@@ -523,7 +546,8 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   brain::IndexConfiguration best_config;
   /** Test 1
    * Choose only 1 index with up to 3 column
-   * it should choose {ABC}
+   * it should choose {AB}
+   * The current cost model has the same cost for configurations {AB} and {ABC}
    */
   size_t max_index_cols = 3;
   size_t enumeration_threshold = 2;
@@ -538,12 +562,13 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
 
   EXPECT_EQ(best_config.GetIndexCount(), 1);
 
-  // TODO[Siva]: This test is broken
-  // EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1, 2}}));
+  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1}}));
 
   /** Test 2
    * Choose only 2 indexes with up to 3 column
-   * it should choose {ABC} and {BCD}
+   * it should choose {AB} and {A}
+   * chooses AB for the same reason as above
+   * chooses A as we choose the lexicographically smallest string representation
    */
   max_index_cols = 3;
   enumeration_threshold = 2;
@@ -558,8 +583,7 @@ TEST_F(IndexSelectionTest, LargeIndexSelectionTest) {
   EXPECT_EQ(best_config.GetIndexCount(), 2);
 
   // TODO[Siva]: This test is broken
-  // EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0, 1, 2}, {1, 2,
-  // 3}}));
+  EXPECT_TRUE(testing_util.CheckIndexes(best_config, {{0}, {0, 1}}));
 }
 
 }  // namespace test
