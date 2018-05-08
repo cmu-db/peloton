@@ -46,7 +46,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
   // 1. Create all the table schemas required for the workload queries.
   // 2. Create all the required workload query strings.
   switch (type) {
-    case A:
+    case A: {
       table_name = "dummy1";
       table_schemas.emplace_back(
           table_name,
@@ -62,7 +62,8 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT a, b, c FROM " + table_name +
                            " WHERE a = 190 and c = 250");
       break;
-    case B:
+    }
+    case B: {
       table_name = "dummy2";
       table_schemas.emplace_back(
           table_name,
@@ -79,7 +80,8 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 190 and c = 250");
       break;
-    case C:
+    }
+    case C: {
       table_name = "dummy3";
       table_schemas.emplace_back(
           table_name,
@@ -95,6 +97,53 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 81 and c = 123 and a = 122");
       break;
+    }
+    case D: {
+      std::string table_name_1 = "d_student";
+      table_schemas.emplace_back(
+          table_name_1,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"name", TupleValueType::STRING},
+              {"gpa", TupleValueType::INTEGER},
+              {"id", TupleValueType::INTEGER},
+              {"cgpa", TupleValueType::INTEGER}});
+      std::string table_name_2 = "d_college";
+      table_schemas.emplace_back(
+          table_name_2,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"name", TupleValueType::STRING},
+              {"city", TupleValueType::STRING},
+              {"county", TupleValueType::STRING},
+              {"state", TupleValueType::STRING},
+              {"country", TupleValueType::STRING},
+              {"enrolment", TupleValueType::INTEGER}});
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE name = 'vamshi' and id = 40");
+      query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 100");
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE name = 'siva' and id = 50");
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE name = 'priyatham' and id = 60");
+      query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 4");
+      query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 10");
+      query_strs.push_back("SELECT cgpa FROM " + table_name_1 +
+                           " WHERE name = 'vam'");
+      query_strs.push_back("SELECT name FROM " + table_name_1 +
+                           " WHERE cgpa = 3");
+      query_strs.push_back("SELECT name FROM " + table_name_1 +
+                           " WHERE cgpa = 9 and gpa = 9");
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE cgpa = 9 and gpa = 9 and name = 'vam'");
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE gpa = 9 and name = 'vam' and cgpa = 9");
+      query_strs.push_back("SELECT country FROM " + table_name_2 +
+                           " WHERE name = 'cmu'");
+      query_strs.push_back("UPDATE " + table_name_2 +
+                           " set name = 'cmu' where country = 'usa'");
+      query_strs.push_back("UPDATE " + table_name_2 +
+                           " set name = 'berkeley' where country = 'usa'");
+      break;
+    }
     default:
       PELOTON_ASSERT(false);
   }
@@ -117,7 +166,7 @@ void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
         s_stream << "INT";
         break;
       case STRING:
-        s_stream << "VARCHAR";
+        s_stream << "VARCHAR(30)";
         break;
       default:
         PELOTON_ASSERT(false);
@@ -127,6 +176,7 @@ void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
     }
   }
   s_stream << ");";
+  LOG_TRACE("Create table: %s", s_stream.str().c_str());
   TestingSQLUtil::ExecuteSQLQuery(s_stream.str());
 }
 
@@ -163,9 +213,10 @@ void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
           oss << rand() % 1000;
           break;
         case FLOAT:
-          oss << rand() * 0.01;
+          oss << (float)(rand() % 100);
+          break;
         case STRING:
-          oss << "str" << rand() % 1000;
+          oss << "'str" << rand() % RAND_MAX << "'";
           break;
         default:
           PELOTON_ASSERT(false);
@@ -175,6 +226,7 @@ void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
       }
     }
     oss << ");";
+    LOG_TRACE("Inserting: %s", oss.str().c_str());
     TestingSQLUtil::ExecuteSQLQuery(oss.str());
   }
   GenerateTableStats();

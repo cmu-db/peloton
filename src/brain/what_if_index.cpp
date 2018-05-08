@@ -114,10 +114,15 @@ void WhatIfIndex::GetTablesReferenced(
           table_names.push_back(sql_statement->from_table->join->left.get()
                                     ->GetTableName()
                                     .c_str());
+          table_names.push_back(sql_statement->from_table->join->right.get()
+                                    ->GetTableName()
+                                    .c_str());
           break;
         }
         case TableReferenceType::SELECT: {
-          // TODO[vamshi]: Find out what has to be done here?
+          // TODO[vamshi]: Nested select. Not supported.
+          LOG_ERROR("Shouldn't come here");
+          PELOTON_ASSERT(false);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {
@@ -156,10 +161,11 @@ WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
   // hypothetical indexes
   // Create a dummy catalog object.
   auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
-      new catalog::IndexCatalogObject(index_seq_no++, index_name_oss.str(),
-                                      index_obj->table_oid, IndexType::BWTREE,
-                                      IndexConstraintType::DEFAULT, false,
-                                      std::vector<oid_t>(index_obj->column_oids.begin(), index_obj->column_oids.end())));
+      new catalog::IndexCatalogObject(
+          index_seq_no++, index_name_oss.str(), index_obj->table_oid,
+          IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
+          std::vector<oid_t>(index_obj->column_oids.begin(),
+                             index_obj->column_oids.end())));
   return index_cat_obj;
 }
 
