@@ -198,7 +198,7 @@ size_t ColumnStatsCatalog::GetTableStats(
   }
   auto tile = (*result_tiles)[0].get();
   size_t tuple_count = tile->GetTupleCount();
-  LOG_DEBUG("Tuple count: %lu", tuple_count);
+  LOG_TRACE("Tuple count: %lu", tuple_count);
   if (tuple_count == 0) {
     return 0;
   }

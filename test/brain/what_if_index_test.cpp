@@ -337,5 +337,102 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   EXPECT_GT(cost_with_index_8, cost_with_index_6);
 }
 
+/**
+ * @brief This test checks if a hypothetical index on multiple columns
+ * helps a particular query.
+ */
+TEST_F(WhatIfIndexTests, MultiColumnTest3) {
+  std::string db_name = DEFAULT_DB_NAME;
+  int num_rows = 1000;
+
+  TableSchema schema("table1", {{"a", TupleValueType::INTEGER},
+                                {"b", TupleValueType::INTEGER},
+                                {"c", TupleValueType::INTEGER},
+                                {"d", TupleValueType::INTEGER}});
+  TestingIndexSuggestionUtil testing_util(db_name);
+  testing_util.CreateTable(schema);
+  testing_util.InsertIntoTable(schema, num_rows);
+
+  // Form the query
+  std::string query("SELECT a from " + schema.table_name +
+                    " WHERE a = 50 and b = 200 and c = 100 and d = 50;");
+  LOG_INFO("Query: %s", query.c_str());
+
+  brain::IndexConfiguration config;
+
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+    parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+    new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+
+  // Get the first statement.
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+    stmt_list.get()->PassOutStatement(0));
+
+  binder->BindNameToNode(sql_statement.get());
+  txn_manager.CommitTransaction(txn);
+
+  // Get the optimized plan tree without the indexes (sequential scan)
+  auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+    sql_statement, config, DEFAULT_DB_NAME);
+  auto cost_without_index = result->cost;
+  LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
+  LOG_DEBUG("%s", result->plan->GetInfo().c_str());
+  EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
+
+  // Insert hypothetical catalog objects
+  config.AddIndexObject(
+    testing_util.CreateHypotheticalIndex(schema.table_name, {"a"}));
+
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_1 = result->cost;
+  LOG_INFO("Cost of the query with index {'a'}: %lf", cost_with_index_1);
+  EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  EXPECT_GT(cost_without_index, cost_with_index_1);
+  LOG_DEBUG("%s", result->plan->GetInfo().c_str());
+
+  config.Clear();
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
+    schema.table_name, {"a", "b"}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_2 = result->cost;
+  EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  LOG_INFO("Cost of the query with index {'a', 'b'}: %lf",
+           cost_with_index_2);
+  EXPECT_GT(cost_without_index, cost_with_index_2);
+  EXPECT_GT(cost_with_index_1, cost_with_index_2);
+
+  config.Clear();
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
+    schema.table_name, {"a", "b", "c"}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_3 = result->cost;
+  EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  LOG_INFO("Cost of the query with index {'a', 'b', 'c'}: %lf",
+           cost_with_index_3);
+  EXPECT_GT(cost_without_index, cost_with_index_3);
+  EXPECT_GT(cost_with_index_2, cost_with_index_3);
+
+  config.Clear();
+  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
+    schema.table_name, {"a", "b", "c", "d"}));
+  result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                      DEFAULT_DB_NAME);
+  auto cost_with_index_4 = result->cost;
+  EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
+  LOG_INFO("Cost of the query with index {'a', 'b', 'c', 'd'}: %lf",
+           cost_with_index_4);
+  EXPECT_GT(cost_without_index, cost_with_index_4);
+  EXPECT_GT(cost_with_index_3, cost_with_index_4);
+}
+
 }  // namespace test
 }  // namespace peloton
