@@ -72,8 +72,7 @@ class GCManager {
 
   virtual void RecycleUnusedTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE, const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE,
-                             storage::DataTable *table UNUSED_ATTRIBUTE) {}
+  virtual void RegisterTable(oid_t table_id UNUSED_ATTRIBUTE) {}
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 

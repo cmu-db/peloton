@@ -35,50 +35,64 @@ namespace test {
 
 namespace gc {
 
-#define MAX_QUEUE_LENGTH 100000
-#define MAX_ATTEMPT_COUNT 100000
-static constexpr size_t INITIAL_MAP_SIZE = 128;
-static constexpr size_t INITIAL_TABLE_SIZE = 128;
-static constexpr size_t RECYCLE_QUEUE_START_SIZE = 1000;
+static constexpr size_t INITIAL_UNLINK_QUEUE_LENGTH = 100000;
+static constexpr size_t INITIAL_TG_QUEUE_LENGTH = 1000;
+static constexpr size_t INITIAL_MAP_SIZE = 32;
+static constexpr size_t MAX_ATTEMPT_COUNT = 100000;
+//static constexpr size_t INITIAL_TABLE_SIZE = 128;
 
 class TransactionLevelGCManager : public GCManager {
 
  public:
   TransactionLevelGCManager(const int thread_count)
-      : gc_thread_count_(thread_count), reclaim_maps_(thread_count) {
+      : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
+
     unlink_queues_.reserve(thread_count);
+    immutable_tile_group_queues_.reserve(thread_count);
+
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
-          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
-              MAX_QUEUE_LENGTH));
-      unlink_queues_.push_back(unlink_queue);
-      local_unlink_queues_.emplace_back();
+
+      unlink_queues_.emplace_back(std::make_shared<
+          LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+
+      immutable_tile_group_queues_.emplace_back(std::make_shared<
+          LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH));
     }
 
     recycle_queues_ = std::make_shared<peloton::CuckooMap<
-        oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>>(INITIAL_MAP_SIZE);
+        oid_t, std::shared_ptr<peloton::LockFreeStack<ItemPointer>>>>(INITIAL_MAP_SIZE);
   }
 
   virtual ~TransactionLevelGCManager() {}
 
-  // this function cleans up all the member variables in the class object.
+  // this function cleans up only the member variables in the class object.
+  // leaks tuples slots, txns, etc. if StopGC() not called first
+  // only used for testing purposes currently
   virtual void Reset() override {
-    unlink_queues_.clear();
-    local_unlink_queues_.clear();
 
-    unlink_queues_.reserve(gc_thread_count_);
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
-          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
-              MAX_QUEUE_LENGTH));
-      unlink_queues_.push_back(unlink_queue);
-      local_unlink_queues_.emplace_back();
-    }
+    local_unlink_queues_.clear();
+    local_unlink_queues_.resize(gc_thread_count_);
 
     reclaim_maps_.clear();
     reclaim_maps_.resize(gc_thread_count_);
 
-    // TODO: Should recycle_queues be reset here?
+    unlink_queues_.clear();
+    unlink_queues_.reserve(gc_thread_count_);
+
+    immutable_tile_group_queues_.clear();
+    immutable_tile_group_queues_.reserve(gc_thread_count_);
+
+    for (int i = 0; i < gc_thread_count_; ++i) {
+
+      unlink_queues_.emplace_back(std::make_shared<
+          LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+
+      immutable_tile_group_queues_.emplace_back(std::make_shared<
+          LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH));
+    }
+
+    recycle_queues_.reset(std::make_shared<peloton::CuckooMap<
+        oid_t, std::shared_ptr<peloton::LockFreeStack<ItemPointer>>>>(INITIAL_MAP_SIZE));
 
     is_running_ = false;
   }
@@ -118,57 +132,26 @@ class TransactionLevelGCManager : public GCManager {
   virtual void RecycleTransaction(
       concurrency::TransactionContext *txn) override;
 
+  // Returns an empty, recycled tuple slot that can be used for insertion
   virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
 
+  // TODO: Revisit, maybe get rid of this?
   // Returns an unused TupleSlot to GCManager (in the case of an insertion failure)
   virtual void RecycleUnusedTupleSlot(storage::DataTable *table, const ItemPointer &location) override;
 
-  virtual void RegisterTable(oid_t table_id, storage::DataTable *table UNUSED_ATTRIBUTE) override {
+  virtual void RegisterTable(oid_t table_id) override {
 
-    // Insert a new entry for the table
+    // if table already registered, ignore
     if (recycle_queues_->Contains(table_id)) {
       return;
     }
-    auto recycle_queue = std::make_shared<
-        peloton::LockFreeQueue<ItemPointer>>(RECYCLE_QUEUE_START_SIZE);
+    // Insert a new entry for the table
+    auto recycle_queue = std::make_shared<peloton::LockFreeStack<ItemPointer>>();
     recycle_queues_->Insert(table_id, recycle_queue);
   }
 
   virtual void DeregisterTable(const oid_t &table_id) override {
     recycle_queues_->Erase(table_id);
-  }
-
-  //  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-  //      peloton::LockFreeQueue<ItemPointer>>>>
-  //  GetTableRecycleQueues(const oid_t &table_id) const {
-  //    std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-  //        peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues;
-  //    if (recycle_queues_->Find(table_id, table_recycle_queues)) {
-  //      return table_recycle_queues;
-  //    } else {
-  //      return nullptr;
-  //    }
-  //  }
-  //
-  //  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>
-  //  GetTileGroupRecycleQueue(std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-  //      peloton::LockFreeQueue<ItemPointer>>>> table_recycle_queues, const oid_t &tile_group_id) const {
-  //    std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
-  //    if (table_recycle_queues != nullptr && table_recycle_queues->Find(tile_group_id, recycle_queue)) {
-  //      return recycle_queue;
-  //    } else {
-  //      return nullptr;
-  //    }
-  //  }
-
-  std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>
-  GetTableRecycleQueue(const oid_t &table_id) const {
-    std::shared_ptr<peloton::LockFreeQueue<ItemPointer>> recycle_queue;
-    if (recycle_queues_->Find(table_id, recycle_queue)) {
-      return recycle_queue;
-    } else {
-      return nullptr;
-    }
   }
 
   virtual size_t GetTableCount() override { return recycle_queues_->GetSize(); }
@@ -177,16 +160,27 @@ class TransactionLevelGCManager : public GCManager {
 
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
+ private:
+
   /**
- * @brief Unlink and reclaim the tuples remained in a garbage collection
- * thread when the Garbage Collector stops.
- *
- * @return No return value.
- */
+* @brief Unlink and reclaim the tuples that remain in a garbage collection
+* thread when the Garbage Collector stops. Used primarily by tests. Also used internally
+*
+* @return No return value.
+*/
   void ClearGarbage(int thread_id);
 
+  // convenience function to get table's recycle queue
+  std::shared_ptr<peloton::LockFreeStack<ItemPointer>>
+  GetTableRecycleQueue(const oid_t &table_id) const {
+    std::shared_ptr<peloton::LockFreeStack<ItemPointer>> recycle_queue;
+    if (recycle_queues_->Find(table_id, recycle_queue)) {
+      return recycle_queue;
+    } else {
+      return nullptr;
+    }
+  }
 
- private:
   inline unsigned int HashToThread(const size_t &thread_id) {
     return (unsigned int)thread_id % gc_thread_count_;
   }
@@ -197,13 +191,17 @@ class TransactionLevelGCManager : public GCManager {
 
   bool ResetTuple(const ItemPointer &);
 
-  // this function iterates the gc context and unlinks every version
+  // iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
   void UnlinkVersions(concurrency::TransactionContext *txn_ctx);
 
   // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
+
+  // iterates through immutable tile group queue and purges all tile groups
+  // from the recycles queues
+  int ProcessImmutableTileGroupQueue(oid_t thread_id) {;
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -228,6 +226,11 @@ class TransactionLevelGCManager : public GCManager {
   // # reclaim_maps == # gc_threads
   std::vector<std::multimap<cid_t, concurrency::TransactionContext* >>
       reclaim_maps_;
+
+  // queues of tile groups to be purged from recycle_queues
+  // oid_t here is tile_group_id
+  std::vector<std::shared_ptr<
+      peloton::LockFreeQueue<oid_t>>> immutable_tile_group_queues_;
 
   // queues for to-be-reused tuples.
   // map of tables to recycle queues

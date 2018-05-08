@@ -227,11 +227,18 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
-  /*
+  /* TODO: Update this to notify the garbage collector
   * @brief The following method use Compare and Swap to set the tilegroup's
   immutable flag to be true. 
   */
   inline bool SetImmutability() {
+    return __sync_bool_compare_and_swap(&immutable, false, true);
+  }
+
+  /* TODO: Better comment
+  * @brief Set's Immutable Flag to True. Only used by the Garbage Collector
+  */
+  inline bool SetImmutabilityWithoutNotifyingGC() {
     return __sync_bool_compare_and_swap(&immutable, false, true);
   }
   
