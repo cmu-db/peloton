@@ -109,14 +109,20 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
               {"cgpa", TupleValueType::INTEGER}});
       std::string table_name_2 = "d_college";
       table_schemas.emplace_back(
-          table_name_2,
-          std::initializer_list<std::pair<std::string, TupleValueType>>{
-              {"name", TupleValueType::STRING},
-              {"city", TupleValueType::STRING},
-              {"county", TupleValueType::STRING},
-              {"state", TupleValueType::STRING},
-              {"country", TupleValueType::STRING},
-              {"enrolment", TupleValueType::INTEGER}});
+        table_name_2,
+        std::initializer_list<std::pair<std::string, TupleValueType>>{
+          {"name", TupleValueType::STRING},
+          {"city", TupleValueType::STRING},
+          {"county", TupleValueType::STRING},
+          {"state", TupleValueType::STRING},
+          {"country", TupleValueType::STRING},
+          {"enrolment", TupleValueType::INTEGER}});
+      std::string table_name_3 = "d_course";
+      table_schemas.emplace_back(
+        table_name_3,
+        std::initializer_list<std::pair<std::string, TupleValueType>>{
+          {"name", TupleValueType::STRING},
+          {"id", TupleValueType::INTEGER}});
       query_strs.push_back("SELECT * FROM " + table_name_1 +
                            " WHERE name = 'vamshi' and id = 40");
       query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 100");
@@ -124,6 +130,8 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE name = 'siva' and id = 50");
       query_strs.push_back("SELECT * FROM " + table_name_1 +
                            " WHERE name = 'priyatham' and id = 60");
+      query_strs.push_back("SELECT * FROM " + table_name_1 +
+                           " WHERE id = 69 and name = 'vamshi'");
       query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 4");
       query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 10");
       query_strs.push_back("SELECT cgpa FROM " + table_name_1 +
@@ -142,6 +150,19 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " set name = 'cmu' where country = 'usa'");
       query_strs.push_back("UPDATE " + table_name_2 +
                            " set name = 'berkeley' where country = 'usa'");
+      query_strs.push_back("DELETE FROM " + table_name_1 +
+                           " where name = 'vam'");
+      query_strs.push_back("DELETE FROM " + table_name_2 +
+                           " where name = 'vam'");
+      query_strs.push_back("DELETE FROM " + table_name_1 + " where id = 1");
+      query_strs.push_back(
+          "SELECT * FROM d_student s inner join d_college c on s.name = "
+          "c.name inner join d_course co on c.name = co.name");
+      query_strs.push_back(
+        "SELECT * FROM d_student join d_college on d_student.name = "
+          "d_college.name");
+      query_strs.push_back("SELECT * FROM " + table_name_1 + " t1 ," +
+                           table_name_2 + " t2 where t1.name = 'vam'");
       break;
     }
     default:
