@@ -13,9 +13,9 @@
 #include <include/brain/index_selection_util.h>
 #include "include/brain/index_suggestion_task.h"
 #include "catalog/query_history_catalog.h"
+#include "brain/index_selection.h"
 
 namespace peloton {
-
 namespace brain {
 
 // Interval in seconds.
@@ -27,6 +27,12 @@ uint64_t IndexSuggestionTask::last_timestamp = 0;
 
 uint64_t IndexSuggestionTask::tuning_threshold = 60;
 
+size_t IndexSuggestionTask::max_index_cols = 3;
+
+size_t IndexSuggestionTask::enumeration_threshold = 2;
+
+size_t IndexSuggestionTask::num_indexes = 10;
+
 void IndexSuggestionTask::Task(BrainEnvironment *env) {
   (void)env;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -35,43 +41,49 @@ void IndexSuggestionTask::Task(BrainEnvironment *env) {
 
   // Query the catalog for new queries.
   auto query_catalog = &catalog::QueryHistoryCatalog::GetInstance(txn);
-  auto queries =
+  auto query_history =
       query_catalog->GetQueryStringsAfterTimestamp(last_timestamp, txn);
-  if (queries->size() > tuning_threshold) {
+  if (query_history->size() > tuning_threshold) {
     LOG_INFO("Tuning threshold has crossed. Time to tune the DB!");
-    // TODO 1)
-    // This is optional.
-    // Validate the queries -- if they belong to any live tables in the
-    // database.
 
-    // TODO 2)
     // Run the index selection.
-    // Create RPC for index creation on the server side.
+    std::vector<std::string> queries;
+    for (auto query_pair: *query_history) {
+      queries.push_back(query_pair.second);
+    }
+
+    // TODO: Handle multiple databases
+    brain::Workload workload(queries, DEFAULT_DB_NAME);
+    brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
+                                num_indexes};
+    brain::IndexConfiguration best_config;
+    is.GetBestIndexes(best_config);
+
+    for (auto index: best_config.GetIndexes()) {
+      // Create RPC for index creation on the server side.
+      CreateIndexRPC(index.get());
+    }
 
     // Update the last_timestamp to the be the latest query's timestamp in
     // the current workload, so that we fetch the new queries next time.
     // TODO[vamshi]: Make this efficient. Currently assuming that the latest
-    // query
-    // can be anywhere in the vector. if the latest query is always at the
+    // query can be anywhere in the vector. if the latest query is always at the
     // end, then we can avoid scan over all the queries.
-    last_timestamp = GetLatestQueryTimestamp(queries.get());
+    last_timestamp = GetLatestQueryTimestamp(query_history.get());
   } else {
     LOG_INFO("Tuning - not this time");
   }
   txn_manager.CommitTransaction(txn);
 }
 
-void IndexSuggestionTask::SendIndexCreateRPCToServer(std::string table_name,
-                                                     std::vector<oid_t> keys) {
+void IndexSuggestionTask::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   // TODO: Remove hardcoded database name and server end point.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
   auto request = peloton_service.createIndexRequest();
-  request.getRequest().setDatabaseName(DEFAULT_DB_NAME);
-  request.getRequest().setTableName(table_name);
-  PELOTON_ASSERT(keys.size() > 0);
-  // TODO: Set index keys for Multicolumn indexes.
-  request.getRequest().setIndexKeys(keys[0]);
+  request.getRequest().setDatabaseOid(index->db_oid);
+  request.getRequest().setTableOid(index->table_oid);
+  PELOTON_ASSERT(index->column_oids.size() > 0);
   auto response = request.send().wait(client.getWaitScope());
 }
 

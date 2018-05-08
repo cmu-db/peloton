@@ -159,7 +159,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
 
   // Parse and bind every query. Store the results in the workload vector.
   for (auto query : queries) {
-    LOG_TRACE("Query: %s", query.c_str());
+    LOG_INFO("Query: %s", query.c_str());
 
     // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
@@ -168,6 +168,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     PELOTON_ASSERT(stmt_list->is_valid);
     // TODO[vamshi]: Only one query for now.
     PELOTON_ASSERT(stmt_list->GetNumStatements() == 1);
+
 
     // Create a new shared ptr from the unique ptr because
     // these queries will be referenced by multiple objects later.

@@ -178,6 +178,7 @@ WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
   }
   // TODO: For now, we assume BW-TREE and DEFAULT index constraint type for the
   // hypothetical indexes
+  // TODO: Support unique keys.
   // Create a dummy catalog object.
   auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
       new catalog::IndexCatalogObject(
