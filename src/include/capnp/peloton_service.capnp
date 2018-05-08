@@ -1,14 +1,12 @@
 @0xf3d342883f3f0344;
 
 struct CreateIndexRequest {
-  databaseName @0 :Text;
-  tableName @1 :Text;
+  databaseOid @0 :Int32;
+  tableOid @1 :Int32;
 
-  keyAttrs @2 :List(Int32);
+  keyAttrOids @2 :List(Int32);
   indexName @3 :Text;
   uniqueKeys @4 :Bool;
-
-  indexKeys @5 :Int32;
 }
 
 struct CreateIndexResponse {

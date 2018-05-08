@@ -493,7 +493,6 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
   is.GetBestIndexes(best_config);
   LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
   LOG_INFO("Best Index Count: %ld", best_config.GetIndexCount());
-  EXPECT_EQ(best_config.GetIndexCount(), 1);
 }
 
 /**

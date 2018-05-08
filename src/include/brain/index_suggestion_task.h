@@ -12,6 +12,7 @@
 
 #pragma once
 #include "brain.h"
+#include "brain/index_selection_util.h"
 
 namespace peloton {
 
@@ -29,8 +30,8 @@ class IndexSuggestionTask {
    * @param table_name
    * @param keys
    */
-  static void SendIndexCreateRPCToServer(std::string table_name,
-                                         std::vector<oid_t> keys);
+  static void CreateIndexRPC(brain::HypotheticalIndexObject *index);
+
   /**
    * Task interval
    */
@@ -48,6 +49,21 @@ class IndexSuggestionTask {
    * in the workload exceeds this number
    */
   static uint64_t tuning_threshold;
+
+  /**
+   *
+   */
+  static size_t max_index_cols;
+
+  /**
+   *
+   */
+  static size_t enumeration_threshold;
+
+  /**
+   *
+   */
+  static size_t num_indexes;
 
  private:
   /**

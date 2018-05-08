@@ -23,7 +23,6 @@ namespace network {
 class PelotonRpcServerImpl final : public PelotonService::Server {
  protected:
   kj::Promise<void> createIndex(CreateIndexContext) override {
-    // TODO(tianyu) Write actual index code
     LOG_DEBUG("Received rpc to create index");
     return kj::READY_NOW;
   }
