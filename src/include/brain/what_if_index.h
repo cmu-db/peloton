@@ -58,7 +58,7 @@ class WhatIfIndex {
    * @param table_names - where the table names will be stored.
    */
   static void GetTablesReferenced(std::shared_ptr<parser::SQLStatement> query,
-                                  std::vector<std::string> &table_names);
+                                  std::unordered_set<std::string> &table_names);
   /**
    * @brief Creates a hypothetical index catalog object, that would be used
    * to fill the catalog cache.

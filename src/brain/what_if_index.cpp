@@ -28,9 +28,10 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   auto txn = txn_manager.BeginTransaction();
 
   // Find all the tables that are referenced in the parsed query.
-  std::vector<std::string> tables_used;
+  std::unordered_set<std::string> tables_used;
   GetTablesReferenced(query, tables_used);
   LOG_TRACE("Tables referenced count: %ld", tables_used.size());
+  PELOTON_ASSERT(tables_used.size() > 0);
 
   // TODO [vamshi]: Improve this loop.
   // Load the indexes into the cache for each table so that the optimizer uses
@@ -75,26 +76,26 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
 
 void WhatIfIndex::GetTablesReferenced(
     std::shared_ptr<parser::SQLStatement> query,
-    std::vector<std::string> &table_names) {
+    std::unordered_set<std::string> &table_names) {
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
   switch (query->GetType()) {
     case StatementType::INSERT: {
       auto sql_statement = dynamic_cast<parser::InsertStatement *>(query.get());
-      table_names.push_back(sql_statement->table_ref_->GetTableName());
+      table_names.insert(sql_statement->table_ref_->GetTableName());
       break;
     }
 
     case StatementType::DELETE: {
       auto sql_statement = dynamic_cast<parser::DeleteStatement *>(query.get());
-      table_names.push_back(sql_statement->table_ref->GetTableName());
+      table_names.insert(sql_statement->table_ref->GetTableName());
       break;
     }
 
     case StatementType::UPDATE: {
       auto sql_statement = dynamic_cast<parser::UpdateStatement *>(query.get());
-      table_names.push_back(sql_statement->table->GetTableName());
+      table_names.insert(sql_statement->table->GetTableName());
       break;
     }
 
@@ -103,38 +104,56 @@ void WhatIfIndex::GetTablesReferenced(
       // Select can operate on more than 1 table.
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
-          // TODO[Siva]: Confirm this from Vamshi
+          // Single table.
           LOG_TRACE("Table name is %s",
-                    sql_statement->from_table.get()->GetTableName().c_str());
-          table_names.push_back(
+                    sql_statement->from_table.get()->GetTableName());
+          table_names.insert(
               sql_statement->from_table.get()->GetTableName());
           break;
         }
         case TableReferenceType::JOIN: {
-          table_names.push_back(sql_statement->from_table->join->left.get()
-                                    ->GetTableName()
-                                    .c_str());
-          table_names.push_back(sql_statement->from_table->join->right.get()
-                                    ->GetTableName()
-                                    .c_str());
+          // Get all table names in the join.
+          std::deque<parser::TableRef*> queue;
+          queue.push_back(sql_statement->from_table->join->left.get());
+          queue.push_back(sql_statement->from_table->join->right.get());
+          while (queue.size() != 0) {
+            auto front = queue.front();
+            queue.pop_front();
+            if (front == nullptr) {
+              continue;
+            }
+            if (front->type == TableReferenceType::JOIN) {
+              queue.push_back(front->join->left.get());
+              queue.push_back(front->join->right.get());
+            } else if (front->type == TableReferenceType::NAME) {
+              table_names.insert(front->GetTableName());
+            } else {
+              PELOTON_ASSERT(false);
+            }
+          }
+//          for (auto name: table_names) {
+//            LOG_INFO("Join Table: %s", name.c_str());
+//          }
           break;
         }
         case TableReferenceType::SELECT: {
-          // TODO[vamshi]: Nested select. Not supported.
-          LOG_ERROR("Shouldn't come here");
-          PELOTON_ASSERT(false);
+          GetTablesReferenced(std::make_shared(sql_statement->from_table->select), table_names);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {
+          // Cross product table list.
           table_cp_list = &(sql_statement->from_table->list);
-          for (auto it = table_cp_list->begin(); it != table_cp_list->end();
-               it++) {
-            table_names.push_back((*it)->GetTableName().c_str());
+          for (auto &table: *table_cp_list) {
+            table_names.insert(table->GetTableName());
           }
+//          for (auto name: table_names) {
+//            LOG_INFO("Cross Table: %s", name.c_str());
+//          }
+          break;
         }
-        default: {
-          LOG_ERROR("Invalid select statement type");
-          PELOTON_ASSERT(false);
+        case TableReferenceType::INVALID: {
+          LOG_ERROR("Invalid table reference");
+          return;
         }
       }
       break;
