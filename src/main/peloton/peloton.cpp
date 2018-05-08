@@ -61,7 +61,7 @@ int RunPelotonBrain() {
     capnp::EzRpcClient client("localhost:15445");
     PelotonService::Client peloton_service = client.getMain<PelotonService>();
     auto request = peloton_service.createIndexRequest();
-    request.getRequest().setIndexKeys(42);
+    request.getRequest().setKeyAttrOids({42});
     auto response = request.send().wait(client.getWaitScope());
   };
 
