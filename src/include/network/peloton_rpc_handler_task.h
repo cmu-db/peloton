@@ -13,11 +13,13 @@
 #pragma once
 #include "capnp/ez-rpc.h"
 #include "capnp/message.h"
+#include "catalog/catalog.h"
 #include "common/dedicated_thread_task.h"
 #include "common/logger.h"
 #include "common/internal_types.h"
 #include "kj/debug.h"
 #include "peloton/capnp/peloton_service.capnp.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace network {
@@ -28,16 +30,32 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto table_oid = request.getParams().getRequest().getTableOid();
     auto col_oids = request.getParams().getRequest().getKeyAttrOids();
+    auto is_unique = request.getParams().getRequest().getUniqueKeys();
     LOG_DEBUG("Database oid: %d", database_oid);
     LOG_DEBUG("Table oid: %d", table_oid);
-    for (auto col: col_oids) {
+
+    std::stringstream sstream;
+    sstream << database_oid << ":" << table_oid << ":";
+    std::vector<oid_t> col_oid_vector;
+    for (auto col : col_oids) {
+      col_oid_vector.push_back(col);
       LOG_DEBUG("Col oid: %d", col);
+      sstream << col << ",";
     }
-    // TODO: Create Index
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    // Create index
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
+                         DEFUALT_SCHEMA_NAME, sstream.str(), IndexType::BWTREE,
+                         IndexConstraintType::DEFAULT, is_unique, txn);
+
+    txn_manager.CommitTransaction(txn);
     return kj::READY_NOW;
   }
 };
-
 
 class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
