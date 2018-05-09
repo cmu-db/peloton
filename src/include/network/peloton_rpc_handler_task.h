@@ -25,8 +25,28 @@ namespace peloton {
 namespace network {
 class PelotonRpcServerImpl final : public PelotonService::Server {
  protected:
+  kj::Promise<void> dropIndex(DropIndexContext request) override {
+    auto database_oid = request.getParams().getRequest().getDatabaseOid();
+    auto index_oid = request.getParams().getRequest().getIndexOid();
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    // Drop index. Fail if it doesn't exist.
+    auto catalog = catalog::Catalog::GetInstance();
+    try {
+      catalog->DropIndex(database_oid, index_oid, txn);
+    } catch (CatalogException e) {
+      LOG_ERROR("Drop Index Failed");
+      txn_manager.AbortTransaction(txn);
+      return kj::NEVER_DONE;
+    }
+    txn_manager.CommitTransaction(txn);
+    return kj::READY_NOW;
+  }
+
   kj::Promise<void> createIndex(CreateIndexContext request) override {
-    LOG_DEBUG("Received rpc to create index");
+    LOG_DEBUG("Received RPC to create index");
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto table_oid = request.getParams().getRequest().getTableOid();
     auto col_oids = request.getParams().getRequest().getKeyAttrOids();
@@ -46,11 +66,17 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    // Create index
+    // Create index. Fail if it already exists.
     auto catalog = catalog::Catalog::GetInstance();
-    catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
-                         DEFUALT_SCHEMA_NAME, sstream.str(), IndexType::BWTREE,
-                         IndexConstraintType::DEFAULT, is_unique, txn);
+    try {
+      catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
+                           DEFUALT_SCHEMA_NAME, sstream.str(), IndexType::BWTREE,
+                           IndexConstraintType::DEFAULT, is_unique, txn);
+    } catch (CatalogException e) {
+      LOG_ERROR("Create Index Failed");
+      txn_manager.AbortTransaction(txn);
+      return kj::NEVER_DONE;
+    }
 
     txn_manager.CommitTransaction(txn);
     return kj::READY_NOW;
