@@ -61,13 +61,11 @@ class IndexSelection {
    * IndexSelection
    *
    * @param query_set set of queries as a workload
-   * @param max_index_cols maximum number of columns to consider in multi-column
-   * index
-   * @param enumeration_threshold exhaustive enumeration threshold
-   * @param num_indexes number of best indexes to return
+   * @param knobs the tunable parameters of the algorithm that includes 
+   * number of indexes to be chosen, threshold for naive enumeration, 
+   * maximum number of columns in each index.
    */
-  IndexSelection(Workload &query_set, size_t max_index_cols,
-                 size_t enumeration_threshold, size_t num_indexes);
+  IndexSelection(Workload &query_set, IndexSelectionKnobs knobs);
 
   /**
    * @brief The main external API for the Index Prediction Tool

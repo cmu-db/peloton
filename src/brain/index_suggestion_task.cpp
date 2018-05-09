@@ -52,10 +52,12 @@ void IndexSuggestionTask::Task(BrainEnvironment *env) {
       queries.push_back(query_pair.second);
     }
 
+    brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                num_indexes};
+
     // TODO: Handle multiple databases
     brain::Workload workload(queries, DEFAULT_DB_NAME);
-    brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                                num_indexes};
+    brain::IndexSelection is = {workload, knobs};
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
 

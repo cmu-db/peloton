@@ -19,11 +19,8 @@
 namespace peloton {
 namespace brain {
 
-//TODO[Siva]: Change this to knobs
-IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
-                               size_t enum_threshold, size_t num_indexes)
-    : query_set_(query_set),
-      context_({max_index_cols, enum_threshold, num_indexes}) {}
+IndexSelection::IndexSelection(Workload &query_set, IndexSelectionKnobs knobs)
+    : query_set_(query_set), context_(knobs) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // http://www.vldb.org/conf/1997/P146.PDF
