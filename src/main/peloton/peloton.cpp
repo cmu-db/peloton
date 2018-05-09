@@ -56,17 +56,8 @@ int RunPelotonBrain() {
   one_second.tv_sec = 1;
   one_second.tv_usec = 0;
 
-  auto example_task = [](peloton::brain::BrainEnvironment *) {
-    // TODO(tianyu): Replace with real address
-    capnp::EzRpcClient client("localhost:15445");
-    PelotonService::Client peloton_service = client.getMain<PelotonService>();
-    auto request = peloton_service.createIndexRequest();
-    request.getRequest().setKeyAttrOids({42});
-    auto response = request.send().wait(client.getWaitScope());
-  };
-
-  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test",
-                                                    example_task);
+  // The handler for the Index Suggestion related RPC calls to create/drop
+  // indexes
   brain.RegisterJob<peloton::brain::SimpleBrainJob>(
       &peloton::brain::IndexSuggestionTask::interval, "index_suggestion",
       peloton::brain::IndexSuggestionTask::Task);
@@ -97,11 +88,31 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;  // TODO: Use an enum with exit error codes
   }
 
+  // int exit_code = 0;
+  // if (peloton::settings::SettingsManager::GetBool(
+  //         peloton::settings::SettingId::brain))
+  //   exit_code = RunPelotonBrain();
+  // else
+  //   exit_code = RunPelotonServer();
+
+  // TODO[Siva]: Remove this from the final PR. This is a temporary to way to
+  // run both peloton server and the brain together to test the index suggestion
+  // at the brain end without catalog replication between the server and the
+  // brain
+  peloton::settings::SettingsManager::SetBool(
+          peloton::settings::SettingId::brain, true);
+  peloton::settings::SettingsManager::SetBool(
+          peloton::settings::SettingId::rpc_enabled, true);
+
   int exit_code = 0;
   if (peloton::settings::SettingsManager::GetBool(
-          peloton::settings::SettingId::brain))
-    exit_code = RunPelotonBrain();
+          peloton::settings::SettingId::brain)) {
+    std::thread brain(RunPelotonBrain);
+    exit_code = RunPelotonServer();
+    brain.join();
+  }
   else
     exit_code = RunPelotonServer();
+
   return exit_code;
 }
