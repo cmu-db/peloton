@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/values_runtime_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,6 +14,7 @@
 
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/pool_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -36,6 +37,8 @@ DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputInteger);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputBigInt);
 
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, CompareStrings);
+
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, WriteVarlen);
 
 }  // namespace codegen
 }  // namespace peloton

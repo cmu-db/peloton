@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/values_runtime_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,6 +37,8 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(InputBigInt);
 
   DECLARE_METHOD(CompareStrings);
+
+  DECLARE_METHOD(WriteVarlen);
 };
 
 }  // namespace codegen

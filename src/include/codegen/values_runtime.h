@@ -15,6 +15,11 @@
 #include <cstdint>
 
 namespace peloton {
+
+namespace type {
+class AbstractPool;
+}  // namespace type
+
 namespace codegen {
 
 namespace type {
@@ -93,6 +98,17 @@ class ValuesRuntime {
    */
   static int32_t CompareStrings(const char *str1, uint32_t len1,
                                 const char *str2, uint32_t len2);
+
+  /**
+   * Write the provided variable length object into the target buffer.
+   *
+   * @param data The bytes we wish to serialize
+   * @param len The length of the byte array
+   * @param buf The target position we wish to write to
+   * @param pool A memory pool to source memory from
+   */
+  static void WriteVarlen(const char *data, uint32_t len, char *buf,
+                          peloton::type::AbstractPool &pool);
 };
 
 }  // namespace codegen

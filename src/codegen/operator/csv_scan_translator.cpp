@@ -88,10 +88,10 @@ namespace {
 class CSVColumnAccess : public RowBatch::AttributeAccess {
  public:
   CSVColumnAccess(const planner::AttributeInfo *ai, llvm::Value *csv_columns,
-                  const std::string &null_str, llvm::Value *runtime_null_str)
+                  std::string null_str, llvm::Value *runtime_null_str)
       : ai_(ai),
         csv_columns_(csv_columns),
-        null_str_(null_str),
+        null_str_(std::move(null_str)),
         runtime_null_(runtime_null_str) {}
 
   llvm::Value *Columns() const { return csv_columns_; }
@@ -172,7 +172,7 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
  private:
   const planner::AttributeInfo *ai_;
   llvm::Value *csv_columns_;
-  const std::string &null_str_;
+  const std::string null_str_;
   llvm::Value *runtime_null_;
 };
 

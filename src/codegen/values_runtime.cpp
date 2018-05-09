@@ -16,6 +16,7 @@
 
 #include "codegen/runtime_functions.h"
 #include "codegen/type/type.h"
+#include "type/abstract_pool.h"
 #include "type/value.h"
 #include "type/type_util.h"
 #include "type/value_factory.h"
@@ -304,6 +305,24 @@ int64_t ValuesRuntime::InputBigInt(UNUSED_ATTRIBUTE const type::Type &type,
 int32_t ValuesRuntime::CompareStrings(const char *str1, uint32_t len1,
                                       const char *str2, uint32_t len2) {
   return peloton::type::TypeUtil::CompareStrings(str1, len1, str2, len2);
+}
+
+void ValuesRuntime::WriteVarlen(const char *data, uint32_t len, char *buf,
+                                peloton::type::AbstractPool &pool) {
+  struct Varlen {
+    uint32_t len;
+    char data[0];
+  };
+
+  // Allocate memory for the Varlen object
+  auto *area = static_cast<Varlen *>(pool.Allocate(sizeof(uint32_t) + len));
+
+  // Populate it
+  area->len = len;
+  PELOTON_MEMCPY(area->data, data, len);
+
+  // Store a pointer to the Varlen object into the target memory space
+  *reinterpret_cast<Varlen **>(buf) = area;
 }
 
 }  // namespace codegen
