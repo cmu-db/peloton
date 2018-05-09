@@ -286,6 +286,11 @@ class DataTable : public AbstractTable {
                        concurrency::TransactionContext *transaction,
                        ItemPointer **index_entry_ptr);
 
+  // try to insert into one specific index.
+  bool InsertInIndex(const AbstractTuple *tuple, ItemPointer location,
+                       concurrency::TransactionContext *transaction,
+                       ItemPointer **index_entry_ptr, std::string index_name);
+
   inline static size_t GetActiveTileGroupCount() {
     return default_active_tilegroup_count_;
   }

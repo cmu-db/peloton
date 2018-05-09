@@ -44,6 +44,7 @@ bool PopulateIndexExecutor::DInit() {
       GetPlanNode<planner::PopulateIndexPlan>();
   target_table_ = node.GetTable();
   column_ids_ = node.GetColumnIds();
+  index_name_ = node.GetIndexName();
   done_ = false;
 
   return true;
@@ -106,8 +107,8 @@ bool PopulateIndexExecutor::DExecute() {
 
         // insert tuple into the index.
         ItemPointer *index_entry_ptr = nullptr;
-        target_table_->InsertInIndexes(tuple.get(), location, current_txn,
-                                       &index_entry_ptr);
+        target_table_->InsertInIndex(tuple.get(), location, current_txn,
+                                       &index_entry_ptr, index_name_);
       }
     }
 

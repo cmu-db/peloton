@@ -58,6 +58,7 @@ class PopulateIndexExecutor : public AbstractExecutor {
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
   std::vector<oid_t> column_ids_;
+  std::string index_name_;
   bool done_ = false;
 };
 

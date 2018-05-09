@@ -35,7 +35,7 @@ class PopulateIndexPlan : public AbstractPlan {
   PopulateIndexPlan &operator=(const PopulateIndexPlan &&) = delete;
 
   explicit PopulateIndexPlan(storage::DataTable *table,
-                             std::vector<oid_t> column_ids);
+                             std::vector<oid_t> column_ids, std::string index_name);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::POPULATE_INDEX;
@@ -47,9 +47,11 @@ class PopulateIndexPlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
+  const std::string GetIndexName() const { return index_name_; }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
-        new PopulateIndexPlan(target_table_, column_ids_));
+        new PopulateIndexPlan(target_table_, column_ids_, index_name_));
   }
 
  private:
@@ -57,6 +59,8 @@ class PopulateIndexPlan : public AbstractPlan {
   storage::DataTable *target_table_ = nullptr;
   /** @brief Column Ids. */
   std::vector<oid_t> column_ids_;
+  /** @brief Index name */
+  std::string index_name_;
 
 };
 }
