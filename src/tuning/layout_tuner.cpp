@@ -76,7 +76,7 @@ Sample GetClustererSample(const Sample& sample, oid_t column_count) {
   return clusterer_sample;
 }
 
-void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
+bool LayoutTuner::UpdateDefaultPartition(storage::DataTable *table) {
   oid_t column_count = table->GetSchema()->GetColumnCount();
 
   // Set up clusterer
@@ -87,7 +87,9 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
 
   // Check if we have any samples
   if (samples.empty()) {
-    return;
+    LOG_DEBUG("Table[%u] contains no LayoutSamples. Layout not tuned.",
+              table->GetOid());
+    return false;
   }
 
   for (auto sample : samples) {
@@ -120,12 +122,13 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
       nullptr) {
     txn_manager.AbortTransaction(txn);
     LOG_DEBUG("Layout Update to failed.");
-    return;
+    return false;
   }
   txn_manager.CommitTransaction(txn);
 
   UNUSED_ATTRIBUTE auto layout = table->GetDefaultLayout();
   LOG_TRACE("Updated Layout: %s", layout.GetInfo().c_str());
+  return true;
 }
 
 void LayoutTuner::Tune() {
@@ -142,7 +145,8 @@ void LayoutTuner::Tune() {
       table->TransformTileGroup(tile_group_offset, theta);
 
       // Update partitioning periodically
-      UpdateDefaultPartition(table);
+      // TODO Lin/Tianyu - Add Failure Handling/Retry logic.
+      UNUSED_ATTRIBUTE bool update_result = UpdateDefaultPartition(table);
 
       // Sleep a bit
       std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));

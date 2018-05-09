@@ -36,82 +36,10 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     CreateAndLoadAllColsTable();
   }
 
-  void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
-    const int tuples_per_tilegroup = 100;
-    const int tile_group_count = 5;
-    const int tuple_count = tuples_per_tilegroup * tile_group_count;
-    const oid_t col_count = 100;
-    const bool is_inlined = true;
-
-    /////////////////////////////////////////////////////////
-    // Define the schema.
-    /////////////////////////////////////////////////////////
-
-    std::vector<catalog::Column> columns;
-
-    for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
-      auto column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "FIELD" + std::to_string(col_itr), is_inlined);
-
-      columns.push_back(column);
-    }
-
-    std::unique_ptr<catalog::Schema> table_schema =
-        std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
-    std::string table_name("TEST_TABLE");
-
-    /////////////////////////////////////////////////////////
-    // Create table.
-    /////////////////////////////////////////////////////////
-
-    bool is_catalog = false;
-    auto *catalog = catalog::Catalog::GetInstance();
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    const bool allocate = true;
-    auto txn = txn_manager.BeginTransaction();
-
-    // Insert table in catalog
-    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
-                         std::move(table_schema), txn, is_catalog,
-                         tuples_per_tilegroup, layout_type);
-    // Get table reference
-    auto table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
-                                           table_name, txn);
-    txn_manager.EndTransaction(txn);
-
-    /////////////////////////////////////////////////////////
-    // Load in the data
-    /////////////////////////////////////////////////////////
-
-    // Insert tuples into tile_group.
-
-    txn = txn_manager.BeginTransaction();
-    auto table_schema_ptr = table->GetSchema();
-    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-
-    for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
-      int populate_value = row_id;
-
-      storage::Tuple tuple(table_schema_ptr, allocate);
-
-      for (oid_t col_id = 0; col_id <= col_count; col_id++) {
-        auto value =
-            type::ValueFactory::GetIntegerValue(populate_value + col_id);
-        tuple.SetValue(col_id, value, testing_pool);
-      }
-
-      ItemPointer *index_entry_ptr = nullptr;
-      ItemPointer tuple_slot_id =
-          table->InsertTuple(&tuple, txn, &index_entry_ptr);
-
-      EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
-      EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-
-      txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
-    }
-
-    txn_manager.CommitTransaction(txn);
+  void ScanLayoutTable(oid_t tuples_per_tilegroup, oid_t tilegroup_count,
+                       oid_t column_count) {
+    auto table = GetLayoutTable();
+    oid_t tuple_count = tuples_per_tilegroup * tilegroup_count;
 
     /////////////////////////////////////////////////////////
     // Do a seq scan on the table with the given layout
@@ -119,7 +47,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
 
     // Column ids to be scanned.
     std::vector<oid_t> column_ids;
-    for (oid_t col_id = 0; col_id < col_count; col_id++) {
+    for (oid_t col_id = 0; col_id < column_count; col_id++) {
       column_ids.push_back(col_id);
     }
 
@@ -143,7 +71,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     for (oid_t tuple_id = 0; tuple_id < tuple_count; tuple_id++) {
       auto &tuple = results[tuple_id];
       int tuple_id_value = tuple_id;
-      for (oid_t col_id = 0; col_id < col_count; col_id++) {
+      for (oid_t col_id = 0; col_id < column_count; col_id++) {
         auto value =
             type::ValueFactory::GetIntegerValue(tuple_id_value + col_id);
         EXPECT_EQ(CmpBool::CmpTrue,
@@ -706,7 +634,13 @@ TEST_F(TableScanTranslatorTest, ScanRowLayout) {
   // Creates a table with LayoutType::ROW and
   // invokes the TableScanTranslator
   //
-  ExecuteTileGroupTest(LayoutType::ROW);
+  oid_t tuples_per_tilegroup = 100;
+  oid_t tilegroup_count = 5;
+  oid_t column_count = 100;
+  bool is_inlined = true;
+  CreateAndLoadTableWithLayout(LayoutType::ROW, tuples_per_tilegroup,
+                               tilegroup_count, column_count, is_inlined);
+  ScanLayoutTable(tuples_per_tilegroup, tilegroup_count, column_count);
 }
 
 TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
@@ -714,7 +648,13 @@ TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
   // Creates a table with LayoutType::COLUMN and
   // invokes the TableScanTranslator
   //
-  ExecuteTileGroupTest(LayoutType::COLUMN);
+  oid_t tuples_per_tilegroup = 100;
+  oid_t tilegroup_count = 5;
+  oid_t column_count = 100;
+  bool is_inlined = true;
+  CreateAndLoadTableWithLayout(LayoutType::COLUMN, tuples_per_tilegroup,
+                               tilegroup_count, column_count, is_inlined);
+  ScanLayoutTable(tuples_per_tilegroup, tilegroup_count, column_count);
 }
 
 TEST_F(TableScanTranslatorTest, MultiLayoutScan) {

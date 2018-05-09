@@ -87,8 +87,9 @@ class LayoutTuner {
    * Update layout of table
    *
    * @param      table  The table
+   * @return     true if the update succeeds, false otherwise
    */
-  void UpdateDefaultPartition(storage::DataTable *table);
+  bool UpdateDefaultPartition(storage::DataTable *table);
 
  private:
   /**
