@@ -16,7 +16,6 @@
 #include "concurrency/transaction_context.h"
 #include "function/date_functions.h"
 #include "gc/gc_manager_factory.h"
-#include "logging/log_manager.h"
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
@@ -73,6 +72,15 @@ TransactionContext *TransactionManager::BeginTransaction(
         .StartTimer();
   }
 
+  if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
+    logging::LogRecord record =
+            logging::LogRecordFactory::CreateTupleRecord(
+                    LogRecordType::TRANSACTION_BEGIN, txn->GetEpochId(),
+                    txn->GetTransactionId(), txn->GetCommitId());
+
+    txn->GetLogBuffer()->WriteRecord(record);
+  }
+
   txn->SetTimestamp(function::DateFunctions::Now());
 
   return txn;
@@ -97,7 +105,6 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
-
   }
 }
 

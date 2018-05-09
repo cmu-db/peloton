@@ -25,7 +25,6 @@
 #include "executor/executor_context.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
-#include "logging/log_manager.h"
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -721,9 +720,13 @@ bool DataTable::CheckForeignKeySrcAndCascade(
                   return false;
                 }
 
-                transaction_manager.PerformInsert(current_txn, location,
-                                                  index_entry_ptr);
-
+                std::vector<type::Value> values;
+                uint32_t num_columns = src_table->GetSchema()->GetColumnCount();
+                for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
+                  values.push_back(src_new_tuple.GetValue(col_id));
+                }
+                transaction_manager.PerformInsert(current_txn, location, index_entry_ptr,
+                                                  reinterpret_cast<char *>(values.data(), values.size()));
                 break;
               }
             }

@@ -26,6 +26,7 @@
 #include "tuning/index_tuner.h"
 #include "tuning/layout_tuner.h"
 
+
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -90,6 +91,21 @@ void PelotonInit::Initialize() {
 
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
+
+  bool enable_logging = settings::SettingsManager::GetBool(settings::SettingId::enable_logging);
+  if(enable_logging){
+    if(!logging::LogManager::GetInstance().init()){
+      LOG_ERROR("LogManager Initialization failed");
+    }
+  }
+
+  bool enable_recovery = settings::SettingsManager::GetBool(settings::SettingId::enable_recovery);
+  if(enable_recovery){
+    logging::LogManager::GetInstance().DoRecovery();
+  }
+
+  threadpool::LoggerQueuePool::GetInstance().Startup();
+
 }
 
 void PelotonInit::Shutdown() {

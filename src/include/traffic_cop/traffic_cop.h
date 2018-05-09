@@ -100,7 +100,9 @@ class TrafficCop {
 
   ResultType CommitQueryHelper();
 
-  void ExecuteStatementPlanGetResult();
+  ResultType AbortQueryHelper();
+
+  ResultType ExecuteStatementPlanGetResult();
 
   ResultType ExecuteStatementGetResult();
 
@@ -143,6 +145,14 @@ class TrafficCop {
 
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);
+  }
+
+  inline std::function<void(ResultType)> GetOnCompleteCallback(){
+    auto on_complete = [this](ResultType result) {
+        this->p_status_.m_result = result;
+        this->task_callback_(this->task_callback_arg_);
+    };
+    return on_complete;
   }
 
   // TODO: this member variable should be in statement_ after parser part
@@ -189,7 +199,7 @@ class TrafficCop {
 
   ResultType BeginQueryHelper(size_t thread_id);
 
-  ResultType AbortQueryHelper();
+
 
   // Get all data tables from a TableRef.
   // For multi-way join

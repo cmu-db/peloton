@@ -110,6 +110,12 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   peloton::ItemPointer location =
       target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
 
+  std::vector<type::Value> values;
+  uint32_t num_columns = target_table_schema->GetColumnCount();
+  for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
+    values.push_back(new_tuple.GetValue(col_id));
+  }
+
   // it is possible that some concurrent transactions have inserted the
   // same tuple. In this case, abort the transaction.
   if (location.block == INVALID_OID) {
@@ -139,7 +145,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     }
   }
 
-  transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+  transaction_manager.PerformInsert(current_txn, location, index_entry_ptr, reinterpret_cast<char *>(values.data()), values.size());
   statement_write_set_.insert(location);
   return true;
 }
@@ -270,6 +276,7 @@ bool UpdateExecutor::DExecute() {
         project_info_->Evaluate(&old_tuple, &old_tuple, nullptr,
                                 executor_context_);
 
+        //TODO(Anirudh): Do we need the values buf and offset buf
         transaction_manager.PerformUpdate(current_txn, old_location);
         // we do not need to add any item pointer to statement-level write set
         // here, because we do not generate any new version
@@ -368,6 +375,7 @@ bool UpdateExecutor::DExecute() {
                     old_location.offset);
           LOG_TRACE("perform update new location: %u, %u", new_location.block,
                     new_location.offset);
+          //TODO(Anirudh): Do we need to create the values and offset buffer
           transaction_manager.PerformUpdate(current_txn, old_location,
                                             new_location);
           statement_write_set_.insert(new_location);

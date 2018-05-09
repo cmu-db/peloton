@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "codegen/codegen.h"
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
@@ -71,6 +72,8 @@ class BufferingConsumer : public QueryResultConsumer {
 
   // Called from compiled query code to buffer the tuple
   static void BufferTuple(char *state, char *tuple, uint32_t num_cols);
+
+  static void AddToTupleBuffer(Value &val, CodeGen &codegen, llvm::Value *tuple_buffer, size_t &i);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

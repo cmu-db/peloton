@@ -21,14 +21,22 @@ namespace test {
 
 class QueryLoggerTests : public PelotonTest {
  protected:
+
+  bool SortByFingerprint(std::string x, std::string y){
+
+    std::string x_query = x.substr(0, x.find_first_of("|"));
+    std::string y_query = y.substr(0, y.find_first_of("|"));
+
+    return x_query < y_query;
+  }
+
   void SetUp() override {
     settings::SettingsManager::SetBool(settings::SettingId::brain, true);
     PelotonInit::Initialize();
 
     // query to check that logging is done
     select_query_ =
-        "SELECT query_string, fingerprint FROM "
-        "peloton.pg_catalog.pg_query_history;";
+        "SELECT query_string, fingerprint FROM pg_catalog.pg_query_history order by query_string;";
 
     brain::QueryLogger::Fingerprint fingerprint{select_query_};
     select_query_fingerprint_ = fingerprint.GetFingerprint();
@@ -51,6 +59,10 @@ class QueryLoggerTests : public PelotonTest {
 
     // give some time to actually log this query
     sleep(wait_time_);
+
+    //order by query_string
+    std::sort(expected_result.begin(), expected_result.end(),
+              [this] (std::string x, std::string y) { return SortByFingerprint(x, y); });
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query_.c_str(),
                                                   expected_result, true);
@@ -87,6 +99,11 @@ class QueryLoggerTests : public PelotonTest {
                              temporary_expected_result.begin(),
                              temporary_expected_result.end());
       temporary_expected_result.clear();
+
+      //order by query_string
+      std::sort(expected_result.begin(), expected_result.end(),
+                [this] (std::string x, std::string y) { return SortByFingerprint(x, y); });
+
       TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query_.c_str(),
                                                     expected_result, true);
 
@@ -125,9 +142,10 @@ TEST_F(QueryLoggerTests, QueriesTest) {
   TestSimpleUtil("INSERT INTO test VALUES (1);", expected_result);
   TestSimpleUtil("INSERT INTO test VALUES (2);", expected_result);
 
+  // the select_query_ done at the end of above test
+  // won't be logged till the txn below commits
   expected_result
-      .pop_back();  // the select_query_ done at the end of above test
-                    // won't be logged till the txn below commits
+      .pop_back();
 
   // check if the queries are logged only when the transaction actually commits
   TestTransactionUtil("BEGIN;", expected_result, false);

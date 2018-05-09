@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <string>
+#include <include/settings/settings_manager.h>
 #pragma once
 
 namespace peloton {

@@ -116,9 +116,42 @@ SETTING_int(gc_num_threads,
             1, 128,
             true, true)
 
+SETTING_int(log_buffer_size,
+						"The default log buffer size (default: 512KB)",
+						512 * 1024,
+						1024, 1024 * 1024,
+						true, true)
+
+SETTING_int(transaction_buffer_size,
+						"The default log buffer size for each transaction (default: 16KB)",
+						16 * 1024,
+						512, 256 * 1024,
+						true, true)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
+SETTING_string(log_directory_name,
+             "The relative path(name) to the directory where the WAL will be stored (default : ./logging)",
+             "./logging",
+             true, true)
+
+SETTING_string(log_file_name,
+							 "The name of the write ahead log file in the directory specified above (default : wal.log)",
+							 "wal.log",
+							 true, true)
+
+// Enable logging. The default value is true for testing purposes
+// TODO(graghura): logging should be turned off by default
+SETTING_bool(enable_logging,
+						 "Enable logging for DB persistence (default: true)",
+						 true,
+						 false, false)
+
+SETTING_bool(enable_recovery,
+             "Enable recovery for DB persistence (default: false)",
+             false,
+             false, false)
 
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
