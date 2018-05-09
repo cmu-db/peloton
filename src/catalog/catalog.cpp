@@ -42,6 +42,7 @@ namespace catalog {
 
 // Get instance of the global catalog
 Catalog *Catalog::GetInstance() {
+  LOG_TRACE("get instance");
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -53,6 +54,7 @@ Catalog *Catalog::GetInstance() {
  * 3) insert peloton into pg_database, catalog tables into pg_table
  */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
+  LOG_TRACE("init catalog");
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
