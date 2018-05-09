@@ -97,6 +97,9 @@ class LockFreeArray {
    */
   bool Contains(const ValueType &value) const;
 
+  // Find offset of an element
+  ssize_t Lookup(const ValueType &value);
+
  private:
   // lock free array
   tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>>

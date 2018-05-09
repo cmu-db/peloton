@@ -1271,7 +1271,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_ReInsertTest) {
 // a TileGroup that was supposed to be immutable.
 
 // check mem -> insert 100k -> check mem -> delete all -> check mem
-TEST_F(TransactionLevelGCManagerTests, DISABLED_FreeTileGroupsTest) {
+TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
 
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
@@ -1293,7 +1293,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_FreeTileGroupsTest) {
   size_t tuples_per_tilegroup = 2;
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "TABLE1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
+      num_key, "table1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
 
   auto &manager = catalog::Manager::GetInstance();
   size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();

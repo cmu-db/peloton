@@ -1021,7 +1021,10 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
 
 void DataTable::DropTileGroup(const oid_t &tile_group_id) {
-  tile_groups_.Update(tile_group_id, invalid_tile_group_id);
+  ssize_t tile_group_offset = tile_groups_.Lookup(tile_group_id);
+  if (tile_group_offset != -1) {
+    tile_groups_.Erase(tile_group_offset, invalid_tile_group_id);
+  }
   auto &catalog_manager = catalog::Manager::GetInstance();
   catalog_manager.DropTileGroup(tile_group_id);
 }
