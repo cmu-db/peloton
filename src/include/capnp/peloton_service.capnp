@@ -13,6 +13,16 @@ struct CreateIndexResponse {
   message @0 :Text;
 }
 
+struct DropIndexRequest {
+  databaseOid @0 :Int32;
+  indexOid @1 :Int32;
+}
+
+struct DropIndexResponse {
+  message @0 :Text;
+}
+
 interface PelotonService {
   createIndex @0 (request :CreateIndexRequest) -> (response :CreateIndexResponse);
+  dropIndex @1 (request :DropIndexRequest) -> (response :DropIndexResponse);
 }
