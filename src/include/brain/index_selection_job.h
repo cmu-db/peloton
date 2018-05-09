@@ -40,6 +40,13 @@ class IndexSelectionJob : public BrainJob {
    * @param keys
    */
   void CreateIndexRPC(brain::HypotheticalIndexObject *index);
+
+  /**
+   * Sends an RPC message to server for drop indexes.
+   * @param index
+   */
+  void DropIndexRPC(oid_t database_oid, catalog::IndexCatalogObject *index);
+
   /**
    * Timestamp of the latest query of the recently processed
    * query workload.

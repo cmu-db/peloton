@@ -100,6 +100,14 @@ class IndexCatalog : public AbstractCatalog {
       const std::string &index_name, const std::string &schema_name,
       concurrency::TransactionContext *txn);
 
+  /**
+   * Get all the indexes present in the catalog.
+   * @param txn
+   * @return Returns vector of index catalog objects.
+   */
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+  GetIndexObjects(concurrency::TransactionContext *txn);
+
  private:
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       oid_t index_oid, concurrency::TransactionContext *txn);

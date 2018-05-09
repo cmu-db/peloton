@@ -13,6 +13,7 @@
 #include <include/brain/index_selection_util.h>
 #include "include/brain/index_selection_job.h"
 #include "catalog/query_history_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "brain/index_selection.h"
 
 namespace peloton {
@@ -34,6 +35,16 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     std::vector<std::string> queries;
     for (auto query_pair : *query_history) {
       queries.push_back(query_pair.second);
+    }
+
+    // Get the existing indexes and drop them.
+    // TODO
+    auto database_oid = 1;
+    auto pg_index = catalog::Catalog::GetInstance()
+      ->GetSystemCatalogs(database_oid)->GetIndexCatalog();
+    auto indexes = pg_index->GetIndexObjects(txn);
+    for (auto index: indexes) {
+      DropIndexRPC(database_oid, index.second.get());
     }
 
     // TODO: Handle multiple databases
@@ -76,6 +87,18 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   }
 
   PELOTON_ASSERT(index->column_oids.size() > 0);
+  auto response = request.send().wait(client.getWaitScope());
+}
+
+void IndexSelectionJob::DropIndexRPC(oid_t database_oid, catalog::IndexCatalogObject *index) {
+  // TODO: Remove hardcoded database name and server end point.
+  capnp::EzRpcClient client("localhost:15445");
+  PelotonService::Client peloton_service = client.getMain<PelotonService>();
+
+  auto request = peloton_service.dropIndexRequest();
+  request.getRequest().setDatabaseOid(database_oid);
+  request.getRequest().setIndexOid(index->GetIndexOid());
+
   auto response = request.send().wait(client.getWaitScope());
 }
 
