@@ -35,7 +35,7 @@ DropExecutor::DropExecutor(const planner::AbstractPlan *node,
 bool DropExecutor::DInit() {
   LOG_TRACE("Initializing Drop Executer...");
 
-  LOG_TRACE("Create Executer initialized!");
+  LOG_TRACE("Drop Executer initialized!");
   return true;
 }
 

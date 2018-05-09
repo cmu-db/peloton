@@ -554,8 +554,8 @@ bool DataTable::InsertInIndex(const AbstractTuple *tuple,
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
-    std::string current_name = index->GetName();
     if (index == nullptr) continue;
+    std::string current_name = index->GetName();
     if (current_name.compare(index_name) != 0) continue;
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
