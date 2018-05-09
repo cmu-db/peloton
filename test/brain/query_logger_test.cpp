@@ -13,8 +13,8 @@
 #include "common/harness.h"
 
 #include "brain/query_logger.h"
-#include "sql/testing_sql_util.h"
 #include "settings/settings_manager.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
@@ -27,7 +27,8 @@ class QueryLoggerTests : public PelotonTest {
 
     // query to check that logging is done
     select_query_ =
-        "SELECT query_string, fingerprint FROM pg_catalog.pg_query_history;";
+        "SELECT query_string, fingerprint FROM "
+        "peloton.pg_catalog.pg_query_history;";
 
     brain::QueryLogger::Fingerprint fingerprint{select_query_};
     select_query_fingerprint_ = fingerprint.GetFingerprint();

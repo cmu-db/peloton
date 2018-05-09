@@ -154,7 +154,8 @@ TEST_F(ParserTests, GrammarTest) {
 
 TEST_F(ParserTests, SelectParserTest) {
   std::string query =
-      "SELECT customer_id, SUM(order_value) FROM order_db.customers JOIN "
+      "SELECT customer_id, SUM(order_value) FROM order_db.public.customers "
+      "JOIN "
       "orders ON customers.id = orders.customer_id GROUP BY customer_id ORDER "
       "BY SUM(order_value) DESC LIMIT 5;";
 
@@ -192,6 +193,7 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName().c_str(), "customers");
   EXPECT_STREQ(join->right->GetTableName().c_str(), "orders");
+  EXPECT_STREQ(join->left->GetSchemaName().c_str(), "public");
   EXPECT_STREQ(join->left->GetDatabaseName().c_str(), "order_db");
 
   // Group By

@@ -296,6 +296,8 @@ void CompressedIndexConfigContainer::AdjustIndexes(
   const auto drop_bitset = ori_bitset - new_bitset;
 
   auto txn = txn_manager_->BeginTransaction();
+  const auto database_oid =
+      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
   for (size_t current_bit = drop_bitset.find_first();
        current_bit != boost::dynamic_bitset<>::npos;
        current_bit = drop_bitset.find_next(current_bit)) {
@@ -307,7 +309,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
         table_offset_reverse_map_.end()) {
       // 2. drop its corresponding index in catalog
       oid_t index_oid = index_id_reverse_map_.at(current_bit);
-      catalog_->DropIndex(index_oid, txn);
+      catalog_->DropIndex(database_oid, index_oid, txn);
 
       // 3. erase its entry in the maps
       index_id_reverse_map_.erase(current_bit);
@@ -342,8 +344,9 @@ void CompressedIndexConfigContainer::AdjustIndexes(
       stringStream << "automated_index_" << current_bit;
       const std::string temp_index_name = stringStream.str();
 
-      catalog_->CreateIndex(database_name_, table_name, index_vector,
-                            temp_index_name, false, IndexType::BWTREE, txn);
+      catalog_->CreateIndex(database_name_, DEFUALT_SCHEMA_NAME, table_name,
+                            index_vector, temp_index_name, false,
+                            IndexType::BWTREE, txn);
 
       txn_manager_->CommitTransaction(txn);
 

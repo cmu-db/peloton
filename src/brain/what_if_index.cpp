@@ -38,7 +38,7 @@ WhatIfIndex::GetCostAndBestPlanTree(parser::SQLStatement *query,
   for (auto table_name : tables_used) {
     // Load the tables into cache.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-        database_name, table_name, txn);
+            database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
     table_object->EvictAllIndexObjects();

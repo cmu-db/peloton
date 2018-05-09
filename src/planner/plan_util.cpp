@@ -37,7 +37,7 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
     catalog::CatalogCache &catalog_cache, const parser::SQLStatement &sql_stmt,
     const bool ignore_primary) {
   std::vector<col_triplet> index_triplets;
-  std::string db_name, table_name;
+  std::string db_name, table_name, schema_name;
   std::shared_ptr<catalog::DatabaseCatalogObject> db_object;
   std::shared_ptr<catalog::TableCatalogObject> table_object;
   oid_t db_oid, table_oid;
@@ -50,19 +50,21 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       table_name = insert_stmt.GetTableName();
       db_object = catalog_cache.GetDatabaseObject(db_name);
       db_oid = db_object->GetDatabaseOid();
-      table_object = db_object->GetTableObject(table_name);
+      schema_name = insert_stmt.GetSchemaName();
+      table_object = db_object->GetTableObject(table_name, schema_name);
       table_oid = table_object->GetTableOid();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
-      if (table_name.empty() || db_name.empty()) {
+      if (table_name.empty() || db_name.empty() || schema_name.empty()) {
         auto &delete_stmt =
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
         table_name = delete_stmt.GetTableName();
         db_object = catalog_cache.GetDatabaseObject(db_name);
         db_oid = db_object->GetDatabaseOid();
-        table_object = db_object->GetTableObject(table_name);
+        schema_name = delete_stmt.GetSchemaName();
+        table_object = db_object->GetTableObject(table_name, schema_name);
         table_oid = table_object->GetTableOid();
       }
       auto indexes_map = table_object->GetIndexObjects();
@@ -91,7 +93,8 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
       db_object = catalog_cache.GetDatabaseObject(db_name);
-      table_object = db_object->GetTableObject(table_name);
+      schema_name = update_stmt.table->GetSchemaName();
+      table_object = db_object->GetTableObject(table_name, schema_name);
       db_oid = db_object->GetDatabaseOid();
       table_oid = table_object->GetTableOid();
 
@@ -149,9 +152,6 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
   std::string table_name;
   oid_t database_id, table_id;
 
-  auto db_object = catalog_cache.GetDatabaseObject(db_name);
-  database_id = db_object->GetDatabaseOid();
-
   // Assume that there is only one SQLStatement in the list
   auto sql_stmt = sql_stmt_list->GetStatement(0);
   switch (sql_stmt->GetType()) {
@@ -172,6 +172,9 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
       try {
         auto plan = optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
+        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        database_id = db_object->GetDatabaseOid();
+
         // Perform a breadth first search on plan tree
         std::queue<const AbstractPlan *> scan_queue;
         const AbstractPlan *temp_ptr;
@@ -191,22 +194,20 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
             // Aggregate columns scanned in predicates
             ExprSet expr_set;
             auto predicate_ptr = temp_scan_ptr->GetPredicate();
-            expression::AbstractExpression *copied_predicate;
+            std::unique_ptr<expression::AbstractExpression> copied_predicate;
             if (nullptr == predicate_ptr) {
               copied_predicate = nullptr;
             } else {
-              copied_predicate = predicate_ptr->Copy();
+              copied_predicate =
+                  std::unique_ptr<expression::AbstractExpression>(
+                      predicate_ptr->Copy());
             }
-            expression::ExpressionUtil::GetTupleValueExprs(expr_set,
-                                                           copied_predicate);
+            expression::ExpressionUtil::GetTupleValueExprs(
+                expr_set, copied_predicate.get());
 
             for (const auto expr : expr_set) {
               auto tuple_value_expr =
                   static_cast<const expression::TupleValueExpression *>(expr);
-
-              table_id =
-                  db_object->GetTableObject(tuple_value_expr->GetTableName())
-                      ->GetTableOid();
               column_oids.emplace_back(database_id, table_id,
                                        (oid_t)tuple_value_expr->GetColumnId());
             }
@@ -226,7 +227,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
     } break;
     default:
       LOG_TRACE("Return nothing for query type: %d",
-                static_cast<int>(sql_stmt.GetType()));
+                static_cast<int>(sql_stmt->GetType()));
   }
   return (column_oids);
 }
