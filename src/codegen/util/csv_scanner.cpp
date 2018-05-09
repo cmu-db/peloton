@@ -150,6 +150,9 @@ void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
     // Copy the old data
     PELOTON_MEMCPY(new_line, line_, line_len_);
 
+    // Free old old
+    memory_.Free(line_);
+
     // Setup pointers and sizes
     line_ = new_line;
     line_maxlen_ = new_maxlen;
