@@ -205,6 +205,11 @@ class ExpressionUtil {
     return new ConstantValueExpression(value);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
   // Similar to the constructor of ComparisonExpression except that
   // this function do constant folding if possible. (when both left and right
   // are ConstantExpression)
@@ -226,6 +231,11 @@ class ExpressionUtil {
     return new ComparisonExpression(type, left, right);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
   // Similar to the constructor of ConjunctionExpression except that
   // this function do constant folding if possible. (when both left and right
   // are ConstantExpression)
@@ -247,6 +257,11 @@ class ExpressionUtil {
     return new ConjunctionExpression(type, left, right);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
   // Similar to the constructor of OperatorExpression except that
   // this function do constant folding if possible. (when both left and right
   // are ConstantExpression)

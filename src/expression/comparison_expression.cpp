@@ -80,7 +80,8 @@ const std::string ComparisonExpression::GetInfo() const {
   return os.str();
 }
 
-bool ComparisonExpression::SymmetricEquals(const AbstractExpression &other) const {
+bool ComparisonExpression::SymmetricEquals(
+    const AbstractExpression &other) const {
   PELOTON_ASSERT(children_.size() == 2);
 
   if (other.GetChildrenSize() != 2) {
@@ -92,39 +93,42 @@ bool ComparisonExpression::SymmetricEquals(const AbstractExpression &other) cons
   auto ocl = other.GetModifiableChild(0);
   auto ocr = other.GetModifiableChild(1);
   auto oexp_type_ = other.GetExpressionType();
-
-  switch (exp_type_) {
-    case (ExpressionType::COMPARE_EQUAL):
-    case (ExpressionType::COMPARE_NOTEQUAL):
-      return exp_type_ == oexp_type_ &&
-             ((ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)) ||
-	      (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)));
-    case (ExpressionType::COMPARE_LESSTHAN):
-      return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)
-	      && oexp_type_ == ExpressionType::COMPARE_LESSTHAN) ||
-	     (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)
-	      && oexp_type_ == ExpressionType::COMPARE_GREATERTHAN);
-    case (ExpressionType::COMPARE_GREATERTHAN):
-      return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)
-	      && oexp_type_ == ExpressionType::COMPARE_GREATERTHAN) ||
-	     (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)
-	      && oexp_type_ == ExpressionType::COMPARE_LESSTHAN);
-    case (ExpressionType::COMPARE_LESSTHANOREQUALTO):
-      return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)
-	      && oexp_type_ == ExpressionType::COMPARE_LESSTHANOREQUALTO) ||
-	     (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)
-	      && oexp_type_ == ExpressionType::COMPARE_GREATERTHANOREQUALTO);
-    case (ExpressionType::COMPARE_GREATERTHANOREQUALTO):
-      return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)
-	      && oexp_type_ == ExpressionType::COMPARE_GREATERTHANOREQUALTO) ||
-	     (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)
-	      && oexp_type_ == ExpressionType::COMPARE_LESSTHANOREQUALTO);
-    case (ExpressionType::COMPARE_DISTINCT_FROM):
-      return exp_type_ == oexp_type_ &&
-             ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr);
-    default:
-      throw Exception("Invalid comparison expression type.");
-  }  
+  try {
+    switch (exp_type_) {
+      case (ExpressionType::COMPARE_EQUAL):
+      case (ExpressionType::COMPARE_NOTEQUAL):
+        return exp_type_ == oexp_type_ &&
+               ((ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr)) ||
+                (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl)));
+      case (ExpressionType::COMPARE_LESSTHAN):
+        return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr) &&
+                oexp_type_ == ExpressionType::COMPARE_LESSTHAN) ||
+               (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl) &&
+                oexp_type_ == ExpressionType::COMPARE_GREATERTHAN);
+      case (ExpressionType::COMPARE_GREATERTHAN):
+        return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr) &&
+                oexp_type_ == ExpressionType::COMPARE_GREATERTHAN) ||
+               (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl) &&
+                oexp_type_ == ExpressionType::COMPARE_LESSTHAN);
+      case (ExpressionType::COMPARE_LESSTHANOREQUALTO):
+        return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr) &&
+                oexp_type_ == ExpressionType::COMPARE_LESSTHANOREQUALTO) ||
+               (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl) &&
+                oexp_type_ == ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+      case (ExpressionType::COMPARE_GREATERTHANOREQUALTO):
+        return (ocl->ExactlyEquals(*vcl) && ocr->ExactlyEquals(*vcr) &&
+                oexp_type_ == ExpressionType::COMPARE_GREATERTHANOREQUALTO) ||
+               (ocl->ExactlyEquals(*vcr) && ocr->ExactlyEquals(*vcl) &&
+                oexp_type_ == ExpressionType::COMPARE_LESSTHANOREQUALTO);
+      case (ExpressionType::COMPARE_DISTINCT_FROM):
+        return exp_type_ == oexp_type_ && ocl->ExactlyEquals(*vcl) &&
+               ocr->ExactlyEquals(*vcr);
+      default:
+        throw Exception("Invalid comparison expression type.");
+    }
+  } catch (std::exception &e) {
+    return false;
+  }
 }
 
 }  // namespace expression
