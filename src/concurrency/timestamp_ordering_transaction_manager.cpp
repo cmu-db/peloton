@@ -12,7 +12,10 @@
 
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 #include <cinttypes>
-
+#include "catalog/table_catalog.h"
+#include "catalog/schema_catalog.h"
+#include "catalog/system_catalogs.h"
+#include "catalog/catalog.h"
 #include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
@@ -470,10 +473,13 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
+      auto tile_group = tile_group_header->GetTileGroup();
+      auto table_object = catalog::Catalog::GetInstance()->GetTableObject(tile_group->GetDatabaseId(), tile_group->GetTableId(), current_txn);
+      auto schema_oid = (catalog::Catalog::GetInstance()->GetSystemCatalogs(tile_group->GetDatabaseId())->GetSchemaCatalog()->GetSchemaObject(table_object->GetSchemaName(), current_txn))->GetSchemaOid();
       logging::LogRecord record =
               logging::LogRecordFactory::CreateTupleRecord(
                       LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
-                      current_txn->GetTransactionId(), current_txn->GetCommitId());
+                      current_txn->GetTransactionId(), current_txn->GetCommitId(), schema_oid);
       record.SetValuesArray(values_buf, values_size);
 
       current_txn->GetLogBuffer()->WriteRecord(record);
@@ -579,10 +585,13 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
+      auto tile_group = tile_group_header->GetTileGroup();
+      auto table_object = catalog::Catalog::GetInstance()->GetTableObject(tile_group->GetDatabaseId(), tile_group->GetTableId(), current_txn);
+      auto schema_oid = (catalog::Catalog::GetInstance()->GetSystemCatalogs(tile_group->GetDatabaseId())->GetSchemaCatalog()->GetSchemaObject(table_object->GetSchemaName(), current_txn))->GetSchemaOid();
       logging::LogRecord record =
               logging::LogRecordFactory::CreateTupleRecord(
                       LogRecordType::TUPLE_UPDATE, location, new_location, current_txn->GetEpochId(),
-                      current_txn->GetTransactionId(), current_txn->GetCommitId());
+                      current_txn->GetTransactionId(), current_txn->GetCommitId(), schema_oid);
 
       record.SetOldItemPointer(location);
       record.SetValuesArray(values_buf, values_size);
@@ -633,11 +642,14 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
     if (values_buf != nullptr) {
+      auto tile_group = tile_group_header->GetTileGroup();
+      auto table_object = catalog::Catalog::GetInstance()->GetTableObject(tile_group->GetDatabaseId(), tile_group->GetTableId(), current_txn);
+      auto schema_oid = (catalog::Catalog::GetInstance()->GetSystemCatalogs(tile_group->GetDatabaseId())->GetSchemaCatalog()->GetSchemaObject(table_object->GetSchemaName(), current_txn))->GetSchemaOid();
       logging::LogRecord record =
               logging::LogRecordFactory::CreateTupleRecord(
                       LogRecordType::TUPLE_UPDATE, location, location,
                       current_txn->GetEpochId(), current_txn->GetTransactionId(),
-                      current_txn->GetCommitId());
+                      current_txn->GetCommitId(), schema_oid);
 
       record.SetOldItemPointer(location);
       record.SetValuesArray(values_buf, values_size);
@@ -756,10 +768,13 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
 
+    auto tile_group = tile_group_header->GetTileGroup();
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(tile_group->GetDatabaseId(), tile_group->GetTableId(), current_txn);
+    auto schema_oid = (catalog::Catalog::GetInstance()->GetSystemCatalogs(tile_group->GetDatabaseId())->GetSchemaCatalog()->GetSchemaObject(table_object->GetSchemaName(), current_txn))->GetSchemaOid();
     logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
                     LogRecordType::TUPLE_DELETE, old_location, current_txn->GetEpochId(),
-                    current_txn->GetTransactionId(), current_txn->GetCommitId());
+                    current_txn->GetTransactionId(), current_txn->GetCommitId(), schema_oid);
 
     current_txn->GetLogBuffer()->WriteRecord(record);
 
@@ -815,10 +830,13 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 
   if(logging::LogManager::GetInstance().IsLoggingEnabled()) {
+    auto tile_group = tile_group_header->GetTileGroup();
+    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(tile_group->GetDatabaseId(), tile_group->GetTableId(), current_txn);
+    auto schema_oid = (catalog::Catalog::GetInstance()->GetSystemCatalogs(tile_group->GetDatabaseId())->GetSchemaCatalog()->GetSchemaObject(table_object->GetSchemaName(), current_txn))->GetSchemaOid();
     logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
                     LogRecordType::TUPLE_DELETE, location, current_txn->GetEpochId(),
-                    current_txn->GetTransactionId(), current_txn->GetCommitId());
+                    current_txn->GetTransactionId(), current_txn->GetCommitId(), schema_oid);
 
     current_txn->GetLogBuffer()->WriteRecord(record);
 

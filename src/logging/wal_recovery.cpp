@@ -212,10 +212,11 @@ bool WalRecovery::InstallCatalogTuple(LogRecordType record_type, storage::Tuple 
 void WalRecovery::CreateTableOnRecovery(std::unique_ptr<storage::Tuple> &tuple,
                                         std::vector<catalog::Column> &columns){
 
+  // NOTE: The third column in pg_table stores the database oid. This value should always be corresponding to the location of the database oid in pg_table
   // Getting database
   auto database =
           storage::StorageManager::GetInstance()->GetDatabaseWithOid(
-                  tuple->GetValue(2).GetAs<oid_t>());
+                  tuple->GetValue(3).GetAs<oid_t>());
 
   // register table with catalog
   database->AddTable(new storage::DataTable(
@@ -270,9 +271,10 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
     if(record_type==LogRecordType::TUPLE_INSERT) {
 
       oid_t database_id = (oid_t) record_decode.ReadLong();
+      oid_t schema_id = (oid_t) record_decode.ReadLong();
       oid_t table_id = (oid_t) record_decode.ReadLong();
 
-      if(database_id != CATALOG_DATABASE_OID || table_id != COLUMN_CATALOG_OID){
+      if(schema_id != CATALOG_SCHEMA_OID || table_id != COLUMN_CATALOG_OID){
         if(pending_table_create){
           CreateTableOnRecovery(tuple_table_create, columns);
           pending_table_create = false;
@@ -301,8 +303,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
                 record_decode, schema->GetColumn(oid).GetType());
         tuple->SetValue(oid, val, pool.get());
       }
-
-      if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
+      if (schema_id == CATALOG_SCHEMA_OID) {  // catalog schema oid
 
 
         if (table_id == DATABASE_CATALOG_OID) {
@@ -397,6 +398,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
       LOG_INFO("Tuple Delete");
 
       oid_t database_id = (oid_t)record_decode.ReadLong();
+      oid_t schema_id = (oid_t) record_decode.ReadLong();
       oid_t table_id = (oid_t)record_decode.ReadLong();
 
       oid_t tg_block = (oid_t)record_decode.ReadLong();
@@ -407,7 +409,7 @@ void WalRecovery::ReplaySingleTxn(txn_id_t txn_id){
       auto tg = table->GetTileGroupById(tg_block);
 
       // This code might be useful on drop
-      if (database_id == CATALOG_DATABASE_OID) {  // catalog database oid
+      if (schema_id == CATALOG_SCHEMA_OID) {  // catalog schema oid
         switch (table_id) {
 
           case DATABASE_CATALOG_OID:{ //pg_database
@@ -579,7 +581,6 @@ void WalRecovery::ReplayLogFile(){
   ParseFromDisk(ReplayStage::PASS_2);
 
   ReplayAllTxns();
-
 }
 
 

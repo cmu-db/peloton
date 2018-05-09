@@ -27,13 +27,14 @@ class LogRecord {
   friend class LogRecordFactory;
 private:
   LogRecord(LogRecordType log_type, const ItemPointer &old_pos, const ItemPointer &pos,
-            const eid_t epoch_id, const txn_id_t txn_id, const cid_t commit_id)
+            const eid_t epoch_id, const txn_id_t txn_id, const cid_t commit_id, oid_t schema_id)
     : log_record_type_(log_type),
       old_tuple_pos_(old_pos),
       tuple_pos_(pos), 
       eid_(epoch_id),
       txn_id_(txn_id),
-      cid_(commit_id) {}
+      cid_(commit_id),
+      schema_id_(schema_id) {}
 
 public:
   virtual ~LogRecord() {}
@@ -59,6 +60,10 @@ public:
     offsets_ = arr;
   }
 
+  inline void SetSchemaId(oid_t schema_id) {
+    schema_id_ = schema_id;
+  }
+
   inline const ItemPointer &GetItemPointer() { return tuple_pos_; }
 
   inline const ItemPointer &GetOldItemPointer() { return old_tuple_pos_; }
@@ -74,6 +79,8 @@ public:
   inline TargetList *GetOffsets() { return offsets_; }
 
   inline txn_id_t GetTransactionId() { return txn_id_; }
+
+  inline oid_t GetSchemaId() { return schema_id_; }
 
 private:
   LogRecordType log_record_type_;
@@ -93,6 +100,8 @@ private:
   TargetList *offsets_;
 
   uint32_t num_values_;
+
+  oid_t schema_id_;
 };
 
 
@@ -101,11 +110,11 @@ public:
 
   static LogRecord CreateTupleRecord(const LogRecordType log_type,
                                      const ItemPointer &pos, eid_t current_eid,
-                                     txn_id_t txn_id, cid_t current_cid) {
+                                     txn_id_t txn_id, cid_t current_cid, oid_t schema_oid) {
     PELOTON_ASSERT(log_type == LogRecordType::TUPLE_INSERT ||
               log_type == LogRecordType::TUPLE_DELETE);
 
-    return LogRecord(log_type, INVALID_ITEMPOINTER, pos, current_eid, txn_id, current_cid);
+    return LogRecord(log_type, INVALID_ITEMPOINTER, pos, current_eid, txn_id, current_cid, schema_oid);
   }
 
   static LogRecord CreateTupleRecord(const LogRecordType log_type, eid_t current_eid,
@@ -116,16 +125,16 @@ public:
               log_type == LogRecordType::TRANSACTION_BEGIN);
 
     return LogRecord(log_type, INVALID_ITEMPOINTER, INVALID_ITEMPOINTER,
-                     current_eid, txn_id, current_cid);
+                     current_eid, txn_id, current_cid, INVALID_OID);
   }
 
   static LogRecord CreateTupleRecord(const LogRecordType log_type, const ItemPointer &old_pos,
                                      const ItemPointer &pos, eid_t current_eid,
-                                     txn_id_t txn_id, cid_t current_cid) {
+                                     txn_id_t txn_id, cid_t current_cid, oid_t schema_oid) {
 
     PELOTON_ASSERT(log_type == LogRecordType::TUPLE_UPDATE);
 
-    return LogRecord(log_type, old_pos, pos, current_eid, txn_id, current_cid);
+    return LogRecord(log_type, old_pos, pos, current_eid, txn_id, current_cid, schema_oid);
   }
 
 };

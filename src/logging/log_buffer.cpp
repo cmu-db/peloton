@@ -29,7 +29,6 @@ void LogBuffer::WriteRecord(LogRecord &record) {
   log_buffer_.WriteLong(record.GetEpochId());
   log_buffer_.WriteLong(record.GetCommitId());
 
-
   switch (type) {
     case LogRecordType::TUPLE_INSERT: {
       auto &manager = catalog::Manager::GetInstance();
@@ -39,6 +38,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
       // Write down the database id and the table id
       log_buffer_.WriteLong(tg->GetDatabaseId());
+      log_buffer_.WriteLong(record.GetSchemaId());
       log_buffer_.WriteLong(tg->GetTableId());
 
       log_buffer_.WriteLong(tuple_pos.block);
@@ -58,6 +58,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
       // Write down the database id and the table id
       log_buffer_.WriteLong(tg->GetDatabaseId());
+      log_buffer_.WriteLong(record.GetSchemaId());
       log_buffer_.WriteLong(tg->GetTableId());
 
       log_buffer_.WriteLong(tuple_pos.block);
@@ -73,6 +74,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
       // Write down the database id and the table id
       log_buffer_.WriteLong(tg->GetDatabaseId());
+      log_buffer_.WriteLong(record.GetSchemaId());
       log_buffer_.WriteLong(tg->GetTableId());
 
       log_buffer_.WriteLong(old_tuple_pos.block);
