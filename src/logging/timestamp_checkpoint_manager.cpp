@@ -74,27 +74,20 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     recovery_timer.Start();
 
     // recover catalog table checkpoint
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    if (LoadCatalogTableCheckpoint(epoch_id, txn) == false) {
-      txn_manager.AbortTransaction(txn);
+    if (LoadCatalogTableCheckpoint(epoch_id) == false) {
       LOG_ERROR("Catalog table checkpoint recovery was failed");
       return false;
     }
-    txn_manager.CommitTransaction(txn);
 
     // recover user table checkpoint
-    txn = txn_manager.BeginTransaction();
-    if (LoadUserTableCheckpoint(epoch_id, txn) == false) {
-      txn_manager.AbortTransaction(txn);
+    if (LoadUserTableCheckpoint(epoch_id) == false) {
       LOG_ERROR("User table checkpoint recovery was failed");
       return false;
     }
-    txn_manager.CommitTransaction(txn);
 
     // set recovered epoch id
     recovered_epoch_id = epoch_id;
-    LOG_INFO("Complete checkpoint recovery in epoch %" PRIu64, epoch_id);
+    LOG_INFO("Complete checkpoint recovery for epoch %" PRIu64, epoch_id);
 
     recovery_timer.Stop();
     LOG_INFO("Checkpoint recovery time: %lf ms", recovery_timer.GetDuration());
@@ -122,7 +115,7 @@ eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
     }
 
     // Get the newest epoch from checkpoint directories
-    for (auto dir_name : dir_name_list) {
+    for (const auto dir_name : dir_name_list) {
       eid_t epoch_id;
 
       // get the directory name as epoch id
@@ -188,8 +181,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
       checkpoint_timer.Stop();
       LOG_INFO(
           "Complete Checkpointing for epoch %" PRIu64 " (cid = %" PRIu64 ")",
-          concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId(),
-          begin_cid);
+          begin_epoch_id, begin_cid);
       LOG_INFO("Checkpointing time: %lf ms", checkpoint_timer.GetDuration());
 
       count = 0;
@@ -226,6 +218,12 @@ void TimestampCheckpointManager::CreateCheckpoint(
         LOG_ERROR("file open error: %s", file_name.c_str());
         return;
       }
+
+      LOG_DEBUG("Checkpoint table %d '%s.%s' in database %d '%s'", table_oid,
+                table_catalog->GetSchemaName().c_str(),
+                table_catalog->GetTableName().c_str(),
+                db_catalog->GetDatabaseOid(),
+                db_catalog->GetDatabaseName().c_str());
 
       // insert data to checkpoint file
       // if table is catalog, then insert data without tile group info
@@ -433,9 +431,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
       auto schema = table->GetSchema();
 
-      // except for catalog table
-
-      LOG_TRACE(
+      LOG_DEBUG(
           "Write table storage object %d '%s' (%lu columns) in database "
           "%d '%s'",
           table_oid, table_catalog->GetTableName().c_str(),
@@ -510,9 +506,10 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
   LoggingUtil::FFlushFsync(file_handle);
 }
 
-bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
-    const eid_t &epoch_id, concurrency::TransactionContext *txn) {
+bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_id) {
   // prepare for catalog data file loading
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
 
@@ -638,26 +635,33 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
 
   }  // database loop end
 
+  txn_manager.CommitTransaction(txn);
   return true;
 }
 
-bool TimestampCheckpointManager::LoadUserTableCheckpoint(
-    const eid_t &epoch_id, concurrency::TransactionContext *txn) {
-  // Recover storage object
+bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+	// Recover storage object
   FileHandle metadata_file;
   std::string metadata_filename = GetMetadataFileFullPath(epoch_id);
   if (LoggingUtil::OpenFile(metadata_filename.c_str(), "rb", metadata_file) ==
       false) {
+  	txn_manager.AbortTransaction(txn);
     LOG_ERROR("Open checkpoint metadata file failed!");
     return false;
   }
   if (RecoverStorageObject(metadata_file, txn) == false) {
+  	txn_manager.AbortTransaction(txn);
     LOG_ERROR("Storage object recovery failed");
     return false;
   }
   LoggingUtil::CloseFile(metadata_file);
+  txn_manager.CommitTransaction(txn);
 
   // Recover table
+  txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
@@ -703,26 +707,27 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
 
   }  // database loop end
 
+  txn_manager.CommitTransaction(txn);
   return true;
 }
 
 // TODO: Use data in catalog table to create storage objects (not serialized
 // catalog object data)
 bool TimestampCheckpointManager::RecoverStorageObject(
-    FileHandle &file_handle, concurrency::TransactionContext *txn) {
+		FileHandle &file_handle, concurrency::TransactionContext *txn) {
   // read metadata file to recovered storage object
   size_t metadata_size = LoggingUtil::GetFileSize(file_handle);
-  char metadata_data[metadata_size];
+  std::unique_ptr<char[]> metadata_data(new char[metadata_size]);
 
   LOG_DEBUG("Recover storage object (%lu byte)", metadata_size);
 
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, metadata_data,
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, metadata_data.get(),
                                       metadata_size) == false) {
     LOG_ERROR("Checkpoint metadata file read error");
     return false;
   }
 
-  CopySerializeInput metadata_buffer(metadata_data, metadata_size);
+  CopySerializeInput metadata_buffer(metadata_data.get(), metadata_size);
   auto catalog = catalog::Catalog::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
 
@@ -736,6 +741,9 @@ bool TimestampCheckpointManager::RecoverStorageObject(
     // database object has already been recovered in catalog recovery
     auto database = storage_manager->GetDatabaseWithOid(db_oid);
 
+    LOG_DEBUG("Recover table object for database %d '%s'",
+    		db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str());
+
     // recover table storage objects
     size_t table_size = metadata_buffer.ReadLong();
     for (oid_t table_idx = 0; table_idx < table_size; table_idx++) {
@@ -744,7 +752,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
       auto table_catalog = db_catalog->GetTableObject(table_oid);
       PELOTON_ASSERT(table_catalog != nullptr);
 
-      LOG_TRACE("Create table object %d '%s.%s'", table_oid,
+      LOG_DEBUG("Create table object %d '%s.%s'", table_oid,
                 table_catalog->GetSchemaName().c_str(),
                 table_catalog->GetTableName().c_str());
 
@@ -756,6 +764,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
         size_t column_length = metadata_buffer.ReadLong();
 
         auto column_catalog = table_catalog->GetColumnObject(column_oid);
+        PELOTON_ASSERT(column_catalog != nullptr);
 
         // create column storage object
         // ToDo: Column should be recovered from catalog

@@ -67,7 +67,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
+        LOG_DEBUG("Check the column %d %s\n%s", column_catalog->GetColumnId(),
         		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
 
         if (column_catalog->GetColumnName() == "id") {

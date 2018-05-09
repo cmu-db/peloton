@@ -99,7 +99,7 @@ class TimestampCheckpointManager : public CheckpointManager {
 
   // checkpointing for the user tables
   void CreateCheckpoint(const cid_t begin_cid,
-                                 concurrency::TransactionContext *txn);
+                        concurrency::TransactionContext *txn);
 
   // read table data and write it down to checkpoint data file
   void CheckpointingTableData(const storage::DataTable *table,
@@ -126,12 +126,10 @@ class TimestampCheckpointManager : public CheckpointManager {
   //===--------------------------------------------------------------------===//
 
   // recover catalog table checkpoints
-  bool LoadCatalogTableCheckpoint(const eid_t &epoch_id,
-                                  concurrency::TransactionContext *txn);
+  bool LoadCatalogTableCheckpoint(const eid_t &epoch_id);
 
   // recover user table checkpoints and these catalog objects
-  bool LoadUserTableCheckpoint(const eid_t &epoch_id,
-                               concurrency::TransactionContext *txn);
+  bool LoadUserTableCheckpoint(const eid_t &epoch_id);
 
   // read a checkpoint catalog file and recover catalog objects for user tables
   bool RecoverStorageObject(FileHandle &file_handle,
