@@ -95,8 +95,8 @@ class CSVScanner {
    * upon invocation.
    * @param delimiter The character that separates columns within a row
    * @param quote The quoting character used to quote data (i.e., strings)
-   * @param escape The character that appears before any data characters that
-   * are the same as the quote character.
+   * @param escape The character that should appear before any data characters
+   * that match the quote character.
    */
   CSVScanner(peloton::type::AbstractPool &memory, const std::string &file_path,
              const codegen::type::Type *col_types, uint32_t num_cols,
@@ -122,8 +122,8 @@ class CSVScanner {
    * upon invocation.
    * @param delimiter The character that separates columns within a row
    * @param quote The quoting character used to quote data (i.e., strings)
-   * @param escape The character that appears before any data characters that
-   * are the same as the quote character.
+   * @param escape The character that should appear before any data characters
+   * that match the quote character.
    */
   static void Init(CSVScanner &scanner,
                    executor::ExecutorContext &executor_context,

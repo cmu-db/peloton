@@ -159,12 +159,12 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
   return GetBuilder().CreateCall(fn, args);
 }
 
-llvm::Value *CodeGen::CallPrintf(const std::string &format,
-                                 const std::vector<llvm::Value *> &args) {
+llvm::Value *CodeGen::Printf(const std::string &format,
+                             const std::vector<llvm::Value *> &args) {
   auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
     printf_fn = RegisterBuiltin(
-        "printf", llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()),
+        "printf", llvm::TypeBuilder<decltype(printf), false>::get(GetContext()),
         reinterpret_cast<void *>(printf));
   }
 
@@ -174,6 +174,19 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
 
   // Call the function
   return CallFunc(printf_fn, printf_args);
+}
+
+llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
+                             llvm::Value *len) {
+  static constexpr char kMemcmpFnName[] = "memcmp";
+  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
+  if (memcmp_fn == nullptr) {
+    memcmp_fn = RegisterBuiltin(
+        kMemcmpFnName,
+        llvm::TypeBuilder<decltype(memcmp), false>::get(GetContext()),
+        reinterpret_cast<void *>(printf));
+  }
+  return CallFunc(memcmp_fn, {ptr1, ptr2, len});
 }
 
 llvm::Value *CodeGen::Sqrt(llvm::Value *val) {

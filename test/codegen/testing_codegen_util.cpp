@@ -446,7 +446,7 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
   format.append("]\n");
 
   // Make the printf call
-  codegen.CallPrintf(format, cols);
+  codegen.Printf(format, cols);
 }
 
 }  // namespace test

@@ -131,8 +131,10 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   // C/C++ standard library functions
   //===--------------------------------------------------------------------===//
-  llvm::Value *CallPrintf(const std::string &format,
-                          const std::vector<llvm::Value *> &args);
+  llvm::Value *Printf(const std::string &format,
+                      const std::vector<llvm::Value *> &args);
+  llvm::Value *Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
+                      llvm::Value *len);
   llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//

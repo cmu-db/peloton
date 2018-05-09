@@ -59,7 +59,7 @@ void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
       }
     }
 
-    codegen.CallPrintf("%lu\n", {res.GetValue()});
+    codegen.Printf("%lu\n", {res.GetValue()});
 
     function.ReturnAndFinish();
   }
@@ -126,7 +126,7 @@ void OverflowTest(const codegen::type::Type &data_type, ExpressionType op) {
       }
     }
 
-    codegen.CallPrintf("%lu\n", {res.GetValue()});
+    codegen.Printf("%lu\n", {res.GetValue()});
 
     function.ReturnAndFinish();
   }
