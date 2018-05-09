@@ -306,7 +306,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  LOG_TRACE("get bool");
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
@@ -315,11 +314,11 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // to increase coherence
   try {
     // Run binder
-    LOG_TRACE("run binder");
     auto bind_node_visitor = binder::BindNodeVisitor(
         tcop_txn_state_.top().first, default_database_name_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
+    LOG_TRACE("get plan from optimizer");
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
