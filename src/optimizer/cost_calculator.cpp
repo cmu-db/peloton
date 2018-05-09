@@ -53,7 +53,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
       StatsStorage::GetInstance()->GetTableStats(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid(), txn_));
-  auto index_scan_rows = table_stats->num_rows;
+  auto index_scan_rows = (double) table_stats->num_rows;
   if (table_stats->GetColumnCount() == 0 || index_scan_rows == 0) {
     output_cost_ = 0.f;
     return;
