@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_suggestion_task.h
+// index_selection_job.h
 //
-// Identification: src/include/brain/index_suggestion_task.h
+// Identification: src/include/brain/index_selection_job.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -20,13 +20,15 @@ namespace brain {
 class IndexSelectionJob : public BrainJob {
  public:
   IndexSelectionJob(BrainEnvironment *env, uint64_t num_queries_threshold)
-      : BrainJob(env), last_timestamp_(0),
+      : BrainJob(env),
+        last_timestamp_(0),
         num_queries_threshold_(num_queries_threshold) {}
   /**
    * Task function.
    * @param env
    */
   void OnJobInvocation(BrainEnvironment *env);
+
  private:
   /**
    * Go through the queries and return the timestamp of the latest query.

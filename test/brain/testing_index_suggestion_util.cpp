@@ -109,20 +109,20 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
               {"cgpa", TupleValueType::INTEGER}});
       std::string table_name_2 = "d_college";
       table_schemas.emplace_back(
-        table_name_2,
-        std::initializer_list<std::pair<std::string, TupleValueType>>{
-          {"name", TupleValueType::STRING},
-          {"city", TupleValueType::STRING},
-          {"county", TupleValueType::STRING},
-          {"state", TupleValueType::STRING},
-          {"country", TupleValueType::STRING},
-          {"enrolment", TupleValueType::INTEGER}});
+          table_name_2,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"name", TupleValueType::STRING},
+              {"city", TupleValueType::STRING},
+              {"county", TupleValueType::STRING},
+              {"state", TupleValueType::STRING},
+              {"country", TupleValueType::STRING},
+              {"enrolment", TupleValueType::INTEGER}});
       std::string table_name_3 = "d_course";
       table_schemas.emplace_back(
-        table_name_3,
-        std::initializer_list<std::pair<std::string, TupleValueType>>{
-          {"name", TupleValueType::STRING},
-          {"id", TupleValueType::INTEGER}});
+          table_name_3,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"name", TupleValueType::STRING},
+              {"id", TupleValueType::INTEGER}});
       query_strs.push_back("SELECT * FROM " + table_name_1 +
                            " WHERE name = 'vamshi' and id = 40");
       query_strs.push_back("SELECT * FROM " + table_name_1 + " WHERE id = 100");
@@ -159,7 +159,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
           "SELECT * FROM d_student s inner join d_college c on s.name = "
           "c.name inner join d_course co on c.name = co.name");
       query_strs.push_back(
-        "SELECT * FROM d_student join d_college on d_student.name = "
+          "SELECT * FROM d_student join d_college on d_student.name = "
           "d_college.name");
       query_strs.push_back("SELECT * FROM " + table_name_1 + " t1 ," +
                            table_name_2 + " t2 where t1.name = 'vam'");
@@ -287,10 +287,10 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   // Find the column oids.
   for (auto col_name : index_col_names) {
     for (auto it = col_obj_pairs.begin(); it != col_obj_pairs.end(); it++) {
-    LOG_DEBUG("Table id: %d, Column id: %d, Offset: %d, Name: %s",
-              it->second->GetTableOid(), it->second->GetColumnId(),
-              it->second->GetColumnOffset(),
-              it->second->GetColumnName().c_str());
+      LOG_DEBUG("Table id: %d, Column id: %d, Offset: %d, Name: %s",
+                it->second->GetTableOid(), it->second->GetColumnId(),
+                it->second->GetColumnOffset(),
+                it->second->GetColumnName().c_str());
       if (col_name == it->second->GetColumnName()) {
         col_ids.push_back(it->second->GetColumnId());
       }

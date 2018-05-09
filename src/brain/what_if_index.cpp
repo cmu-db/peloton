@@ -107,13 +107,12 @@ void WhatIfIndex::GetTablesReferenced(
           // Single table.
           LOG_TRACE("Table name is %s",
                     sql_statement->from_table.get()->GetTableName());
-          table_names.insert(
-              sql_statement->from_table.get()->GetTableName());
+          table_names.insert(sql_statement->from_table.get()->GetTableName());
           break;
         }
         case TableReferenceType::JOIN: {
           // Get all table names in the join.
-          std::deque<parser::TableRef*> queue;
+          std::deque<parser::TableRef *> queue;
           queue.push_back(sql_statement->from_table->join->left.get());
           queue.push_back(sql_statement->from_table->join->right.get());
           while (queue.size() != 0) {
@@ -131,24 +130,26 @@ void WhatIfIndex::GetTablesReferenced(
               PELOTON_ASSERT(false);
             }
           }
-//          for (auto name: table_names) {
-//            LOG_INFO("Join Table: %s", name.c_str());
-//          }
+          //          for (auto name: table_names) {
+          //            LOG_INFO("Join Table: %s", name.c_str());
+          //          }
           break;
         }
         case TableReferenceType::SELECT: {
-          GetTablesReferenced(std::shared_ptr<parser::SQLStatement>(sql_statement->from_table->select), table_names);
+          GetTablesReferenced(std::shared_ptr<parser::SQLStatement>(
+                                  sql_statement->from_table->select),
+                              table_names);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {
           // Cross product table list.
           table_cp_list = &(sql_statement->from_table->list);
-          for (auto &table: *table_cp_list) {
+          for (auto &table : *table_cp_list) {
             table_names.insert(table->GetTableName());
           }
-//          for (auto name: table_names) {
-//            LOG_INFO("Cross Table: %s", name.c_str());
-//          }
+          //          for (auto name: table_names) {
+          //            LOG_INFO("Cross Table: %s", name.c_str());
+          //          }
           break;
         }
         case TableReferenceType::INVALID: {

@@ -41,7 +41,7 @@ struct IndexConfigComparator {
       } else if (s1.first.GetIndexCount() < s2.first.GetIndexCount()) {
         return false;
       } else {
-        //TODO[Siva]: Change this to a better one, choose the one with bigger/
+        // TODO[Siva]: Change this to a better one, choose the one with bigger/
         // smaller indexes
         return (s1.first.ToString() < s2.first.ToString());
       }
@@ -61,8 +61,8 @@ class IndexSelection {
    * IndexSelection
    *
    * @param query_set set of queries as a workload
-   * @param knobs the tunable parameters of the algorithm that includes 
-   * number of indexes to be chosen, threshold for naive enumeration, 
+   * @param knobs the tunable parameters of the algorithm that includes
+   * number of indexes to be chosen, threshold for naive enumeration,
    * maximum number of columns in each index.
    */
   IndexSelection(Workload &query_set, IndexSelectionKnobs knobs);

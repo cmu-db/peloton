@@ -38,13 +38,15 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     }
 
     // Get the existing indexes and drop them.
-    // TODO
-    auto database_oid = 1;
+    // TODO: Handle multiple databases
+    auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
+        DEFAULT_DB_NAME, txn);
     auto pg_index = catalog::Catalog::GetInstance()
-      ->GetSystemCatalogs(database_oid)->GetIndexCatalog();
+                        ->GetSystemCatalogs(database_object->GetDatabaseOid())
+                        ->GetIndexCatalog();
     auto indexes = pg_index->GetIndexObjects(txn);
-    for (auto index: indexes) {
-      DropIndexRPC(database_oid, index.second.get());
+    for (auto index : indexes) {
+      DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
     }
 
     // TODO: Handle multiple databases
@@ -90,7 +92,8 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   auto response = request.send().wait(client.getWaitScope());
 }
 
-void IndexSelectionJob::DropIndexRPC(oid_t database_oid, catalog::IndexCatalogObject *index) {
+void IndexSelectionJob::DropIndexRPC(oid_t database_oid,
+                                     catalog::IndexCatalogObject *index) {
   // TODO: Remove hardcoded database name and server end point.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();

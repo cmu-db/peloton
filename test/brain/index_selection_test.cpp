@@ -314,7 +314,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 
   // candidates union (candidates * single_column_indexes)
   indexes = {// candidates
-             a11,  b11,  bc12, ac12,  c12,  a21, abc21,
+             a11, b11, bc12, ac12, c12, a21, abc21,
              // crossproduct
              ab11, ac11, ba11, bc11, bca12, acb12, ca12, cb12, ab21, ac21};
   expected = {indexes};
@@ -362,7 +362,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   brain::IndexConfiguration best_config;
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
   brain::IndexConfiguration expected_config;
-  
+
   /** Test 1
    * Choose only 1 index with 1 column
    * it should choose {B}
@@ -548,7 +548,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
 
   TestingIndexSuggestionUtil testing_util(database_name);
   auto config =
-    testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -576,13 +576,12 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
 
   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
-  
+
   EXPECT_EQ(2, best_config.GetIndexCount());
 
   expected_indexes = {
       testing_util.CreateHypotheticalIndex("d_student", {"id", "name"}, &is),
-      testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa"},
-          &is)};
+      testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa"}, &is)};
   expected_config = {expected_indexes};
 
   EXPECT_TRUE(expected_config == best_config);

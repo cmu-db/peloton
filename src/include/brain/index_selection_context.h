@@ -55,8 +55,7 @@ class IndexSelectionContext {
 
   // memoization of the cost of a query for a given configuration
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>,
-                     double, KeyHasher>
-      memo_;
+                     double, KeyHasher> memo_;
   // map from index configuration to the sharedpointer of the
   // IndexConfiguration object
   IndexObjectPool pool_;

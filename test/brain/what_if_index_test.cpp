@@ -355,40 +355,38 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
 
   // Form the query
   std::string query1("SELECT a from " + schema.table_name +
-                    " WHERE a = 50 and b = 200 and c = 100 and d = 50;");
+                     " WHERE a = 50 and b = 200 and c = 100 and d = 50;");
   std::string query2("SELECT a from " + schema.table_name +
-                    " WHERE c = 100 and a = 50 and d = 1 and b = 123;");
+                     " WHERE c = 100 and a = 50 and d = 1 and b = 123;");
   std::string query3("SELECT a from " + schema.table_name +
-                    " WHERE d = 100 and c = 50 and b = 1 and a = 13;");
+                     " WHERE d = 100 and c = 50 and b = 1 and a = 13;");
   LOG_INFO("Query1: %s", query1.c_str());
   LOG_INFO("Query2: %s", query2.c_str());
   LOG_INFO("Query3: %s", query3.c_str());
 
-
   brain::IndexConfiguration config;
 
   std::unique_ptr<parser::SQLStatementList> stmt_list1(
-    parser::PostgresParser::ParseSQLString(query1));
+      parser::PostgresParser::ParseSQLString(query1));
   std::unique_ptr<parser::SQLStatementList> stmt_list2(
-    parser::PostgresParser::ParseSQLString(query2));
+      parser::PostgresParser::ParseSQLString(query2));
   std::unique_ptr<parser::SQLStatementList> stmt_list3(
-    parser::PostgresParser::ParseSQLString(query3));
-
+      parser::PostgresParser::ParseSQLString(query3));
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<binder::BindNodeVisitor> binder(
-    new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   // Get the first statement.
   auto sql_statement1 = std::shared_ptr<parser::SQLStatement>(
-    stmt_list1.get()->PassOutStatement(0));
+      stmt_list1.get()->PassOutStatement(0));
   auto sql_statement2 = std::shared_ptr<parser::SQLStatement>(
-    stmt_list2.get()->PassOutStatement(0));
+      stmt_list2.get()->PassOutStatement(0));
   auto sql_statement3 = std::shared_ptr<parser::SQLStatement>(
-    stmt_list3.get()->PassOutStatement(0));
+      stmt_list3.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement1.get());
   binder->BindNameToNode(sql_statement2.get());
@@ -397,7 +395,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
 
   // Get the optimized plan tree without the indexes (sequential scan)
   auto result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(
-    sql_statement1, config, DEFAULT_DB_NAME);
+      sql_statement1, config, DEFAULT_DB_NAME);
   auto cost_without_index = result1->cost;
   LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
   LOG_DEBUG("%s", result1->plan->GetInfo().c_str());
@@ -405,14 +403,14 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
 
   // Insert hypothetical catalog objects
   config.AddIndexObject(
-    testing_util.CreateHypotheticalIndex(schema.table_name, {"a"}));
+      testing_util.CreateHypotheticalIndex(schema.table_name, {"a"}));
 
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                      DEFAULT_DB_NAME);
-  auto result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                      DEFAULT_DB_NAME);
-  auto result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
+  auto result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement2, config, DEFAULT_DB_NAME);
+  auto result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(
+      sql_statement3, config, DEFAULT_DB_NAME);
   auto cost_with_index_1_1 = result1->cost;
   auto cost_with_index_1_2 = result2->cost;
   auto cost_with_index_1_3 = result3->cost;
@@ -423,34 +421,33 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   EXPECT_EQ(cost_with_index_1_2, cost_with_index_1_3);
 
   config.Clear();
-  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
-    schema.table_name, {"a", "b"}));
+  config.AddIndexObject(
+      testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "b"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   auto cost_with_index_2_1 = result1->cost;
   auto cost_with_index_2_2 = result2->cost;
   auto cost_with_index_2_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b'}: %lf",
-           cost_with_index_2_1);
+  LOG_INFO("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2_1);
   EXPECT_GT(cost_without_index, cost_with_index_2_1);
   EXPECT_GT(cost_with_index_1_1, cost_with_index_2_1);
   EXPECT_EQ(cost_with_index_2_1, cost_with_index_2_2);
   EXPECT_EQ(cost_with_index_2_2, cost_with_index_2_3);
 
   config.Clear();
-  config.AddIndexObject(testing_util.CreateHypotheticalIndex(
-    schema.table_name, {"a", "b", "c"}));
+  config.AddIndexObject(
+      testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "b", "c"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   auto cost_with_index_3_1 = result1->cost;
   auto cost_with_index_3_2 = result2->cost;
   auto cost_with_index_3_3 = result3->cost;
@@ -464,13 +461,13 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
 
   config.Clear();
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
-    schema.table_name, {"a", "b", "c", "d"}));
+      schema.table_name, {"a", "b", "c", "d"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                      DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME);
   auto cost_with_index_4_1 = result1->cost;
   auto cost_with_index_4_2 = result2->cost;
   auto cost_with_index_4_3 = result3->cost;

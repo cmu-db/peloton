@@ -60,8 +60,8 @@ int RunPelotonBrain() {
   // indexes
   // TODO[vamshi]: Remove this hard coding
   auto num_queries_threshold = 2;
-  brain.RegisterJob<peloton::brain::IndexSelectionJob>(&one_minute, "index_suggestion",
-                                                       num_queries_threshold);
+  brain.RegisterJob<peloton::brain::IndexSelectionJob>(
+      &one_minute, "index_suggestion", num_queries_threshold);
   brain.Run();
   return 0;
 }
@@ -101,9 +101,9 @@ int main(int argc, char *argv[]) {
   // at the brain end without catalog replication between the server and the
   // brain
   peloton::settings::SettingsManager::SetBool(
-          peloton::settings::SettingId::brain, true);
+      peloton::settings::SettingId::brain, true);
   peloton::settings::SettingsManager::SetBool(
-          peloton::settings::SettingId::rpc_enabled, true);
+      peloton::settings::SettingId::rpc_enabled, true);
 
   int exit_code = 0;
   if (peloton::settings::SettingsManager::GetBool(
@@ -111,8 +111,7 @@ int main(int argc, char *argv[]) {
     std::thread brain(RunPelotonBrain);
     exit_code = RunPelotonServer();
     brain.join();
-  }
-  else
+  } else
     exit_code = RunPelotonServer();
 
   return exit_code;

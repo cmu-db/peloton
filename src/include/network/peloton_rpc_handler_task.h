@@ -72,8 +72,9 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto catalog = catalog::Catalog::GetInstance();
     try {
       catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
-                           DEFUALT_SCHEMA_NAME, sstream.str(), IndexType::BWTREE,
-                           IndexConstraintType::DEFAULT, is_unique, txn);
+                           DEFUALT_SCHEMA_NAME, sstream.str(),
+                           IndexType::BWTREE, IndexConstraintType::DEFAULT,
+                           is_unique, txn);
     } catch (CatalogException e) {
       LOG_ERROR("Create Index Failed");
       txn_manager.AbortTransaction(txn);

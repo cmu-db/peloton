@@ -291,13 +291,13 @@ IndexCatalog::GetIndexObjects(concurrency::TransactionContext *txn) {
   }
   // try get from cache
   auto pg_table = Catalog::GetInstance()
-    ->GetSystemCatalogs(database_oid)
-    ->GetTableCatalog();
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
   auto table_objects = pg_table->GetTableObjects(txn);
   if (!table_objects.empty()) {
-    for (auto table_obj: table_objects) {
+    for (auto table_obj : table_objects) {
       auto index_objects = GetIndexObjects(table_obj.first, txn);
-      for (auto index_obj: index_objects) {
+      for (auto index_obj : index_objects) {
         result_indexes[index_obj.first] = index_obj.second;
       }
     }

@@ -6,29 +6,7 @@
 //
 // Identification: src/include/catalog/index_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Index Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_index
-//
-// Schema: (column: column_name)
-// 0: index_oid (pkey)
-// 1: index_name
-// 2: table_oid (which table this index belongs to)
-// 3: schema_name (which namespace this index belongs to)
-// 4: index_type (default value is BWTREE)
-// 5: index_constraint
-// 6: unique_keys (is this index supports duplicate keys)
-// 7: indexed_attributes (indicate which table columns this index indexes. For
-// example a value of 0 2 would mean that the first and the third table columns
-// make up the index.)
-//
-// Indexes: (index offset: indexed columns)
-// 0: index_oid (unique & primary key)
-// 1: index_name & schema_name (unique)
-// 2: table_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

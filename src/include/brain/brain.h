@@ -29,17 +29,14 @@ namespace brain {
  * the brain, such as RPC and Catalog.
  */
 class BrainEnvironment {
-public:
-  BrainEnvironment() {
-    index_selection_knobs = {1, 2, 1};
-  }
-  IndexSelectionKnobs GetIndexSelectionKnobs() {
-    return index_selection_knobs;
-  }
+ public:
+  BrainEnvironment() { index_selection_knobs = {1, 2, 1}; }
+  IndexSelectionKnobs GetIndexSelectionKnobs() { return index_selection_knobs; }
   void SetIndexSelectionKnobs(IndexSelectionKnobs knobs) {
     index_selection_knobs = knobs;
   }
-private:
+
+ private:
   IndexSelectionKnobs index_selection_knobs;
 };
 
@@ -67,6 +64,7 @@ class BrainJob {
    * provided BrainEnvironment for interaction with Brain's resources.
    */
   virtual void OnJobInvocation(BrainEnvironment *) = 0;
+
  private:
   BrainEnvironment *env_;
 };
@@ -80,6 +78,7 @@ class SimpleBrainJob : public BrainJob {
                           std::function<void(BrainEnvironment *)> task)
       : BrainJob(env), task_(std::move(task)) {}
   inline void OnJobInvocation(BrainEnvironment *env) override { task_(env); }
+
  private:
   std::function<void(BrainEnvironment *)> task_;
 };
@@ -95,13 +94,12 @@ class Brain {
   Brain() : scheduler_(0) {}
 
   ~Brain() {
-    for (auto entry : jobs_)
-      delete entry.second;
+    for (auto entry : jobs_) delete entry.second;
   }
 
   template <typename BrainJob, typename... Args>
-  inline void RegisterJob(const struct timeval *period,
-                          std::string name, Args... args) {
+  inline void RegisterJob(const struct timeval *period, std::string name,
+                          Args... args) {
     auto *job = new BrainJob(&env_, args...);
     jobs_[name] = job;
     auto callback = [](int, short, void *arg) {
@@ -111,13 +109,9 @@ class Brain {
         scheduler_.RegisterPeriodicEvent(period, callback, job);
   }
 
-  inline void Run() {
-    scheduler_.EventLoop();
-  }
+  inline void Run() { scheduler_.EventLoop(); }
 
-  inline void Terminate() {
-    scheduler_.ExitLoop();
-  }
+  inline void Terminate() { scheduler_.ExitLoop(); }
 
  private:
   NotifiableTask scheduler_;
@@ -125,5 +119,5 @@ class Brain {
   std::unordered_map<std::string, struct event *> job_handles_;
   BrainEnvironment env_;
 };
-} // namespace brain
-} // namespace peloton
+}  // namespace brain
+}  // namespace peloton

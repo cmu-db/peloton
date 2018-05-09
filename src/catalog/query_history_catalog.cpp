@@ -33,7 +33,6 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
                       "fingerprint    VARCHAR NOT NULL, "
                       "timestamp      TIMESTAMP NOT NULL);",
                       txn) {
-
   // Secondary index on timestamp
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, QUERY_HISTORY_CATALOG_NAME,
