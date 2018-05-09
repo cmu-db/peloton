@@ -79,7 +79,7 @@ class IndexMetricRawData : public AbstractRawData {
 
  private:
   inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_index_id,
-                              CounterType type) {
+                             CounterType type) {
     auto entry = counters_.find(db_index_id);
     if (entry == counters_.end())
       counters_[db_index_id] = std::vector<int64_t>(NUM_COUNTERS);
@@ -91,8 +91,10 @@ class IndexMetricRawData : public AbstractRawData {
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 
-  // should be number of possible CounterType values
-  static const size_t NUM_COUNTERS = 6;
+  // list of counter types (used by Aggregate)
+  static const std::vector<CounterType> COUNTER_TYPES;
+  // should be equal to COUNTER_TYPES.size()
+  static const int NUM_COUNTERS = 6;
 };
 
 class IndexMetric : public AbstractMetric<IndexMetricRawData> {

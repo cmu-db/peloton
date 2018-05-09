@@ -21,6 +21,17 @@
 namespace peloton {
 namespace stats {
 
+const std::vector<TableMetricRawData::CounterType>
+    TableMetricRawData::COUNTER_TYPES = {
+        TableMetricRawData::CounterType::READ,
+        TableMetricRawData::CounterType::UPDATE,
+        TableMetricRawData::CounterType::INSERT,
+        TableMetricRawData::CounterType::DELETE,
+        TableMetricRawData::CounterType::INLINE_MEMORY_ALLOC,
+        TableMetricRawData::CounterType::INLINE_MEMORY_USAGE,
+        TableMetricRawData::CounterType::VARLEN_MEMORY_ALLOC,
+        TableMetricRawData::CounterType::VARLEN_MEMORY_USAGE};
+
 void TableMetricRawData::Aggregate(AbstractRawData &other) {
   auto &other_table_data = dynamic_cast<TableMetricRawData &>(other);
   // Collect counters

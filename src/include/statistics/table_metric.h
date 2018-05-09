@@ -24,50 +24,44 @@
 namespace peloton {
 namespace stats {
 class TableMetricRawData : public AbstractRawData {
+  // this serves as an index into each table's counter vector
+  enum CounterType {
+    READ = 0,
+    UPDATE,
+    INSERT,
+    DELETE,
+    INLINE_MEMORY_ALLOC,
+    INLINE_MEMORY_USAGE,
+    VARLEN_MEMORY_ALLOC,
+    VARLEN_MEMORY_USAGE
+  };
+
  public:
   inline void IncrementTableReads(std::pair<oid_t, oid_t> db_table_id,
                                   size_t num_read) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][READ] += num_read;
+    GetCounter(db_table_id, READ) += num_read;
   }
 
   inline void IncrementTableUpdates(std::pair<oid_t, oid_t> db_table_id) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][UPDATE]++;
+    GetCounter(db_table_id, UPDATE)++;
   }
 
   inline void IncrementTableInserts(std::pair<oid_t, oid_t> db_table_id) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][INSERT]++;
+    GetCounter(db_table_id, INSERT)++;
   }
 
   inline void IncrementTableDeletes(std::pair<oid_t, oid_t> db_table_id) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][DELETE]++;
+    GetCounter(db_table_id, DELETE)++;
   }
 
   inline void IncrementTableMemAlloc(std::pair<oid_t, oid_t> db_table_id,
                                      int64_t bytes) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][INLINE_MEMORY_ALLOC] += bytes;
+    GetCounter(db_table_id, INLINE_MEMORY_ALLOC) += bytes;
   }
 
   inline void DecrementTableMemAlloc(std::pair<oid_t, oid_t> db_table_id,
                                      int64_t bytes) {
-    auto entry = counters_.find(db_table_id);
-    if (entry == counters_.end())
-      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
-    counters_[db_table_id][INLINE_MEMORY_ALLOC] -= bytes;
+    GetCounter(db_table_id, INLINE_MEMORY_ALLOC) -= bytes;
   }
 
   inline void AddModifiedTileGroup(std::pair<oid_t, oid_t> db_table_id,
@@ -81,10 +75,9 @@ class TableMetricRawData : public AbstractRawData {
 
   void Aggregate(AbstractRawData &other) override;
 
-  // TODO(justin) -- actually implement
   void WriteToCatalog() override;
 
-  const std::string GetInfo() const override { return "index metric"; }
+  const std::string GetInfo() const override { return "table metric"; }
 
   /**
    * Fetch Usage for inlined tile memory and both allocation and usage for
@@ -93,21 +86,18 @@ class TableMetricRawData : public AbstractRawData {
   void FetchData() override;
 
  private:
+  inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_table_id,
+                             CounterType type) {
+    auto entry = counters_.find(db_table_id);
+    if (entry == counters_.end())
+      counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
+    return counters_[db_table_id][type];
+  }
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 
-  // this serves as an index into each table's counter vector
-  enum CounterType {
-    READ = 0,
-    UPDATE,
-    INSERT,
-    DELETE,
-    INLINE_MEMORY_ALLOC,
-    INLINE_MEMORY_USAGE,
-    VARLEN_MEMORY_ALLOC,
-    VARLEN_MEMORY_USAGE
-  };
-
+  // list of counter types (used by Aggregate)
+  static const std::vector<CounterType> COUNTER_TYPES;
   // should be number of possible CounterType values
   static const size_t NUM_COUNTERS = 8;
 

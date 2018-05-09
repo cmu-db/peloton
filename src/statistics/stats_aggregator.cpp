@@ -29,7 +29,7 @@ void StatsAggregator::RunTask() {
              lock_, std::chrono::milliseconds(aggregation_interval_ms_)) ==
              std::cv_status::timeout &&
          !exiting_)
-  Aggregate();
+    Aggregate();
   exiting_ = false;
   exec_finished_.notify_all();
   LOG_INFO("Aggregator done!");
@@ -42,8 +42,9 @@ void StatsAggregator::Aggregate() {
     if (acc.empty())
       acc = data_block;
     else
-      for (size_t i = 0; i < acc.size(); i++)
+      for (size_t i = 0; i < data_block.size(); i++) {
         acc[i]->Aggregate(*data_block[i]);
+      }
   }
   for (auto &raw_data : acc) {
     raw_data->FetchData();

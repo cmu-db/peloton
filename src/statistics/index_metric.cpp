@@ -19,13 +19,21 @@
 namespace peloton {
 namespace stats {
 
+const std::vector<IndexMetricRawData::CounterType>
+    IndexMetricRawData::COUNTER_TYPES = {
+        IndexMetricRawData::CounterType::READ,
+        IndexMetricRawData::CounterType::UPDATE,
+        IndexMetricRawData::CounterType::INSERT,
+        IndexMetricRawData::CounterType::DELETE,
+        IndexMetricRawData::CounterType::MEMORY_ALLOC,
+        IndexMetricRawData::CounterType::MEMORY_USAGE};
+
 void IndexMetricRawData::Aggregate(AbstractRawData &other) {
   auto &other_index_metric = dynamic_cast<IndexMetricRawData &>(other);
   for (auto &entry : other_index_metric.counters_) {
-    auto &this_counter = counters_[entry.first];
-    auto &other_counter = entry.second;
-    for (size_t i = 0; i < NUM_COUNTERS; i++) {
-      this_counter[i] += other_counter[i];
+    for (auto &counter_type : COUNTER_TYPES) {
+      GetCounter(entry.first, counter_type) +=
+          other_index_metric.GetCounter(entry.first, counter_type);
     }
   }
 }
