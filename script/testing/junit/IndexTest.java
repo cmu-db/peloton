@@ -71,11 +71,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("create index");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
+                    Thread.sleep(1000);
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("create index complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -89,11 +92,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("insert tuple");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
                     stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
+                    Thread.sleep(3000);
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("insert tuple complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -161,10 +167,10 @@ public class IndexTest extends PLTestBase {
         });
 
         thread1.start();
-        thread2.start();
+//        thread2.start();
 
         thread1.join();
-        thread2.join();
+//        thread2.join();
 
         System.out.println("select");
         Statement stmt = conn.createStatement();
@@ -221,10 +227,10 @@ public class IndexTest extends PLTestBase {
         });
 
         thread1.start();
-        thread2.start();
+//        thread2.start();
 
         thread1.join();
-        thread2.join();
+//        thread2.join();
 
         System.out.println("select");
         Statement stmt = conn.createStatement();
