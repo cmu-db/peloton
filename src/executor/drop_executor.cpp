@@ -151,11 +151,12 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   std::string database_name = node.GetDatabaseName();
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   if (node.IsMissing()) {
     try {
       auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-          database_name, schema_name, table_name, txn);
+          database_name, schema_name, session_namespace, table_name, txn);
     } catch (CatalogException &e) {
       LOG_TRACE("Table %s does not exist.", table_name.c_str());
       return false;
@@ -163,7 +164,7 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   }
 
   ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -172,7 +173,7 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id =
           catalog::Catalog::GetInstance()
-              ->GetTableObject(database_name, schema_name, table_name, txn)
+              ->GetTableObject(database_name, schema_name, session_namespace, table_name, txn)
               ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
@@ -189,9 +190,10 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
   // drop trigger
   ResultType result =
       catalog::Catalog::GetInstance()

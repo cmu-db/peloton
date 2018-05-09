@@ -163,7 +163,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
   system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFUALT_SCHEMA_OID, DEFUALT_SCHEMA_NAME, pool_.get(), txn);
+      DEFUALT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
@@ -271,9 +271,14 @@ ResultType Catalog::CreateSchema(const std::string &database_name,
   auto pg_namespace =
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
   auto schema_object = pg_namespace->GetSchemaObject(schema_name, txn);
-  if (schema_object != nullptr)
-    throw CatalogException("Schema(namespace) " + schema_name +
+  if (schema_object != nullptr) {
+    //if the temporary schema exists
+    if (schema_name.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
+      return ResultType::SUCCESS;
+      }
+      throw CatalogException("Schema(namespace) " + schema_name +
                            " already exists");
+  }
   // Since there isn't physical class corresponds to schema(namespace), the only
   // thing needs to be done is inserting record into pg_namespace
   pg_namespace->InsertSchema(pg_namespace->GetNextOid(), schema_name,
@@ -319,7 +324,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                            " to create table");
 
   // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object = database_object->GetTableObject(table_name, schema_name, schema_name);
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
                            " already exists");
@@ -369,7 +374,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     if (column.IsUnique()) {
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-      CreateIndex(database_name, schema_name, table_name, {column_id},
+      CreateIndex(database_name, schema_name, schema_name, table_name, {column_id},
                   index_name, true, IndexType::BWTREE, txn);
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
@@ -452,6 +457,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 /*@brief   create index on table
  * @param   database_name    the database which the indexed table belongs to
  * @param   schema_name      the namespace which the indexed table belongs to
+ 8 @param   session_namespace   the session namespace of the query running on
  * @param   table_name       name of the table to add index on
  * @param   index_attr       collection of the indexed attribute(column) name
  * @param   index_name       name of the table to add index on
@@ -464,6 +470,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
  */
 ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &schema_name,
+                                const std::string &session_namespace,
                                 const std::string &table_name,
                                 const std::vector<oid_t> &key_attrs,
                                 const std::string &index_name, bool unique_keys,
@@ -484,7 +491,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                            " to create index");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
   if (table_object == nullptr)
     throw CatalogException("Can't find table " + schema_name + "." +
                            table_name + " to create index");
@@ -492,9 +499,10 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   IndexConstraintType index_constraint =
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
 
+  //schema not sure. should get from the table object
   ResultType success = CreateIndex(
       database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
-      schema_name, index_name, index_type, index_constraint, unique_keys, txn);
+      table_object->GetSchemaName(), index_name, index_type, index_constraint, unique_keys, txn);
 
   return success;
 }
@@ -651,12 +659,14 @@ ResultType Catalog::DropSchema(const std::string &database_name,
  * @param   database_name    the database which the dropped table belongs to
  * @param   schema_name      the namespace which the dropped table belongs
  * to
+ * @param   session_namespace the session that the transaction running over.
  * @param   table_name       the dropped table name
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::DropTable(const std::string &database_name,
                               const std::string &schema_name,
+                              const std::string &session_namespace,
                               const std::string &table_name,
                               concurrency::TransactionContext *txn) {
   if (txn == nullptr)
@@ -671,7 +681,7 @@ ResultType Catalog::DropTable(const std::string &database_name,
                            " does not exist");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
   if (table_object == nullptr)
     throw CatalogException("Drop Table: table " + schema_name + "." +
                            table_name + " does not exist");
@@ -796,7 +806,8 @@ storage::Database *Catalog::GetDatabaseWithName(
  * throw exception and abort txn if not exists/invisible
  * */
 storage::DataTable *Catalog::GetTableWithName(
-    const std::string &database_name, const std::string &schema_name,
+    const std::string &database_name, const std::string &schema_name, 
+    const std::string &session_namespace,
     const std::string &table_name, concurrency::TransactionContext *txn) {
   PELOTON_ASSERT(txn != nullptr);
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
@@ -804,7 +815,7 @@ storage::DataTable *Catalog::GetTableWithName(
 
   // Check in pg_table, throw exception and abort txn if not exists
   auto table_object =
-      GetTableObject(database_name, schema_name, table_name, txn);
+      GetTableObject(database_name, schema_name, session_namespace, table_name, txn);
 
   // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -863,6 +874,7 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &schema_name,
+    const std::string &session_namespace,
     const std::string &table_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
@@ -881,7 +893,7 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   }
 
   // Check in pg_table using txn
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // throw table not found exception and explicitly abort txn
@@ -921,6 +933,28 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   }
 
   return table_object;
+}
+
+/**
+ * Drop all the temporary tables associated with the namespace.
+ */
+void Catalog::DropTempTables(const std::string &database_name,
+                             const std::string &session_namespace,
+                             concurrency::TransactionContext *txn) {
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  //get pg_table
+  auto pg_table =
+      catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
+  // get all the tables to be dropped
+  auto tables_dropped = pg_table->GetTableObjects(session_namespace, txn);
+  // drop all tables.
+  for (auto iter = tables_dropped.begin(); iter != tables_dropped.end();
+       iter++) {
+    // is this a safeway to use?
+    auto table_ptr = *iter;
+    DropTable(table_ptr->GetDatabaseOid(), table_ptr->GetTableOid(), txn);
+  }
 }
 
 std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(

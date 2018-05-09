@@ -99,7 +99,7 @@ TEST_F(CreateTests, CreatingTable) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME,
                            DEFAULT_DB_NAME, std::move(table_schema),
                            CreateType::TABLE);
 
@@ -141,7 +141,7 @@ TEST_F(CreateTests, CreatingUDFs) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+  planner::CreatePlan node("accounts", DEFAULT_SCHEMA_NAME, DEFAULT_DB_NAME,
                            std::move(table_schema), CreateType::TABLE);
 
   // Create executer
@@ -243,7 +243,7 @@ TEST_F(CreateTests, CreatingTrigger) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+  planner::CreatePlan node("accounts", DEFAULT_SCHEMA_NAME, DEFAULT_DB_NAME,
                            std::move(table_schema), CreateType::TABLE);
 
   // Create executer
@@ -299,15 +299,13 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(left)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(right)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level
@@ -333,7 +331,8 @@ TEST_F(CreateTests, CreatingTrigger) {
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
+          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "accounts",
+          txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -373,7 +372,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+  planner::CreatePlan node("accounts", DEFAULT_SCHEMA_NAME, DEFAULT_DB_NAME,
                            std::move(table_schema), CreateType::TABLE);
 
   // Create executer
@@ -421,7 +420,8 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
+          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "accounts",
+          txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -462,7 +462,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("accounts", DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+  planner::CreatePlan node("accounts", DEFAULT_SCHEMA_NAME, DEFAULT_DB_NAME,
                            std::move(table_schema), CreateType::TABLE);
 
   // Create executer
@@ -502,7 +502,8 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
 
   // check whether the trigger catalog table contains this new trigger
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "accounts",
+      txn);
   auto trigger_list =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())

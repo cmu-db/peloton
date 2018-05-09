@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "catalog/catalog_defaults.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"

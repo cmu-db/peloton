@@ -124,6 +124,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   std::string table_name = node.GetTableName();
   std::string schema_name = node.GetSchemaName();
   std::string database_name = node.GetDatabaseName();
+  std::string session_namespace = node.GetSessionNamespace();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
@@ -137,12 +138,12 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     if (node.GetForeignKeys().empty() == false) {
       int count = 1;
       auto catalog = catalog::Catalog::GetInstance();
-      auto source_table = catalog->GetTableWithName(database_name, schema_name,
+      auto source_table = catalog->GetTableWithName(database_name, schema_name, schema_name,
                                                     table_name, current_txn);
 
       for (auto fk : node.GetForeignKeys()) {
         auto sink_table = catalog->GetTableWithName(
-            database_name, schema_name, fk.sink_table_name, current_txn);
+            database_name, schema_name, schema_name, fk.sink_table_name, current_txn);
         // Source Column Offsets
         std::vector<oid_t> source_col_ids;
         for (auto col_name : fk.foreign_key_sources) {
@@ -189,7 +190,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         std::vector<std::string> source_col_names = fk.foreign_key_sources;
         std::string index_name = table_name + "_FK_" + sink_table->GetName() +
                                  "_" + std::to_string(count);
-        catalog->CreateIndex(database_name, schema_name, table_name,
+        catalog->CreateIndex(database_name, schema_name, session_namespace, table_name,
                              source_col_ids, index_name, false,
                              IndexType::BWTREE, current_txn);
         count++;
@@ -222,13 +223,15 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
+  std::string session_namespace = node.GetSessionNamespace();
   bool unique_flag = node.IsUnique();
   IndexType index_type = node.GetIndexType();
 
   auto key_attrs = node.GetKeyAttrs();
 
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, schema_name, table_name, key_attrs, index_name,
+      database_name, schema_name, session_namespace, 
+      table_name, key_attrs, index_name,
       unique_flag, index_type, txn);
   txn->SetResult(result);
 
@@ -248,10 +251,11 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   trigger::Trigger newTrigger(node);
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
 
   // durable trigger: insert the information of this trigger in the trigger
   // catalog table
@@ -275,7 +279,7 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // ask target table to update its trigger list variable
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          database_name, schema_name, table_name, txn);
+          database_name, schema_name, session_namespace, table_name, txn);
   target_table->UpdateTriggerListFromCatalog(txn);
 
   // hardcode SUCCESS result for txn

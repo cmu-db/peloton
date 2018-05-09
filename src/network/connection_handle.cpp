@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <cstring>
 
+#include "catalog/catalog_defaults.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 #include "network/peloton_server.h"
@@ -163,6 +164,8 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
     struct event *event = static_cast<struct event *>(arg);
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
+  //set the connection temporary namespace
+  traffic_cop_.SetTempSessionName(TEMP_NAMESPACE_PREFIX + std::to_string(sock_fd));
 }
 
 void ConnectionHandle::UpdateEventFlags(short flags) {
@@ -557,7 +560,7 @@ Transition ConnectionHandle::CloseSocket() {
     SSL_free(conn_SSL_context);
     conn_SSL_context = nullptr;
   }
-
+  traffic_cop_.DropTempTables();
   peloton_close(sock_fd_);
   return Transition::NONE;
 

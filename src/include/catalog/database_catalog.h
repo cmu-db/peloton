@@ -50,6 +50,7 @@ class DatabaseCatalogObject {
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &table_name, const std::string &schema_name,
+      const std::string &session_namespace,
       bool cached_only = false);
 
   bool IsValidTableObjects() {
@@ -81,6 +82,10 @@ class DatabaseCatalogObject {
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
       const std::string &index_name, const std::string &schema_name);
+
+  //helper to get table object
+  std::shared_ptr<TableCatalogObject> GetTableObjectHelper(
+    const std::string &table_name, const std::string &schema_name, bool cached_only);
 
   // cache for table name to oid translation
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>

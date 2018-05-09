@@ -963,11 +963,18 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
       new CreateStatement(CreateStatement::CreateType::kTable);
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
+  if (relation->relpersistence == 't') {
+    result->is_temp_table = true;
+  }
 
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
   if (relation->schemaname) {
+    if(result->is_temp_table) {
+      throw ParserException(StringUtil::Format(
+              "Cannot create temp table with specified schema %s", relation->schemaname));
+    }
     result->table_info_->schema_name = relation->schemaname;
   }
   if (relation->catalogname) {

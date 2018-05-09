@@ -489,7 +489,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
   if (database_object) {
     auto table_object =
-        database_object->GetTableObject(table_name, schema_name, true);
+        database_object->GetTableObject(table_name, schema_name, std::string(), true);
     if (table_object) return table_object;
   }
 
@@ -559,6 +559,24 @@ TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
 
   database_object->SetValidTableObjects(true);
   return database_object->GetTableObjects();
+}
+
+/*@brief   read table catalog objects from pg_table using database oid
+ * @param   schema_name  the schema name we want to search
+ * @param   txn     TransactionContext
+ * @return  table catalog objects
+ */
+std::vector<std::shared_ptr<TableCatalogObject>>
+TableCatalog::GetTableObjects(const std::string &schema_name, concurrency::TransactionContext *txn) {
+  //get all the table.
+  auto tables = GetTableObjects(txn);
+  std::vector<std::shared_ptr<TableCatalogObject>> result;
+  for (auto it : tables) {
+    if (it.second->GetSchemaName() == schema_name) {
+      result.push_back(it.second);
+    }
+  }
+  return result;
 }
 
 /*@brief    update version id column within pg_table

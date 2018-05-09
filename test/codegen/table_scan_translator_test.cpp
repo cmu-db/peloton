@@ -67,11 +67,12 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     std::unique_ptr<catalog::Schema> schema{new catalog::Schema(cols)};
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name,
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, all_cols_table_name,
                          std::move(schema), txn);
 
     all_cols_table = catalog->GetTableWithName(
-        test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name, txn);
+        test_db_name, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME,
+        all_cols_table_name, txn);
     auto *table_schema = all_cols_table->GetSchema();
 
     // Insert one row where all columns are NULL
@@ -150,8 +151,8 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   auto &tuple = buffer.GetOutputTuples()[0];
   for (uint32_t i = 0; i < all_col_ids.size(); i++) {
     auto col_val = tuple.GetValue(i);
-    EXPECT_TRUE(col_val.IsNull())
-        << "Result value: " << col_val.ToString() << ", expected NULL";
+    EXPECT_TRUE(col_val.IsNull()) << "Result value: " << col_val.ToString()
+                                  << ", expected NULL";
   }
 }
 

@@ -38,17 +38,17 @@ TriggerCatalog::TriggerCatalog(const std::string &database_name,
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
       {ColumnId::TABLE_OID, ColumnId::TRIGGER_TYPE},
       TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
       {ColumnId::TABLE_OID}, TRIGGER_CATALOG_NAME "_skey1", false,
       IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
       {ColumnId::TRIGGER_NAME, ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
 }
