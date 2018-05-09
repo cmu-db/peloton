@@ -15,12 +15,13 @@
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "codegen/util/csv_scanner.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(CSVScannerColumn) {
-  DECLARE_MEMBER(0, char[sizeof(type::Type)], type);
+  DECLARE_MEMBER(0, type::Type, type);
   DECLARE_MEMBER(1, char *, ptr);
   DECLARE_MEMBER(2, uint32_t, len);
   DECLARE_MEMBER(3, bool, is_null);

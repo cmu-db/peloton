@@ -54,14 +54,11 @@ class CSVScanTranslator : public OperatorTranslator {
   std::string GetName() const override;
 
  private:
-  // Plan accessor
-  const planner::CSVScanPlan &GetScanPlan() const { return scan_; }
-
-  llvm::Value *ConstructColumnDescriptor() const;
-
- private:
-  // The scan
+  // The plan
   const planner::CSVScanPlan &scan_;
+
+  // The set of attributes output by the csv scan
+  std::vector<const planner::AttributeInfo *> output_attributes_;
 
   // The scanner state ID
   RuntimeState::StateID scanner_id_;

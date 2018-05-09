@@ -34,9 +34,14 @@ class CSVScanPlan : public AbstractScan {
    *
    * @param file_name The file path
    * @param cols Information of the columns expected in each row of the CSV
+   * @param delimiter The character that separates columns within a row
+   * @param quote The character used to quote data (i.e., strings)
+   * @param escape The character that should appear before any data characters
+   * that match the quote character.
    */
   CSVScanPlan(std::string file_name, std::vector<ColumnInfo> &&cols,
-              char delimiter = ',', char quote = '"', char escape = '"');
+              char delimiter = ',', char quote = '"', char escape = '"',
+              std::string null = "");
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -55,6 +60,7 @@ class CSVScanPlan : public AbstractScan {
   char GetDelimiterChar() const { return delimiter_; }
   char GetQuoteChar() const { return quote_; }
   char GetEscapeChar() const { return escape_; }
+  const std::string &GetNullString() const { return null_; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -76,8 +82,9 @@ class CSVScanPlan : public AbstractScan {
   char delimiter_;
   char quote_;
   char escape_;
+  const std::string null_;
 
-  std::vector<std::unique_ptr<planner::AttributeInfo>> attributes_;
+  std::vector<planner::AttributeInfo> attributes_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,17 +95,19 @@ class CSVScanPlan : public AbstractScan {
 
 inline CSVScanPlan::CSVScanPlan(std::string file_name,
                                 std::vector<CSVScanPlan::ColumnInfo> &&cols,
-                                char delimiter, char quote, char escape)
+                                char delimiter, char quote, char escape,
+                                std::string null)
     : file_name_(std::move(file_name)),
       delimiter_(delimiter),
       quote_(quote),
-      escape_(escape) {
-  for (const auto &col : cols) {
-    std::unique_ptr<planner::AttributeInfo> attribute{
-        new planner::AttributeInfo()};
-    attribute->name = col.name;
-    attribute->type = codegen::type::Type{col.type, true};
-    attributes_.emplace_back(std::move(attribute));
+      escape_(escape),
+      null_(null) {
+  attributes_.resize(cols.size());
+  for (uint32_t i = 0; i < cols.size(); i++) {
+    const auto &col_info = cols[i];
+    attributes_[i].type = codegen::type::Type{col_info.type, true};
+    attributes_[i].attribute_id = i;
+    attributes_[i].name = col_info.name;
   }
 }
 
@@ -109,8 +118,8 @@ inline PlanNodeType CSVScanPlan::GetPlanNodeType() const {
 inline std::unique_ptr<AbstractPlan> CSVScanPlan::Copy() const {
   std::vector<CSVScanPlan::ColumnInfo> new_cols;
   for (const auto &attribute : attributes_) {
-    new_cols.push_back(CSVScanPlan::ColumnInfo{
-        .name = attribute->name, .type = attribute->type.type_id});
+    new_cols.push_back(CSVScanPlan::ColumnInfo{.name = attribute.name,
+                                               .type = attribute.type.type_id});
   }
   return std::unique_ptr<AbstractPlan>(
       new CSVScanPlan(file_name_, std::move(new_cols)));
@@ -118,7 +127,7 @@ inline std::unique_ptr<AbstractPlan> CSVScanPlan::Copy() const {
 
 inline void CSVScanPlan::PerformBinding(BindingContext &binding_context) {
   for (uint32_t i = 0; i < attributes_.size(); i++) {
-    binding_context.BindNew(i, attributes_[i].get());
+    binding_context.BindNew(i, &attributes_[i]);
   }
 }
 
@@ -142,7 +151,7 @@ inline void CSVScanPlan::GetAttributes(
     std::vector<const AttributeInfo *> &ais) const {
   ais.clear();
   for (const auto &ai : attributes_) {
-    ais.push_back(ai.get());
+    ais.push_back(&ai);
   }
 }
 
