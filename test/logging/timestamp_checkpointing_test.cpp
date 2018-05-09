@@ -243,11 +243,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 
   		// check the records
   		oid_t max_tuple_count = tile_group->GetNextTupleSlot();
-      if (table_catalog->GetTableName() == "checkpoint_table_test") {
-      	EXPECT_EQ(4, max_tuple_count);
-      } else {
-      	EXPECT_EQ(3, max_tuple_count);
-      }
       for (oid_t tuple_id = START_OID; tuple_id < max_tuple_count; tuple_id++) {
         for (oid_t column_id = START_OID; column_id < column_count; column_id++) {
           type::Value value = tile_group->GetValue(tuple_id, column_id);
