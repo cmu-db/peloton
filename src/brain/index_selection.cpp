@@ -368,7 +368,6 @@ void IndexSelection::IndexColsParseWhereHelper(
                 where_expr->GetInfo().c_str());
       PELOTON_ASSERT(false);
   }
-  (void)config;
 }
 
 void IndexSelection::IndexColsParseGroupByHelper(

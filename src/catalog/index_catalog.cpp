@@ -57,7 +57,8 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
 IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
-                                       bool unique_keys, std::vector<oid_t> key_attrs)
+                                       bool unique_keys,
+                                       std::vector<oid_t> key_attrs)
     : index_oid(index_oid),
       index_name(index_name),
       table_oid(table_oid),
@@ -66,9 +67,9 @@ IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
       unique_keys(unique_keys),
       key_attrs(std::vector<oid_t>(key_attrs.begin(), key_attrs.end())) {}
 
-IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           UNUSED_ATTRIBUTE type::AbstractPool *pool,
-                           UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
+IndexCatalog::IndexCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_index
@@ -280,6 +281,28 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 
   // return empty object if not found
   return nullptr;
+}
+
+std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
+IndexCatalog::GetIndexObjects(concurrency::TransactionContext *txn) {
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> result_indexes;
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+  // try get from cache
+  auto pg_table = Catalog::GetInstance()
+    ->GetSystemCatalogs(database_oid)
+    ->GetTableCatalog();
+  auto table_objects = pg_table->GetTableObjects(txn);
+  if (!table_objects.empty()) {
+    for (auto table_obj: table_objects) {
+      auto index_objects = GetIndexObjects(table_obj.first, txn);
+      for (auto index_obj: index_objects) {
+        result_indexes[index_obj.first] = index_obj.second;
+      }
+    }
+  }
+  return result_indexes;
 }
 
 /*@brief   get all index records from the same table
