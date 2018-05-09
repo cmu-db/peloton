@@ -380,12 +380,10 @@ void TileGroup::Sync() {
 void TileGroup::SerializeTo(SerializeOutput &out) {
   out.WriteInt(num_tuple_slots);
   out.WriteLong(tile_schemas.size());
-
   for (auto tile_schema : tile_schemas) {
     tile_schema.SerializeTo(out);
-    LOG_INFO("tile_schema in tile group %d\n%s", tile_group_id,
-    		tile_schema.GetInfo().c_str());
   }
+
   out.WriteLong(column_map.size());
   for (auto column_info : column_map) {
     oid_t column_offset = column_info.first;

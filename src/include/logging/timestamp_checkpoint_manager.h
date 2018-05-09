@@ -254,7 +254,7 @@ class TimestampCheckpointManager : public CheckpointManager {
     }
 
     // Remove old checkpoint directory
-    for (auto dir_name : dir_name_list) {
+    for (const auto dir_name : dir_name_list) {
       if (strcmp(dir_name.c_str(), checkpoint_working_dir_name_.c_str()) != 0) {
         eid_t epoch_id = std::strtoul(dir_name.c_str(), NULL, 10);
         if (epoch_id == 0) {

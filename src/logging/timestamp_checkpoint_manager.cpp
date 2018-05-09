@@ -300,7 +300,7 @@ void TimestampCheckpointManager::CheckpointingTableData(
     // write down tuple data to file
     int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1,
                      file_handle.file);
-    if (ret != 1 && ret != 0) {
+    if (ret != 1) {
       LOG_ERROR("Write error");
       return;
     }
@@ -377,22 +377,14 @@ bool TimestampCheckpointManager::IsVisible(
 
   if (tuple_txn_id == INITIAL_TXN_ID) {
     // this tuple is not owned by any other transaction.
-    if (activated && !invalidated) {
-      return true;
-    } else {
-      return false;
-    }
+    return activated && !invalidated;
   } else {
     // this tuple is owned by othre transactions.
     if (tuple_begin_cid == MAX_CID) {
       // this tuple is an uncommitted version.
       return false;
     } else {
-      if (activated && !invalidated) {
-        return true;
-      } else {
-        return false;
-      }
+      return activated && !invalidated;
     }
   }
 }
