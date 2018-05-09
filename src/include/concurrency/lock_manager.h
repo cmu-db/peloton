@@ -18,7 +18,6 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include <boost/thread/shared_mutex.hpp>
-#include <boost/foreach.hpp>
 
 namespace peloton {
 namespace concurrency {
@@ -79,15 +78,26 @@ class LockManager {
   // Type of locks. Currently only support RWLOCK
   enum LockType { RW_LOCK };
 
+  // Type of locked read write locks.
+  enum RWLockType { SHARED, EXCLUSIVE, INVALID };
+
+  // This is used by transaction manager to properly release locks.
+  struct LockWithOid{
+    oid_t oid;
+    RWLockType type;
+  };
+
   // Constructor
   LockManager() {}
 
   // Destructor
   ~LockManager() {
     // Iterate through mapped locks
-    std::pair<oid_t, std::shared_ptr<boost::upgrade_mutex> > tmp;
     std::vector<oid_t> v;
-    BOOST_FOREACH (tmp, lock_map_) { v.push_back(tmp.first); }
+    auto itr = lock_map_.begin();
+    for (; itr != lock_map_.end(); itr++){
+      v.push_back(itr->first);
+    }
 
     // Remove each lock
     for (std::vector<oid_t>::iterator itr = v.begin(); itr != v.end(); itr++) {

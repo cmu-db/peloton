@@ -23,6 +23,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
+#include "concurrency/lock_manager.h"
 
 #define INTITIAL_RW_SET_SIZE 64
 
@@ -205,6 +206,13 @@ class TransactionContext : public Printable {
   }
 
   /**
+   * @brief      Unlock all locks acquired in the transaction.
+   *
+   * @return     True if the operation successful, False otherwise.
+   */
+  bool UnlockAllLocks();
+
+  /**
    * @brief      Gets the read write set.
    *
    * @return     The read write set.
@@ -281,6 +289,22 @@ class TransactionContext : public Printable {
     return isolation_level_;
   }
 
+  /**
+   * @brief      Add Exclusive lock in the lock set
+   *
+   */
+  inline void AddLockExclusive(oid_t oid) {
+    lock_info_.push_back({oid, concurrency::LockManager::EXCLUSIVE});
+  }
+
+  /**
+   * @brief      Add Shared lock in the lock set
+   *
+   */
+  inline void AddLockShared(oid_t oid) {
+    lock_info_.push_back({oid, concurrency::LockManager::SHARED});
+  }
+
   /** cache for table catalog objects */
   catalog::CatalogCache catalog_cache;
 
@@ -341,6 +365,12 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  /**
+   * this set contains locks that need to be released.
+   */
+  std::vector<concurrency::LockManager::LockWithOid> lock_info_;
+
 };
 
 }  // namespace concurrency

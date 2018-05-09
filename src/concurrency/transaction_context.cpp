@@ -224,5 +224,27 @@ void TransactionContext::ExecOnCommitTriggers() {
   }
 }
 
+bool TransactionContext::UnlockAllLocks(){
+  if (lock_info_.size() == 0){
+    return true;
+  }
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool result = true;
+  for (size_t i = 0; i < lock_info_.size(); i++){
+    if (lock_info_[i].type == concurrency::LockManager::SHARED){
+      if(!lm->UnlockShared(lock_info_[i].oid)) {
+        result = false;
+      }
+    }
+    else{
+      if(!lm->UnlockExclusive(lock_info_[i].oid)) {
+        result = false;
+      }
+    }
+  }
+  return result;
+}
+
+
 }  // namespace concurrency
 }  // namespace peloton

@@ -84,6 +84,11 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
+  // Unlock all acquired locks
+  if (!current_txn->UnlockAllLocks()){
+    LOG_WARN("On transaction end, release lock failed!");
+  }
+
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   } else {

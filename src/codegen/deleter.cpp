@@ -47,12 +47,11 @@ void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   LOG_WARN("Shared Lock in insert: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
   bool lock_success = lm->LockShared(table_oid);
-  concurrency::LockManager::SafeLock dummy;
   if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");
   }
   else {
-    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+    txn->AddLockShared(table_oid);
   }
 
   bool is_owner = txn_manager.IsOwner(txn, tile_group_header, tuple_offset);
