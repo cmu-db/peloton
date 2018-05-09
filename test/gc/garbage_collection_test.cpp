@@ -106,8 +106,7 @@ int GarbageNum(storage::DataTable *table) {
 // get tuple recycled by GC
 int RecycledNum(storage::DataTable *table) {
   int count = 0;
-  auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table_id).IsNull())
+  while (!gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
