@@ -70,6 +70,8 @@ TEST_F(ExpressionUtilTests, OperatorFactoryTest) {
           ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, exp1, exp2);
   EXPECT_EQ(CmpBool::CmpTrue,
             exp_two->GetValue().CompareEquals(two->GetValue()));
+  delete two;
+  delete exp_two;
 }
 
 TEST_F(ExpressionUtilTests, ComparisonFactoryTest) {
@@ -88,6 +90,8 @@ TEST_F(ExpressionUtilTests, ComparisonFactoryTest) {
 
   EXPECT_EQ(CmpBool::CmpTrue,
             cmp->GetValue().CompareEquals(true_value->GetValue()));
+  delete true_value;
+  delete cmp;
 }
 
 TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
@@ -99,8 +103,11 @@ TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
           type::ValueFactory::GetBooleanValue(false));
   auto cmp = (expression::ConstantValueExpression *)
       expression::ExpressionUtil::ConjunctionFactory(
-          ExpressionType::CONJUNCTION_AND, exp1, exp2);
+          ExpressionType::CONJUNCTION_AND, exp1->Copy(), exp2->Copy());
   EXPECT_EQ(CmpBool::CmpTrue, cmp->GetValue().CompareEquals(exp2->GetValue()));
+  delete cmp;
+  delete exp1;
+  delete exp2;
 
   auto exp3 = (expression::ConstantValueExpression *)
       expression::ExpressionUtil::ConstantValueFactory(
@@ -108,14 +115,14 @@ TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
   auto exp4 = (expression::ConstantValueExpression *)
       expression::ExpressionUtil::ConstantValueFactory(
           type::ValueFactory::GetBooleanValue(false));
-  auto exp5 = (expression::ConstantValueExpression *)
-      expression::ExpressionUtil::ConstantValueFactory(
-          type::ValueFactory::GetBooleanValue(false));
   auto cmp2 = (expression::ConstantValueExpression *)
       expression::ExpressionUtil::ConjunctionFactory(
-          ExpressionType::CONJUNCTION_OR, exp3, exp4);
+          ExpressionType::CONJUNCTION_OR, exp3->Copy(), exp4->Copy());
   EXPECT_EQ(CmpBool::CmpFalse,
-            cmp2->GetValue().CompareEquals(exp5->GetValue()));
+            cmp2->GetValue().CompareEquals(exp4->GetValue()));
+  delete cmp2;
+  delete exp3;
+  delete exp4;
 }
 
 // Make sure that we can traverse a tree
