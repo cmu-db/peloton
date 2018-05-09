@@ -164,7 +164,7 @@ bool SeqScanExecutor::DExecute() {
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
-        auto visibility = transaction_manager.IsVisible(
+        UNUSED_ATTRIBUTE auto visibility = transaction_manager.IsVisible(
             current_txn, tile_group_header, tuple_id);
 
         // we don't need to check transaction visibility when building index.
