@@ -14,18 +14,18 @@
 // pg_column_stats
 //
 // Schema: (column offset: column_name)
-// 0: database_id (pkey)
-// 1: table_id (pkey)
-// 2: column_id (pkey)
-// 3: num_rows
-// 4: cardinality
-// 5: frac_null
-// 6: most_common_vals
-// 7: most_common_freqs
-// 8: histogram_bounds
+// 0: table_id (pkey)
+// 1: column_id (pkey)
+// 2: num_rows
+// 3: cardinality
+// 4: frac_null
+// 5: most_common_vals
+// 6: most_common_freqs
+// 7: histogram_bounds
 //
 // Indexes: (index offset: indexed columns)
-// 0: name & database_oid (unique & primary key)
+// 0: table_id & column_id (unique)
+// 1: table_id (non-unique)
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,8 +34,6 @@
 #include <map>
 
 #include "catalog/abstract_catalog.h"
-
-#define COLUMN_STATS_CATALOG_NAME "pg_column_stats"
 
 namespace peloton {
 
@@ -47,50 +45,55 @@ namespace catalog {
 
 class ColumnStatsCatalog : public AbstractCatalog {
  public:
-  ~ColumnStatsCatalog();
 
-  // Global Singleton
-  static ColumnStatsCatalog *GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
+  ColumnStatsCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                     concurrency::TransactionContext *txn);
+
+  ~ColumnStatsCatalog();
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
+  bool InsertColumnStats(oid_t table_id, oid_t column_id,
                          int num_rows, double cardinality, double frac_null,
                          std::string most_common_vals,
                          std::string most_common_freqs,
                          std::string histogram_bounds, std::string column_name,
                          bool has_index, type::AbstractPool *pool,
                          concurrency::TransactionContext *txn);
-  bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
+  bool DeleteColumnStats(oid_t table_id, oid_t column_id,
                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   std::unique_ptr<std::vector<type::Value>> GetColumnStats(
-      oid_t database_id, oid_t table_id, oid_t column_id,
+      oid_t table_id, oid_t column_id,
       concurrency::TransactionContext *txn);
 
   size_t GetTableStats(
-      oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
-      std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
+          oid_t table_id, concurrency::TransactionContext *txn,
+          std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
           column_stats_map);
   // TODO: add more if needed
 
+
+  /** @brief   private function for initialize schema of pg_index
+   *  @return  unqiue pointer to schema
+   */
+  std::unique_ptr<catalog::Schema> InitializeSchema();
+
   enum ColumnId {
-    DATABASE_ID = 0,
-    TABLE_ID = 1,
-    COLUMN_ID = 2,
-    NUM_ROWS = 3,
-    CARDINALITY = 4,
-    FRAC_NULL = 5,
-    MOST_COMMON_VALS = 6,
-    MOST_COMMON_FREQS = 7,
-    HISTOGRAM_BOUNDS = 8,
-    COLUMN_NAME = 9,
-    HAS_INDEX = 10,
+    TABLE_ID = 0,
+    COLUMN_ID = 1,
+    NUM_ROWS = 2,
+    CARDINALITY = 3,
+    FRAC_NULL = 4,
+    MOST_COMMON_VALS = 5,
+    MOST_COMMON_FREQS = 6,
+    HISTOGRAM_BOUNDS = 7,
+    COLUMN_NAME = 8,
+    HAS_INDEX = 9,
     // Add new columns here in creation order
   };
 
@@ -106,7 +109,6 @@ class ColumnStatsCatalog : public AbstractCatalog {
   };
 
  private:
-  ColumnStatsCatalog(concurrency::TransactionContext *txn);
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,

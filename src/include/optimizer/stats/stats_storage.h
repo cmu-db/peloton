@@ -41,10 +41,6 @@ class StatsStorage {
 
   StatsStorage();
 
-  /* Functions for managing stats table and schema */
-
-  void CreateStatsTableInCatalog();
-
   /* Functions for adding, updating and quering stats */
 
   void InsertOrUpdateTableStats(storage::DataTable *table,

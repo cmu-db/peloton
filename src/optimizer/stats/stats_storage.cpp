@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
@@ -31,24 +32,11 @@ StatsStorage *StatsStorage::GetInstance() {
 
 /**
  * StatsStorage - Constructor of StatsStorage.
- * In the construcotr, `pg_column_stats` table and `samples_db` database are
- * created.
+ * In the construcotr, the EphemeralPool is created.
  */
 StatsStorage::StatsStorage() {
   pool_.reset(new type::EphemeralPool());
-  CreateStatsTableInCatalog();
 }
-
-/**
- * CreateStatsCatalog - Create 'pg_column_stats' table in the catalog database.
- */
-void StatsStorage::CreateStatsTableInCatalog() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::ColumnStatsCatalog::GetInstance(txn);
-  txn_manager.CommitTransaction(txn);
-}
-
 /**
  * InsertOrUpdateTableStats - Add or update all column stats of a table.
  * This function iterates all column stats in the table stats and insert column
@@ -109,7 +97,9 @@ void StatsStorage::InsertOrUpdateColumnStats(
   LOG_TRACE("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto pg_column_stats = catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_id)
+          ->GetColumnStatsCatalog();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   bool single_statement_txn = false;
@@ -117,10 +107,10 @@ void StatsStorage::InsertOrUpdateColumnStats(
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  column_stats_catalog->DeleteColumnStats(database_id, table_id, column_id,
+  pg_column_stats->DeleteColumnStats(table_id, column_id,
                                           txn);
-  column_stats_catalog->InsertColumnStats(
-      database_id, table_id, column_id, num_rows, cardinality, frac_null,
+  pg_column_stats->InsertColumnStats(
+      table_id, column_id, num_rows, cardinality, frac_null,
       most_common_vals, most_common_freqs, histogram_bounds, column_name,
       has_index, pool_.get(), txn);
 
@@ -136,12 +126,14 @@ void StatsStorage::InsertOrUpdateColumnStats(
 std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
                                                               oid_t table_id,
                                                               oid_t column_id) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto pg_column_stats = catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_id)
+          ->GetColumnStatsCatalog();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // std::unique_ptr<std::vector<type::Value>> column_stats_vector
-  auto column_stats_vector = column_stats_catalog->GetColumnStats(
-      database_id, table_id, column_id, txn);
+  auto column_stats_vector = pg_column_stats->GetColumnStats(
+      table_id, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
   return ConvertVectorToColumnStats(database_id, table_id, column_id,
@@ -218,10 +210,11 @@ std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
  */
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto pg_column_stats = catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_id)
+          ->GetColumnStatsCatalog();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
-  column_stats_catalog->GetTableStats(database_id, table_id, txn,
-                                      column_stats_map);
+  pg_column_stats->GetTableStats(table_id, txn, column_stats_map);
 
   std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
   for (auto it = column_stats_map.begin(); it != column_stats_map.end(); ++it) {
@@ -242,10 +235,11 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids,
     concurrency::TransactionContext *txn) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto pg_column_stats = catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_id)
+          ->GetColumnStatsCatalog();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
-  column_stats_catalog->GetTableStats(database_id, table_id, txn,
-                                      column_stats_map);
+  pg_column_stats->GetTableStats(table_id, txn, column_stats_map);
 
   std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
   for (oid_t col_id : column_ids) {

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/catalog/column_stats_catalog.h>
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
@@ -158,6 +159,18 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {TableCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
 
+  system_catalogs->GetIndexCatalog()->InsertIndex(
+          COLUMN_STATS_CATALOG_SKEY0_OID, COLUMN_STATS_CATALOG_NAME "_skey0",
+          COLUMN_STATS_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
+          IndexConstraintType::UNIQUE, true,
+          {ColumnStatsCatalog::ColumnId::TABLE_ID,
+           ColumnStatsCatalog::ColumnId::COLUMN_ID}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(
+          COLUMN_STATS_CATALOG_SKEY1_OID, COLUMN_STATS_CATALOG_NAME "_skey1",
+          COLUMN_STATS_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
+          IndexConstraintType::UNIQUE, true,
+          {ColumnStatsCatalog::ColumnId::TABLE_ID}, pool_.get(), txn);
+
   // Insert records(default + pg_catalog namespace) into pg_namespace
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
@@ -184,6 +197,9 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
+  system_catalogs->GetTableCatalog()->InsertTable(
+          COLUMN_STATS_CATALOG_OID, COLUMN_STATS_CATALOG_NAME,
+          CATALOG_SCHEMA_NAME, database_oid, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
