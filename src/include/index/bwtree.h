@@ -35,6 +35,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <sys/mman.h>
+
 /*
  * BWTREE_PELOTON - Specifies whether Peloton-specific features are
  *                  Compiled or not
@@ -2864,6 +2866,21 @@ class BwTree : public BwTreeBase {
    * the mapping table rather than CAS with nullptr
    */
   void InitMappingTable() {
+    mapping_table = (std::atomic<const BaseNode *> *) \
+                    mmap(NULL, 1024 * 1024 * 1024, 
+                         PROT_READ | PROT_WRITE, 
+                         MAP_ANONYMOUS | MAP_PRIVATE,
+                         -1, 0);
+    // If allocation fails, we throw an error because this is uncoverable
+    // The upper level functions should either catch this exception
+    // and then use another index instead, or simply kill the system
+    if(mapping_table == (void *)-1) {
+      LOG_ERROR("Failed to initialize mapping table");
+      throw IndexException("mmap() failed to initialize mapping table for Bw-Tree");
+    }
+
+    LOG_TRACE("Mapping table allocated via mmap()");
+
     LOG_TRACE("Initializing mapping table.... size = %lu", MAPPING_TABLE_SIZE);
     LOG_TRACE("Fast initialization: Do not set to zero");
 
@@ -2986,7 +3003,8 @@ class BwTree : public BwTreeBase {
    * If both are nullptr then we just traverse and do not do anything
    */
   const KeyValuePair *Traverse(Context *context_p, const ValueType *value_p,
-                               std::pair<int, bool> *index_pair_p) {
+                               std::pair<int, bool> *index_pair_p,
+                               bool unique_key=false) {
     // For value collection it always returns nullptr
     const KeyValuePair *found_pair_p = nullptr;
 
@@ -3072,7 +3090,7 @@ class BwTree : public BwTreeBase {
     } else {
       // If a value is given then use this value to Traverse down leaf
       // page to find whether the value exists or not
-      found_pair_p = NavigateLeafNode(context_p, *value_p, index_pair_p);
+      found_pair_p = NavigateLeafNode(context_p, *value_p, index_pair_p, unique_key);
     }
 
     if (context_p->abort_flag == true) {
@@ -4172,7 +4190,8 @@ class BwTree : public BwTreeBase {
    */
   const KeyValuePair *NavigateLeafNode(Context *context_p,
                                        const ValueType &search_value,
-                                       std::pair<int, bool> *index_pair_p) {
+                                       std::pair<int, bool> *index_pair_p,
+                                       bool unique_key=false) {
     // This will go to the right sibling until we have seen
     // a node whose range match the search key
     NavigateSiblingChain(context_p);
@@ -4217,7 +4236,7 @@ class BwTree : public BwTreeBase {
             // We do not need to check any delete set here, since if the
             // value has been deleted earlier then this function would
             // already have returned
-            if (ValueCmpEqual(scan_start_it->second, search_value)) {
+            if (unique_key == true || ValueCmpEqual(scan_start_it->second, search_value)) {
               // Since only Delete() will use this piece of information
               // we set exist flag to false to indicate that the value
               // has been invalidated
@@ -4245,7 +4264,7 @@ class BwTree : public BwTreeBase {
               static_cast<const LeafInsertNode *>(node_p);
 
           if (KeyCmpEqual(search_key, insert_node_p->item.first)) {
-            if (ValueCmpEqual(insert_node_p->item.second, search_value)) {
+            if (unique_key == true || ValueCmpEqual(insert_node_p->item.second, search_value)) {
               // Only Delete() will use this
               // We just simply inherit from the first node
               *index_pair_p = insert_node_p->GetIndexPair();
@@ -4264,7 +4283,7 @@ class BwTree : public BwTreeBase {
 
           // If the value was deleted then return false
           if (KeyCmpEqual(search_key, delete_node_p->item.first)) {
-            if (ValueCmpEqual(delete_node_p->item.second, search_value)) {
+            if (unique_key == true || ValueCmpEqual(delete_node_p->item.second, search_value)) {
               // Only Insert() will use this
               // We just simply inherit from the first node
               *index_pair_p = delete_node_p->GetIndexPair();
@@ -6993,8 +7012,12 @@ class BwTree : public BwTreeBase {
    *
    * This function returns false if value already exists
    * If CAS fails this function retries until it succeeds
+   * 
+   * Note that this function also takes a unique_key argument, to indicate whether
+   * we allow the same key with different values. For a primary key index this
+   * should be set true. By default we allow non-unique key
    */
-  bool Insert(const KeyType &key, const ValueType &value) {
+  bool Insert(const KeyType &key, const ValueType &value, bool unique_key=false) {
     LOG_TRACE("Insert called");
 
 #ifdef BWTREE_DEBUG
@@ -7011,7 +7034,7 @@ class BwTree : public BwTreeBase {
       // Also if the key previously exists in the delta chain
       // then return the position of the node using next_key_p
       // if there is none then return nullptr
-      const KeyValuePair *item_p = Traverse(&context, &value, &index_pair);
+      const KeyValuePair *item_p = Traverse(&context, &value, &index_pair, unique_key);
 
       // If the key-value pair already exists then return false
       if (item_p != nullptr) {
@@ -7373,7 +7396,7 @@ class BwTree : public BwTreeBase {
   NodeID first_leaf_id;
 
   std::atomic<NodeID> next_unused_node_id;
-  std::array<std::atomic<const BaseNode *>, MAPPING_TABLE_SIZE> mapping_table;
+  std::atomic<const BaseNode *> *mapping_table;
 
   // This list holds free NodeID which was removed by remove delta
   // We recycle NodeID in epoch manager
@@ -7562,6 +7585,8 @@ class BwTree : public BwTreeBase {
       // would always fail, until we have cleaned all epoch nodes
       current_epoch_p = nullptr;
 
+      LOG_DEBUG("Clearing the epoch in ~EpochManager()...");
+
       // If all threads has exited then all thread counts are
       // 0, and therefore this should proceed way to the end
       ClearEpoch();
@@ -7599,6 +7624,20 @@ class BwTree : public BwTreeBase {
                 epoch_leave.load());
 #endif
 
+      // NOTE: Only unmap memory here because we need to access the mapping
+      // table in the above routine. If it was unmapped in ~BwTree() then this
+      // function will invoke illegal memory access
+      int munmap_ret = munmap(tree_p->mapping_table, 1024 * 1024 * 1024);
+
+      // Although failure of munmap is not fatal, we still print out 
+      // an error log entry
+      // Otherwise just trace log
+      if(munmap_ret != 0) {
+        LOG_ERROR("munmap() returns with %d", munmap_ret);
+      } else {
+        LOG_TRACE("Mapping table is unmapped for Bw-Tree");
+      }
+      
       return;
     }
 

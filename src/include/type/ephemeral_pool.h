@@ -41,7 +41,7 @@ class EphemeralPool : public AbstractPool {
   // Allocate a contiguous block of memory of the given size. If the allocation
   // is successful a non-null pointer is returned. If the allocation fails, a
   // null pointer will be returned.
-  void *Allocate(size_t size) {
+  void *Allocate(size_t size) override {
     auto location = new char[size];
 
     pool_lock_.Lock();
@@ -53,7 +53,7 @@ class EphemeralPool : public AbstractPool {
   }
 
   // Returns the provided chunk of memory back into the pool
-  void Free(UNUSED_ATTRIBUTE void *ptr) {
+  void Free(UNUSED_ATTRIBUTE void *ptr) override {
     char *cptr = (char *)ptr;
     pool_lock_.Lock();
     size_t block_size = locations_[cptr];

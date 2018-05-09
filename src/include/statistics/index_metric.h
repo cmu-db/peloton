@@ -115,17 +115,17 @@ class IndexMetric : public AbstractMetric<IndexMetricRawData> {
   inline void OnIndexDelete(std::pair<oid_t, oid_t> db_index_id) override {
     GetRawData()->IncrementIndexDeletes(db_index_id);
   }
-  inline void OnMemoryAlloc(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+  inline void OnMemoryAlloc(std::pair<oid_t, oid_t> db_index_id, size_t bytes) override {
     GetRawData()->IncrementIndexMemoryAlloc(db_index_id, bytes);
   };
-  inline void OnMemoryFree(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+  inline void OnMemoryFree(std::pair<oid_t, oid_t> db_index_id, size_t bytes) override {
     GetRawData()->DecrementIndexMemoryAlloc(db_index_id, bytes);
   };
-  inline void OnMemoryUsage(std::pair<oid_t, oid_t> db_index_id, size_t bytes) {
+  inline void OnMemoryUsage(std::pair<oid_t, oid_t> db_index_id, size_t bytes) override  {
     GetRawData()->IncrementIndexMemoryUsage(db_index_id, bytes);
   };
   inline void OnMemoryReclaim(std::pair<oid_t, oid_t> db_index_id,
-                              size_t bytes) {
+                              size_t bytes) override {
     GetRawData()->DecrementIndexMemoryUsage(db_index_id, bytes);
   };
 };

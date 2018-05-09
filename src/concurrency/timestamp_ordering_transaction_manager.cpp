@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cinttypes>
 #include "concurrency/timestamp_ordering_transaction_manager.h"
+#include <cinttypes>
 
+#include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -30,10 +31,9 @@ common::synchronization::SpinLatch *
 TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  return (common::synchronization::SpinLatch *)(tile_group_header
-                                                    ->GetReservedFieldRef(
-                                                        tuple_id) +
-                                                LOCK_OFFSET);
+  return (
+      common::synchronization::SpinLatch
+          *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
 cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
@@ -232,9 +232,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
           .CollectTupleRead(tile_group_id, 1);
-
       return true;
-
     } else {
       // if it's not select for update, then update read set and return true.
 
@@ -243,7 +241,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
           .CollectTupleRead(tile_group_id, 1);
-
       return true;
     }
 
@@ -285,7 +282,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
           .CollectTupleRead(location.block, 1);
-
       return true;
 
     } else {
@@ -370,11 +366,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
       PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
                          current_txn->GetCommitId() ||
                      GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
-
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
           .CollectTupleRead(location.block, 1);
-
       return true;
 
     } else {
@@ -389,7 +383,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
           // Increment table read op stats
           stats::ThreadLevelStatsCollector::GetCollectorForThread()
               .CollectTupleRead(location.block, 1);
-
           return true;
         } else {
           // if the tuple has been owned by some concurrent transactions,
@@ -481,8 +474,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // version.
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
                  transaction_id);
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                     .IsNull() == true);
+  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset).IsNull());
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
@@ -599,8 +591,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
                  transaction_id);
   // we must be deleting the latest version.
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                     .IsNull() == true);
+  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset).IsNull());
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
@@ -1048,5 +1039,5 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   return ResultType::ABORTED;
 }
 
-}  // namespace storage
+}  // namespace concurrency
 }  // namespace peloton

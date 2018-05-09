@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "storage/storage_manager.h"
 #include "catalog/catalog.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
@@ -18,6 +17,7 @@
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 #include "planner/seq_scan_plan.h"
+#include "storage/storage_manager.h"
 
 #include "codegen/testing_codegen_util.h"
 
@@ -67,11 +67,12 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     std::unique_ptr<catalog::Schema> schema{new catalog::Schema(cols)};
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, all_cols_table_name, std::move(schema),
-                         txn);
+    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name,
+                         std::move(schema), txn);
 
-    auto &table = GetAllColsTable();
-    auto *table_schema = table.GetSchema();
+    all_cols_table = catalog->GetTableWithName(
+        test_db_name, DEFUALT_SCHEMA_NAME, all_cols_table_name, txn);
+    auto *table_schema = all_cols_table->GetSchema();
 
     // Insert one row where all columns are NULL
     storage::Tuple tuple{table_schema, true};
@@ -82,7 +83,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
 
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
-        table.InsertTuple(&tuple, txn, &index_entry_ptr);
+        all_cols_table->InsertTuple(&tuple, txn, &index_entry_ptr);
     PELOTON_ASSERT(tuple_slot_id.block != INVALID_OID);
     PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
@@ -90,12 +91,11 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  storage::DataTable &GetAllColsTable() const {
-    return *GetDatabase().GetTableWithName(all_cols_table_name);
-  }
+  storage::DataTable *GetAllColsTable() { return all_cols_table; }
 
  private:
   uint32_t num_rows_to_insert = 64;
+  storage::DataTable *all_cols_table = nullptr;
 };
 
 TEST_F(TableScanTranslatorTest, AllColumnsScan) {
@@ -125,13 +125,12 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   //
   // SELECT * FROM crazy_table;
   //
-
-  auto &tbl = GetAllColsTable();
-  std::vector<oid_t> all_col_ids(tbl.GetSchema()->GetColumnCount());
+  auto *tbl = GetAllColsTable();
+  std::vector<oid_t> all_col_ids(tbl->GetSchema()->GetColumnCount());
   std::iota(all_col_ids.begin(), all_col_ids.end(), 0);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&tbl, nullptr, all_col_ids};
+  planner::SeqScanPlan scan{tbl, nullptr, all_col_ids};
 
   // Do binding
   planner::BindingContext context;
@@ -151,8 +150,8 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   auto &tuple = buffer.GetOutputTuples()[0];
   for (uint32_t i = 0; i < all_col_ids.size(); i++) {
     auto col_val = tuple.GetValue(i);
-    EXPECT_TRUE(col_val.IsNull()) << "Result value: " << col_val.ToString()
-                                  << ", expected NULL";
+    EXPECT_TRUE(col_val.IsNull())
+        << "Result value: " << col_val.ToString() << ", expected NULL";
   }
 }
 
@@ -217,15 +216,15 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
 
   // First tuple should be (0, 1)
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(0)));
+                                  type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(1)));
+                                  type::ValueFactory::GetIntegerValue(1)));
 
   // Second tuple should be (10, 11)
   EXPECT_EQ(CmpBool::CmpTrue, results[1].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(10)));
+                                  type::ValueFactory::GetIntegerValue(10)));
   EXPECT_EQ(CmpBool::CmpTrue, results[1].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(11)));
+                                  type::ValueFactory::GetIntegerValue(11)));
 }
 
 TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
@@ -292,9 +291,9 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(20)));
+                                  type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(21)));
+                                  type::ValueFactory::GetIntegerValue(21)));
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
@@ -580,9 +579,9 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(0)));
+                                  type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(1)));
+                                  type::ValueFactory::GetIntegerValue(1)));
 }
 
 }  // namespace test

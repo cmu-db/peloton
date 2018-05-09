@@ -12,6 +12,7 @@
 
 #include <fstream>
 #include <memory>
+#include "common/utility.h"
 #include "event2/thread.h"
 
 #include "common/dedicated_thread_registry.h"
@@ -226,10 +227,11 @@ int PelotonServer::VerifyCallback(int ok, X509_STORE_CTX *store) {
 template <typename... Ts>
 void PelotonServer::TrySslOperation(int (*func)(Ts...), Ts... arg) {
   if (func(arg...) < 0) {
+    auto error_message = peloton_error_message();
     if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
       SSL_CTX_free(ssl_context);
     }
-    throw ConnectionException("Error listening onsocket.");
+    throw ConnectionException(error_message);
   }
 }
 
@@ -286,12 +288,8 @@ void PelotonServer::ServerLoop() {
                                                          stats_aggregate_task);
   }
   dispatcher_task_->EventLoop();
-  LOG_INFO("Closing server");
-  int status;
-  do {
-    status = close(listen_fd_);
-  } while (status < 0 && errno == EINTR);
-  LOG_DEBUG("Already Closed the connection %d", listen_fd_);
+
+  peloton_close(listen_fd_);
 
   LOG_INFO("Server Closed");
 }

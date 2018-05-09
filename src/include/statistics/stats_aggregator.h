@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
-#include <vector>
-#include <unordered_map>
 #include <condition_variable>
-#include <string>
 #include <fstream>
+#include <map>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "common/logger.h"
 #include "common/macros.h"
@@ -28,6 +28,7 @@
 #include "common/dedicated_thread_task.h"
 #include "thread_level_stats_collector.h"
 #include "type/ephemeral_pool.h"
+
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

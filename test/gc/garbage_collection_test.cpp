@@ -125,7 +125,7 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
 
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("UPDATE_DB");
+  auto database = TestingExecutorUtil::InitializeDatabase("update_db");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
@@ -197,7 +197,7 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("UPDATE_DB");
+  TestingExecutorUtil::DeleteDatabase("update_db");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
@@ -219,7 +219,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("DELETE_DB");
+  auto database = TestingExecutorUtil::InitializeDatabase("delete_db");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
   // create a table with only one key
@@ -295,7 +295,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("DELETE_DB");
+  TestingExecutorUtil::DeleteDatabase("delete_db");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(

@@ -14,22 +14,22 @@
 #include <algorithm>
 #include "tuning/brain_util.h"
 
-#include "concurrency/transaction_manager_factory.h"
-#include "tuning/clusterer.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
+#include "tuning/clusterer.h"
 
 namespace peloton {
 namespace tuning {
 
-IndexTuner& IndexTuner::GetInstance() {
+IndexTuner &IndexTuner::GetInstance() {
   static IndexTuner index_tuner;
   return index_tuner;
 }
@@ -52,7 +52,7 @@ void IndexTuner::Start() {
 }
 
 // Add an ad-hoc index
-static void AddIndex(storage::DataTable* table,
+static void AddIndex(storage::DataTable *table,
                      std::set<oid_t> suggested_index_attrs) {
   // Construct index metadata
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
@@ -63,8 +63,8 @@ static void AddIndex(storage::DataTable* table,
   auto index_oid = index_count + 1;
 
   auto tuple_schema = table->GetSchema();
-  catalog::Schema* key_schema;
-  index::IndexMetadata* index_metadata;
+  catalog::Schema *key_schema;
+  index::IndexMetadata *index_metadata;
   bool unique;
 
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
@@ -91,7 +91,7 @@ static void AddIndex(storage::DataTable* table,
   LOG_DEBUG("Creating index : %s", index_metadata->GetInfo().c_str());
 }
 
-void IndexTuner::BuildIndex(storage::DataTable* table,
+void IndexTuner::BuildIndex(storage::DataTable *table,
                             std::shared_ptr<index::Index> index) {
   auto table_schema = table->GetSchema();
   auto index_tile_group_offset = index->GetIndexedTileGroupOff();
@@ -137,7 +137,7 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
   tile_groups_indexed_ += tile_groups_indexed;
 }
 
-void IndexTuner::BuildIndices(storage::DataTable* table) {
+void IndexTuner::BuildIndices(storage::DataTable *table) {
   oid_t index_count = table->GetIndexCount();
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
@@ -153,7 +153,7 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
 }
 
 double IndexTuner::ComputeWorkloadWriteRatio(
-    const std::vector<tuning::Sample>& samples) {
+    const std::vector<tuning::Sample> &samples) {
   double write_ratio = 0;
 
   double total_read_duration = 0;
@@ -198,7 +198,7 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 }
 
 std::vector<sample_frequency_map_entry> GetFrequentSamples(
-    const std::vector<tuning::Sample>& samples) {
+    const std::vector<tuning::Sample> &samples) {
   std::unordered_map<tuning::Sample, double> sample_frequency_map;
   double total_weight = 0;
 
@@ -253,7 +253,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
 }
 
 std::vector<std::vector<double>> GetSuggestedIndices(
-    const std::vector<sample_frequency_map_entry>& list) {
+    const std::vector<sample_frequency_map_entry> &list) {
   // Find frequent samples
   size_t frequency_rank_threshold = 10;
 
@@ -264,8 +264,8 @@ std::vector<std::vector<double>> GetSuggestedIndices(
   for (size_t entry_itr = 0;
        (entry_itr < frequency_rank_threshold) && (entry_itr < list_size);
        entry_itr++) {
-    auto& entry = list[entry_itr];
-    auto& sample = entry.first;
+    auto &entry = list[entry_itr];
+    auto &sample = entry.first;
     LOG_TRACE("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
     suggested_indices.push_back(sample.GetColumnsAccessed());
   }
@@ -275,14 +275,14 @@ std::vector<std::vector<double>> GetSuggestedIndices(
 
 double GetCurrentIndexUtility(
     std::set<oid_t> suggested_index_set,
-    const std::vector<sample_frequency_map_entry>& list) {
+    const std::vector<sample_frequency_map_entry> &list) {
   double current_index_utility = 0;
   auto list_size = list.size();
 
   for (size_t entry_itr = 0; entry_itr < list_size; entry_itr++) {
-    auto& entry = list[entry_itr];
-    auto& sample = entry.first;
-    auto& columns = sample.GetColumnsAccessed();
+    auto &entry = list[entry_itr];
+    auto &sample = entry.first;
+    auto &columns = sample.GetColumnsAccessed();
 
     std::set<oid_t> columns_set(columns.begin(), columns.end());
 
@@ -296,7 +296,7 @@ double GetCurrentIndexUtility(
   return current_index_utility;
 }
 
-void IndexTuner::DropIndexes(storage::DataTable* table) {
+void IndexTuner::DropIndexes(storage::DataTable *table) {
   oid_t index_count = table->GetIndexCount();
 
   // Go over indices
@@ -326,8 +326,8 @@ void IndexTuner::DropIndexes(storage::DataTable* table) {
 }
 
 void IndexTuner::AddIndexes(
-    storage::DataTable* table,
-    const std::vector<std::vector<double>>& suggested_indices) {
+    storage::DataTable *table,
+    const std::vector<std::vector<double>> &suggested_indices) {
   oid_t valid_index_count = table->GetValidIndexCount();
   size_t constructed_index_itr = 0;
 
@@ -384,8 +384,8 @@ void IndexTuner::AddIndexes(
   }
 }
 
-void UpdateIndexUtility(storage::DataTable* table,
-                        const std::vector<sample_frequency_map_entry>& list) {
+void UpdateIndexUtility(storage::DataTable *table,
+                        const std::vector<sample_frequency_map_entry> &list) {
   oid_t index_count = table->GetIndexCount();
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
@@ -422,7 +422,7 @@ void UpdateIndexUtility(storage::DataTable* table,
   }
 }
 
-void PrintIndexInformation(storage::DataTable* table) {
+void PrintIndexInformation(storage::DataTable *table) {
   oid_t index_count = table->GetIndexCount();
   auto table_tilegroup_count = table->GetTileGroupCount();
   LOG_INFO("Index count : %u", table->GetValidIndexCount());
@@ -448,7 +448,7 @@ void PrintIndexInformation(storage::DataTable* table) {
   }
 }
 
-void IndexTuner::Analyze(storage::DataTable* table) {
+void IndexTuner::Analyze(storage::DataTable *table) {
   // Process all samples in table
   auto samples = table->GetIndexSamples();
 
@@ -492,7 +492,7 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   PrintIndexInformation(table);
 }
 
-void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
+void IndexTuner::IndexTuneHelper(storage::DataTable *table) {
   // Process all samples in table
   auto samples = table->GetIndexSamples();
   auto sample_count = samples.size();
@@ -563,7 +563,7 @@ void IndexTuner::Stop() {
   LOG_INFO("Stopped index tuner");
 }
 
-void IndexTuner::AddTable(storage::DataTable* table) {
+void IndexTuner::AddTable(storage::DataTable *table) {
   {
     std::lock_guard<std::mutex> lock(index_tuner_mutex);
     tables.push_back(table);
@@ -577,7 +577,7 @@ void IndexTuner::ClearTables() {
   }
 }
 
-void IndexTuner::BootstrapTPCC(const std::string& path) {
+void IndexTuner::BootstrapTPCC(const std::string &path) {
   // Enable visibility mode
   SetVisibilityMode();
 
@@ -595,12 +595,13 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
     auto samples = table_samples.second;
 
     // Locate table in catalog
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    auto table = catalog->GetTableWithName(database_name, table_name, txn);
+    auto table = catalog->GetTableWithName(
+        database_name, std::string(DEFUALT_SCHEMA_NAME), table_name, txn);
     txn_manager.CommitTransaction(txn);
     PELOTON_ASSERT(table != nullptr);
-    for (auto& sample : samples) {
+    for (auto &sample : samples) {
       table->RecordIndexSample(sample);
     }
     LOG_INFO("Added table to index tuner : %s", table_name.c_str());
@@ -611,11 +612,11 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
 }
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(const std::string& path) {
+void LoadStatsFromFile(const std::string &path) {
   LOG_INFO("LoadStatsFromFile Invoked");
 
   // Get index tuner
-  auto& index_tuner = tuning::IndexTuner::GetInstance();
+  auto &index_tuner = tuning::IndexTuner::GetInstance();
 
   // Set duration between pauses
   auto duration = 30000;  // in ms
@@ -627,5 +628,5 @@ void LoadStatsFromFile(const std::string& path) {
   return;
 }
 
-}  // namespace indextuner
+}  // namespace tuning
 }  // namespace peloton

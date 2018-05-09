@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/stats_aggregator.h"
-
+#include <cinttypes>
 namespace peloton {
 namespace stats {
 

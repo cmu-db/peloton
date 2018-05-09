@@ -12,12 +12,14 @@
 
 #include <cstdio>
 
+#include "common/harness.h"
 #include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
-#include "common/harness.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/statement.h"
 #include "concurrency/transaction_context.h"
@@ -46,7 +48,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "traffic_cop/traffic_cop.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -176,18 +177,17 @@ TEST_F(UpdateTests, UpdatingOld) {
       new catalog::Schema({id_column, manager_id_column, name_column}));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema), CreateType::TABLE);
+  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+                           DEFAULT_DB_NAME, std::move(table_schema),
+                           CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
-            1);
 
   LOG_INFO("Table created!");
 
-  storage::DataTable *table =
-      catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table", txn);
+  storage::DataTable *table = catalog->GetTableWithName(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
@@ -209,10 +209,16 @@ TEST_F(UpdateTests, UpdatingOld) {
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
       "(1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  auto parse_tree = insert_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -251,10 +257,16 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -290,10 +302,16 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = "
       "1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -324,9 +342,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -359,10 +383,16 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   LOG_INFO("Building parse tree completed!");
+
+  LOG_INFO("Binding parse tree...");
+  parse_tree = delete_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -386,6 +416,6 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}  // namespace?
+}  // namespace
 }  // namespace test
 }  // namespace peloton

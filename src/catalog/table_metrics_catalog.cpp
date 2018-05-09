@@ -20,14 +20,15 @@ namespace peloton {
 namespace catalog {
 
 TableMetricsCatalog *TableMetricsCatalog::GetInstance(
+    const std::string &database_name,
     concurrency::TransactionContext *txn) {
-  static TableMetricsCatalog table_metrics_catalog{txn};
+  static TableMetricsCatalog table_metrics_catalog{database_name, txn};
   return &table_metrics_catalog;
 }
 
-TableMetricsCatalog::TableMetricsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." TABLE_METRICS_CATALOG_NAME
+TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name, concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                      "." CATALOG_SCHEMA_NAME "." TABLE_METRICS_CATALOG_NAME
                       " ("
                       "database_oid   INT NOT NULL, "
                       "table_oid      INT NOT NULL, "
@@ -46,14 +47,13 @@ TableMetricsCatalog::TableMetricsCatalog(concurrency::TransactionContext *txn)
 TableMetricsCatalog::~TableMetricsCatalog() {}
 
 bool TableMetricsCatalog::InsertTableMetrics(
-    oid_t database_oid, oid_t table_oid, int64_t reads, int64_t updates,
+    oid_t /* database_id */, oid_t table_oid, int64_t reads, int64_t updates,
     int64_t deletes, int64_t inserts, int64_t memory_alloc,
     int64_t memory_usage, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(reads);
   auto val3 = type::ValueFactory::GetIntegerValue(updates);
@@ -63,7 +63,6 @@ bool TableMetricsCatalog::InsertTableMetrics(
   auto val7 = type::ValueFactory::GetIntegerValue(memory_usage);
   auto val8 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
   tuple->SetValue(ColumnId::READS, val2, pool);
   tuple->SetValue(ColumnId::UPDATES, val3, pool);

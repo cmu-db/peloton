@@ -14,7 +14,6 @@
 // pg_table_metrics
 //
 // Schema: (column offset: column_name)
-// 0: database_oid
 // 1: table_oid
 // 2: reads
 // 3: updates
@@ -41,10 +40,13 @@ namespace catalog {
 
 class TableMetricsCatalog : public AbstractCatalog {
  public:
+  TableMetricsCatalog(const std::string &database_name,
+                      concurrency::TransactionContext *txn);
   ~TableMetricsCatalog();
 
   // Global Singleton
   static TableMetricsCatalog *GetInstance(
+      const std::string &database_name,
       concurrency::TransactionContext *txn = nullptr);
 
   inline std::string GetName() const override { return TABLE_METRICS_CATALOG_NAME; }
@@ -66,8 +68,6 @@ class TableMetricsCatalog : public AbstractCatalog {
   // TODO: add if needed
 
  private:
-  TableMetricsCatalog(concurrency::TransactionContext *txn);
-
   enum ColumnId {
     DATABASE_OID = 0,
     TABLE_OID = 1,

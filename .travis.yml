@@ -14,46 +14,6 @@ matrix:
               - PELOTON_BUILD_TYPE=Debug
               - COVERALLS=Off
 
-        # Linux builds for gcc 4.8
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-4.8
-          env:
-              # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc4.8 Debug"
-              - CXX=g++-4.8
-              - CC=gcc-4.8
-              - PELOTON_BUILD_TYPE=Debug
-              # COVERALLS: we run coveralls only for one compiler
-              - COVERALLS=Off
-
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-4.8
-          env:
-              # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="gcc4.8 Release"
-              - CXX=g++-4.8
-              - CC=gcc-4.8
-              - PELOTON_BUILD_TYPE=Release
-              - COVERALLS=Off
-
         # Linux builds for gcc 5
         - os: linux
           sudo: required
@@ -93,6 +53,8 @@ matrix:
               - bash ../script/testing/psql/psql_test.sh
               # run jdbc tests
               - python ../script/validators/jdbc_validator.py
+              # run junit tests
+              - python ../script/testing/junit/run_junit.py
               # upload coverage info
               - make coveralls
 
@@ -134,6 +96,8 @@ matrix:
               - bash ../script/testing/psql/psql_test.sh
               # run jdbc tests
               - python ../script/validators/jdbc_validator.py
+              # run junit tests
+              - python ../script/testing/junit/run_junit.py
 
 install:
     # setup environment

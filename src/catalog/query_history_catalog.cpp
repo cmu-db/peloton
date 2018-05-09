@@ -27,7 +27,7 @@ QueryHistoryCatalog &QueryHistoryCatalog::GetInstance(
 
 QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." QUERY_HISTORY_CATALOG_NAME
+                      "." CATALOG_SCHEMA_NAME "." QUERY_HISTORY_CATALOG_NAME
                       " ("
                       "query_string   VARCHAR NOT NULL, "
                       "fingerprint    VARCHAR NOT NULL, "

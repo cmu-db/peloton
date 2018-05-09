@@ -51,7 +51,8 @@ void IndexMetricRawData::WriteToCatalog() {
     oid_t table_oid = 0;  // FIXME!!
 
     auto &counts = entry.second;
-    catalog::IndexMetricsCatalog::GetInstance()->InsertIndexMetrics(
+    // TODO(tianyu): fix name
+    catalog::IndexMetricsCatalog::GetInstance("")->InsertIndexMetrics(
         database_oid, table_oid, index_oid, counts[READ], counts[DELETE],
         counts[INSERT], time_stamp, nullptr, txn);
   }

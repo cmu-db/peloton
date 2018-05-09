@@ -37,7 +37,7 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
       container{false, comparator, equals, hash_func} {
   return;
 }
-
+        
 BWTREE_TEMPLATE_ARGUMENTS
 BWTREE_INDEX_TYPE::~BWTreeIndex() {}
 
@@ -70,7 +70,6 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
 
   LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
             IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
-
   return inserted;
 }
 
@@ -105,7 +104,6 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
 
   LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
             IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
-
   return removed;
 }
 
@@ -218,8 +216,6 @@ void BWTREE_INDEX_TYPE::Scan(
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
       metadata->GetDatabaseOid(), GetOid(), result.size());
-
-  return;
 }
 
 /*
@@ -238,6 +234,7 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const std::vector<ExpressionType> &expr_list,
     ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
+
   // Only work with limit == 1 and offset == 0
   // Because that gets translated to "min"
   // But still since we could not access tuples in the table
@@ -259,14 +256,13 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     auto scan_itr = container.Begin(index_low_key);
     if ((scan_itr.IsEnd() == false) &&
         (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
+
       result.push_back(scan_itr->second);
     }
   } else {
     Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
          csp_p);
   }
-
-  return;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
@@ -281,7 +277,6 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
       metadata->GetDatabaseOid(), GetOid(), result.size());
-  return;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
@@ -295,8 +290,6 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
 
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectIndexRead(
       metadata->GetDatabaseOid(), GetOid(), result.size());
-
-  return;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS

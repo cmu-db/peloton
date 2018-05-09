@@ -120,7 +120,8 @@ void TableMetricRawData::WriteToCatalog() {
     // TODO (Justin): currently incorrect, should actually read and then
     // increment,
     // since each aggregation period only knows the delta
-    catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
+    // TODO(tianyu): fix name
+    catalog::TableMetricsCatalog::GetInstance("")->InsertTableMetrics(
         database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
         counts[INSERT], counts[INLINE_MEMORY_ALLOC],
         counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);

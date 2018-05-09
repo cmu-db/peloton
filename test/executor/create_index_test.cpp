@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "traffic_cop/traffic_cop.h"
 #include <cstdio>
 #include "sql/testing_sql_util.h"
+#include "traffic_cop/traffic_cop.h"
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
@@ -81,9 +82,14 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       "dept_name TEXT);");
   LOG_INFO("Building parse tree completed!");
 
+  LOG_INFO("Binding parse tree...");
+  auto parse_tree = create_stmt->GetStatement(0);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(create_stmt, txn));
   LOG_INFO("Building plan tree completed!");
 
   std::vector<type::Value> params;
@@ -110,11 +116,6 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            1);
-
   // Inserting a tuple end-to-end
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Inserting a tuple...");
@@ -132,9 +133,14 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       "(1,52,'hello_1');");
   LOG_INFO("Building parse tree completed!");
 
+  LOG_INFO("Binding parse tree...");
+  parse_tree = insert_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
@@ -169,9 +175,14 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       "CREATE INDEX saif ON department_table (student_id);");
   LOG_INFO("Building parse tree completed!");
 
+  LOG_INFO("Binding parse tree...");
+  parse_tree = update_stmt->GetStatement(0);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
+  LOG_INFO("Binding parse tree completed!");
+
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
@@ -195,7 +206,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
   // Expected 2 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 

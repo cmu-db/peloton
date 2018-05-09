@@ -20,12 +20,18 @@
 #include "planner/create_plan.h"
 #include "planner/order_by_plan.h"
 #include "sql/testing_sql_util.h"
+<<<<<<< HEAD
 #include "storage/data_table.h"
 using std::vector;
 using std::unordered_set;
+=======
+
+using std::shared_ptr;
+>>>>>>> d052644e7922480ea03bceada59527997b0b9ca5
 using std::string;
 using std::unique_ptr;
-using std::shared_ptr;
+using std::unordered_set;
+using std::vector;
 
 namespace peloton {
 namespace test {
@@ -132,9 +138,10 @@ class OptimizerSQLTests : public PelotonTest {
 
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Testing select star expression
-  TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
-                                  "444", "4", "0", "555"},
-           false);
+  TestUtil(
+      "SELECT * from test",
+      {"333", "22", "1", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
+      false);
 
   // Something wrong with column property.
   string query = "SELECT b from test order by c";
@@ -229,9 +236,10 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       true);
 
   // Testing order by * expression
-  TestUtil("SELECT * from test order by a", {"1", "22", "333", "2", "11", "0",
-                                             "3", "33", "444", "4", "0", "555"},
-           true);
+  TestUtil(
+      "SELECT * from test order by a",
+      {"1", "22", "333", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
+      true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
@@ -330,7 +338,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   auto txn = txn_manager.BeginTransaction();
   // using transaction to get table from catalog
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "test2", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test2", txn);
   EXPECT_NE(nullptr, table);
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
@@ -352,7 +360,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
 
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
-                   DEFAULT_DB_NAME, "test2", txn),
+                   DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test2", txn),
                peloton::Exception);
   txn_manager.CommitTransaction(txn);
 }
@@ -611,7 +619,14 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       "SELECT A.b, B.b FROM test1 as A, test1 as B "
       "WHERE A.a = B.a",
       {
-          "22", "22", "22", "22", "11", "11", "0", "0",
+          "22",
+          "22",
+          "22",
+          "22",
+          "11",
+          "11",
+          "0",
+          "0",
       },
       false);
 
@@ -653,8 +668,8 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestUtil(
       "SELECT test.a, test1.a, test2.a, test3.c FROM test, test1, test2, test3 "
       "WHERE test.a = test2.a AND test2.a = test1.a and test.b = test3.b",
-      {"1", "1", "1", "0", "1", "1", "1", "555", "2", "2", "2", "333", "4",
-       "4", "4", "0"},
+      {"1", "1", "1", "0", "1", "1", "1", "555", "2", "2", "2", "333", "4", "4",
+       "4", "0"},
       false);
 }
 
