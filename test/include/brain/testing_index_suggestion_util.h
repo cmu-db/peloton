@@ -93,14 +93,6 @@ class TestingIndexSuggestionUtil {
       brain::IndexSelection *is = nullptr);
 
   /**
-   * Check whether the given indexes are the same as the expected ones
-   * @param chosen_indexes
-   * @param expected_indexes
-   */
-  bool CheckIndexes(brain::IndexConfiguration chosen_indexes,
-                    std::set<std::vector<oid_t>> expected_indexes);
-
-  /**
    * Return a micro workload
    * This function returns queries and the respective table schemas
    * User of this function must create all of the returned tables.

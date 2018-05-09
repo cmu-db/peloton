@@ -96,6 +96,8 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE b = 190 and a = 677 and c = 987");
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 81 and c = 123 and a = 122");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 81 and c = 123 and d = 122");
       break;
     }
     case D: {
@@ -199,25 +201,6 @@ void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
   s_stream << ");";
   LOG_TRACE("Create table: %s", s_stream.str().c_str());
   TestingSQLUtil::ExecuteSQLQuery(s_stream.str());
-}
-
-// Check whether the given indexes are the same as the expected ones
-bool TestingIndexSuggestionUtil::CheckIndexes(
-    brain::IndexConfiguration chosen_indexes,
-    std::set<std::vector<oid_t>> expected_indexes) {
-  if (chosen_indexes.GetIndexCount() != expected_indexes.size()) return false;
-
-  for (auto expected_columns : expected_indexes) {
-    bool found = false;
-    for (auto chosen_index : chosen_indexes.GetIndexes()) {
-      if (chosen_index->column_oids == expected_columns) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) return false;
-  }
-  return true;
 }
 
 // Inserts specified number of tuples into the table with random values.
