@@ -19,10 +19,11 @@
 namespace peloton {
 namespace brain {
 
+//TODO[Siva]: Change this to knobs
 IndexSelection::IndexSelection(Workload &query_set, size_t max_index_cols,
                                size_t enum_threshold, size_t num_indexes)
     : query_set_(query_set),
-      context_(max_index_cols, enum_threshold, num_indexes) {}
+      context_({max_index_cols, enum_threshold, num_indexes}) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // http://www.vldb.org/conf/1997/P146.PDF
@@ -39,7 +40,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
-  for (unsigned long i = 0; i < context_.num_iterations_; i++) {
+  for (unsigned long i = 0; i < context_.knobs_.num_iterations_; i++) {
     LOG_TRACE("******* Iteration %ld **********", i);
     LOG_TRACE("Candidate Indexes Before: %s",
               candidate_indexes.ToString().c_str());
@@ -51,7 +52,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
-              context_.num_indexes_);
+              context_.knobs_.num_indexes_);
     LOG_TRACE("Top Candidate Indexes: %s",
               candidate_indexes.ToString().c_str());
 
@@ -59,7 +60,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
     // Generate multi-column indexes before starting the next iteration.
     // Only do this if there is next iteration.
-    if (i < (context_.num_iterations_ - 1)) {
+    if (i < (context_.knobs_.num_iterations_ - 1)) {
       GenerateMultiColumnIndexes(top_candidate_indexes, admissible_indexes,
                                  candidate_indexes);
     }
@@ -211,7 +212,7 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // returns the cheapest m indexes
 
   auto max_num_indexes =
-      std::min(context_.naive_enumeration_threshold_, context_.num_indexes_);
+      std::min(context_.knobs_.naive_enumeration_threshold_, context_.knobs_.num_indexes_);
 
   // Define a set ordering of (index config, cost) and define the ordering in
   // the set

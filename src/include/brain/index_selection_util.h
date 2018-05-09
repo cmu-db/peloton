@@ -27,6 +27,23 @@ namespace peloton {
 namespace brain {
 
 //===--------------------------------------------------------------------===//
+// IndexSuggestionKnobs
+//===--------------------------------------------------------------------===//
+
+// Tunable knobs of the index selection algorithm
+struct IndexSuggestionKnobs {
+  // The number of iterations of the main algorithm which is also the maximum
+  // number of columns in a single index as in ith iteration we consider indexes
+  // with i or lesser columns
+  size_t num_iterations_;
+  // The number of indexes up to which we will do exhaustive enumeration
+  size_t naive_enumeration_threshold_;
+  // The number of indexes in the final configuration returned by the
+  // IndexSelection algorithm
+  size_t num_indexes_;
+};
+
+//===--------------------------------------------------------------------===//
 // IndexObject
 //===--------------------------------------------------------------------===//
 
