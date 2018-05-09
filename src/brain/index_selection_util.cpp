@@ -50,8 +50,8 @@ HypotheticalIndexObject HypotheticalIndexObject::Merge(
   result.table_oid = table_oid;
   result.column_oids = column_oids;
   for (auto column : index->column_oids) {
-    if (std::find(column_oids.begin(), column_oids.end(), column) 
-            == column_oids.end())
+    if (std::find(column_oids.begin(), column_oids.end(), column) ==
+        column_oids.end())
       result.column_oids.push_back(column);
   }
   return result;
@@ -169,7 +169,6 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     // TODO[vamshi]: Only one query for now.
     PELOTON_ASSERT(stmt_list->GetNumStatements() == 1);
 
-
     // Create a new shared ptr from the unique ptr because
     // these queries will be referenced by multiple objects later.
     // Release the unique ptr from the stmt list to avoid freeing at the end of
@@ -181,9 +180,18 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
     // Bind the query
     binder->BindNameToNode(stmt_shared.get());
 
-    AddQuery(stmt_shared);
+    // Only take the DML queries from the workload
+    switch (stmt_shared->GetType()) {
+      case StatementType::INSERT:
+      case StatementType::DELETE:
+      case StatementType::UPDATE:
+      case StatementType::SELECT:
+        AddQuery(stmt_shared);
+      default:
+        // Ignore other queries.
+        LOG_TRACE("Ignoring query: %s" + stmt->GetInfo().c_str());
+    }
   }
-
   txn_manager.CommitTransaction(txn);
 }
 
