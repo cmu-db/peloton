@@ -53,16 +53,13 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto table_oid = request.getParams().getRequest().getTableOid();
     auto col_oids = request.getParams().getRequest().getKeyAttrOids();
     auto is_unique = request.getParams().getRequest().getUniqueKeys();
+    auto index_name = request.getParams().getRequest().getIndexName();
+    std::vector<oid_t> col_oid_vector;
     LOG_DEBUG("Database oid: %d", database_oid);
     LOG_DEBUG("Table oid: %d", table_oid);
-
-    std::stringstream sstream;
-    sstream << database_oid << ":" << table_oid << ":";
-    std::vector<oid_t> col_oid_vector;
     for (auto col : col_oids) {
-      col_oid_vector.push_back(col);
       LOG_DEBUG("Col oid: %d", col);
-      sstream << col << ",";
+      col_oid_vector.push_back(col);
     }
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -72,9 +69,8 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto catalog = catalog::Catalog::GetInstance();
     try {
       catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
-                           DEFUALT_SCHEMA_NAME, sstream.str(),
-                           IndexType::BWTREE, IndexConstraintType::DEFAULT,
-                           is_unique, txn);
+                           DEFUALT_SCHEMA_NAME, index_name, IndexType::BWTREE,
+                           IndexConstraintType::DEFAULT, is_unique, txn);
     } catch (CatalogException e) {
       LOG_ERROR("Create Index Failed");
       txn_manager.AbortTransaction(txn);

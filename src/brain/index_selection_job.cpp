@@ -19,6 +19,8 @@
 namespace peloton {
 namespace brain {
 
+#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index_"
+
 void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -46,7 +48,14 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
                         ->GetIndexCatalog();
     auto indexes = pg_index->GetIndexObjects(txn);
     for (auto index : indexes) {
-      DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+      auto index_name = index.second->GetIndexName();
+      // TODO: This is a hack for now. Add a boolean to the index catalog to
+      // find out if an index is a brain suggested index/user created index.
+      if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
+          std::string::npos) {
+        LOG_DEBUG("Dropping Index: %s", index_name.c_str());
+        DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+      }
     }
 
     // TODO: Handle multiple databases
@@ -77,9 +86,21 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
 
+  // Create the index name: concat - db_id, table_id, col_ids
+  std::stringstream sstream;
+  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << ":" << index->db_oid << ":"
+          << index->table_oid << ":";
+  std::vector<oid_t> col_oid_vector;
+  for (auto col : index->column_oids) {
+    col_oid_vector.push_back(col);
+    sstream << col << ",";
+  }
+  auto index_name = sstream.str();
+
   auto request = peloton_service.createIndexRequest();
   request.getRequest().setDatabaseOid(index->db_oid);
   request.getRequest().setTableOid(index->table_oid);
+  request.getRequest().setIndexName(index_name);
   request.getRequest().setUniqueKeys(false);
 
   auto col_list =

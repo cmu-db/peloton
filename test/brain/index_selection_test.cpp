@@ -314,7 +314,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 
   // candidates union (candidates * single_column_indexes)
   indexes = {// candidates
-             a11,  b11,  bc12, ac12,  c12,  a21, abc21,
+             a11, b11, bc12, ac12, c12, a21, abc21,
              // crossproduct
              ab11, ac11, ba11, bc11, bca12, acb12, ca12, cb12, ab21, ac21};
   expected = {indexes};
