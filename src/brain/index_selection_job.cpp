@@ -2,16 +2,16 @@
 //
 //                         Peloton
 //
-// index_suggestion_task.cpp
+// index_selection_job.cpp
 //
-// Identification: src/brain/index_suggestion_task.cpp
+// Identification: src/brain/index_selection_job.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <include/brain/index_selection_util.h>
-#include "include/brain/index_suggestion_job.h"
+#include "include/brain/index_selection_job.h"
 #include "catalog/query_history_catalog.h"
 #include "brain/index_selection.h"
 
@@ -32,7 +32,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
     // Run the index selection.
     std::vector<std::string> queries;
-    for (auto query_pair: *query_history) {
+    for (auto query_pair : *query_history) {
       queries.push_back(query_pair.second);
     }
 
@@ -42,7 +42,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
 
-    for (auto index: best_config.GetIndexes()) {
+    for (auto index : best_config.GetIndexes()) {
       // Create RPC for index creation on the server side.
       CreateIndexRPC(index.get());
     }
@@ -69,8 +69,9 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   request.getRequest().setTableOid(index->table_oid);
   request.getRequest().setUniqueKeys(false);
 
-  auto col_list = request.getRequest().initKeyAttrOids(index->column_oids.size());
-  for (auto i=0UL; i<index->column_oids.size(); i++) {
+  auto col_list =
+      request.getRequest().initKeyAttrOids(index->column_oids.size());
+  for (auto i = 0UL; i < index->column_oids.size(); i++) {
     col_list.set(i, index->column_oids[i]);
   }
 

@@ -31,7 +31,7 @@ namespace brain {
 class BrainEnvironment {
 public:
   BrainEnvironment() {
-    index_selection_knobs = {3, 2, 10};
+    index_selection_knobs = {1, 2, 1};
   }
   IndexSelectionKnobs GetIndexSelectionKnobs() {
     return index_selection_knobs;

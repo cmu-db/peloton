@@ -151,10 +151,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // Else S = S U {I}
   // 4. If |S| = k then exit
   // LOG_INFO("Starting with the following index: %s",
-            // indexes.ToString().c_str());
+  // indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
 
-  // LOG_INFO("At start: #indexes chosen : %zu, #num_indexes: %zu", current_index_count, k);
+  // LOG_INFO("At start: #indexes chosen : %zu, #num_indexes: %zu",
+  // current_index_count, k);
 
   if (current_index_count >= k) return;
 
@@ -172,7 +173,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
       // LOG_INFO("Considering this index: %s \n with cost: %lf",
-                // best_index->ToString().c_str(), cur_cost);
+      // best_index->ToString().c_str(), cur_cost);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -182,7 +183,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
       // LOG_INFO("Adding the following index: %s",
-                // best_index->ToString().c_str());
+      // best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
@@ -208,8 +209,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // The naive algorithm gets all the possible subsets of size <= m and then
   // returns the cheapest m indexes
 
-  auto max_num_indexes =
-      std::min(context_.knobs_.naive_enumeration_threshold_, context_.knobs_.num_indexes_);
+  auto max_num_indexes = std::min(context_.knobs_.naive_enumeration_threshold_,
+                                  context_.knobs_.num_indexes_);
 
   // Define a set ordering of (index config, cost) and define the ordering in
   // the set
@@ -252,8 +253,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.erase({empty, 0.0});
 
   // for (auto index : result_index_config) {
-    // LOG_INFO("ExhaustiveEnumeration: Index: %s, Cost: %lf", 
-             // index.first.ToString().c_str(), index.second);
+  // LOG_INFO("ExhaustiveEnumeration: Index: %s, Cost: %lf",
+  // index.first.ToString().c_str(), index.second);
   // }
 
   // Since the insertion into the sets ensures the order of cost, get the first
@@ -306,10 +307,7 @@ void IndexSelection::GetAdmissibleIndexes(
       break;
     }
 
-    default: {
-      LOG_ERROR("Cannot handle DDL statements");
-      PELOTON_ASSERT(false);
-    }
+    default: { LOG_DEBUG("DDL Statement encountered, Ignoring.."); }
   }
 }
 
