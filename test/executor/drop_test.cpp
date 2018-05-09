@@ -123,7 +123,6 @@ TEST_F(DropTests, DroppingTable) {
                 ->GetTableObjects()
                 .size(),
             expeected_table_count);
-
   // free the database just created
   catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
