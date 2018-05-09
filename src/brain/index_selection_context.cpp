@@ -16,7 +16,7 @@
 namespace peloton {
 namespace brain {
 
-IndexSelectionContext::IndexSelectionContext(IndexSuggestionKnobs knobs)
+IndexSelectionContext::IndexSelectionContext(IndexSelectionKnobs knobs)
     : knobs_(knobs) {}
 
 }  // namespace brain

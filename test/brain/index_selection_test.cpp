@@ -46,9 +46,12 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::string database_name = DEFAULT_DB_NAME;
   long num_tuples = 10;
 
-  size_t max_cols = 2;
+  size_t max_index_cols = 2;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 10;
+
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
 
   TableSchema schema(table_name, {{"a", TupleValueType::INTEGER},
                                   {"b", TupleValueType::INTEGER},
@@ -82,7 +85,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   auto queries = workload.GetQueries();
   for (unsigned long i = 0; i < queries.size(); i++) {
     brain::Workload w(queries[i], workload.GetDatabaseName());
-    brain::IndexSelection is(w, max_cols, enumeration_threshold, num_indexes);
+    brain::IndexSelection is(w, knobs);
 
     brain::IndexConfiguration ic;
     is.GetAdmissibleIndexes(queries[i], ic);
@@ -100,10 +103,13 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   std::string database_name = DEFAULT_DB_NAME;
 
   // Config knobs
-  size_t max_cols = 1;
+  size_t max_index_cols = 1;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 10;
   int num_rows = 2000;
+
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
 
   TestingIndexSuggestionUtil testing_util(database_name);
   auto config =
@@ -125,8 +131,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexConfiguration candidate_config;
   brain::IndexConfiguration admissible_config;
 
-  brain::IndexSelection index_selection(workload, max_cols,
-                                        enumeration_threshold, num_indexes);
+  brain::IndexSelection index_selection(workload, knobs);
   index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
                                            workload);
 
@@ -149,8 +154,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   candidate_config.Clear();
   admissible_config.Clear();
 
-  brain::IndexSelection is(workload, max_cols, enumeration_threshold,
-                           num_indexes);
+  brain::IndexSelection is(workload, knobs);
   is.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
 
   LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
@@ -193,7 +197,15 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   brain::IndexConfiguration result;
   brain::IndexConfiguration expected;
   brain::Workload workload(database_name);
-  brain::IndexSelection index_selection(workload, 5, 2, 10);
+
+  size_t max_index_cols = 5;
+  size_t enumeration_threshold = 2;
+  size_t num_indexes = 10;
+
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
+
+  brain::IndexSelection index_selection(workload, knobs);
 
   std::vector<oid_t> cols;
 
@@ -357,8 +369,11 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   size_t max_index_cols = 1;         // multi-column index limit
   size_t enumeration_threshold = 2;  // naive enumeration threshold
   size_t num_indexes = 1;            // top num_indexes will be returned.
-  brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                              num_indexes};
+
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
+
+  brain::IndexSelection is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -380,7 +395,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 1;
   enumeration_threshold = 2;
   num_indexes = 2;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -403,7 +419,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 2;
   enumeration_threshold = 2;
   num_indexes = 1;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -425,7 +442,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 2;
   enumeration_threshold = 2;
   num_indexes = 2;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -449,7 +467,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 2;
   enumeration_threshold = 2;
   num_indexes = 4;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -473,7 +492,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 3;
   enumeration_threshold = 2;
   num_indexes = 1;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -497,7 +517,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   max_index_cols = 3;
   enumeration_threshold = 2;
   num_indexes = 4;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -546,8 +567,9 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
   size_t max_index_cols = 3;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 2;
-  brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                              num_indexes};
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
+  brain::IndexSelection is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -601,8 +623,9 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   size_t max_index_cols = 3;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 1;
-  brain::IndexSelection is = {workload, max_index_cols, enumeration_threshold,
-                              num_indexes};
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
+  brain::IndexSelection is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 
@@ -626,7 +649,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   max_index_cols = 3;
   enumeration_threshold = 2;
   num_indexes = 2;
-  is = {workload, max_index_cols, enumeration_threshold, num_indexes};
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs};
 
   is.GetBestIndexes(best_config);
 

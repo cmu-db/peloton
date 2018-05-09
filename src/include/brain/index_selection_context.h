@@ -48,7 +48,7 @@ class IndexSelectionContext {
    * @brief Constructor
    *
    */
-  IndexSelectionContext(IndexSuggestionKnobs knobs);
+  IndexSelectionContext(IndexSelectionKnobs knobs);
 
  private:
   friend class IndexSelection;
@@ -62,7 +62,7 @@ class IndexSelectionContext {
   IndexObjectPool pool_;
 
   // The knobs for this run of the algorithm
-  IndexSuggestionKnobs knobs_;
+  IndexSelectionKnobs knobs_;
 };
 
 }  // namespace brain

@@ -31,7 +31,7 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 // Tunable knobs of the index selection algorithm
-struct IndexSuggestionKnobs {
+struct IndexSelectionKnobs {
   // The number of iterations of the main algorithm which is also the maximum
   // number of columns in a single index as in ith iteration we consider indexes
   // with i or lesser columns
