@@ -28,6 +28,8 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
   kj::Promise<void> dropIndex(DropIndexContext request) override {
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto index_oid = request.getParams().getRequest().getIndexOid();
+    LOG_DEBUG("Database oid: %d", database_oid);
+    LOG_DEBUG("Index oid: %d", index_oid);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();

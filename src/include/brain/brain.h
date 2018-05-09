@@ -19,6 +19,7 @@
 #include "capnp/ez-rpc.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 #include "common/notifiable_task.h"
+#include "brain/index_selection_util.h"
 
 namespace peloton {
 namespace brain {
@@ -28,7 +29,18 @@ namespace brain {
  * the brain, such as RPC and Catalog.
  */
 class BrainEnvironment {
-  // TODO(tianyu): fill in as needed
+public:
+  BrainEnvironment() {
+    index_suggestion_knobs = {3, 2, 10};
+  }
+  IndexSuggestionKnobs GetIndexSuggestionKnobs() {
+    return index_suggestion_knobs;
+  }
+  void SetIndexSuggestionKnobs(IndexSuggestionKnobs knobs) {
+    index_suggestion_knobs = knobs;
+  }
+private:
+  IndexSuggestionKnobs index_suggestion_knobs;
 };
 
 /**

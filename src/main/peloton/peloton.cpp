@@ -18,7 +18,7 @@
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
 #include "brain/brain.h"
-#include "brain/index_suggestion_task.h"
+#include "brain/index_suggestion_job.h"
 
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
@@ -52,15 +52,17 @@ int RunPelotonBrain() {
   peloton::brain::Brain brain;
   evthread_use_pthreads();
   // TODO(tianyu): register jobs here
-  struct timeval one_second;
-  one_second.tv_sec = 1;
-  one_second.tv_usec = 0;
+  struct timeval one_minute;
+  one_minute.tv_sec = 60;
+  one_minute.tv_usec = 0;
 
   // The handler for the Index Suggestion related RPC calls to create/drop
   // indexes
-  brain.RegisterJob<peloton::brain::SimpleBrainJob>(
-      &peloton::brain::IndexSuggestionTask::interval, "index_suggestion",
-      peloton::brain::IndexSuggestionTask::Task);
+  // TODO[vamshi]: Remove this hard coding
+  auto num_queries_threshold = 1000;
+  peloton::brain::IndexSuggestionJob index_suggestion_job(num_queries_threshold);
+  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_minute, "index_suggestion",
+      index_suggestion_job);
   brain.Run();
   return 0;
 }

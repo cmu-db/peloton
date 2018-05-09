@@ -11,30 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include <include/brain/index_selection_util.h>
-#include "include/brain/index_suggestion_task.h"
+#include "include/brain/index_suggestion_job.h"
 #include "catalog/query_history_catalog.h"
 #include "brain/index_selection.h"
 
 namespace peloton {
 namespace brain {
 
-// Interval in seconds.
-struct timeval IndexSuggestionTask::interval {
-  10, 0
-};
-
-uint64_t IndexSuggestionTask::last_timestamp = 0;
-
-uint64_t IndexSuggestionTask::tuning_threshold = 60;
-
-size_t IndexSuggestionTask::max_index_cols = 3;
-
-size_t IndexSuggestionTask::enumeration_threshold = 2;
-
-size_t IndexSuggestionTask::num_indexes = 10;
-
-void IndexSuggestionTask::Task(BrainEnvironment *env) {
-  (void)env;
+void IndexSuggestionJob::OnJobInvocation(BrainEnvironment *env) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
@@ -42,8 +26,8 @@ void IndexSuggestionTask::Task(BrainEnvironment *env) {
   // Query the catalog for new queries.
   auto query_catalog = &catalog::QueryHistoryCatalog::GetInstance(txn);
   auto query_history =
-      query_catalog->GetQueryStringsAfterTimestamp(last_timestamp, txn);
-  if (query_history->size() > tuning_threshold) {
+      query_catalog->GetQueryStringsAfterTimestamp(last_timestamp_, txn);
+  if (query_history->size() > num_queries_threshold_) {
     LOG_INFO("Tuning threshold has crossed. Time to tune the DB!");
 
     // Run the index selection.
@@ -76,7 +60,7 @@ void IndexSuggestionTask::Task(BrainEnvironment *env) {
   txn_manager.CommitTransaction(txn);
 }
 
-void IndexSuggestionTask::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
+void IndexSuggestionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   // TODO: Remove hardcoded database name and server end point.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
@@ -95,7 +79,7 @@ void IndexSuggestionTask::CreateIndexRPC(brain::HypotheticalIndexObject *index) 
   auto response = request.send().wait(client.getWaitScope());
 }
 
-uint64_t IndexSuggestionTask::GetLatestQueryTimestamp(
+uint64_t IndexSuggestionJob::GetLatestQueryTimestamp(
     std::vector<std::pair<uint64_t, std::string>> *queries) {
   uint64_t latest_time = 0;
   for (auto query : *queries) {
