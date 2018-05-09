@@ -136,6 +136,20 @@ void Updater::Update() {
   auto tile_group = table_->GetTileGroupById(old_location_.block).get();
   auto *tile_group_header = tile_group->GetHeader();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  oid_t table_oid = table_->GetOid();
+  // Lock the table (reader lock)
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  LOG_WARN("Shared Lock in insert: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+  bool lock_success = lm->LockShared(table_oid);
+  concurrency::LockManager::SafeLock dummy;
+  if (!lock_success) {
+    LOG_TRACE("Cannot obtain lock for the table, abort!");
+  }
+  else {
+    dummy.Set(table_oid, concurrency::LockManager::SafeLock::SHARED);
+  }
+
   // Either update in-place
   if (is_owner_ == true) {
     txn_manager.PerformUpdate(txn, old_location_);
