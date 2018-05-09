@@ -69,7 +69,7 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     LOG_INFO("No checkpoint for recovery");
     return false;
   } else {
-    LOG_INFO("Do checkpoint recovery");
+    LOG_INFO("Start checkpoint recovery");
     Timer<std::milli> recovery_timer;
     recovery_timer.Start();
 
@@ -106,42 +106,43 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
 eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
   // already recovered
   if (recovered_epoch_id != INVALID_EID) {
-  	return recovered_epoch_id;
+    return recovered_epoch_id;
   }
   // for checkpoint recovery
   else {
     eid_t max_epoch = INVALID_EID;
     std::vector<std::string> dir_name_list;
 
-		// Get list of checkpoint directories
-		if (LoggingUtil::GetDirectoryList(checkpoint_base_dir_.c_str(),
-																			dir_name_list) == false) {
-			LOG_ERROR("Failed to get directory list %s", checkpoint_base_dir_.c_str());
-			return INVALID_EID;
-		}
+    // Get list of checkpoint directories
+    if (LoggingUtil::GetDirectoryList(checkpoint_base_dir_.c_str(),
+                                      dir_name_list) == false) {
+      LOG_ERROR("Failed to get directory list %s",
+                checkpoint_base_dir_.c_str());
+      return INVALID_EID;
+    }
 
-		// Get the newest epoch from checkpoint directories
-		for (auto dir_name : dir_name_list) {
-			eid_t epoch_id;
+    // Get the newest epoch from checkpoint directories
+    for (auto dir_name : dir_name_list) {
+      eid_t epoch_id;
 
-			// get the directory name as epoch id
-			// if it includes character, go next
-			if ((epoch_id = std::strtoul(dir_name.c_str(), NULL, 10)) == 0) {
-				continue;
-			}
+      // get the directory name as epoch id
+      // if it includes character, go next
+      if ((epoch_id = std::strtoul(dir_name.c_str(), NULL, 10)) == 0) {
+        continue;
+      }
 
-			if (epoch_id == INVALID_EID) {
-				LOG_ERROR("Unexpected epoch value in checkpoints directory: %s",
-									dir_name.c_str());
-			}
+      if (epoch_id == INVALID_EID) {
+        LOG_ERROR("Unexpected epoch value in checkpoints directory: %s",
+                  dir_name.c_str());
+      }
 
-			// the largest epoch is a recovered epoch id
-			if (epoch_id > max_epoch) {
-				max_epoch = epoch_id;
-			}
-		}
-		LOG_DEBUG("max epoch : %" PRIu64, max_epoch);
-		return max_epoch;
+      // the largest epoch is a recovered epoch id
+      if (epoch_id > max_epoch) {
+        max_epoch = epoch_id;
+      }
+    }
+    LOG_DEBUG("max epoch : %" PRIu64, max_epoch);
+    return max_epoch;
   }
 }
 
@@ -156,7 +157,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     count++;
     if (count == checkpoint_interval_) {
-      LOG_INFO("Do checkpointing");
+      LOG_INFO("Start checkpointing");
       Timer<std::milli> checkpoint_timer;
       checkpoint_timer.Start();
 
@@ -168,7 +169,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
           concurrency::TimestampOrderingTransactionManager::GetInstance(
               ProtocolType::TIMESTAMP_ORDERING,
               IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::WAIT);
-        auto txn = txn_manager.BeginTransaction();
+      auto txn = txn_manager.BeginTransaction();
       cid_t begin_cid = txn->GetReadId();
       eid_t begin_epoch_id = txn->GetEpochId();
 
@@ -186,7 +187,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 
       checkpoint_timer.Stop();
       LOG_INFO(
-          "Complete Checkpointing in epoch %" PRIu64 " (cid = %" PRIu64 ")",
+          "Complete Checkpointing for epoch %" PRIu64 " (cid = %" PRIu64 ")",
           concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId(),
           begin_cid);
       LOG_INFO("Checkpointing time: %lf ms", checkpoint_timer.GetDuration());
@@ -216,25 +217,25 @@ void TimestampCheckpointManager::CreateCheckpoint(
       // make sure the table exists in this epoch
       if (table_catalog == nullptr) continue;
 
-			// create a checkpoint file for the table
-			FileHandle file_handle;
-			std::string file_name = GetWorkingCheckpointFileFullPath(
-					db_catalog->GetDatabaseName(), table_catalog->GetTableName());
-			if (LoggingUtil::OpenFile(file_name.c_str(), "wb", file_handle) !=
-					true) {
-				LOG_ERROR("file open error: %s", file_name.c_str());
-				return;
-			}
+      // create a checkpoint file for the table
+      FileHandle file_handle;
+      std::string file_name = GetWorkingCheckpointFileFullPath(
+          db_catalog->GetDatabaseName(), table_catalog->GetSchemaName(),
+          table_catalog->GetTableName());
+      if (LoggingUtil::OpenFile(file_name.c_str(), "wb", file_handle) != true) {
+        LOG_ERROR("file open error: %s", file_name.c_str());
+        return;
+      }
 
-			// insert data to checkpoint file
-			// if table is catalog, then insert data without tile group info
-			if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) {
-		    CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
-			} else {
-				CheckpointingTableData(table, begin_cid, file_handle);
-			}
+      // insert data to checkpoint file
+      // if table is catalog, then insert data without tile group info
+      if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) {
+        CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
+      } else {
+        CheckpointingTableData(table, begin_cid, file_handle);
+      }
 
-			LoggingUtil::CloseFile(file_handle);
+      LoggingUtil::CloseFile(file_handle);
     }  // end table loop
 
   }  // end database loop
@@ -419,9 +420,9 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
     std::vector<std::shared_ptr<catalog::TableCatalogObject>> table_catalogs;
     auto all_table_catalogs = db_catalog->GetTableObjects();
     for (auto table_catalog_pair : all_table_catalogs) {
-    	auto table_catalog = table_catalog_pair.second;
+      auto table_catalog = table_catalog_pair.second;
       if (table_catalog->GetSchemaName() != CATALOG_SCHEMA_NAME) {
-      	table_catalogs.push_back(table_catalog);
+        table_catalogs.push_back(table_catalog);
       }
     }
 
@@ -434,10 +435,12 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
 
       // except for catalog table
 
-      LOG_TRACE("Write table storage object %d '%s' (%lu columns) in database "
-      					"%d '%s'", table_oid, table_catalog->GetTableName().c_str(),
-                schema->GetColumnCount(), db_oid,
-                db_catalog->GetDatabaseName().c_str());
+      LOG_TRACE(
+          "Write table storage object %d '%s' (%lu columns) in database "
+          "%d '%s'",
+          table_oid, table_catalog->GetTableName().c_str(),
+          schema->GetColumnCount(), db_oid,
+          db_catalog->GetDatabaseName().c_str());
 
       // write table information
       metadata_buffer.WriteInt(table_oid);
@@ -515,23 +518,23 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
 
   // recover all catalog table in each database
   for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
-  	auto db_oid = db_catalog_pair.first;
-		auto db_catalog = db_catalog_pair.second;
+    auto db_oid = db_catalog_pair.first;
+    auto db_catalog = db_catalog_pair.second;
 
-		// load system catalogs in the database
-		// if not exist, then create the database storage object and catalogs
-		std::shared_ptr<catalog::SystemCatalogs> system_catalogs;
-		storage::Database *database;
-		try {
-			system_catalogs = catalog->GetSystemCatalogs(db_oid);
-			database = storage_manager->GetDatabaseWithOid(db_oid);
-      LOG_DEBUG("Use existed database storage object %d '%s'", db_oid,
+    // load system catalogs in the database
+    // if not exist, then create the database storage object and catalogs
+    std::shared_ptr<catalog::SystemCatalogs> system_catalogs;
+    storage::Database *database;
+    try {
+      system_catalogs = catalog->GetSystemCatalogs(db_oid);
+      database = storage_manager->GetDatabaseWithOid(db_oid);
+      LOG_TRACE("Use existed database storage object %d '%s'", db_oid,
                 db_catalog->GetDatabaseName().c_str());
-      LOG_DEBUG("And use its system catalog objects");
-		} catch (Exception &e) {
-      LOG_DEBUG("Create database storage object %d '%s'",
-					db_oid, db_catalog->GetDatabaseName().c_str());
-      LOG_DEBUG("And create system catalog objects for this database");
+      LOG_TRACE("And use its system catalog objects");
+    } catch (Exception &e) {
+      LOG_TRACE("Create database storage object %d '%s'", db_oid,
+                db_catalog->GetDatabaseName().c_str());
+      LOG_TRACE("And create system catalog objects for this database");
 
       // create database storage object
       database = new storage::Database(db_oid);
@@ -542,98 +545,104 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
       // put database object into rw_object_set
       txn->RecordCreate(db_oid, INVALID_OID, INVALID_OID);
 
-			// add core & non-core system catalog tables into database
-			catalog->catalog_map_.emplace(db_oid,
-													 std::shared_ptr<catalog::SystemCatalogs>(
-															 new catalog::SystemCatalogs(database,
-																	 catalog->pool_.get(), txn)));
-			catalog->catalog_map_[db_oid]->Bootstrap(db_catalog->GetDatabaseName(), txn);
-			system_catalogs = catalog->catalog_map_[db_oid];
-		}
+      // add core & non-core system catalog tables into database
+      catalog->catalog_map_.emplace(
+          db_oid,
+          std::shared_ptr<catalog::SystemCatalogs>(new catalog::SystemCatalogs(
+              database, catalog->pool_.get(), txn)));
+      catalog->catalog_map_[db_oid]->Bootstrap(db_catalog->GetDatabaseName(),
+                                               txn);
+      system_catalogs = catalog->catalog_map_[db_oid];
+    }
 
-		// load checkpoint files for catalog data
-		// except for basic catalogs having the object class: DatabaseCatalog,
-		// TableCatalog, IndexCatalog, ColumnCatalog
-		// also except for catalog requiring to initialize values: LangageCatalog,
-		// ProcCatalog, SettingsCatalog
-		for (auto table_catalog : db_catalog->GetTableObjects(
-				(std::string)CATALOG_SCHEMA_NAME)) {
-			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
-			auto table_name = table_catalog->GetTableName();
+    // load checkpoint files for catalog data
+    // except for basic catalogs having the object class: DatabaseCatalog,
+    // TableCatalog, IndexCatalog, ColumnCatalog
+    // also except for catalog requiring to initialize values: LangageCatalog,
+    // ProcCatalog, SettingsCatalog
+    for (auto table_catalog :
+         db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
+      auto table = database->GetTableWithOid(table_catalog->GetTableOid());
+      auto table_name = table_catalog->GetTableName();
 
-			// catalogs out of recovery
-			if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
-					table_name == "zone_map") {
-				// nothing to do (keep the default values, and not recover other data)
-			} else {
-				// read a checkpoint file for the catalog
-				oid_t oid_align;
-				FileHandle table_file;
-				std::string table_filename = GetCheckpointFileFullPath(
-						db_catalog->GetDatabaseName(), table_name, epoch_id);
-				if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
-						false) {
-					LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
-							table_catalog->GetTableOid(), table_name.c_str());
-					continue;
-				}
+      // catalogs out of recovery
+      if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
+          table_name == "zone_map") {
+        // nothing to do (keep the default values, and not recover other data)
+      } else {
+        // read a checkpoint file for the catalog
+        oid_t oid_align;
+        FileHandle table_file;
+        std::string table_filename = GetCheckpointFileFullPath(
+            db_catalog->GetDatabaseName(), table_catalog->GetSchemaName(),
+            table_name, epoch_id);
+        if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
+            false) {
+          LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
+                    table_catalog->GetTableOid(), table_name.c_str());
+          continue;
+        }
 
-				LOG_DEBUG("Recover checkpoint file for catalog table %d '%s'",
-						table_catalog->GetTableOid(), table_name.c_str());
+        LOG_DEBUG("Recover catalog table %d '%s.%s' in database %d '%s'",
+                  table_catalog->GetTableOid(),
+                  table_catalog->GetSchemaName().c_str(), table_name.c_str(),
+                  db_catalog->GetDatabaseOid(),
+                  db_catalog->GetDatabaseName().c_str());
 
-				// catalogs with duplicate check
-				// keep the default values, but other data is recovered
-				if (table_name == "pg_database" || table_name == "pg_namespace" ||
-						table_name == "pg_table" || table_name == "pg_attribute" ||
-						table_name == "pg_index" || table_name == "pg_language" ||
-						table_name == "pg_proc") {
-					oid_align = RecoverTableDataWithDuplicateCheck(table, table_file, txn);
-				}
-				// catalogs to be recovered without duplicate check
-				else {
-					oid_align = RecoverTableDataWithoutTileGroup(table, table_file, txn);
-				}
+        // catalogs with duplicate check
+        // keep the default values, but other data is recovered
+        if (table_name == "pg_database" || table_name == "pg_namespace" ||
+            table_name == "pg_table" || table_name == "pg_attribute" ||
+            table_name == "pg_index" || table_name == "pg_language" ||
+            table_name == "pg_proc") {
+          oid_align =
+              RecoverTableDataWithDuplicateCheck(table, table_file, txn);
+        }
+        // catalogs to be recovered without duplicate check
+        else {
+          oid_align = RecoverTableDataWithoutTileGroup(table, table_file, txn);
+        }
 
-				LoggingUtil::CloseFile(table_file);
+        LoggingUtil::CloseFile(table_file);
 
-				// modify next OID of each catalog
-				if (table_name == "pg_database") {
-					catalog::DatabaseCatalog::GetInstance()->oid_ += oid_align;
-				} else if (table_name == "pg_table") {
-					system_catalogs->GetTableCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_attribute") {
-					// OID is not used
-				} else if (table_name == "pg_namespace") {
-					system_catalogs->GetSchemaCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_index") {
-					system_catalogs->GetIndexCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_language") {
-					catalog::LanguageCatalog::GetInstance().oid_ += oid_align;
-				} else if (table_name == "pg_proc") {
-					catalog::ProcCatalog::GetInstance().oid_ += oid_align;
-				} else if (table_name == "pg_database_metrics") {
-					catalog::DatabaseMetricsCatalog::GetInstance()->oid_ += oid_align;
-				} else if (table_name == "pg_table_metrics") {
-					system_catalogs->GetTableMetricsCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_index_metrics") {
-					system_catalogs->GetIndexMetricsCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_query_metrics") {
-					system_catalogs->GetQueryMetricsCatalog()->oid_ += oid_align;
-				} else if (table_name == "pg_query_history") {
-					// OID is not used
-				} else if (table_name == "pg_trigger") {
-					system_catalogs->GetTriggerCatalog()->oid_ += oid_align;
-				}
-			}
-		} // table loop end
+        // modify next OID of each catalog
+        if (table_name == "pg_database") {
+          catalog::DatabaseCatalog::GetInstance()->oid_ += oid_align;
+        } else if (table_name == "pg_table") {
+          system_catalogs->GetTableCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_attribute") {
+          // OID is not used
+        } else if (table_name == "pg_namespace") {
+          system_catalogs->GetSchemaCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_index") {
+          system_catalogs->GetIndexCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_language") {
+          catalog::LanguageCatalog::GetInstance().oid_ += oid_align;
+        } else if (table_name == "pg_proc") {
+          catalog::ProcCatalog::GetInstance().oid_ += oid_align;
+        } else if (table_name == "pg_database_metrics") {
+          catalog::DatabaseMetricsCatalog::GetInstance()->oid_ += oid_align;
+        } else if (table_name == "pg_table_metrics") {
+          system_catalogs->GetTableMetricsCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_index_metrics") {
+          system_catalogs->GetIndexMetricsCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_query_metrics") {
+          system_catalogs->GetQueryMetricsCatalog()->oid_ += oid_align;
+        } else if (table_name == "pg_query_history") {
+          // OID is not used
+        } else if (table_name == "pg_trigger") {
+          system_catalogs->GetTriggerCatalog()->oid_ += oid_align;
+        }
+      }
+    }  // table loop end
 
-  } // database loop end
+  }  // database loop end
 
   return true;
 }
 
 bool TimestampCheckpointManager::LoadUserTableCheckpoint(
-		const eid_t &epoch_id, concurrency::TransactionContext *txn) {
+    const eid_t &epoch_id, concurrency::TransactionContext *txn) {
   // Recover storage object
   FileHandle metadata_file;
   std::string metadata_filename = GetMetadataFileFullPath(epoch_id);
@@ -659,35 +668,38 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
     // the catalog database has already been recovered.
     if (db_oid == CATALOG_DATABASE_OID) continue;
 
-		for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
-			auto table_oid = table_catalog_pair.first;
-			auto table = database->GetTableWithOid(table_oid);
-			auto table_catalog = table_catalog_pair.second;
+    for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
+      auto table_oid = table_catalog_pair.first;
+      auto table = database->GetTableWithOid(table_oid);
+      auto table_catalog = table_catalog_pair.second;
 
-			// catalog tables in each database have already benn recovered
-			if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) continue;
+      // catalog tables in each database have already benn recovered
+      if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) continue;
 
-			// read a checkpoint file for the catalog
-			FileHandle table_file;
-			std::string table_filename =
-					GetCheckpointFileFullPath(db_catalog->GetDatabaseName(),
-																		table_catalog->GetTableName(), epoch_id);
-			if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
-					false) {
-				LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
-									table_oid, table_catalog->GetTableName().c_str());
-				continue;
-			}
+      // read a checkpoint file for the catalog
+      FileHandle table_file;
+      std::string table_filename = GetCheckpointFileFullPath(
+          db_catalog->GetDatabaseName(), table_catalog->GetSchemaName(),
+          table_catalog->GetTableName(), epoch_id);
+      if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
+          false) {
+        LOG_ERROR("Checkpoint file for table %d '%s' is not existed", table_oid,
+                  table_catalog->GetTableName().c_str());
+        continue;
+      }
 
-			LOG_DEBUG("Recover checkpoint file for user table %d '%s'",
-								table_oid, table_catalog->GetTableName().c_str());
+      LOG_DEBUG("Recover user table %d '%s.%s' in database %d '%s'", table_oid,
+                table_catalog->GetSchemaName().c_str(),
+                table_catalog->GetTableName().c_str(),
+                db_catalog->GetDatabaseOid(),
+                db_catalog->GetDatabaseName().c_str());
 
-			// recover the table from the checkpoint file
-			RecoverTableData(table, table_file, txn);
+      // recover the table from the checkpoint file
+      RecoverTableData(table, table_file, txn);
 
-			LoggingUtil::CloseFile(table_file);
+      LoggingUtil::CloseFile(table_file);
 
-		}  // table loop end
+    }  // table loop end
 
   }  // database loop end
 
@@ -732,8 +744,8 @@ bool TimestampCheckpointManager::RecoverStorageObject(
       auto table_catalog = db_catalog->GetTableObject(table_oid);
       PELOTON_ASSERT(table_catalog != nullptr);
 
-      LOG_DEBUG("Create table object %d '%s.%s'", table_oid,
-      					table_catalog->GetSchemaName().c_str(),
+      LOG_TRACE("Create table object %d '%s.%s'", table_oid,
+                table_catalog->GetSchemaName().c_str(),
                 table_catalog->GetTableName().c_str());
 
       // recover column information
@@ -765,18 +777,19 @@ bool TimestampCheckpointManager::RecoverStorageObject(
           }
         }
 
-        // Set a column in the vector in order of the column_id in ColumnCatalogObject
+        // Set a column in the vector in order of the column_id in
+        // ColumnCatalogObject
         // ToDo: just insert by push_back function
         auto column_itr = columns.begin();
         for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
-        	if (column_itr == columns.end() ||
-        			column_itr->GetOffset() > column.GetOffset()) {
-        		break;
-        	} else {
-        		column_itr++;
-        	}
+          if (column_itr == columns.end() ||
+              column_itr->GetOffset() > column.GetOffset()) {
+            break;
+          } else {
+            column_itr++;
+          }
         }
-      	columns.insert(column_itr, column);
+        columns.insert(column_itr, column);
 
       }  // column loop end
 
@@ -820,8 +833,8 @@ bool TimestampCheckpointManager::RecoverStorageObject(
 
       // recover trigger object of the storage table
       auto trigger_list =
-          catalog->GetSystemCatalogs(db_oid)->GetTriggerCatalog()
-							->GetTriggers(table_oid, txn);
+          catalog->GetSystemCatalogs(db_oid)->GetTriggerCatalog()->GetTriggers(
+              table_oid, txn);
       for (int trigger_idx = 0;
            trigger_idx < trigger_list->GetTriggerListSize(); trigger_idx++) {
         auto trigger = trigger_list->Get(trigger_idx);
@@ -880,19 +893,20 @@ void TimestampCheckpointManager::RecoverTableData(
   size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return;
   std::unique_ptr<char[]> data(new char[table_size]);
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) ==
+      false) {
     LOG_ERROR("Checkpoint table file read error");
     return;
   }
   CopySerializeInput input_buffer(data.get(), table_size);
 
-  LOG_DEBUG("Recover table %d data (%lu byte)", table->GetOid(), table_size);
+  LOG_TRACE("Recover table %d data (%lu byte)", table->GetOid(), table_size);
 
   // Drop a default tile group created by table catalog recovery
   table->DropTileGroups();
 
   // Create tile group
-	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   auto schema = table->GetSchema();
   oid_t tile_group_count = input_buffer.ReadLong();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
@@ -948,7 +962,8 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
   size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return 0;
   std::unique_ptr<char[]> data(new char[table_size]);
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) ==
+      false) {
     LOG_ERROR("Checkpoint table file read error");
     return 0;
   }
@@ -958,7 +973,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
             table->GetOid(), table_size);
 
   // recover table tuples
-	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   oid_t insert_tuple_count = 0;
   auto schema = table->GetSchema();
   oid_t column_count = schema->GetColumnCount();
@@ -991,10 +1006,11 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
 oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
     storage::DataTable *table, FileHandle &file_handle,
     concurrency::TransactionContext *txn) {
-	size_t table_size = LoggingUtil::GetFileSize(file_handle);
+  size_t table_size = LoggingUtil::GetFileSize(file_handle);
   if (table_size == 0) return 0;
   std::unique_ptr<char[]> data(new char[table_size]);
-  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) == false) {
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) ==
+      false) {
     LOG_ERROR("Checkpoint table file read error");
     return 0;
   }
@@ -1014,7 +1030,7 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
   }
 
   // recover table tuples
-	std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   oid_t insert_tuple_count = 0;
   while (input_buffer.RestSize() > 0) {
     // recover values on each column

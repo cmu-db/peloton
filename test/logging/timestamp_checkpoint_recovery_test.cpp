@@ -58,7 +58,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
-    LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
+    LOG_DEBUG("Check the table %d %s\n%s", table_catalog->GetTableOid(),
     		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
 
     // check the basic information of columns
@@ -103,7 +103,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     else if (table_catalog->GetTableName() == "checkpoint_index_test") {
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_INFO("Check the index %s", index_catalog->GetIndexName().c_str());
+        LOG_DEBUG("Check the index %s", index_catalog->GetIndexName().c_str());
+
         // unique primary key for attribute "pid" (primary key)
         if (index_catalog->GetIndexName() == "checkpoint_index_test_pkey") {
           EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
@@ -186,7 +187,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // multiple attributes constraint
       for (auto multi_constraint : table->GetSchema()->GetMultiConstraints()) {
         // currently nothing (this might not be used)
-      	LOG_INFO("multi constraint: %s", multi_constraint.GetInfo().c_str());
+      	LOG_DEBUG("multi constraint: %s", multi_constraint.GetInfo().c_str());
       }
 
       // foreign key constraint
@@ -194,8 +195,9 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       EXPECT_EQ(2, fk_count);
       for (oid_t fk_id = 0; fk_id < fk_count; fk_id++) {
         auto foreign_key = table->GetForeignKey(fk_id);
-        LOG_INFO("Check foreign key constraint: %s",
+        LOG_DEBUG("Check foreign key constraint: %s",
                   foreign_key->GetConstraintName().c_str());
+
         // value3 => checkpoint_table_test.pid
         if (foreign_key->GetConstraintName() ==
             "FK_checkpoint_constraint_test->checkpoint_table_test") {
@@ -255,7 +257,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // index for constraints
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_INFO("check index for constraints: %s",
+        LOG_DEBUG("check index for constraints: %s",
         		index_catalog->GetIndexName().c_str());
 
         // primary key for attributes "pid1" and "pid2"
@@ -327,7 +329,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_INFO("Check constraints of the column %d %s\n%s",
+        LOG_DEBUG("Check constraints of the column %d %s\n%s",
         		column_catalog->GetColumnId(),
         		column_catalog->GetColumnName().c_str(),
         		column.GetInfo().c_str());
@@ -441,19 +443,6 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     }
   } // table loop end
 
-  // check the catalog data
-  /*
-  auto catalog_db_catalog =
-      catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
-  for (auto table_catalog_pair : catalog_db_catalog->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
-    // auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
-    // table_catalog->GetTableOid());
-    LOG_DEBUG("Check catalog table %s", table_catalog->GetTableName().c_str());
-    // currently do nothing
-  }
-  */
-
   // finish the low level test
   txn_manager.CommitTransaction(txn);
 
@@ -481,56 +470,15 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // make sure the constraints are working
   // PRIMARY KEY (1 column: pid)
-  LOG_INFO("PRIMARY KEY (1 column) check");
+  LOG_DEBUG("PRIMARY KEY (1 column) check");
   std::string primary_key_dml1 =
       "INSERT INTO checkpoint_table_test VALUES (0, 5.5, 'eee');";
   ResultType primary_key_result1 =
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result1);
 
-  /*
-  // output created table information to verify checkpoint recovery
-  auto txn2 = txn_manager.BeginTransaction();
-  auto default_db_catalog2 = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn2);
-  for (auto table_catalog_pair : default_db_catalog2->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
-    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
-                                          table_catalog->GetTableOid());
-    LOG_INFO("Table %d %s\n%s", table_catalog->GetTableOid(),
-    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
-
-    for (auto column_pair : table_catalog->GetColumnObjects()) {
-      auto column_catalog = column_pair.second;
-      auto column =
-          table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-      LOG_INFO("Column %d %s\n%s", column_catalog->GetColumnId(),
-      		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
-    }
-
-    auto tile_group_count = table->GetTileGroupCount();
-    LOG_INFO("Tile group count: %lu", tile_group_count);
-    for (oid_t tg_offset = START_OID; tg_offset < tile_group_count; tg_offset++) {
-      auto tile_group = table->GetTileGroup(tg_offset);
-      auto column_map = tile_group->GetColumnMap();
-      LOG_INFO("Column map size in tile group %d : %lu",
-      		tile_group->GetTileGroupId(), column_map.size());
-      for(auto column_tile : column_map) {
-        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-        		column_tile.first, column_tile.second.first, column_tile.second.second);
-      }
-      for(oid_t column_offset = 0; column_offset < column_map.size(); column_offset++) {
-      	if (column_map.count(column_offset) == 0) continue;
-      	auto tile_pair = column_map.at(column_offset);
-        LOG_INFO("column_map info: column_offset=%d, tile_offset=%d, map=%d",
-        		column_offset, tile_pair.first, tile_pair.second);
-      }
-    }
-  }
-  txn_manager.CommitTransaction(txn2);
-  */
-
   // PRIMARY KEY (2 column: pid1, pid2)
-  LOG_INFO("PRIMARY KEY (2 columns) check");
+  LOG_DEBUG("PRIMARY KEY (2 columns) check");
   std::string primary_key_dml2 =
       "INSERT INTO checkpoint_constraint_test VALUES (1, 2, 15, 16, 0, 1 ,2);";
   ResultType primary_key_result2 =
@@ -538,7 +486,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   EXPECT_EQ(ResultType::ABORTED, primary_key_result2);
 
   // DEFAULT (value1 = 0)
-  LOG_INFO("DEFAULT check");
+  LOG_DEBUG("DEFAULT check");
   std::string default_dml =
       "INSERT INTO checkpoint_constraint_test"
       " (pid1, pid2, value2, value3, value4, value5)"

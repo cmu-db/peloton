@@ -156,44 +156,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
       "INSERT INTO checkpoint_table_test VALUES (3, 0.0, 'xxxx');");
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
-  /*
-  // output created table information to verify checkpoint recovery
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto catalog = catalog::Catalog::GetInstance();
-  auto storage = storage::StorageManager::GetInstance();
-  auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
-  LOG_INFO("Database %d %s", default_db_catalog->GetDatabaseOid(),
-  		default_db_catalog->GetDatabaseName().c_str());
-  for (auto table_catalog_pair : default_db_catalog->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
-    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
-                                          table_catalog->GetTableOid());
-    LOG_INFO("Table %d %s.%s\n%s", table_catalog->GetTableOid(),
-    		table_catalog->GetSchemaName().c_str(),
-    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
-
-    for (auto column_pair : table_catalog->GetColumnObjects()) {
-      auto column_catalog = column_pair.second;
-      auto column =
-          table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-      LOG_INFO("Column %d %s\n%s", column_catalog->GetColumnId(),
-      		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
-    }
-  }
-
-  auto catalog_db_catalog = catalog->GetDatabaseObject(CATALOG_DATABASE_NAME, txn);
-  LOG_INFO("Database %d %s", catalog_db_catalog->GetDatabaseOid(),
-  		catalog_db_catalog->GetDatabaseName().c_str());
-  for (auto table_catalog_pair : catalog_db_catalog->GetTableObjects()) {
-    auto table_catalog = table_catalog_pair.second;
-    LOG_INFO("Table %d %s.%s", table_catalog->GetTableOid(),
-    		table_catalog->GetSchemaName().c_str(),
-    		table_catalog->GetTableName().c_str());
-  }
-  txn_manager.CommitTransaction(txn);
-  */
-
   // generate table and data that will be out of checkpointing.
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
   TestingSQLUtil::ExecuteSQLQuery(
@@ -227,6 +189,8 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto storage = storage::StorageManager::GetInstance();
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+
+  // check the created directory of the checkpoint
   eid_t checkpointed_epoch = checkpoint_manager.GetRecoveryCheckpointEpoch();
   std::string checkpoint_dir = "./data/checkpoints/" + std::to_string(checkpointed_epoch);
   EXPECT_TRUE(logging::LoggingUtil::CheckDirectoryExistence(checkpoint_dir.c_str()));
@@ -239,9 +203,10 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
                                           table_catalog->GetTableOid());
     FileHandle table_file;
     std::string file = checkpoint_dir + "/" + "checkpoint_" +
-    		default_db_catalog->GetDatabaseName() + "_" + table_catalog->GetTableName();
+    		default_db_catalog->GetDatabaseName() + "_" +
+				table_catalog->GetSchemaName() + "_" + table_catalog->GetTableName();
 
-    LOG_INFO("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
+    LOG_DEBUG("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
     		table_catalog->GetTableName().c_str());
 
   	// open table file
