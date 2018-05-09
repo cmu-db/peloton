@@ -13,6 +13,7 @@
 #include "codegen/inserter.h"
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
+#include "concurrency/lock_manager.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"

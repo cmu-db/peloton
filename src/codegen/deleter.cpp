@@ -14,6 +14,7 @@
 
 #include "codegen/transaction_runtime.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "concurrency/lock_manager.h"
 #include "storage/data_table.h"
 
 namespace peloton {
