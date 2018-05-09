@@ -118,9 +118,9 @@ class TileGroup : public Printable {
   // this function is called only when building tile groups for aggregation
   // operations.
   // FIXME: GC has recycled some of the tuples, so this count is not accurate
-  oid_t GetActiveTupleCount() const;
+  uint32_t GetActiveTupleCount() const;
 
-  oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
+  uint32_t GetAllocatedTupleCount() const { return num_tuple_slots_; }
 
   TileGroupHeader *GetHeader() const { return tile_group_header; }
 
@@ -187,10 +187,10 @@ class TileGroup : public Printable {
   AbstractTable *table;  // this design is fantastic!!!
 
   // number of tuple slots allocated
-  oid_t num_tuple_slots;
+  uint32_t num_tuple_slots_;
 
   // number of tiles
-  oid_t tile_count_;
+  uint32_t tile_count_;
 
   std::mutex tile_group_mutex;
 

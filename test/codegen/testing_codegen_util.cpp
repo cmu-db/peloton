@@ -179,9 +179,9 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
 }
 
 void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
-    peloton::LayoutType layout_type, oid_t tuples_per_tilegroup,
-    oid_t tile_group_count, oid_t column_count, bool is_inlined) {
-  oid_t tuple_count = tuples_per_tilegroup * tile_group_count;
+    peloton::LayoutType layout_type, uint32_t tuples_per_tilegroup,
+    uint32_t tile_group_count, uint32_t column_count, bool is_inlined) {
+  uint32_t tuple_count = tuples_per_tilegroup * tile_group_count;
   /////////////////////////////////////////////////////////
   // Define the schema.
   /////////////////////////////////////////////////////////

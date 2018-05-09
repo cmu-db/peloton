@@ -81,34 +81,32 @@ Layout::Layout(const column_map_type &column_map, oid_t layout_id)
   }
 }
 
-// Sets the tile id and column id w.r.t that tile corresponding to
-// the specified tile group column id.
-void Layout::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                                 oid_t &tile_column_offset) const {
+void Layout::LocateTileAndColumn(oid_t column_id, oid_t &tile_id,
+                                 oid_t &tile_column_id) const {
   // Ensure that the column_offset is not out of bound
-  PELOTON_ASSERT(num_columns_ > column_offset);
+  PELOTON_ASSERT(num_columns_ > column_id);
 
-  // For row store layout, tile id is always 0 and the tile
-  // column_id and tile column_id is the same.
+  // For row store layout, tile_id is always 0 and the
+  // column_id and tile column_id are the same.
   if (layout_type_ == LayoutType::ROW) {
-    tile_offset = 0;
-    tile_column_offset = column_offset;
+    tile_id = 0;
+    tile_column_id = column_id;
     return;
   }
 
-  // For column store layout, tile_id is always same as column_id
-  // and the tile column_id is always 0.
+  // For column store layout, tile_id is same as column_id
+  // and the tile_column_id is always 0.
   if (layout_type_ == LayoutType::COLUMN) {
-    tile_offset = column_offset;
-    tile_column_offset = 0;
+    tile_id = column_id;
+    tile_column_id = 0;
     return;
   }
 
   // For other layouts, fetch the layout and
   // get the entry in the column map
-  auto entry = column_layout_.at(column_offset);
-  tile_offset = entry.first;
-  tile_column_offset = entry.second;
+  auto entry = column_layout_.at(column_id);
+  tile_id = entry.first;
+  tile_column_id = entry.second;
 }
 
 double Layout::GetLayoutDifference(const storage::Layout &other) const {

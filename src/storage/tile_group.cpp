@@ -39,7 +39,7 @@ TileGroup::TileGroup(BackendType backend_type,
       backend_type(backend_type),
       tile_group_header(tile_group_header),
       table(table),
-      num_tuple_slots(tuple_count),
+      num_tuple_slots_(tuple_count),
       tile_group_layout_(layout) {
   tile_count_ = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
@@ -102,7 +102,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -136,7 +136,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
@@ -183,7 +183,7 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   }
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -282,7 +282,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   if (status == false) return INVALID_OID;
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;

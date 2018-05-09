@@ -299,7 +299,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::TransactionContext *txn,
-                                bool is_catalog, oid_t tuples_per_tilegroup,
+                                bool is_catalog, uint32_t tuples_per_tilegroup,
                                 peloton::LayoutType layout_type) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +

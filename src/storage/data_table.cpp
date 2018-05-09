@@ -1203,7 +1203,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
   // First, get info from the original tile group's schema
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
 
-  oid_t column_count = layout.GetColumnCount();
+  uint32_t column_count = layout.GetColumnCount();
   for (oid_t col_id = 0; col_id < column_count; col_id++) {
     // Get TileGroup layout's tile and offset for col_id.
     tile_group_layout.LocateTileAndColumn(col_id, orig_tile_offset,

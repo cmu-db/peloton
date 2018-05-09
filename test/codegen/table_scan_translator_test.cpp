@@ -634,9 +634,9 @@ TEST_F(TableScanTranslatorTest, ScanRowLayout) {
   // Creates a table with LayoutType::ROW and
   // invokes the TableScanTranslator
   //
-  oid_t tuples_per_tilegroup = 100;
-  oid_t tilegroup_count = 5;
-  oid_t column_count = 100;
+  uint32_t tuples_per_tilegroup = 100;
+  uint32_t tilegroup_count = 5;
+  uint32_t column_count = 100;
   bool is_inlined = true;
   CreateAndLoadTableWithLayout(LayoutType::ROW, tuples_per_tilegroup,
                                tilegroup_count, column_count, is_inlined);
@@ -648,9 +648,9 @@ TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
   // Creates a table with LayoutType::COLUMN and
   // invokes the TableScanTranslator
   //
-  oid_t tuples_per_tilegroup = 100;
-  oid_t tilegroup_count = 5;
-  oid_t column_count = 100;
+  uint32_t tuples_per_tilegroup = 100;
+  uint32_t tilegroup_count = 5;
+  uint32_t column_count = 100;
   bool is_inlined = true;
   CreateAndLoadTableWithLayout(LayoutType::COLUMN, tuples_per_tilegroup,
                                tilegroup_count, column_count, is_inlined);
@@ -670,7 +670,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   const int tuples_per_tilegroup = 100;
   const int col_count = 6;
   const bool is_inlined = true;
-  oid_t tuple_count = 100;
+  uint32_t tuple_count = 100;
 
   /////////////////////////////////////////////////////////
   // Define the schema.

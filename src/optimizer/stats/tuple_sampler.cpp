@@ -98,7 +98,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
 
     storage::Tile *tile = tile_group->GetTile(tile_itr);
     const catalog::Schema &schema = *(tile->GetSchema());
-    oid_t tile_column_count = schema.GetColumnCount();
+    uint32_t tile_column_count = schema.GetColumnCount();
 
     char *tile_tuple_location = tile->GetTupleLocation(tuple_offset);
     storage::Tuple tile_tuple(&schema, tile_tuple_location);

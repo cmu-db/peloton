@@ -75,11 +75,15 @@ class Layout : public Printable {
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }
 
-  /** @brief  Sets the tile id and column id w.r.t. of the tile corresponding
-   *          to the specified tile group column id.
+  /** @brief  Locates the tile and column to which the specified
+   *          specified tile group column_id.
+   *          It updates the tile_id and tile_column_id references.
+   *  @param  column_id         The Id of the column to be located.
+   *  @param  tile_id           A reference to update the tile_id.
+   *  @param  tile_column_id    A reference to update the tile_column_id.
    */
-  void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                           oid_t &tile_column_offset) const;
+  void LocateTileAndColumn(oid_t column_id, oid_t &tile_id,
+                           oid_t &tile_column_id) const;
 
   /** @brief    Returns the layout difference w.r.t. the other Layout.
    *  @double   The delta between the layouts. Used by LayoutTuner class.
@@ -93,7 +97,7 @@ class Layout : public Printable {
   oid_t GetTileColumnOffset(oid_t column_id) const;
 
   /** @brief  Returns the number of columns in the layout. */
-  oid_t GetColumnCount() const { return num_columns_; }
+  uint32_t GetColumnCount() const { return num_columns_; }
 
   /** @brief Returns the tile-columns map for each tile in the TileGroup. */
   tile_map_type GetTileMap() const;
