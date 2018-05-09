@@ -163,6 +163,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
+      LOG_TRACE("create plan type = %d", static_cast<int>(create_plan->GetCreateType()));
+      
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(

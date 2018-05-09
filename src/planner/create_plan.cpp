@@ -34,6 +34,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string schema_name,
       create_type(c_type) {}
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
+  LOG_TRACE("plan type = %d", static_cast<int>(parse_tree->type));
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;
