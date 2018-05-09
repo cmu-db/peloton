@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/catalog/column_stats_catalog.h>
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
+#include "catalog/column_stats_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
