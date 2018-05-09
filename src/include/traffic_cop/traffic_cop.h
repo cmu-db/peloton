@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// traffic_cop.h
+// transaction_state_handler.h
 //
-// Identification: src/include/traffic_cop/traffic_cop.h
+// Identification: src/include/traffic_cop/transaction_state_handler.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -145,10 +145,6 @@ class TrafficCop {
     default_database_name_ = std::move(default_database_name);
   }
 
-  // TODO: this member variable should be in statement_ after parser part
-  // finished
-  std::string query_;
-
  private:
   bool is_queuing_;
 
@@ -196,6 +192,13 @@ class TrafficCop {
   // still a HACK
   void GetTableColumns(parser::TableRef *from_table,
                        std::vector<catalog::Column> &target_tables);
+
+  inline bool IsTxnStatement (Statement &statement) const {
+    return (statement.GetQueryType() == QueryType::QUERY_BEGIN ||
+        statement.GetQueryType() == QueryType::QUERY_COMMIT ||
+        statement.GetQueryType() == QueryType::QUERY_ROLLBACK);
+  }
+
 };
 
 }  // namespace tcop
