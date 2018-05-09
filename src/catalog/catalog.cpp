@@ -216,6 +216,7 @@ void Catalog::Bootstrap() {
 
 ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::TransactionContext *txn) {
+  LOG_TRACE("db name = %s", database_name.c_str());
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            database_name);
