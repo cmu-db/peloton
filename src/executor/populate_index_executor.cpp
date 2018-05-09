@@ -61,7 +61,7 @@ bool PopulateIndexExecutor::DExecute() {
     // TODO: add non-blocking version. Need to add some identifier
     // for switching between blocking/non-blocking.
     concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-    LOG_WARN("Exclusive Lock: lock mamager address is %p, table oid is *u", (void *)lm, table_oid);
+    LOG_WARN("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
     bool lock_success = lm->LockExclusive(table_oid);
     concurrency::LockManager::SafeLock dummy;
     if (!lock_success) {
