@@ -1198,8 +1198,12 @@ parser::SQLStatement *PostgresParser::CreateFunctionTransform(
 // IndexStmt parsenodes.
 parser::SQLStatement *PostgresParser::CreateIndexTransform(IndexStmt *root) {
   LOG_TRACE("IndexStmt concurrent = %d", static_cast<int>(root->concurrent));
-  parser::CreateStatement *result =
-      new parser::CreateStatement(CreateStatement::kIndex);
+  parser::CreateStatement *result = nullptr;
+  if (root->concurrent) {
+    result = new parser::CreateStatement(CreateStatement::kIndexConcurrent);
+  } else {
+    result = new parser::CreateStatement(CreateStatement::kIndex);
+  }
   result->unique = root->unique;
   for (auto cell = root->indexParams->head; cell != nullptr;
        cell = cell->next) {

@@ -164,8 +164,44 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       ddl_plan = move(child_CreatePlan);
 
       LOG_TRACE("create plan type = %d", static_cast<int>(create_plan->GetCreateType()));
-      
+
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        auto create_stmt = (parser::CreateStatement *)tree;
+        auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetTableName(), txn);
+        std::vector<oid_t> column_ids;
+        // use catalog object instead of schema to acquire metadata
+        auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
+            create_stmt->GetTableName(), txn);
+        for (auto column_name : create_plan->GetIndexAttributes()) {
+          auto column_object = table_object->GetColumnObject(column_name);
+          // Check if column is missing
+          if (column_object == nullptr)
+            throw CatalogException(
+                "Some columns are missing when create index " +
+                std::string(create_stmt->index_name));
+          oid_t col_pos = column_object->GetColumnId();
+          column_ids.push_back(col_pos);
+        }
+        // Create a plan to retrieve data
+        std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
+            new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
+
+        child_SeqScanPlan->AddChild(std::move(ddl_plan));
+        ddl_plan = std::move(child_SeqScanPlan);
+        // Create a plan to add data to index
+        std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
+            new planner::PopulateIndexPlan(target_table, column_ids));
+        child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
+        create_plan->SetKeyAttrs(column_ids);
+        ddl_plan = std::move(child_PopulateIndexPlan);
+      }
+
+      // support create index concurrently
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX_CONCURRENT) {
+        LOG_TRACE("create index concurrent");
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
