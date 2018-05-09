@@ -201,6 +201,10 @@ class Catalog {
   void DropTempTables(const std::string &database_name,
                       const std::string &session_namespace,
                       concurrency::TransactionContext *txn);
+
+  void RemoveCachedSequenceCurrVal(const std::string &database_name,
+                      const std::string &temp_session_name_,
+                      concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

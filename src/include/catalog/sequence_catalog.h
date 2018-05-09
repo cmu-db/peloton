@@ -35,6 +35,7 @@
 #include <unordered_map>
 #include <utility>
 #include <mutex>
+#include <boost/functional/hash.hpp>
 
 #include "catalog/abstract_catalog.h"
 #include "catalog/catalog_defaults.h"
@@ -144,8 +145,54 @@ class SequenceCatalog : public AbstractCatalog {
     DBOID_SEQNAME_KEY = 1
   };
 
+  void InsertCurrValCache(std::string session_namespace_, std::string sequence_name, int64_t currval){
+    std::tuple<std::string, std::string> key(session_namespace_, sequence_name);
+    size_t hash_key = key_hash(key);
+    sequence_currval_cache[hash_key] = currval;
+    namespace_hash_lists[session_namespace_].push_back(hash_key);
+    sequence_name_hash_lists[sequence_name].push_back(hash_key);
+  }
+
+  void EvictNamespaceCurrValCache(std::string session_namespace_){
+    std::vector<size_t> hash_keys = namespace_hash_lists[session_namespace_];
+    for (size_t hash_key : hash_keys){
+      sequence_currval_cache.erase(hash_key);
+    }
+    namespace_hash_lists.erase(session_namespace_);
+  }
+
+  void EvictSequenceNameCurrValCache(std::string sequence_name){
+    std::vector<size_t> hash_keys = sequence_name_hash_lists[sequence_name];
+    for (size_t hash_key : hash_keys){
+      sequence_currval_cache.erase(hash_key);
+    }
+    sequence_name_hash_lists.erase(sequence_name);
+  }
+
+  bool CheckCachedCurrValExistence(std::string session_namespace_, std::string sequence_name) {
+    std::tuple<std::string, std::string> key(session_namespace_, sequence_name);
+    size_t hash_key = key_hash(key);
+
+    if (sequence_currval_cache.find(hash_key) != sequence_currval_cache.end())
+      return true;
+
+    return false;
+  }
+
+  int64_t GetCachedCurrVal(std::string session_namespace_, std::string sequence_name){
+    std::tuple<std::string, std::string> key(session_namespace_, sequence_name);
+    size_t hash_key = key_hash(key);
+
+    return sequence_currval_cache.find(hash_key)->second;
+  }
+
  private:
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
+
+  std::unordered_map<size_t, int64_t> sequence_currval_cache;
+  std::unordered_map<std::string, std::vector<size_t>> namespace_hash_lists;
+  std::unordered_map<std::string, std::vector<size_t>> sequence_name_hash_lists;
+  boost::hash<std::tuple<std::string, std::string>> key_hash;
 
   void ValidateSequenceArguments(int64_t seq_increment, int64_t seq_max,
      int64_t seq_min, int64_t seq_start) {

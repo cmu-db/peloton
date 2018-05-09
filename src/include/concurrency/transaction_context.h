@@ -51,9 +51,9 @@ class TransactionContext : public Printable {
 
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id, const cid_t &commit_id);
- 
+
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id, 
+              const cid_t &read_id, const cid_t &commit_id,
               const size_t read_write_set_size);
 
   /**
@@ -138,7 +138,7 @@ class TransactionContext : public Printable {
    * @param[in]  epoch_id  The epoch identifier
    */
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
-  
+
   /**
    * @brief      Sets the timestamp.
    *
@@ -284,6 +284,8 @@ class TransactionContext : public Printable {
   /** cache for table catalog objects */
   catalog::CatalogCache catalog_cache;
 
+  std::string temp_session_name_;
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -326,8 +328,8 @@ class TransactionContext : public Printable {
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;
 
-  /** 
-   * this set contains data location that needs to be gc'd in the transaction. 
+  /**
+   * this set contains data location that needs to be gc'd in the transaction.
    */
   std::shared_ptr<GCSet> gc_set_;
   std::shared_ptr<GCObjectSet> gc_object_set_;

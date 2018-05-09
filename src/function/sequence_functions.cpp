@@ -50,13 +50,20 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
                   ->GetSequence(database_oid, sequence_name, mini_txn);
   if (sequence_object != nullptr) {
     uint32_t val = sequence_object->GetNextVal();
+    int64_t curr_val = sequence_object->GetCurrVal();
     // insert the new copy of sequence into cache for future currval
     bool insert = txn->catalog_cache.InsertSequenceObject(sequence_object);
     PELOTON_ASSERT(insert);
     auto ret = txn_manager.CommitTransaction(mini_txn);
-    while (ret != ResultType::SUCCESS) {
-      ret = txn_manager.CommitTransaction(mini_txn);
+    if (ret != ResultType::SUCCESS) {
+      txn_manager.AbortTransaction(mini_txn);
+      return Nextval(ctx, sequence_name);
     }
+
+    catalog::Catalog::GetInstance()
+                  ->GetSystemCatalogs(database_oid)
+                  ->GetSequenceCatalog()
+                  ->InsertCurrValCache(txn->temp_session_name_, sequence_name, curr_val);
     return val;
   } else {
     throw SequenceException(
@@ -77,21 +84,20 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
   oid_t database_oid = catalog::Catalog::GetInstance()
           ->GetDatabaseObject(ctx.GetDatabaseName(), txn)->GetDatabaseOid();
   // get the sequence copy from cache
-  auto sequence_object = txn->
-          catalog_cache.GetSequenceObject(sequence_name, database_oid);
-  if (sequence_object != nullptr) {
-    return sequence_object->GetCurrVal();
+  auto sequence_catalog = catalog::Catalog::GetInstance()
+                    ->GetSystemCatalogs(database_oid)
+                    ->GetSequenceCatalog();
+  if(sequence_catalog->CheckCachedCurrValExistence(
+      txn->temp_session_name_, std::string(sequence_name))) {
+    return sequence_catalog->GetCachedCurrVal(
+      txn->temp_session_name_, std::string(sequence_name));
   } else {
     // get sequence from catalog
-    sequence_object =
-            catalog::Catalog::GetInstance()
-                    ->GetSystemCatalogs(database_oid)
-                    ->GetSequenceCatalog()
+    auto sequence_object = sequence_catalog
                     ->GetSequence(database_oid, sequence_name, txn);
     if (sequence_object != nullptr) {
-      // nextval not called brefore
       throw SequenceException(
-              StringUtil::Format("Nextval never called for sequence \"%s\"",
+              StringUtil::Format("currval for sequence \"%s\" is undefined for this session",
                       sequence_name));
     } else {
       // sequence does not exist

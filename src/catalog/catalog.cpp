@@ -649,6 +649,16 @@ ResultType Catalog::DropSchema(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
+void Catalog::RemoveCachedSequenceCurrVal(const std::string &database_name,
+                                          const std::string &temp_session_name_,
+                                          concurrency::TransactionContext *txn){
+  oid_t database_oid = DatabaseCatalog::GetInstance()
+          ->GetDatabaseObject(database_name, txn)->GetDatabaseOid();
+  // get the sequence copy from cache
+  GetSystemCatalogs(database_oid)->GetSequenceCatalog()
+    ->EvictNamespaceCurrValCache(temp_session_name_);
+}
+
 /*@brief   Drop table
  * 1. drop all the indexes on actual table, and drop index records in
  * pg_index
@@ -806,7 +816,7 @@ storage::Database *Catalog::GetDatabaseWithName(
  * throw exception and abort txn if not exists/invisible
  * */
 storage::DataTable *Catalog::GetTableWithName(
-    const std::string &database_name, const std::string &schema_name, 
+    const std::string &database_name, const std::string &schema_name,
     const std::string &session_namespace,
     const std::string &table_name, concurrency::TransactionContext *txn) {
   PELOTON_ASSERT(txn != nullptr);

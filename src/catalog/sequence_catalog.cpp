@@ -86,7 +86,7 @@ SequenceCatalog::SequenceCatalog(const std::string &database_name,
                       "sqval        BIGINT NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, SEQUENCE_CATALOG_NAME,
+      database_name, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, SEQUENCE_CATALOG_NAME,
       {ColumnId::DATABSE_OID, ColumnId::SEQUENCE_NAME},
       SEQUENCE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
@@ -182,6 +182,7 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
 
   oid_t database_oid = database_object->GetDatabaseOid();
   DeleteSequenceByName(sequence_name, database_oid, txn);
+  EvictSequenceNameCurrValCache(sequence_name);
 
   return ResultType::SUCCESS;
 }

@@ -167,6 +167,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     txn = txn_manager.BeginTransaction(thread_id);
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
+  txn->temp_session_name_ = temp_session_name_;
 
   // skip if already aborted
   if (curr_state.second == ResultType::ABORTED) {
@@ -618,6 +619,7 @@ void TrafficCop::DropTempTables() {
   catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, temp_session_name_, txn);
   //drop the schema
   catalog::Catalog::GetInstance()->DropSchema(default_database_name_, temp_session_name_, txn);
+  catalog::Catalog::GetInstance()->RemoveCachedSequenceCurrVal(default_database_name_, temp_session_name_, txn);
   txn_manager.CommitTransaction(txn);
 }
 

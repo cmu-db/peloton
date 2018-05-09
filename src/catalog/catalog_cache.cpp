@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <memory>
+#include <boost/functional/hash.hpp>
 
 #include "catalog/catalog_cache.h"
-#include <boost/functional/hash.hpp>
 
 #include "catalog/database_catalog.h"
 #include "catalog/sequence_catalog.h"
