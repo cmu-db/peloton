@@ -60,9 +60,8 @@ int RunPelotonBrain() {
   // indexes
   // TODO[vamshi]: Remove this hard coding
   auto num_queries_threshold = 1000;
-  peloton::brain::IndexSuggestionJob index_suggestion_job(num_queries_threshold);
-  brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_minute, "index_suggestion",
-      index_suggestion_job);
+  brain.RegisterJob<peloton::brain::IndexSelectionJob>(&one_minute, "index_suggestion",
+                                                       num_queries_threshold);
   brain.Run();
   return 0;
 }

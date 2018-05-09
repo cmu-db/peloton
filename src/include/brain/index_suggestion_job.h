@@ -17,10 +17,10 @@
 namespace peloton {
 
 namespace brain {
-class IndexSuggestionJob : public BrainJob {
+class IndexSelectionJob : public BrainJob {
  public:
-  IndexSuggestionJob(uint64_t num_queries_threshold)
-      : last_timestamp_(0),
+  IndexSelectionJob(BrainEnvironment *env, uint64_t num_queries_threshold)
+      : BrainJob(env), last_timestamp_(0),
         num_queries_threshold_(num_queries_threshold) {}
   /**
    * Task function.

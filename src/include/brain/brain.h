@@ -31,16 +31,16 @@ namespace brain {
 class BrainEnvironment {
 public:
   BrainEnvironment() {
-    index_suggestion_knobs = {3, 2, 10};
+    index_selection_knobs = {3, 2, 10};
   }
-  IndexSuggestionKnobs GetIndexSuggestionKnobs() {
-    return index_suggestion_knobs;
+  IndexSelectionKnobs GetIndexSelectionKnobs() {
+    return index_selection_knobs;
   }
-  void SetIndexSuggestionKnobs(IndexSuggestionKnobs knobs) {
-    index_suggestion_knobs = knobs;
+  void SetIndexSelectionKnobs(IndexSelectionKnobs knobs) {
+    index_selection_knobs = knobs;
   }
 private:
-  IndexSuggestionKnobs index_suggestion_knobs;
+  IndexSelectionKnobs index_selection_knobs;
 };
 
 /**

@@ -18,7 +18,7 @@
 namespace peloton {
 namespace brain {
 
-void IndexSuggestionJob::OnJobInvocation(BrainEnvironment *env) {
+void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
@@ -36,12 +36,9 @@ void IndexSuggestionJob::OnJobInvocation(BrainEnvironment *env) {
       queries.push_back(query_pair.second);
     }
 
-    brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
-                                num_indexes};
-
     // TODO: Handle multiple databases
     brain::Workload workload(queries, DEFAULT_DB_NAME);
-    brain::IndexSelection is = {workload, knobs};
+    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs()};
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
 
@@ -55,14 +52,14 @@ void IndexSuggestionJob::OnJobInvocation(BrainEnvironment *env) {
     // TODO[vamshi]: Make this efficient. Currently assuming that the latest
     // query can be anywhere in the vector. if the latest query is always at the
     // end, then we can avoid scan over all the queries.
-    last_timestamp = GetLatestQueryTimestamp(query_history.get());
+    last_timestamp_ = GetLatestQueryTimestamp(query_history.get());
   } else {
     LOG_INFO("Tuning - not this time");
   }
   txn_manager.CommitTransaction(txn);
 }
 
-void IndexSuggestionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
+void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   // TODO: Remove hardcoded database name and server end point.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
@@ -81,7 +78,7 @@ void IndexSuggestionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
   auto response = request.send().wait(client.getWaitScope());
 }
 
-uint64_t IndexSuggestionJob::GetLatestQueryTimestamp(
+uint64_t IndexSelectionJob::GetLatestQueryTimestamp(
     std::vector<std::pair<uint64_t, std::string>> *queries) {
   uint64_t latest_time = 0;
   for (auto query : *queries) {
