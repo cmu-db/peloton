@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sql/testing_sql_util.h>
-#include <com_err.h>
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
@@ -19,6 +17,7 @@
 #include "concurrency/epoch_manager.h"
 
 #include "catalog/catalog.h"
+#include "sql/testing_sql_util.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/database.h"

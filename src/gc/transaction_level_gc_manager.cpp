@@ -275,7 +275,6 @@ void TransactionLevelGCManager::RemoveGarbageObjects(
 
 void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto tile_group_id = location.block;
-  auto offset = location.offset;
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
 
   // During the resetting,
@@ -330,7 +329,7 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
 
     if (!immutable) {
       tile_group_header->SetImmutabilityWithoutNotifyingGC();
-      recycle_stack.RemoveAllWithTileGroup(tile_group_id);
+      recycle_stack->RemoveAllWithTileGroup(tile_group_id);
       immutable = true;
     }
 
@@ -592,7 +591,7 @@ int TransactionLevelGCManager::ProcessImmutableTileGroupQueue(oid_t thread_id) {
     oid_t table_id = tile_group->GetTableId();
 
     auto recycle_stack = GetTableRecycleStack(table_id);
-    recycle_stack.RemoveAllWithTileGroup(tile_group_id);
+    recycle_stack->RemoveAllWithTileGroup(tile_group_id);
     num_processed++;
   }
 

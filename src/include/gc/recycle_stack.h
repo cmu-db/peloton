@@ -42,7 +42,7 @@ class RecycleStack {
     std::atomic_flag lock;
   };
 
-  Node head_;
+  Node head_{INVALID_ITEMPOINTER, nullptr, ATOMIC_FLAG_INIT};
 }; // class RecycleStack
 } // namespace gc
 } // namespace peloton

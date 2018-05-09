@@ -29,10 +29,6 @@
 
 namespace peloton {
 
-namespace test {
-  class TransactionLevelGCManagerTests;
-}
-
 namespace gc {
 
 static constexpr size_t INITIAL_UNLINK_QUEUE_LENGTH = 100000;
@@ -91,8 +87,8 @@ class TransactionLevelGCManager : public GCManager {
           LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH));
     }
 
-    recycle_stacks_.reset(std::make_shared<peloton::CuckooMap<
-        oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE));
+    recycle_stacks_ = std::make_shared<peloton::CuckooMap<
+        oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
 
     is_running_ = false;
   }
@@ -158,8 +154,6 @@ class TransactionLevelGCManager : public GCManager {
 
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
- private:
-
   /**
 * @brief Unlink and reclaim the tuples that remain in a garbage collection
 * thread when the Garbage Collector stops. Used primarily by tests. Also used internally
@@ -167,6 +161,8 @@ class TransactionLevelGCManager : public GCManager {
 * @return No return value.
 */
   void ClearGarbage(int thread_id);
+
+ private:
 
   // convenience function to get table's recycle queue
   std::shared_ptr<RecycleStack>

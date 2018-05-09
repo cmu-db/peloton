@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/container/lock_free_queue.h"
+#include "gc/recycle_stack.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -132,9 +133,6 @@ template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
                          ItemPointerComparator>;
 
 // Used in TransactionLevelGCManager
-template class CuckooMap<oid_t, std::shared_ptr<
-                         peloton::LockFreeQueue<ItemPointer>>>;
-
-template class CuckooMap<oid_t, storage::DataTable *>;
+template class CuckooMap<oid_t, std::shared_ptr<gc::RecycleStack>>;
 
 }  // namespace peloton

@@ -16,11 +16,7 @@ namespace peloton {
 
 namespace gc {
 
-RecycleStack::RecycleStack() {
-  head_.next = nullptr;
-  head_.lock = ATOMIC_FLAG_INIT;
-  head_.location = INVALID_ITEMPOINTER;
-}
+RecycleStack::RecycleStack() {}
 
 // unlinks and deletes all nodes in the stack
 RecycleStack::~RecycleStack() {
@@ -43,7 +39,7 @@ RecycleStack::~RecycleStack() {
     curr = head_.next;
   }
 
-  head_->lock.clear(std::memory_order_acq_rel);
+  head_.lock.clear(std::memory_order_acq_rel);
 }
 
 // Used by GC Manager to add to recycle stack (can be slower)
