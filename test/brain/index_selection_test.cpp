@@ -362,6 +362,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   brain::IndexConfiguration best_config;
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
   brain::IndexConfiguration expected_config;
+  
   /** Test 1
    * Choose only 1 index with 1 column
    * it should choose {B}
@@ -615,6 +616,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   brain::IndexConfiguration best_config;
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
   brain::IndexConfiguration expected_config;
+
   /** Test 1
    * Choose only 1 index with up to 3 column
    * it should choose {AB}
