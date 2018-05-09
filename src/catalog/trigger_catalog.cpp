@@ -93,7 +93,6 @@ ResultType TriggerCatalog::DropTrigger(const oid_t database_oid,
                                        const oid_t table_oid,
                                        const std::string &trigger_name,
                                        concurrency::TransactionContext *txn) {
-
   bool delete_success = DeleteTriggerByName(trigger_name, table_oid, txn);
   if (delete_success) {
     LOG_TRACE("Delete trigger successfully");

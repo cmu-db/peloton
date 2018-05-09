@@ -199,6 +199,7 @@ class Catalog {
    */
   std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
 
+
   //===--------------------------------------------------------------------===//
   // CHECK EXISTENCE WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
