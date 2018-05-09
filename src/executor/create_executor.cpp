@@ -47,6 +47,8 @@ bool CreateExecutor::DExecute() {
 
   UNUSED_ATTRIBUTE bool result = false;
 
+  LOG_TRACE("node type = %d", static_cast<int>(node.GetCreateType()));
+
   switch (node.GetCreateType()) {
     case CreateType::DB: {
       result = CreateDatabase(node);
@@ -91,6 +93,7 @@ bool CreateExecutor::DExecute() {
 }
 
 bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
+  LOG_TRACE("node dbname = %s", node.GetDatabaseName().c_str());
   auto txn = context_->GetTransaction();
   auto database_name = node.GetDatabaseName();
   // invoke logic within catalog.cpp
