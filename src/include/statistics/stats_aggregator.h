@@ -47,6 +47,11 @@ class StatsAggregator : public DedicatedThreadTask {
 
   void RunTask() override;
 
+  /**
+   * Aggregate metrics from all threads which have collected stats,
+   * combine with what was previously in catalog
+   * and insert new total into catalog
+   */
   void Aggregate();
 
  private:

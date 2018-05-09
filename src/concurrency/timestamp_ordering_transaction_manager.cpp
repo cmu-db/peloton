@@ -181,6 +181,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //////////////////////////////////////////////////////////
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
     // do not update read set for read-only transactions.
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleRead(
+        location.block, 1);
     return true;
   }  // end READ ONLY
 
