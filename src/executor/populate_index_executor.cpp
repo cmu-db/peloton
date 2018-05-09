@@ -77,8 +77,7 @@ bool PopulateIndexExecutor::DExecute() {
     }
 
     if (child_tiles_.size() == 0) {
-      LOG_TRACE("PopulateIndex Executor : false -- no child tiles ");
-      return false;
+      LOG_TRACE("PopulateIndex Executor : -- no child tiles ");
     }
 
     auto target_table_schema = target_table_->GetSchema();
