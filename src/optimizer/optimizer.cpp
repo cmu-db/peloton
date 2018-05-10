@@ -101,12 +101,11 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // TODO: support multi-statement queries
   auto parse_tree = parse_tree_list->GetStatement(0);
 
-  unique_ptr<planner::AbstractPlan> child_plan = nullptr;
-
+  LOG_DEBUG("optimizer : %s", parse_tree->GetInfo().c_str());
   // Handle ddl statement
-  auto util_plan = HandleUtilStatement(parse_tree, txn);
-  if (util_plan != nullptr) {
-    return move(util_plan);
+  auto util_plan_status = HandleUtilStatement(parse_tree, txn);
+  if (util_plan_status.has_plan != false) {
+    return move(util_plan_status.util_plan);
   }
 
   metadata_.txn = txn;
@@ -138,16 +137,17 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
 void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
-unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
+UtilPlanStatus Optimizer::HandleUtilStatement(
     parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
-  unique_ptr<planner::AbstractPlan> util_plan = nullptr;
+  UtilPlanStatus util_plan_status;
+  util_plan_status.has_plan = true;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
           new planner::DropPlan((parser::DropStatement *)tree));
-      util_plan = move(drop_plan);
+      util_plan_status.util_plan = move(drop_plan);
       break;
     }
 
@@ -158,7 +158,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       auto create_plan =
           new planner::CreatePlan((parser::CreateStatement *)tree);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
-      util_plan = move(child_CreatePlan);
+      util_plan_status.util_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
@@ -184,14 +184,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
         std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
             new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
 
-        child_SeqScanPlan->AddChild(std::move(util_plan));
-        util_plan = std::move(child_SeqScanPlan);
+        child_SeqScanPlan->AddChild(std::move(util_plan_status.util_plan));
+        util_plan_status.util_plan = std::move(child_SeqScanPlan);
         // Create a plan to add data to index
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
             new planner::PopulateIndexPlan(target_table, column_ids));
-        child_PopulateIndexPlan->AddChild(std::move(util_plan));
+        child_PopulateIndexPlan->AddChild(std::move(util_plan_status.util_plan));
         create_plan->SetKeyAttrs(column_ids);
-        util_plan = std::move(child_PopulateIndexPlan);
+        util_plan_status.util_plan = std::move(child_PopulateIndexPlan);
       }
       break;
     }
@@ -203,20 +203,20 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       unique_ptr<planner::AbstractPlan> create_func_plan(
           new planner::CreateFunctionPlan(
               (parser::CreateFunctionStatement *)tree));
-      util_plan = move(create_func_plan);
+      util_plan_status.util_plan = move(create_func_plan);
     } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
           static_cast<parser::AnalyzeStatement *>(tree), txn));
-      util_plan = move(analyze_plan);
+      util_plan_status.util_plan = move(analyze_plan);
       break;
     }
     case StatementType::COPY: {
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      util_plan = util::CreateCopyPlan(copy_parse_tree);
+      util_plan_status.util_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
     case StatementType::EXPLAIN: {
@@ -224,17 +224,20 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       // Pass the sql statement to explain to the plan node
       auto *explain_parse_tree =
           reinterpret_cast<parser::ExplainStatement *>(tree);
-      util_plan.reset(
+      util_plan_status.util_plan.reset(
           // TODO(boweic): not releasing this unique_ptr here would cause a
           // double delete which I still don't know why is happening.
           // I believe no one should take the ownership of the pointer here
           new planner::ExplainPlan(explain_parse_tree->real_sql_stmt.release(),
                                    explain_parse_tree->default_database_name));
-    }
-    default:
       break;
+    }
+    default: {
+      util_plan_status.has_plan = false;
+      break;
+    }
   }
-  return util_plan;
+  return util_plan_status;
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(

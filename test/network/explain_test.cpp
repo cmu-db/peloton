@@ -56,18 +56,13 @@ void *ExplainTest(int port) {
     txn1.exec("CREATE TABLE template(id INT);");
     txn1.commit();
 
-    // Execute EXPLAIN directly
+    // Try execute EXPLAIN 
     pqxx::work txn2(C);
-    pqxx::result result1 = txn2.exec("EXPLAIN SELECT * from template;");
+    pqxx::result result = txn2.exec("EXPLAIN SELECT * from template;");
     txn2.commit();
-    EXPECT_EQ(result1.size(), 1);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(std::string(result[0][0].c_str()), std::string("SeqScan()"));
 
-    // Execute EXPLAIN through PREPARE statement
-    pqxx::work txn3(C);
-    txn3.exec("PREPARE func AS EXPLAIN SELECT * from template;");
-    pqxx::result result2 = txn3.exec("EXECUTE func");
-    txn3.commit();
-    EXPECT_EQ(result2.size(), 1);
   } catch (const std::exception &e) {
     LOG_INFO("[ExplainTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

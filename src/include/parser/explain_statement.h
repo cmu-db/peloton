@@ -28,6 +28,10 @@ class ExplainStatement : public SQLStatement {
 
   void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
   std::unique_ptr<parser::SQLStatement> real_sql_stmt;
 
   /**

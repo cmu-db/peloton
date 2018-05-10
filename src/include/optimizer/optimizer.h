@@ -44,6 +44,11 @@ class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
 namespace optimizer {
 
+struct UtilPlanStatus {
+  bool has_plan = false;
+  std::unique_ptr<planner::AbstractPlan> util_plan;
+};
+
 struct QueryInfo {
   QueryInfo(std::vector<expression::AbstractExpression *> &exprs,
             std::shared_ptr<PropertySet> &props)
@@ -100,10 +105,11 @@ class Optimizer : public AbstractOptimizer {
    *support
    *CREATE), set
    * tree: a peloton query tree representing a select query
-   * return: the util plan if it is a util statement
+   * return: the util plan if it is a util statement, if the sql type
+   * is not util statements then return with has_plan set to false
    */
-  std::unique_ptr<planner::AbstractPlan> HandleUtilStatement(
-      parser::SQLStatement *tree, concurrency::TransactionContext *txn);
+  UtilPlanStatus HandleUtilStatement(parser::SQLStatement *tree,
+                                     concurrency::TransactionContext *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
