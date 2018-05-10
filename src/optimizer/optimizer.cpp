@@ -218,10 +218,11 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           if (column_object == nullptr)
             throw CatalogException(
                 "Some columns are missing when create index " +
-                std::string(create_stmt->index_name));
+                    std::string(create_stmt->index_name));
           oid_t col_pos = column_object->GetColumnId();
           column_ids.push_back(col_pos);
         }
+        std::string index_name = create_stmt->index_name;
         // Create a plan to retrieve data
         std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
             new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
@@ -230,7 +231,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         ddl_plan = std::move(child_SeqScanPlan);
         // Create a plan to add data to index
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
-            new planner::PopulateIndexPlan(target_table, column_ids));
+            new planner::PopulateIndexPlan(target_table, column_ids, index_name));
         child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
         create_plan->SetKeyAttrs(column_ids);
         ddl_plan = std::move(child_PopulateIndexPlan);
