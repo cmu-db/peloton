@@ -172,7 +172,7 @@ bool UpdateExecutor::DExecute() {
   LOG_WARN("Shared Lock in update: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
   bool lock_success = lm->LockShared(table_oid);
   if (!lock_success) {
-    LOG_TRACE("Cannot obtain lock for the table, abort!");
+    LOG_WARN("Cannot obtain lock for the table, abort!");
   }
   else {
     current_txn->AddLockShared(table_oid);
