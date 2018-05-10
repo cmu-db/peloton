@@ -164,28 +164,13 @@ bool SeqScanExecutor::DExecute() {
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
-        UNUSED_ATTRIBUTE auto visibility = transaction_manager.IsVisible(
+        auto visibility = transaction_manager.IsVisible(
             current_txn, tile_group_header, tuple_id);
 
         // we don't need to check transaction visibility when building index.
         // perform predicate evaluation.
-        if (predicate_ == nullptr) {
-          position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(current_txn, location,
-                                                     acquire_owner);
-          if (!res) {
-            transaction_manager.SetTransactionResult(current_txn,
-                                                     ResultType::FAILURE);
-            return res;
-          }
-        } else {
-          ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                   tuple_id);
-          LOG_TRACE("Evaluate predicate for a tuple");
-          auto eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_);
-          LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());
-          if (eval.IsTrue()) {
+        if (visibility == VisibilityType::OK || children_.size() == 1) {
+          if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
             auto res = transaction_manager.PerformRead(current_txn, location,
                                                        acquire_owner);
@@ -193,8 +178,25 @@ bool SeqScanExecutor::DExecute() {
               transaction_manager.SetTransactionResult(current_txn,
                                                        ResultType::FAILURE);
               return res;
-            } else {
-              LOG_TRACE("Sequential Scan Predicate Satisfied");
+            }
+          } else {
+            ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                     tuple_id);
+            LOG_TRACE("Evaluate predicate for a tuple");
+            auto eval =
+                predicate_->Evaluate(&tuple, nullptr, executor_context_);
+            LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());
+            if (eval.IsTrue()) {
+              position_list.push_back(tuple_id);
+              auto res = transaction_manager.PerformRead(current_txn, location,
+                                                         acquire_owner);
+              if (!res) {
+                transaction_manager.SetTransactionResult(current_txn,
+                                                         ResultType::FAILURE);
+                return res;
+              } else {
+                LOG_TRACE("Sequential Scan Predicate Satisfied");
+              }
             }
           }
         }
