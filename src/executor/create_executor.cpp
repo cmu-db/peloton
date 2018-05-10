@@ -71,6 +71,12 @@ bool CreateExecutor::DExecute() {
       break;
     }
 
+      // if query was for creating index concurrently
+    case CreateType::INDEX_CONCURRENT: {
+      result = CreateIndex(node);
+      break;
+    }
+
     // if query was for creating trigger
     case CreateType::TRIGGER: {
       result = CreateTrigger(node);
