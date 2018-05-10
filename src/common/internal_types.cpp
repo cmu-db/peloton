@@ -676,6 +676,9 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
           case parser::CreateStatement::CreateType::kIndex:
             query_type = QueryType::QUERY_CREATE_INDEX;
             break;
+          case parser::CreateStatement::CreateType::kIndexConcurrent:
+            query_type = QueryType::QUERY_CREATE_INDEX;
+            break;
           case parser::CreateStatement::CreateType::kTable:
             query_type = QueryType::QUERY_CREATE_TABLE;
             break;
