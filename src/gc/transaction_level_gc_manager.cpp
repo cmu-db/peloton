@@ -18,6 +18,9 @@
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
 #include "index/index.h"
 #include "settings/settings_manager.h"
 #include "storage/database.h"
@@ -337,6 +340,10 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
       // TODO: compact this tile group
       // create task to compact this tile group
       // add to the worker queue
+      auto &pool = threadpool::MonoQueuePool::GetInstance();
+      pool.SubmitTask([tile_group_id, this] {
+        this->CompactTileGroup(tile_group_id);
+      });
     }
   }
 
@@ -596,6 +603,180 @@ int TransactionLevelGCManager::ProcessImmutableTileGroupQueue(oid_t thread_id) {
   }
 
   return num_processed;
+}
+
+
+void TransactionLevelGCManager::CompactTileGroup(oid_t tile_group_id) {
+
+  size_t attempts = 0;
+  size_t max_attempts = 100;
+
+  while (attempts < max_attempts) {
+
+    auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) {
+      return; // this tile group no longer exists
+    }
+
+    storage::DataTable *table =
+        dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+
+    if (table == nullptr) {
+      return; // this table no longer exists
+    }
+
+    bool success = MoveTuplesOutOfTileGroup(table, tile_group);
+
+    if (success) {
+      return;
+    }
+
+    // Otherwise, transaction failed, so we'll retry
+    // TODO: add backoff
+  }
+}
+
+// Compacts tile group by moving all of its tuples to other tile groups
+// Once empty, it will eventually get freed by the GCM
+// returns true if txn succeeds or should not be retried, otherwise false
+bool TransactionLevelGCManager::MoveTuplesOutOfTileGroup(
+    storage::DataTable *table, std::shared_ptr<storage::TileGroup> tile_group) {
+
+  auto tile_group_id = tile_group->GetTileGroupId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn));
+
+  auto tile_group_header = tile_group->GetHeader();
+  PELOTON_ASSERT(tile_group_header != nullptr);
+
+  std::unique_ptr<executor::LogicalTile> source_tile(
+      executor::LogicalTileFactory::WrapTileGroup(tile_group));
+
+  auto &pos_lists = source_tile.get()->GetPositionLists();
+
+  // Construct Project Info (outside loop so only done once)
+  TargetList target_list;
+  DirectMapList direct_map_list;
+  size_t num_columns = table->GetSchema()->GetColumnCount();
+
+  for (size_t i = 0; i < num_columns; i++) {
+    DirectMap direct_map = std::make_pair(i, std::make_pair(0, i));
+    direct_map_list.push_back(direct_map);
+  }
+
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+
+  // Update tuples in the given tile group
+  for (oid_t visible_tuple_id : *source_tile) {
+
+    // TODO: Make sure that pos_lists[0] is the only list we need...
+    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+
+    ItemPointer old_location(tile_group_id, physical_tuple_id);
+
+    auto visibility = txn_manager.IsVisible(
+        txn, tile_group_header, physical_tuple_id,
+        VisibilityIdType::COMMIT_ID);
+    if (visibility != VisibilityType::OK) {
+      // ignore garbage tuples because they don't prevent tile group freeing
+      continue;
+    }
+
+    LOG_TRACE("Moving Visible Tuple id : %u, Physical Tuple id : %u ",
+              visible_tuple_id, physical_tuple_id);
+
+    bool is_ownable = txn_manager.IsOwnable(
+            txn, tile_group_header, physical_tuple_id);
+    if (!is_ownable) {
+      LOG_TRACE("Failed to move tuple. Not ownable.");
+      txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
+      txn_manager.AbortTransaction(txn);
+      return false;
+    }
+
+
+    // if the tuple is not owned by any transaction and is visible to
+    // current transaction, we'll try to move it to a new tile group
+    bool acquired_ownership =
+        txn_manager.AcquireOwnership(txn, tile_group_header,
+                                                 physical_tuple_id);
+    if (!acquired_ownership) {
+      LOG_TRACE("Failed to move tuple. Could not acquire ownership of tuple.");
+      txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
+      txn_manager.AbortTransaction(txn);
+      return false;
+    }
+
+    // ensure that this is the latest version
+    bool is_latest_version = tile_group_header->GetPrevItemPointer(physical_tuple_id).IsNull();
+    if (is_latest_version == false) {
+      LOG_TRACE("Skipping tuple, not latest version.");
+      txn_manager.YieldOwnership(txn, tile_group_header,
+                                         physical_tuple_id);
+      continue;
+    }
+
+    ItemPointer new_location = table->AcquireVersion();
+    PELOTON_ASSERT(new_location.IsNull() == false);
+
+    auto &manager = catalog::Manager::GetInstance();
+    auto new_tile_group = manager.GetTileGroup(new_location.block);
+
+    ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
+                                                 new_location.offset);
+
+    ContainerTuple<storage::TileGroup> old_tuple(tile_group.get(),
+                                                 physical_tuple_id);
+
+    // perform projection from old version to new version.
+    // this triggers in-place update, and we do not need to allocate
+    // another version.
+    project_info->Evaluate(&new_tuple, &old_tuple, nullptr,
+                            executor_context.get());
+
+    // don't perform insert into secondary indexes or check constraints
+    // was already done when originally inserted/updated
+    // get indirection.
+
+//    ItemPointer *indirection =
+//        tile_group_header->GetIndirection(old_location.offset);
+
+//    // finally install new version into the table
+//    bool install_success = table->InstallVersion(&new_tuple,
+//                                &(project_info->GetTargetList()),
+//                                txn, indirection);
+//
+//    // PerformUpdate() will not be executed if the insertion failed.
+//    // There is a write lock acquired, but it is not in the write set
+//    // because we haven't yet put them into the write set.
+//    // the acquired lock can't be released when the txn is aborted.
+//    // the YieldOwnership() function releases the acquired write lock.
+//    if (!install_success) {
+//      LOG_TRACE("Fail to insert new tuple for move. Set txn failure.");
+//
+//      // Since the ownership is acquire inside this task, we
+//      // release it here
+//      txn_manager.YieldOwnership(txn, tile_group_header,
+//                                         physical_tuple_id);
+//      txn_manager.SetTransactionResult(txn,ResultType::FAILURE);
+//      txn_manager.AbortTransaction(txn);
+//      return false;
+//    }
+
+    LOG_TRACE("perform move old location: %u, %u", old_location.block,
+              old_location.offset);
+    LOG_TRACE("perform move new location: %u, %u", new_location.block,
+              new_location.offset);
+    txn_manager.PerformUpdate(txn, old_location, new_location);
+  }
+
+  txn_manager.CommitTransaction(txn);
+  return true;
 }
 
 }  // namespace gc
