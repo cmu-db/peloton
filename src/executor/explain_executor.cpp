@@ -64,8 +64,8 @@ bool ExplainExecutor::DExecute() {
   dest_tile->InsertTuple(0, buffer.get());
   SetOutput(LogicalTileFactory::WrapTiles({dest_tile}));
 
-  LOG_TRACE("Explain finished!");
-  return true;
+  LOG_TRACE("Explain finished!, plan : %s", plan->GetInfo().c_str());
+  return false;
 }
 
 }  // namespace executor

@@ -19,9 +19,6 @@
 #include <memory>
 
 namespace peloton {
-namespace concurrency {
-class TransactionContext;
-}
 
 namespace planner {
 class ExplainPlan : public AbstractPlan {
@@ -31,34 +28,31 @@ class ExplainPlan : public AbstractPlan {
   ExplainPlan(ExplainPlan &&) = delete;
   ExplainPlan &operator=(ExplainPlan &&) = delete;
 
-  explicit ExplainPlan(std::unique_ptr<parser::SQLStatement> sql_stmt,
-                       std::string default_database_name)
-      : sql_stmt_(sql_stmt.release()),
-        default_database_name_(default_database_name){};
-
-  explicit ExplainPlan(std::shared_ptr<parser::SQLStatement> sql_stmt,
+  explicit ExplainPlan(parser::SQLStatement *sql_stmt,
                        std::string default_database_name)
       : sql_stmt_(sql_stmt), default_database_name_(default_database_name){};
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::EXPLAIN; }
 
-  const std::string GetInfo() const { return std::string("Explain") + sql_stmt_->GetInfo(); }
+  const std::string GetInfo() const {
+    return std::string("Explain") + sql_stmt_->GetInfo();
+  }
 
   inline std::unique_ptr<AbstractPlan> Copy() const {
-    // FIXME: support deep copy for sql statement, then use a unique_ptr here
     return std::unique_ptr<AbstractPlan>(
         new ExplainPlan(sql_stmt_, default_database_name_));
   }
 
-  parser::SQLStatement *GetSQLStatement() const { return sql_stmt_.get(); }
+  parser::SQLStatement *GetSQLStatement() const { return sql_stmt_; }
 
   std::string GetDatabaseName() const { return default_database_name_; }
 
  private:
   /**
-   * @brief The SQL statement to explain (owned by the AST)
+   * @brief The SQL statement to explain, the it should be owned by the
+   * explain ast
    */
-  std::shared_ptr<parser::SQLStatement> sql_stmt_;
+  parser::SQLStatement *sql_stmt_;
   /**
    * @brief The database name to be used in the binder
    */

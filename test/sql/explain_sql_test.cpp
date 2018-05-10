@@ -60,7 +60,7 @@ TEST_F(ExplainSQLTests, ExplainSelectTest) {
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
   EXPECT_EQ(result.size(), 1);
-  EXPECT_EQ(result[0], "");
+  EXPECT_EQ(result[0], "SeqScan()");
 
   // Free the database
   txn = txn_manager.BeginTransaction();

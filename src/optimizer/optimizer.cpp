@@ -225,7 +225,10 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleUtilStatement(
       auto *explain_parse_tree =
           reinterpret_cast<parser::ExplainStatement *>(tree);
       util_plan.reset(
-          new planner::ExplainPlan(std::move(explain_parse_tree->real_sql_stmt),
+          // TODO(boweic): not releasing this unique_ptr here would cause a
+          // double delete which I still don't know why is happening.
+          // I believe no one should take the ownership of the pointer here
+          new planner::ExplainPlan(explain_parse_tree->real_sql_stmt.release(),
                                    explain_parse_tree->default_database_name));
     }
     default:
