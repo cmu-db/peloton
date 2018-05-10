@@ -652,11 +652,6 @@ bool TransactionLevelGCManager::MoveTuplesOutOfTileGroup(
   auto tile_group_header = tile_group->GetHeader();
   PELOTON_ASSERT(tile_group_header != nullptr);
 
-  std::unique_ptr<executor::LogicalTile> source_tile(
-      executor::LogicalTileFactory::WrapTileGroup(tile_group));
-
-  auto &pos_lists = source_tile.get()->GetPositionLists();
-
   // Construct Project Info (outside loop so only done once)
   TargetList target_list;
   DirectMapList direct_map_list;
@@ -672,10 +667,7 @@ bool TransactionLevelGCManager::MoveTuplesOutOfTileGroup(
                                std::move(direct_map_list)));
 
   // Update tuples in the given tile group
-  for (oid_t visible_tuple_id : *source_tile) {
-
-    // TODO: Make sure that pos_lists[0] is the only list we need...
-    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+  for (oid_t physical_tuple_id = 0; physical_tuple_id < tile_group->GetAllocatedTupleCount(); physical_tuple_id++) {
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
@@ -698,7 +690,6 @@ bool TransactionLevelGCManager::MoveTuplesOutOfTileGroup(
       txn_manager.AbortTransaction(txn);
       return false;
     }
-
 
     // if the tuple is not owned by any transaction and is visible to
     // current transaction, we'll try to move it to a new tile group
@@ -732,41 +723,9 @@ bool TransactionLevelGCManager::MoveTuplesOutOfTileGroup(
 
     ContainerTuple<storage::TileGroup> old_tuple(tile_group.get(),
                                                  physical_tuple_id);
-
-    // perform projection from old version to new version.
-    // this triggers in-place update, and we do not need to allocate
-    // another version.
+    
     project_info->Evaluate(&new_tuple, &old_tuple, nullptr,
                             executor_context.get());
-
-    // don't perform insert into secondary indexes or check constraints
-    // was already done when originally inserted/updated
-    // get indirection.
-
-//    ItemPointer *indirection =
-//        tile_group_header->GetIndirection(old_location.offset);
-
-//    // finally install new version into the table
-//    bool install_success = table->InstallVersion(&new_tuple,
-//                                &(project_info->GetTargetList()),
-//                                txn, indirection);
-//
-//    // PerformUpdate() will not be executed if the insertion failed.
-//    // There is a write lock acquired, but it is not in the write set
-//    // because we haven't yet put them into the write set.
-//    // the acquired lock can't be released when the txn is aborted.
-//    // the YieldOwnership() function releases the acquired write lock.
-//    if (!install_success) {
-//      LOG_TRACE("Fail to insert new tuple for move. Set txn failure.");
-//
-//      // Since the ownership is acquire inside this task, we
-//      // release it here
-//      txn_manager.YieldOwnership(txn, tile_group_header,
-//                                         physical_tuple_id);
-//      txn_manager.SetTransactionResult(txn,ResultType::FAILURE);
-//      txn_manager.AbortTransaction(txn);
-//      return false;
-//    }
 
     LOG_TRACE("perform move old location: %u, %u", old_location.block,
               old_location.offset);
