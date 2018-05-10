@@ -594,7 +594,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * complex workloads.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest3) {
-  // TODO[Siva]: This test non-deterministically fails :( comparator issues
+  // TODO[Siva]: This test non-deterministically fails :( cost model issues
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 

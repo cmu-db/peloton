@@ -224,7 +224,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   IndexConfiguration empty;
   // The running index configuration contains the possible subsets generated so
   // far. It is updated after every iteration
-  running_index_config.emplace(empty, 0.0);
+  auto cost_empty = ComputeCost(empty, workload);
+  running_index_config.emplace(empty, cost_empty);
 
   for (auto const &index : indexes.GetIndexes()) {
     // Make a copy of the running index configuration and add each element to it
@@ -250,7 +251,7 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.insert(running_index_config.begin(),
                              running_index_config.end());
   // Remove the starting empty set that we added
-  result_index_config.erase({empty, 0.0});
+  result_index_config.erase({empty, cost_empty});
 
   for (auto index : result_index_config) {
     LOG_INFO("EXHAUSTIVE: Index: %s, Cost: %lf",
@@ -260,6 +261,11 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   // Since the insertion into the sets ensures the order of cost, get the first
   // m configurations
   if (result_index_config.empty()) return;
+
+  // if having no indexes is better (for eg. for insert heavy workload),
+  // then don't choose anything
+  if (cost_empty < result_index_config.begin()->second) return;
+
   auto best_m_index = result_index_config.begin()->first;
   top_indexes.Merge(best_m_index);
 }
