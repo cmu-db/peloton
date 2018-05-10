@@ -53,11 +53,13 @@ class CompressedIndexConfigUtil {
    */
   static std::unique_ptr<boost::dynamic_bitset<>> GenerateBitSet(
       const CompressedIndexConfigContainer &container,
-      const std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> &idx_objs);
+      const std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+          &idx_objs);
 
-  static void SetBit(const CompressedIndexConfigContainer &container,
-                     boost::dynamic_bitset<> &bitmap,
-                     const std::shared_ptr<HypotheticalIndexObject> &idx_object);
+  static void SetBit(
+      const CompressedIndexConfigContainer &container,
+      boost::dynamic_bitset<> &bitmap,
+      const std::shared_ptr<HypotheticalIndexObject> &idx_object);
 
   // Feature constructors
   /**
@@ -80,6 +82,9 @@ class CompressedIndexConfigUtil {
       const boost::dynamic_bitset<> &add_candidate_set,
       const boost::dynamic_bitset<> &drop_candidate_set,
       vector_eig &query_config_vec);
+
+  static void GetOriTables(const std::string &db_name,
+                           std::set<oid_t> &ori_table_oids);
 
  private:
   /**

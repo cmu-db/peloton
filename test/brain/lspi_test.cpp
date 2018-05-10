@@ -106,10 +106,13 @@ TEST_F(LSPITests, TuneTest) {
   const int num_rows = 200;
 
   CreateDatabase(database_name);
+  std::set<oid_t> ori_table_oids;
+  brain::CompressedIndexConfigUtil::GetOriTables(database_name, ori_table_oids);
+
   CreateTable(table_name);
   InsertIntoTable(table_name, num_rows);
 
-  brain::LSPIIndexTuner index_tuner(database_name);
+  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
 
   std::vector<std::string> workload;
   workload.push_back("SELECT * FROM " + table_name +

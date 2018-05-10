@@ -16,8 +16,8 @@ namespace peloton {
 namespace brain {
 
 CompressedIndexConfigContainer::CompressedIndexConfigContainer(
-    const std::string &database_name, catalog::Catalog *catalog,
-    concurrency::TransactionManager *txn_manager)
+    const std::string &database_name, const std::set<oid_t> &ori_table_oids,
+    catalog::Catalog *catalog, concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
       catalog_{catalog},
       txn_manager_{txn_manager},
@@ -41,6 +41,10 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
   // Scan tables to populate the internal maps
   for (const auto &table_obj : table_objs) {
     const auto table_oid = table_obj.first;
+
+    if (ori_table_oids.find(table_oid) != ori_table_oids.end()) {
+      continue;
+    }
 
     table_id_map_[table_oid] = {};
     id_table_map_[table_oid] = {};
@@ -67,6 +71,11 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
   // Scan tables to populate current config
   for (const auto &table_obj : table_objs) {
     const auto table_oid = table_obj.first;
+
+    if (ori_table_oids.find(table_oid) != ori_table_oids.end()) {
+      continue;
+    }
+
     const auto index_objs = table_obj.second->GetIndexObjects();
     if (index_objs.empty()) {
       SetBit(table_offset_map_.at(table_oid));
@@ -338,8 +347,10 @@ void CompressedIndexConfigContainer::AdjustIndexes(
                                   ->GetTableObject(new_index->table_oid)
                                   ->GetTableName();
 
-      std::vector<oid_t> index_vector(new_index->column_oids.begin(),
-                                      new_index->column_oids.end());
+      std::set<oid_t> temp_oids(new_index->column_oids.begin(),
+                                new_index->column_oids.end());
+
+      std::vector<oid_t> index_vector(temp_oids.begin(), temp_oids.end());
 
       std::ostringstream stringStream;
       stringStream << "automated_index_" << current_bit;

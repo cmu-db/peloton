@@ -49,7 +49,8 @@ void CompressedIndexConfigUtil::AddCandidates(
 
   for (const auto it : aggregate_map) {
     const auto table_oid = it.first;
-    const auto &column_oids = it.second.column_oids;
+    const std::set<oid_t> temp_oids(it.second.column_oids.begin(),
+                                    it.second.column_oids.end());
     const auto table_offset = container.GetTableOffset(table_oid);
 
     // Insert empty index
@@ -58,7 +59,7 @@ void CompressedIndexConfigUtil::AddCandidates(
     // For each index, iterate through its columns
     // and incrementally add the columns to the prefix closure of current table
     std::vector<oid_t> col_oids;
-    for (const auto column_oid : column_oids) {
+    for (const auto column_oid : temp_oids) {
       col_oids.push_back(column_oid);
 
       // Insert prefix index
@@ -178,5 +179,23 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
     config_id_drop = drop_candidate_set.find_next(config_id_drop);
   }
 }
+
+void CompressedIndexConfigUtil::GetOriTables(const std::string &db_name,
+                                             std::set<oid_t> &ori_table_oids) {
+  peloton::concurrency::TransactionManager *txn_manager =
+      &concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager->BeginTransaction();
+  const auto table_objs = catalog::Catalog::GetInstance()
+                              ->GetDatabaseObject(db_name, txn)
+                              ->GetTableObjects();
+
+  for (const auto it : table_objs) {
+    ori_table_oids.insert(it.first);
+  }
+
+  txn_manager->CommitTransaction(txn);
+}
+
 }  // namespace brain
 }  // namespace peloton

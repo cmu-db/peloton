@@ -26,7 +26,7 @@ namespace peloton {
 namespace brain {
 
 class CompressedIndexConfigContainer {
-  friend class CompressedIndexConfigManager;
+  friend class CompressedIndexConfigUtil;
 
  public:
   /**
@@ -40,7 +40,8 @@ class CompressedIndexConfigContainer {
    * bitset)
    */
   explicit CompressedIndexConfigContainer(
-      const std::string &database_name, catalog::Catalog *catalog = nullptr,
+      const std::string &database_name, const std::set<oid_t> &ori_table_oids,
+      catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
   /**
