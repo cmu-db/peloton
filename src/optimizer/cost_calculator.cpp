@@ -61,11 +61,13 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
   auto index_object = op->table_->GetIndexObject(op->index_id);
   const auto &key_attr_list = index_object->GetKeyAttrs();
   // Loop over index to retrieve helpful index columns
-  // Right now only consider conjunctive equality predicates
-  // example : index cols (a, b, c) predicates(a=1 AND b=2 AND c=3)
-  // TODO(boweic): Add support for non equality predicate
-  // example1 : index cols (a, b, c) predicates(a<1 AND b<=2 and c<3)
-  // example2 : index cols (a, b, c) predicates(a=1 AND b>2 AND c>3)
+  // Consider all predicates that could be accelerated by the index, 
+  // i.e. till the first column with no equality predicate on it
+  // index cols (a, b, c)
+  // example1 : predicates(a=1 AND b=2 AND c=3) index helps on both a, b and c
+  // example2 : predicates(a<1 AND b<=2 and c<3) index helps on only a
+  // example3 : predicates(a=1 AND b>2 AND c>3) index helps on a and b
+  bool has_non_equality_pred = false;
   for (size_t idx = 0; idx < key_attr_list.size(); ++idx) {
     // If index cannot further reduce scan range, break
     if (idx == op->key_column_id_list.size() ||
@@ -78,7 +80,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
       auto &expr = predicate.expr;
       // TODO(boweic): support non equality predicates
       if (expr->GetExpressionType() != ExpressionType::COMPARE_EQUAL) {
-        continue;
+        has_non_equality_pred = true;
       }
       expression::AbstractExpression *tv_expr = nullptr;
       if (expr->GetChild(0)->GetExpressionType() ==
@@ -110,6 +112,9 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
       // update selectivity here
       index_scan_rows *=
           util::CalculateSelectivityForPredicate(table_stats, expr.get());
+    }
+    if (has_non_equality_pred) {
+      break;
     }
   }
   // Index search cost + scan cost
