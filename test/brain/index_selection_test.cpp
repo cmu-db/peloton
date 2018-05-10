@@ -77,15 +77,17 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
 
   admissible_indexes.push_back(2);
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   // Create a new workload
-  brain::Workload workload(query_strs, database_name);
+  brain::Workload workload(query_strs, database_name, txn);
   EXPECT_GT(workload.Size(), 0);
 
   // Verify the admissible indexes.
   auto queries = workload.GetQueries();
   for (unsigned long i = 0; i < queries.size(); i++) {
     brain::Workload w(queries[i], workload.GetDatabaseName());
-    brain::IndexSelection is(w, knobs);
+    brain::IndexSelection is(w, knobs, txn);
 
     brain::IndexConfiguration ic;
     is.GetAdmissibleIndexes(queries[i], ic);
@@ -93,6 +95,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
     auto indexes = ic.GetIndexes();
     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
   }
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -122,7 +125,10 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
     testing_util.CreateTable(table_schema);
   }
 
-  brain::Workload workload(query_strings, database_name);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::Workload workload(query_strings, database_name, txn);
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   // Generate candidate configurations.
@@ -131,7 +137,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexConfiguration candidate_config;
   brain::IndexConfiguration admissible_config;
 
-  brain::IndexSelection index_selection(workload, knobs);
+  brain::IndexSelection index_selection(workload, knobs, txn);
   index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
                                            workload);
 
@@ -154,7 +160,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   candidate_config.Clear();
   admissible_config.Clear();
 
-  brain::IndexSelection is(workload, knobs);
+  brain::IndexSelection is(workload, knobs, txn);
   is.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
 
   LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
@@ -184,6 +190,8 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
     }
     EXPECT_TRUE(found);
   }
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -205,7 +213,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
 
-  brain::IndexSelection index_selection(workload, knobs);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::IndexSelection index_selection(workload, knobs, txn);
 
   std::vector<oid_t> cols;
 
@@ -332,6 +343,8 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
     EXPECT_EQ(1, count);
   }
   EXPECT_EQ(expected_indexes.size(), chosen_indexes.size());
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -610,7 +623,10 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
     testing_util.InsertIntoTable(table_schema, num_rows);
   }
 
-  brain::Workload workload(query_strings, database_name);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::Workload workload(query_strings, database_name, txn);
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
@@ -626,7 +642,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   size_t num_indexes = 1;
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
-  brain::IndexSelection is = {workload, knobs};
+  brain::IndexSelection is = {workload, knobs, txn};
 
   is.GetBestIndexes(best_config);
 
@@ -664,6 +680,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   // expected_config = {expected_indexes};
 
   // EXPECT_TRUE(expected_config == best_config);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

@@ -22,6 +22,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "parser/sql_statement.h"
 #include "parser/postgresparser.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 namespace brain {
@@ -229,7 +230,8 @@ class Workload {
    * and
    * add SQLStatements.
    */
-  Workload(std::vector<std::string> &queries, std::string database_name);
+  Workload(std::vector<std::string> &queries, std::string database_name,
+           concurrency::TransactionContext *txn);
 
   /**
    * @brief - Constructor

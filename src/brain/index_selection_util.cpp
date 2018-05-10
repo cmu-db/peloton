@@ -146,14 +146,10 @@ std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(
   return index_s_ptr;
 }
 
-Workload::Workload(std::vector<std::string> &queries, std::string database_name)
+Workload::Workload(std::vector<std::string> &queries, std::string database_name,
+                   concurrency::TransactionContext *txn)
     : database_name(database_name) {
   LOG_TRACE("Initializing workload with %ld queries", queries.size());
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto parser = parser::PostgresParser::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
   std::unique_ptr<binder::BindNodeVisitor> binder(
       new binder::BindNodeVisitor(txn, database_name));
 
@@ -171,7 +167,8 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
 
     // Create a new shared ptr from the unique ptr because
     // these queries will be referenced by multiple objects later.
-    // Release the unique ptr from the stmt list to avoid freeing at the end of
+    // Release the unique ptr from the stmt list to avoid freeing at the end
+    // of
     // this loop iteration.
     auto stmt = stmt_list->PassOutStatement(0);
     auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.release());
@@ -192,7 +189,6 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
         LOG_TRACE("Ignoring query: %s" + stmt->GetInfo().c_str());
     }
   }
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace brain

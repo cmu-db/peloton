@@ -12,9 +12,10 @@
 
 #include "brain/index_selection_util.h"
 #include "brain/index_selection_job.h"
+#include "brain/index_selection.h"
 #include "catalog/query_history_catalog.h"
 #include "catalog/system_catalogs.h"
-#include "brain/index_selection.h"
+#include "optimizer/stats/stats_storage.h"
 
 namespace peloton {
 namespace brain {
@@ -26,7 +27,25 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
 
-  // Query the catalog for new queries.
+  // Generate column stats for all the tables before we begin.
+  // TODO[vamshi]
+  // Instead of collecting stats for every table, collect them only for the
+  // tables
+  // we are analyzing i.e. tables that are referenced in the current workload.
+  optimizer::StatsStorage *stats_storage =
+      optimizer::StatsStorage::GetInstance();
+  ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
+  if (result != ResultType::SUCCESS) {
+    LOG_ERROR(
+        "Cannot generate stats for table columns. Not performing index "
+        "suggestion...");
+    txn_manager.AbortTransaction(txn);
+    return;
+  }
+
+  // Query the catalog for new SQL queries.
+  // New SQL queries are the queries that were added to the system
+  // after the last_timestamp_
   auto query_catalog = &catalog::QueryHistoryCatalog::GetInstance(txn);
   auto query_history =
       query_catalog->GetQueryStringsAfterTimestamp(last_timestamp_, txn);
@@ -49,7 +68,8 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     auto indexes = pg_index->GetIndexObjects(txn);
     for (auto index : indexes) {
       auto index_name = index.second->GetIndexName();
-      // TODO: This is a hack for now. Add a boolean to the index catalog to
+      // TODO [vamshi]:
+      // This is a hack for now. Add a boolean to the index catalog to
       // find out if an index is a brain suggested index/user created index.
       if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
           std::string::npos) {
@@ -59,8 +79,8 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     }
 
     // TODO: Handle multiple databases
-    brain::Workload workload(queries, DEFAULT_DB_NAME);
-    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs()};
+    brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
+    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
 

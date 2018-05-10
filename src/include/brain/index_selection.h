@@ -65,7 +65,8 @@ class IndexSelection {
    * number of indexes to be chosen, threshold for naive enumeration,
    * maximum number of columns in each index.
    */
-  IndexSelection(Workload &query_set, IndexSelectionKnobs knobs);
+  IndexSelection(Workload &query_set, IndexSelectionKnobs knobs,
+                 concurrency::TransactionContext *txn);
 
   /**
    * @brief The main external API for the Index Prediction Tool
@@ -219,6 +220,8 @@ class IndexSelection {
   Workload query_set_;
   // Common context of index selection object.
   IndexSelectionContext context_;
+  // Transaction.
+  concurrency::TransactionContext *txn_;
 };
 
 }  // namespace brain

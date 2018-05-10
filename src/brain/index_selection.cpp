@@ -19,8 +19,9 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set, IndexSelectionKnobs knobs)
-    : query_set_(query_set), context_(knobs) {}
+IndexSelection::IndexSelection(Workload &query_set, IndexSelectionKnobs knobs,
+                               concurrency::TransactionContext *txn)
+    : query_set_(query_set), context_(knobs), txn_(txn) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // http://www.vldb.org/conf/1997/P146.PDF
@@ -151,11 +152,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // Else S = S U {I}
   // 4. If |S| = k then exit
   LOG_INFO("GREEDY: Starting with the following index: %s",
-      indexes.ToString().c_str());
+           indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
 
   LOG_INFO("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
-      current_index_count, k);
+           current_index_count, k);
 
   if (current_index_count >= k) return;
 
@@ -173,7 +174,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
       LOG_INFO("GREEDY: Considering this index: %s \n with cost: %lf",
-          best_index->ToString().c_str(), cur_cost);
+               best_index->ToString().c_str(), cur_cost);
       if (cur_cost < cur_min_cost) {
         cur_min_cost = cur_cost;
         best_index = index;
@@ -183,7 +184,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
       LOG_INFO("GREEDY: Adding the following index: %s",
-          best_index->ToString().c_str());
+               best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
@@ -254,8 +255,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.erase({empty, cost_empty});
 
   for (auto index : result_index_config) {
-    LOG_INFO("EXHAUSTIVE: Index: %s, Cost: %lf",
-    index.first.ToString().c_str(), index.second);
+    LOG_INFO("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
+             index.second);
   }
 
   // Since the insertion into the sets ensures the order of cost, get the first
@@ -433,7 +434,7 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
       cost += context_.memo_[state];
     } else {
       auto result = WhatIfIndex::GetCostAndBestPlanTree(
-          query, config, workload.GetDatabaseName());
+          query, config, workload.GetDatabaseName(), txn_);
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }

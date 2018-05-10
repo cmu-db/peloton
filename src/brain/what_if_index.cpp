@@ -22,11 +22,8 @@ unsigned long WhatIfIndex::index_seq_no = 0;
 std::unique_ptr<optimizer::OptimizerPlanInfo>
 WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
                                     IndexConfiguration &config,
-                                    std::string database_name) {
-  // Need transaction for fetching catalog information.
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
+                                    std::string database_name,
+                                    concurrency::TransactionContext *txn) {
   // Find all the tables that are referenced in the parsed query.
   std::unordered_set<std::string> tables_used;
   GetTablesReferenced(query, tables_used);
@@ -38,6 +35,8 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   // the indexes that we provide.
   for (auto table_name : tables_used) {
     // Load the tables into cache.
+    // TODO [vamshi]: If the table is deleted, then this will throw an
+    // exception. Handle it.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
     // Evict all the existing real indexes and
@@ -69,8 +68,6 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   LOG_TRACE("Query: %s", query->GetInfo().c_str());
   LOG_TRACE("Hypothetical config: %s", config.ToString().c_str());
   LOG_TRACE("Got cost %lf", opt_info_obj->cost);
-
-  txn_manager.CommitTransaction(txn);
   return opt_info_obj;
 }
 

@@ -66,11 +66,10 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
-  txn_manager.CommitTransaction(txn);
 
   // 1. Get the optimized plan tree without the indexes (sequential scan)
   auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement, config, DEFAULT_DB_NAME);
+      sql_statement, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
@@ -82,7 +81,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
@@ -94,7 +93,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       testing_util.CreateHypotheticalIndex(schema.table_name, {"c"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
@@ -103,6 +102,8 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
   EXPECT_LT(cost_with_index_2, cost_without_index);
   EXPECT_NE(result->plan, nullptr);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -143,11 +144,10 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
       stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
-  txn_manager.CommitTransaction(txn);
 
   // Get the optimized plan tree without the indexes (sequential scan)
   auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement, config, DEFAULT_DB_NAME);
+      sql_statement, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result->cost;
   LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
@@ -157,7 +157,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
       testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "c"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
   LOG_INFO("Cost of the query with index {'a', 'c'}: %lf", cost_with_index_1);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
@@ -168,7 +168,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
   LOG_INFO("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
@@ -179,7 +179,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b", "c"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_3 = result->cost;
   LOG_INFO("Cost of the query with index {'b', 'c'}: %lf", cost_with_index_3);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
@@ -190,7 +190,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_4 = result->cost;
   EXPECT_LE(cost_with_index_3, cost_with_index_4);
 
@@ -199,6 +199,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with index {'b'}: %lf", cost_with_index_4);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
+
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(WhatIfIndexTests, MultiColumnTest2) {
@@ -237,11 +239,10 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
       stmt_list.get()->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
-  txn_manager.CommitTransaction(txn);
 
   // Get the optimized plan tree without the indexes (sequential scan)
   auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement, config, DEFAULT_DB_NAME);
+      sql_statement, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result->cost;
   LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
 
@@ -251,7 +252,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
       schema.table_name, {"a", "b", "c", "d", "e"}));
 
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_INFO("Cost of the query with index {'a', 'b', 'c', 'd', 'e'}: %lf",
@@ -262,7 +263,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
       schema.table_name, {"a", "c", "d", "f"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_INFO("Cost of the query with index {'a', 'c', 'd', 'f'}: %lf",
@@ -273,7 +274,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
       schema.table_name, {"a", "b", "d", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_3 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_INFO("Cost of the query with index {'a', 'b', 'd', 'e'}: %lf",
@@ -284,7 +285,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b", "c", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_4 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with index {'b', 'c', 'e'}: %lf",
@@ -295,7 +296,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
       schema.table_name, {"b", "c", "d", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_5 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with index {'b', 'c', 'd', 'e'}: %lf",
@@ -306,7 +307,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b", "e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_6 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_INFO("Cost of the query with index {'b', 'e'}: %lf", cost_with_index_6);
@@ -318,7 +319,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"e"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_7 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_DEBUG("Cost of the query with index {'e'} : %lf", cost_with_index_7);
@@ -329,12 +330,14 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"b"}));
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
-                                                      DEFAULT_DB_NAME);
+                                                      DEFAULT_DB_NAME, txn);
   auto cost_with_index_8 = result->cost;
   LOG_INFO("Cost of the query with index {'b'}: %lf", cost_with_index_8);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   EXPECT_GT(cost_without_index, cost_with_index_8);
   EXPECT_GT(cost_with_index_8, cost_with_index_6);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -391,11 +394,10 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   binder->BindNameToNode(sql_statement1.get());
   binder->BindNameToNode(sql_statement2.get());
   binder->BindNameToNode(sql_statement3.get());
-  txn_manager.CommitTransaction(txn);
 
   // Get the optimized plan tree without the indexes (sequential scan)
   auto result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement1, config, DEFAULT_DB_NAME);
+      sql_statement1, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result1->cost;
   LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
   LOG_DEBUG("%s", result1->plan->GetInfo().c_str());
@@ -406,11 +408,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
       testing_util.CreateHypotheticalIndex(schema.table_name, {"a"}));
 
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   auto result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement2, config, DEFAULT_DB_NAME);
+      sql_statement2, config, DEFAULT_DB_NAME, txn);
   auto result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(
-      sql_statement3, config, DEFAULT_DB_NAME);
+      sql_statement3, config, DEFAULT_DB_NAME, txn);
   auto cost_with_index_1_1 = result1->cost;
   auto cost_with_index_1_2 = result2->cost;
   auto cost_with_index_1_3 = result3->cost;
@@ -424,11 +426,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "b"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_2_1 = result1->cost;
   auto cost_with_index_2_2 = result2->cost;
   auto cost_with_index_2_3 = result3->cost;
@@ -443,11 +445,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   config.AddIndexObject(
       testing_util.CreateHypotheticalIndex(schema.table_name, {"a", "b", "c"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_3_1 = result1->cost;
   auto cost_with_index_3_2 = result2->cost;
   auto cost_with_index_3_3 = result3->cost;
@@ -463,11 +465,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
       schema.table_name, {"a", "b", "c", "d"}));
   result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement1, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result2 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement2, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   result3 = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement3, config,
-                                                       DEFAULT_DB_NAME);
+                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_4_1 = result1->cost;
   auto cost_with_index_4_2 = result2->cost;
   auto cost_with_index_4_3 = result3->cost;
@@ -478,6 +480,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   EXPECT_GT(cost_with_index_3_1, cost_with_index_4_1);
   EXPECT_EQ(cost_with_index_4_1, cost_with_index_4_2);
   EXPECT_EQ(cost_with_index_4_2, cost_with_index_4_3);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test
