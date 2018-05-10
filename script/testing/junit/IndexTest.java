@@ -115,11 +115,12 @@ public class IndexTest extends PLTestBase {
 	    System.out.println("select");
 	    Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 0;");
-        rs.next();
+        if(rs.next()){
 	    checkRow(rs,
 		 new String [] {"c1", "c2"},
 		 new int [] {-1, -1});
-        assertNoMoreRows(rs);
+	    assertNoMoreRows(rs);
+	}
     }
 
     /**
@@ -178,11 +179,12 @@ public class IndexTest extends PLTestBase {
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 1;");
-        rs.next();
-        checkRow(rs,
-         new String [] {"c1", "c2"},
-         new int [] {-1, 0});
-        assertNoMoreRows(rs);
+        if (rs.next()){
+	    checkRow(rs,
+		     new String [] {"c1", "c2"},
+		     new int [] {-1, 0});
+	    assertNoMoreRows(rs);
+	}
     }
 
     /**
@@ -241,11 +243,12 @@ public class IndexTest extends PLTestBase {
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 2;");
-        rs.next();
-        checkRow(rs,
-         new String [] {"c1", "c2"},
-         new int [] {1, 1});
-        assertNoMoreRows(rs);
+        if (rs.next()){
+	    checkRow(rs,
+		     new String [] {"c1", "c2"},
+		     new int [] {1, 1});
+	    assertNoMoreRows(rs);
+	}
     }
 
 }
