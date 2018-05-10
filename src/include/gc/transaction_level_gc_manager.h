@@ -146,8 +146,6 @@ class TransactionLevelGCManager : public GCManager {
 
   int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
-  void CompactTileGroup(oid_t tile_group_id);
-
   void AddToImmutableTileGroupQueue(const oid_t &tile_group_id);
 
   /**
@@ -159,10 +157,6 @@ class TransactionLevelGCManager : public GCManager {
   void ClearGarbage(int thread_id);
 
  private:
-
-  // Worker function used by CompactTileGroup() to move tuples to new tile group
-  bool MoveTuplesOutOfTileGroup(storage::DataTable *table,
-                                std::shared_ptr<storage::TileGroup> tile_group);
 
   // convenience function to get table's recycle queue
   std::shared_ptr<RecycleStack>
