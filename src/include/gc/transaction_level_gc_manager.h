@@ -35,7 +35,6 @@ static constexpr size_t INITIAL_UNLINK_QUEUE_LENGTH = 100000;
 static constexpr size_t INITIAL_TG_QUEUE_LENGTH = 1000;
 static constexpr size_t INITIAL_MAP_SIZE = 32;
 static constexpr size_t MAX_ATTEMPT_COUNT = 100000;
-//static constexpr size_t INITIAL_TABLE_SIZE = 128;
 
 class TransactionLevelGCManager : public GCManager {
 
@@ -44,17 +43,14 @@ class TransactionLevelGCManager : public GCManager {
       : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
 
     unlink_queues_.reserve(thread_count);
-    immutable_tile_group_queues_.reserve(thread_count);
 
     for (int i = 0; i < gc_thread_count_; ++i) {
 
       unlink_queues_.emplace_back(std::make_shared<
           LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
-
-      immutable_tile_group_queues_.emplace_back(std::make_shared<
-          LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH));
     }
 
+    immutable_tile_group_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
     recycle_stacks_ = std::make_shared<peloton::CuckooMap<
         oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
   }
@@ -75,18 +71,14 @@ class TransactionLevelGCManager : public GCManager {
     unlink_queues_.clear();
     unlink_queues_.reserve(gc_thread_count_);
 
-    immutable_tile_group_queues_.clear();
-    immutable_tile_group_queues_.reserve(gc_thread_count_);
-
     for (int i = 0; i < gc_thread_count_; ++i) {
 
       unlink_queues_.emplace_back(std::make_shared<
           LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
 
-      immutable_tile_group_queues_.emplace_back(std::make_shared<
-          LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH));
     }
 
+    immutable_tile_group_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
     recycle_stacks_ = std::make_shared<peloton::CuckooMap<
         oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
 
@@ -156,6 +148,8 @@ class TransactionLevelGCManager : public GCManager {
 
   void CompactTileGroup(oid_t tile_group_id);
 
+  void AddToImmutableTileGroupQueue(const oid_t &tile_group_id);
+
   /**
 * @brief Unlink and reclaim the tuples that remain in a garbage collection
 * thread when the Garbage Collector stops. Used primarily by tests. Also used internally
@@ -203,7 +197,7 @@ class TransactionLevelGCManager : public GCManager {
 
   // iterates through immutable tile group queue and purges all tile groups
   // from the recycles queues
-  int ProcessImmutableTileGroupQueue(oid_t thread_id);
+  int ProcessImmutableTileGroupQueue();
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -231,8 +225,7 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues of tile groups to be purged from recycle_stacks
   // oid_t here is tile_group_id
-  std::vector<std::shared_ptr<
-      peloton::LockFreeQueue<oid_t>>> immutable_tile_group_queues_;
+  std::shared_ptr<peloton::LockFreeQueue<oid_t>> immutable_tile_group_queue_;
 
   // queues for to-be-reused tuples.
   // map of tables to recycle stacks

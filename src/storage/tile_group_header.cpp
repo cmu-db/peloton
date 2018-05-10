@@ -249,5 +249,14 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
   return active_tuple_slots;
 }
 
+bool TileGroupHeader::SetImmutability() {
+  bool result = __sync_bool_compare_and_swap(&immutable, false, true);
+  if (result == true) {
+    auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+    gc_manager.AddToImmutableTileGroupQueue(tile_group->GetTileGroupId());
+  }
+  return result;
+}
+
 }  // namespace storage
 }  // namespace peloton

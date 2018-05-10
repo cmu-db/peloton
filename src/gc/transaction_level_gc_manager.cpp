@@ -75,7 +75,7 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
       continue;
     }
 
-    int immutable_count = ProcessImmutableTileGroupQueue(thread_id);
+    int immutable_count = ProcessImmutableTileGroupQueue();
     int reclaimed_count = Reclaim(thread_id, expired_eid);
     int unlinked_count = Unlink(thread_id, expired_eid);
 
@@ -242,6 +242,10 @@ void TransactionLevelGCManager::RecycleTupleSlots(
   }
 }
 
+void TransactionLevelGCManager::AddToImmutableTileGroupQueue(const oid_t &tile_group_id) {
+  immutable_tile_group_queue_->Enqueue(tile_group_id);
+}
+
 void TransactionLevelGCManager::RemoveGarbageObjects(
     concurrency::TransactionContext *txn_ctx) {
   
@@ -337,7 +341,6 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
     }
 
     if (num_recycled >= compaction_threshold) {
-      // TODO: compact this tile group
       // create task to compact this tile group
       // add to the worker queue
       auto &pool = threadpool::MonoQueuePool::GetInstance();
@@ -402,7 +405,7 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
 
 void TransactionLevelGCManager::ClearGarbage(int thread_id) {
 
-  ProcessImmutableTileGroupQueue(thread_id);
+  ProcessImmutableTileGroupQueue();
 
   while (!unlink_queues_[thread_id]->IsEmpty() ||
          !local_unlink_queues_[thread_id].empty()) {
@@ -579,15 +582,14 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer locat
 }
 
 
-int TransactionLevelGCManager::ProcessImmutableTileGroupQueue(oid_t thread_id) {
+int TransactionLevelGCManager::ProcessImmutableTileGroupQueue() {
 
   int num_processed = 0;
-  auto tile_group_queue = immutable_tile_group_queues_[thread_id];
   oid_t tile_group_id;
 
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
     // if there's no more tile_groups in the queue, then break.
-    if (tile_group_queue->Dequeue(tile_group_id) == false) {
+    if (immutable_tile_group_queue_->Dequeue(tile_group_id) == false) {
       break;
     }
 
@@ -611,6 +613,11 @@ void TransactionLevelGCManager::CompactTileGroup(oid_t tile_group_id) {
   size_t attempts = 0;
   size_t max_attempts = 100;
 
+  constexpr auto kMinPauseTime = std::chrono::microseconds(1);
+  constexpr auto kMaxPauseTime = std::chrono::microseconds(100000);
+
+  auto pause_time = kMinPauseTime;
+
   while (attempts < max_attempts) {
 
     auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
@@ -631,8 +638,9 @@ void TransactionLevelGCManager::CompactTileGroup(oid_t tile_group_id) {
       return;
     }
 
-    // Otherwise, transaction failed, so we'll retry
-    // TODO: add backoff
+    // Otherwise, transaction failed, so we'll retry with exponential backoff
+    std::this_thread::sleep_for(pause_time);
+    pause_time = std::min(pause_time * 2, kMaxPauseTime);
   }
 }
 

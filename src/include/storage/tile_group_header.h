@@ -19,8 +19,9 @@
 #include "common/macros.h"
 #include "common/synchronization/spin_latch.h"
 #include "common/printable.h"
-#include "storage/tuple.h"
 #include "common/internal_types.h"
+#include "gc/transaction_level_gc_manager.h"
+#include "storage/tuple.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -227,15 +228,14 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
-  /* TODO: Update this to notify the garbage collector
+  /*
   * @brief The following method use Compare and Swap to set the tilegroup's
-  immutable flag to be true. 
+  immutable flag to be true. GC must be notified in order to stop recycling
+   slots from it
   */
-  inline bool SetImmutability() {
-    return __sync_bool_compare_and_swap(&immutable, false, true);
-  }
+  bool SetImmutability();
 
-  /* TODO: Better comment
+  /*
   * @brief Set's Immutable Flag to True. Only used by the Garbage Collector
   */
   inline bool SetImmutabilityWithoutNotifyingGC() {
