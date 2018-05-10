@@ -114,15 +114,12 @@ public class IndexTest extends PLTestBase {
 
 	    System.out.println("select");
 	    Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 1;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//	    checkRow(rs,
-//		 new String [] {"c1", "c2"},
-//		 new int [] {-1, -1});
-//        assertNoMoreRows(rs);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 0;");
+        rs.next();
+	    checkRow(rs,
+		 new String [] {"c1", "c2"},
+		 new int [] {-1, -1});
+        assertNoMoreRows(rs);
     }
 
     /**
@@ -137,11 +134,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("create index");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
+                    Thread.sleep(1000);
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("create index complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -155,11 +155,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("update tuple");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
                     stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
+                    Thread.sleep(3000);
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("update tuple complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -167,22 +170,19 @@ public class IndexTest extends PLTestBase {
         });
 
         thread1.start();
-//        thread2.start();
+        thread2.start();
 
         thread1.join();
-//        thread2.join();
+        thread2.join();
 
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 1;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//        checkRow(rs,
-//         new String [] {"c1", "c2"},
-//         new int [] {-1, 0});
-//        assertNoMoreRows(rs);
+        rs.next();
+        checkRow(rs,
+         new String [] {"c1", "c2"},
+         new int [] {-1, 0});
+        assertNoMoreRows(rs);
     }
 
     /**
@@ -197,11 +197,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("create index");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
+                    Thread.sleep(1000);
                     stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("create index complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -215,11 +218,14 @@ public class IndexTest extends PLTestBase {
                     System.out.println("delete tuple");
                     Connection c = makeDefaultConnection();
                     Statement stmt = c.createStatement();
+                    stmt.execute("BEGIN;");
                     stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
+                    Thread.sleep(3000);
+                    stmt.execute("END;");
                     stmt.close();
                     c.close();
                     System.out.println("delete tuple complete");
-                } catch (SQLException e) {
+                } catch (SQLException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -227,22 +233,19 @@ public class IndexTest extends PLTestBase {
         });
 
         thread1.start();
-//        thread2.start();
+        thread2.start();
 
         thread1.join();
-//        thread2.join();
+        thread2.join();
 
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 2;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//        checkRow(rs,
-//         new String [] {"c1", "c2"},
-//         new int [] {1, 1});
-//        assertNoMoreRows(rs);
+        rs.next();
+        checkRow(rs,
+         new String [] {"c1", "c2"},
+         new int [] {1, 1});
+        assertNoMoreRows(rs);
     }
 
 }
