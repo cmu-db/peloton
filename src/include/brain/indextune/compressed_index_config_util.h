@@ -53,11 +53,11 @@ class CompressedIndexConfigUtil {
    */
   static std::unique_ptr<boost::dynamic_bitset<>> GenerateBitSet(
       const CompressedIndexConfigContainer &container,
-      const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs);
+      const std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> &idx_objs);
 
   static void SetBit(const CompressedIndexConfigContainer &container,
                      boost::dynamic_bitset<> &bitmap,
-                     const std::shared_ptr<IndexObject> &idx_object);
+                     const std::shared_ptr<HypotheticalIndexObject> &idx_object);
 
   // Feature constructors
   /**
@@ -92,7 +92,7 @@ class CompressedIndexConfigUtil {
   /**
    * @brief Convert an index triplet to an index object
    */
-  static std::shared_ptr<brain::IndexObject> ConvertIndexTriplet(
+  static std::shared_ptr<brain::HypotheticalIndexObject> ConvertIndexTriplet(
       CompressedIndexConfigContainer &container,
       const planner::col_triplet &idx_triplet);
 };

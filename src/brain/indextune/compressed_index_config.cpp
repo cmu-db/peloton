@@ -76,8 +76,8 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
         const auto index_oid = index_obj.first;
 
         std::vector<oid_t> col_oids(indexed_cols);
-        auto idx_obj =
-            std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+        auto idx_obj = std::make_shared<brain::HypotheticalIndexObject>(
+            db_oid, table_oid, col_oids);
 
         const auto global_index_offset = GetGlobalOffset(idx_obj);
         index_id_map_[index_oid] = global_index_offset;
@@ -92,7 +92,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
 }
 
 size_t CompressedIndexConfigContainer::GetLocalOffset(
-    const oid_t table_oid, const std::set<oid_t> &column_oids) const {
+    const oid_t table_oid, const std::vector<oid_t> &column_oids) const {
   std::set<size_t> col_ids;
   const auto &col_id_map = table_id_map_.at(table_oid);
   for (const auto col_oid : column_oids) {
@@ -111,7 +111,7 @@ size_t CompressedIndexConfigContainer::GetLocalOffset(
 }
 
 size_t CompressedIndexConfigContainer::GetGlobalOffset(
-    const std::shared_ptr<brain::IndexObject> &index_obj) const {
+    const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const {
   oid_t table_oid = index_obj->table_oid;
   const auto local_offset = GetLocalOffset(table_oid, index_obj->column_oids);
   const auto table_offset = table_offset_map_.at(table_oid);
@@ -119,7 +119,7 @@ size_t CompressedIndexConfigContainer::GetGlobalOffset(
 }
 
 bool CompressedIndexConfigContainer::IsSet(
-    const std::shared_ptr<brain::IndexObject> &index_obj) const {
+    const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const {
   size_t offset = GetGlobalOffset(index_obj);
   return cur_index_config_->test(offset);
 }
@@ -128,8 +128,8 @@ bool CompressedIndexConfigContainer::IsSet(const size_t offset) const {
   return cur_index_config_->test(offset);
 }
 
-std::shared_ptr<brain::IndexObject> CompressedIndexConfigContainer::GetIndex(
-    size_t global_offset) const {
+std::shared_ptr<brain::HypotheticalIndexObject>
+CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
   size_t table_offset;
   auto it = table_offset_reverse_map_.lower_bound(global_offset);
   if (it == table_offset_reverse_map_.end()) {
@@ -158,11 +158,12 @@ std::shared_ptr<brain::IndexObject> CompressedIndexConfigContainer::GetIndex(
       catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
   txn_manager_->CommitTransaction(txn);
 
-  return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+  return std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid,
+                                                          col_oids);
 }
 
 void CompressedIndexConfigContainer::SetBit(
-    const std::shared_ptr<IndexObject> &idx_object) {
+    const std::shared_ptr<HypotheticalIndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset);
 }
@@ -172,7 +173,7 @@ void CompressedIndexConfigContainer::SetBit(size_t offset) {
 }
 
 void CompressedIndexConfigContainer::UnsetBit(
-    const std::shared_ptr<IndexObject> &idx_object) {
+    const std::shared_ptr<HypotheticalIndexObject> &idx_object) {
   size_t offset = GetGlobalOffset(idx_object);
   cur_index_config_->set(offset, false);
 }

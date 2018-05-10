@@ -96,14 +96,14 @@ class CompressedIdxConfigTest : public PelotonTest {
   /**
    * @brief Create two indexes on columns (a, b) and (b, c), respectively
    */
-  std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_A(
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> CreateIndex_A(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
     const auto table_obj = db_obj->GetTableWithName(table_name);
     const auto table_oid = table_obj->GetOid();
-    std::vector<std::shared_ptr<brain::IndexObject>> result;
+    std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> result;
 
     auto col_a = table_obj->GetSchema()->GetColumnID("a");
     auto col_b = table_obj->GetSchema()->GetColumnID("b");
@@ -117,9 +117,9 @@ class CompressedIdxConfigTest : public PelotonTest {
                           IndexType::BWTREE, txn);
 
     result.push_back(
-        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_a_b));
+        std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid, index_a_b));
     result.push_back(
-        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_b_c));
+        std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid, index_b_c));
 
     txn_manager_->CommitTransaction(txn);
 
@@ -129,14 +129,14 @@ class CompressedIdxConfigTest : public PelotonTest {
   /**
    * @brief Create one index on columns (a, c)
    */
-  std::vector<std::shared_ptr<brain::IndexObject>> CreateIndex_B(
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> CreateIndex_B(
       const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
     const auto table_obj = db_obj->GetTableWithName(table_name);
     const auto table_oid = table_obj->GetOid();
-    std::vector<std::shared_ptr<brain::IndexObject>> result;
+    std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> result;
 
     auto col_a = table_obj->GetSchema()->GetColumnID("a");
     auto col_c = table_obj->GetSchema()->GetColumnID("c");
@@ -146,7 +146,7 @@ class CompressedIdxConfigTest : public PelotonTest {
                           IndexType::BWTREE, txn);
 
     result.push_back(
-        std::make_shared<brain::IndexObject>(db_oid, table_oid, index_a_c));
+        std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid, index_a_c));
 
     txn_manager_->CommitTransaction(txn);
 
@@ -165,7 +165,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     txn_manager_->CommitTransaction(txn);
   }
 
-  std::shared_ptr<brain::IndexObject> GetIndexObjectFromString(
+  std::shared_ptr<brain::HypotheticalIndexObject> GetHypotheticalIndexObjectFromString(
       const std::string &database_name, const std::string &table_name,
       const std::vector<std::string> &columns) {
     auto txn = txn_manager_->BeginTransaction();
@@ -179,7 +179,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     }
     txn_manager_->CommitTransaction(txn);
 
-    return std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+    return std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid, col_oids);
   }
 
  private:
@@ -225,18 +225,18 @@ TEST_F(CompressedIdxConfigTest, BasicTest) {
   brain::CompressedIndexConfigUtil::AddCandidates(comp_idx_config, query_string,
                                                   add_candidates);
 
-  auto index_empty = GetIndexObjectFromString(database_name, table_name_1, {});
-  auto index_b = GetIndexObjectFromString(database_name, table_name_1, {"b"});
+  auto index_empty = GetHypotheticalIndexObjectFromString(database_name, table_name_1, {});
+  auto index_b = GetHypotheticalIndexObjectFromString(database_name, table_name_1, {"b"});
   auto index_a_b =
-      GetIndexObjectFromString(database_name, table_name_1, {"a", "b"});
+      GetHypotheticalIndexObjectFromString(database_name, table_name_1, {"a", "b"});
   auto index_b_c =
-      GetIndexObjectFromString(database_name, table_name_1, {"b", "c"});
+      GetHypotheticalIndexObjectFromString(database_name, table_name_1, {"b", "c"});
 
   // we should have prefix closure: {}, {b}, {b, c}
-  std::vector<std::shared_ptr<brain::IndexObject>> add_expect_indexes = {
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> add_expect_indexes = {
       index_empty, index_b, index_b_c};
   // since b is primary key, we will ignore index {a, b}
-  std::vector<std::shared_ptr<brain::IndexObject>> drop_expect_indexes = {};
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> drop_expect_indexes = {};
 
   auto add_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
       comp_idx_config, add_expect_indexes);

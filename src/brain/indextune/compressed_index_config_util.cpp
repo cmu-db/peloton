@@ -29,7 +29,7 @@ void CompressedIndexConfigUtil::AddCandidates(
   container.GetTransactionManager()->CommitTransaction(txn);
 
   // Aggregate all columns in the same table
-  std::unordered_map<oid_t, brain::IndexObject> aggregate_map;
+  std::unordered_map<oid_t, brain::HypotheticalIndexObject> aggregate_map;
 
   for (const auto &each_triplet : affected_cols_vector) {
     const auto db_oid = std::get<0>(each_triplet);
@@ -37,12 +37,12 @@ void CompressedIndexConfigUtil::AddCandidates(
     const auto col_oid = std::get<2>(each_triplet);
 
     if (aggregate_map.find(table_oid) == aggregate_map.end()) {
-      aggregate_map[table_oid] = brain::IndexObject();
+      aggregate_map[table_oid] = brain::HypotheticalIndexObject();
       aggregate_map.at(table_oid).db_oid = db_oid;
       aggregate_map.at(table_oid).table_oid = table_oid;
     }
 
-    aggregate_map.at(table_oid).column_oids.insert(col_oid);
+    aggregate_map.at(table_oid).column_oids.push_back(col_oid);
   }
 
   const auto db_oid = aggregate_map.begin()->second.db_oid;
@@ -62,8 +62,8 @@ void CompressedIndexConfigUtil::AddCandidates(
       col_oids.push_back(column_oid);
 
       // Insert prefix index
-      auto idx_new =
-          std::make_shared<brain::IndexObject>(db_oid, table_oid, col_oids);
+      auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
+          db_oid, table_oid, col_oids);
       SetBit(container, add_candidates, idx_new);
     }
   }
@@ -89,7 +89,7 @@ void CompressedIndexConfigUtil::DropCandidates(
   container.GetTransactionManager()->CommitTransaction(txn);
 }
 
-std::shared_ptr<brain::IndexObject>
+std::shared_ptr<brain::HypotheticalIndexObject>
 CompressedIndexConfigUtil::ConvertIndexTriplet(
     CompressedIndexConfigContainer &container,
     const planner::col_triplet &idx_triplet) {
@@ -106,7 +106,8 @@ CompressedIndexConfigUtil::ConvertIndexTriplet(
 
   container.GetTransactionManager()->CommitTransaction(txn);
 
-  return std::make_shared<brain::IndexObject>(db_oid, table_oid, input_oids);
+  return std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid,
+                                                          input_oids);
 }
 
 std::unique_ptr<parser::SQLStatementList>
@@ -128,7 +129,8 @@ CompressedIndexConfigUtil::ToBindedSqlStmtList(
 std::unique_ptr<boost::dynamic_bitset<>>
 CompressedIndexConfigUtil::GenerateBitSet(
     const CompressedIndexConfigContainer &container,
-    const std::vector<std::shared_ptr<brain::IndexObject>> &idx_objs) {
+    const std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+        &idx_objs) {
   auto result = std::unique_ptr<boost::dynamic_bitset<>>(
       new boost::dynamic_bitset<>(container.GetConfigurationCount()));
 
@@ -142,7 +144,7 @@ CompressedIndexConfigUtil::GenerateBitSet(
 void CompressedIndexConfigUtil::SetBit(
     const CompressedIndexConfigContainer &container,
     boost::dynamic_bitset<> &bitmap,
-    const std::shared_ptr<IndexObject> &idx_object) {
+    const std::shared_ptr<HypotheticalIndexObject> &idx_object) {
   size_t offset = container.GetGlobalOffset(idx_object);
   bitmap.set(offset);
 }

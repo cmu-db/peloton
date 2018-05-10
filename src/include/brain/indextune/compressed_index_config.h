@@ -46,11 +46,11 @@ class CompressedIndexConfigContainer {
   /**
    * Get the local offset of an index in a table
    * @param table_oid: the table oid
-   * @param column_oids: a set of column oids, representing the index
+   * @param column_oids: a vector of column oids, representing the index
    * @return the local offset of the index in the bitset
    */
   size_t GetLocalOffset(const oid_t table_oid,
-                        const std::set<oid_t> &column_oids) const;
+                        const std::vector<oid_t> &column_oids) const;
 
   /**
    * Get the global offset of an index in a table
@@ -59,14 +59,15 @@ class CompressedIndexConfigContainer {
    * offset" + "local offset"
    */
   size_t GetGlobalOffset(
-      const std::shared_ptr<brain::IndexObject> &index_obj) const;
+      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
 
   /**
    * Check whether an index is in current configuration or not
    * @param index_obj: the index to be checked
    * @return the bit for that index is set or not
    */
-  bool IsSet(const std::shared_ptr<brain::IndexObject> &index_obj) const;
+  bool IsSet(
+      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
 
   /**
    * Check whether an index is in current configuration or not
@@ -80,13 +81,14 @@ class CompressedIndexConfigContainer {
    * @param global_offset: the global offset
    * @return the index object at "global_offset" of current configuration
    */
-  std::shared_ptr<brain::IndexObject> GetIndex(size_t global_offset) const;
+  std::shared_ptr<brain::HypotheticalIndexObject> GetIndex(
+      size_t global_offset) const;
 
   /**
    * Add an index to current configuration
    * @param idx_object: the index to be added
    */
-  void SetBit(const std::shared_ptr<IndexObject> &idx_object);
+  void SetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
 
   /**
    * Add an index to current configuration
@@ -98,7 +100,7 @@ class CompressedIndexConfigContainer {
    * Remove an index from current configuration
    * @param idx_object: the index to be removed
    */
-  void UnsetBit(const std::shared_ptr<IndexObject> &idx_object);
+  void UnsetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
 
   /**
    * Remove and index from current configuration
