@@ -116,8 +116,6 @@ bool PopulateIndexExecutor::DExecute() {
     }
     // build index without lock
     else{
-      oid_t table_oid = target_table_->GetOid();
-
       // Get the output from seq_scan
       while (children_[0]->Execute()) {
         child_tiles_.emplace_back(children_[0]->GetOutput());
