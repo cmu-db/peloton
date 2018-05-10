@@ -226,7 +226,7 @@ void TransactionContext::ExecOnCommitTriggers() {
 
 bool TransactionContext::UnlockAllLocks(){
   if (lock_info_.size() == 0){
-    LOG_WARN("Unlock shared Lock: no lock found!")
+    LOG_WARN("Unlock shared Lock: no lock found!");
     return true;
   }
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
