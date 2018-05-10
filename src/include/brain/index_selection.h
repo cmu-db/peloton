@@ -30,9 +30,22 @@ struct IndexConfigComparator {
                   const std::pair<IndexConfiguration, double> &s2) {
     // Order by cost. If cost is same, then by the number of indexes
     // Unless the configuration is exactly the same, get some ordering
-    return ((s1.second < s2.second) ||
-            (s1.first.GetIndexCount() < s2.first.GetIndexCount()) ||
-            (s1.first.ToString() < s2.first.ToString()));
+
+    if (s1.second < s2.second) {
+      return true;
+    } else if (s1.second > s2.second) {
+      return false;
+    } else {
+      if (s1.first.GetIndexCount() > s2.first.GetIndexCount()) {
+        return true;
+      } else if (s1.first.GetIndexCount() < s2.first.GetIndexCount()) {
+        return false;
+      } else {
+        // TODO[Siva]: Change this to a better one, choose the one with bigger/
+        // smaller indexes
+        return (s1.first.ToString() < s2.first.ToString());
+      }
+    }
   }
 
   Workload *w;
@@ -48,13 +61,11 @@ class IndexSelection {
    * IndexSelection
    *
    * @param query_set set of queries as a workload
-   * @param max_index_cols maximum number of columns to consider in multi-column
-   * index
-   * @param enumeration_threshold exhaustive enumeration threshold
-   * @param num_indexes number of best indexes to return
+   * @param knobs the tunable parameters of the algorithm that includes
+   * number of indexes to be chosen, threshold for naive enumeration,
+   * maximum number of columns in each index.
    */
-  IndexSelection(Workload &query_set, size_t max_index_cols,
-                 size_t enumeration_threshold, size_t num_indexes);
+  IndexSelection(Workload &query_set, IndexSelectionKnobs knobs);
 
   /**
    * @brief The main external API for the Index Prediction Tool
@@ -65,7 +76,7 @@ class IndexSelection {
   /**
    * @brief Gets the indexable columns of a given query
    */
-  void GetAdmissibleIndexes(parser::SQLStatement *query,
+  void GetAdmissibleIndexes(std::shared_ptr<parser::SQLStatement> query,
                             IndexConfiguration &indexes);
 
   /**
@@ -115,7 +126,8 @@ class IndexSelection {
    * the pool. Otherwise create one and return.
    * Currently, this is used only for unit testing
    */
-  std::shared_ptr<IndexObject> AddConfigurationToPool(IndexObject object);
+  std::shared_ptr<HypotheticalIndexObject> AddConfigurationToPool(
+      HypotheticalIndexObject object);
 
  private:
   /**
@@ -186,7 +198,7 @@ class IndexSelection {
    * @param - config: returns a new index object here
    */
   void IndexObjectPoolInsertHelper(
-      const std::tuple<oid_t, oid_t, oid_t> tuple_col,
+      const std::tuple<oid_t, oid_t, oid_t> &tuple_col,
       IndexConfiguration &config);
 
   /**

@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// cost_and_stats_calculator.h
+// stats_calculator.cpp
 //
 // Identification: src/optimizer/stats_calculator.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,8 +42,8 @@ void StatsCalculator::Visit(const LogicalGet *op) {
     return;
   }
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
-      StatsStorage::GetInstance()->GetTableStats(op->table->GetDatabaseOid(),
-                                                 op->table->GetTableOid(), txn_));
+      StatsStorage::GetInstance()->GetTableStats(
+          op->table->GetDatabaseOid(), op->table->GetTableOid(), txn_));
   // First, get the required stats of the base table
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>> required_stats;
   for (auto &col : required_cols_) {
@@ -143,7 +143,8 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
       column_stats = std::make_shared<ColumnStats>(
           *left_child_group->GetStats(tv_expr->GetColFullName()));
     } else {
-      PELOTON_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      PELOTON_ASSERT(
+          right_child_group->HasColumnStats(tv_expr->GetColFullName()));
       column_stats = std::make_shared<ColumnStats>(
           *right_child_group->GetStats(tv_expr->GetColFullName()));
     }
@@ -251,95 +252,11 @@ void StatsCalculator::UpdateStatsForFilter(
   double selectivity = 1.f;
   for (auto &annotated_expr : predicates) {
     // Loop over conjunction exprs
-    selectivity *= CalculateSelectivityForPredicate(predicate_table_stats,
-                                                    annotated_expr.expr.get());
+    selectivity *= util::CalculateSelectivityForPredicate(
+        predicate_table_stats, annotated_expr.expr.get());
   }
   // Update selectivity
   memo_->GetGroupByID(gexpr_->GetGroupID())->SetNumRows(num_rows * selectivity);
-}
-
-// Calculate the selectivity given the predicate and the stats of columns in the
-// predicate
-double StatsCalculator::CalculateSelectivityForPredicate(
-    const std::shared_ptr<TableStats> predicate_table_stats,
-    const expression::AbstractExpression *expr) {
-  double selectivity = 1.f;
-  if (predicate_table_stats->GetColumnCount() == 0 ||
-      predicate_table_stats->GetColumnStats(0)->num_rows == 0) {
-    return selectivity;
-  }
-  // Base case : Column Op Val
-  if ((expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
-       (expr->GetChild(1)->GetExpressionType() ==
-            ExpressionType::VALUE_CONSTANT ||
-        expr->GetChild(1)->GetExpressionType() ==
-            ExpressionType::VALUE_PARAMETER)) ||
-      (expr->GetChild(1)->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
-       (expr->GetChild(0)->GetExpressionType() ==
-            ExpressionType::VALUE_CONSTANT ||
-        expr->GetChild(0)->GetExpressionType() ==
-            ExpressionType::VALUE_PARAMETER))) {
-    int right_index =
-        expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE
-            ? 1
-            : 0;
-
-    auto left_expr = expr->GetChild(1 - right_index);
-    PELOTON_ASSERT(left_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto col_name =
-        reinterpret_cast<const expression::TupleValueExpression *>(left_expr)
-            ->GetColFullName();
-
-    auto expr_type = expr->GetExpressionType();
-    if (right_index == 0) {
-      switch (expr_type) {
-        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-          expr_type = ExpressionType::COMPARE_GREATERTHANOREQUALTO;
-          break;
-        case ExpressionType::COMPARE_LESSTHAN:
-          expr_type = ExpressionType::COMPARE_GREATERTHAN;
-          break;
-        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-          expr_type = ExpressionType::COMPARE_LESSTHANOREQUALTO;
-          break;
-        case ExpressionType::COMPARE_GREATERTHAN:
-          expr_type = ExpressionType::COMPARE_LESSTHAN;
-          break;
-        default:
-          break;
-      }
-    }
-
-    type::Value value;
-    if (expr->GetChild(right_index)->GetExpressionType() ==
-        ExpressionType::VALUE_CONSTANT) {
-      value = reinterpret_cast<expression::ConstantValueExpression *>(
-                  expr->GetModifiableChild(right_index))
-                  ->GetValue();
-    } else {
-      value = type::ValueFactory::GetParameterOffsetValue(
-                  reinterpret_cast<expression::ParameterValueExpression *>(
-                      expr->GetModifiableChild(right_index))
-                      ->GetValueIdx())
-                  .Copy();
-    }
-    ValueCondition condition(col_name, expr_type, value);
-    selectivity =
-        Selectivity::ComputeSelectivity(predicate_table_stats, condition);
-  } else if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND ||
-             expr->GetExpressionType() == ExpressionType::CONJUNCTION_OR) {
-    double left_selectivity = CalculateSelectivityForPredicate(
-        predicate_table_stats, expr->GetChild(0));
-    double right_selectivity = CalculateSelectivityForPredicate(
-        predicate_table_stats, expr->GetChild(1));
-    if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
-      selectivity = left_selectivity * right_selectivity;
-    } else {
-      selectivity = left_selectivity + right_selectivity -
-                    left_selectivity * right_selectivity;
-    }
-  }
-  return selectivity;
 }
 
 }  // namespace optimizer

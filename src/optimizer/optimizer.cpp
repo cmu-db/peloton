@@ -21,16 +21,16 @@
 #include "common/exception.h"
 
 #include "optimizer/binding.h"
-#include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
-#include "optimizer/optimize_context.h"
-#include "optimizer/optimizer_task_pool.h"
-#include "optimizer/plan_generator.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_to_operator_transformer.h"
+#include "optimizer/input_column_deriver.h"
+#include "optimizer/plan_generator.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -44,20 +44,13 @@
 
 #include "storage/data_table.h"
 
-#include "binder/bind_node_visitor.h"
-
-using std::make_shared;
 using std::vector;
 using std::unordered_map;
-using std::make_shared;
 using std::shared_ptr;
 using std::unique_ptr;
 using std::move;
 using std::pair;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::unordered_map;
-using std::vector;
+using std::make_shared;
 
 namespace peloton {
 namespace optimizer {
@@ -148,18 +141,18 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 // Return an optimized physical query tree for the given parse tree along
 // with the cost.
 std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
-    parser::SQLStatement *parsed_statement,
+    std::shared_ptr<parser::SQLStatement> parsed_statement,
     concurrency::TransactionContext *txn) {
   metadata_.txn = txn;
 
   // Generate initial operator tree to work with from the parsed
   // statement object.
   std::shared_ptr<GroupExpression> g_expr =
-      InsertQueryTree(parsed_statement, txn);
+      InsertQueryTree(parsed_statement.get(), txn);
   GroupID root_id = g_expr->GetGroupID();
 
   // Get the physical properties of the final plan that must be enforced
-  auto query_info = GetQueryInfo(parsed_statement);
+  auto query_info = GetQueryInfo(parsed_statement.get());
 
   // Start with the base expression and explore all the possible transformations
   // and add them to the local context.
@@ -179,32 +172,33 @@ std::unique_ptr<OptimizerPlanInfo> Optimizer::GetOptimizedPlanInfo(
     auto group = GetMetadata().memo.GetGroupByID(root_id);
     auto best_expr = group->GetBestExpression(query_info.physical_props);
 
-    // TODO[vamshi]: Comment this code out. Only for debugging.
-    // Find out the index scan plan cols.
-    std::deque<GroupID> queue;
-    queue.push_back(root_id);
-    while (queue.size() != 0) {
-      auto front = queue.front();
-      queue.pop_front();
-      auto group = GetMetadata().memo.GetGroupByID(front);
-      auto best_expr = group->GetBestExpression(query_info.physical_props);
-
-      PELOTON_ASSERT(best_expr->Op().IsPhysical());
-      if (best_expr->Op().GetType() == OpType::IndexScan) {
-        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
-        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
-        LOG_DEBUG("Index Scan on %s",
-                  index_scan_op->table_->GetTableName().c_str());
-        for (auto col : index_scan_op->key_column_id_list) {
-          (void)col;  // for debug mode
-          LOG_DEBUG("Col: %d", col);
-        }
-      }
-
-      for (auto child_grp : best_expr->GetChildGroupIDs()) {
-        queue.push_back(child_grp);
-      }
-    }
+    //    // TODO[vamshi]: Comment this code out. Only for debugging.
+    //    // Find out the index scan plan cols.
+    //    std::deque<GroupID> queue;
+    //    queue.push_back(root_id);
+    //    while (queue.size() != 0) {
+    //      auto front = queue.front();
+    //      queue.pop_front();
+    //      auto group = GetMetadata().memo.GetGroupByID(front);
+    //      auto best_expr =
+    //      group->GetBestExpression(query_info.physical_props);
+    //
+    //      PELOTON_ASSERT(best_expr->Op().IsPhysical());
+    //      if (best_expr->Op().GetType() == OpType::IndexScan) {
+    //        PELOTON_ASSERT(best_expr->GetChildrenGroupsSize() == 0);
+    //        auto index_scan_op = best_expr->Op().As<PhysicalIndexScan>();
+    //        LOG_DEBUG("Index Scan on %s",
+    //                  index_scan_op->table_->GetTableName().c_str());
+    //        for (auto col : index_scan_op->key_column_id_list) {
+    //          (void)col;  // for debug mode
+    //          LOG_DEBUG("Col: %d", col);
+    //        }
+    //      }
+    //
+    //      for (auto child_grp : best_expr->GetChildGroupIDs()) {
+    //        queue.push_back(child_grp);
+    //      }
+    //    }
 
     info_obj->cost = best_expr->GetCost(query_info.physical_props);
     info_obj->plan = std::move(best_plan);

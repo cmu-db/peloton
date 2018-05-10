@@ -48,31 +48,20 @@ class IndexSelectionContext {
    * @brief Constructor
    *
    */
-  IndexSelectionContext(size_t num_iterations,
-                        size_t naive_enumeration_threshold,
-                        size_t num_indexes);
+  IndexSelectionContext(IndexSelectionKnobs knobs);
 
  private:
   friend class IndexSelection;
 
   // memoization of the cost of a query for a given configuration
   std::unordered_map<std::pair<IndexConfiguration, parser::SQLStatement *>,
-                     double, KeyHasher>
-      memo_;
+                     double, KeyHasher> memo_;
   // map from index configuration to the sharedpointer of the
   // IndexConfiguration object
   IndexObjectPool pool_;
 
-  // Tunable knobs of the index selection algorithm
-  // The number of iterations of the main algorithm which is also the maximum
-  // number of columns in a single index as in ith iteration we consider indexes
-  // with i or lesser columns
-  size_t num_iterations_;
-  // The number of indexes up to which we will do exhaustive enumeration
-  size_t naive_enumeration_threshold_;
-  // The number of indexes in the final configuration returned by the
-  // IndexSelection algorithm
-  size_t num_indexes_;
+  // The knobs for this run of the algorithm
+  IndexSelectionKnobs knobs_;
 };
 
 }  // namespace brain

@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/column_stats_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -198,7 +198,7 @@ size_t ColumnStatsCatalog::GetTableStats(
   }
   auto tile = (*result_tiles)[0].get();
   size_t tuple_count = tile->GetTupleCount();
-  LOG_DEBUG("Tuple count: %lu", tuple_count);
+  LOG_TRACE("Tuple count: %lu", tuple_count);
   if (tuple_count == 0) {
     return 0;
   }

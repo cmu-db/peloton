@@ -6,7 +6,7 @@
 //
 // Identification: src/include/catalog/abstract_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -65,6 +65,12 @@ class AbstractCatalog {
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
+                         concurrency::TransactionContext *txn) const;
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
+                         std::vector<type::Value> values,
+                         std::vector<ExpressionType> expr_types,
                          concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>

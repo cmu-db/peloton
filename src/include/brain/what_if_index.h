@@ -45,7 +45,7 @@ class WhatIfIndex {
    * @return physical plan info
    */
   static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndBestPlanTree(
-      parser::SQLStatement *query, IndexConfiguration &config,
+      std::shared_ptr<parser::SQLStatement> query, IndexConfiguration &config,
       std::string database_name);
 
  private:
@@ -57,8 +57,8 @@ class WhatIfIndex {
    * @param query - a parsed and bound SQL statement
    * @param table_names - where the table names will be stored.
    */
-  static void GetTablesReferenced(parser::SQLStatement *query,
-                                  std::vector<std::string> &table_names);
+  static void GetTablesReferenced(std::shared_ptr<parser::SQLStatement> query,
+                                  std::unordered_set<std::string> &table_names);
   /**
    * @brief Creates a hypothetical index catalog object, that would be used
    * to fill the catalog cache.
@@ -67,7 +67,7 @@ class WhatIfIndex {
    * @return index catalog object
    */
   static std::shared_ptr<catalog::IndexCatalogObject> CreateIndexCatalogObject(
-      IndexObject *obj);
+      HypotheticalIndexObject *obj);
   /**
    * @brief a monotonically increasing sequence number for creating dummy oids
    * for the given hypothetical indexes.
