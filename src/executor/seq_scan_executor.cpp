@@ -84,8 +84,10 @@ bool SeqScanExecutor::DExecute() {
       !(GetRawNode()->GetChildren().size() > 0 &&
         GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
             PlanNodeType::CREATE &&
-        ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-                ->GetCreateType() == CreateType::INDEX)) {
+        (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+	 ->GetCreateType() == CreateType::INDEX ||
+      ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+	 ->GetCreateType() == CreateType::INDEX_CONCURRENT))){
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
 
@@ -130,8 +132,10 @@ bool SeqScanExecutor::DExecute() {
             GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
                 PlanNodeType::CREATE &&
             // If it is, confirm it is for indexes
-            ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-                    ->GetCreateType() == CreateType::INDEX)) {
+            (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+	     ->GetCreateType() == CreateType::INDEX ||
+	   ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+	     ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
     PELOTON_ASSERT(target_table_ != nullptr);

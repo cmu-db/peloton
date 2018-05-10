@@ -73,7 +73,7 @@ public class IndexTest extends PLTestBase {
                     Statement stmt = c.createStatement();
                     stmt.execute("BEGIN;");
                     Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
                     stmt.execute("END;");
                     stmt.close();
                     c.close();
@@ -121,6 +121,9 @@ public class IndexTest extends PLTestBase {
 		 new int [] {-1, -1});
 	    assertNoMoreRows(rs);
 	}
+	else{
+	    assert(false);
+	}
     }
 
     /**
@@ -137,7 +140,7 @@ public class IndexTest extends PLTestBase {
                     Statement stmt = c.createStatement();
                     stmt.execute("BEGIN;");
                     Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
                     stmt.execute("END;");
                     stmt.close();
                     c.close();
@@ -185,6 +188,9 @@ public class IndexTest extends PLTestBase {
 		     new int [] {-1, 0});
 	    assertNoMoreRows(rs);
 	}
+	else{
+	    assert(false);
+	}
     }
 
     /**
@@ -201,7 +207,7 @@ public class IndexTest extends PLTestBase {
                     Statement stmt = c.createStatement();
                     stmt.execute("BEGIN;");
                     Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX i1 ON tbl(c1);");
+                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
                     stmt.execute("END;");
                     stmt.close();
                     c.close();
@@ -248,6 +254,9 @@ public class IndexTest extends PLTestBase {
 		     new String [] {"c1", "c2"},
 		     new int [] {1, 1});
 	    assertNoMoreRows(rs);
+	}
+	else{
+	    assert(false);
 	}
     }
 

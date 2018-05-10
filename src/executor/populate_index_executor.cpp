@@ -117,6 +117,8 @@ bool PopulateIndexExecutor::DExecute() {
     }
     // build index without lock
     else{
+
+      LOG_DEBUG("Non-blocking create index");
       // Get the output from seq_scan
       while (children_[0]->Execute()) {
         child_tiles_.emplace_back(children_[0]->GetOutput());
