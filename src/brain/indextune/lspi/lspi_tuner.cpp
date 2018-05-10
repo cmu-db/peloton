@@ -70,7 +70,7 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   }
 
   vector_eig new_config_vec;
-  index_config_->ToCoveredEigen(optimal_config_set, new_config_vec);
+  CompressedIndexConfigUtil::ToEigen(optimal_config_set, new_config_vec);
   // Step 4: Update the LSPI model based on current most optimal query config
   lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
@@ -94,7 +94,10 @@ void LSPIIndexTuner::FindOptimalConfig(
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,
           query_config_vec);
-      index_config_->ToCoveredEigen(config_vec);
+      /**
+       * The paper converts the current representation
+       */
+      CompressedIndexConfigUtil::ToEigen(*index_config_->GetCurrentIndexConfig(), config_vec);
       double hypothetical_exec_cost = rlse_model_->Predict(query_config_vec);
       double hypothetical_config_cost = lstd_model_->Predict(config_vec);
       double cost = hypothetical_config_cost + hypothetical_exec_cost;

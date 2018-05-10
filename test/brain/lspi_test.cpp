@@ -107,7 +107,7 @@ TEST_F(LSPITests, TuneTest) {
 
   CreateDatabase(database_name);
   std::set<oid_t> ori_table_oids;
-  brain::CompressedIndexConfigUtil::GetOriTables(database_name, ori_table_oids);
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name, ori_table_oids);
 
   CreateTable(table_name);
   InsertIntoTable(table_name, num_rows);

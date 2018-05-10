@@ -40,50 +40,19 @@ class CompressedIndexConfigContainer {
    * bitset)
    */
   explicit CompressedIndexConfigContainer(
-      const std::string &database_name, const std::set<oid_t> &ori_table_oids,
+      const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
       catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
   /**
-   * Get the local offset of an index in a table
-   * @param table_oid: the table oid
-   * @param column_oids: a vector of column oids, representing the index
-   * @return the local offset of the index in the bitset
+   * @brief Given a new bitset, add/drop corresponding indexes and update
+   * current bitset
    */
-  size_t GetLocalOffset(const oid_t table_oid,
-                        const std::vector<oid_t> &column_oids) const;
+  void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
 
-  /**
-   * Get the global offset of an index in a table
-   * @param index_obj: the index
-   * @return the global offset of the index in the bitset, which is "table
-   * offset" + "local offset"
-   */
-  size_t GetGlobalOffset(
-      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
 
-  /**
-   * Check whether an index is in current configuration or not
-   * @param index_obj: the index to be checked
-   * @return the bit for that index is set or not
-   */
-  bool IsSet(
-      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
 
-  /**
-   * Check whether an index is in current configuration or not
-   * @param offset: the global offset of the index
-   * @return the bit for that index is set or not
-   */
-  bool IsSet(const size_t offset) const;
-
-  /**
-   * Given a global offset, get the corresponding index
-   * @param global_offset: the global offset
-   * @return the index object at "global_offset" of current configuration
-   */
-  std::shared_ptr<brain::HypotheticalIndexObject> GetIndex(
-      size_t global_offset) const;
+  // **Useful setter fns**
 
   /**
    * Add an index to current configuration
@@ -109,61 +78,100 @@ class CompressedIndexConfigContainer {
    */
   void UnsetBit(size_t offset);
 
-  /**
-   * @brief Given a new bitset, add/drop corresponding indexes and update
-   * current bitset
-   */
-  void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
 
-  // Getters
+
+  // **Useful getter fns**
+
+  /**
+   * Get the global offset of an index in a table
+   * @param index_obj: the index
+   * @return the global offset of the index in the bitset
+   */
+  size_t GetGlobalOffset(
+      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
+
+  /**
+ * Check whether an index is in current configuration or not
+ * @param index_obj: the index to be checked
+ * @return the bit for that index is set or not
+ */
+  bool IsSet(
+      const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const;
+
+  /**
+   * Check whether an index is in current configuration or not
+   * @param offset: the global offset of the index
+   * @return the bit for that index is set or not
+   */
+  bool IsSet(const size_t offset) const;
+
   /**
    * @brief Get the total number of possible indexes in current database
    */
   size_t GetConfigurationCount() const;
 
   /**
+   * Given a global offset, get the corresponding index
+   * @param global_offset: the global offset
+   * @return the index object at "global_offset" of current configuration
+   */
+  std::shared_ptr<brain::HypotheticalIndexObject> GetIndex(
+      size_t global_offset) const;
+
+  /**
    * @brief Get the current index configuration as a bitset(read-only)
    */
   const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
+
+  /**
+   * @brief Get instance of the txn manager
+   */
   concurrency::TransactionManager *GetTransactionManager();
+  /**
+   * @brief Get instance of the catalog
+   */
   catalog::Catalog *GetCatalog();
+
   std::string GetDatabaseName() const;
-  size_t GetTableOffset(oid_t table_oid) const;
-
-  // Utility functions
+  /**
+   * @brief Given a table oid get the bitset offset where it lies
+   */
+  size_t GetTableOffsetStart(oid_t table_oid) const;
+  /**
+   * @brief Given a table oid get the bitset offset where it ends
+   */
+  size_t GetTableOffsetEnd(oid_t table_oid) const;
+  /**
+   * @brief Given a table oid get the bitset offset the next table_oid lies.
+   * Here next refers to next on the bitset
+   */
+  size_t GetNextTableIdx(size_t start_idx) const;
+  /**
+   * @brief Get the total number of indexes on a given table
+   */
+  size_t GetNumIndexes(oid_t table_oid) const;
+  /**
+   * @brief Get the next index configuration offset
+   */
+  size_t GetNextSetIndexConfig(size_t from_idx) const;
+  /**
+   * @brief Check if a table has any index config
+   */
+  bool EmptyConfig(oid_t table_oid) const;
+  /**
+   * @brief Extremely verbose representation
+   */
   std::string ToString() const;
-  /**
-   * @brief Get the Eigen vector/feature representation of the current index
-   * config bitset
-   */
-  void ToEigen(vector_eig &config_vec) const;
-
-  /**
-   * @brief Get the Eigen vector/feature representation from the
-   * provided config set
-   */
-  void ToEigen(const boost::dynamic_bitset<> &config_set,
-               vector_eig &config_vec) const;
-
-  /**
-   * @brief Get the Eigen vector/feature representation of the covered index
-   * config
-   */
-  void ToCoveredEigen(vector_eig &config_vec) const;
-  /**
-   * Get the covered index configuration feature vector.
-   * The difference between this and `GetCurrentIndexConfig` is that
-   * all single column index configurations by a multicolumn index are
-   * considered covered and set to 1.
-   * @param config_vec: configuration vector to construct
-   */
-  void ToCoveredEigen(const boost::dynamic_bitset<> &config_set,
-                      vector_eig &config_vec) const;
 
  private:
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
+  void EnumerateConfigurations(const std::vector<oid_t>& cols,
+                               size_t max_index_size, std::map<std::vector<oid_t>, size_t>& indexconf_id_map,
+                               std::map<size_t, std::vector<oid_t>>& id_indexconf_map,
+                               std::vector<oid_t>& index_conf, size_t& next_id);
+
 
   /**
    * Outer mapping: table_oid -> inner mapping
@@ -172,49 +180,37 @@ class CompressedIndexConfigContainer {
    * For example, table T (table_oid = 12345) has three columns: A (column_oid =
    * 5), B (column_oid = 3), C (column_oid = 14). Then we will have:
    * table_id_map_[12345] ==> inner mapping
-   * inner mapping ==> {5->0, 3->1, 14, 2} (here 5, 3 and 14 are column oids, 0,
-   * 1 and 2 are interal mapping IDs)
+   * inner mapping ==> {Nothing->0, {5}->1, {3}->2, {14}-> 3, {5, 3} -> 4....
+   * Basically every possible single and multicol index ordering gets a unique identifier.
+   * Identifiers continue when we go from one table to the next - i.e. if table T1 ends at id 15
+   * Table T2 starts at 16 and goes on from there.
+   * TODO(saatviks): Come up with an even more compressed rep.(like eg. a->0, b->1, c->2
+   * and Nothing = 000, {a} = 001, {ab} = 011, etc. Problem is this doesnt work for
+   * permutations - only for combinations).
    */
-  std::unordered_map<oid_t, std::unordered_map<oid_t, size_t>> table_id_map_;
+  std::unordered_map<oid_t, std::map<std::vector<oid_t>, size_t>> table_indexid_map_;
 
   /**
    * Outer mapping: table_oid -> inner reverse mapping
-   * Inner reverse mapping: internal mapping ID -> column_oid
-   *
-   * Using the same example as above, now we will have:
-   * table_id_map_[12345] ==> inner reverse mapping
-   * inner revserse mapping ==> {0->5, 1->3, 2->14} (here 5, 3 and 14 are column
-   * oids, 0, 1 and 2 are interal mapping IDs)
+   * Inner reverse mapping is the reverse of `inner mapping`
+   * explained above
    */
-  std::unordered_map<oid_t, std::unordered_map<size_t, oid_t>> id_table_map_;
+  std::unordered_map<oid_t, std::map<size_t, std::vector<oid_t>>> indexid_table_map_;
 
   /**
-   * the mapping between table_oid and the starting position of table in the
-   * bitset.
-   *
-   * For example, table A (table_oid = 111) has 3 columns (8 possible index
-   * configs in total), table B (table_oid =
-   * 222) has 2 columns (4 possible index configs in total), table C (table_oid
-   * = 333) has 4 columns (16 possible index configs in total).
-   *
-   * Then we will have:
-   * table_offset_map_[111] = 0
-   * table_offset_map_[222] = 8
-   * table_offset_map_[333] = 12
+   * In order to enable faster table->col lookups we also store table offsets separately.
+   * This also allows for other functionality.
    */
   std::map<oid_t, size_t> table_offset_map_;
 
   // This map is just the reverse mapping of table_offset_map_
   std::map<size_t, oid_t> table_offset_reverse_map_;
 
-  // TODO(weichenl): Remove both these maps later
-  // This map stores an index's oid -> its global offset in the bitset
-  std::unordered_map<oid_t, size_t> index_id_map_;
+  // This map stores global offset -> index's oid
+  std::unordered_map<size_t, oid_t> offset_to_indexoid_;
 
-  // This map is the reverse mapping of index_id_map_
-  std::unordered_map<size_t, oid_t> index_id_reverse_map_;
-
-  // the next offset of a new table
+  // the next offset of a new table(during construction)
+  // the end pointer - post construction
   size_t next_table_offset_;
 
   std::unique_ptr<boost::dynamic_bitset<>> cur_index_config_;

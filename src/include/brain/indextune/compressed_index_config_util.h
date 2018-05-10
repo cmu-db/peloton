@@ -83,8 +83,15 @@ class CompressedIndexConfigUtil {
       const boost::dynamic_bitset<> &drop_candidate_set,
       vector_eig &query_config_vec);
 
-  static void GetOriTables(const std::string &db_name,
+  static void GetIgnoreTables(const std::string &db_name,
                            std::set<oid_t> &ori_table_oids);
+
+  /**
+   * @brief Get the Eigen vector/feature representation from the
+   * provided config set
+   */
+  static void ToEigen(const boost::dynamic_bitset<> &config_set,
+                      vector_eig &config_vec);
 
  private:
   /**

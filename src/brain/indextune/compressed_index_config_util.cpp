@@ -51,7 +51,7 @@ void CompressedIndexConfigUtil::AddCandidates(
     const auto table_oid = it.first;
     const std::set<oid_t> temp_oids(it.second.column_oids.begin(),
                                     it.second.column_oids.end());
-    const auto table_offset = container.GetTableOffset(table_oid);
+    const auto table_offset = container.GetTableOffsetStart(table_oid);
 
     // Insert empty index
     add_candidates.set(table_offset);
@@ -180,7 +180,7 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
   }
 }
 
-void CompressedIndexConfigUtil::GetOriTables(const std::string &db_name,
+void CompressedIndexConfigUtil::GetIgnoreTables(const std::string &db_name,
                                              std::set<oid_t> &ori_table_oids) {
   peloton::concurrency::TransactionManager *txn_manager =
       &concurrency::TransactionManagerFactory::GetInstance();
@@ -190,11 +190,23 @@ void CompressedIndexConfigUtil::GetOriTables(const std::string &db_name,
                               ->GetDatabaseObject(db_name, txn)
                               ->GetTableObjects();
 
-  for (const auto it : table_objs) {
+  for (const auto &it : table_objs) {
     ori_table_oids.insert(it.first);
   }
 
   txn_manager->CommitTransaction(txn);
+}
+
+void CompressedIndexConfigUtil::ToEigen(
+    const boost::dynamic_bitset<> &config_set, vector_eig &config_vec) {
+  // Note that the representation is reversed - but this should not affect
+  // anything
+  config_vec = vector_eig::Zero(config_set.size());
+  size_t config_id = config_set.find_first();
+  while (config_id != boost::dynamic_bitset<>::npos) {
+    config_vec[config_id] = 1.0;
+    config_id = config_set.find_next(config_id);
+  }
 }
 
 }  // namespace brain
