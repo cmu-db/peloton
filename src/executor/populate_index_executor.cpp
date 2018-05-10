@@ -71,6 +71,7 @@ bool PopulateIndexExecutor::DExecute() {
         LOG_TRACE("Cannot obtain lock for the table, abort!");
       }
       else{
+        LOG_WARN("Exclusive lock success, will last until populate index is over.");
         dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
       }
 
