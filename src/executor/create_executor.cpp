@@ -47,6 +47,8 @@ bool CreateExecutor::DExecute() {
 
   UNUSED_ATTRIBUTE bool result = false;
 
+  LOG_TRACE("node type = %d", static_cast<int>(node.GetCreateType()));
+
   switch (node.GetCreateType()) {
     case CreateType::DB: {
       result = CreateDatabase(node);
@@ -65,6 +67,12 @@ bool CreateExecutor::DExecute() {
 
     // if query was for creating index
     case CreateType::INDEX: {
+      result = CreateIndex(node);
+      break;
+    }
+
+      // if query was for creating index concurrently
+    case CreateType::INDEX_CONCURRENT: {
       result = CreateIndex(node);
       break;
     }
@@ -91,11 +99,15 @@ bool CreateExecutor::DExecute() {
 }
 
 bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
+  LOG_TRACE("begin create db");
   auto txn = context_->GetTransaction();
+  LOG_TRACE("get txn");
   auto database_name = node.GetDatabaseName();
+  LOG_TRACE("node dbname = %s", node.GetDatabaseName().c_str());
   // invoke logic within catalog.cpp
   ResultType result =
       catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
+  LOG_TRACE("get result");
   txn->SetResult(result);
   LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   return (true);

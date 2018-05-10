@@ -323,6 +323,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::INDEX: {
       return "INDEX";
     }
+    case CreateType::INDEX_CONCURRENT: {
+      return "CONCURRENT INDEX";
+    }
     case CreateType::CONSTRAINT: {
       return "CONSTRAINT";
     }
@@ -674,6 +677,9 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
             query_type = QueryType::QUERY_CREATE_DB;
             break;
           case parser::CreateStatement::CreateType::kIndex:
+            query_type = QueryType::QUERY_CREATE_INDEX;
+            break;
+          case parser::CreateStatement::CreateType::kIndexConcurrent:
             query_type = QueryType::QUERY_CREATE_INDEX;
             break;
           case parser::CreateStatement::CreateType::kTable:

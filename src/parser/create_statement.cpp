@@ -51,6 +51,18 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
          << "Type : " << IndexTypeToString(index_type);
       break;
     }
+    case CreateStatement::CreateType::kIndexConcurrent: {
+      os << "Create type: Concurrent Index" << std::endl;
+      os << StringUtil::Indent(num_indent + 1) << index_name << std::endl;
+      os << StringUtil::Indent(num_indent + 1)
+         << "INDEX : table : " << GetTableName() << " unique : " << unique
+         << " attrs : ";
+      for (auto &key : index_attrs) os << key << " ";
+      os << std::endl;
+      os << StringUtil::Indent(num_indent + 1)
+         << "Type : " << IndexTypeToString(index_type);
+      break;
+    }
     case CreateStatement::CreateType::kTrigger: {
       os << "Create type: Trigger" << std::endl;
       os << StringUtil::Indent(num_indent + 1)

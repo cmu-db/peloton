@@ -42,6 +42,7 @@ namespace catalog {
 
 // Get instance of the global catalog
 Catalog *Catalog::GetInstance() {
+  LOG_TRACE("get instance");
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -53,6 +54,7 @@ Catalog *Catalog::GetInstance() {
  * 3) insert peloton into pg_database, catalog tables into pg_table
  */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
+  LOG_TRACE("init catalog");
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -214,6 +216,7 @@ void Catalog::Bootstrap() {
 
 ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::TransactionContext *txn) {
+  LOG_TRACE("db name = %s", database_name.c_str());
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            database_name);

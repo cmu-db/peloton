@@ -34,6 +34,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string schema_name,
       create_type(c_type) {}
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
+  LOG_TRACE("plan type = %d", static_cast<int>(parse_tree->type));
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;
@@ -153,8 +154,15 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       table_schema = schema;
       break;
     }
-    case parser::CreateStatement::CreateType::kIndex: {
-      create_type = CreateType::INDEX;
+    case parser::CreateStatement::CreateType::kIndex:
+    case parser::CreateStatement::CreateType::kIndexConcurrent: // support concurrent create index
+    {
+      if (parse_tree->type == parser::CreateStatement::CreateType::kIndex) {
+        create_type = CreateType::INDEX;
+      } else {
+        // support concurrent create index
+        create_type = CreateType::INDEX_CONCURRENT;
+      }
       index_name = std::string(parse_tree->index_name);
       table_name = std::string(parse_tree->GetTableName());
       schema_name = std::string(parse_tree->GetSchemaName());
