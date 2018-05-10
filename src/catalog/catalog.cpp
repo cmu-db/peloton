@@ -559,7 +559,10 @@ ResultType Catalog::CreateIndex(
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     auto table_object = database_object->GetTableObject(table_oid);
-    auto index_object = table_object->GetIndexObject(index_name);
+
+    auto database_oid = database_object->GetDatabaseOid();
+    auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
+    auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
 
     if (index_object != nullptr)
       throw CatalogException("Index " + index_name + " already exists in" +
@@ -845,7 +848,7 @@ ResultType Catalog::DropIndex(std::string database_name, std::string index_name,
             table->GetName().c_str());
 
   // register index object in rw_object_set
-  table->GetIndexWithOid(index_oid);
+  table->DropIndexWithOid(index_oid);
   txn->RecordDrop(database_oid, index_object->GetTableOid(), index_oid);
 
   return ResultType::SUCCESS;
