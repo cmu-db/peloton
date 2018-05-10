@@ -35,7 +35,7 @@ class PopulateIndexPlan : public AbstractPlan {
   PopulateIndexPlan &operator=(const PopulateIndexPlan &&) = delete;
 
   explicit PopulateIndexPlan(storage::DataTable *table,
-                             std::vector<oid_t> column_ids, std::string index_name);
+                             std::vector<oid_t> column_ids, std::string index_name, bool concurrent);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::POPULATE_INDEX;
@@ -49,6 +49,8 @@ class PopulateIndexPlan : public AbstractPlan {
 
   const std::string GetIndexName() const { return index_name_; }
 
+  const bool GetConcurrent() const { return concurrent_; }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new PopulateIndexPlan(target_table_, column_ids_, index_name_));
@@ -61,6 +63,8 @@ class PopulateIndexPlan : public AbstractPlan {
   std::vector<oid_t> column_ids_;
   /** @brief Index name */
   std::string index_name_;
+  /** @brief If the index is to be created concurrently */
+  bool concurrent_;
 
 };
 }

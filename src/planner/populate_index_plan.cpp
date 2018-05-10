@@ -19,7 +19,7 @@
 namespace peloton {
 namespace planner {
 PopulateIndexPlan::PopulateIndexPlan(storage::DataTable *table,
-                                     std::vector<oid_t> column_ids, std::string index_name)
-    : target_table_(table), column_ids_(column_ids), index_name_(index_name) {}
+                                     std::vector<oid_t> column_ids, std::string index_name, bool concurrent)
+    : target_table_(table), column_ids_(column_ids), index_name_(index_name), concurrent_(concurrent) {}
 }
 }

@@ -45,6 +45,7 @@ bool PopulateIndexExecutor::DInit() {
   target_table_ = node.GetTable();
   column_ids_ = node.GetColumnIds();
   index_name_ = node.GetIndexName();
+  concurrent_ = node.GetConcurrent();
   done_ = false;
 
   return true;
@@ -56,61 +57,108 @@ bool PopulateIndexExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {
-    oid_t table_oid = target_table_->GetOid();
 
-    // Lock the table to exclusive
-    // TODO: add non-blocking version. Need to add some identifier
-    // for switching between blocking/non-blocking.
-    concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-    LOG_WARN("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
-    bool lock_success = lm->LockExclusive(table_oid);
-    concurrency::LockManager::SafeLock dummy;
-    if (!lock_success) {
-      LOG_TRACE("Cannot obtain lock for the table, abort!");
-    }
-    else{
-      dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
-    }
+    // Build index with lock
+    if (concurrent_ == false){
+      oid_t table_oid = target_table_->GetOid();
+      // Lock the table to exclusive
+      // for switching between blocking/non-blocking.
+      concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+      LOG_WARN("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+      bool lock_success = lm->LockExclusive(table_oid);
+      concurrency::LockManager::SafeLock dummy;
+      if (!lock_success) {
+        LOG_TRACE("Cannot obtain lock for the table, abort!");
+      }
+      else{
+        dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
+      }
 
-    // Get the output from seq_scan
-    while (children_[0]->Execute()) {
-      child_tiles_.emplace_back(children_[0]->GetOutput());
-    }
+      // Get the output from seq_scan
+      while (children_[0]->Execute()) {
+        child_tiles_.emplace_back(children_[0]->GetOutput());
+      }
 
-    if (child_tiles_.size() == 0) {
-      LOG_TRACE("PopulateIndex Executor : -- no child tiles ");
-    }
+      if (child_tiles_.size() == 0) {
+        LOG_TRACE("PopulateIndex Executor : -- no child tiles ");
+      }
 
-    auto target_table_schema = target_table_->GetSchema();
+      auto target_table_schema = target_table_->GetSchema();
 
-    std::unique_ptr<storage::Tuple> tuple(
-        new storage::Tuple(target_table_schema, true));
+      std::unique_ptr<storage::Tuple> tuple(
+          new storage::Tuple(target_table_schema, true));
 
-    // Go over the logical tile and insert in the index the values
-    for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
-         child_tile_itr++) {
-      auto tile = child_tiles_[child_tile_itr].get();
+      // Go over the logical tile and insert in the index the values
+      for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
+           child_tile_itr++) {
+        auto tile = child_tiles_[child_tile_itr].get();
 
-      // Go over all tuples in the logical tile
-      for (oid_t tuple_id : *tile) {
-        ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
+        // Go over all tuples in the logical tile
+        for (oid_t tuple_id : *tile) {
+          ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
 
-        // Materialize the logical tile tuple
-        for (oid_t column_itr = 0; column_itr < column_ids_.size();
-             column_itr++) {
-          type::Value val = (cur_tuple.GetValue(column_itr));
-          tuple->SetValue(column_ids_[column_itr], val, executor_pool);
-        }
+          // Materialize the logical tile tuple
+          for (oid_t column_itr = 0; column_itr < column_ids_.size();
+               column_itr++) {
+            type::Value val = (cur_tuple.GetValue(column_itr));
+            tuple->SetValue(column_ids_[column_itr], val, executor_pool);
+          }
 
-        ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
-                             tuple_id);
+          ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
+                               tuple_id);
 
-        // insert tuple into the index.
-        ItemPointer *index_entry_ptr = nullptr;
-        target_table_->InsertInIndex(tuple.get(), location, current_txn,
+          // insert tuple into the index.
+          ItemPointer *index_entry_ptr = nullptr;
+          target_table_->InsertInIndex(tuple.get(), location, current_txn,
                                        &index_entry_ptr, index_name_);
+        }
       }
     }
+    // build index without lock
+    else{
+      oid_t table_oid = target_table_->GetOid();
+
+      // Get the output from seq_scan
+      while (children_[0]->Execute()) {
+        child_tiles_.emplace_back(children_[0]->GetOutput());
+      }
+
+      if (child_tiles_.size() == 0) {
+        LOG_TRACE("PopulateIndex Executor : -- no child tiles ");
+      }
+
+      auto target_table_schema = target_table_->GetSchema();
+
+      std::unique_ptr<storage::Tuple> tuple(
+          new storage::Tuple(target_table_schema, true));
+
+      // Go over the logical tile and insert in the index the values
+      for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
+           child_tile_itr++) {
+        auto tile = child_tiles_[child_tile_itr].get();
+
+        // Go over all tuples in the logical tile
+        for (oid_t tuple_id : *tile) {
+          ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
+
+          // Materialize the logical tile tuple
+          for (oid_t column_itr = 0; column_itr < column_ids_.size();
+               column_itr++) {
+            type::Value val = (cur_tuple.GetValue(column_itr));
+            tuple->SetValue(column_ids_[column_itr], val, executor_pool);
+          }
+
+          ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
+                               tuple_id);
+
+          // insert tuple into the index.
+          ItemPointer *index_entry_ptr = nullptr;
+          target_table_->InsertInIndex(tuple.get(), location, current_txn,
+                                       &index_entry_ptr, index_name_);
+        }
+      }
+    }
+
 
     done_ = true;
   }

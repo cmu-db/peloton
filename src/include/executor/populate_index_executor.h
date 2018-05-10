@@ -59,6 +59,7 @@ class PopulateIndexExecutor : public AbstractExecutor {
   storage::DataTable *target_table_ = nullptr;
   std::vector<oid_t> column_ids_;
   std::string index_name_;
+  bool concurrent_ = false;
   bool done_ = false;
 };
 
