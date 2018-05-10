@@ -143,8 +143,6 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, schema_name, table_name, current_txn);
 
-    oid_t table_oid = table_object->GetTableOid();
-
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
       int count = 1;
