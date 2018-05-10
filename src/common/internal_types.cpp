@@ -323,6 +323,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::INDEX: {
       return "INDEX";
     }
+    case CreateType::INDEX_CONCURRENT: {
+      return "CONCURRENT INDEX";
+    }
     case CreateType::CONSTRAINT: {
       return "CONSTRAINT";
     }
