@@ -114,15 +114,12 @@ public class IndexTest extends PLTestBase {
 
 	    System.out.println("select");
 	    Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 1;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//	    checkRow(rs,
-//		 new String [] {"c1", "c2"},
-//		 new int [] {-1, -1});
-//        assertNoMoreRows(rs);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 0;");
+        rs.next();
+	    checkRow(rs,
+		 new String [] {"c1", "c2"},
+		 new int [] {-1, -1});
+        assertNoMoreRows(rs);
     }
 
     /**
@@ -181,14 +178,11 @@ public class IndexTest extends PLTestBase {
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 1;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//        checkRow(rs,
-//         new String [] {"c1", "c2"},
-//         new int [] {-1, 0});
-//        assertNoMoreRows(rs);
+        rs.next();
+        checkRow(rs,
+         new String [] {"c1", "c2"},
+         new int [] {-1, 0});
+        assertNoMoreRows(rs);
     }
 
     /**
@@ -247,14 +241,11 @@ public class IndexTest extends PLTestBase {
         System.out.println("select");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM tbl WHERE c1 < 2;");
-        while (rs.next()) {
-            System.out.printf("c1: %d, c2: %d\n", rs.getInt("c1"), rs.getInt("c2"));
-        }
-//        rs.next();
-//        checkRow(rs,
-//         new String [] {"c1", "c2"},
-//         new int [] {1, 1});
-//        assertNoMoreRows(rs);
+        rs.next();
+        checkRow(rs,
+         new String [] {"c1", "c2"},
+         new int [] {1, 1});
+        assertNoMoreRows(rs);
     }
 
 }
