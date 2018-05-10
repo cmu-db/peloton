@@ -169,7 +169,7 @@ bool UpdateExecutor::DExecute() {
   oid_t table_oid = target_table_->GetOid();
   // Lock the table (reader lock)
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  LOG_WARN("Shared Lock in insert: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+  LOG_WARN("Shared Lock in update: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
   bool lock_success = lm->LockShared(table_oid);
   if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");
