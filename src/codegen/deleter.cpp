@@ -45,7 +45,7 @@ void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
   oid_t table_oid = table_->GetOid();
   // Lock the table (reader lock)
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  LOG_WARN("Shared Lock in delete: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+  LOG_WARN("Shared Lock in : lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
   bool lock_success = lm->LockShared(table_oid);
   if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");

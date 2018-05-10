@@ -67,20 +67,16 @@ public class IndexTest extends PLTestBase {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("create index");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("create index complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("create index");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                Thread.sleep(1000);
+                stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("create index complete");
             }
 
         });
@@ -88,20 +84,16 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("insert tuple");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
-                    Thread.sleep(3000);
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("insert tuple complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("insert tuple");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                stmt.execute("INSERT INTO tbl VALUES(-1, -1);");
+                Thread.sleep(3000);
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("insert tuple complete");
             }
 
         });
@@ -134,20 +126,16 @@ public class IndexTest extends PLTestBase {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("create index");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("create index complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("create index");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                Thread.sleep(1000);
+                stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("create index complete");
             }
 
         });
@@ -155,20 +143,16 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("update tuple");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
-                    Thread.sleep(3000);
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("update tuple complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("update tuple");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                stmt.execute("UPDATE tbl SET c1 = -1 WHERE c1 = 0;");
+                Thread.sleep(3000);
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("update tuple complete");
             }
 
         });
@@ -201,20 +185,16 @@ public class IndexTest extends PLTestBase {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("create index");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    Thread.sleep(1000);
-                    stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("create index complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("create index");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                Thread.sleep(1000);
+                stmt.execute("CREATE INDEX CONCURRENTLY i1 ON tbl(c1);");
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("create index complete");
             }
 
         });
@@ -222,20 +202,16 @@ public class IndexTest extends PLTestBase {
         Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    System.out.println("delete tuple");
-                    Connection c = makeDefaultConnection();
-                    Statement stmt = c.createStatement();
-                    stmt.execute("BEGIN;");
-                    stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
-                    Thread.sleep(3000);
-                    stmt.execute("END;");
-                    stmt.close();
-                    c.close();
-                    System.out.println("delete tuple complete");
-                } catch (SQLException | InterruptedException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("delete tuple");
+                Connection c = makeDefaultConnection();
+                Statement stmt = c.createStatement();
+                stmt.execute("BEGIN;");
+                stmt.execute("DELETE FROM tbl WHERE c1 = 0;");
+                Thread.sleep(3000);
+                stmt.execute("END;");
+                stmt.close();
+                c.close();
+                System.out.println("delete tuple complete");
             }
 
         });
