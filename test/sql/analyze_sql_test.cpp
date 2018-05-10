@@ -20,12 +20,9 @@
 #include "executor/create_executor.h"
 #include "optimizer/stats/stats_storage.h"
 #include "planner/create_plan.h"
-<<<<<<< HEAD
 #include "common/internal_types.h"
 #include "storage/database.h"
-=======
 #include "sql/testing_sql_util.h"
->>>>>>> d052644e7922480ea03bceada59527997b0b9ca5
 
 namespace peloton {
 namespace test {

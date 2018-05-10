@@ -15,7 +15,6 @@
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "common/harness.h"
@@ -91,31 +90,6 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
       2, 3, 4, 5, pool.get(), txn);
-
-<<<<<<< HEAD
-
-=======
-  // inset meaningless tuple into QUERY_METRICS_CATALOG and check
-  stats::QueryMetric::QueryParamBuf param;
-  param.len = 1;
-  param.buf = (unsigned char *)pool->Allocate(1);
-  *param.buf = 'a';
-  auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
-  catalog::Catalog::GetInstance()
-      ->GetSystemCatalogs(database_object->GetDatabaseOid())
-      ->GetQueryMetricsCatalog()
-      ->InsertQueryMetrics("a query", database_object->GetDatabaseOid(), 1,
-                           param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
-                           txn);
-  auto param1 = catalog::Catalog::GetInstance()
-                    ->GetSystemCatalogs(database_object->GetDatabaseOid())
-                    ->GetQueryMetricsCatalog()
-                    ->GetParamTypes("a query", txn);
-  EXPECT_EQ(1, param1.len);
-  EXPECT_EQ('a', *param1.buf);
-  // check colum object
->>>>>>> d052644e7922480ea03bceada59527997b0b9ca5
   EXPECT_EQ("name", catalog::Catalog::GetInstance()
                         ->GetTableObject("emp_db", DEFUALT_SCHEMA_NAME,
                                          "department_table", txn)

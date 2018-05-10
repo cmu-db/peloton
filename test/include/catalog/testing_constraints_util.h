@@ -28,7 +28,6 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
-<<<<<<< HEAD
 #include "executor/logical_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -41,8 +40,6 @@
 #include "planner/insert_plan.h"
 #include "planner/project_info.h"
 #include "executor/executor_context.h"
-=======
->>>>>>> d052644e7922480ea03bceada59527997b0b9ca5
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/insert_executor.h"

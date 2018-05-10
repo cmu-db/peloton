@@ -20,14 +20,10 @@
 #include "planner/create_plan.h"
 #include "planner/order_by_plan.h"
 #include "sql/testing_sql_util.h"
-<<<<<<< HEAD
 #include "storage/data_table.h"
 using std::vector;
 using std::unordered_set;
-=======
-
 using std::shared_ptr;
->>>>>>> d052644e7922480ea03bceada59527997b0b9ca5
 using std::string;
 using std::unique_ptr;
 using std::unordered_set;
