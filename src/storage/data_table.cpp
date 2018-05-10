@@ -93,6 +93,14 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (size_t i = 0; i < active_indirection_array_count_; ++i) {
     AddDefaultIndirectionArray(i);
   }
+
+  // Initialize lock
+  concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
+  bool success = lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
+  if (!success){
+    LOG_TRACE("Initialize lock in create table failed! oid is %u", table_oid);
+  }
+
 }
 
 DataTable::~DataTable() {

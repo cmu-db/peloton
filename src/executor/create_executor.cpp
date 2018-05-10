@@ -144,11 +144,6 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         database_name, schema_name, table_name, current_txn);
 
     oid_t table_oid = table_object->GetTableOid();
-    concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-    bool success = lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
-    if (!success){
-      LOG_TRACE("Initialize lock in create table failed! oid is %u", table_oid);
-    }
 
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
