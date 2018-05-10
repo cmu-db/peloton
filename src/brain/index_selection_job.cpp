@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/brain/index_selection_util.h>
-#include "include/brain/index_selection_job.h"
+#include "brain/index_selection_util.h"
+#include "brain/index_selection_job.h"
 #include "catalog/query_history_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "brain/index_selection.h"
