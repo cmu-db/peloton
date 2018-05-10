@@ -25,6 +25,9 @@
 #include "common/internal_types.h"
 #include "type/value.h"
 
+#include "storage/storage_manager.h"
+#include "storage/data_table.h"
+
 namespace peloton {
 
 namespace catalog {
@@ -165,7 +168,17 @@ class TileGroup : public Printable {
   // the specified tile group column id.
   inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                                   oid_t &tile_column_offset) const {
-    PELOTON_ASSERT(column_map.count(column_offset) != 0);
+  	auto t = StorageManager::GetInstance()->GetTableWithOid(this->database_id, this->table_id);
+		if(t->GetName() == "checkpoint_constraint_test") {
+    	LOG_INFO("In LocateTileAndColumn function for column %d\n%s",
+    			column_offset, this->GetInfo().c_str());
+    	for (auto column_pair : column_map) {
+    		LOG_INFO("column_map: %d -> (%d -> %d)", column_pair.first,
+    				column_pair.second.first, column_pair.second.second);
+    	}
+    }
+
+  	PELOTON_ASSERT(column_map.count(column_offset) != 0);
     // get the entry in the column map
     auto entry = column_map.at(column_offset);
     tile_offset = entry.first;

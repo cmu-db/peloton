@@ -477,7 +477,6 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result1);
 
-  /*
   // PRIMARY KEY (2 column: pid1, pid2)
   LOG_DEBUG("PRIMARY KEY (2 columns) check");
   std::string primary_key_dml2 =
@@ -485,7 +484,6 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType primary_key_result2 =
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml2);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result2);
-  */
 
   // DEFAULT (value1 = 0)
   LOG_DEBUG("DEFAULT check");
