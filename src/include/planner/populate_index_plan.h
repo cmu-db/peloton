@@ -49,7 +49,7 @@ class PopulateIndexPlan : public AbstractPlan {
 
   const std::string GetIndexName() const { return index_name_; }
 
-  const bool GetConcurrent() { return concurrent_; }
+  bool GetConcurrent() const{ return concurrent_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
