@@ -53,7 +53,7 @@ class PopulateIndexPlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
-        new PopulateIndexPlan(target_table_, column_ids_, index_name_));
+        new PopulateIndexPlan(target_table_, column_ids_, index_name_, concurrent_));
   }
 
  private:
