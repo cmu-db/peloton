@@ -1197,8 +1197,13 @@ parser::SQLStatement *PostgresParser::CreateFunctionTransform(
 // Please refer to parser/parsenode.h for the definition of
 // IndexStmt parsenodes.
 parser::SQLStatement *PostgresParser::CreateIndexTransform(IndexStmt *root) {
-  parser::CreateStatement *result =
-      new parser::CreateStatement(CreateStatement::kIndex);
+  LOG_TRACE("IndexStmt concurrent = %d", static_cast<int>(root->concurrent));
+  parser::CreateStatement *result = nullptr;
+  if (root->concurrent) {
+    result = new parser::CreateStatement(CreateStatement::kIndexConcurrent);
+  } else {
+    result = new parser::CreateStatement(CreateStatement::kIndex);
+  }
   result->unique = root->unique;
   for (auto cell = root->indexParams->head; cell != nullptr;
        cell = cell->next) {
@@ -1933,6 +1938,7 @@ parser::UpdateStatement *PostgresParser::UpdateTransform(
 parser::SQLStatementList *PostgresParser::ParseSQLString(const char *text) {
   auto ctx = pg_query_parse_init();
   auto result = pg_query_parse(text);
+  LOG_TRACE("parse %s", text);
   if (result.error) {
     // Parse Error
     std::string exception_msg = StringUtil::Format(
@@ -1970,6 +1976,7 @@ PostgresParser &PostgresParser::GetInstance() {
 
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string &query_string) {
+  LOG_TRACE("query = %s", query_string.c_str());
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
   if (stmt) {

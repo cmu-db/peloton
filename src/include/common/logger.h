@@ -48,20 +48,22 @@ namespace peloton {
 #define LOG_OUTPUT_STREAM stdout
 
 // Compile Option
-#ifndef LOG_LEVEL
-// TODO : any way to use pragma message in GCC?
-//#pragma message("Warning: LOG_LEVEL compile option was not explicitly
-// given.")
-#ifndef NDEBUG
-//#pragma message("LOG_LEVEL_DEBUG is used instead as DEBUG option is on.")
-#define LOG_LEVEL LOG_LEVEL_DEBUG
-#else
-//#pragma message("LOG_LEVEL_WARN is used instead as DEBUG option is off.")
-#define LOG_LEVEL LOG_LEVEL_INFO
-#endif
-//#pragma message("Give LOG_LEVEL compile option to overwrite the default
-// level.")
-#endif
+//#ifndef LOG_LEVEL
+//// TODO : any way to use pragma message in GCC?
+////#pragma message("Warning: LOG_LEVEL compile option was not explicitly
+//// given.")
+//#ifndef NDEBUG
+////#pragma message("LOG_LEVEL_DEBUG is used instead as DEBUG option is on.")
+//#define LOG_LEVEL LOG_LEVEL_DEBUG
+//#else
+////#pragma message("LOG_LEVEL_WARN is used instead as DEBUG option is off.")
+//#define LOG_LEVEL LOG_LEVEL_INFO
+//#endif
+////#pragma message("Give LOG_LEVEL compile option to overwrite the default
+//// level.")
+//#endif
+
+#define LOG_LEVEL LOG_LEVEL_ALL
 
 // For compilers which do not support __FUNCTION__
 #if !defined(__FUNCTION__) && !defined(__GNUC__)

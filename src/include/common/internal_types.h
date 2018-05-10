@@ -616,6 +616,7 @@ enum class CreateType {
   CONSTRAINT = 4,             // constraint create type
   TRIGGER = 5,                // trigger create type
   SCHEMA = 6,                 // schema create type
+  INDEX_CONCURRENT = 7,       // concurrent create index type
 };
 std::string CreateTypeToString(CreateType type);
 CreateType StringToCreateType(const std::string &str);

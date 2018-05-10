@@ -99,6 +99,7 @@ static void InterpretPlan(
       BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
 
   status = executor_tree->Init();
+  LOG_TRACE("executor_tree init plan %s",plan.get()->GetInfo().c_str());
   if (status != true) {
     result.m_result = ResultType::FAILURE;
     result.m_error_message = "Failed initialization of query execution tree";
@@ -111,6 +112,7 @@ static void InterpretPlan(
   // Execute the tree until we get values tiles from root node
   while (status == true) {
     status = executor_tree->Execute();
+    LOG_TRACE("executor_tree execute plan %s",plan.get()->GetInfo().c_str());
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
     // Some executors don't return logical tiles (e.g., Update).

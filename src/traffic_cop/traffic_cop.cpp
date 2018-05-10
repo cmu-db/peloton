@@ -267,6 +267,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
   std::shared_ptr<Statement> statement = std::make_shared<Statement>(
       stmt_name, query_type, query_string, std::move(sql_stmt_list));
+  LOG_TRACE("stmt type = %d, query type = %d", static_cast<int>(stmt_type), static_cast<int>(query_type));
 
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
@@ -317,6 +318,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         tcop_txn_state_.top().first, default_database_name_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
+    LOG_TRACE("get plan from optimizer");
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);

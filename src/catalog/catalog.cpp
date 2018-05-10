@@ -42,6 +42,7 @@ namespace catalog {
 
 // Get instance of the global catalog
 Catalog *Catalog::GetInstance() {
+  LOG_TRACE("get instance");
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -53,6 +54,7 @@ Catalog *Catalog::GetInstance() {
  * 3) insert peloton into pg_database, catalog tables into pg_table
  */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
+  LOG_TRACE("init catalog");
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -214,6 +216,7 @@ void Catalog::Bootstrap() {
 
 ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::TransactionContext *txn) {
+  LOG_TRACE("db name = %s", database_name.c_str());
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            database_name);
@@ -559,7 +562,10 @@ ResultType Catalog::CreateIndex(
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     auto table_object = database_object->GetTableObject(table_oid);
-    auto index_object = table_object->GetIndexObject(index_name);
+
+    auto database_oid = database_object->GetDatabaseOid();
+    auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
+    auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
 
     if (index_object != nullptr)
       throw CatalogException("Index " + index_name + " already exists in" +
@@ -845,7 +851,7 @@ ResultType Catalog::DropIndex(std::string database_name, std::string index_name,
             table->GetName().c_str());
 
   // register index object in rw_object_set
-  table->GetIndexWithOid(index_oid);
+  table->DropIndexWithOid(index_oid);
   txn->RecordDrop(database_oid, index_object->GetTableOid(), index_oid);
 
   return ResultType::SUCCESS;
