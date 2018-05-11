@@ -97,6 +97,7 @@ bool PopulateIndexExecutor::DExecute() {
         // Go over all tuples in the logical tile
         for (oid_t tuple_id : *tile) {
           ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
+	  LOG_DEBUG("Add tuple in index");
 
           // Materialize the logical tile tuple
           for (oid_t column_itr = 0; column_itr < column_ids_.size();
@@ -125,7 +126,7 @@ bool PopulateIndexExecutor::DExecute() {
       }
 
       if (child_tiles_.size() == 0) {
-        LOG_TRACE("PopulateIndex Executor : -- no child tiles ");
+        LOG_DEBUG("PopulateIndex Executor : -- no child tiles ");
       }
 
       auto target_table_schema = target_table_->GetSchema();
@@ -136,6 +137,7 @@ bool PopulateIndexExecutor::DExecute() {
       // Go over the logical tile and insert in the index the values
       for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
            child_tile_itr++) {
+	LOG_DEBUG("Add values to Index");
         auto tile = child_tiles_[child_tile_itr].get();
 
         // Go over all tuples in the logical tile

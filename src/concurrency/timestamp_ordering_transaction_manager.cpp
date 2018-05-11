@@ -719,7 +719,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 ResultType TimestampOrderingTransactionManager::CommitTransaction(
     TransactionContext *const current_txn) {
-  LOG_TRACE("Committing peloton txn : %" PRId64,
+  LOG_DEBUG("Committing peloton txn : %" PRId64,
             current_txn->GetTransactionId());
 
   //////////////////////////////////////////////////////////
@@ -917,7 +917,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
                  IsolationLevelType::READ_ONLY);
 
-  LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
+  LOG_DEBUG("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetReadWriteSet();

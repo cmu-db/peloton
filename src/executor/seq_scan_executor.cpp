@@ -141,6 +141,7 @@ bool SeqScanExecutor::DExecute() {
     PELOTON_ASSERT(target_table_ != nullptr);
     PELOTON_ASSERT(column_ids_.size() > 0);
     if (children_.size() > 0 && !index_done_) {
+      LOG_DEBUG("Execute child of sequential scan");
       children_[0]->Execute();
       // This stops continuous executions due to
       // a parent and avoids multiple creations
@@ -154,6 +155,7 @@ bool SeqScanExecutor::DExecute() {
     bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
     auto current_txn = executor_context_->GetTransaction();
 
+    LOG_DEBUG("Begin scanning table sequentially, table count = %d", table_tile_group_count_);
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -176,12 +178,20 @@ bool SeqScanExecutor::DExecute() {
         if (visibility == VisibilityType::OK || children_.size() == 1) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
+	    LOG_DEBUG("perform read in seq scan");
             auto res = transaction_manager.PerformRead(current_txn, location,
                                                        acquire_owner);
             if (!res) {
-              transaction_manager.SetTransactionResult(current_txn,
+	      if (visibility == VisibilityType::OK){
+		LOG_DEBUG("perform read failed in seq scan!");
+		transaction_manager.SetTransactionResult(current_txn,
                                                        ResultType::FAILURE);
-              return res;
+		return res;
+	      }
+	      else{
+		LOG_DEBUG("Encountered modified tuple");
+		continue;
+	      }
             }
           } else {
             ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
@@ -195,9 +205,16 @@ bool SeqScanExecutor::DExecute() {
               auto res = transaction_manager.PerformRead(current_txn, location,
                                                          acquire_owner);
               if (!res) {
-                transaction_manager.SetTransactionResult(current_txn,
-                                                         ResultType::FAILURE);
-                return res;
+		if (visibility == VisibilityType::OK){
+		  LOG_DEBUG("perform read failed in seq scan!");
+		  transaction_manager.SetTransactionResult(current_txn,
+							   ResultType::FAILURE);
+		  return res;
+		}
+		else{
+		  LOG_DEBUG("Encountered modified tuple");
+		  continue;
+		}
               } else {
                 LOG_TRACE("Sequential Scan Predicate Satisfied");
               }
