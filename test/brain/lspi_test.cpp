@@ -12,7 +12,7 @@
 
 #include <chrono>
 #include "brain/indextune/lspi/lspi_tuner.h"
-#include "brain/indextune/lspi/lstd.h"
+#include "brain/indextune/lspi/lstdq.h"
 #include "brain/indextune/lspi/rlse.h"
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"

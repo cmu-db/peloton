@@ -24,7 +24,7 @@ LSPIIndexTuner::LSPIIndexTuner(
                                          txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
-  lstd_model_ = std::unique_ptr<LSTDModel>(new LSTDModel(feat_len));
+  lstdq_model_ = std::unique_ptr<LSTDQModel>(new LSTDQModel(feat_len));
   prev_config_vec = vector_eig::Zero(feat_len);
   // Empty config
   prev_config_vec[0] = 1.0;
@@ -70,11 +70,10 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   }
 
   vector_eig new_config_vec;
-  CompressedIndexConfigUtil::ToEigen(optimal_config_set, new_config_vec);
+  CompressedIndexConfigUtil::ConstructStateConfigFeature(optimal_config_set, new_config_vec);
   // Step 4: Update the LSPI model based on current most optimal query config
-  lstd_model_->Update(prev_config_vec, new_config_vec, latency_avg);
+  lstdq_model_->Update(prev_config_vec, new_config_vec, latency_avg);
   // Step 5: Adjust to the most optimal query config
-  // Still buggy will be fixed soon.
   index_config_->AdjustIndexes(optimal_config_set);
 }
 
@@ -97,9 +96,9 @@ void LSPIIndexTuner::FindOptimalConfig(
       /**
        * The paper converts the current representation
        */
-      CompressedIndexConfigUtil::ToEigen(*index_config_->GetCurrentIndexConfig(), config_vec);
+      CompressedIndexConfigUtil::ConstructStateConfigFeature(*index_config_->GetCurrentIndexConfig(), config_vec);
       double hypothetical_exec_cost = rlse_model_->Predict(query_config_vec);
-      double hypothetical_config_cost = lstd_model_->Predict(config_vec);
+      double hypothetical_config_cost = lstdq_model_->Predict(config_vec);
       double cost = hypothetical_config_cost + hypothetical_exec_cost;
       if (cost < max_cost) {
         optimal_config_set.set(index_id_rec);
@@ -108,7 +107,7 @@ void LSPIIndexTuner::FindOptimalConfig(
     // We are done go to next
     index_id_rec = add_candidate_set.find_next(index_id_rec);
   }
-  // Iterate through add candidates
+  // Iterate through drop candidates
   size_t index_id_drop = drop_candidate_set.find_first();
   while (index_id_drop != boost::dynamic_bitset<>::npos) {
     if (optimal_config_set.test(index_id_drop)) {
@@ -119,7 +118,7 @@ void LSPIIndexTuner::FindOptimalConfig(
           hypothetical_config, add_candidate_set, drop_candidate_set,
           query_config_vec);
       double hypothetical_exec_cost = rlse_model_->Predict(query_config_vec);
-      double hypothetical_config_cost = lstd_model_->Predict(config_vec);
+      double hypothetical_config_cost = lstdq_model_->Predict(config_vec);
       double cost = hypothetical_config_cost + hypothetical_exec_cost;
       if (cost < max_cost) {
         optimal_config_set.reset(index_id_drop);

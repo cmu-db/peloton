@@ -88,10 +88,10 @@ class CompressedIndexConfigUtil {
 
   /**
    * @brief Get the Eigen vector/feature representation from the
-   * provided config set
+   * provided config set: 1 if Index config present, else -1
    */
-  static void ToEigen(const boost::dynamic_bitset<> &config_set,
-                      vector_eig &config_vec);
+  static void ConstructStateConfigFeature(const boost::dynamic_bitset<> &config_set,
+                                          vector_eig &config_vec);
 
  private:
   /**
