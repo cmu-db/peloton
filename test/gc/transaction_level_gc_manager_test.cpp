@@ -108,8 +108,8 @@ int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
 //  auto table_id = table->GetOid();
   while (!gc::GCManagerFactory::GetInstance()
-              .GetRecycledTupleSlot(table)
-              .IsNull())
+      .GetRecycledTupleSlot(table)
+      .IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -971,12 +971,91 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
   gc::GCManagerFactory::Configure(0);
 }
 
-////////////////////////////////////////////////////////
-//// OLD TESTS
-///////////////////////////////////////////////////////
+// check mem -> insert 100k -> check mem -> delete all -> check mem
+TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
+
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(1);
+
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  // create database
+  auto database = TestingExecutorUtil::InitializeDatabase("freetilegroupsdb");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  // create a table with only one key
+  const int num_key = 0;
+  size_t tuples_per_tilegroup = 2;
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      num_key, "table1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
+
+  auto &manager = catalog::Manager::GetInstance();
+  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
+  LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
+
+  auto current_eid = epoch_manager.GetCurrentEpochId();
+
+  //  int round = 1;
+  for(int round = 1; round <= 3; round++) {
+
+    LOG_DEBUG("Round: %d\n", round);
+
+    epoch_manager.SetCurrentEpochId(++current_eid);
+    //===========================
+    // insert tuples here.
+    //===========================
+    size_t num_inserts = 100;
+    auto insert_result = BulkInsertTuples(table.get(), num_inserts);
+    EXPECT_EQ(ResultType::SUCCESS, insert_result);
+
+    // capture memory usage
+    size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
+    LOG_DEBUG("Round %d: tile_group_count_after_insert: %zu", round, tile_group_count_after_insert);
+
+    epoch_manager.SetCurrentEpochId(++current_eid);
+    //===========================
+    // delete the tuples.
+    //===========================
+    auto delete_result = BulkDeleteTuples(table.get(), num_inserts);
+    EXPECT_EQ(ResultType::SUCCESS, delete_result);
+
+    size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
+    LOG_DEBUG("Round %d: tile_group_count_after_delete: %zu", round, tile_group_count_after_delete);
+
+    epoch_manager.SetCurrentEpochId(++current_eid);
+
+    gc_manager.ClearGarbage(0);
+
+    size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
+    LOG_DEBUG("Round %d: tile_group_count_after_gc: %zu", round, tile_group_count_after_gc);
+    EXPECT_LT(tile_group_count_after_gc, tile_group_count_after_init + 1);
+  }
+
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
+  table.release();
+
+  // DROP!
+  TestingExecutorUtil::DeleteDatabase("freetilegroupsdb");
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(
+      catalog::Catalog::GetInstance()->GetDatabaseObject("freetilegroupsdb", txn),
+      CatalogException);
+  txn_manager.CommitTransaction(txn);
+}
 
 // update -> delete
-TEST_F(TransactionLevelGCManagerTests, DISABLED_UpdateDeleteTest) {
+TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
   std::vector<std::unique_ptr<std::thread>> gc_threads;
@@ -985,16 +1064,16 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_UpdateDeleteTest) {
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("database0");
+  auto database = TestingExecutorUtil::InitializeDatabase("updatedeletedb");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "table0", db_id, INVALID_OID, 1234, true));
+      num_key, "updatedeletetable", db_id, INVALID_OID, 1234, true));
 
-  EXPECT_EQ(1, gc_manager.GetTableCount());
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
   //===========================
   // update a version here.
@@ -1092,19 +1171,19 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_UpdateDeleteTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("database0");
+  TestingExecutorUtil::DeleteDatabase("updatedeletedb");
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("database0", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseObject("updatedeletedb", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
 // insert -> delete -> insert
-TEST_F(TransactionLevelGCManagerTests, DISABLED_ReInsertTest) {
+TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -1116,14 +1195,14 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_ReInsertTest) {
 
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("database1");
+  auto database = TestingExecutorUtil::InitializeDatabase("reinsertdb");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "table1", db_id, INVALID_OID, 1234, true));
+      num_key, "reinserttable", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -1255,24 +1334,25 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_ReInsertTest) {
   table.release();
 
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("database1");
+  TestingExecutorUtil::DeleteDatabase("reinsertdb");
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("database1", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseObject("reinsertdb", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
-// TODO: add an immutability test back in, old one was not valid because it
-// modified
-// a TileGroup that was supposed to be immutable.
-
-// check mem -> insert 100k -> check mem -> delete all -> check mem
-TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
-
+/*
+Brief Summary : This tests tries to check immutability of a tile group.
+Once a tile group is set immutable, gc should not recycle slots from the
+tile group. We will first insert into a tile group and then delete tuples
+from the tile group. After setting immutability further inserts or updates
+should not use slots from the tile group where delete happened.
+*/
+TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -1284,71 +1364,59 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
 
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database
-  auto database = TestingExecutorUtil::InitializeDatabase("freetilegroupsdb");
+  auto database = TestingExecutorUtil::InitializeDatabase("immutabilitydb");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   // create a table with only one key
-  const int num_key = 0;
-  size_t tuples_per_tilegroup = 2;
-
+  const int num_key = 25;
+  const size_t tuples_per_tilegroup = 5;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "table1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
+      num_key, "immutabilitytable", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
 
-  auto &manager = catalog::Manager::GetInstance();
-  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
-  LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
-  auto current_eid = epoch_manager.GetCurrentEpochId();
+  oid_t num_tile_groups = (table.get())->GetTileGroupCount();
+  EXPECT_EQ(num_tile_groups, (num_key / tuples_per_tilegroup) + 1);
 
-  //  int round = 1;
-  for(int round = 1; round <= 3; round++) {
+  // Making the 1st tile group immutable
+  auto tile_group = (table.get())->GetTileGroup(0);
+  auto tile_group_ptr = tile_group.get();
+  auto tile_group_header = tile_group_ptr->GetHeader();
+  tile_group_header->SetImmutability();
 
-    LOG_DEBUG("Round: %d\n", round);
+  // Deleting a tuple from the 1st tilegroup
+  auto ret = DeleteTuple(table.get(), 2);
+  gc_manager.ClearGarbage(0);
 
-    epoch_manager.SetCurrentEpochId(++current_eid);
-    //===========================
-    // insert tuples here.
-    //===========================
-    size_t num_inserts = 100;
-    auto insert_result = BulkInsertTuples(table.get(), num_inserts);
-    EXPECT_EQ(ResultType::SUCCESS, insert_result);
+  // ReturnFreeSlot() should not return a tuple slot from the immutable tile group
+  // should be from where ever the tombstone was inserted
+  auto location = gc_manager.GetRecycledTupleSlot(table.get());
+  EXPECT_NE(tile_group->GetTileGroupId(), location.block);
 
-    // capture memory usage
-    size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_insert: %zu", round, tile_group_count_after_insert);
+  // Deleting a tuple from the 2nd tilegroup which is mutable.
+  ret = DeleteTuple(table.get(), 6);
 
-    epoch_manager.SetCurrentEpochId(++current_eid);
-    //===========================
-    // delete the tuples.
-    //===========================
-    auto delete_result = BulkDeleteTuples(table.get(), num_inserts);
-    EXPECT_EQ(ResultType::SUCCESS, delete_result);
+  EXPECT_TRUE(ret == ResultType::SUCCESS);
+  epoch_manager.SetCurrentEpochId(4);
+  gc_manager.ClearGarbage(0);
 
-    size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_delete: %zu", round, tile_group_count_after_delete);
-
-    epoch_manager.SetCurrentEpochId(++current_eid);
-
-    gc_manager.ClearGarbage(0);
-
-    size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_gc: %zu", round, tile_group_count_after_gc);
-    EXPECT_LT(tile_group_count_after_gc, tile_group_count_after_init + 1);
-  }
+  // ReturnFreeSlot() should not return null because deleted tuple was from
+  // mutable tilegroup
+  location = gc_manager.GetRecycledTupleSlot(table.get());
+  EXPECT_EQ(location.IsNull(), false);
 
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
 
   table.release();
-
   // DROP!
-  TestingExecutorUtil::DeleteDatabase("freetilegroupsdb");
+  TestingExecutorUtil::DeleteDatabase("immutabilitydb");
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("freetilegroupsdb", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseObject("immutabilitydb", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
 }
