@@ -16,12 +16,12 @@
 #include "sql/testing_sql_util.h"
 #include "planner/index_scan_plan.h"
 
-#include "brain/testing_index_suggestion_util.h"
+#include "brain/testing_index_selection_util.h"
 
 namespace peloton {
 namespace test {
 
-using namespace index_suggestion;
+using namespace index_selection;
 
 //===--------------------------------------------------------------------===//
 // WhatIfIndex Tests
@@ -40,14 +40,14 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
                                 {"c", TupleValueType::INTEGER},
                                 {"d", TupleValueType::INTEGER}});
 
-  TestingIndexSuggestionUtil testing_util(db_name);
+  TestingIndexSelectionUtil testing_util(db_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_rows);
 
   // Form the query.
   std::string query("SELECT a from " + schema.table_name +
                     " WHERE b = 100 and c = 5;");
-  LOG_INFO("Query: %s", query.c_str());
+  LOG_DEBUG("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
 
@@ -72,7 +72,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
       sql_statement, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  LOG_INFO("Cost of the query without indexes: %lf", cost_without_index);
+  LOG_DEBUG("Cost of the query without indexes: %lf", cost_without_index);
   EXPECT_NE(result->plan, nullptr);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
@@ -84,7 +84,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with 1 index: %lf", cost_with_index_1);
+  LOG_DEBUG("Cost of the query with 1 index: %lf", cost_with_index_1);
   EXPECT_NE(result->plan, nullptr);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
@@ -96,7 +96,7 @@ TEST_F(WhatIfIndexTests, SingleColTest) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with 2 indexes: %lf", cost_with_index_2);
+  LOG_DEBUG("Cost of the query with 2 indexes: %lf", cost_with_index_2);
 
   EXPECT_LT(cost_with_index_1, cost_without_index);
   EXPECT_LT(cost_with_index_2, cost_without_index);
@@ -118,14 +118,14 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
                                 {"b", TupleValueType::INTEGER},
                                 {"c", TupleValueType::INTEGER},
                                 {"d", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil testing_util(db_name);
+  TestingIndexSelectionUtil testing_util(db_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_rows);
 
   // Form the query
   std::string query("SELECT a from " + schema.table_name +
                     " WHERE b = 200 and c = 100;");
-  LOG_INFO("Query: %s", query.c_str());
+  LOG_DEBUG("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
 
@@ -149,7 +149,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
       sql_statement, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result->cost;
-  LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
+  LOG_DEBUG("Cost of the query without indexes {}: %lf", cost_without_index);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   // Insert hypothetical catalog objects
@@ -159,9 +159,9 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
-  LOG_INFO("Cost of the query with index {'a', 'c'}: %lf", cost_with_index_1);
+  LOG_DEBUG("Cost of the query with index {'a', 'c'}: %lf", cost_with_index_1);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  EXPECT_EQ(cost_without_index, cost_with_index_1);
+  EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_1);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
@@ -170,9 +170,9 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
-  LOG_INFO("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2);
+  LOG_DEBUG("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  EXPECT_EQ(cost_without_index, cost_with_index_2);
+  EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_2);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   config.Clear();
@@ -181,7 +181,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_3 = result->cost;
-  LOG_INFO("Cost of the query with index {'b', 'c'}: %lf", cost_with_index_3);
+  LOG_DEBUG("Cost of the query with index {'b', 'c'}: %lf", cost_with_index_3);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   EXPECT_GT(cost_without_index, cost_with_index_3);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
@@ -197,7 +197,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest1) {
   // The cost of using one index {1} should be greater than the cost
   // of using both the indexes {1, 2} for the query.
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'b'}: %lf", cost_with_index_4);
+  LOG_DEBUG("Cost of the query with index {'b'}: %lf", cost_with_index_4);
   LOG_DEBUG("%s", result->plan->GetInfo().c_str());
 
   txn_manager.CommitTransaction(txn);
@@ -213,14 +213,14 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                 {"d", TupleValueType::INTEGER},
                                 {"e", TupleValueType::INTEGER},
                                 {"f", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil testing_util(db_name);
+  TestingIndexSelectionUtil testing_util(db_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_rows);
 
   // Form the query.
   std::string query("SELECT a from " + schema.table_name +
                     " WHERE b = 500 AND e = 100;");
-  LOG_INFO("Query: %s", query.c_str());
+  LOG_DEBUG("Query: %s", query.c_str());
 
   brain::IndexConfiguration config;
 
@@ -255,7 +255,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_1 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b', 'c', 'd', 'e'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'a', 'b', 'c', 'd', 'e'}: %lf",
            cost_with_index_1);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_1);
 
@@ -266,7 +266,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_2 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'c', 'd', 'f'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'a', 'c', 'd', 'f'}: %lf",
            cost_with_index_2);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_2);
 
@@ -277,7 +277,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_3 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b', 'd', 'e'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'a', 'b', 'd', 'e'}: %lf",
            cost_with_index_3);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_3);
 
@@ -288,7 +288,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_4 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'b', 'c', 'e'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'b', 'c', 'e'}: %lf",
            cost_with_index_4);
   EXPECT_GT(cost_without_index, cost_with_index_4);
 
@@ -299,7 +299,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_5 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'b', 'c', 'd', 'e'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'b', 'c', 'd', 'e'}: %lf",
            cost_with_index_5);
   EXPECT_GT(cost_without_index, cost_with_index_5);
 
@@ -310,7 +310,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_6 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'b', 'e'}: %lf", cost_with_index_6);
+  LOG_DEBUG("Cost of the query with index {'b', 'e'}: %lf", cost_with_index_6);
   EXPECT_GT(cost_without_index, cost_with_index_6);
   EXPECT_GT(cost_with_index_5, cost_with_index_6);
   EXPECT_GT(cost_with_index_4, cost_with_index_6);
@@ -332,7 +332,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   result = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                       DEFAULT_DB_NAME, txn);
   auto cost_with_index_8 = result->cost;
-  LOG_INFO("Cost of the query with index {'b'}: %lf", cost_with_index_8);
+  LOG_DEBUG("Cost of the query with index {'b'}: %lf", cost_with_index_8);
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   EXPECT_GT(cost_without_index, cost_with_index_8);
   EXPECT_GT(cost_with_index_8, cost_with_index_6);
@@ -352,7 +352,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
                                 {"b", TupleValueType::INTEGER},
                                 {"c", TupleValueType::INTEGER},
                                 {"d", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil testing_util(db_name);
+  TestingIndexSelectionUtil testing_util(db_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_rows);
 
@@ -363,9 +363,9 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
                      " WHERE c = 100 and a = 50 and d = 1 and b = 123;");
   std::string query3("SELECT a from " + schema.table_name +
                      " WHERE d = 100 and c = 50 and b = 1 and a = 13;");
-  LOG_INFO("Query1: %s", query1.c_str());
-  LOG_INFO("Query2: %s", query2.c_str());
-  LOG_INFO("Query3: %s", query3.c_str());
+  LOG_DEBUG("Query1: %s", query1.c_str());
+  LOG_DEBUG("Query2: %s", query2.c_str());
+  LOG_DEBUG("Query3: %s", query3.c_str());
 
   brain::IndexConfiguration config;
 
@@ -399,7 +399,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto result1 = brain::WhatIfIndex::GetCostAndBestPlanTree(
       sql_statement1, config, DEFAULT_DB_NAME, txn);
   auto cost_without_index = result1->cost;
-  LOG_INFO("Cost of the query without indexes {}: %lf", cost_without_index);
+  LOG_DEBUG("Cost of the query without indexes {}: %lf", cost_without_index);
   LOG_DEBUG("%s", result1->plan->GetInfo().c_str());
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 
@@ -416,11 +416,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_1_1 = result1->cost;
   auto cost_with_index_1_2 = result2->cost;
   auto cost_with_index_1_3 = result3->cost;
-  LOG_INFO("Cost of the query with index {'a'}: %lf", cost_with_index_1_1);
+  LOG_DEBUG("Cost of the query with index {'a'}: %lf", cost_with_index_1_1);
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   EXPECT_GT(cost_without_index, cost_with_index_1_1);
-  EXPECT_EQ(cost_with_index_1_1, cost_with_index_1_2);
-  EXPECT_EQ(cost_with_index_1_2, cost_with_index_1_3);
+  EXPECT_DOUBLE_EQ(cost_with_index_1_1, cost_with_index_1_2);
+  EXPECT_DOUBLE_EQ(cost_with_index_1_2, cost_with_index_1_3);
 
   config.Clear();
   config.AddIndexObject(
@@ -435,11 +435,11 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_2_2 = result2->cost;
   auto cost_with_index_2_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2_1);
+  LOG_DEBUG("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2_1);
   EXPECT_GT(cost_without_index, cost_with_index_2_1);
   EXPECT_GT(cost_with_index_1_1, cost_with_index_2_1);
-  EXPECT_EQ(cost_with_index_2_1, cost_with_index_2_2);
-  EXPECT_EQ(cost_with_index_2_2, cost_with_index_2_3);
+  EXPECT_DOUBLE_EQ(cost_with_index_2_1, cost_with_index_2_2);
+  EXPECT_DOUBLE_EQ(cost_with_index_2_2, cost_with_index_2_3);
 
   config.Clear();
   config.AddIndexObject(
@@ -454,12 +454,12 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_3_2 = result2->cost;
   auto cost_with_index_3_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b', 'c'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'a', 'b', 'c'}: %lf",
            cost_with_index_3_1);
   EXPECT_GT(cost_without_index, cost_with_index_3_1);
   EXPECT_GT(cost_with_index_2_1, cost_with_index_3_1);
-  EXPECT_EQ(cost_with_index_3_1, cost_with_index_3_2);
-  EXPECT_EQ(cost_with_index_3_2, cost_with_index_3_3);
+  EXPECT_DOUBLE_EQ(cost_with_index_3_1, cost_with_index_3_2);
+  EXPECT_DOUBLE_EQ(cost_with_index_3_2, cost_with_index_3_3);
 
   config.Clear();
   config.AddIndexObject(testing_util.CreateHypotheticalIndex(
@@ -474,12 +474,12 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_4_2 = result2->cost;
   auto cost_with_index_4_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_INFO("Cost of the query with index {'a', 'b', 'c', 'd'}: %lf",
+  LOG_DEBUG("Cost of the query with index {'a', 'b', 'c', 'd'}: %lf",
            cost_with_index_4_1);
   EXPECT_GT(cost_without_index, cost_with_index_4_1);
   EXPECT_GT(cost_with_index_3_1, cost_with_index_4_1);
-  EXPECT_EQ(cost_with_index_4_1, cost_with_index_4_2);
-  EXPECT_EQ(cost_with_index_4_2, cost_with_index_4_3);
+  EXPECT_DOUBLE_EQ(cost_with_index_4_1, cost_with_index_4_2);
+  EXPECT_DOUBLE_EQ(cost_with_index_4_2, cost_with_index_4_3);
 
   txn_manager.CommitTransaction(txn);
 }

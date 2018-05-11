@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// testing_index_suggestion_util.cpp
+// testing_index_selection_util.cpp
 //
-// Identification: test/brain/testing_index_suggestion_util.cpp
+// Identification: test/brain/testing_index_selection_util.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/testing_index_suggestion_util.h"
+#include "brain/testing_index_selection_util.h"
 #include "brain/what_if_index.h"
 #include "common/harness.h"
 #include "optimizer/stats/stats_storage.h"
@@ -21,15 +21,15 @@ namespace peloton {
 
 namespace test {
 
-namespace index_suggestion {
+namespace index_selection {
 
-TestingIndexSuggestionUtil::TestingIndexSuggestionUtil(std::string db_name)
+TestingIndexSelectionUtil::TestingIndexSelectionUtil(std::string db_name)
     : database_name_(db_name) {
   srand(time(NULL));
   CreateDatabase();
 }
 
-TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
+TestingIndexSelectionUtil::~TestingIndexSelectionUtil() {
   for (auto it = tables_created_.begin(); it != tables_created_.end(); it++) {
     DropTable(it->first);
   }
@@ -37,7 +37,7 @@ TestingIndexSuggestionUtil::~TestingIndexSuggestionUtil() {
 }
 
 std::pair<std::vector<TableSchema>, std::vector<std::string>>
-TestingIndexSuggestionUtil::GetQueryStringsWorkload(
+TestingIndexSelectionUtil::GetQueryStringsWorkload(
     QueryStringsWorkloadType type) {
   std::vector<std::string> query_strs;
   std::vector<TableSchema> table_schemas;
@@ -193,7 +193,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
 }
 
 // Creates a new table with the provided schema.
-void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
+void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
   // Create table.
   std::ostringstream s_stream;
   s_stream << "CREATE TABLE " << schema.table_name << " (";
@@ -223,14 +223,14 @@ void TestingIndexSuggestionUtil::CreateTable(TableSchema schema) {
 }
 
 // Inserts specified number of tuples into the table with random values.
-void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
+void TestingIndexSelectionUtil::InsertIntoTable(TableSchema schema,
                                                  long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;
     oss << "INSERT INTO " << schema.table_name << " VALUES (";
-    for (auto i = 0UL; i < schema.cols.size(); i++) {
-      auto type = schema.cols[i].second;
+    for (auto col = 0UL; col < schema.cols.size(); col++) {
+      auto type = schema.cols[col].second;
       switch (type) {
         case INTEGER:
           oss << rand() % 1000;
@@ -244,7 +244,7 @@ void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
         default:
           PELOTON_ASSERT(false);
       }
-      if (i < (schema.cols.size() - 1)) {
+      if (col < (schema.cols.size() - 1)) {
         oss << ", ";
       }
     }
@@ -255,7 +255,7 @@ void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
   GenerateTableStats();
 }
 
-void TestingIndexSuggestionUtil::GenerateTableStats() {
+void TestingIndexSelectionUtil::GenerateTableStats() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   optimizer::StatsStorage *stats_storage =
@@ -270,7 +270,7 @@ void TestingIndexSuggestionUtil::GenerateTableStats() {
 // Returns a what-if index on the columns at the given
 // offset of the table.
 std::shared_ptr<brain::HypotheticalIndexObject>
-TestingIndexSuggestionUtil::CreateHypotheticalIndex(
+TestingIndexSelectionUtil::CreateHypotheticalIndex(
     std::string table_name, std::vector<std::string> index_col_names,
     brain::IndexSelection *is) {
   // We need transaction to get table object.
@@ -315,21 +315,21 @@ TestingIndexSuggestionUtil::CreateHypotheticalIndex(
   return index_obj;
 }
 
-void TestingIndexSuggestionUtil::CreateDatabase() {
+void TestingIndexSelectionUtil::CreateDatabase() {
   std::string create_db_str = "CREATE DATABASE " + database_name_ + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_db_str);
 }
 
-void TestingIndexSuggestionUtil::DropDatabase() {
+void TestingIndexSelectionUtil::DropDatabase() {
   std::string create_str = "DROP DATABASE " + database_name_ + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
-void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
+void TestingIndexSelectionUtil::DropTable(std::string table_name) {
   std::string create_str = "DROP TABLE " + table_name + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
-}  // namespace index_suggestion
+}  // namespace index_selection
 }  // namespace test
 }  // namespace peloton

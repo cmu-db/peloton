@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// testing_index_suggestion_util.h
+// testing_index_selection_util.h
 //
-// Identification: test/include/brain/testing_index_suggestion_util.h
+// Identification: test/include/brain/testing_index_selection_util.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -18,7 +18,7 @@
 namespace peloton {
 namespace test {
 
-namespace index_suggestion {
+namespace index_selection {
 
 /**
  * Table column type.
@@ -55,18 +55,18 @@ class TableSchema {
 /**
  * Utility class for testing Index Selection (auto-index).
  */
-class TestingIndexSuggestionUtil {
+class TestingIndexSelectionUtil {
  public:
   /**
    * Creates a database.
    * @param db_name
    */
-  TestingIndexSuggestionUtil(std::string db_name);
+  TestingIndexSelectionUtil(std::string db_name);
 
   /**
    * Drops all tables and the database.
    */
-  ~TestingIndexSuggestionUtil();
+  ~TestingIndexSelectionUtil();
 
   /**
    * Inserts specified number of tuples.

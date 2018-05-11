@@ -23,12 +23,12 @@
 #include "optimizer/stats/table_stats.h"
 #include "sql/testing_sql_util.h"
 
-#include "brain/testing_index_suggestion_util.h"
+#include "brain/testing_index_selection_util.h"
 
 namespace peloton {
 namespace test {
 
-using namespace index_suggestion;
+using namespace index_selection;
 
 //===--------------------------------------------------------------------===//
 // IndexSelectionTest
@@ -57,7 +57,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
                                   {"b", TupleValueType::INTEGER},
                                   {"c", TupleValueType::INTEGER},
                                   {"d", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_tuples);
 
@@ -114,7 +114,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
 
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   auto config =
       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::A);
   auto table_schemas = config.first;
@@ -357,7 +357,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   int num_rows = 2000;  // number of rows to be inserted.
 
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   auto config =
       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::B);
   auto table_schemas = config.first;
@@ -573,11 +573,10 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
  * complex workloads.
  */
 // TEST_F(IndexSelectionTest, IndexSelectionTest2) {
-//   // TODO[Siva]: This test non-deterministically fails :( comparator issues
 //   std::string database_name = DEFAULT_DB_NAME;
 //   int num_rows = 1000;  // number of rows to be inserted.
 
-//   TestingIndexSuggestionUtil testing_util(database_name);
+//   TestingIndexSelectionUtil testing_util(database_name);
 //   auto config =
 //     testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
 //   auto table_schemas = config.first;
@@ -633,7 +632,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   auto config =
       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::C);
   auto table_schemas = config.first;
