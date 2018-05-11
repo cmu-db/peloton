@@ -170,8 +170,9 @@ class TileGroup : public Printable {
                                   oid_t &tile_column_offset) const {
   	auto t = StorageManager::GetInstance()->GetTableWithOid(this->database_id, this->table_id);
 		if(t->GetName() == "checkpoint_constraint_test") {
-    	LOG_INFO("In LocateTileAndColumn function for column %d\n%s",
-    			column_offset, this->GetInfo().c_str());
+    	LOG_INFO("In LocateTileAndColumn function for column %d",	column_offset);
+    	LOG_INFO("database: %d, table: %d, tile group: %d",
+    			this->database_id, this->table_id, this->tile_group_id);
     	for (auto column_pair : column_map) {
     		LOG_INFO("column_map: %d -> (%d -> %d)", column_pair.first,
     				column_pair.second.first, column_pair.second.second);

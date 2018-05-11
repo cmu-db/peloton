@@ -128,6 +128,10 @@ class TimestampCheckpointManager : public CheckpointManager {
   // recover catalog table checkpoints
   bool LoadCatalogTableCheckpoint(const eid_t &epoch_id);
 
+  // read a checkpoint catalog
+  bool LoadCatalogTableCheckpoint(const eid_t &epoch_id, const oid_t db_oid,
+  		const oid_t table_oid, concurrency::TransactionContext *txn);
+
   // recover user table checkpoints and these catalog objects
   bool LoadUserTableCheckpoint(const eid_t &epoch_id);
 

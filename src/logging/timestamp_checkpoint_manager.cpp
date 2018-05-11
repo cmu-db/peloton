@@ -198,16 +198,21 @@ void TimestampCheckpointManager::CreateCheckpoint(
   // do checkpointing to take tables into each file
   for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
     auto db_oid = db_catalog_pair.first;
-    auto database = storage_manager->GetDatabaseWithOid(db_oid);
     auto db_catalog = db_catalog_pair.second;
+    auto database = storage_manager->GetDatabaseWithOid(db_oid);
 
     for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
       auto table_oid = table_catalog_pair.first;
-      auto table = database->GetTableWithOid(table_oid);
       auto table_catalog = table_catalog_pair.second;
 
       // make sure the table exists in this epoch
-      if (table_catalog == nullptr) continue;
+      // and some catalog table is out of checkpoint
+    	if (table_catalog == nullptr ||
+    			table_catalog->GetTableName() == "pg_settings" ||
+    			table_catalog->GetTableName() == "pg_column_stats" ||
+    			table_catalog->GetTableName() == "zone_map") {
+    		continue;
+    	}
 
       // create a checkpoint file for the table
       FileHandle file_handle;
@@ -227,6 +232,7 @@ void TimestampCheckpointManager::CreateCheckpoint(
 
       // insert data to checkpoint file
       // if table is catalog, then insert data without tile group info
+      auto table = database->GetTableWithOid(table_oid);
       if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) {
         CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
       } else {
@@ -513,28 +519,35 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
 
-  // recover all catalog table in each database
+  // first, recover all catalogs within catalog database
+  auto catalog_db_catalog = catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
+  PELOTON_ASSERT(catalog_db_catalog != nullptr);
+  for (auto table_catalog :
+  		catalog_db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
+    if (LoadCatalogTableCheckpoint(epoch_id, catalog_db_catalog->GetDatabaseOid(),
+    		table_catalog->GetTableOid(), txn) == false) {
+      txn_manager.AbortTransaction(txn);
+    	return false;
+    }
+  }
+
+  // recover all catalog table within each database
   for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
     auto db_oid = db_catalog_pair.first;
     auto db_catalog = db_catalog_pair.second;
 
+    // catalog database has already been recovered
+    if (db_oid == CATALOG_DATABASE_OID) continue;
+
     // load system catalogs in the database
     // if not exist, then create the database storage object and catalogs
-    std::shared_ptr<catalog::SystemCatalogs> system_catalogs;
-    storage::Database *database;
-    try {
-      system_catalogs = catalog->GetSystemCatalogs(db_oid);
-      database = storage_manager->GetDatabaseWithOid(db_oid);
-      LOG_TRACE("Use existed database storage object %d '%s'", db_oid,
+    if (storage_manager->HasDatabase(db_oid) == false) {
+      LOG_DEBUG("Create database storage object %d '%s'", db_oid,
                 db_catalog->GetDatabaseName().c_str());
-      LOG_TRACE("And use its system catalog objects");
-    } catch (Exception &e) {
-      LOG_TRACE("Create database storage object %d '%s'", db_oid,
-                db_catalog->GetDatabaseName().c_str());
-      LOG_TRACE("And create system catalog objects for this database");
+      LOG_DEBUG("And create system catalog objects for this database");
 
       // create database storage object
-      database = new storage::Database(db_oid);
+      auto database = new storage::Database(db_oid);
       // TODO: This should be deprecated, dbname should only exists in pg_db
       database->setDBName(db_catalog->GetDatabaseName());
       storage_manager->AddDatabaseToStorageManager(database);
@@ -543,93 +556,21 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
       txn->RecordCreate(db_oid, INVALID_OID, INVALID_OID);
 
       // add core & non-core system catalog tables into database
-      catalog->catalog_map_.emplace(
-          db_oid,
-          std::shared_ptr<catalog::SystemCatalogs>(new catalog::SystemCatalogs(
-              database, catalog->pool_.get(), txn)));
+      catalog->BootstrapSystemCatalogs(database, txn);
       catalog->catalog_map_[db_oid]->Bootstrap(db_catalog->GetDatabaseName(),
-                                               txn);
-      system_catalogs = catalog->catalog_map_[db_oid];
+      		txn);
+    } else {
+    	LOG_DEBUG("Use existed database storage object %d '%s'", db_oid,
+                db_catalog->GetDatabaseName().c_str());
+    	LOG_DEBUG("And use its system catalog objects");
     }
 
-    // load checkpoint files for catalog data
-    // except for basic catalogs having the object class: DatabaseCatalog,
-    // TableCatalog, IndexCatalog, ColumnCatalog
-    // also except for catalog requiring to initialize values: LangageCatalog,
-    // ProcCatalog, SettingsCatalog
     for (auto table_catalog :
          db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
-      auto table = database->GetTableWithOid(table_catalog->GetTableOid());
-      auto table_name = table_catalog->GetTableName();
-
-      // catalogs out of recovery
-      if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
-          table_name == "zone_map") {
-        // nothing to do (keep the default values, and not recover other data)
-      } else {
-        // read a checkpoint file for the catalog
-        oid_t oid_align;
-        FileHandle table_file;
-        std::string table_filename = GetCheckpointFileFullPath(
-            db_catalog->GetDatabaseName(), table_catalog->GetSchemaName(),
-            table_name, epoch_id);
-        if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
-            false) {
-          LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
-                    table_catalog->GetTableOid(), table_name.c_str());
-          continue;
-        }
-
-        LOG_DEBUG("Recover catalog table %d '%s.%s' in database %d '%s'",
-                  table_catalog->GetTableOid(),
-                  table_catalog->GetSchemaName().c_str(), table_name.c_str(),
-                  db_catalog->GetDatabaseOid(),
-                  db_catalog->GetDatabaseName().c_str());
-
-        // catalogs with duplicate check
-        // keep the default values, but other data is recovered
-        if (table_name == "pg_database" || table_name == "pg_namespace" ||
-            table_name == "pg_table" || table_name == "pg_attribute" ||
-            table_name == "pg_index" || table_name == "pg_language" ||
-            table_name == "pg_proc") {
-          oid_align =
-              RecoverTableDataWithDuplicateCheck(table, table_file, txn);
-        }
-        // catalogs to be recovered without duplicate check
-        else {
-          oid_align = RecoverTableDataWithoutTileGroup(table, table_file, txn);
-        }
-
-        LoggingUtil::CloseFile(table_file);
-
-        // modify next OID of each catalog
-        if (table_name == "pg_database") {
-          catalog::DatabaseCatalog::GetInstance()->oid_ += oid_align;
-        } else if (table_name == "pg_table") {
-          system_catalogs->GetTableCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_attribute") {
-          // OID is not used
-        } else if (table_name == "pg_namespace") {
-          system_catalogs->GetSchemaCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_index") {
-          system_catalogs->GetIndexCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_language") {
-          catalog::LanguageCatalog::GetInstance().oid_ += oid_align;
-        } else if (table_name == "pg_proc") {
-          catalog::ProcCatalog::GetInstance().oid_ += oid_align;
-        } else if (table_name == "pg_database_metrics") {
-          catalog::DatabaseMetricsCatalog::GetInstance()->oid_ += oid_align;
-        } else if (table_name == "pg_table_metrics") {
-          system_catalogs->GetTableMetricsCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_index_metrics") {
-          system_catalogs->GetIndexMetricsCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_query_metrics") {
-          system_catalogs->GetQueryMetricsCatalog()->oid_ += oid_align;
-        } else if (table_name == "pg_query_history") {
-          // OID is not used
-        } else if (table_name == "pg_trigger") {
-          system_catalogs->GetTriggerCatalog()->oid_ += oid_align;
-        }
+      if (LoadCatalogTableCheckpoint(epoch_id, db_oid,
+      		table_catalog->GetTableOid(), txn) == false) {
+        txn_manager.AbortTransaction(txn);
+      	return false;
       }
     }  // table loop end
 
@@ -637,6 +578,96 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
 
   txn_manager.CommitTransaction(txn);
   return true;
+}
+
+
+bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
+		const eid_t &epoch_id, const oid_t db_oid, const oid_t table_oid,
+		concurrency::TransactionContext *txn) {
+	auto catalog = catalog::Catalog::GetInstance();
+	auto db_catalog = catalog->GetDatabaseObject(db_oid, txn);
+	auto table_catalog = db_catalog->GetTableObject(table_oid);
+  auto table_name = table_catalog->GetTableName();
+  auto system_catalogs = catalog->GetSystemCatalogs(db_oid);
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
+
+  // load checkpoint files for catalog data
+  // except for catalog requiring to initialize values: LangageCatalog,
+  // ProcCatalog, SettingsCatalog
+
+	// catalogs out of recovery
+	if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
+			table_name == "zone_map") {
+		// nothing to do (keep the default values, and not recover other data)
+	} else {
+		// read a checkpoint file for the catalog
+		oid_t oid_align;
+		FileHandle table_file;
+		std::string table_filename = GetCheckpointFileFullPath(
+				db_catalog->GetDatabaseName(), table_catalog->GetSchemaName(),
+				table_name, epoch_id);
+		if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
+				false) {
+			LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
+								table_catalog->GetTableOid(), table_name.c_str());
+			return false;
+		}
+
+		LOG_DEBUG("Recover catalog table %d '%s.%s' in database %d '%s'",
+							table_catalog->GetTableOid(),
+							table_catalog->GetSchemaName().c_str(), table_name.c_str(),
+							db_catalog->GetDatabaseOid(),
+							db_catalog->GetDatabaseName().c_str());
+
+		// catalogs with duplicate check
+		// keep the default values, but other data is recovered
+		if (table_name == "pg_database" || table_name == "pg_namespace" ||
+				table_name == "pg_table" || table_name == "pg_attribute" ||
+				table_name == "pg_index" || table_name == "pg_language" ||
+				table_name == "pg_proc") {
+			oid_align =
+					RecoverTableDataWithDuplicateCheck(table, table_file, txn);
+		}
+		// catalogs to be recovered without duplicate check
+		else {
+			oid_align = RecoverTableDataWithoutTileGroup(table, table_file, txn);
+		}
+
+		LoggingUtil::CloseFile(table_file);
+
+		// modify next OID of each catalog
+		if (table_name == "pg_database") {
+			catalog::DatabaseCatalog::GetInstance()->oid_ += oid_align;
+		} else if (table_name == "pg_table") {
+			system_catalogs->GetTableCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_attribute") {
+			// OID is not used
+		} else if (table_name == "pg_namespace") {
+			system_catalogs->GetSchemaCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_index") {
+			system_catalogs->GetIndexCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_language") {
+			catalog::LanguageCatalog::GetInstance().oid_ += oid_align;
+		} else if (table_name == "pg_proc") {
+			catalog::ProcCatalog::GetInstance().oid_ += oid_align;
+		} else if (table_name == "pg_database_metrics") {
+			catalog::DatabaseMetricsCatalog::GetInstance()->oid_ += oid_align;
+		} else if (table_name == "pg_table_metrics") {
+			system_catalogs->GetTableMetricsCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_index_metrics") {
+			system_catalogs->GetIndexMetricsCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_query_metrics") {
+			system_catalogs->GetQueryMetricsCatalog()->oid_ += oid_align;
+		} else if (table_name == "pg_query_history") {
+			// OID is not used
+		} else if (table_name == "pg_trigger") {
+			system_catalogs->GetTriggerCatalog()->oid_ += oid_align;
+		}
+	}
+
+	return true;
 }
 
 bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) {
@@ -710,6 +741,7 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) 
   txn_manager.CommitTransaction(txn);
   return true;
 }
+
 
 // TODO: Use data in catalog table to create storage objects (not serialized
 // catalog object data)

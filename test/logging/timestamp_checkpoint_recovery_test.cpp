@@ -531,6 +531,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   // EXPECT_EQ(ResultType::FAILURE, check_result);
   EXPECT_EQ(ResultType::SUCCESS, check_result);  // check doesn't work correctly
 
+  std::string sql4 = "SELECT * FROM checkpoint_constraint_test;";
+  std::vector<std::string> expected4 = {"1|2|3|4|0|1|2", "5|6|7|8|1|6|7",
+                                        "9|10|11|12|2|11|12", "13|14|0|16|0|1|2",
+                                        "17|18|19|1|1|6|7"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql4, expected4, false);
+
   // FOREIGN KEY (1 column: value3 => pid)
   LOG_DEBUG("FOREIGN KEY (1 column) check");
   std::string foreign_key_dml1 =
@@ -539,6 +545,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType foreign_key_result1 =
       TestingSQLUtil::ExecuteSQLQuery(foreign_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, foreign_key_result1);
+
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql4, expected4, false);
 
   // FOREIGN KEY (2 column: (value4, value5) => (upid1, upid2))
   LOG_DEBUG("FOREIGN KEY (2 columns) check");
