@@ -538,7 +538,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread delete tuples, without sleep
      */
     @Test
-    public void test_con_create_delete() throws SQLException {
+    public void test_con_create_delete2() throws SQLException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
