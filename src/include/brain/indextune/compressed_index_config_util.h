@@ -13,15 +13,7 @@
 #pragma once
 
 #include <boost/dynamic_bitset.hpp>
-#include "brain/index_selection.h"
 #include "brain/indextune/compressed_index_config.h"
-#include "brain/util/eigen_util.h"
-#include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/table_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "planner/plan_util.h"
 
 namespace peloton {
 namespace brain {

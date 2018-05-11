@@ -40,7 +40,8 @@ class CompressedIndexConfigContainer {
    * bitset)
    */
   explicit CompressedIndexConfigContainer(
-      const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
+      const std::string &database_name,
+      const std::set<oid_t> &ignore_table_oids,
       catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
@@ -49,8 +50,6 @@ class CompressedIndexConfigContainer {
    * current bitset
    */
   void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
-
-
 
   // **Useful setter fns**
 
@@ -77,8 +76,6 @@ class CompressedIndexConfigContainer {
    * @param offset: the global offset of the index to be removed
    */
   void UnsetBit(size_t offset);
-
-
 
   // **Useful getter fns**
 
@@ -167,11 +164,11 @@ class CompressedIndexConfigContainer {
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
-  void EnumerateConfigurations(const std::vector<oid_t>& cols,
-                               size_t max_index_size, std::map<std::vector<oid_t>, size_t>& indexconf_id_map,
-                               std::map<size_t, std::vector<oid_t>>& id_indexconf_map,
-                               std::vector<oid_t>& index_conf, size_t& next_id);
-
+  void EnumerateConfigurations(
+      const std::vector<oid_t> &cols, size_t max_index_size,
+      std::map<std::vector<oid_t>, size_t> &indexconf_id_map,
+      std::map<size_t, std::vector<oid_t>> &id_indexconf_map,
+      std::vector<oid_t> &index_conf, size_t &next_id);
 
   /**
    * Outer mapping: table_oid -> inner mapping
@@ -181,24 +178,31 @@ class CompressedIndexConfigContainer {
    * 5), B (column_oid = 3), C (column_oid = 14). Then we will have:
    * table_id_map_[12345] ==> inner mapping
    * inner mapping ==> {Nothing->0, {5}->1, {3}->2, {14}-> 3, {5, 3} -> 4....
-   * Basically every possible single and multicol index ordering gets a unique identifier.
-   * Identifiers continue when we go from one table to the next - i.e. if table T1 ends at id 15
+   * Basically every possible single and multicol index ordering gets a unique
+   * identifier.
+   * Identifiers continue when we go from one table to the next - i.e. if table
+   * T1 ends at id 15
    * Table T2 starts at 16 and goes on from there.
-   * TODO(saatviks): Come up with an even more compressed rep.(like eg. a->0, b->1, c->2
-   * and Nothing = 000, {a} = 001, {ab} = 011, etc. Problem is this doesnt work for
+   * TODO(saatviks): Come up with an even more compressed rep.(like eg. a->0,
+   * b->1, c->2
+   * and Nothing = 000, {a} = 001, {ab} = 011, etc. Problem is this doesnt work
+   * for
    * permutations - only for combinations).
    */
-  std::unordered_map<oid_t, std::map<std::vector<oid_t>, size_t>> table_indexid_map_;
+  std::unordered_map<oid_t, std::map<std::vector<oid_t>, size_t>>
+      table_indexid_map_;
 
   /**
    * Outer mapping: table_oid -> inner reverse mapping
    * Inner reverse mapping is the reverse of `inner mapping`
    * explained above
    */
-  std::unordered_map<oid_t, std::map<size_t, std::vector<oid_t>>> indexid_table_map_;
+  std::unordered_map<oid_t, std::map<size_t, std::vector<oid_t>>>
+      indexid_table_map_;
 
   /**
-   * In order to enable faster table->col lookups we also store table offsets separately.
+   * In order to enable faster table->col lookups we also store table offsets
+   * separately.
    * This also allows for other functionality.
    */
   std::map<oid_t, size_t> table_offset_map_;

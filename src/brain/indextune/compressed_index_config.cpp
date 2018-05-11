@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/indextune/compressed_index_config.h"
-#include "catalog/column_catalog.h"
 
 #define MAX_INDEX_SIZE 3
 

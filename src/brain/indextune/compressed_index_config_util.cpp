@@ -22,7 +22,7 @@ void CompressedIndexConfigUtil::AddCandidates(
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto txn = container.GetTransactionManager()->BeginTransaction();
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
-  std::vector<planner::col_triplet> affected_cols_vector =
+  std::vector<planner::col_triplet> indexable_cols_vector =
       planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
                                              std::move(sql_stmt_list),
                                              container.GetDatabaseName());
@@ -31,7 +31,7 @@ void CompressedIndexConfigUtil::AddCandidates(
   // Aggregate all columns in the same table
   std::unordered_map<oid_t, brain::HypotheticalIndexObject> aggregate_map;
 
-  for (const auto &each_triplet : affected_cols_vector) {
+  for (const auto &each_triplet : indexable_cols_vector) {
     const auto db_oid = std::get<0>(each_triplet);
     const auto table_oid = std::get<1>(each_triplet);
     const auto col_oid = std::get<2>(each_triplet);
