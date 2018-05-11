@@ -478,7 +478,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   /** Test 5
    * Choose 4 indexes with up to 2 columns
-   * it should choose {AB}, {BC} from exhaustive and {AC} from greedy
+   * it should choose {AB}, {BC} from exhaustive and {AC} or {CA} from greedy
    * more indexes donot give any added benefit
    */
   max_index_cols = 2;
@@ -500,7 +500,17 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
   expected_config = {expected_indexes};
 
-  EXPECT_TRUE(expected_config == best_config);
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> 
+  alternate_expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "c"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  brain::IndexConfiguration alternate_expected_config = 
+      {alternate_expected_indexes};
+
+  // It can choose either AC or CA based on the distribution of C and A
+  EXPECT_TRUE((expected_config == best_config) || 
+              (alternate_expected_config == best_config));
 
   /** Test 6
    * Choose 1 index with up to 3 columns
