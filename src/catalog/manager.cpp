@@ -40,7 +40,7 @@ void Manager::AddIndirectionArray(
 
 void Manager::DropIndirectionArray(const oid_t oid) {
   // drop the catalog reference to the tile group
-  indirection_array_locator_[oid] = empty_indirection_array_;
+  tile_group_locator_.unsafe_erase(oid);
 }
 
 // used for logging test
