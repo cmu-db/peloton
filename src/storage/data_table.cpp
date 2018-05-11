@@ -1027,8 +1027,10 @@ void DataTable::DropTileGroups() {
   }
 
   // Clear array
+  active_tile_groups_.clear();
   tile_groups_.Clear();
 
+  active_tile_groups_.resize(active_tilegroup_count_);
   tile_group_count_ = 0;
 }
 
