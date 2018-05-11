@@ -33,12 +33,12 @@ Manager &Manager::GetInstance() {
 //===--------------------------------------------------------------------===//
 
 void Manager::AddIndirectionArray(
-    const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
+    const oid_t &oid, std::shared_ptr<storage::IndirectionArray> location) {
   // add/update the catalog reference to the indirection array
   auto ret = indirection_array_locator_[oid] = location;
 }
 
-void Manager::DropIndirectionArray(const oid_t oid) {
+void Manager::DropIndirectionArray(const oid_t &oid) {
   // drop the catalog reference to the tile group
   tile_group_locator_.unsafe_erase(oid);
 }
