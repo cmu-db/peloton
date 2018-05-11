@@ -20,6 +20,7 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
+#include <algorithm>
 
 namespace peloton {
 namespace concurrency {
@@ -75,6 +76,9 @@ TransactionContext *TransactionManager::BeginTransaction(
 
   txn->SetTimestamp(function::DateFunctions::Now());
 
+  // Record current transaction in transaction set
+  current_transactions_.insert(txn->GetTransactionId());
+
   return txn;
 }
 
@@ -96,6 +100,9 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   current_txn = nullptr;
+
+  // Record deletion of transaction in current transaction set
+  current_transactions_.erase(current_txn->GetTransactionId());
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
       settings::SettingId::stats_mode)) != StatsType::INVALID) {
@@ -258,6 +265,18 @@ VisibilityType TransactionManager::IsVisible(
       }
     }
   }
+}
+
+// This function checks if the given transaction set overlaps with current
+// transaction set. Return true if overlaps, false otherwise.
+bool TransactionManager::CheckConcurrentTxn(std::set<txn_id_t> input){
+  auto itr = input.begin();
+  for (;itr != input.end(); itr++){
+    if (current_transactions_.find(*itr) != current_transactions_.end()){
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace concurrency

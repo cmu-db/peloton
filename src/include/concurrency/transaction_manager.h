@@ -256,10 +256,19 @@ class TransactionManager {
     return isolation_level_;
   }
 
+  /**
+   * @brief      Check if the given transaction id set overlaps with
+   *             current transaction set.
+   *
+   * @return     True if set overlaps, false if not.
+   */
+  bool CheckConcurrentTxn(std::set<txn_id_t> set);
+
  protected:
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
+  static std::set<txn_id_t> current_transactions_;
 
 };
 }  // namespace storage

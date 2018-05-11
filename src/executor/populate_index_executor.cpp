@@ -36,7 +36,7 @@ PopulateIndexExecutor::PopulateIndexExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool PopulateIndexExecutor::DInit() {
-  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT((children_.size() == 1 || children_.size() == 2));
   PELOTON_ASSERT(executor_context_);
 
   // Initialize executor state
