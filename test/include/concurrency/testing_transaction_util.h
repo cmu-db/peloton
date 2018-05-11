@@ -160,6 +160,12 @@ class TestingTransactionUtil {
   static bool ExecuteScan(concurrency::TransactionContext *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id, bool select_for_update = false);
+  static bool ExecuteCreateIndex(concurrency::TransactionContext *txn, std::string index_name,
+                                 std::string database_name, std::string schema_name,
+                                 std::string table_name, std::vector<oid_t> key_attrs);
+  static bool ExecuteDropIndex(concurrency::TransactionContext *txn, std::string index_name,
+                               std::string database_name, std::string schema_name,
+                               std::string table_name);
 
   static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
@@ -338,13 +344,11 @@ class TransactionThread {
         break;
       }
       case TXN_OP_CREATE_INDEX: {
-        auto catalog = catalog::Catalog::GetInstance();
         LOG_INFO("txn isolation level = %d",
                  static_cast<int>(txn->GetIsolationLevel()));
-        auto tmp =
-            catalog->CreateIndex(database_name, schema_name, table_name, key_attrs,
-                                 index_name1, false, IndexType::BWTREE, txn);
-        if (tmp == ResultType::SUCCESS)
+        execute_result = TestingTransactionUtil::ExecuteCreateIndex(txn, index_name1,
+                                                                    database_name, schema_name, table_name, key_attrs);
+        if (!execute_result)
           schedule->create_index_results.push_back(1);
         else
           schedule->create_index_results.push_back(0);
@@ -352,14 +356,14 @@ class TransactionThread {
         break;
       }
       case TXN_OP_DROP_INDEX: {
-        auto catalog = catalog::Catalog::GetInstance();
-        auto tmp =  catalog->DropIndex(database_name, index_name1, schema_name, txn);
-        if (tmp == ResultType::SUCCESS){
+        LOG_INFO("txn isolation level = %d",
+                 static_cast<int>(txn->GetIsolationLevel()));
+        execute_result = TestingTransactionUtil::ExecuteDropIndex(txn, index_name1,
+                                                                    database_name, schema_name, table_name);
+        if (!execute_result)
           schedule->drop_index_results.push_back(1);
-        }
-        else{
+        else
           schedule->drop_index_results.push_back(0);
-        }
         LOG_INFO("Txn %d Drop Index", schedule->schedule_id);
         break;
       }
@@ -515,3 +519,4 @@ class TransactionScheduler {
 };
 }
 }
+

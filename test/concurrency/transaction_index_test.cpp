@@ -64,7 +64,8 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
       scheduler.Run();
 
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+      // create two index with same name, can success
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
 
       EXPECT_EQ(1, scheduler.schedules[0].create_index_results[0]);
@@ -184,3 +185,4 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
 
 }  // namespace test
 }  // namespace peloton
+

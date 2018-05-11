@@ -13,6 +13,7 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
+#include "storage/abstract_table.h"
 
 #include <vector>
 
