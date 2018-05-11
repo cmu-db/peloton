@@ -146,6 +146,10 @@ std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(
   return index_s_ptr;
 }
 
+//===--------------------------------------------------------------------===//
+// Workload
+//===--------------------------------------------------------------------===//
+
 Workload::Workload(std::vector<std::string> &queries, std::string database_name,
                    concurrency::TransactionContext *txn)
     : database_name(database_name) {

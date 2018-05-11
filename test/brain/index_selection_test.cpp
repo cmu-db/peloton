@@ -503,7 +503,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> 
   alternate_expected_indexes = {
       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
-      testing_util.CreateHypotheticalIndex("dummy2", {"a", "c"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
   brain::IndexConfiguration alternate_expected_config = 
       {alternate_expected_indexes};
@@ -681,7 +681,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   /** Test 2
    * Choose only 2 indexes with up to 3 column
-   * it should choose some permutation of {BCA} and {BCD}
+   * it should choose some permutation of {BCA} and {DEF}
    */
   max_index_cols = 3;
   enumeration_threshold = 2;
@@ -698,7 +698,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   expected_indexes = {
       testing_util.CreateHypotheticalIndex("dummy3", {"b", "c", "a"}, &is),
-      testing_util.CreateHypotheticalIndex("dummy3", {"b", "c", "d"}, &is)};
+      testing_util.CreateHypotheticalIndex("dummy3", {"d", "e", "f"}, &is)};
   expected_config = {expected_indexes};
 
   EXPECT_TRUE(expected_config == best_config);

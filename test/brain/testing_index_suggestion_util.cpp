@@ -97,7 +97,10 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
               {"a", TupleValueType::INTEGER},
               {"b", TupleValueType::INTEGER},
               {"c", TupleValueType::INTEGER},
-              {"d", TupleValueType::INTEGER}});
+              {"d", TupleValueType::INTEGER},
+              {"e", TupleValueType::INTEGER},
+              {"f", TupleValueType::INTEGER},
+              {"g", TupleValueType::INTEGER}});
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE a = 160 and b = 199 and c = 1009");
       query_strs.push_back("SELECT * FROM " + table_name +
@@ -109,6 +112,11 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 81 and c = 12");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE d = 81 and e = 123 and f = 122");
+      query_strs.push_back("SELECT * FROM " + table_name + " WHERE d = 81");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE d = 81 and e = 12");
       break;
     }
     case D: {
