@@ -81,6 +81,8 @@ class GCManager {
   virtual void RecycleTransaction(
                       concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
+  virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
+
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
                                     oid_t tuple_id);

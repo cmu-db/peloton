@@ -128,6 +128,15 @@ SETTING_int(min_parallel_table_scan_size,
             true, true)
 
 //===----------------------------------------------------------------------===//
+// Garbage Collection and TileGroup Compaction
+//===----------------------------------------------------------------------===//
+//SETTING_double(name, description, default_value, min_value, max_value, is_mutable, is_persistent)
+
+SETTING_double(compaction_threshold, "Fraction of recycled slots that can exist in a tile group before compaction is triggered", 0.75, 0.25, 1.0, false, false)
+
+
+
+//===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
 

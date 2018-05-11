@@ -172,6 +172,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
   return index_entries.size();
 }
 
+//Test that compaction is triggered and successful for sparse tile groups
 TEST_F(TileGroupCompactorTests, BasicTest) {
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
@@ -185,8 +186,8 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
 
-  auto storage_manager = storage::StorageManager::GetInstance();
   // create database
+  auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase("basiccompactdb");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
@@ -208,11 +209,11 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   //===========================
   // insert tuples here, this will allocate another tile group
   //===========================
-  size_t num_inserts = 10;
+  size_t num_inserts = tuples_per_tilegroup;
   auto insert_result = BulkInsertTuples(table.get(), num_inserts);
   EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
-  // capture memory usage
+  // capture num tile groups occupied
   size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_insert: %zu", tile_group_count_after_insert);
   EXPECT_GT(tile_group_count_after_insert, tile_group_count_after_init);
@@ -231,10 +232,13 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   epoch_manager.SetCurrentEpochId(++current_eid);
   gc_manager.ClearGarbage(0);
 
+  epoch_manager.SetCurrentEpochId(++current_eid);
+  gc_manager.ClearGarbage(0);
+
   //===========================
   // run GC then sleep for 1 second to allow for tile compaction to work
   //===========================
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   size_t tile_group_count_after_compact = manager.GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_compact: %zu", tile_group_count_after_compact);
@@ -261,6 +265,72 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
       CatalogException);
   txn_manager.CommitTransaction(txn);
 }
+
+//Basic functionality
+//
+//Test that compaction is triggered and successful for sparse tile groups
+//    Fill up tile group with 10 tuples
+//    Delete 9 of the tuples
+//    Check that tile group is compacted
+//    Ensure that tuples have the same values
+//
+//Test that compaction is NOT triggered for non-sparse tile groups
+//    Fill up tile group with 10 tuples
+//    Delete 5 of the tuples
+//    Check that tile group is NOT compacted
+//
+//Edge cases
+//
+//Test that Compaction ignores all tuples for dropped tile group
+//    Create tile group
+//Save tg_id
+//Insert tuples to fill tile group completely
+//    Delete all tuples in tile group
+//    Run compaction on freed tile group
+//    Shouldn't crash
+//Ensure that no tuples moved (by checking that num tile groups didnt change)
+//Ensure that tuples have the same values
+//
+//    Test that compaction ignores tile group if table dropped
+//Create tile group
+//    Save tg_id
+//    Drop table
+//    Run compaction on freed tile group
+//    Shouldn't crash
+//Ensure that no tuples moved (by checking that num tile groups didnt change)
+//
+//Test that compaction ignores all tuples for tile group full of all garbage
+//Create tile group
+//    Insert tuples to fill tile group completely
+//Update all tuples in tile group
+//Run compaction on first tile group
+//Ensure that no tuples moved (by checking that num tile groups didnt change)
+//
+//Concurrency tests
+//
+//Test updates during compaction
+//Create tile group
+//    Insert tuples to fill tile group completely
+//Delete 80% of tuples
+//Start txn that updates the last of these tuples, dont commit
+//Start MoveTuplesOutOfTileGroup
+//Confirm that returns false
+//Verify that tuples values are correct
+//Commit update txn
+//    Start MoveTuplesOutOfTileGroup
+//    Confirm that returns true
+//Verify that tuples values are correct
+//
+//Test retry mechanism
+//    Create tile group
+//Delete 80%
+//Start txn that updates 1 of these tuples but does not commit
+//    Run CompactTileGroups in separate thread
+//Sleep .1 second
+//    Commit txn
+//    Sleep .1 second
+//    Test that tile group was compacted
+
 
 }  // namespace test
 }  // namespace peloton

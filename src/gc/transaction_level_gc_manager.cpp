@@ -34,6 +34,90 @@
 namespace peloton {
 namespace gc {
 
+TransactionLevelGCManager::TransactionLevelGCManager(const int thread_count)
+    : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
+
+  compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+
+  unlink_queues_.reserve(thread_count);
+
+  for (int i = 0; i < gc_thread_count_; ++i) {
+
+    unlink_queues_.emplace_back(std::make_shared<
+        LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+  }
+
+  immutable_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  compaction_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  recycle_stacks_ = std::make_shared<peloton::CuckooMap<
+      oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
+}
+
+void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
+  local_unlink_queues_.clear();
+  local_unlink_queues_.resize(gc_thread_count_);
+
+  reclaim_maps_.clear();
+  reclaim_maps_.resize(gc_thread_count_);
+
+  unlink_queues_.clear();
+  unlink_queues_.reserve(gc_thread_count_);
+
+  for (int i = 0; i < gc_thread_count_; ++i) {
+    unlink_queues_.emplace_back(std::make_shared<
+      LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+  }
+
+  immutable_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  compaction_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  recycle_stacks_ = std::make_shared<peloton::CuckooMap<
+      oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
+
+  is_running_ = false;
+}
+
+TransactionLevelGCManager&
+TransactionLevelGCManager::GetInstance(const int thread_count) {
+  static TransactionLevelGCManager gc_manager(thread_count);
+  return gc_manager;
+}
+
+
+void TransactionLevelGCManager::StartGC(
+    std::vector<std::unique_ptr<std::thread>> &gc_threads) {
+  LOG_TRACE("Starting GC");
+
+  is_running_ = true;
+  gc_threads.resize(gc_thread_count_);
+
+  for (int i = 0; i < gc_thread_count_; ++i) {
+    gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
+  }
+}
+
+void TransactionLevelGCManager::StartGC()  {
+  LOG_TRACE("Starting GC");
+  is_running_ = true;
+
+  for (int i = 0; i < gc_thread_count_; ++i) {
+    thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
+  }
+};
+
+void TransactionLevelGCManager::RegisterTable(oid_t table_id) {
+  // if table already registered, ignore
+  if (recycle_stacks_->Contains(table_id)) {
+    return;
+  }
+  // Insert a new entry for the table
+  auto recycle_stack = std::make_shared<RecycleStack>();
+  recycle_stacks_->Insert(table_id, recycle_stack);
+}
+
+void TransactionLevelGCManager::DeregisterTable(const oid_t &table_id) {
+  recycle_stacks_->Erase(table_id);
+}
+
 // Assumes that location is valid
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -76,14 +160,16 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
       continue;
     }
 
-    int immutable_count = ProcessImmutableTileGroupQueue();
-    int reclaimed_count = Reclaim(thread_id, expired_eid);
+    int immutable_count = ProcessImmutableQueue();
+    int compaction_count = ProcessCompactionQueue();
     int unlinked_count = Unlink(thread_id, expired_eid);
+    int reclaimed_count = Reclaim(thread_id, expired_eid);
 
     if (is_running_ == false) {
       return;
     }
-    if (immutable_count == 0 && reclaimed_count == 0 && unlinked_count == 0) {
+
+    if (immutable_count == 0 && reclaimed_count == 0 && unlinked_count == 0 && compaction_count == 0) {
       // sleep at most 0.8192 s
       if (backoff_shifts < 13) {
         ++backoff_shifts;
@@ -118,7 +204,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
   int tuple_counter = 0;
 
   // check if any garbage can be unlinked from indexes.
-  // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
+  // every time we garbage collect at most MAX_PROCESSED_COUNT tuples.
   std::vector<concurrency::TransactionContext* > garbages;
 
   // First iterate the local unlink queue
@@ -136,7 +222,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
         return res;
       });
 
-  for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
+  for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
     concurrency::TransactionContext *txn_ctx;
     // if there's no more tuples in the queue, then break.
     if (unlink_queues_[thread_id]->Dequeue(txn_ctx) == false) {
@@ -166,10 +252,9 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     }
 
     if (txn_ctx->GetEpochId() <= expired_eid) {
-      // as the global expired epoch id is no less than the garbage version's
-      // epoch id, it means that no active transactions can read the version. As
-      // a result, we can delete all the tuples from the indexes to which it
-      // belongs.
+      // since this txn's epochId is <= the global expired epoch id
+      // no active transactions can read the version. Asa result,
+      // we can delete remove all of its garbage tuples from the indexes
 
       // unlink versions from version chain and indexes
       RemoveVersionsFromIndexes(txn_ctx);
@@ -183,7 +268,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     }
   }  // end for
 
-  // once the current epoch id is expired, then we know all the transactions
+  // once the current epoch is expired, we know all the transactions
   // that are active at this time point will be committed/aborted.
   // at that time point, it is safe to recycle the version.
   eid_t safe_expired_eid =
@@ -207,11 +292,11 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
     const eid_t garbage_eid = garbage_ctx_entry->first;
     auto txn_ctx = garbage_ctx_entry->second;
 
-    // if the global expired epoch id is no less than the garbage version's
-    // epoch id, then recycle the garbage version
+    // if the the garbage version's epoch id is expired
+    // then recycle the garbage version
     if (garbage_eid <= expired_eid) {
       RecycleTupleSlots(txn_ctx);
-      RemoveGarbageObjects(txn_ctx);
+      RemoveObjectLevelGarbage(txn_ctx);
 
       // Remove from the original map
       garbage_ctx_entry = reclaim_maps_[thread_id].erase(garbage_ctx_entry);
@@ -242,44 +327,6 @@ void TransactionLevelGCManager::RecycleTupleSlots(
     }
   }
 }
-
-void TransactionLevelGCManager::AddToImmutableTileGroupQueue(const oid_t &tile_group_id) {
-  immutable_tile_group_queue_->Enqueue(tile_group_id);
-}
-
-void TransactionLevelGCManager::RemoveGarbageObjects(
-    concurrency::TransactionContext *txn_ctx) {
-  
-  // Perform object-level GC (e.g. dropped tables, indexes, databases)
-  auto storage_manager = storage::StorageManager::GetInstance();
-  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
-    oid_t database_oid = std::get<0>(entry);
-    oid_t table_oid = std::get<1>(entry);
-    oid_t index_oid = std::get<2>(entry);
-    PELOTON_ASSERT(database_oid != INVALID_OID);
-    auto database = storage_manager->GetDatabaseWithOid(database_oid);
-    PELOTON_ASSERT(database != nullptr);
-    if (table_oid == INVALID_OID) {
-      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-      LOG_DEBUG("GCing database %u", database_oid);
-      continue;
-    }
-    auto table = database->GetTableWithOid(table_oid);
-    PELOTON_ASSERT(table != nullptr);
-    if (index_oid == INVALID_OID) {
-      database->DropTableWithOid(table_oid);
-      LOG_DEBUG("GCing table %u", table_oid);
-      continue;
-    }
-    auto index = table->GetIndexWithOid(index_oid);
-    PELOTON_ASSERT(index != nullptr);
-    table->DropIndexWithOid(index_oid);
-    LOG_DEBUG("GCing index %u", index_oid);
-  }
-
-  delete txn_ctx;
-}
-
 
 void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto tile_group_id = location.block;
@@ -324,47 +371,69 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   tile_group_header->IncrementGCReaders();
   auto num_recycled = tile_group_header->IncrementRecycled() + 1;
   auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
-  // tunable knob, 50% for now
-  auto recycling_threshold = tuples_per_tile_group >> 1;
-  // tunable knob, set at 87.5% for now
-  auto compaction_threshold = tuples_per_tile_group - (tuples_per_tile_group >> 3);
-
   bool immutable = tile_group_header->GetImmutability();
-  // check if tile group should be made immutable
-  // and possibly compacted
-  if (num_recycled >= recycling_threshold &&
+  size_t max_recycled = (size_t) (tuples_per_tile_group * compaction_threshold_);
+
+  // check if tile group should be compacted
+  if (!immutable && num_recycled >= max_recycled &&
       table->IsActiveTileGroup(tile_group_id) == false) {
 
-    if (!immutable) {
-      tile_group_header->SetImmutabilityWithoutNotifyingGC();
-      recycle_stack->RemoveAllWithTileGroup(tile_group_id);
-      immutable = true;
-    }
+    tile_group_header->SetImmutabilityWithoutNotifyingGC();
+    recycle_stack->RemoveAllWithTileGroup(tile_group_id);
 
-    if (num_recycled >= compaction_threshold) {
-      // create task to compact this tile group
-      // add to the worker queue
-      auto &pool = threadpool::MonoQueuePool::GetInstance();
-      pool.SubmitTask([tile_group_id] {
-        TileGroupCompactor::CompactTileGroup(tile_group_id);
-      });
-    }
+    // create task to compact this tile group
+    // add to the worker queue
+    AddToCompactionQueue(tile_group_id);
+    immutable = true;
   }
 
   if (!immutable) {
-    // this slot should be recycled, add it back to the recycle stack
+    // this slot should be recycled, add it to the recycle stack
     recycle_stack->Push(location);
   }
+
   // if this is the last remaining tuple recycled, free tile group
-  else if (num_recycled == tuples_per_tile_group) {
-    // This GC thread should free the TileGroup
-    while (tile_group_header->GetGCReaders() > 1) {
-      // Spin here until the other GC threads stop operating on this TileGroup
-    }
+  if (num_recycled == tuples_per_tile_group) {
+    // Spin here until the other GC threads stop operating on this TileGroup
+    while (tile_group_header->GetGCReaders() > 1);
+
     table->DropTileGroup(tile_group_id);
   }
 
   tile_group_header->DecrementGCReaders();
+}
+
+void TransactionLevelGCManager::RemoveObjectLevelGarbage(
+    concurrency::TransactionContext *txn_ctx) {
+
+  // Perform object-level GC (e.g. dropped tables, indexes, databases)
+  auto storage_manager = storage::StorageManager::GetInstance();
+  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
+    oid_t database_oid = std::get<0>(entry);
+    oid_t table_oid = std::get<1>(entry);
+    oid_t index_oid = std::get<2>(entry);
+    PELOTON_ASSERT(database_oid != INVALID_OID);
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+    PELOTON_ASSERT(database != nullptr);
+    if (table_oid == INVALID_OID) {
+      storage_manager->RemoveDatabaseFromStorageManager(database_oid);
+      LOG_DEBUG("GCing database %u", database_oid);
+      continue;
+    }
+    auto table = database->GetTableWithOid(table_oid);
+    PELOTON_ASSERT(table != nullptr);
+    if (index_oid == INVALID_OID) {
+      database->DropTableWithOid(table_oid);
+      LOG_DEBUG("GCing table %u", table_oid);
+      continue;
+    }
+    auto index = table->GetIndexWithOid(index_oid);
+    PELOTON_ASSERT(index != nullptr);
+    table->DropIndexWithOid(index_oid);
+    LOG_DEBUG("GCing index %u", index_oid);
+  }
+
+  delete txn_ctx;
 }
 
 // looks for a free tuple slot that can now be reused
@@ -405,8 +474,15 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
 }
 
 void TransactionLevelGCManager::ClearGarbage(int thread_id) {
+  // order matters
 
-  ProcessImmutableTileGroupQueue();
+  while (!immutable_queue_->IsEmpty()) {
+    ProcessImmutableQueue();
+  }
+
+  while (!compaction_queue_->IsEmpty()) {
+    ProcessCompactionQueue();
+  }
 
   while (!unlink_queues_[thread_id]->IsEmpty() ||
          !local_unlink_queues_[thread_id].empty()) {
@@ -416,8 +492,6 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   while (reclaim_maps_[thread_id].size() != 0) {
     Reclaim(thread_id, MAX_CID);
   }
-
-  return;
 }
 
 void TransactionLevelGCManager::StopGC() {
@@ -582,15 +656,28 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer locat
   }
 }
 
+inline unsigned int
+TransactionLevelGCManager::HashToThread(const size_t &thread_id) {
+  return (unsigned int)thread_id % gc_thread_count_;
+}
 
-int TransactionLevelGCManager::ProcessImmutableTileGroupQueue() {
+std::shared_ptr<RecycleStack>
+TransactionLevelGCManager::GetTableRecycleStack(const oid_t &table_id) const {
+  std::shared_ptr<RecycleStack> recycle_stack;
+  if (recycle_stacks_->Find(table_id, recycle_stack)) {
+    return recycle_stack;
+  } else {
+    return nullptr;
+  }
+}
 
+int TransactionLevelGCManager::ProcessImmutableQueue() {
   int num_processed = 0;
   oid_t tile_group_id;
 
-  for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
-    // if there's no more tile_groups in the queue, then break.
-    if (immutable_tile_group_queue_->Dequeue(tile_group_id) == false) {
+  for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
+    // if there are no more tile_groups in the queue, then break.
+    if (immutable_queue_->Dequeue(tile_group_id) == false) {
       break;
     }
 
@@ -598,15 +685,49 @@ int TransactionLevelGCManager::ProcessImmutableTileGroupQueue() {
     if (tile_group == nullptr) {
       continue;
     }
-    oid_t table_id = tile_group->GetTableId();
 
+    oid_t table_id = tile_group->GetTableId();
     auto recycle_stack = GetTableRecycleStack(table_id);
+    if (recycle_stack == nullptr) {
+      continue;
+    }
+
     recycle_stack->RemoveAllWithTileGroup(tile_group_id);
     num_processed++;
   }
-
   return num_processed;
 }
+
+void TransactionLevelGCManager::AddToImmutableQueue(const oid_t &tile_group_id) {
+  immutable_queue_->Enqueue(tile_group_id);
+}
+
+void TransactionLevelGCManager::AddToCompactionQueue(const oid_t &tile_group_id) {
+  compaction_queue_->Enqueue(tile_group_id);
+}
+
+int TransactionLevelGCManager::ProcessCompactionQueue() {
+  int num_processed = 0;
+  oid_t tile_group_id;
+
+  for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
+    // if there are no more tile_groups in the queue, then break.
+    if (compaction_queue_->Dequeue(tile_group_id) == false) {
+      break;
+    }
+
+    // Submit task to compact this tile group asynchronously
+    // Task is responsible for ensuring the tile group still exists
+    // when it runs
+    auto &pool = threadpool::MonoQueuePool::GetInstance();
+    pool.SubmitTask([tile_group_id] {
+      TileGroupCompactor::CompactTileGroup(tile_group_id);
+    });
+    num_processed++;
+  }
+  return num_processed;
+}
+
 }  // namespace gc
 }  // namespace peloton
 

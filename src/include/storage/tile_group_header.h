@@ -20,7 +20,7 @@
 #include "common/synchronization/spin_latch.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
-#include "gc/transaction_level_gc_manager.h"
+#include "gc/gc_manager_factory.h"
 #include "storage/tuple.h"
 #include "type/value.h"
 

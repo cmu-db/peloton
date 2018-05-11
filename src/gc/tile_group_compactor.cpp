@@ -21,10 +21,10 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
   size_t attempts = 0;
   size_t max_attempts = 100;
 
-  constexpr auto kMinPauseTime = std::chrono::microseconds(1);
-  constexpr auto kMaxPauseTime = std::chrono::microseconds(100000);
+  constexpr auto minPauseTime = std::chrono::microseconds(1);
+  constexpr auto maxPauseTime = std::chrono::microseconds(100000);
 
-  auto pause_time = kMinPauseTime;
+  auto pause_time = minPauseTime;
 
   while (attempts < max_attempts) {
 
@@ -48,7 +48,7 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
     // Otherwise, transaction failed, so we'll retry with exponential backoff
     std::this_thread::sleep_for(pause_time);
-    pause_time = std::min(pause_time * 2, kMaxPauseTime);
+    pause_time = std::min(pause_time * 2, maxPauseTime);
   }
 }
 

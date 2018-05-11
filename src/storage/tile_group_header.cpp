@@ -22,10 +22,11 @@
 #include "common/printable.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager.h"
+#include "gc/gc_manager_factory.h"
 #include "logging/log_manager.h"
 #include "storage/backend_manager.h"
-#include "type/value.h"
 #include "storage/tuple.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace storage {
@@ -255,8 +256,8 @@ bool TileGroupHeader::SetImmutability() {
   bool expected = false;
   bool result = immutable_.compare_exchange_strong(expected, true);
   if (result == true) {
-    auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
-    gc_manager.AddToImmutableTileGroupQueue(tile_group->GetTileGroupId());
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.AddToImmutableQueue(tile_group->GetTileGroupId());
   }
   return result;
 }

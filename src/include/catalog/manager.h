@@ -50,18 +50,20 @@ class Manager {
 
   oid_t GetNextIndirectionArrayId() { return ++indirection_array_oid_; }
 
-  oid_t GetCurrentIndirectionArrayId() const { return indirection_array_oid_; }
+  oid_t GetCurrentIndirectionArrayId() { return indirection_array_oid_; }
 
-  void AddIndirectionArray(const oid_t &oid,
+  void AddIndirectionArray(const oid_t oid,
                            std::shared_ptr<storage::IndirectionArray> location);
 
-  void DropIndirectionArray(const oid_t &oid);
+  void DropIndirectionArray(const oid_t oid);
 
-  void ClearIndirectionArrays(void);
+  void ClearIndirectionArray(void);
 
   Manager(Manager const &) = delete;
 
  private:
+
+  static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 
   //===--------------------------------------------------------------------===//
   // Data members for indirection array allocation
@@ -71,6 +73,7 @@ class Manager {
   tbb::concurrent_unordered_map<oid_t,
                                 std::shared_ptr<storage::IndirectionArray>>
       indirection_array_locator_;
+  static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 
 }  // namespace catalog
