@@ -16,17 +16,16 @@ namespace peloton {
 namespace stats {
 
 void StatsAggregator::Terminate() {
-  lock_.lock();
+  std::unique_lock<std::mutex> lock(mutex_);
   exiting_ = true;
-  while (exiting_) exec_finished_.wait(lock_);
-  lock_.unlock();
+  while (exiting_) exec_finished_.wait(lock);
 }
 
 void StatsAggregator::RunTask() {
   LOG_INFO("Aggregator is now running.");
-
+  std::unique_lock<std::mutex> lock(mutex_);
   while (exec_finished_.wait_for(
-             lock_, std::chrono::milliseconds(aggregation_interval_ms_)) ==
+             lock, std::chrono::milliseconds(aggregation_interval_ms_)) ==
              std::cv_status::timeout &&
          !exiting_)
     Aggregate();

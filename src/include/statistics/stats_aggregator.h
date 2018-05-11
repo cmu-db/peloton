@@ -42,7 +42,7 @@ namespace stats {
 class StatsAggregator : public DedicatedThreadTask {
  public:
   StatsAggregator(int64_t aggregation_interval)
-      : aggregation_interval_ms_(aggregation_interval), lock_(mutex_) {}
+      : aggregation_interval_ms_(aggregation_interval) {}
 
   void Terminate() override;
 
@@ -58,7 +58,6 @@ class StatsAggregator : public DedicatedThreadTask {
  private:
   int64_t aggregation_interval_ms_;
   std::mutex mutex_;
-  std::unique_lock<std::mutex> lock_;
   std::condition_variable exec_finished_;
   bool exiting_ = false;
 };

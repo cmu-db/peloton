@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/index_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "statistics/index_metric.h"
@@ -51,8 +53,8 @@ void IndexMetricRawData::WriteToCatalog() {
     oid_t table_oid = 0;  // FIXME!!
 
     auto &counts = entry.second;
-    // TODO(tianyu): fix name
-    catalog::IndexMetricsCatalog::GetInstance("")->InsertIndexMetrics(
+    auto system_catalogs = catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
+    system_catalogs->GetIndexMetricsCatalog()->InsertIndexMetrics(
         database_oid, table_oid, index_oid, counts[READ], counts[DELETE],
         counts[INSERT], time_stamp, nullptr, txn);
   }

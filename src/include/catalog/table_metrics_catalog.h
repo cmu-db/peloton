@@ -44,11 +44,6 @@ class TableMetricsCatalog : public AbstractCatalog {
                       concurrency::TransactionContext *txn);
   ~TableMetricsCatalog();
 
-  // Global Singleton
-  static TableMetricsCatalog *GetInstance(
-      const std::string &database_name,
-      concurrency::TransactionContext *txn = nullptr);
-
   inline std::string GetName() const override { return TABLE_METRICS_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//

@@ -239,7 +239,8 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
        tuple_slot_id++) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     if (tuple_txn_id != INVALID_TXN_ID) {
-      PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+      // TODO(Tianyu) Why the fuck is this thing here to begin with?
+//      PELOTON_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
       active_tuple_slots++;
     }
   }

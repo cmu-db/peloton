@@ -42,11 +42,6 @@ class IndexMetricsCatalog : public AbstractCatalog {
                       concurrency::TransactionContext *txn);
   ~IndexMetricsCatalog();
 
-  // Global Singleton
-  static IndexMetricsCatalog *GetInstance(
-      const std::string &database_name,
-      concurrency::TransactionContext *txn = nullptr);
-
   inline std::string GetName() const override { return INDEX_METRICS_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//

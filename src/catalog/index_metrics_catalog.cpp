@@ -19,12 +19,6 @@
 namespace peloton {
 namespace catalog {
 
-IndexMetricsCatalog *IndexMetricsCatalog::GetInstance(
-    const std::string &database_name,
-    concurrency::TransactionContext *txn) {
-  static IndexMetricsCatalog index_metrics_catalog{database_name, txn};
-  return &index_metrics_catalog;
-}
 
 IndexMetricsCatalog::IndexMetricsCatalog(const std::string &database_name, concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE "  + database_name +

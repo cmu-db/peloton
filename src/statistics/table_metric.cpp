@@ -12,6 +12,7 @@
 
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "statistics/table_metric.h"
 #include "storage/data_table.h"
@@ -120,8 +121,8 @@ void TableMetricRawData::WriteToCatalog() {
     // TODO (Justin): currently incorrect, should actually read and then
     // increment,
     // since each aggregation period only knows the delta
-    // TODO(tianyu): fix name
-    catalog::TableMetricsCatalog::GetInstance("")->InsertTableMetrics(
+    auto system_catalogs = catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
+    system_catalogs->GetTableMetricsCatalog()->InsertTableMetrics(
         database_oid, table_oid, counts[READ], counts[UPDATE], counts[DELETE],
         counts[INSERT], counts[INLINE_MEMORY_ALLOC],
         counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);
