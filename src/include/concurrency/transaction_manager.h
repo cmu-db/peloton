@@ -238,10 +238,6 @@ class TransactionManager {
 
   virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
 
-  virtual bool CheckConcurrentTxn(std::unordered_set<txn_id_t>* set);
-
-  virtual std::unordered_set<txn_id_t> GetCurrentTxn();
-
   /**
    * This function generates the maximum commit id of committed transactions.
    * please note that this function only returns a "safe" value instead of a
@@ -262,11 +258,29 @@ class TransactionManager {
     return isolation_level_;
   }
 
+  /**
+   * @brief      Check if the given transaction id set overlaps with
+   *             current transaction set.
+   *
+   * @return     True if set overlaps, false if not.
+   */
+  bool CheckConcurrentTxn(std::unordered_set<txn_id_t>* set);
+
+  /**
+   * @brief      Access the current transaction set
+   *
+   * @return     Current transaction set
+   */
+  std::unordered_set<txn_id_t> GetCurrentTxn(){
+    std::unordered_set<txn_id_t> tmp = current_transactions_;
+    return tmp;
+  }
 
  protected:
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
+  static std::unordered_set<txn_id_t> current_transactions_;
 
 };
 }  // namespace concurrency

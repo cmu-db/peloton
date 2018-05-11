@@ -31,6 +31,8 @@ IsolationLevelType TransactionManager::isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
+std::unordered_set<txn_id_t> TransactionManager::current_transactions_ =
+    std::unordered_set<txn_id_t>();
 
 TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type) {
@@ -266,6 +268,18 @@ VisibilityType TransactionManager::IsVisible(
       }
     }
   }
+}
+
+// This function checks if the given transaction set overlaps with current
+// transaction set. Return true if overlaps, false otherwise.
+bool TransactionManager::CheckConcurrentTxn(std::unordered_set<txn_id_t>* input){
+  auto itr = input->begin();
+  for ( ;itr != input->end(); itr++){
+    if (current_transactions_.find(*itr) != current_transactions_.end()){
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace concurrency
