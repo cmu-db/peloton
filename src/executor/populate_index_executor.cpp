@@ -63,7 +63,7 @@ bool PopulateIndexExecutor::DExecute() {
 
     // Build index with lock
     if (concurrent_ == false){
-      PELOTON_ASSERT((children_.size() == 1);
+      PELOTON_ASSERT(children_.size() == 1);
       oid_t table_oid = target_table_->GetOid();
       // Lock the table to exclusive
       // for switching between blocking/non-blocking.
@@ -124,7 +124,7 @@ bool PopulateIndexExecutor::DExecute() {
     else{
 
       LOG_DEBUG("Non-blocking create index");
-      PELOTON_ASSERT((children_.size() == 2));
+      PELOTON_ASSERT(children_.size() == 2);
       auto &transaction_manager =
           concurrency::TransactionManagerFactory::GetInstance();
 
