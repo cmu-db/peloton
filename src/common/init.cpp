@@ -50,8 +50,7 @@ void PelotonInit::Initialize() {
     threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
 
-  //int parallelism = (CONNECTION_THREAD_COUNT + 3) / 4;
-  int parallelism = 2;
+  int parallelism = (CONNECTION_THREAD_COUNT + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 
