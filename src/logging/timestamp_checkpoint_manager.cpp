@@ -943,7 +943,7 @@ void TimestampCheckpointManager::RecoverTableData(
 
   LOG_TRACE("Recover table %d data (%lu byte)", table->GetOid(), table_size);
 
-  // Drop a default tile group created by table catalog recovery
+  // Drop all default tile groups created by table catalog recovery
   table->DropTileGroups();
 
   // Create tile group
@@ -957,7 +957,8 @@ void TimestampCheckpointManager::RecoverTableData(
                                             table->GetDatabaseOid(), table);
 
     // add the tile group to table
-    table->AddTileGroup(tile_group);
+    oid_t active_tile_group_id = tg_idx % table->GetActiveTileGroupCount();
+    table->AddTileGroup(tile_group, active_tile_group_id);
 
     // recover tuples located in the tile group
     oid_t visible_tuple_count = input_buffer.ReadLong();
@@ -976,9 +977,8 @@ void TimestampCheckpointManager::RecoverTableData(
       ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
       if (location.block != INVALID_OID) {
         // register the location of the inserted tuple to the table without
-        // foreign key check
-        // to avoid an error which occurs in tables with the mutual foreign keys
-        // each other
+        // foreign key check to avoid an error which occurs in tables with
+      	// the mutual foreign keys each other
         ItemPointer *index_entry_ptr = nullptr;
         if (table->InsertTuple(tuple.get(), location, txn, &index_entry_ptr,
                                false) == true) {
@@ -995,6 +995,15 @@ void TimestampCheckpointManager::RecoverTableData(
     }  // tuple loop end
 
   }  // tile group loop end
+
+  // if # of recovered tile_groups is smaller than # of active tile
+  // groups, then create default tile group for rest of the slots of
+  // active tile groups
+  for (auto active_tile_group_id = tile_group_count;
+  		active_tile_group_id < table->GetActiveTileGroupCount();
+  		active_tile_group_id++) {
+  	table->AddDefaultTileGroup(active_tile_group_id);
+  }
 }
 
 oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(

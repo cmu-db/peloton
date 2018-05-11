@@ -934,47 +934,15 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   return tile_group_id;
 }
 
-void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
-  PELOTON_ASSERT(tile_group_id);
-
-  std::vector<catalog::Schema> schemas;
-  schemas.push_back(*schema);
-
-  column_map_type column_map;
-  // default column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(0, col_itr);
-  }
-
-  std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, schemas, column_map,
-      tuples_per_tilegroup_));
-
-  auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
-
-  if (tile_groups_exists == false) {
-    tile_groups_.Append(tile_group_id);
-
-    LOG_TRACE("Added a tile group ");
-
-    // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-
-    // we must guarantee that the compiler always add tile group before adding
-    // tile_group_count_.
-    COMPILER_MEMORY_FENCE;
-
-    tile_group_count_++;
-
-    LOG_TRACE("Recording tile group : %u ", tile_group_id);
-  }
-}
-
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
+  AddTileGroup(tile_group, active_tile_group_id);
+}
 
+void DataTable::AddTileGroup(
+		const std::shared_ptr<TileGroup> &tile_group,
+		const size_t &active_tile_group_id) {
   active_tile_groups_[active_tile_group_id] = tile_group;
 
   oid_t tile_group_id = tile_group->GetTileGroupId();

@@ -130,10 +130,12 @@ class DataTable : public AbstractTable {
   // TILE GROUP
   //===--------------------------------------------------------------------===//
 
-  // coerce into adding a new tile group with a tile group id
-  void AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
-
+  // for test
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
+
+  // for checkpoint recovery
+  void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group,
+  		const size_t &active_tile_group_id);
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
