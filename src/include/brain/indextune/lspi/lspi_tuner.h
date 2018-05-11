@@ -32,7 +32,7 @@ class LSPIIndexTuner {
  public:
   explicit LSPIIndexTuner(
       const std::string &db_name, const std::set<oid_t> &ori_table_oids,
-      catalog::Catalog *cat = nullptr,
+      catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
    * Given a recent set of queries and their latency on the current

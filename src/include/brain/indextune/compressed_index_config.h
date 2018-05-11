@@ -51,32 +51,6 @@ class CompressedIndexConfigContainer {
    */
   void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
 
-  // **Useful setter fns**
-
-  /**
-   * Add an index to current configuration
-   * @param idx_object: the index to be added
-   */
-  void SetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
-
-  /**
-   * Add an index to current configuration
-   * @param offset: the global offset of the index to be added
-   */
-  void SetBit(size_t offset);
-
-  /**
-   * Remove an index from current configuration
-   * @param idx_object: the index to be removed
-   */
-  void UnsetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
-
-  /**
-   * Remove and index from current configuration
-   * @param offset: the global offset of the index to be removed
-   */
-  void UnsetBit(size_t offset);
-
   // **Useful getter fns**
 
   /**
@@ -164,6 +138,31 @@ class CompressedIndexConfigContainer {
   std::string database_name_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
+
+  /**
+   * Add an index to current configuration
+   * @param idx_object: the index to be added
+   */
+  void SetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
+
+  /**
+   * Add an index to current configuration
+   * @param offset: the global offset of the index to be added
+   */
+  void SetBit(size_t offset);
+
+  /**
+   * Remove an index from current configuration
+   * @param idx_object: the index to be removed
+   */
+  void UnsetBit(const std::shared_ptr<HypotheticalIndexObject> &idx_object);
+
+  /**
+   * Remove and index from current configuration
+   * @param offset: the global offset of the index to be removed
+   */
+  void UnsetBit(size_t offset);
+
   void EnumerateConfigurations(
       const std::vector<oid_t> &cols, size_t max_index_size,
       std::map<std::vector<oid_t>, size_t> &indexconf_id_map,
