@@ -325,7 +325,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    if (query_type == QueryType::QUERY_SELECT) {
+    if (query_type == QueryType::QUERY_SELECT ||
+        query_type == QueryType::QUERY_EXPLAIN) {
       auto tuple_descriptor = GenerateTupleDescriptor(
           statement->GetStmtParseTreeList()->GetStatement(0));
       statement->SetTupleDescriptor(tuple_descriptor);
@@ -365,8 +366,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>>
-        &parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
