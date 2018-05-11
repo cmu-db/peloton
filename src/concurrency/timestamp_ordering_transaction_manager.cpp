@@ -715,17 +715,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
-  // Increment # txns committed metric
-  // Sine you have to iterate rw_set in the function anyway, it does not
-  // matter to peek the first element of rw_set a bit.
-  if (!rw_set.IsEmpty()) {
-    // Call the GetConstIterator() function to explicitly lock the cuckoohash
-    // and initilaize the iterator
-    auto rw_set_lt = rw_set.GetConstIterator();
-    const auto tile_group_id = rw_set_lt.begin()->first.block;
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectTransactionCommit(tile_group_id);
-  }
+  // Sine we have to iterate rw_set in the function anyway, it does not
+  // matter to peek the first element of rw_set.
+  oid_t stats_tile_group_id = INVALID_OID;
 
 
   // install everything.
@@ -739,6 +731,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   for (const auto &tuple_entry : rw_set.GetConstIterator()) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
+    stats_tile_group_id = tile_group_id;
     oid_t tuple_slot = item_ptr.offset;
 
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -852,6 +845,10 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     }
   }
 
+  // Increment # txns committed metric
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTransactionCommit(stats_tile_group_id);
+
   ResultType result = current_txn->GetResult();
 
   log_manager.LogEnd();
@@ -885,15 +882,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
-  // Increment # txns aborted metric
-  if (!rw_set.IsEmpty()) {
-    // Call the GetConstIterator() function to explicitly lock the cuckoohash
-    // and initilaize the iterator
-    auto rw_set_lt = rw_set.GetConstIterator();
-    const auto tile_group_id = rw_set_lt.begin()->first.block;
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectTransactionAbort(tile_group_id);
-  }
+  oid_t stats_tile_group_id = INVALID_OID;
 
   // Iterate through each item pointer in the read write set
   // TODO (Pooja): This might be inefficient since we will have to get the
@@ -901,6 +890,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   for (const auto &tuple_entry : rw_set.GetConstIterator()) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
+    stats_tile_group_id = tile_group_id;
     oid_t tuple_slot = item_ptr.offset;
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -1033,6 +1023,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     }
   }
 
+  // Increment # txns aborted metric
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTransactionAbort(stats_tile_group_id);
   current_txn->SetResult(ResultType::ABORTED);
   EndTransaction(current_txn);
 
