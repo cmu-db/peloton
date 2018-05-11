@@ -220,9 +220,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
           create_plan->SetKeyAttrs(column_ids);
           ddl_plan = std::move(child_PopulateIndexPlan);
         }
-        if (concurrent){
-          child_PopulateIndexPlan->AddChild(std::move(child_SeqScanPlan_second));
-        }
       }
       break;
     }
