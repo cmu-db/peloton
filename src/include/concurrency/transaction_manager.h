@@ -280,7 +280,7 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-  static std::unordered_set<txn_id_t> current_transactions_;
+  std::unordered_set<txn_id_t> current_transactions_;
 
 };
 }  // namespace concurrency
