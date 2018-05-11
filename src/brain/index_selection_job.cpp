@@ -58,13 +58,23 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
       queries.push_back(query_pair.second);
     }
 
+    // TODO: Handle multiple databases
+    brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
+    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
+    brain::IndexConfiguration best_config;
+    is.GetBestIndexes(best_config);
+
+    if (best_config.IsEmpty()) {
+      LOG_INFO("Best config is empty");
+    }
+
     // Get the existing indexes and drop them.
     // TODO: Handle multiple databases
     auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-        DEFAULT_DB_NAME, txn);
+      DEFAULT_DB_NAME, txn);
     auto pg_index = catalog::Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_object->GetDatabaseOid())
-                        ->GetIndexCatalog();
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetIndexCatalog();
     auto indexes = pg_index->GetIndexObjects(txn);
     for (auto index : indexes) {
       auto index_name = index.second->GetIndexName();
@@ -73,16 +83,20 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
       // find out if an index is a brain suggested index/user created index.
       if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
           std::string::npos) {
-        LOG_DEBUG("Dropping Index: %s", index_name.c_str());
-        DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+        bool found = false;
+        for (auto installed_index: best_config.GetIndexes()) {
+          if ((index.second.get()->GetTableOid() == installed_index.get()->table_oid) &&
+          (index.second.get()->GetKeyAttrs() == installed_index.get()->column_oids)) {
+            found = true;
+          }
+        }
+        // Drop only indexes which are not suggested this time.
+        if (!found) {
+          LOG_DEBUG("Dropping Index: %s", index_name.c_str());
+          DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+        }
       }
     }
-
-    // TODO: Handle multiple databases
-    brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
-    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
-    brain::IndexConfiguration best_config;
-    is.GetBestIndexes(best_config);
 
     for (auto index : best_config.GetIndexes()) {
       // Create RPC for index creation on the server side.
