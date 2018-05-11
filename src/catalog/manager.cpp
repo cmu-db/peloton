@@ -44,7 +44,7 @@ void Manager::DropIndirectionArray(const oid_t &oid) {
 }
 
 // used for logging test
-void Manager::ClearIndirectionArray() { indirection_array_locator_.clear(); }
+void Manager::ClearIndirectionArrays() { indirection_array_locator_.clear(); }
 
 }  // namespace catalog
 }  // namespace peloton
