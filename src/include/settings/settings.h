@@ -138,7 +138,7 @@ SETTING_int(port, "Peloton port (default: 15721)", 15721, 1024, 65535, false,
 
     // Enable or disable data collection
     SETTING_bool(brain_data_collection,
-                 "Enable data collection for the brain (default true)", true,
+                 "Enable data collection for the brain (default false)", false,
                  true, true)
 
     // Size of the brain task queue
