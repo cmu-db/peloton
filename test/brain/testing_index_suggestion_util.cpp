@@ -78,7 +78,15 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE a = 190 and b = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE a = 190 and b = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 190 and a = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 190 and c = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 190 and c = 250");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE a = 190 and c = 250");
       break;
     }
     case C: {
@@ -98,6 +106,9 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE b = 81 and c = 123 and a = 122");
       query_strs.push_back("SELECT * FROM " + table_name +
                            " WHERE b = 81 and c = 123 and d = 122");
+      query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
+      query_strs.push_back("SELECT * FROM " + table_name +
+                           " WHERE b = 81 and c = 12");
       break;
     }
     case D: {
@@ -214,14 +225,7 @@ void TestingIndexSuggestionUtil::InsertIntoTable(TableSchema schema,
       auto type = schema.cols[i].second;
       switch (type) {
         case INTEGER:
-          // to choose {BCA} over {CBA} deterministically,
-          // we make column C less sparse i.e. it would contain fewer non-unique keys.
-          // TODO [Priyatham]- May be code this up in a better way?
-          if (i == 2) {
-            oss << rand() % 600;
-          } else {
-            oss << rand() % 1000;
-          }
+          oss << rand() % 1000;
           break;
         case FLOAT:
           oss << (float)(rand() % 100);

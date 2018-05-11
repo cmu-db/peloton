@@ -39,7 +39,7 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
   // Start the index selection.
   for (unsigned long i = 0; i < context_.knobs_.num_iterations_; i++) {
-    LOG_INFO("******* Iteration %ld **********", i);
+    LOG_TRACE("******* Iteration %ld **********", i);
     LOG_TRACE("Candidate Indexes Before: %s",
               candidate_indexes.ToString().c_str());
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
@@ -151,11 +151,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // 3. If Cost (S U {I}) >= Cost(S) then exit
   // Else S = S U {I}
   // 4. If |S| = k then exit
-  LOG_INFO("GREEDY: Starting with the following index: %s",
+  LOG_TRACE("GREEDY: Starting with the following index: %s",
            indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
 
-  LOG_INFO("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
+  LOG_TRACE("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
            current_index_count, k);
 
   if (current_index_count >= k) return;
@@ -173,9 +173,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes = indexes;
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
-      LOG_INFO("GREEDY: Considering this index: %s \n with cost: %lf",
-               best_index->ToString().c_str(), cur_cost);
-      if (cur_cost < cur_min_cost) {
+      LOG_TRACE("GREEDY: Considering this index: %s \n with cost: %lf",
+               index->ToString().c_str(), cur_cost);
+      if (cur_cost < cur_min_cost || (best_index != nullptr &&
+          cur_cost == cur_min_cost && 
+          new_indexes.ToString() < best_index->ToString())) {
         cur_min_cost = cur_cost;
         best_index = index;
       }
@@ -183,7 +185,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
-      LOG_INFO("GREEDY: Adding the following index: %s",
+      LOG_TRACE("GREEDY: Adding the following index: %s",
                best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
@@ -192,12 +194,12 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
       // we are done with all remaining indexes
       if (remaining_indexes.GetIndexCount() == 0) {
-        LOG_INFO("GREEDY: Breaking because nothing more");
+        LOG_TRACE("GREEDY: Breaking because nothing more");
         break;
       }
     } else {  // we did not find any better index to add to our current
               // configuration
-      LOG_INFO("GREEDY: Breaking because nothing better found");
+      LOG_TRACE("GREEDY: Breaking because nothing better found");
       break;
     }
   }
@@ -255,7 +257,7 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.erase({empty, cost_empty});
 
   for (auto index : result_index_config) {
-    LOG_INFO("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
+    LOG_TRACE("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
              index.second);
   }
 
