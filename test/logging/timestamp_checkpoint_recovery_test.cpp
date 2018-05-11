@@ -476,6 +476,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType primary_key_result1 =
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result1);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // PRIMARY KEY (2 column: pid1, pid2)
   LOG_DEBUG("PRIMARY KEY (2 columns) check");
@@ -484,6 +485,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType primary_key_result2 =
       TestingSQLUtil::ExecuteSQLQuery(primary_key_dml2);
   EXPECT_EQ(ResultType::ABORTED, primary_key_result2);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // DEFAULT (value1 = 0)
   LOG_DEBUG("DEFAULT check");
@@ -506,6 +508,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   } else {
   	EXPECT_TRUE(false);
   }
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // UNIQUE (value1)
   LOG_DEBUG("UNIQUE check");
@@ -513,6 +516,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       "INSERT INTO checkpoint_constraint_test VALUES (17, 18, 3, 20, 1, 6 ,7);";
   ResultType unique_result = TestingSQLUtil::ExecuteSQLQuery(unique_dml);
   EXPECT_EQ(ResultType::ABORTED, unique_result);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // NOT NULL (value2)
   LOG_DEBUG("NOT NULL check");
@@ -522,6 +526,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType not_null_result = TestingSQLUtil::ExecuteSQLQuery(not_null_dml);
   // EXPECT_EQ(ResultType::ABORTED, not_null_result);
   EXPECT_EQ(ResultType::FAILURE, not_null_result);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // CHECK (value2 > 2)
   LOG_DEBUG("CHECK check");
@@ -530,12 +535,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType check_result = TestingSQLUtil::ExecuteSQLQuery(check_dml);
   // EXPECT_EQ(ResultType::FAILURE, check_result);
   EXPECT_EQ(ResultType::SUCCESS, check_result);  // check doesn't work correctly
-
-  std::string sql4 = "SELECT * FROM checkpoint_constraint_test;";
-  std::vector<std::string> expected4 = {"1|2|3|4|0|1|2", "5|6|7|8|1|6|7",
-                                        "9|10|11|12|2|11|12", "13|14|0|16|0|1|2",
-                                        "17|18|19|1|1|6|7"};
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql4, expected4, false);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // FOREIGN KEY (1 column: value3 => pid)
   LOG_DEBUG("FOREIGN KEY (1 column) check");
@@ -545,8 +545,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType foreign_key_result1 =
       TestingSQLUtil::ExecuteSQLQuery(foreign_key_dml1);
   EXPECT_EQ(ResultType::ABORTED, foreign_key_result1);
-
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql4, expected4, false);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // FOREIGN KEY (2 column: (value4, value5) => (upid1, upid2))
   LOG_DEBUG("FOREIGN KEY (2 columns) check");
@@ -555,8 +554,14 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       ",20);";
   ResultType foreign_key_result2 =
       TestingSQLUtil::ExecuteSQLQuery(foreign_key_dml2);
-  // EXPECT_EQ(ResultType::ABORTED, foreign_key_result2);
-  EXPECT_EQ(ResultType::TO_ABORT, foreign_key_result2);
+  EXPECT_EQ(ResultType::ABORTED, foreign_key_result2);
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
+
+  std::string sql4 = "SELECT * FROM checkpoint_constraint_test;";
+  std::vector<std::string> expected4 = {"1|2|3|4|0|1|2", "5|6|7|8|1|6|7",
+                                        "9|10|11|12|2|11|12", "13|14|0|16|0|1|2",
+                                        "17|18|19|1|1|6|7"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql4, expected4, false);
 
   PelotonInit::Shutdown();
 }
