@@ -60,7 +60,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
 
-  immutable = false;
+  immutable_ = false;
   recycling_ = true;
   num_recycled_ = 0;
   num_gc_readers_ = 0;
@@ -85,7 +85,9 @@ const std::string TileGroupHeader::GetInfo() const {
   os << "Address:" << this << ", ";
   os << "NumActiveTuples:";
   os << GetActiveTupleCount() << ", ";
-  os << "Immutable: " << GetImmutability();
+  os << "NumRecycled:";
+  os << GetNumRecycled() << ", ";
+  os << "Immutable:" << GetImmutability();
   os << ")";
   os << std::endl;
 
@@ -250,7 +252,8 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
 }
 
 bool TileGroupHeader::SetImmutability() {
-  bool result = __sync_bool_compare_and_swap(&immutable, false, true);
+  bool expected = false;
+  bool result = immutable_.compare_exchange_strong(expected, true);
   if (result == true) {
     auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
     gc_manager.AddToImmutableTileGroupQueue(tile_group->GetTileGroupId());

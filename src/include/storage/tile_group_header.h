@@ -229,28 +229,33 @@ class TileGroupHeader : public Printable {
   }
 
   /*
-  * @brief The following method use Compare and Swap to set the tilegroup's
-  immutable flag to be true. GC must be notified in order to stop recycling
-   slots from it
+  * The following method use Compare and Swap to set the tilegroup's
+  * immutable flag to be true. GC must be notified in order to stop recycling
+  * slots from it
   */
   bool SetImmutability();
 
   /*
-  * @brief Set's Immutable Flag to True. Only used by the Garbage Collector
+  * Set's Immutable Flag to True. Only used by the Garbage Collector
+  * since it doesn't need to notify itself
   */
   inline bool SetImmutabilityWithoutNotifyingGC() {
-    return __sync_bool_compare_and_swap(&immutable, false, true);
+    bool expected = false;
+    return immutable_.compare_exchange_strong(expected, true);
   }
   
   /*
-  * @brief The following method use Compare and Swap to set the tilegroup's
-  immutable flag to be false. 
+  * The following method use Compare and Swap to set the tilegroup's
+  * immutable flag to be false. This should only be used for testing purposes
+  * because it violates a constraint of Zone Maps and the Garbage Collector
+  * that a TileGroup's immutability will never change after being set to true
   */
   inline bool ResetImmutability() {
-    return __sync_bool_compare_and_swap(&immutable, true, false);
+    bool expected = true;
+    return immutable_.compare_exchange_strong(expected, false);
   }
 
-  inline bool GetImmutability() const { return immutable; }
+  inline bool GetImmutability() const { return immutable_.load(); }
 
   inline void StopRecycling() { recycling_.store(false); }
 
@@ -260,7 +265,7 @@ class TileGroupHeader : public Printable {
 
   inline size_t DecrementRecycled() { return num_recycled_.fetch_sub(1); }
 
-  inline size_t GetRecycled() { return num_recycled_.load(); }
+  inline size_t GetNumRecycled() const { return num_recycled_.load(); }
 
   inline size_t IncrementGCReaders() { return num_gc_readers_.fetch_add(1); }
 
@@ -327,9 +332,9 @@ class TileGroupHeader : public Printable {
 
   common::synchronization::SpinLatch tile_header_lock;
 
-  // Immmutable Flag. Should be set by the indextuner to be true.
+  // Immmutable Flag. Should only be set to true when a TileGroup has used up all of its initial slots
   // By default it will be set to false.
-  bool immutable;
+  std::atomic<bool> immutable_;
 
   // metadata used by the garbage collector to recycle tuples
   std::atomic<bool> recycling_; // enables/disables recycling from this tile group

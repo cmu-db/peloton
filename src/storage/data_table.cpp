@@ -1019,7 +1019,6 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
-
 void DataTable::DropTileGroup(const oid_t &tile_group_id) {
   ssize_t tile_group_offset = tile_groups_.Lookup(tile_group_id);
   if (tile_group_offset != -1) {
