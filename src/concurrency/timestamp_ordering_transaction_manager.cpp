@@ -1100,5 +1100,17 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   return ResultType::ABORTED;
 }
 
+// This function checks if the given transaction set overlaps with current
+// transaction set. Return true if overlaps, false otherwise.
+bool TimestampOrderingTransactionManager::CheckConcurrentTxn(std::unordered_set<txn_id_t>* input){
+  auto itr = input->begin();
+  for ( ;itr != input->end(); itr++){
+    if (current_transactions_.find(*itr) != current_transactions_.end()){
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace concurrency
 }  // namespace peloton

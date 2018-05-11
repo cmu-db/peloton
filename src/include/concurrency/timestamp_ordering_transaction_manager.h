@@ -236,10 +236,29 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   virtual ResultType AbortTransaction(TransactionContext *const current_txn);
 
+  /**
+   * @brief      Check if the given transaction id set overlaps with
+   *             current transaction set.
+   *
+   * @return     True if set overlaps, false if not.
+   */
+  bool CheckConcurrentTxn(std::unordered_set<txn_id_t>* set);
+
+  /**
+   * @brief      Access the current transaction set
+   *
+   * @return     Current transaction set
+   */
+  std::unordered_set<txn_id_t> GetCurrentTxn(){
+    std::unordered_set<txn_id_t> tmp = current_transactions_;
+    return tmp;
+  }
+
 
 private:
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
+  std::unordered_set<txn_id_t> current_transactions_;
 
   /**
    * @brief      Gets the spin latch field.
