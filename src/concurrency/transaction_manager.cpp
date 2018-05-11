@@ -12,6 +12,9 @@
 
 #include "concurrency/transaction_manager.h"
 
+#include <set>
+#include <algorithm>
+
 #include "catalog/manager.h"
 #include "concurrency/transaction_context.h"
 #include "function/date_functions.h"
@@ -20,7 +23,6 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
-#include <algorithm>
 
 namespace peloton {
 namespace concurrency {
@@ -269,9 +271,9 @@ VisibilityType TransactionManager::IsVisible(
 
 // This function checks if the given transaction set overlaps with current
 // transaction set. Return true if overlaps, false otherwise.
-bool TransactionManager::CheckConcurrentTxn(std::set<txn_id_t> input){
-  auto itr = input.begin();
-  for (;itr != input.end(); itr++){
+bool TransactionManager::CheckConcurrentTxn(std::set<txn_id_t>* input){
+  auto itr = input->begin();
+  for ( ;itr != input->end(); itr++){
     if (current_transactions_.find(*itr) != current_transactions_.end()){
       return true;
     }

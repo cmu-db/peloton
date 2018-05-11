@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <set>
+
 #include "common/logger.h"
 #include "type/value.h"
 #include "executor/logical_tile.h"
@@ -20,6 +22,7 @@
 #include "storage/data_table.h"
 #include "storage/tile.h"
 #include "concurrency/lock_manager.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -60,6 +63,7 @@ bool PopulateIndexExecutor::DExecute() {
 
     // Build index with lock
     if (concurrent_ == false){
+      PELOTON_ASSERT((children_.size() == 1);
       oid_t table_oid = target_table_->GetOid();
       // Lock the table to exclusive
       // for switching between blocking/non-blocking.
@@ -120,12 +124,27 @@ bool PopulateIndexExecutor::DExecute() {
     else{
 
       LOG_DEBUG("Non-blocking create index");
+      PELOTON_ASSERT((children_.size() == 2));
+      auto &transaction_manager =
+          concurrency::TransactionManagerFactory::GetInstance();
 
-      // Scan pass 1
+      // Get concurrent transactions before scanning
+      std::set<txn_id_t>* txn_set = transaction_manager.GetCurrentTxn();
+      txn_set->erase(current_txn->GetTransactionId());
 
-      // Get the output from seq_scan
+      // Get the output from seq_scan (1st pass)
       while (children_[0]->Execute()) {
-        child_tiles_.emplace_back(children_[0]->GetOutput());
+      }
+
+      // Check if all concurrent transaction ends
+      while (transaction_manager.CheckConcurrentTxn(txn_set)){
+        // Sleep 5ms to avoid spin wait
+        usleep(5000);
+      }
+
+      // Get the output from seq_scan (2nd pass)
+      while (children_[1]->Execute()) {
+        child_tiles_.emplace_back(children_[1]->GetOutput());
       }
 
       if (child_tiles_.size() == 0) {

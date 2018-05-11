@@ -17,11 +17,13 @@
 #include <unordered_map>
 #include <list>
 #include <utility>
+#include <set>
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -262,7 +264,17 @@ class TransactionManager {
    *
    * @return     True if set overlaps, false if not.
    */
-  bool CheckConcurrentTxn(std::set<txn_id_t> set);
+  bool CheckConcurrentTxn(std::set<txn_id_t>* set);
+
+  /**
+   * @brief      Access the current transaction set
+   *
+   * @return     Current transaction set
+   */
+  std::set<txn_id_t>* GetCurrentTxn(){
+    std::set<txn_id_t> tmp = current_transactions_;
+    return &tmp;
+  }
 
  protected:
   static ProtocolType protocol_;
