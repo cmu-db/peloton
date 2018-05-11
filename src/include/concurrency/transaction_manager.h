@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <list>
 #include <utility>
-#include <set>
+#include <unordered_set>
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction_context.h"
@@ -264,15 +264,15 @@ class TransactionManager {
    *
    * @return     True if set overlaps, false if not.
    */
-  bool CheckConcurrentTxn(std::set<txn_id_t>* set);
+  bool CheckConcurrentTxn(std::unordered_set<txn_id_t>* set);
 
   /**
    * @brief      Access the current transaction set
    *
    * @return     Current transaction set
    */
-  std::set<txn_id_t> GetCurrentTxn(){
-    std::set<txn_id_t> tmp = current_transactions_;
+  std::unordered_set<txn_id_t> GetCurrentTxn(){
+    std::unordered_set<txn_id_t> tmp = current_transactions_;
     return tmp;
   }
 
@@ -280,8 +280,8 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-  static std::set<txn_id_t> current_transactions_;
+  static std::unordered_set<txn_id_t> current_transactions_;
 
 };
-}  // namespace storage
+}  // namespace concurrency
 }  // namespace peloton

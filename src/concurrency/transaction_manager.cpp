@@ -12,8 +12,7 @@
 
 #include "concurrency/transaction_manager.h"
 
-#include <set>
-#include <algorithm>
+#include <unordered_set>
 
 #include "catalog/manager.h"
 #include "concurrency/transaction_context.h"
@@ -271,7 +270,7 @@ VisibilityType TransactionManager::IsVisible(
 
 // This function checks if the given transaction set overlaps with current
 // transaction set. Return true if overlaps, false otherwise.
-bool TransactionManager::CheckConcurrentTxn(std::set<txn_id_t>* input){
+bool TransactionManager::CheckConcurrentTxn(std::unordered_set<txn_id_t>* input){
   auto itr = input->begin();
   for ( ;itr != input->end(); itr++){
     if (current_transactions_.find(*itr) != current_transactions_.end()){

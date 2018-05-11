@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <set>
+#include <unordered_set>
 
 #include "common/logger.h"
 #include "type/value.h"
@@ -129,7 +129,7 @@ bool PopulateIndexExecutor::DExecute() {
           concurrency::TransactionManagerFactory::GetInstance();
 
       // Get concurrent transactions before scanning
-      std::set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
+      std::unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
       txn_set.erase(current_txn->GetTransactionId());
 
       // Get the output from seq_scan (1st pass)
