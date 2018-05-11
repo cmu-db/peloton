@@ -52,7 +52,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  bool inserted = container.Insert(index_key, value);
+  bool inserted = container.Insert(index_key, value, HasUniqueKeys());
   if (inserted) {
     auto &stats_collector =
         stats::ThreadLevelStatsCollector::GetCollectorForThread();
