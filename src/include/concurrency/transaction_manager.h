@@ -271,9 +271,9 @@ class TransactionManager {
    *
    * @return     Current transaction set
    */
-  std::set<txn_id_t>* GetCurrentTxn(){
+  std::set<txn_id_t> GetCurrentTxn(){
     std::set<txn_id_t> tmp = current_transactions_;
-    return &tmp;
+    return tmp;
   }
 
  protected:
