@@ -178,20 +178,20 @@ bool SeqScanExecutor::DExecute() {
         if (visibility == VisibilityType::OK || children_.size() == 1) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-	    LOG_DEBUG("perform read in seq scan");
+	        LOG_DEBUG("perform read in seq scan");
             auto res = transaction_manager.PerformRead(current_txn, location,
                                                        acquire_owner);
             if (!res) {
-	      if (visibility == VisibilityType::OK){
-		LOG_DEBUG("perform read failed in seq scan!");
-		transaction_manager.SetTransactionResult(current_txn,
+	          if (visibility == VisibilityType::OK){
+		        LOG_DEBUG("perform read failed in seq scan!");
+		        transaction_manager.SetTransactionResult(current_txn,
                                                        ResultType::FAILURE);
-		return res;
-	      }
-	      else{
-		LOG_DEBUG("Encountered modified tuple");
-		continue;
-	      }
+		        return res;
+	          }
+	          else{
+		        LOG_DEBUG("Encountered modified tuple");
+		        continue;
+	          }
             }
           } else {
             ContainerTuple<storage::TileGroup> tuple(tile_group.get(),

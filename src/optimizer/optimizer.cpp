@@ -191,8 +191,10 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan(
             new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
 
-        child_SeqScanPlan->AddChild(std::move(ddl_plan));
-        ddl_plan = std::move(child_SeqScanPlan);
+        // Create a second plan to retrieve data
+        // This plan is for concurrent create index
+        std::unique_ptr<planner::SeqScanPlan> child_SeqScanPlan_second(
+            new planner::SeqScanPlan(target_table, nullptr, column_ids, false));
 
         bool concurrent = false;
         // Create a plan to add data to index
@@ -202,6 +204,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
             new planner::PopulateIndexPlan(target_table, column_ids, index_name, concurrent));
         child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
+        if (concurrent){
+          child_PopulateIndexPlan->AddChild(std::move(child_SeqScanPlan_second));
+        }
         create_plan->SetKeyAttrs(column_ids);
         ddl_plan = std::move(child_PopulateIndexPlan);
       }

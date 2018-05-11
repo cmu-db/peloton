@@ -97,7 +97,7 @@ bool PopulateIndexExecutor::DExecute() {
         // Go over all tuples in the logical tile
         for (oid_t tuple_id : *tile) {
           ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
-	  LOG_DEBUG("Add tuple in index");
+	      LOG_DEBUG("Add tuple in index");
 
           // Materialize the logical tile tuple
           for (oid_t column_itr = 0; column_itr < column_ids_.size();
@@ -120,6 +120,9 @@ bool PopulateIndexExecutor::DExecute() {
     else{
 
       LOG_DEBUG("Non-blocking create index");
+
+      // Scan pass 1
+
       // Get the output from seq_scan
       while (children_[0]->Execute()) {
         child_tiles_.emplace_back(children_[0]->GetOutput());
@@ -137,7 +140,7 @@ bool PopulateIndexExecutor::DExecute() {
       // Go over the logical tile and insert in the index the values
       for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
            child_tile_itr++) {
-	LOG_DEBUG("Add values to Index");
+	    LOG_DEBUG("Add values to Index");
         auto tile = child_tiles_[child_tile_itr].get();
 
         // Go over all tuples in the logical tile
