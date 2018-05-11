@@ -58,12 +58,11 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const auto col_objs = table_obj.second->GetColumnObjects();
     std::vector<oid_t> null_conf;
     std::vector<oid_t> cols;
-    for(const auto& col_obj: col_objs) {
+    for (const auto &col_obj : col_objs) {
       cols.push_back(col_obj.first);
     }
-    EnumerateConfigurations(cols, MAX_INDEX_SIZE,
-                            indexconf_id_map, id_indexconf_map,
-                            null_conf, next_index_id);
+    EnumerateConfigurations(cols, MAX_INDEX_SIZE, indexconf_id_map,
+                            id_indexconf_map, null_conf, next_index_id);
 
     table_offset_map_[table_oid] = next_table_offset_;
     table_offset_reverse_map_[next_table_offset_] = table_oid;
@@ -104,23 +103,22 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
   txn_manager_->CommitTransaction(txn);
 }
 
-void CompressedIndexConfigContainer::EnumerateConfigurations(const std::vector<peloton::oid_t> &cols,
-                                                             size_t max_index_size,
-                                                             std::map<std::vector<peloton::oid_t>,
-                                                                      size_t> &indexconf_id_map,
-                                                             std::map<size_t,
-                                                                      std::vector<peloton::oid_t>> &id_indexconf_map,
-                                                             std::vector<peloton::oid_t> &index_conf,
-                                                             size_t &next_id) {
-  if(index_conf.size() <= std::min<size_t>(max_index_size, cols.size())) {
+void CompressedIndexConfigContainer::EnumerateConfigurations(
+    const std::vector<peloton::oid_t> &cols, size_t max_index_size,
+    std::map<std::vector<peloton::oid_t>, size_t> &indexconf_id_map,
+    std::map<size_t, std::vector<peloton::oid_t>> &id_indexconf_map,
+    std::vector<peloton::oid_t> &index_conf, size_t &next_id) {
+  if (index_conf.size() <= std::min<size_t>(max_index_size, cols.size())) {
     indexconf_id_map[index_conf] = next_id;
     id_indexconf_map[next_id] = index_conf;
     next_id++;
   }
-  for(auto col: cols) {
-    if(std::find(index_conf.begin(), index_conf.end(), col) == index_conf.end()) {
+  for (auto col : cols) {
+    if (std::find(index_conf.begin(), index_conf.end(), col) ==
+        index_conf.end()) {
       index_conf.push_back(col);
-      EnumerateConfigurations(cols, max_index_size, indexconf_id_map, id_indexconf_map, index_conf, next_id);
+      EnumerateConfigurations(cols, max_index_size, indexconf_id_map,
+                              id_indexconf_map, index_conf, next_id);
       index_conf.pop_back();
     }
   }
@@ -146,6 +144,11 @@ void CompressedIndexConfigContainer::AdjustIndexes(
         table_offset_reverse_map_.end()) {
       // 2. drop its corresponding index in catalog
       oid_t index_oid = offset_to_indexoid_.at(current_bit);
+      // TODO (weichenl): This will call into the storage manager and delete the
+      // index in the real table storage, which we don't have on the brain side.
+      // We need a way to only delete the entry in the catalog table, and then
+      // issue a RPC call to let Peloton server really drop the index (using
+      // this DropIndex method).
       catalog_->DropIndex(database_oid, index_oid, txn);
 
       // 3. erase its entry in the maps
@@ -170,8 +173,8 @@ void CompressedIndexConfigContainer::AdjustIndexes(
       // 2. add its corresponding index in catalog
       const auto new_index = GetIndex(current_bit);
       const auto table_name = catalog_->GetDatabaseObject(database_name_, txn)
-          ->GetTableObject(new_index->table_oid)
-          ->GetTableName();
+                                  ->GetTableObject(new_index->table_oid)
+                                  ->GetTableName();
 
       std::set<oid_t> temp_oids(new_index->column_oids.begin(),
                                 new_index->column_oids.end());
@@ -192,8 +195,8 @@ void CompressedIndexConfigContainer::AdjustIndexes(
 
       // 3. insert its entry in the maps
       const auto index_object = catalog_->GetDatabaseObject(database_name_, txn)
-          ->GetTableObject(new_index->table_oid)
-          ->GetIndexObject(temp_index_name);
+                                    ->GetTableObject(new_index->table_oid)
+                                    ->GetIndexObject(temp_index_name);
       const auto index_oid = index_object->GetIndexOid();
 
       txn_manager_->CommitTransaction(txn);
@@ -254,7 +257,8 @@ CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
   }
 
   const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
-  std::vector<oid_t> col_oids = indexid_table_map_.at(table_oid).at(global_offset);
+  std::vector<oid_t> col_oids =
+      indexid_table_map_.at(table_oid).at(global_offset);
 
   auto txn = txn_manager_->BeginTransaction();
   const auto db_oid =
@@ -287,18 +291,20 @@ std::string CompressedIndexConfigContainer::GetDatabaseName() const {
   return database_name_;
 }
 
-size_t CompressedIndexConfigContainer::GetTableOffsetStart(oid_t table_oid) const {
+size_t CompressedIndexConfigContainer::GetTableOffsetStart(
+    oid_t table_oid) const {
   return table_offset_map_.at(table_oid);
 }
 
-size_t CompressedIndexConfigContainer::GetTableOffsetEnd(oid_t table_oid) const {
+size_t CompressedIndexConfigContainer::GetTableOffsetEnd(
+    oid_t table_oid) const {
   size_t start_idx = GetTableOffsetStart(table_oid);
   return GetNextTableIdx(start_idx);
 }
 
 size_t CompressedIndexConfigContainer::GetNextTableIdx(size_t start_idx) const {
   auto next_tbl_offset_iter = table_offset_reverse_map_.upper_bound(start_idx);
-  if(next_tbl_offset_iter == table_offset_reverse_map_.end()) {
+  if (next_tbl_offset_iter == table_offset_reverse_map_.end()) {
     return GetConfigurationCount();
   } else {
     return next_tbl_offset_iter->first;
@@ -320,10 +326,11 @@ std::string CompressedIndexConfigContainer::ToString() const {
     size_t end_idx = GetNextTableIdx(start_idx);
     oid_t table_oid = tbl_offset_iter->second;
     str_stream << "Table OID: " << table_oid << " Compressed Section: "
-               << bitset_str.substr(start_idx, end_idx - start_idx) << std::endl;
+               << bitset_str.substr(start_idx, end_idx - start_idx)
+               << std::endl;
     for (auto col_iter : table_indexid_map_.at(table_oid)) {
       str_stream << "(";
-      for (auto col_oid: col_iter.first) {
+      for (auto col_oid : col_iter.first) {
         str_stream << col_oid << ",";
       }
       str_stream << "):" << col_iter.second << std::endl;
@@ -335,7 +342,7 @@ std::string CompressedIndexConfigContainer::ToString() const {
 size_t CompressedIndexConfigContainer::GetNumIndexes(oid_t table_oid) const {
   size_t start_idx = GetTableOffsetStart(table_oid);
   size_t end_idx = GetNextTableIdx(start_idx);
-  if(IsSet(start_idx)) {
+  if (IsSet(start_idx)) {
     return 0;
   } else {
     size_t idx = GetNextSetIndexConfig(start_idx);
@@ -348,15 +355,16 @@ size_t CompressedIndexConfigContainer::GetNumIndexes(oid_t table_oid) const {
   }
 }
 
-size_t CompressedIndexConfigContainer::GetNextSetIndexConfig(size_t from_idx) const {
+size_t CompressedIndexConfigContainer::GetNextSetIndexConfig(
+    size_t from_idx) const {
   return cur_index_config_->find_next(from_idx);
 }
 
-bool CompressedIndexConfigContainer::EmptyConfig(peloton::oid_t table_oid) const {
+bool CompressedIndexConfigContainer::EmptyConfig(
+    peloton::oid_t table_oid) const {
   size_t table_offset = table_offset_map_.at(table_oid);
   return IsSet(table_offset);
 }
-
 
 }  // namespace brain
 }  // namespace peloton

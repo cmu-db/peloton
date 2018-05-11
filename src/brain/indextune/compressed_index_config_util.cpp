@@ -22,6 +22,11 @@ void CompressedIndexConfigUtil::AddCandidates(
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto txn = container.GetTransactionManager()->BeginTransaction();
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
+  // TODO (weichenl): Lin Ma: This result (indexable_cols_vector) only contains
+  // simple single-column indexes. Later on, if we switch to the AutoAdmin
+  // approach, then we'll have multi-column indexes. For example, if we have two
+  // indexes (AB, CDE), the closure would be (A, AB, C, CD, CDE). But you should
+  // not aggregate AB and CDE together.
   std::vector<planner::col_triplet> indexable_cols_vector =
       planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
                                              std::move(sql_stmt_list),
@@ -180,8 +185,8 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
   }
 }
 
-void CompressedIndexConfigUtil::GetIgnoreTables(const std::string &db_name,
-                                             std::set<oid_t> &ori_table_oids) {
+void CompressedIndexConfigUtil::GetIgnoreTables(
+    const std::string &db_name, std::set<oid_t> &ori_table_oids) {
   peloton::concurrency::TransactionManager *txn_manager =
       &concurrency::TransactionManagerFactory::GetInstance();
 
