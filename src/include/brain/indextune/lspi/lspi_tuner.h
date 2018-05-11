@@ -16,7 +16,7 @@
 #include <string>
 #include "brain/indextune/compressed_index_config.h"
 #include "brain/indextune/compressed_index_config_util.h"
-#include "brain/indextune/lspi/lstd.h"
+#include "brain/indextune/lspi/lstdq.h"
 #include "brain/indextune/lspi/rlse.h"
 #include "brain/util/eigen_util.h"
 
@@ -60,7 +60,7 @@ class LSPIIndexTuner {
   // RLSE model for computing immediate cost of an action
   std::unique_ptr<RLSEModel> rlse_model_;
   // LSTD model for computing
-  std::unique_ptr<LSTDModel> lstd_model_;
+  std::unique_ptr<LSTDQModel> lstdq_model_;
   // Previous config feature vector
   vector_eig prev_config_vec;
 };

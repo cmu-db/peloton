@@ -197,11 +197,11 @@ void CompressedIndexConfigUtil::GetIgnoreTables(const std::string &db_name,
   txn_manager->CommitTransaction(txn);
 }
 
-void CompressedIndexConfigUtil::ToEigen(
+void CompressedIndexConfigUtil::ConstructStateConfigFeature(
     const boost::dynamic_bitset<> &config_set, vector_eig &config_vec) {
   // Note that the representation is reversed - but this should not affect
   // anything
-  config_vec = vector_eig::Zero(config_set.size());
+  config_vec = -vector_eig::Ones(config_set.size());
   size_t config_id = config_set.find_first();
   while (config_id != boost::dynamic_bitset<>::npos) {
     config_vec[config_id] = 1.0;

@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/indextune/lspi/lstd.h"
+#include "brain/indextune/lspi/lstdq.h"
 
 namespace peloton {
 namespace brain {
-LSTDModel::LSTDModel(size_t feat_len, double variance_init, double gamma)
+LSTDQModel::LSTDQModel(size_t feat_len, double variance_init, double gamma)
     : feat_len_(feat_len), gamma_(gamma) {
   model_variance_ = matrix_eig::Zero(feat_len, feat_len);
   model_variance_.diagonal().array() += variance_init;
@@ -22,7 +22,7 @@ LSTDModel::LSTDModel(size_t feat_len, double variance_init, double gamma)
 }
 
 // TODO(saatvik): Recheck and better variable naming
-void LSTDModel::Update(const vector_eig &state_feat_curr,
+void LSTDQModel::Update(const vector_eig &state_feat_curr,
                        const vector_eig &state_feat_next, double true_cost) {
   vector_eig var1 = state_feat_curr - state_feat_next * gamma_;
   double var2 = 1 + (var1.transpose() * model_variance_).dot(state_feat_curr);
@@ -34,7 +34,7 @@ void LSTDModel::Update(const vector_eig &state_feat_curr,
   // TODO(saatvik): Log error here?
 }
 
-double LSTDModel::Predict(const vector_eig &state_feat) const {
+double LSTDQModel::Predict(const vector_eig &state_feat) const {
   return gamma_ * weights_.dot(state_feat);
 }
 }  // namespace brain
