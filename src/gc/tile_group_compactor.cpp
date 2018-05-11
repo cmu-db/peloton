@@ -95,8 +95,7 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
       continue;
     }
 
-    LOG_TRACE("Moving Visible Tuple id : %u, Physical Tuple id : %u ",
-              visible_tuple_id, physical_tuple_id);
+    LOG_TRACE("Moving Physical Tuple id : %u ", physical_tuple_id);
 
     bool is_ownable = txn_manager.IsOwnable(
             txn, tile_group_header, physical_tuple_id);
@@ -122,6 +121,8 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     // ensure that this is the latest version
     bool is_latest_version = tile_group_header->GetPrevItemPointer(physical_tuple_id).IsNull();
     if (is_latest_version == false) {
+      // if a tuple is not the latest version, then there's no point in moving it
+      // this also does not conflict with our compaction operation, so don't abort
       LOG_TRACE("Skipping tuple, not latest version.");
       txn_manager.YieldOwnership(txn, tile_group_header,
                                          physical_tuple_id);
