@@ -272,7 +272,7 @@ class TransactionManager {
    * @return     Current transaction set
    */
   std::unordered_set<txn_id_t> GetCurrentTxn(){
-    std::unordered_set<txn_id_t> tmp = current_transactions_;
+    std::unordered_set<txn_id_t> tmp = TransactionManager::current_transactions_;
     return tmp;
   }
 
@@ -280,7 +280,7 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-  std::unordered_set<txn_id_t> current_transactions_;
+  static std::unordered_set<txn_id_t> current_transactions_;
 
 };
 }  // namespace concurrency

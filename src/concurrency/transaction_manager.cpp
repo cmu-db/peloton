@@ -273,7 +273,7 @@ VisibilityType TransactionManager::IsVisible(
 bool TransactionManager::CheckConcurrentTxn(std::unordered_set<txn_id_t>* input){
   auto itr = input->begin();
   for ( ;itr != input->end(); itr++){
-    if (current_transactions_.find(*itr) != current_transactions_.end()){
+    if (TransactionManager::current_transactions_.find(*itr) != TransactionManager::current_transactions_.end()){
       return true;
     }
   }
