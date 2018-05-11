@@ -20,6 +20,21 @@
 #include "kj/debug.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "codegen/buffering_consumer.h"
+#include "executor/executor_context.h"
+#include "codegen/buffering_consumer.h"
+#include "codegen/proxy/string_functions_proxy.h"
+#include "codegen/query.h"
+#include "codegen/query_cache.h"
+#include "codegen/query_compiler.h"
+#include "codegen/type/decimal_type.h"
+#include "codegen/type/integer_type.h"
+#include "codegen/type/type.h"
+#include "codegen/value.h"
+#include "planner/populate_index_plan.h"
+#include "traffic_cop/traffic_cop.h"
+#include "storage/storage_manager.h"
+#include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace network {
@@ -77,7 +92,53 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
       return kj::NEVER_DONE;
     }
 
-    txn_manager.CommitTransaction(txn);
+    // Index created. Populate it.
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto table_object =
+        storage_manager->GetTableWithOid(database_oid, table_oid);
+
+    // Create a seq plan to retrieve data
+    std::unique_ptr<planner::SeqScanPlan> populate_seq_plan(
+      new planner::SeqScanPlan(table_object, nullptr, col_oid_vector, false));
+
+    // Create a index plan
+    std::shared_ptr<planner::AbstractPlan> populate_index_plan(
+      new planner::PopulateIndexPlan(table_object, col_oid_vector));
+    populate_index_plan->AddChild(std::move(populate_seq_plan));
+
+    std::vector<type::Value> params;
+    std::vector<ResultValue> result;
+    std::atomic_int counter;
+    std::vector<int> result_format;
+
+    auto callback = [](void *arg) {
+      std::atomic_int *count = static_cast<std::atomic_int *>(arg);
+      count->store(0);
+    };
+
+    // Set the callback and context state.
+    auto &traffic_cop = tcop::TrafficCop::GetInstance();
+    traffic_cop.SetTaskCallback(callback, &counter);
+    traffic_cop.SetTcopTxnState(txn);
+
+    // Execute the plan through the traffic cop so that it runs on a separate
+    // thread and we don't have to wait for the output.
+    executor::ExecutionResult status = traffic_cop.ExecuteHelper(
+        populate_index_plan, params, result, result_format);
+
+    if (traffic_cop.GetQueuing()) {
+      while (counter.load() == 1) {
+        usleep(10);
+      }
+      if (traffic_cop.p_status_.m_result == ResultType::SUCCESS) {
+        LOG_INFO("Index populate succeeded");
+      } else {
+        LOG_ERROR("Index populate failed");
+      }
+      traffic_cop.SetQueuing(false);
+    }
+    traffic_cop.CommitQueryHelper();
+
     return kj::READY_NOW;
   }
 };
