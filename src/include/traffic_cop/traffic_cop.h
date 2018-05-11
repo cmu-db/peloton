@@ -146,10 +146,10 @@ class TrafficCop {
   }
 
   //set the session namespace for this session.
-  void SetTempSessionName(const std::string temp_session_name) {
-    temp_session_name_ = std::move(temp_session_name);
+  void SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
     //set the session namespace for the optimizer
-    optimizer_->SetSessionNamespace(temp_session_name);
+    optimizer_->SetSessionNamespace(session_namespace);
   }
 
   //Used to drop all the temporary table created for this session
@@ -177,7 +177,7 @@ class TrafficCop {
   std::string default_database_name_ = DEFAULT_DB_NAME;
 
   // Default session namespace
-  std::string temp_session_name_;
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 
   int rows_affected_;
 

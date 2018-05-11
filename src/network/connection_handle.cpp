@@ -165,7 +165,7 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
   //set the connection temporary namespace
-  traffic_cop_.SetTempSessionName(TEMP_NAMESPACE_PREFIX + std::to_string(sock_fd));
+  traffic_cop_.SetSessionNamespace(TEMP_NAMESPACE_PREFIX + std::to_string(sock_fd));
 }
 
 void ConnectionHandle::UpdateEventFlags(short flags) {

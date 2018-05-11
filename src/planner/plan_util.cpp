@@ -46,10 +46,11 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       db_name = insert_stmt.GetDatabaseName();
       table_name = insert_stmt.GetTableName();
       schema_name = insert_stmt.GetSchemaName();
+      session_namespace = insert_stmt.GetSessionNamespace();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
-      if (table_name.empty() || db_name.empty() || schema_name.empty()) {
+      if (table_name.empty() || db_name.empty() || (schema_name.empty() && session_namespace.empty())) {
         auto &delete_stmt =
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
