@@ -27,7 +27,7 @@ IndexMetricsCatalog *IndexMetricsCatalog::GetInstance(
 }
 
 IndexMetricsCatalog::IndexMetricsCatalog(const std::string &database_name, concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE "  + database_name + CATALOG_DATABASE_NAME
+    : AbstractCatalog("CREATE TABLE "  + database_name +
                       "." CATALOG_SCHEMA_NAME "." INDEX_METRICS_CATALOG_NAME
                       " ("
                       "database_oid   INT NOT NULL, "

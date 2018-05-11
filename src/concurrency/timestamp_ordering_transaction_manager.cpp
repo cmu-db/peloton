@@ -715,6 +715,19 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
+  // Increment # txns committed metric
+  // Sine you have to iterate rw_set in the function anyway, it does not
+  // matter to peek the first element of rw_set a bit.
+  if (!rw_set.IsEmpty()) {
+    // Call the GetConstIterator() function to explicitly lock the cuckoohash
+    // and initilaize the iterator
+    auto rw_set_lt = rw_set.GetConstIterator();
+    const auto tile_group_id = rw_set_lt.begin()->first.block;
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectTransactionCommit(tile_group_id);
+  }
+
+
   // install everything.
   // 1. install a new version for update operations;
   // 2. install an empty version for delete operations;
@@ -844,19 +857,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   log_manager.LogEnd();
 
   EndTransaction(current_txn);
-
-  // Increment # txns committed metric
-  // Sine you have to iterate rw_set in the function anyway, it does not
-  // matter to peek the first element of rw_set a bit.
-  if (!rw_set.IsEmpty()) {
-    // Call the GetConstIterator() function to explicitly lock the cuckoohash
-    // and initilaize the iterator
-    auto rw_set_lt = rw_set.GetConstIterator();
-    const auto tile_group_id = rw_set_lt.begin()->first.block;
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectTransactionCommit(tile_group_id);
-  }
-
   return result;
 }
 
@@ -883,6 +883,16 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     oid_t table_oid = std::get<1>(obj);
     oid_t index_oid = std::get<2>(obj);
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
+  }
+
+  // Increment # txns aborted metric
+  if (!rw_set.IsEmpty()) {
+    // Call the GetConstIterator() function to explicitly lock the cuckoohash
+    // and initilaize the iterator
+    auto rw_set_lt = rw_set.GetConstIterator();
+    const auto tile_group_id = rw_set_lt.begin()->first.block;
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectTransactionAbort(tile_group_id);
   }
 
   // Iterate through each item pointer in the read write set
@@ -1026,15 +1036,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   current_txn->SetResult(ResultType::ABORTED);
   EndTransaction(current_txn);
 
-  // Increment # txns aborted metric
-  if (!rw_set.IsEmpty()) {
-    // Call the GetConstIterator() function to explicitly lock the cuckoohash
-    // and initilaize the iterator
-    auto rw_set_lt = rw_set.GetConstIterator();
-    const auto tile_group_id = rw_set_lt.begin()->first.block;
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectTransactionAbort(tile_group_id);
-  }
 
   return ResultType::ABORTED;
 }

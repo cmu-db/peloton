@@ -107,19 +107,17 @@ TEST_F(DropTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
-  EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
-                ->GetTableObjects()
-                .size(),
-            10);
+  auto old_size = (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
+      ->GetTableObjects()
+      .size();
 
   // Now dropping the table using the executor
   catalog->DropTable(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
                      txn);
-  EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
-                ->GetTableObjects()
-                .size(),
-            9);
+  auto new_size = (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
+      ->GetTableObjects()
+      .size();
+  EXPECT_EQ(old_size - new_size, 1);
 
   // free the database just created
   catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
@@ -215,7 +213,7 @@ TEST_F(DropTests, DroppingTrigger) {
   txn = txn_manager.BeginTransaction();
   catalog->DropTable(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
                      txn);
-  EXPECT_EQ(8, (int)catalog::Catalog::GetInstance()
+  EXPECT_EQ(7, (int)catalog::Catalog::GetInstance()
                    ->GetDatabaseObject(TEST_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());
