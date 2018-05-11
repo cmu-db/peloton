@@ -199,7 +199,7 @@ class SequenceCatalog : public AbstractCatalog {
     if (seq_min > seq_max) {
         throw SequenceException(
             StringUtil::Format(
-              "MINVALUE (%d) must be less than MAXVALUE (%d)", seq_min, seq_max));
+              "MINVALUE (%ld) must be less than MAXVALUE (%ld)", seq_min, seq_max));
     }
 
     if (seq_increment == 0) {
@@ -210,13 +210,13 @@ class SequenceCatalog : public AbstractCatalog {
     if (seq_increment > 0 && seq_start < seq_min) {
         throw SequenceException(
             StringUtil::Format(
-              "START value (%d) cannot be less than MINVALUE (%d)", seq_start, seq_min));
+              "START value (%ld) cannot be less than MINVALUE (%ld)", seq_start, seq_min));
     }
 
     if (seq_increment < 0 && seq_start > seq_max) {
         throw SequenceException(
             StringUtil::Format(
-              "START value (%d) cannot be greater than MAXVALUE (%d)", seq_start, seq_max));
+              "START value (%ld) cannot be greater than MAXVALUE (%ld)", seq_start, seq_max));
     }
   };
 };

@@ -394,6 +394,9 @@ std::string DropTypeToString(DropType type) {
     case DropType::SCHEMA: {
       return "SCHEMA";
     }
+    case DropType::SEQUENCE: {
+      return "SEQUENCE";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for DropType value '%d'",
@@ -419,6 +422,8 @@ DropType StringToDropType(const std::string &str) {
     return DropType::TRIGGER;
   } else if (upper_str == "SCHEMA") {
     return DropType::SCHEMA;
+  } else if (upper_str == "SEQUENCE") {
+    return DropType::SEQUENCE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DropType conversion from string '%s'", upper_str.c_str()));

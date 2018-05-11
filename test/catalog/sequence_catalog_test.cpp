@@ -41,8 +41,10 @@ class SequenceTests : public PelotonTest {
                              ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                              ->GetOid();
     std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
-        catalog::SequenceCatalog::GetInstance().GetSequence(database_oid,
-                                                            sequence_name, txn);
+        catalog::Catalog::GetInstance()
+                  ->GetSystemCatalogs(database_oid)
+                  ->GetSequenceCatalog()
+                  ->GetSequence(database_oid, sequence_name, txn);
 
     return new_sequence;
   }
@@ -97,10 +99,9 @@ TEST_F(SequenceTests, BasicTest) {
   EXPECT_EQ(50, new_sequence->seq_max);
   EXPECT_EQ(10, new_sequence->seq_start);
   EXPECT_EQ(true, new_sequence->seq_cycle);
+  EXPECT_EQ(10, new_sequence->GetNextVal());
   EXPECT_EQ(10, new_sequence->GetCurrVal());
 
-  int64_t nextVal = new_sequence->GetNextVal();
-  EXPECT_EQ(10, nextVal);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -121,7 +122,7 @@ TEST_F(SequenceTests, NoDuplicateTest) {
     CreateSequenceHelper(query, txn);
     EXPECT_EQ(0, 1);
   } catch (const SequenceException &expected) {
-    ASSERT_STREQ("Insert Sequence with Duplicate Sequence Name: seq",
+    ASSERT_STREQ("Sequence seq already exists!",
                  expected.what());
   }
   txn_manager.CommitTransaction(txn);
@@ -162,7 +163,7 @@ TEST_F(SequenceTests, NextValPosIncrementFunctionalityTest) {
     nextVal = new_sequence->GetNextVal();
     EXPECT_EQ(0, 1);
   } catch (const SequenceException &expected) {
-    ASSERT_STREQ("Sequence exceeds upper limit!", expected.what());
+    ASSERT_STREQ("nextval: reached maximum value of sequence seq1 (50)", expected.what());
   }
   txn_manager.CommitTransaction(txn);
 }
@@ -202,8 +203,67 @@ TEST_F(SequenceTests, NextValNegIncrementFunctionalityTest) {
     nextVal = new_sequence->GetNextVal();
     EXPECT_EQ(0, 1);
   } catch (const SequenceException &expected) {
-    ASSERT_STREQ("Sequence exceeds lower limit!", expected.what());
+    ASSERT_STREQ("nextval: reached minimum value of sequence seq2 (10)", expected.what());
   }
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(SequenceTests, InvalidArgumentTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::string query =
+    "CREATE SEQUENCE seq3 "
+    "INCREMENT BY -1 "
+    "MINVALUE 50 MAXVALUE 10 "
+    "START 10 CYCLE;";
+
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(0, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("MINVALUE (50) must be less than MAXVALUE (10)", expected.what());
+  }
+
+  query =
+    "CREATE SEQUENCE seq3 "
+    "INCREMENT BY 0 "
+    "MINVALUE 10 MAXVALUE 50 "
+    "START 10 CYCLE;";
+
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(0, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("INCREMENT must not be zero", expected.what());
+  }
+
+  query =
+    "CREATE SEQUENCE seq3 "
+    "INCREMENT BY 1 "
+    "MINVALUE 10 MAXVALUE 50 "
+    "START 8 CYCLE;";
+
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(0, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("START value (8) cannot be less than MINVALUE (10)", expected.what());
+  }
+
+  query =
+    "CREATE SEQUENCE seq3 "
+    "INCREMENT BY -1 "
+    "MINVALUE 10 MAXVALUE 50 "
+    "START 60 CYCLE;";
+
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(0, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("START value (60) cannot be greater than MAXVALUE (50)", expected.what());
+  }
+
   txn_manager.CommitTransaction(txn);
 }
 }
