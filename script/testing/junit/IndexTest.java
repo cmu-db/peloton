@@ -61,7 +61,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread insert tuples
      */
     @Test
-    public void test_create_insert() throws SQLException {
+    public void test_create_insert() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -121,7 +121,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread insert tuples
      */
     @Test
-    public void test_con_create_insert() throws SQLException {
+    public void test_con_create_insert() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -181,7 +181,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread insert tuples, without sleep
      */
     @Test
-    public void test_con_create_insert2() throws SQLException {
+    public void test_con_create_insert2() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -239,7 +239,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread update tuples
      */
     @Test
-    public void test_create_update() throws SQLException {
+    public void test_create_update() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -299,7 +299,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread update tuples
      */
     @Test
-    public void test_con_create_update() throws SQLException {
+    public void test_con_create_update() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -359,7 +359,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread update tuples, without sleep
      */
     @Test
-    public void test_con_create_update2() throws SQLException {
+    public void test_con_create_update2() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -418,7 +418,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index, 1 thread delete tuples
      */
     @Test
-    public void test_create_delete() throws SQLException {
+    public void test_create_delete() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -478,7 +478,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread delete tuples
      */
     @Test
-    public void test_con_create_delete() throws SQLException {
+    public void test_con_create_delete() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -538,7 +538,7 @@ public class IndexTest extends PLTestBase {
      * 1 thread create index concurrently, 1 thread delete tuples, without sleep
      */
     @Test
-    public void test_con_create_delete2() throws SQLException {
+    public void test_con_create_delete2() throws SQLException, InterruptedException {
         Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
