@@ -31,6 +31,8 @@ IsolationLevelType TransactionManager::isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
+std::unordered_set<txn_id_t> TransactionManager::current_transactions_ =
+    std::unordered_set<txn_id_t>();
 
 TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type) {
@@ -94,6 +96,9 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     LOG_WARN("On transaction end, release lock failed!");
   }
 
+  // Record deletion of transaction in current transaction set
+  current_transactions_.erase(current_txn->GetTransactionId());
+
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   } else {
@@ -101,9 +106,6 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   current_txn = nullptr;
-
-  // Record deletion of transaction in current transaction set
-  current_transactions_.erase(current_txn->GetTransactionId());
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
       settings::SettingId::stats_mode)) != StatsType::INVALID) {
