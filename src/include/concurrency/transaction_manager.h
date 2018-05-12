@@ -17,14 +17,13 @@
 #include <unordered_map>
 #include <list>
 #include <utility>
-#include <unordered_set>
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
 #include "common/internal_types.h"
-#include "common/container/lock_free_array.h"
+#include "tbb/concurrent_unordered_set.h"
 
 namespace peloton {
 
@@ -265,15 +264,15 @@ class TransactionManager {
    *
    * @return     True if set overlaps, false if not.
    */
-  bool CheckConcurrentTxn(LockFreeArray<txn_id_t>* set);
+  bool CheckConcurrentTxn(tbb::concurrent_unordered_set<txn_id_t>* set);
 
   /**
    * @brief      Access the current transaction set
    *
    * @return     Current transaction set
    */
-  LockFreeArray<txn_id_t> GetCurrentTxn(){
-    LockFreeArray<txn_id_t> tmp = current_transactions_;
+  tbb::concurrent_unordered_set<txn_id_t> GetCurrentTxn(){
+    tbb::concurrent_unordered_set<txn_id_t> tmp = current_transactions_;
     return tmp;
   }
 
@@ -281,7 +280,7 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-  LockFreeArray<txn_id_t> current_transactions_;
+  tbb::concurrent_unordered_set<txn_id_t> current_transactions_;
 
 };
 }  // namespace concurrency

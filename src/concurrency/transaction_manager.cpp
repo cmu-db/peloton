@@ -22,7 +22,6 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
-#include "common/container/lock_free_array.h"
 
 namespace peloton {
 namespace concurrency {
@@ -79,7 +78,7 @@ TransactionContext *TransactionManager::BeginTransaction(
   txn->SetTimestamp(function::DateFunctions::Now());
 
   // Record current transaction in transaction set
-  current_transactions_.Append(txn->GetTransactionId());
+  current_transactions_.insert(txn->GetTransactionId());
 
   return txn;
 }
@@ -96,14 +95,7 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // Record deletion of transaction in current transaction set
-  auto count = current_transactions_.GetSize();
-  for (size_t i = 0; i < count; i++){
-    auto tmp = current_transactions_.Find(i);
-    if (tmp == current_txn->GetTransactionId()){
-      current_transactions_.Erase(i, -1);
-      break;
-    }
-  }
+  current_transactions_.unsafe_erase(current_txn->GetTransactionId());
 
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
@@ -278,11 +270,10 @@ VisibilityType TransactionManager::IsVisible(
 
 // This function checks if the given transaction set overlaps with current
 // transaction set. Return true if overlaps, false otherwise.
-bool TransactionManager::CheckConcurrentTxn(LockFreeArray<txn_id_t>* input){
-  auto count = input->GetSize();
-  for (size_t i = 0; i < count; i++){
-    auto tmp = current_transactions_.Find(i);
-    if (input->Contains(tmp)){
+bool TransactionManager::CheckConcurrentTxn(tbb::concurrent_unordered_set<txn_id_t>* input){
+  auto count = input->size();
+  for (auto itr = input->begin(); itr != input->end(); itr++){
+    if (current_transactions_.find(*itr) != current_transactions_.end()){
       return true;
     }
   }

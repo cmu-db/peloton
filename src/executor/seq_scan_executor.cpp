@@ -29,7 +29,7 @@
 #include "storage/tile.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/logger.h"
-#include "common/container/lock_free_array.h"
+#include "tbb/concurrent_unordered_set.h"
 
 namespace peloton {
 namespace executor {
@@ -162,14 +162,8 @@ bool SeqScanExecutor::DExecute() {
 
         LOG_DEBUG("Concurrently create index");
         // Get concurrent transactions before scanning
-        LockFreeArray<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
-        for (size_t i = 0; i < txn_set.GetSize(); i++) {
-          auto tmp = txn_set.Find(i);
-          if (tmp == current_txn->GetTransactionId()) {
-            txn_set.Erase(i, -1);
-            break;
-          }
-        }
+        tbb::concurrent_unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
+        txn_set.unsafe_erase(current_txn->GetTransactionId());
 
         // Check if all concurrent transaction ends
         while (transaction_manager.CheckConcurrentTxn(&txn_set)){
