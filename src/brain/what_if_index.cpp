@@ -24,10 +24,11 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
                                     IndexConfiguration &config,
                                     std::string database_name,
                                     concurrency::TransactionContext *txn) {
+  LOG_DEBUG("***** GetCostAndBestPlanTree **** \n");
   // Find all the tables that are referenced in the parsed query.
   std::unordered_set<std::string> tables_used;
   GetTablesReferenced(query, tables_used);
-  LOG_TRACE("Tables referenced count: %ld", tables_used.size());
+  LOG_DEBUG("Tables referenced count: %ld", tables_used.size());
   PELOTON_ASSERT(tables_used.size() > 0);
 
   // TODO [vamshi]: Improve this loop.
@@ -39,35 +40,41 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
     // exception. Handle it.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
+
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
     table_object->EvictAllIndexObjects();
+
+    // Upon evict index objects, the index set becomes
+    // invalid. Set it to valid so that we don't query
+    // the catalog again while doing query optimization later.
+    table_object->SetValidIndexObjects(true);
+
     auto index_set = config.GetIndexes();
     for (auto it = index_set.begin(); it != index_set.end(); it++) {
       auto index = *it;
       if (index->table_oid == table_object->GetTableOid()) {
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
-        LOG_TRACE("Created a new hypothetical index %d on table: %d",
+        LOG_DEBUG("Created a new hypothetical index %d on table: %d",
                   index_catalog_obj->GetIndexOid(),
                   index_catalog_obj->GetTableOid());
         for (auto col : index_catalog_obj->GetKeyAttrs()) {
           (void)col;  // for debug mode.
-          LOG_TRACE("Cols: %d", col);
+          LOG_DEBUG("Cols: %d", col);
         }
       }
     }
-    LOG_TRACE("Index Catalog Objects inserted: %ld",
-              table_object->GetIndexObjects().size());
   }
 
   // Perform query optimization with the hypothetical indexes
   optimizer::Optimizer optimizer;
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query, txn);
 
-  LOG_TRACE("Query: %s", query->GetInfo().c_str());
-  LOG_TRACE("Hypothetical config: %s", config.ToString().c_str());
-  LOG_TRACE("Got cost %lf", opt_info_obj->cost);
+  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
+  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
+  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
+  LOG_DEBUG("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
   return opt_info_obj;
 }
 
@@ -102,8 +109,8 @@ void WhatIfIndex::GetTablesReferenced(
       switch (sql_statement->from_table->type) {
         case TableReferenceType::NAME: {
           // Single table.
-          LOG_TRACE("Table name is %s",
-                    sql_statement->from_table.get()->GetTableName());
+          LOG_DEBUG("Table name is %s",
+                    sql_statement->from_table.get()->GetTableName().c_str());
           table_names.insert(sql_statement->from_table.get()->GetTableName());
           break;
         }

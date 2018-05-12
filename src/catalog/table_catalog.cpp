@@ -126,6 +126,16 @@ void TableCatalogObject::EvictAllIndexObjects() {
   valid_index_objects = false;
 }
 
+/*
+ * @brief Sets the index objects to be invalid.
+ * This is useful in what-if API to avoid querying
+ * the catalog again by setting is_valid to true.
+ * @param is_valid
+ */
+void TableCatalogObject::SetValidIndexObjects(bool is_valid) {
+  valid_index_objects = is_valid;
+}
+
 /* @brief   get all index objects of this table into cache
  * @return  map from index oid to cached index object
  */

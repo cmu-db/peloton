@@ -64,11 +64,13 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
 
   kj::Promise<void> createIndex(CreateIndexContext request) override {
     LOG_DEBUG("Received RPC to create index");
+
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto table_oid = request.getParams().getRequest().getTableOid();
     auto col_oids = request.getParams().getRequest().getKeyAttrOids();
     auto is_unique = request.getParams().getRequest().getUniqueKeys();
     auto index_name = request.getParams().getRequest().getIndexName();
+
     std::vector<oid_t> col_oid_vector;
     LOG_DEBUG("Database oid: %d", database_oid);
     LOG_DEBUG("Table oid: %d", table_oid);
@@ -87,11 +89,13 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
                            DEFUALT_SCHEMA_NAME, index_name, IndexType::BWTREE,
                            IndexConstraintType::DEFAULT, is_unique, txn);
     } catch (CatalogException e) {
-      LOG_ERROR("Create Index Failed");
-      txn_manager.AbortTransaction(txn);
-      return kj::NEVER_DONE;
+      LOG_ERROR("Create Index Failed: %s", e.GetMessage().c_str());
+      // TODO [vamshi]: Do we commit or abort?
+      txn_manager.CommitTransaction(txn);
+      return kj::READY_NOW;
     }
 
+    // TODO [vamshi]: Hack change this.
     // Index created. Populate it.
     auto storage_manager = storage::StorageManager::GetInstance();
     auto table_object =

@@ -60,6 +60,9 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
     // TODO: Handle multiple databases
     brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
+    LOG_INFO("Knob Num Indexes: %zu", env->GetIndexSelectionKnobs().num_indexes_);
+    LOG_INFO("Knob Naive: %zu", env->GetIndexSelectionKnobs().naive_enumeration_threshold_);
+    LOG_INFO("Knob Num Iterations: %zu", env->GetIndexSelectionKnobs().num_iterations_);
     brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
@@ -78,7 +81,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     auto indexes = pg_index->GetIndexObjects(txn);
     for (auto index : indexes) {
       auto index_name = index.second->GetIndexName();
-      // TODO [vamshi]:
+      // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
       // This is a hack for now. Add a boolean to the index catalog to
       // find out if an index is a brain suggested index/user created index.
       if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
@@ -101,6 +104,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     for (auto index : best_config.GetIndexes()) {
       // Create RPC for index creation on the server side.
       CreateIndexRPC(index.get());
+      LOG_DEBUG("Create index done on %s", index->ToString());
     }
 
     // Update the last_timestamp to the be the latest query's timestamp in
