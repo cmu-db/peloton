@@ -37,9 +37,8 @@ class TableMetricRawData : public AbstractRawData {
   };
 
  public:
-  inline void IncrementTableReads(std::pair<oid_t, oid_t> db_table_id,
-                                  size_t num_read) {
-    GetCounter(db_table_id, READ) += num_read;
+  inline void IncrementTableReads(std::pair<oid_t, oid_t> db_table_id) {
+    GetCounter(db_table_id, READ)++;
   }
 
   inline void IncrementTableUpdates(std::pair<oid_t, oid_t> db_table_id) {
@@ -107,27 +106,27 @@ class TableMetricRawData : public AbstractRawData {
 
 class TableMetric : public AbstractMetric<TableMetricRawData> {
  public:
-  inline void OnTupleRead(oid_t tile_group_id, size_t num_read) override {
+  inline void OnTupleRead(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     if (db_table_id.second == INVALID_OID) return;
-    GetRawData()->IncrementTableReads(db_table_id, num_read);
+    GetRawData()->IncrementTableReads(db_table_id);
   }
 
-  inline void OnTupleUpdate(oid_t tile_group_id) override {
+  inline void OnTupleUpdate(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);
     GetRawData()->IncrementTableUpdates(db_table_id);
   }
 
-  inline void OnTupleInsert(oid_t tile_group_id) override {
+  inline void OnTupleInsert(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);
     GetRawData()->IncrementTableInserts(db_table_id);
   }
 
-  inline void OnTupleDelete(oid_t tile_group_id) override {
+  inline void OnTupleDelete(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     auto db_table_id = GetDBTableIdFromTileGroupOid(tile_group_id);
     if (db_table_id.second == INVALID_OID) return;
     GetRawData()->AddModifiedTileGroup(db_table_id, tile_group_id);

@@ -55,7 +55,7 @@ void IndexMetricRawData::WriteToCatalog() {
     auto &counts = entry.second;
     auto system_catalogs = catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
     system_catalogs->GetIndexMetricsCatalog()->InsertIndexMetrics(
-        database_oid, table_oid, index_oid, counts[READ], counts[DELETE],
+        table_oid, index_oid, counts[READ], counts[DELETE],
         counts[INSERT], time_stamp, nullptr, txn);
   }
 

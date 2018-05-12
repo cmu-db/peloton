@@ -31,7 +31,7 @@ class TestMetricRawData : public AbstractRawData {
    * @brief aggregate the counts
    * @param other
    */
-  inline void Aggregate(AbstractRawData &other) {
+  inline void Aggregate(AbstractRawData &other) override {
     auto &other_test = dynamic_cast<TestMetricRawData &>(other);
     count_ += other_test.count_;
   }

@@ -15,10 +15,9 @@
 //
 // Schema: (column offset: column_name)
 // 1: txn_id
-// 2: arrival
-// 3: reads
-// 4: valid
-// 5: committed
+// 2: reads
+// 3: valid
+// 4: committed
 // Indexes: (index offset: indexed columns)
 // 0: index_oid (unique & primary key)
 //
@@ -34,11 +33,31 @@
 namespace peloton {
 namespace catalog {
 
-class TupleAccessMetricsCatalog : public AbstractCatalog {
-
+class TupleAccessMetricsCatalogObject {
  public:
-  TupleAccessMetricsCatalog(const std::string &database_name,
-                            concurrency::TransactionContext *txn);
+  TupleAccessMetricsCatalogObject(executor::LogicalTile *tile, oid_t tupleId = 0);
+
+  inline txn_id_t GetTxnId() { return tid_; }
+  inline uint64_t GetReads() { return reads_; }
+  inline bool IsValid() { return valid_; }
+  inline bool IsCommitted() { return committed_; }
+
+ private:
+  txn_id_t tid_;
+  uint64_t reads_;
+  bool valid_;
+  bool committed_;
+};
+
+class TupleAccessMetricsCatalog : public AbstractCatalog {
+  friend class TupleAccessMetricsCatalogObject;
+ public:
+
+  static TupleAccessMetricsCatalog *GetInstance(concurrency::TransactionContext *txn) {
+    static TupleAccessMetricsCatalog catalog{txn};
+    return &catalog;
+  }
+  TupleAccessMetricsCatalog(concurrency::TransactionContext *txn);
 
   ~TupleAccessMetricsCatalog() = default;
 
@@ -50,31 +69,34 @@ class TupleAccessMetricsCatalog : public AbstractCatalog {
   // Write Related API
   //===--------------------------------------------------------------------===//
   bool InsertAccessMetric(txn_id_t tid,
-                          int64_t arrival,
                           uint64_t reads,
                           bool valid,
                           bool committed,
                           type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteAccessMetrics(txn_id_t tid, int64_t arrival,
+  bool DeleteAccessMetrics(txn_id_t tid,
                            concurrency::TransactionContext *txn);
 
   bool UpdateAccessMetrics(txn_id_t tid,
-                           int64_t arrival,
                            uint64_t reads,
                            bool valid,
                            bool committed,
                            concurrency::TransactionContext *txn);
+  //===--------------------------------------------------------------------===//
+  // Read-only Related API
+  //===--------------------------------------------------------------------===//
+  std::shared_ptr<TupleAccessMetricsCatalogObject> GetTupleAccessMetricsCatalogObject(
+      txn_id_t tid,
+      concurrency::TransactionContext *txn);
 
  private:
   enum ColumnId {
     TXN_ID = 0,
-    ARRIVAL = 1,
-    READS = 2,
-    VALID = 3,
-    COMMITTED = 4
+    READS = 1,
+    VALID = 2,
+    COMMITTED = 3
   };
-  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3};
 
   enum IndexId {
     PRIMARY_KEY = 0,

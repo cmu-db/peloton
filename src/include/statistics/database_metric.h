@@ -23,6 +23,11 @@
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+} // namespace concurrency
+
 namespace stats {
 class DatabaseMetricRawData : public AbstractRawData {
  public:
@@ -68,12 +73,12 @@ class DatabaseMetricRawData : public AbstractRawData {
 
 class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
  public:
-  inline void OnTransactionCommit(oid_t tile_group_id) override {
+  inline void OnTransactionCommit(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     oid_t database_id = GetDBTableIdFromTileGroupOid(tile_group_id).first;
     GetRawData()->IncrementTxnCommited(database_id);
   }
 
-  inline void OnTransactionAbort(oid_t tile_group_id) override {
+  inline void OnTransactionAbort(const concurrency::TransactionContext *, oid_t tile_group_id) override {
     oid_t database_id = GetDBTableIdFromTileGroupOid(tile_group_id).first;
     GetRawData()->IncrementTxnAborted(database_id);
   }

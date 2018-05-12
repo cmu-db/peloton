@@ -12,6 +12,7 @@
 
 #include "catalog/tuple_access_catalog.h"
 
+#include <vector>
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -19,21 +20,31 @@
 namespace peloton {
 namespace catalog {
 
-TupleAccessMetricsCatalog::TupleAccessMetricsCatalog(const std::string &database_name,
-                                                     concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." CATALOG_SCHEMA_NAME "." TUPLE_ACCESS_METRICS_CATALOG_NAME
-                          " ("
-                          "txn_id      BIGINT NOT NULL, "
-                          "arrival     BIGINT NOT NULL, "
-                          "reads       BIGINT NOT NULL, "
-                          "valid       BOOL NOT NULL, "
-                          "committed   BOOL NOT NULL, "
-                          "PRIMARY KEY(txn_id, arrival));",
+TupleAccessMetricsCatalogObject::TupleAccessMetricsCatalogObject(executor::LogicalTile *tile,
+                                                                 oid_t tupleId)
+    : tid_(tile->GetValue(tupleId, TupleAccessMetricsCatalog::ColumnId::TXN_ID).GetAs<txn_id_t>()),
+      reads_(tile->GetValue(tupleId,
+                         TupleAccessMetricsCatalog::ColumnId::READS)
+              .GetAs<uint64_t>()),
+      valid_(
+          tile->GetValue(tupleId, TupleAccessMetricsCatalog::ColumnId::VALID)
+              .GetAs<bool>()),
+      committed_(
+          tile->GetValue(tupleId,
+                         TupleAccessMetricsCatalog::ColumnId::COMMITTED)
+              .GetAs<bool>()) {}
+
+TupleAccessMetricsCatalog::TupleAccessMetricsCatalog(concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE "  CATALOG_DATABASE_NAME
+                      "." CATALOG_SCHEMA_NAME "." TUPLE_ACCESS_METRICS_CATALOG_NAME
+                      " ("
+                      "txn_id      BIGINT NOT NULL PRIMARY KEY, "
+                      "reads       BIGINT NOT NULL, "
+                      "valid       BOOL NOT NULL, "
+                      "committed   BOOL NOT NULL);",
                       txn) {}
 
 bool TupleAccessMetricsCatalog::InsertAccessMetric(peloton::txn_id_t tid,
-                                                   int64_t arrival,
                                                    uint64_t reads,
                                                    bool valid,
                                                    bool committed,
@@ -44,9 +55,6 @@ bool TupleAccessMetricsCatalog::InsertAccessMetric(peloton::txn_id_t tid,
 
   tuple->SetValue(ColumnId::TXN_ID,
                   type::ValueFactory::GetBigIntValue(tid),
-                  pool);
-  tuple->SetValue(ColumnId::ARRIVAL,
-                  type::ValueFactory::GetBigIntValue(arrival),
                   pool);
   tuple->SetValue(ColumnId::READS,
                   type::ValueFactory::GetBigIntValue(reads),
@@ -61,17 +69,14 @@ bool TupleAccessMetricsCatalog::InsertAccessMetric(peloton::txn_id_t tid,
 }
 
 bool TupleAccessMetricsCatalog::DeleteAccessMetrics(peloton::txn_id_t tid,
-                                                    int64_t arrival,
                                                     peloton::concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetBigIntValue(tid).Copy());
-  values.push_back(type::ValueFactory::GetBigIntValue(arrival).Copy());
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
 bool TupleAccessMetricsCatalog::UpdateAccessMetrics(peloton::txn_id_t tid,
-                                                    int64_t arrival,
                                                     uint64_t reads,
                                                     bool valid,
                                                     bool committed,
@@ -79,14 +84,12 @@ bool TupleAccessMetricsCatalog::UpdateAccessMetrics(peloton::txn_id_t tid,
   std::vector<oid_t> update_columns(all_column_ids_);
   std::vector<type::Value> update_values;
   update_values.push_back(type::ValueFactory::GetBigIntValue(tid).Copy());
-  update_values.push_back(type::ValueFactory::GetBigIntValue(arrival).Copy());
   update_values.push_back(type::ValueFactory::GetBigIntValue(reads).Copy());
   update_values.push_back(type::ValueFactory::GetBooleanValue(valid).Copy());
   update_values.push_back(type::ValueFactory::GetBooleanValue(committed).Copy());
 
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetBigIntValue(tid).Copy());
-  scan_values.push_back(type::ValueFactory::GetBigIntValue(arrival).Copy());
   oid_t index_offset = IndexId::PRIMARY_KEY;
   return UpdateWithIndexScan(update_columns,
                              update_values,
@@ -94,6 +97,22 @@ bool TupleAccessMetricsCatalog::UpdateAccessMetrics(peloton::txn_id_t tid,
                              index_offset,
                              txn);
 }
+
+std::shared_ptr<TupleAccessMetricsCatalogObject> TupleAccessMetricsCatalog::GetTupleAccessMetricsCatalogObject(
+    txn_id_t tid,
+    concurrency::TransactionContext *txn) {
+  if (txn == nullptr) throw CatalogException("Invalid Transaction");
+
+  std::vector<oid_t> column_ids(all_column_ids_);
+  oid_t index_offset = IndexId::PRIMARY_KEY;
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetBigIntValue(tid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1)
+    return std::make_shared<TupleAccessMetricsCatalogObject>((*result_tiles)[0].get());
+  return nullptr;
 }
 }  // namespace catalog
 }  // namespace peloton

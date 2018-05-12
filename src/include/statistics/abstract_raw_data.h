@@ -42,7 +42,6 @@ class AbstractRawData : public Printable {
    * to be garbage-collected after this method is called.
    */
   virtual void WriteToCatalog() = 0;
-
   /**
    * Fetches the currently stored values of the metric in the catalog,
    * for combining with newly aggregated value, if appropriate.

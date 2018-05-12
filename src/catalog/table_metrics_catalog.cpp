@@ -47,15 +47,14 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
     : AbstractCatalog("CREATE TABLE " + database_name +
                           "." CATALOG_SCHEMA_NAME "." TABLE_METRICS_CATALOG_NAME
                           " ("
-                          "table_oid      INT NOT NULL, "
+                          "table_oid      INT NOT NULL PRIMARY KEY, "
                           "reads          INT NOT NULL, "
                           "updates        INT NOT NULL, "
                           "inserts        INT NOT NULL, "
                           "deletes        INT NOT NULL, "
                           "memory_alloc     INT NOT NULL, "
                           "memory_usage     INT NOT NULL, "
-                          "time_stamp     INT NOT NULL,"
-                          "PRIMARY KEY(table_oid));",
+                          "time_stamp     INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
