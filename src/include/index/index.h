@@ -436,6 +436,7 @@ class Index : public Printable {
   }
 
   bool CheckDuplicate(std::pair<storage::Tuple, ItemPointer> entry){
+    (void*) entry;
     return(false);
   }
 
