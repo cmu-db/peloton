@@ -36,6 +36,10 @@ class ItemPointer {
     return (block == INVALID_OID && offset == INVALID_OID);
   }
 
+  operator size_t() const {
+    return block*offset+block+offset;
+  }
+
   bool operator<(const ItemPointer &rhs) const {
     if (block != rhs.block) {
       return block < rhs.block;
