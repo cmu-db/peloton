@@ -172,8 +172,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
     // Create a new shared ptr from the unique ptr because
     // these queries will be referenced by multiple objects later.
     // Release the unique ptr from the stmt list to avoid freeing at the end
-    // of
-    // this loop iteration.
+    // of this loop iteration.
     auto stmt = stmt_list->PassOutStatement(0);
     auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.release());
     PELOTON_ASSERT(stmt_shared->GetType() != StatementType::INVALID);
@@ -190,7 +189,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
         AddQuery(stmt_shared);
       default:
         // Ignore other queries.
-        LOG_TRACE("Ignoring query: %s" + stmt->GetInfo().c_str());
+        LOG_TRACE("Ignoring query: %s", stmt->GetInfo().c_str());
     }
   }
 }
