@@ -58,7 +58,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
-    LOG_DEBUG("Check the table %d %s\n%s", table_catalog->GetTableOid(),
+    LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
     		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
 
     // check the basic information of columns
@@ -67,7 +67,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_DEBUG("Check the column %d %s\n%s", column_catalog->GetColumnId(),
+
+        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
         		column_catalog->GetColumnName().c_str(), column.GetInfo().c_str());
 
         if (column_catalog->GetColumnName() == "id") {
@@ -103,7 +104,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     else if (table_catalog->GetTableName() == "checkpoint_index_test") {
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_DEBUG("Check the index %s", index_catalog->GetIndexName().c_str());
+
+        LOG_INFO("Check the index %s", index_catalog->GetIndexName().c_str());
 
         // unique primary key for attribute "pid" (primary key)
         if (index_catalog->GetIndexName() == "checkpoint_index_test_pkey") {
@@ -113,12 +115,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          if (2 == key_attrs.size()) {
-          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          	EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs[1])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
+					EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_attrs.at(1))
+															 ->GetColumnName());
         }
         // unique primary key for attribute "upid" (unique)
         else if (index_catalog->GetIndexName() ==
@@ -129,10 +129,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          if (1 == key_attrs.size()) {
-          	EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
         }
         // ART index for attribute "value1"
         else if (index_catalog->GetIndexName() == "index_test1") {
@@ -142,10 +140,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          if (1 == key_attrs.size()) {
-          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
-                                  ->GetColumnName());
-          }
+					EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs.at(0))
+																->GetColumnName());
         }
         // SKIPLIST index for attributes "value2" and "value3"
         else if (index_catalog->GetIndexName() == "index_test2") {
@@ -155,12 +151,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          if (2 == key_attrs.size()) {
-          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
-                                  ->GetColumnName());
-          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[1])
-                                  ->GetColumnName());
-          }
+					EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs.at(0))
+																->GetColumnName());
+					EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs.at(1))
+																->GetColumnName());
         }
         // unique index for attribute "value2"
         else if (index_catalog->GetIndexName() == "unique_index_test") {
@@ -170,10 +164,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          if (1 == key_attrs.size()) {
-          	EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs[0])
-                                  ->GetColumnName());
-          }
+					EXPECT_EQ("value2", table_catalog->GetColumnObject(key_attrs.at(0))
+																->GetColumnName());
         } else {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
@@ -187,7 +179,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // multiple attributes constraint
       for (auto multi_constraint : table->GetSchema()->GetMultiConstraints()) {
         // currently nothing (this might not be used)
-      	LOG_DEBUG("multi constraint: %s", multi_constraint.GetInfo().c_str());
+      	LOG_INFO("multi constraint: %s", multi_constraint.GetInfo().c_str());
       }
 
       // foreign key constraint
@@ -195,7 +187,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       EXPECT_EQ(2, fk_count);
       for (oid_t fk_id = 0; fk_id < fk_count; fk_id++) {
         auto foreign_key = table->GetForeignKey(fk_id);
-        LOG_DEBUG("Check foreign key constraint: %s",
+        LOG_INFO("Check foreign key constraint: %s",
                   foreign_key->GetConstraintName().c_str());
 
         // value3 => checkpoint_table_test.pid
@@ -209,16 +201,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(1, source_columns.size());
-          if (1 == source_columns.size()) {
-          	EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns[0])
-                                  ->GetColumnName());
-          }
+					EXPECT_EQ("value3", table_catalog->GetColumnObject(source_columns.at(0))
+																->GetColumnName());
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(1, sink_columns.size());
-          if (1 == sink_columns.size()) {
-          	EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns[0])
-                              ->GetColumnName());
-          }
+					EXPECT_EQ("id", sink_table_catalog->GetColumnObject(sink_columns.at(0))
+														->GetColumnName());
         }
         // (value4, value5) => (checkpoint_index_test.upid1,
         // checkpoint_index_test.upid2)
@@ -232,22 +220,18 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(2, source_columns.size());
-          if (2 == source_columns.size()) {
-          	EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns[0])
-                                  ->GetColumnName());
-          	EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns[1])
-                                  ->GetColumnName());
-          }
+					EXPECT_EQ("value4", table_catalog->GetColumnObject(source_columns.at(0))
+																->GetColumnName());
+					EXPECT_EQ("value5", table_catalog->GetColumnObject(source_columns.at(1))
+																->GetColumnName());
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(2, sink_columns.size());
-          if (2 == sink_columns.size()) {
-          	EXPECT_EQ("upid1",
-                      sink_table_catalog->GetColumnObject(sink_columns[0])
-                        ->GetColumnName());
-          	EXPECT_EQ("upid2",
-                      sink_table_catalog->GetColumnObject(sink_columns[1])
-                        ->GetColumnName());
-          }
+					EXPECT_EQ("upid1",
+										sink_table_catalog->GetColumnObject(sink_columns.at(0))
+											->GetColumnName());
+					EXPECT_EQ("upid2",
+										sink_table_catalog->GetColumnObject(sink_columns.at(1))
+											->GetColumnName());
         } else {
           LOG_ERROR("Unexpected foreign key is found: %s",
                     foreign_key->GetConstraintName().c_str());
@@ -257,7 +241,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       // index for constraints
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
-        LOG_DEBUG("check index for constraints: %s",
+        LOG_INFO("check index for constraints: %s",
         		index_catalog->GetIndexName().c_str());
 
         // primary key for attributes "pid1" and "pid2"
@@ -268,12 +252,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          if (2 == key_attrs.size()) {
-          	EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          	EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs[1])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
+					EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_attrs.at(1))
+															 ->GetColumnName());
         }
         // UNIQUE constraint index for an attribute "value1"
         else if (index_catalog->GetIndexName() ==
@@ -284,10 +266,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
-          if (1 == key_attrs.size()) {
-          	EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
         }
         // foreign key index for an attribute "value3"
         else if (index_catalog->GetIndexName() ==
@@ -298,10 +278,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
         	EXPECT_EQ(1, key_attrs.size());
-          if (1 == key_attrs.size()) {
-          	EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
         }
         // foreign key index for an attributes "value4" and "value5"
         else if (index_catalog->GetIndexName() ==
@@ -312,12 +290,10 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(index_catalog->HasUniqueKeys());
           auto key_attrs = index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
-          if (2 == key_attrs.size()) {
-          	EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs[0])
-                                 ->GetColumnName());
-          	EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs[1])
-                                 ->GetColumnName());
-          }
+					EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs.at(0))
+															 ->GetColumnName());
+					EXPECT_EQ("value5", table_catalog->GetColumnObject(key_attrs.at(1))
+															 ->GetColumnName());
         } else {
           LOG_ERROR("Unexpected index is found: %s",
                     index_catalog->GetIndexName().c_str());
@@ -329,7 +305,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column_catalog = column_pair.second;
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-        LOG_DEBUG("Check constraints of the column %d %s\n%s",
+        LOG_INFO("Check constraints of the column %d %s\n%s",
         		column_catalog->GetColumnId(),
         		column_catalog->GetColumnName().c_str(),
         		column.GetInfo().c_str());
@@ -470,7 +446,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // make sure the constraints are working
   // PRIMARY KEY (1 column: pid)
-  LOG_DEBUG("PRIMARY KEY (1 column) check");
+  LOG_INFO("PRIMARY KEY (1 column) check");
   std::string primary_key_dml1 =
       "INSERT INTO checkpoint_table_test VALUES (0, 5.5, 'eee');";
   ResultType primary_key_result1 =
@@ -479,7 +455,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // PRIMARY KEY (2 column: pid1, pid2)
-  LOG_DEBUG("PRIMARY KEY (2 columns) check");
+  LOG_INFO("PRIMARY KEY (2 columns) check");
   std::string primary_key_dml2 =
       "INSERT INTO checkpoint_constraint_test VALUES (1, 2, 15, 16, 0, 1 ,2);";
   ResultType primary_key_result2 =
@@ -488,7 +464,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // DEFAULT (value1 = 0)
-  LOG_DEBUG("DEFAULT check");
+  LOG_INFO("DEFAULT check");
   std::string default_dml =
       "INSERT INTO checkpoint_constraint_test"
       " (pid1, pid2, value2, value3, value4, value5)"
@@ -503,15 +479,11 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   ResultType default_result2 =
       TestingSQLUtil::ExecuteSQLQuery(default_sql, result_value);
   EXPECT_EQ(ResultType::SUCCESS, default_result2);
-  if(result_value.size() == 1) {
-  	EXPECT_EQ("0", result_value[0]);
-  } else {
-  	EXPECT_TRUE(false);
-  }
+	EXPECT_EQ("0", result_value.at(0));
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // UNIQUE (value1)
-  LOG_DEBUG("UNIQUE check");
+  LOG_INFO("UNIQUE check");
   std::string unique_dml =
       "INSERT INTO checkpoint_constraint_test VALUES (17, 18, 3, 20, 1, 6 ,7);";
   ResultType unique_result = TestingSQLUtil::ExecuteSQLQuery(unique_dml);
@@ -519,7 +491,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // NOT NULL (value2)
-  LOG_DEBUG("NOT NULL check");
+  LOG_INFO("NOT NULL check");
   std::string not_null_dml =
       "INSERT INTO checkpoint_constraint_test VALUES (17, 18, 19, NULL, 1, 6 "
       ",7);";
@@ -529,7 +501,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // CHECK (value2 > 2)
-  LOG_DEBUG("CHECK check");
+  LOG_INFO("CHECK check");
   std::string check_dml =
       "INSERT INTO checkpoint_constraint_test VALUES (17, 18, 19, 1, 1, 6 ,7);";
   ResultType check_result = TestingSQLUtil::ExecuteSQLQuery(check_dml);
@@ -538,7 +510,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // FOREIGN KEY (1 column: value3 => pid)
-  LOG_DEBUG("FOREIGN KEY (1 column) check");
+  LOG_INFO("FOREIGN KEY (1 column) check");
   std::string foreign_key_dml1 =
       "INSERT INTO checkpoint_constraint_test VALUES (21, 22, 23, 24, 10, 6 "
       ",7);";
@@ -548,7 +520,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
   // FOREIGN KEY (2 column: (value4, value5) => (upid1, upid2))
-  LOG_DEBUG("FOREIGN KEY (2 columns) check");
+  LOG_INFO("FOREIGN KEY (2 columns) check");
   std::string foreign_key_dml2 =
       "INSERT INTO checkpoint_constraint_test VALUES (21, 22, 23, 24, 1, 20 "
       ",20);";

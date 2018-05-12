@@ -206,7 +206,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
     		default_db_catalog->GetDatabaseName() + "_" +
 				table_catalog->GetSchemaName() + "_" + table_catalog->GetTableName();
 
-    LOG_DEBUG("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
+    LOG_INFO("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
     		table_catalog->GetTableName().c_str());
 
   	// open table file
