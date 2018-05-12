@@ -58,6 +58,7 @@ class StatsAggregator : public DedicatedThreadTask {
 
  private:
   int64_t aggregation_interval_ms_;
+  // mutex for aggregate task scheduling. No conflict generally
   std::mutex mutex_;
   std::condition_variable exec_finished_;
   bool exiting_ = false;

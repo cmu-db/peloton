@@ -6,11 +6,11 @@
 //
 // Identification: tests/include/statistics/stats_tests_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/statistics/test_metric.h>
+#include "statistics/test_metric.h"
 #include "statistics/testing_stats_util.h"
 
 #include "executor/delete_executor.h"

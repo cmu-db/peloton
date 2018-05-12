@@ -31,8 +31,7 @@ namespace type {
 // Value Factory
 //===--------------------------------------------------------------------===//
 
-class
-ValueFactory {
+class ValueFactory {
  public:
   static inline Value Clone(const Value &src,
                             UNUSED_ATTRIBUTE AbstractPool *dataPool = nullptr) {
