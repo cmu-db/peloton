@@ -115,6 +115,7 @@ void TableMetricRawData::WriteToCatalog() {
                         time_since_epoch).count();
 
   for (auto &entry : counters_) {
+    // one iteration per (database, table) pair
     oid_t database_oid = entry.first.first;
     oid_t table_oid = entry.first.second;
     auto &counts = entry.second;
@@ -132,6 +133,7 @@ void TableMetricRawData::WriteToCatalog() {
           counts[DELETE], counts[INLINE_MEMORY_ALLOC],
           counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);
     } else {
+      // update existing entry
       table_metrics_catalog->UpdateTableMetrics(
           table_oid, old_metric->GetReads() + counts[READ],
           old_metric->GetUpdates() + counts[UPDATE],

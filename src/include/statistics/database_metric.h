@@ -63,7 +63,7 @@ class DatabaseMetricRawData : public AbstractRawData {
    * First counter represents number of transactions committed and the second
    * one represents the number of transactions aborted.
    */
-  std::unordered_map<oid_t, std::pair<uint64_t, uint64_t>> counters_;
+  std::unordered_map<oid_t, std::pair<int64_t, int64_t>> counters_;
 };
 
 class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
