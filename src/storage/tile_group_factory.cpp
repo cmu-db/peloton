@@ -31,6 +31,10 @@ TileGroup *TileGroupFactory::GetTileGroup(
   // Allocate the data on appropriate backend
   BackendType backend_type = BackendType::MM;
       // logging::LoggingUtil::GetBackendType(peloton_logging_mode);
+  // Ensure that the layout of the new TileGroup is not null.
+  if (layout == nullptr) {
+    throw NullPointerException("Layout of the TileGroup must be non-null.");
+  }
 
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,

@@ -137,8 +137,8 @@ oid_t Layout::GetTileIdFromColumnId(oid_t column_id) const {
   return tile_offset;
 }
 
-tile_map_type Layout::GetTileMap() const {
-  tile_map_type tile_map;
+TileToColumnMap Layout::GetTileMap() const {
+  TileToColumnMap tile_map;
 
   if (layout_type_ == LayoutType::ROW) {
     // Row store layout, hence all columns are contained in tile 0.

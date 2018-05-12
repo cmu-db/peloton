@@ -34,7 +34,7 @@ namespace storage {
 /** @brief used to store the mapping between a tile and its columns
  * <tile index> to vector{<original column index, tile column offset>}
  */
-typedef std::map<oid_t, std::vector<std::pair<oid_t, oid_t>>> tile_map_type;
+typedef std::map<oid_t, std::vector<std::pair<oid_t, oid_t>>> TileToColumnMap;
 
 /**
  * @brief   Class to store the physical layout of a TileGroup.
@@ -100,7 +100,7 @@ class Layout : public Printable {
   uint32_t GetColumnCount() const { return num_columns_; }
 
   /** @brief Returns the tile-columns map for each tile in the TileGroup. */
-  tile_map_type GetTileMap() const;
+  TileToColumnMap GetTileMap() const;
 
   /** @brief  Constructs the schema for the given layout.  This function
    *          is used only in TempTables and LogicalTiles.

@@ -579,7 +579,7 @@ std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
   bool result =
       pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn);
   if (!result) {
-    LOG_DEBUG("Failed to create a new layout for table %u", table_oid);
+    LOG_ERROR("Failed to create a new layout for table %u", table_oid);
     return nullptr;
   }
   return new_layout;
