@@ -128,9 +128,9 @@ class RawDataWrapper {
    * @param ptr the pointer it wraps around
    * @param safe the boolean variable it uses to signal its lifetime
    */
-  inline RawDataWrapper(DataType *ptr, bool &safe) : ptr_(ptr), safe_(safe) {}
+  inline RawDataWrapper(DataType *ptr, std::atomic<bool> &safe) : ptr_(ptr), safe_(safe) {}
   DataType *ptr_;
-  bool &safe_;
+  std::atomic<bool> &safe_;
 };
 
 /**
@@ -144,7 +144,7 @@ class RawDataWrapper {
 template <typename DataType>
 class AbstractMetric : public Metric {
  public:
-  AbstractMetric() : raw_data_(new DataType()) {}
+  AbstractMetric() : raw_data_(new DataType()), safe_{true} {}
 
   ~AbstractMetric() { delete raw_data_.load(); }
   /**
@@ -185,7 +185,7 @@ class AbstractMetric : public Metric {
 
  private:
   std::atomic<DataType *> raw_data_;
-  bool safe_ = true;
+  std::atomic<bool> safe_;
 };
 }  // namespace stats
 }  // namespace peloton

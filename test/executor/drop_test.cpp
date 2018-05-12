@@ -117,7 +117,7 @@ TEST_F(DropTests, DroppingTable) {
   auto new_size = (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
       ->GetTableObjects()
       .size();
-  EXPECT_EQ(old_size - new_size, 1);
+  EXPECT_EQ(1, old_size - new_size);
 
   // free the database just created
   catalog->DropDatabaseWithName(TEST_DB_NAME, txn);

@@ -100,9 +100,9 @@ bool ArtIndex::DeleteEntry(const storage::Tuple *key, ItemPointer *value) {
     // Those who is familiar with the code base for index implementation should
     // insert these lines to accurate place with correct values
     size_t memory = key->GetLength() + 8;  // key size + item pointer size
-    stats_collector.CollectIndexMemoryAlloc(metadata->GetDatabaseOid(),
+    stats_collector.CollectIndexMemoryFree(metadata->GetDatabaseOid(),
                                             GetOid(), memory);
-    stats_collector.CollectIndexMemoryUsage(metadata->GetDatabaseOid(),
+    stats_collector.CollectIndexMemoryReclaim(metadata->GetDatabaseOid(),
                                             GetOid(), memory);
   }
 

@@ -53,7 +53,7 @@ class DedicatedThreadRegistry {
    *
    * Register a thread under requester to run the given task
    *
-   * @param requster The owner to assign the new thread to
+   * @param requester The owner to assign the new thread to
    * @param args the arguments to pass to constructor of task
    * @return the DedicatedThreadTask running on new thread
    */
