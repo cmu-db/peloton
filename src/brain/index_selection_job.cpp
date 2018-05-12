@@ -104,7 +104,6 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     for (auto index : best_config.GetIndexes()) {
       // Create RPC for index creation on the server side.
       CreateIndexRPC(index.get());
-      LOG_DEBUG("Create index done on %s", index->ToString());
     }
 
     // Update the last_timestamp to the be the latest query's timestamp in
