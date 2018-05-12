@@ -80,7 +80,7 @@ TransactionContext *TransactionManager::BeginTransaction(
   txn->SetTimestamp(function::DateFunctions::Now());
 
   // Record current transaction in transaction set
-  current_transactions_.insert(txn->GetTransactionId());
+  current_transactions_.Append(txn->GetTransactionId());
 
   return txn;
 }
@@ -97,9 +97,14 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // Record deletion of transaction in current transaction set
-  if (current_transactions_.erase(current_txn->GetTransactionId()) == 0){
-    LOG_WARN("transaction record not deleted!");
-  };
+  auto count = current_transactions_.GetSize();
+  for (size_t i = 0; i < count; i++){
+    auto tmp = current_transactions_.Find(i);
+    if (tmp == current_txn->GetTransactionId()){
+      current_transactions_.Erase(i, -1);
+      break;
+    }
+  }
 
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
@@ -274,10 +279,11 @@ VisibilityType TransactionManager::IsVisible(
 
 // This function checks if the given transaction set overlaps with current
 // transaction set. Return true if overlaps, false otherwise.
-bool TransactionManager::CheckConcurrentTxn(std::unordered_set<txn_id_t>* input){
-  auto itr = input->begin();
-  for ( ;itr != input->end(); itr++){
-    if (current_transactions_.find(*itr) != current_transactions_.end()){
+bool TransactionManager::CheckConcurrentTxn(LockFreeArray<txn_id_t>* input){
+  auto count = input->GetSize();
+  for (size_t i = 0; i < count; i++){
+    auto tmp = current_transactions_.Find(i);
+    if (input->Contains(tmp)){
       return true;
     }
   }

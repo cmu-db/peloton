@@ -161,8 +161,14 @@ bool SeqScanExecutor::DExecute() {
 
         LOG_DEBUG("Concurrently create index");
         // Get concurrent transactions before scanning
-        std::unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
-        txn_set.erase(current_txn->GetTransactionId());
+        LockFreeArray txn_set = transaction_manager.GetCurrentTxn();
+        for (size_t i = 0; i < txn_set.GetSize(); i++) {
+          auto tmp = txn_set.Find(i);
+          if (tmp == current_txn->GetTransactionId()) {
+            txn_set.erase(i);
+            break;
+          }
+        }
 
         // Check if all concurrent transaction ends
         while (transaction_manager.CheckConcurrentTxn(&txn_set)){
