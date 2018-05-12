@@ -115,6 +115,7 @@ def execute_sql_statements_with_stats(data_path, peloton, execution_count):
 
 
 def analyze(peloton):
+    # Note this doesn't actually do anything. When https://github.com/cmu-db/peloton/issues/1360 is resolved, this will work
     peloton.process_query("ANALYZE;")
 
 
@@ -147,6 +148,7 @@ def main():
                         help="Optional path to peloton binary if peloton is not on your path")
     parser.add_argument('--query-count', default=500,
                         help="Number of times to run the query defined in the data query path")
+    # For now, data load path needs to include analyze statements at end. we don't support analyze on all tables
     parser.add_argument("data_load_path")
     parser.add_argument("data_query_path")
     args = parser.parse_args()
