@@ -132,17 +132,18 @@ bool PopulateIndexExecutor::DExecute() {
       std::unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
       txn_set.erase(current_txn->GetTransactionId());
 
-      // Get the output from seq_scan (1st pass)
+      // Build index, add it to the table
       while (children_[0]->Execute()) {
       }
 
       // Check if all concurrent transaction ends
       while (transaction_manager.CheckConcurrentTxn(&txn_set)){
+        LOG_DEBUG("Sleep for a while, waiting other transactions");
         // Sleep 5ms to avoid spin wait
         usleep(5000);
       }
 
-      // Get the output from seq_scan (2nd pass)
+      // Get the output from seq_scan
       while (children_[1]->Execute()) {
         child_tiles_.emplace_back(children_[1]->GetOutput());
       }

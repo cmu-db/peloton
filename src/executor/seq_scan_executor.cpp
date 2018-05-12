@@ -175,7 +175,14 @@ bool SeqScanExecutor::DExecute() {
 
         // we don't need to check transaction visibility when building index.
         // perform predicate evaluation.
-        if (visibility == VisibilityType::OK || children_.size() == 1) {
+        if (visibility == VisibilityType::OK ||
+            (GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
+            PlanNodeType::CREATE &&
+            // If it is, confirm it is for indexes
+            (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                ->GetCreateType() == CreateType::INDEX ||
+                ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                    ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
 	        LOG_DEBUG("perform read in seq scan");
