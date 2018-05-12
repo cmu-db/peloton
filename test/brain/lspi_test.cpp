@@ -16,6 +16,7 @@
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"
 #include "brain/testing_index_suggestion_util.h"
+#include "brain/what_if_index.h"
 
 namespace peloton {
 namespace test {
@@ -75,14 +76,38 @@ TEST_F(LSPITests, TuneTest) {
 
   brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
 
+  brain::IndexConfiguration index_config;
+
   int CATALOG_SYNC_INTERVAL = 2;
 
   std::vector<double> query_latencies;
   std::vector<std::string> query_strs;
   for (size_t i = 1; i <= query_strings.size(); i++) {
     auto query = query_strings[i - 1];
-    // TODO (weichenl): use what_if API to obtain the "latency"
-    auto latency = 5.0;
+
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser::PostgresParser::ParseSQLString(query));
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    std::unique_ptr<binder::BindNodeVisitor> binder(
+        new binder::BindNodeVisitor(txn, database_name));
+
+    // Get the first statement.
+    auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+        stmt_list.get()->PassOutStatement(0));
+
+    binder->BindNameToNode(sql_statement.get());
+    txn_manager.CommitTransaction(txn);
+
+    auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
+        sql_statement, index_config, database_name);
+    auto latency = result->cost;
+
+    LOG_DEBUG("query: %s", query.c_str());
+    LOG_DEBUG("latency: %f", latency);
+
     query_strs.push_back(query);
     query_latencies.push_back(latency);
     if (i % CATALOG_SYNC_INTERVAL == 0) {
