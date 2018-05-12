@@ -108,20 +108,20 @@ class Catalog {
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &schema_name,
                          const std::string &table_name,
-                         bool populate = false,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, bool unique_keys,
                          IndexType index_type,
-                         concurrency::TransactionContext *txn);
+                         concurrency::TransactionContext *txn,
+                         bool populate = false);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
-                         bool populate = false,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &schema_name,
                          const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
-                         bool is_catalog = false);
+                         bool is_catalog = false,
+                         bool populate = false);
 
 
   //===--------------------------------------------------------------------===//

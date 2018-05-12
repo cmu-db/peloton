@@ -250,8 +250,8 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
 
   // Create index in the catalog
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, schema_name, table_name, populate, key_attrs, index_name,
-      unique_flag, index_type, txn);
+      database_name, schema_name, table_name, key_attrs, index_name,
+      unique_flag, index_type, txn, populate);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
