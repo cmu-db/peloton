@@ -33,12 +33,16 @@ LSPIIndexTuner::LSPIIndexTuner(
   prev_config_vec[0] = 1.0;
 }
 
+const CompressedIndexConfigContainer *LSPIIndexTuner::GetConfigContainer() const {
+  return index_config_.get();
+}
+
 void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
-                          const std::vector<double> &query_latencies) {
+                          const std::vector<double> &query_costs) {
   size_t num_queries = queries.size();
   std::vector<boost::dynamic_bitset<>> add_candidate_sets;
   std::vector<boost::dynamic_bitset<>> drop_candidate_sets;
-  double latency_avg = 0.0;
+  double cost_avg = 0.0;
   const boost::dynamic_bitset<> &curr_config_set =
       *index_config_->GetCurrentIndexConfig();
   // Be careful about not duplicating bitsets anywhere since they can
@@ -53,22 +57,22 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
     CompressedIndexConfigUtil::DropCandidates(*index_config_, queries[i],
                                               drop_candidate_set);
     drop_candidate_sets.push_back(std::move(drop_candidate_set));
-    latency_avg += query_latencies[i];
+    cost_avg += query_costs[i];
   }
-  latency_avg /= num_queries;
+  cost_avg /= num_queries;
   // Step 2: Update the RLSE model with the new samples
   for (size_t i = 0; i < num_queries; i++) {
     vector_eig query_config_feat;
     CompressedIndexConfigUtil::ConstructQueryConfigFeature(
         curr_config_set, add_candidate_sets[i], drop_candidate_sets[i],
         query_config_feat);
-    rlse_model_->Update(query_config_feat, query_latencies[i]);
+    rlse_model_->Update(query_config_feat, query_costs[i]);
   }
   // Step 3: Iterate through the queries/latencies and obtain a new optimal
   // config
-  auto optimal_config_set = boost::dynamic_bitset<>(curr_config_set);
+  auto optimal_config_set = curr_config_set;
   for (size_t i = 0; i < num_queries; i++) {
-    FindOptimalConfig(query_latencies[i], curr_config_set,
+    FindOptimalConfig(query_costs[i], curr_config_set,
                       add_candidate_sets[i], drop_candidate_sets[i],
                       optimal_config_set);
   }
@@ -77,9 +81,12 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   CompressedIndexConfigUtil::ConstructStateConfigFeature(optimal_config_set,
                                                          new_config_vec);
   // Step 4: Update the LSPI model based on current most optimal query config
-  lstdq_model_->Update(prev_config_vec, new_config_vec, latency_avg);
+  lstdq_model_->Update(prev_config_vec, new_config_vec, cost_avg);
+
   // Step 5: Adjust to the most optimal query config
   index_config_->AdjustIndexes(optimal_config_set);
+  // TODO(saatviks, weichenl): Is this a heavy op?
+  PELOTON_ASSERT(optimal_config_set == *index_config_->GetCurrentIndexConfig());
 }
 
 void LSPIIndexTuner::FindOptimalConfig(

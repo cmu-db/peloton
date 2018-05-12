@@ -51,6 +51,7 @@ class LSPIIndexTuner {
                          const boost::dynamic_bitset<> &add_candidate_set,
                          const boost::dynamic_bitset<> &drop_candidate_set,
                          boost::dynamic_bitset<> &optimal_config_set);
+  const CompressedIndexConfigContainer *GetConfigContainer() const;
 
  private:
   // Database to tune
