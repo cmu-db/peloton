@@ -39,6 +39,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
   checkpoint_manager.DoCheckpointRecovery();
 
+  /*
   // low level test
   // make sure data structures created in checkpointing test and recovered
   // above are correct.
@@ -425,6 +426,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // finish the low level test
   txn_manager.CommitTransaction(txn);
+*/
 
   // high level test
   // make sure the records of 3 user tables created checkpointing test
