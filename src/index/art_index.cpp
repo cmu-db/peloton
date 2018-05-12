@@ -39,6 +39,7 @@ void LoadKey(void *ctx, TID tid, art::Key &key) {
   // Get physical tile group
   auto *item_pointer = reinterpret_cast<ItemPointer *>(tid);
   auto tile_group = table->GetTileGroupById(item_pointer->block);
+  PELOTON_ASSERT(tile_group != nullptr);
 
   // Construct tuple, project only indexed columns
   const auto &indexed_cols = index_meta->GetKeyAttrs();

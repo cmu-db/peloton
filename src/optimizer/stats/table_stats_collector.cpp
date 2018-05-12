@@ -47,6 +47,9 @@ void TableStatsCollector::CollectColumnStats() {
   for (size_t offset = 0; offset < tile_group_count; offset++) {
     std::shared_ptr<storage::TileGroup> tile_group =
         table_->GetTileGroup(offset);
+    if (tile_group == nullptr) {
+      continue;
+    }
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     oid_t tuple_count = tile_group->GetAllocatedTupleCount();
     active_tuple_count_ += tile_group_header->GetActiveTupleCount();

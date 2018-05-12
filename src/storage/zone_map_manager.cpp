@@ -63,6 +63,9 @@ void ZoneMapManager::CreateZoneMapsForTable(
   size_t num_tile_groups = table->GetTileGroupCount();
   for (size_t i = 0; i < num_tile_groups; i++) {
     auto tile_group = table->GetTileGroup(i);
+    if (tile_group == nullptr) {
+      continue;
+    }
     auto tile_group_ptr = tile_group.get();
     PELOTON_ASSERT(tile_group_ptr != nullptr);
     auto tile_group_header = tile_group_ptr->GetHeader();
@@ -92,6 +95,9 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
   auto schema = table->GetSchema();
   size_t num_columns = schema->GetColumnCount();
   auto tile_group = table->GetTileGroup(tile_group_idx);
+  if (tile_group == nullptr) {
+    return;
+  }
 
   for (oid_t col_itr = 0; col_itr < num_columns; col_itr++) {
     // Set temp min and temp max as the first value.

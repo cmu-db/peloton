@@ -662,6 +662,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
 
           for (ItemPointer *ptr : location_ptrs) {
             auto src_tile_group = src_table->GetTileGroupById(ptr->block);
+            PELOTON_ASSERT(src_tile_group != nullptr);
             auto src_tile_group_header = src_tile_group->GetHeader();
 
             auto visibility = transaction_manager.IsVisible(
@@ -820,6 +821,7 @@ bool DataTable::CheckForeignKeyConstraints(
 
         // Check the visibility of the result
         auto tile_group = ref_table->GetTileGroupById(location_ptrs[0]->block);
+        PELOTON_ASSERT(tile_group != nullptr);
         auto tile_group_header = tile_group->GetHeader();
 
         auto &transaction_manager =
@@ -1332,6 +1334,10 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   auto tile_group_id =
       tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
+  if (tile_group_id == invalid_tile_group_id) {
+    LOG_ERROR("Tile group offset not found in table : %u ", tile_group_offset);
+    return nullptr;
+  }
 
   // Get orig tile group from catalog
   auto storage_tilegroup = storage::StorageManager::GetInstance();

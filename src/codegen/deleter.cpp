@@ -38,6 +38,7 @@ void Deleter::Delete(uint32_t tile_group_id, uint32_t tuple_offset) {
 
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id);
+  PELOTON_ASSERT(tile_group != nullptr);
   auto *tile_group_header = tile_group->GetHeader();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

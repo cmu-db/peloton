@@ -63,6 +63,7 @@ TEST_F(ContainerTupleTests, GetInfo) {
   auto pos = temp_table->InsertTuple(&tuple1);
 
   auto tile_group = temp_table->GetTileGroupById(pos.block);
+  PELOTON_ASSERT(tile_group != nullptr);
   auto tuple_id = pos.offset;
 
   // Now test
