@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <chrono>
 #include "brain/indextune/lspi/lspi_tuner.h"
 #include "brain/indextune/lspi/lstdq.h"
 #include "brain/indextune/lspi/rlse.h"
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"
-#include "sql/testing_sql_util.h"
+#include "brain/testing_index_suggestion_util.h"
 
 namespace peloton {
 namespace test {
@@ -25,52 +24,7 @@ namespace test {
 // Tensorflow Tests
 //===--------------------------------------------------------------------===//
 
-class LSPITests : public PelotonTest {
- private:
-  std::string database_name_;
-
- public:
-  LSPITests() {}
-
-  /**
-   * @brief Create a new database
-   */
-  void CreateDatabase(const std::string &db_name) {
-    database_name_ = db_name;
-    std::string create_db_str = "CREATE DATABASE " + db_name + ";";
-    TestingSQLUtil::ExecuteSQLQuery(create_db_str);
-  }
-
-  /**
-   * @brief Create a new table with schema (a INT, b INT, c INT)
-   */
-  void CreateTable(const std::string &table_name) {
-    std::string create_str =
-        "CREATE TABLE " + table_name + "(a INT, b INT, c INT);";
-    TestingSQLUtil::ExecuteSQLQuery(create_str);
-  }
-
-  double TimedExecuteQuery(const std::string &query_str) {
-    auto start = std::chrono::system_clock::now();
-
-    TestingSQLUtil::ExecuteSQLQuery(query_str);
-
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-
-    return elapsed_seconds.count();
-  }
-
-  void InsertIntoTable(std::string table_name, int no_of_tuples) {
-    // Insert tuples into table
-    for (int i = 0; i < no_of_tuples; i++) {
-      std::ostringstream oss;
-      oss << "INSERT INTO " << table_name << " VALUES (" << i << "," << i + 1
-          << "," << i + 2 << ");";
-      TestingSQLUtil::ExecuteSQLQuery(oss.str());
-    }
-  }
-};
+class LSPITests : public PelotonTest {};
 
 TEST_F(LSPITests, RLSETest) {
   // Attempt to fit y = m*x
@@ -101,34 +55,34 @@ TEST_F(LSPITests, RLSETest) {
 TEST_F(LSPITests, TuneTest) {
   // Sanity test that all components are running
   // Need more ri
-  const std::string database_name = DEFAULT_DB_NAME;
-  const std::string table_name = "dummy_table";
-  const int num_rows = 200;
+  std::string database_name = DEFAULT_DB_NAME;
 
-  CreateDatabase(database_name);
+  index_suggestion::TestingIndexSuggestionUtil testing_util(database_name);
+
   std::set<oid_t> ori_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name, ori_table_oids);
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ori_table_oids);
 
-  CreateTable(table_name);
-  InsertIntoTable(table_name, num_rows);
+  auto config = testing_util.GetQueryStringsWorkload(
+      index_suggestion::QueryStringsWorkloadType::A);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
+
+  // Create all the required tables for this workloads.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+  }
 
   brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
 
-  std::vector<std::string> workload;
-  workload.push_back("SELECT * FROM " + table_name +
-                     " WHERE a > 160 and a < 250");
-  workload.push_back("DELETE FROM " + table_name + " WHERE a < 1 or b > 4");
-  workload.push_back("SELECT * FROM " + table_name +
-                     " WHERE b > 190 and b < 250");
-  workload.push_back("UPDATE " + table_name +
-                     " SET a = 45 WHERE a < 1 or b > 4");
   int CATALOG_SYNC_INTERVAL = 2;
 
   std::vector<double> query_latencies;
   std::vector<std::string> query_strs;
-  for (size_t i = 1; i <= workload.size(); i++) {
-    auto query = workload[i - 1];
-    auto latency = TimedExecuteQuery(query);
+  for (size_t i = 1; i <= query_strings.size(); i++) {
+    auto query = query_strings[i - 1];
+    // TODO (weichenl): use what_if API to obtain the "latency"
+    auto latency = 5.0;
     query_strs.push_back(query);
     query_latencies.push_back(latency);
     if (i % CATALOG_SYNC_INTERVAL == 0) {
