@@ -1174,6 +1174,24 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
   return ret_index;
 }
 
+std::shared_ptr<index::Index> DataTable::GetIndexWithName(
+    std::string name) {
+  std::shared_ptr<index::Index> ret_index;
+  auto index_count = indexes_.GetSize();
+
+  for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
+    ret_index = indexes_.Find(index_itr);
+    if (ret_index != nullptr && ret_index->GetName()== name) {
+      break;
+    }
+  }
+  if (ret_index == nullptr) {
+    throw CatalogException("No index with name = " + name +
+        " is found");
+  }
+  return ret_index;
+}
+
 void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   oid_t index_offset = 0;
   std::shared_ptr<index::Index> index;

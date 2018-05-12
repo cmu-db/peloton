@@ -54,6 +54,10 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   index_key.SetFromKey(key);
 
   bool ret;
+  if (populated){
+    std::pair<storage::Tuple, ItemPointer> tmp(*key, *value);
+    insert_set.insert(tmp);
+  }
   if(HasUniqueKeys() == true) {
     ret = container.Insert(index_key, value, true);
   } else {
@@ -111,6 +115,11 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   index_key.SetFromKey(key);
 
   bool predicate_satisfied = false;
+
+  if (populated){
+    std::pair<storage::Tuple, ItemPointer> tmp(*key, *value);
+    insert_set.insert(tmp);
+  }
 
   // This function will complete them in one step
   // predicate will be set to nullptr if the predicate

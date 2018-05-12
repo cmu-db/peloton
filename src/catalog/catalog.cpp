@@ -511,6 +511,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &schema_name,
                                 const std::string &table_name,
+                                bool populate = false,
                                 const std::vector<oid_t> &key_attrs,
                                 const std::string &index_name, bool unique_keys,
                                 IndexType index_type,
@@ -539,14 +540,14 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
 
   ResultType success = CreateIndex(
-      database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
+      database_object->GetDatabaseOid(), table_object->GetTableOid(), populate, key_attrs,
       schema_name, index_name, index_type, index_constraint, unique_keys, txn);
 
   return success;
 }
 
 ResultType Catalog::CreateIndex(
-    oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &key_attrs,
+    oid_t database_oid, oid_t table_oid, bool populate = false, const std::vector<oid_t> &key_attrs,
     const std::string &schema_name, const std::string &index_name,
     IndexType index_type, IndexConstraintType index_constraint,
     bool unique_keys, concurrency::TransactionContext *txn, bool is_catalog) {
@@ -592,6 +593,7 @@ ResultType Catalog::CreateIndex(
   // Add index to table
   std::shared_ptr<index::Index> key_index(
       index::IndexFactory::GetIndex(index_metadata));
+  key_index->SetPopulated(populate);
   table->AddIndex(key_index);
 
   // Put index object into rw_object_set

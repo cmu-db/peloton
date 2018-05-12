@@ -239,6 +239,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
+  bool populate = node.GetPopulateFlag();
   bool unique_flag = node.IsUnique();
   IndexType index_type = node.GetIndexType();
 
@@ -249,7 +250,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
 
   // Create index in the catalog
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      database_name, schema_name, table_name, key_attrs, index_name,
+      database_name, schema_name, table_name, populate, key_attrs, index_name,
       unique_flag, index_type, txn);
   txn->SetResult(result);
 

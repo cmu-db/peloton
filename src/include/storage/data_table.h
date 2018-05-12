@@ -180,6 +180,8 @@ class DataTable : public AbstractTable {
 
   std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset);
 
+  std::shared_ptr<index::Index> GetIndexWithName(std::string name);
+
   std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
 
   oid_t GetIndexCount() const;

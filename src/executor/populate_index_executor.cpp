@@ -139,6 +139,11 @@ bool PopulateIndexExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(target_table_schema, true));
 
+      std::shared_ptr<index::Index> idx = target_table_->GetIndexWithName(index_name_);
+      if (idx == nullptr){
+        LOG_DEBUG("create index error, cannot find the index");
+      }
+
       // Go over the logical tile and insert in the index the values
       for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
            child_tile_itr++) {
@@ -161,10 +166,14 @@ bool PopulateIndexExecutor::DExecute() {
 
           // insert tuple into the index.
           ItemPointer *index_entry_ptr = nullptr;
-          target_table_->InsertInIndex(tuple.get(), location, current_txn,
-                                       &index_entry_ptr, index_name_);
+          std::pair<storage::Tuple, ItemPointer> tmp(*tuple, location);
+          if (!idx->CheckDuplicate(tmp)){
+            target_table_->InsertInIndex(tuple.get(), location, current_txn,
+                                         &index_entry_ptr, index_name_);
+          }
         }
       }
+      idx->ResetPopulated();
     }
 
 

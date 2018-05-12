@@ -162,7 +162,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       } else {
         // support concurrent create index
         create_type = CreateType::INDEX_CONCURRENT;
+        populate = true;
       }
+
       index_name = std::string(parse_tree->index_name);
       table_name = std::string(parse_tree->GetTableName());
       schema_name = std::string(parse_tree->GetSchemaName());
