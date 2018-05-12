@@ -347,6 +347,18 @@ void IndexSelection::IndexColsParseWhereHelper(
       left_child = where_expr->GetChild(0);
       right_child = where_expr->GetChild(1);
 
+      // if where clause is something like a = b, we don't benefit from index
+      if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        return;
+      }
+
+      // if where clause is something like 1 = 2, we don't benefit from index
+      if (left_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+          right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+        return;
+      }
+
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         PELOTON_ASSERT(right_child->GetExpressionType() !=
                        ExpressionType::VALUE_TUPLE);
