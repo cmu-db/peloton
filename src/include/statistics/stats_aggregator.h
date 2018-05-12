@@ -55,6 +55,8 @@ class StatsAggregator : public DedicatedThreadTask {
    */
   void Aggregate();
 
+  std::vector<std::shared_ptr<AbstractRawData>> AggregateRawData();
+
  private:
   int64_t aggregation_interval_ms_;
   std::mutex mutex_;

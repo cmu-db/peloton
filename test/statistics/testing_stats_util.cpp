@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/statistics/test_metric.h>
 #include "statistics/testing_stats_util.h"
 
 #include "executor/delete_executor.h"
@@ -28,6 +29,7 @@
 #include "planner/plan_util.h"
 #include "storage/tile.h"
 #include "traffic_cop/traffic_cop.h"
+#include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace test {
@@ -150,6 +152,18 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
   txn_manager.CommitTransaction(txn);
+}
+
+int TestingStatsUtil::AggregateCounts() {
+  stats::StatsAggregator aggregator(1);
+  auto result = aggregator.AggregateRawData();
+
+  // Only TestRawData should be collected
+  EXPECT_LE(result.size(), 1);
+
+  if (result.empty()) return 0;
+
+  return dynamic_cast<stats::TestMetricRawData &>(*result[0]).count_;
 }
 
 }  // namespace test

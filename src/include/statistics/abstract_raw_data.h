@@ -20,10 +20,11 @@ namespace stats {
  * @brief An always-consistent storage unit for intermediate stats results.
  *
  * These objects hold raw data points processed by a metric on the thread-local
- * level. Entries into this object must be always consistent. (i.e. future
- *entries
- * should not rely on some early entries being in this object) This is because
- * an aggregator can come at any time and swap out the object for aggregation.
+ * level. Entries into this object must be always consistent.
+ * (i.e. future entries should not rely on some early entries being in this
+ * object)
+ * This is because an aggregator can come at any time and swap out
+ * the object for aggregation.
  *
  * @see Metric for detailed description of how this would work.
  */
@@ -44,7 +45,7 @@ class AbstractRawData : public Printable {
 
   /**
    * Fetches the currently stored values of the metric in the catalog,
-   * for combining with newly aggreated value, if appropriate.
+   * for combining with newly aggregated value, if appropriate.
    * Specifically, this is useful if your RawData only tracks a metric's
    * change in each aggregation period rather than the true value,
    * so you can correctly update the catalog.

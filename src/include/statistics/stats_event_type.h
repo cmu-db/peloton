@@ -32,7 +32,8 @@ enum class StatsEventType {
   INDEX_MEMORY_USAGE,
   INDEX_MEMORY_RECLAIM,
   QUERY_BEGIN,
-  QUERY_END
+  QUERY_END,
+  TEST  // Testing event
 };
 };
 }
