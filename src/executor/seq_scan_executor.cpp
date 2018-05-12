@@ -226,19 +226,20 @@ bool SeqScanExecutor::DExecute() {
             LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());
             if (eval.IsTrue()) {
               position_list.push_back(tuple_id);
+              LOG_DEBUG("perform read with eval in seq scan");
               auto res = transaction_manager.PerformRead(current_txn, location,
                                                          acquire_owner);
               if (!res) {
-		if (visibility == VisibilityType::OK){
-		  LOG_DEBUG("perform read failed in seq scan!");
-		  transaction_manager.SetTransactionResult(current_txn,
-							   ResultType::FAILURE);
-		  return res;
-		}
-		else{
-		  LOG_DEBUG("Encountered modified tuple");
-		  continue;
-		}
+                if (visibility == VisibilityType::OK){
+                  LOG_DEBUG("perform read failed in seq scan!");
+                  transaction_manager.SetTransactionResult(current_txn,
+                                       ResultType::FAILURE);
+                  return res;
+                }
+                else{
+                  LOG_DEBUG("Encountered modified tuple");
+                  continue;
+                }
               } else {
                 LOG_TRACE("Sequential Scan Predicate Satisfied");
               }

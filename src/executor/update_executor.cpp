@@ -165,9 +165,10 @@ bool UpdateExecutor::DExecute() {
   }
 
   // We are scanning over a logical tile.
-  LOG_TRACE("Update executor :: 1 child ");
+  LOG_DEBUG("Update executor :: 1 child ");
 
   if (!children_[0]->Execute()) {
+
     return false;
   }
 
@@ -203,7 +204,7 @@ bool UpdateExecutor::DExecute() {
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
 
-    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
+    LOG_DEBUG("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     ///////////////////////////////////////////////////////////
