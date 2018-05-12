@@ -182,7 +182,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
     // do not update read set for read-only transactions.
     stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleRead(
-        location.block, 1);
+        current_txn,
+        location.block);
     return true;
   }  // end READ ONLY
 
@@ -231,7 +232,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
-          .CollectTupleRead(tile_group_id, 1);
+          .CollectTupleRead(current_txn, tile_group_id);
       return true;
     } else {
       // if it's not select for update, then update read set and return true.
@@ -240,7 +241,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
-          .CollectTupleRead(tile_group_id, 1);
+          .CollectTupleRead(current_txn, tile_group_id);
       return true;
     }
 
@@ -281,7 +282,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
-          .CollectTupleRead(location.block, 1);
+          .CollectTupleRead(current_txn, location.block);
       return true;
 
     } else {
@@ -292,7 +293,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
           // Increment table read op stats
           stats::ThreadLevelStatsCollector::GetCollectorForThread()
-              .CollectTupleRead(location.block, 1);
+              .CollectTupleRead(current_txn, location.block);
           return true;
 
         } else {
@@ -309,7 +310,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
         // Increment table read op stats
         stats::ThreadLevelStatsCollector::GetCollectorForThread()
-            .CollectTupleRead(location.block, 1);
+            .CollectTupleRead(current_txn, location.block);
         return true;
       }
     }
@@ -368,7 +369,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
                      GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
       // Increment table read op stats
       stats::ThreadLevelStatsCollector::GetCollectorForThread()
-          .CollectTupleRead(location.block, 1);
+          .CollectTupleRead(current_txn, location.block);
       return true;
 
     } else {
@@ -382,7 +383,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
           // Increment table read op stats
           stats::ThreadLevelStatsCollector::GetCollectorForThread()
-              .CollectTupleRead(location.block, 1);
+              .CollectTupleRead(current_txn, location.block);
           return true;
         } else {
           // if the tuple has been owned by some concurrent transactions,
@@ -404,7 +405,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
         // Increment table read op stats
         stats::ThreadLevelStatsCollector::GetCollectorForThread()
-            .CollectTupleRead(location.block, 1);
+            .CollectTupleRead(current_txn, location.block);
         return true;
       }
     }
@@ -446,6 +447,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   // Increment table insert op stats
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleInsert(
+      current_txn,
       location.block);
 }
 
@@ -526,6 +528,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Increment table update op stats
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleUpdate(
+      current_txn,
       location.block);
 }
 
@@ -557,6 +560,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Increment table update op stats
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleUpdate(
+      current_txn,
       location.block);
 }
 
@@ -641,6 +645,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   // Increment table delete op stats
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleDelete(
+      current_txn,
       old_location.block);
 }
 
@@ -673,6 +678,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   // Increment table delete op stats
   stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTupleDelete(
+      current_txn,
       old_location.block);
 }
 
@@ -845,13 +851,12 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     }
   }
 
-  // Increment # txns committed metric
-  stats::ThreadLevelStatsCollector::GetCollectorForThread()
-      .CollectTransactionCommit(stats_tile_group_id);
-
   ResultType result = current_txn->GetResult();
 
   log_manager.LogEnd();
+  // Increment # txns committed metric
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTransactionCommit(current_txn, stats_tile_group_id);
 
   EndTransaction(current_txn);
   return result;
@@ -1023,12 +1028,10 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     }
   }
 
-  // Increment # txns aborted metric
-  stats::ThreadLevelStatsCollector::GetCollectorForThread()
-      .CollectTransactionAbort(stats_tile_group_id);
   current_txn->SetResult(ResultType::ABORTED);
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectTransactionAbort(current_txn, stats_tile_group_id);
   EndTransaction(current_txn);
-
 
   return ResultType::ABORTED;
 }

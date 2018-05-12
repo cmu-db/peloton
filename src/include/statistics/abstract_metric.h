@@ -22,6 +22,11 @@
 #include "statistics/stats_event_type.h"
 
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+} // namespace concurrency
+
 namespace stats {
 /**
  * @brief Interface representing a metric.
@@ -47,25 +52,85 @@ class Metric {
  public:
   virtual ~Metric() = default;
 
-  // TODO(tianyu): fill arguments
-  virtual void OnTransactionBegin(){};
-  virtual void OnTransactionCommit(oid_t){};
-  virtual void OnTransactionAbort(oid_t){};
-  virtual void OnTupleRead(oid_t, size_t){};
-  virtual void OnTupleUpdate(oid_t){};
-  virtual void OnTupleInsert(oid_t){};
-  virtual void OnTupleDelete(oid_t){};
-  virtual void OnIndexRead(std::pair<oid_t, oid_t>, size_t){};
-  virtual void OnIndexUpdate(std::pair<oid_t, oid_t>){};
-  virtual void OnIndexInsert(std::pair<oid_t, oid_t>){};
-  virtual void OnIndexDelete(std::pair<oid_t, oid_t>){};
-  virtual void OnMemoryAlloc(std::pair<oid_t, oid_t>, size_t){};
-  virtual void OnMemoryFree(std::pair<oid_t, oid_t>, size_t){};
-  virtual void OnMemoryUsage(std::pair<oid_t, oid_t>, size_t){};
-  virtual void OnMemoryReclaim(std::pair<oid_t, oid_t>, size_t){};
-  virtual void OnQueryBegin(){};
-  virtual void OnQueryEnd(){};
-  virtual void OnTest(int){};
+  // TODO(tianyu): Add more parameters for events as needed
+  // TODO(tianyu): @Tianyi Can you add documentation for what tile_group_id means? Same for the ones below.
+  /**
+   * @param Context of the transaction beginning
+   */
+  virtual void OnTransactionBegin(const concurrency::TransactionContext *) {};
+  /**
+   * @param Context of the transaction committing
+   * @param ?
+   */
+  virtual void OnTransactionCommit(const concurrency::TransactionContext *,
+                                   oid_t) {};
+  /**
+   * @param Context of the transaction aborting
+   * @param ?
+   */
+  virtual void OnTransactionAbort(const concurrency::TransactionContext *,
+                                  oid_t) {};
+  /**
+   * @param Context of the transaction performing read
+   * @param ?
+   */
+  virtual void OnTupleRead(const concurrency::TransactionContext *, oid_t) {};
+  /**
+   * @param Context of the transaction performing update
+   * @param ?
+   */
+  virtual void OnTupleUpdate(const concurrency::TransactionContext *, oid_t) {};
+  /**
+   * @param Context of the transaction performing insert
+   * @param ?
+   */
+  virtual void OnTupleInsert(const concurrency::TransactionContext *, oid_t) {};
+  /**
+ * @param Context of the transaction performing delete
+ * @param ?
+ */
+  virtual void OnTupleDelete(const concurrency::TransactionContext *, oid_t) {};
+  /**
+   * ?
+   */
+  virtual void OnIndexRead(std::pair<oid_t, oid_t>, size_t) {};
+  /**
+   * ?
+   */
+  virtual void OnIndexUpdate(std::pair<oid_t, oid_t>) {};
+  /**
+   * ?
+   */
+  virtual void OnIndexInsert(std::pair<oid_t, oid_t>) {};
+  /**
+   * ?
+   */
+  virtual void OnIndexDelete(std::pair<oid_t, oid_t>) {};
+  /**
+   * ?
+   */
+  virtual void OnMemoryAlloc(std::pair<oid_t, oid_t>, size_t) {};
+  /**
+   * ?
+   */
+  virtual void OnMemoryFree(std::pair<oid_t, oid_t>, size_t) {};
+  /**
+   * ?
+   */
+  virtual void OnMemoryUsage(std::pair<oid_t, oid_t>, size_t) {};
+  /**
+   * ?
+   */
+  virtual void OnMemoryReclaim(std::pair<oid_t, oid_t>, size_t) {};
+  /**
+   * ?
+   */
+  virtual void OnQueryBegin() {};
+  /**
+   * ?
+   */
+  virtual void OnQueryEnd() {};
+  virtual void OnTest(int) {};
 
   /**
    * @brief Replace RawData with an empty one and return the old one.
@@ -93,7 +158,7 @@ class Metric {
 };
 
 /* Forward Declaration */
-template <typename DataType>
+template<typename DataType>
 class AbstractMetric;
 
 /**
@@ -106,7 +171,7 @@ class AbstractMetric;
  *
  * @tparam DataType the type of AbstractRawData this Wrapper holds
  */
-template <typename DataType>
+template<typename DataType>
 class RawDataWrapper {
   friend class AbstractMetric<DataType>;
 
@@ -128,7 +193,8 @@ class RawDataWrapper {
    * @param ptr the pointer it wraps around
    * @param safe the boolean variable it uses to signal its lifetime
    */
-  inline RawDataWrapper(DataType *ptr, std::atomic<bool> &safe) : ptr_(ptr), safe_(safe) {}
+  inline RawDataWrapper(DataType *ptr, std::atomic<bool> &safe)
+      : ptr_(ptr), safe_(safe) {}
   DataType *ptr_;
   std::atomic<bool> &safe_;
 };
@@ -141,7 +207,7 @@ class RawDataWrapper {
  *
  * @tparam DataType the type of AbstractRawData this Metric holds
  */
-template <typename DataType>
+template<typename DataType>
 class AbstractMetric : public Metric {
  public:
   AbstractMetric() : raw_data_(new DataType()), safe_{true} {}

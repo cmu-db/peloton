@@ -19,8 +19,12 @@
 #include "statistics/abstract_metric.h"
 #include "tbb/concurrent_unordered_map.h"
 
-
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+} // namespace concurrency
+
 namespace stats {
 /**
  * @brief Class responsible for collecting raw data on a single thread.
@@ -34,8 +38,8 @@ namespace stats {
 class ThreadLevelStatsCollector {
  public:
   using CollectorsMap =
-      tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
-                                    std::hash<std::thread::id>>;
+  tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
+                                std::hash<std::thread::id>>;
   /**
    * @return the Collector for the calling thread
    */
@@ -59,42 +63,45 @@ class ThreadLevelStatsCollector {
    */
   ~ThreadLevelStatsCollector();
 
-  // TODO(tianyu): fill arguments
-  inline void CollectTransactionBegin() {
+  /* See Metric for documentation on the following methods. They should correspond
+   * to the "OnXxx" methods one-to-one */
+  inline void CollectTransactionBegin(const concurrency::TransactionContext *txn) {
     for (auto &metric : metric_dispatch_[StatsEventType::TXN_BEGIN])
-      metric->OnTransactionBegin();
+      metric->OnTransactionBegin(txn);
   };
 
-  inline void CollectTransactionCommit(oid_t tile_group_id) {
+  inline void CollectTransactionCommit(const concurrency::TransactionContext *txn,
+                                       oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TXN_COMMIT])
-      metric->OnTransactionCommit(tile_group_id);
+      metric->OnTransactionCommit(txn, tile_group_id);
   };
 
-  inline void CollectTransactionAbort(oid_t tile_group_id) {
+  inline void CollectTransactionAbort(const concurrency::TransactionContext *txn,
+                                      oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TXN_ABORT])
-      metric->OnTransactionAbort(tile_group_id);
+      metric->OnTransactionAbort(txn, tile_group_id);
   };
 
-  inline void CollectTupleRead(oid_t tile_group_id, size_t num_read) {
+  inline void CollectTupleRead(const concurrency::TransactionContext *current_txn,
+                               oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_READ])
-      metric->OnTupleRead(tile_group_id, num_read);
+      metric->OnTupleRead(current_txn, tile_group_id);
   };
-
-  inline void CollectTupleUpdate(oid_t tile_group_id) {
+  inline void CollectTupleUpdate(const concurrency::TransactionContext *current_txn,
+                                 oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_UPDATE])
-      metric->OnTupleUpdate(tile_group_id);
+      metric->OnTupleUpdate(current_txn, tile_group_id);
   };
-
-  inline void CollectTupleInsert(oid_t tile_group_id) {
+  inline void CollectTupleInsert(const concurrency::TransactionContext *current_txn,
+                                 oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_INSERT])
-      metric->OnTupleInsert(tile_group_id);
+      metric->OnTupleInsert(current_txn, tile_group_id);
   };
-
-  inline void CollectTupleDelete(oid_t tile_group_id) {
+  inline void CollectTupleDelete(const concurrency::TransactionContext *current_txn,
+                                 oid_t tile_group_id) {
     for (auto &metric : metric_dispatch_[StatsEventType::TUPLE_DELETE])
-      metric->OnTupleDelete(tile_group_id);
+      metric->OnTupleDelete(current_txn, tile_group_id);
   };
-
   inline void CollectTableMemoryAlloc(oid_t database_id, oid_t table_id,
                                       size_t bytes) {
     if (table_id == INVALID_OID || database_id == INVALID_OID) return;
@@ -102,14 +109,12 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[StatsEventType::TABLE_MEMORY_ALLOC])
       metric->OnMemoryAlloc({database_id, table_id}, bytes);
   };
-
   inline void CollectTableMemoryFree(oid_t database_id, oid_t table_id,
                                      size_t bytes) {
     if (table_id == INVALID_OID || database_id == INVALID_OID) return;
     for (auto &metric : metric_dispatch_[StatsEventType::TABLE_MEMORY_FREE])
       metric->OnMemoryFree({database_id, table_id}, bytes);
   };
-
   inline void CollectIndexRead(oid_t database_id, oid_t index_id,
                                size_t num_read) {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_READ])
@@ -127,41 +132,34 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_DELETE])
       metric->OnIndexDelete({database_id, index_id});
   };
-
   inline void CollectIndexMemoryAlloc(oid_t database_id, oid_t index_id,
                                       size_t bytes) {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_ALLOC])
       metric->OnMemoryAlloc({database_id, index_id}, bytes);
   };
-
   inline void CollectIndexMemoryUsage(oid_t database_id, oid_t index_id,
                                       size_t bytes) {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_USAGE])
       metric->OnMemoryUsage({database_id, index_id}, bytes);
   };
-
   inline void CollectIndexMemoryFree(oid_t database_id, oid_t index_id,
                                      size_t bytes) {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_FREE])
       metric->OnMemoryFree({database_id, index_id}, bytes);
   };
-
   inline void CollectIndexMemoryReclaim(oid_t database_id, oid_t index_id,
                                         size_t bytes) {
     for (auto &metric : metric_dispatch_[StatsEventType::INDEX_MEMORY_RECLAIM])
       metric->OnMemoryReclaim({database_id, index_id}, bytes);
   };
-
   inline void CollectQueryBegin() {
     for (auto &metric : metric_dispatch_[StatsEventType::QUERY_BEGIN])
       metric->OnQueryBegin();
   };
-
   inline void CollectQueryEnd() {
     for (auto &metric : metric_dispatch_[StatsEventType::QUERY_END])
       metric->OnQueryEnd();
   };
-
   inline void CollectTestNum(int number) {
     for (auto &metric : metric_dispatch_[StatsEventType::TEST])
       metric->OnTest(number);
@@ -182,7 +180,7 @@ class ThreadLevelStatsCollector {
    * @tparam metric type of Metric to register
    * @param types A list of event types to receive updates about.
    */
-  template <typename metric>
+  template<typename metric>
   void RegisterMetric(std::vector<StatsEventType> types) {
     auto m = std::make_shared<metric>();
     metrics_.push_back(m);

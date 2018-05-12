@@ -24,22 +24,20 @@ IndexMetricsCatalog::IndexMetricsCatalog(const std::string &database_name, concu
     : AbstractCatalog("CREATE TABLE "  + database_name +
                       "." CATALOG_SCHEMA_NAME "." INDEX_METRICS_CATALOG_NAME
                       " ("
-                      "database_oid   INT NOT NULL, "
                       "table_oid      INT NOT NULL, "
                       "index_oid      INT NOT NULL, "
                       "reads          INT NOT NULL, "
                       "deletes        INT NOT NULL, "
                       "inserts        INT NOT NULL, "
                       "time_stamp     INT NOT NULL,"
-                      "PRIMARY KEY(database_oid, table_oid, index_oid));",
+                      "PRIMARY KEY(table_oid, index_oid));",
                       txn) {
   // Add secondary index here if necessary
 }
 
 IndexMetricsCatalog::~IndexMetricsCatalog() {}
 
-bool IndexMetricsCatalog::InsertIndexMetrics(
-    oid_t /* database_id */, oid_t table_oid, oid_t index_oid, int64_t reads, int64_t deletes,
+bool IndexMetricsCatalog::InsertIndexMetrics(oid_t table_oid, oid_t index_oid, int64_t reads, int64_t deletes,
     int64_t inserts, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(

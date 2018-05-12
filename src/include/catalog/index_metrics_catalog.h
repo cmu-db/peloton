@@ -47,7 +47,7 @@ class IndexMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertIndexMetrics(oid_t database_oid, oid_t table_oid, oid_t index_oid, int64_t reads,
+  bool InsertIndexMetrics(oid_t table_oid, oid_t index_oid, int64_t reads,
                           int64_t deletes, int64_t inserts, int64_t time_stamp,
                           type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
