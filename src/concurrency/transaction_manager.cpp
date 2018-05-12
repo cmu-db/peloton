@@ -22,6 +22,7 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
+#include "common/container/lock_free_array.h"
 
 namespace peloton {
 namespace concurrency {
@@ -31,8 +32,6 @@ IsolationLevelType TransactionManager::isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
-LockFreeArray<txn_id_t> TransactionManager::current_transactions_ =
-    LockFreeArray<txn_id_t>();
 
 TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type) {

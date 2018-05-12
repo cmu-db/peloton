@@ -281,7 +281,7 @@ class TransactionManager {
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-  static LockFreeArray<txn_id_t> current_transactions_;
+  LockFreeArray<txn_id_t> current_transactions_;
 
 };
 }  // namespace concurrency
