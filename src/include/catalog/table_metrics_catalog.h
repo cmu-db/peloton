@@ -41,7 +41,6 @@ class TableMetricsCatalogObject {
  public:
   TableMetricsCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
-  inline oid_t GetIndexOid() { return database_oid_; }
   inline oid_t GetTableOid() { return table_oid_; }
   inline int64_t GetReads() { return reads_; }
   inline int64_t GetUpdates() { return updates_; }
@@ -52,7 +51,6 @@ class TableMetricsCatalogObject {
   inline int64_t GetTimeStamp() { return time_stamp_; }
 
  private:
-  oid_t database_oid_;
   oid_t table_oid_;
   int64_t reads_;
   int64_t updates_;

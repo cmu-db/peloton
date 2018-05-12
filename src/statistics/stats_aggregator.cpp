@@ -46,6 +46,7 @@ void StatsAggregator::Aggregate() {
       }
   }
   for (auto &raw_data : acc) {
+    // TODO(Justin): Consider whether FetchData should actually be separate from WriteToCatalog or not
     raw_data->FetchData();
     raw_data->WriteToCatalog();
   }

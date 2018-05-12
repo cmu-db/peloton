@@ -118,15 +118,29 @@ void TableMetricRawData::WriteToCatalog() {
     oid_t database_oid = entry.first.first;
     oid_t table_oid = entry.first.second;
     auto &counts = entry.second;
-    // TODO (Justin): currently incorrect, should actually read and then
-    // increment,
-    // since each aggregation period only knows the delta
+
+    // try and fetch existing data from catalog
     auto system_catalogs =
         catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
-    system_catalogs->GetTableMetricsCatalog()->InsertTableMetrics(
-        table_oid, counts[READ], counts[UPDATE], counts[INSERT], counts[DELETE],
-        counts[INLINE_MEMORY_ALLOC], counts[INLINE_MEMORY_USAGE], time_stamp,
-        nullptr, txn);
+    auto table_metrics_catalog = system_catalogs->GetTableMetricsCatalog();
+    auto old_metric =
+        table_metrics_catalog->GetTableMetricsObject(table_oid, txn);
+    if (old_metric == nullptr) {
+      // no entry exists for this table yet
+      table_metrics_catalog->InsertTableMetrics(
+          table_oid, counts[READ], counts[UPDATE], counts[INSERT],
+          counts[DELETE], counts[INLINE_MEMORY_ALLOC],
+          counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);
+    } else {
+      table_metrics_catalog->UpdateTableMetrics(
+          table_oid, old_metric->GetReads() + counts[READ],
+          old_metric->GetUpdates() + counts[UPDATE],
+          old_metric->GetInserts() + counts[INSERT],
+          old_metric->GetDeletes() + counts[DELETE],
+          old_metric->GetMemoryAlloc() + counts[INLINE_MEMORY_ALLOC],
+          old_metric->GetMemoryUsage() + counts[INLINE_MEMORY_USAGE],
+          time_stamp, txn);
+    }
   }
 
   txn_manager.CommitTransaction(txn);

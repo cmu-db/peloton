@@ -134,14 +134,18 @@ bool TableMetricsCatalog::UpdateTableMetrics(
   std::vector<oid_t> update_columns(all_column_ids_);
   std::vector<type::Value> update_values;
 
-  update_values.push_back(type::ValueFactory::GetIntegerValue(table_oid));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(reads));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(updates));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(inserts));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(deletes));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(memory_alloc));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(memory_usage));
-  update_values.push_back(type::ValueFactory::GetIntegerValue(time_stamp));
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(reads).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(updates).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(inserts).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(deletes).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(memory_alloc).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(memory_usage).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(time_stamp).Copy());
 
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid));
