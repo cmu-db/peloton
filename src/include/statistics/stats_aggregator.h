@@ -29,7 +29,6 @@
 #include "thread_level_stats_collector.h"
 #include "type/ephemeral_pool.h"
 
-
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -54,6 +53,8 @@ class StatsAggregator : public DedicatedThreadTask {
    * and insert new total into catalog
    */
   void Aggregate();
+
+  std::vector<std::shared_ptr<AbstractRawData>> AggregateRawData();
 
  private:
   int64_t aggregation_interval_ms_;

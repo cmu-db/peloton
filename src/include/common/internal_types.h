@@ -1026,15 +1026,15 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 // Statistics Types
 //===--------------------------------------------------------------------===//
 
-// Statistics Collection Type
-// Disable or enable
-// TODO: This should probably be a collection level and not a boolean
-// (enable/disable)
+// Statistics Collection Mode Type
+// (enable/disable/test)
 enum class StatsModeType {
   // Disable statistics collection
   DISABLE = INVALID_TYPE_ID,
   // Enable statistics collection
   ENABLE = 1,
+  // Enable Test stats only
+  TEST = 2,
 };
 
 enum class MetricType {

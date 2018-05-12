@@ -34,8 +34,9 @@ void StatsAggregator::RunTask() {
   LOG_INFO("Aggregator done!");
 }
 
-void StatsAggregator::Aggregate() {
-  std::vector<std::shared_ptr<AbstractRawData>> acc;
+using RawDataCollect = std::vector<std::shared_ptr<AbstractRawData>>;
+RawDataCollect StatsAggregator::AggregateRawData() {
+  RawDataCollect acc;
   for (auto &entry : ThreadLevelStatsCollector::GetAllCollectors()) {
     auto data_block = entry.second.GetDataToAggregate();
     if (acc.empty())
@@ -44,7 +45,12 @@ void StatsAggregator::Aggregate() {
       for (size_t i = 0; i < data_block.size(); i++) {
         acc[i]->Aggregate(*data_block[i]);
       }
-  }
+  };
+  return acc;
+}
+
+void StatsAggregator::Aggregate() {
+  auto acc = AggregateRawData();
   for (auto &raw_data : acc) {
     // TODO(Justin): Consider whether FetchData should actually be separate from WriteToCatalog or not
     raw_data->FetchData();

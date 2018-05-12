@@ -18,10 +18,7 @@
 #include "settings/settings_manager.h"
 #include "statistics/abstract_metric.h"
 #include "tbb/concurrent_unordered_map.h"
-#include "statistics/database_metric.h"
-#include "statistics/index_metric.h"
-#include "statistics/stats_event_type.h"
-#include "statistics/table_metric.h"
+
 
 namespace peloton {
 namespace stats {
@@ -52,7 +49,15 @@ class ThreadLevelStatsCollector {
    */
   static CollectorsMap &GetAllCollectors() { return collector_map_; };
 
+  /**
+   * @brief Constructor of collector
+   */
   ThreadLevelStatsCollector();
+
+  /**
+   * @brief Destructor of collector
+   */
+  ~ThreadLevelStatsCollector();
 
   // TODO(tianyu): fill arguments
   inline void CollectTransactionBegin() {
@@ -151,10 +156,16 @@ class ThreadLevelStatsCollector {
     for (auto &metric : metric_dispatch_[StatsEventType::QUERY_BEGIN])
       metric->OnQueryBegin();
   };
+
   inline void CollectQueryEnd() {
     for (auto &metric : metric_dispatch_[StatsEventType::QUERY_END])
       metric->OnQueryEnd();
   };
+
+  inline void CollectTestNum(int number) {
+    for (auto &metric : metric_dispatch_[StatsEventType::TEST])
+      metric->OnTest(number);
+  }
 
   /**
    * @return A vector of raw data, for each registered metric. Each piece of
@@ -162,11 +173,7 @@ class ThreadLevelStatsCollector {
    * metric is guaranteed to be in the same positopn in the returned vector
    * for different instances of Collector.
    */
-  std::vector<std::shared_ptr<AbstractRawData>> GetDataToAggregate() {
-    std::vector<std::shared_ptr<AbstractRawData>> result;
-    for (auto &metric : metrics_) result.push_back(metric->Swap());
-    return result;
-  }
+  std::vector<std::shared_ptr<AbstractRawData>> GetDataToAggregate();
 
  private:
   /**

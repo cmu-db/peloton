@@ -10,6 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 #include "statistics/thread_level_stats_collector.h"
+#include "statistics/database_metric.h"
+#include "statistics/index_metric.h"
+#include "statistics/stats_event_type.h"
+#include "statistics/table_metric.h"
+#include "statistics/test_metric.h"
 
 namespace peloton {
 namespace stats {
@@ -21,9 +26,9 @@ CollectorsMap ThreadLevelStatsCollector::collector_map_ = CollectorsMap();
 
 ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
   // TODO(tianyu): Write stats to register here
-  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
-    // TODO(tianyi): Have more fine grained control for these metrics
+  auto stats_mode = static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode));
+  if (stats_mode == StatsModeType::ENABLE) {
     RegisterMetric<TableMetric>(
         {StatsEventType::TUPLE_READ, StatsEventType::TUPLE_UPDATE,
          StatsEventType::TUPLE_INSERT, StatsEventType::TUPLE_DELETE,
@@ -36,7 +41,19 @@ ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
     RegisterMetric<DatabaseMetric>({StatsEventType::TXN_BEGIN,
                                     StatsEventType::TXN_COMMIT,
                                     StatsEventType::TXN_ABORT});
-  }
+  } else if (stats_mode == StatsModeType::TEST)
+    RegisterMetric<TestMetric>({StatsEventType::TEST});
+}
+
+ThreadLevelStatsCollector::~ThreadLevelStatsCollector() {
+  metrics_.clear();
+  metric_dispatch_.clear();
+}
+
+std::vector<std::shared_ptr<AbstractRawData>> ThreadLevelStatsCollector::GetDataToAggregate() {
+  std::vector<std::shared_ptr<AbstractRawData>> result;
+  for (auto &metric : metrics_) result.push_back(metric->Swap());
+  return result;
 }
 }  // namespace stats
 }  // namespace peloton

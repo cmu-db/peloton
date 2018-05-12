@@ -65,6 +65,7 @@ class Metric {
   virtual void OnMemoryReclaim(std::pair<oid_t, oid_t>, size_t){};
   virtual void OnQueryBegin(){};
   virtual void OnQueryEnd(){};
+  virtual void OnTest(int){};
 
   /**
    * @brief Replace RawData with an empty one and return the old one.
@@ -144,6 +145,8 @@ template <typename DataType>
 class AbstractMetric : public Metric {
  public:
   AbstractMetric() : raw_data_(new DataType()) {}
+
+  ~AbstractMetric() { delete raw_data_.load(); }
   /**
    * @see Metric
    *

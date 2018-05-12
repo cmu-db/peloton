@@ -6,7 +6,7 @@
 //
 // Identification: tests/include/statistics/stats_tests_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -60,6 +60,8 @@ class TestingStatsUtil {
   static std::shared_ptr<Statement> GetUpdateStmt();
 
   static void ParseAndPlan(Statement *statement, std::string sql);
+
+  static int AggregateCounts();
 };
 
 }  // namespace test

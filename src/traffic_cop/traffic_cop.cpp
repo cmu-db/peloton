@@ -135,10 +135,9 @@ ResultType TrafficCop::AbortQueryHelper() {
 ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
-  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsModeType::ENABLE) {
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectQueryEnd();
-  }
+
+  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectQueryEnd();
+
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
@@ -196,11 +195,8 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   };
 
   // start timer in tcop before submitting task to worker
-  if (static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) == StatsModeType::ENABLE) {
-    stats::ThreadLevelStatsCollector::GetCollectorForThread()
-        .CollectQueryBegin();
-  }
+  stats::ThreadLevelStatsCollector::GetCollectorForThread()
+      .CollectQueryBegin();
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
   pool.SubmitTask([plan, txn, &params, &result_format, on_complete] {
