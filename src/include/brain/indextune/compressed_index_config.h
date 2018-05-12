@@ -41,7 +41,7 @@ class CompressedIndexConfigContainer {
    */
   explicit CompressedIndexConfigContainer(
       const std::string &database_name,
-      const std::set<oid_t> &ignore_table_oids,
+      const std::set<oid_t> &ignore_table_oids, size_t max_index_size = 3,
       catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 

@@ -57,6 +57,7 @@ TEST_F(LSPITests, TuneTest) {
   // Sanity test that all components are running
   // Need more ri
   std::string database_name = DEFAULT_DB_NAME;
+  size_t max_index_size = 3;
 
   index_suggestion::TestingIndexSuggestionUtil testing_util(database_name);
 
@@ -74,7 +75,8 @@ TEST_F(LSPITests, TuneTest) {
     testing_util.CreateTable(table_schema);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
+  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids,
+                                    max_index_size);
 
   brain::CompressedIndexConfigContainer compressed_idx_config(database_name,
                                                               ori_table_oids);

@@ -12,14 +12,13 @@
 
 #include "brain/indextune/compressed_index_config.h"
 
-#define MAX_INDEX_SIZE 3
-
 namespace peloton {
 namespace brain {
 
 CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
-    catalog::Catalog *catalog, concurrency::TransactionManager *txn_manager)
+    size_t max_index_size, catalog::Catalog *catalog,
+    concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
       catalog_{catalog},
       txn_manager_{txn_manager},
@@ -61,7 +60,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     for (const auto &col_obj : col_objs) {
       cols.push_back(col_obj.first);
     }
-    EnumerateConfigurations(cols, MAX_INDEX_SIZE, indexconf_id_map,
+    EnumerateConfigurations(cols, max_index_size, indexconf_id_map,
                             id_indexconf_map, null_conf, next_index_id);
 
     table_offset_map_[table_oid] = next_table_offset_;
