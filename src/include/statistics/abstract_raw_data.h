@@ -43,13 +43,10 @@ class AbstractRawData : public Printable {
    */
   virtual void WriteToCatalog() = 0;
   /**
-   * Fetches the currently stored values of the metric in the catalog,
-   * for combining with newly aggregated value, if appropriate.
-   * Specifically, this is useful if your RawData only tracks a metric's
-   * change in each aggregation period rather than the true value,
-   * so you can correctly update the catalog.
-   * In the situation where the aggregated data is already the right value,
-   * this method does not need to be overriden.
+   * This provides an alternative way for certain metrics to be collected,
+   * if they cannot be efficiently fit into the collection point API,
+   * It's probably better to try and use the API first,
+   * and the fall through to this method if necessary.
    */
   virtual void FetchData(){};
 

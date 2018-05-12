@@ -140,8 +140,10 @@ void TableMetricRawData::WriteToCatalog() {
           old_metric->GetInserts() + counts[INSERT],
           old_metric->GetDeletes() + counts[DELETE],
           old_metric->GetMemoryAlloc() + counts[INLINE_MEMORY_ALLOC],
-          old_metric->GetMemoryUsage() + counts[INLINE_MEMORY_USAGE],
-          time_stamp, txn);
+          counts[INLINE_MEMORY_USAGE] +
+              counts[VARLEN_MEMORY_USAGE],  // memory usage is not a delta
+          time_stamp,
+          txn);
     }
   }
 
