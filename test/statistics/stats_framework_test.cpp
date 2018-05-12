@@ -49,7 +49,8 @@ TEST_F(StatsFrameworkTests, SingleThreadBulkTest) {
   int aggreg_sum = 0;
   for (size_t i = 0; i < trial; i++) {
     int num = rand();
-    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTestNum(num);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTestNum(
+        num);
     actual_sum += num;
 
     if (!(i % aggr_step)) {
@@ -90,7 +91,7 @@ TEST_F(StatsFrameworkTests, MultiThreadTest) {
   std::atomic<bool> finish(false);
 
   // start the aggregator
-  std::thread aggregator([&]{
+  std::thread aggregator([&] {
     while (!finish) {
       usleep(aggr_interval);
       aggreg_sum += TestingStatsUtil::AggregateCounts();
@@ -100,17 +101,18 @@ TEST_F(StatsFrameworkTests, MultiThreadTest) {
   // Start the collectors;
   std::vector<std::thread> collectors;
   for (size_t i = 0; i < num_of_collector; i++) {
-    collectors.emplace_back([&](){
+    collectors.emplace_back([&]() {
       for (size_t trial = 0; trial < collect_tials; trial++) {
         int num = rand();
-        stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTestNum(num);
+        stats::ThreadLevelStatsCollector::GetCollectorForThread()
+            .CollectTestNum(num);
         actual_sum += num;
         usleep(collect_interval);
       }
     });
   }
 
-  for (auto &collector: collectors) {
+  for (auto &collector : collectors) {
     collector.join();
   }
 
@@ -119,8 +121,6 @@ TEST_F(StatsFrameworkTests, MultiThreadTest) {
   aggregator.join();
 
   ASSERT_EQ(actual_sum, aggreg_sum);
-
 }
-
 }
 }
