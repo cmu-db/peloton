@@ -90,9 +90,9 @@ class Tuple : public AbstractTuple {
 
   bool operator==(const Tuple &other) const;
   bool operator!=(const Tuple &other) const;
-  
+
   operator size_t() const {
-    return reinterpret_cast<size_t>(*tuple_data_);
+    return HashCode();
   }
 
   int Compare(const Tuple &other) const;
