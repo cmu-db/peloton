@@ -31,8 +31,8 @@ IsolationLevelType TransactionManager::isolation_level_ =
     IsolationLevelType::SERIALIZABLE;
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
-std::unordered_set<txn_id_t> TransactionManager::current_transactions_ =
-    std::unordered_set<txn_id_t>();
+LockFreeArray<txn_id_t> TransactionManager::current_transactions_ =
+    LockFreeArray<txn_id_t>();
 
 TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type) {
