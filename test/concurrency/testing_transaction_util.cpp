@@ -502,7 +502,7 @@ ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table, const 
 ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
+  for (size_t i=0; i < num_tuples; i++) {
     scheduler.Txn(0).Insert(i, i);
   }
   scheduler.Txn(0).Commit();
@@ -514,7 +514,7 @@ ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table, c
 ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
+  for (size_t i=0; i < num_tuples; i++) {
     scheduler.Txn(0).Delete(i, false);
   }
   scheduler.Txn(0).Commit();
