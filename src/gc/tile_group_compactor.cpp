@@ -118,7 +118,8 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
       return false;
     }
 
-    // ensure that this is the latest version
+    // check again now that we have ownsership
+    // to ensure that this is stil the latest version
     bool is_latest_version = tile_group_header->GetPrevItemPointer(physical_tuple_id).IsNull();
     if (is_latest_version == false) {
       // if a tuple is not the latest version, then there's no point in moving it

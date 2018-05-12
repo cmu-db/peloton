@@ -10,18 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
+#include "common/harness.h"
+#include "concurrency/epoch_manager.h"
 #include "concurrency/testing_transaction_util.h"
 #include "executor/testing_executor_util.h"
-#include "common/harness.h"
 #include "gc/transaction_level_gc_manager.h"
-#include "concurrency/epoch_manager.h"
-
-#include "catalog/catalog.h"
+#include "gc/tile_group_compactor.h"
 #include "sql/testing_sql_util.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
+#include "storage/tile_group.h"
 #include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
@@ -34,145 +34,13 @@ namespace test {
 
 class TileGroupCompactorTests : public PelotonTest {};
 
-ResultType UpdateTuple(storage::DataTable *table, const int key) {
-  srand(15721);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Update(key, rand() % 15721);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType InsertTuple(storage::DataTable *table, const int key) {
-  srand(15721);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Insert(key, rand() % 15721);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
-    scheduler.Txn(0).Insert(i, i);
-  }
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
-    scheduler.Txn(0).Delete(i, false);
-  }
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType DeleteTuple(storage::DataTable *table, const int key) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Delete(key);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType SelectTuple(storage::DataTable *table, const int key,
-                       std::vector<int> &results) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Read(key);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  results = scheduler.schedules[0].results;
-
-  return scheduler.schedules[0].txn_result;
-}
-
-int GetNumRecycledTuples(storage::DataTable *table) {
-  int count = 0;
-//  auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance()
-      .GetRecycledTupleSlot(table)
-      .IsNull())
-    count++;
-
-  LOG_INFO("recycled version num = %d", count);
-  return count;
-}
-
-size_t CountOccurrencesInAllIndexes(storage::DataTable *table, int first_val,
-                                    int second_val) {
-  size_t num_occurrences = 0;
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
-  auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
-  auto value = type::ValueFactory::GetIntegerValue(second_val);
-
-  tuple->SetValue(0, primary_key, nullptr);
-  tuple->SetValue(1, value, nullptr);
-
-  for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
-    auto index = table->GetIndex(idx);
-    if (index == nullptr) continue;
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    // build key.
-    std::unique_ptr<storage::Tuple> current_key(
-        new storage::Tuple(index_schema, true));
-    current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
-
-    std::vector<ItemPointer *> index_entries;
-    index->ScanKey(current_key.get(), index_entries);
-    num_occurrences += index_entries.size();
-  }
-  return num_occurrences;
-}
-
-size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
-                               int first_val, int second_val) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(table->GetSchema(), true));
-  auto primary_key = type::ValueFactory::GetIntegerValue(first_val);
-  auto value = type::ValueFactory::GetIntegerValue(second_val);
-
-  tuple->SetValue(0, primary_key, nullptr);
-  tuple->SetValue(1, value, nullptr);
-
-  auto index = table->GetIndex(idx);
-  if (index == nullptr) return 0;
-  auto index_schema = index->GetKeySchema();
-  auto indexed_columns = index_schema->GetIndexedColumns();
-
-  // build key.
-  std::unique_ptr<storage::Tuple> current_key(
-      new storage::Tuple(index_schema, true));
-  current_key->SetFromTuple(tuple.get(), indexed_columns, index->GetPool());
-
-  std::vector<ItemPointer *> index_entries;
-  index->ScanKey(current_key.get(), index_entries);
-
-  return index_entries.size();
-}
-
+//Basic functionality
+//
 //Test that compaction is triggered and successful for sparse tile groups
+//    Fill up tile group with 10 tuples
+//    Delete 9 of the tuples
+//    Check that tile group is compacted
+//    Ensure that tuples have the same values
 TEST_F(TileGroupCompactorTests, BasicTest) {
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
@@ -210,7 +78,7 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   // insert tuples here, this will allocate another tile group
   //===========================
   size_t num_inserts = tuples_per_tilegroup;
-  auto insert_result = BulkInsertTuples(table.get(), num_inserts);
+  auto insert_result = TestingTransactionUtil::BulkInsertTuples(table.get(), num_inserts);
   EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
   // capture num tile groups occupied
@@ -222,7 +90,7 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   //===========================
   // delete the tuples all but 1 tuple, this will not allocate another tile group
   //===========================
-  auto delete_result = BulkDeleteTuples(table.get(), num_inserts - 1);
+  auto delete_result = TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts - 1);
   EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
   size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
@@ -266,19 +134,112 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-//Basic functionality
-//
-//Test that compaction is triggered and successful for sparse tile groups
-//    Fill up tile group with 10 tuples
-//    Delete 9 of the tuples
-//    Check that tile group is compacted
-//    Ensure that tuples have the same values
-//
+
+// TODO
 //Test that compaction is NOT triggered for non-sparse tile groups
 //    Fill up tile group with 10 tuples
 //    Delete 5 of the tuples
 //    Check that tile group is NOT compacted
 //
+
+
+////////// Concurrency test ///////////////////////////////////
+//Test updates during compaction
+//Create tile group
+//    Insert tuples to fill tile group completely
+//Delete 80% of tuples
+//Start txn that updates the last of these tuples, dont commit
+//Start MoveTuplesOutOfTileGroup
+//Confirm that returns false
+//Verify that tuples values are correct
+//Commit update txn
+//    Start MoveTuplesOutOfTileGroup
+//    Confirm that returns true
+//Verify that tuples values are correct
+//
+TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
+  std::string test_name = "abortinsert";
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
+      0, test_name + "table", db_id, INVALID_OID, 1234, true, 10));
+  TestingTransactionUtil::AddSecondaryIndex(table.get());
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  size_t starting_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  size_t num_inserts = 10;
+  auto insert_result = TestingTransactionUtil::BulkInsertTuples(table.get(), num_inserts);
+  EXPECT_EQ(ResultType::SUCCESS, insert_result);
+
+  // Delete compaction_threshold tuples from tile_group
+  TransactionScheduler scheduler(1, table.get(), &txn_manager);
+  size_t num_delete_tuples = 8;
+  for (size_t i=1; i <= num_delete_tuples; i++) {
+    scheduler.Txn(0).Delete(i, false);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+  EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+
+  auto txn = txn_manager.BeginTransaction();
+  auto update_result = TestingTransactionUtil::ExecuteUpdate(txn, table.get(), 9, 100, true);
+  EXPECT_TRUE(update_result);
+
+  auto tile_group = table->GetTileGroup(0);
+  bool compact_result = gc::TileGroupCompactor::MoveTuplesOutOfTileGroup(table.get(), tile_group);
+  EXPECT_FALSE(compact_result);
+
+  txn_manager.CommitTransaction(txn);
+
+  // clear garbage
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  compact_result = gc::TileGroupCompactor::MoveTuplesOutOfTileGroup(table.get(), tile_group);
+  EXPECT_TRUE(compact_result);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  // assert num live tile groups is what it was before started
+  auto current_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  EXPECT_EQ(starting_num_live_tile_groups, current_num_live_tile_groups);
+
+  // assert that tuples 8 and 9 exist with expected values
+  std::vector<int> results;
+  auto ret = TestingTransactionUtil::SelectTuple(table.get(), 10, results);
+  EXPECT_EQ(ResultType::SUCCESS, ret);
+  EXPECT_EQ(10, results[0]);
+
+  results.clear();
+  ret = TestingTransactionUtil::SelectTuple(table.get(), 9, results);
+  EXPECT_EQ(ResultType::SUCCESS, ret);
+  EXPECT_EQ(100, results[0]);
+
+//  LOG_DEBUG("%s", table->GetInfo().c_str());
+
+  table.release();
+  TestingExecutorUtil::DeleteDatabase(test_name + "db");
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+  EXPECT_FALSE(storage_manager->HasDatabase(db_id));
+}
+
 //Edge cases
 //
 //Test that Compaction ignores all tuples for dropped tile group
@@ -306,21 +267,7 @@ TEST_F(TileGroupCompactorTests, BasicTest) {
 //Run compaction on first tile group
 //Ensure that no tuples moved (by checking that num tile groups didnt change)
 //
-//Concurrency tests
-//
-//Test updates during compaction
-//Create tile group
-//    Insert tuples to fill tile group completely
-//Delete 80% of tuples
-//Start txn that updates the last of these tuples, dont commit
-//Start MoveTuplesOutOfTileGroup
-//Confirm that returns false
-//Verify that tuples values are correct
-//Commit update txn
-//    Start MoveTuplesOutOfTileGroup
-//    Confirm that returns true
-//Verify that tuples values are correct
-//
+
 //Test retry mechanism
 //    Create tile group
 //Delete 80%

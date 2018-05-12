@@ -62,7 +62,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   }
 
   immutable_ = false;
-  recycling_ = true;
   num_recycled_ = 0;
   num_gc_readers_ = 0;
 }

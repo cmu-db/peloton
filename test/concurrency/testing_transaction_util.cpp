@@ -474,5 +474,77 @@ bool TestingTransactionUtil::ExecuteScan(
   }
   return true;
 }
+
+ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table, const int key) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Update(key, rand() % 15721);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
 }
+
+ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table, const int key) {
+  srand(15721);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Insert(key, rand() % 15721);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
 }
+
+ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i=1; i <= num_tuples; i++) {
+    scheduler.Txn(0).Insert(i, i);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i=1; i <= num_tuples; i++) {
+    scheduler.Txn(0).Delete(i, false);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::DeleteTuple(storage::DataTable *table, const int key) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Delete(key);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::SelectTuple(storage::DataTable *table, const int key,
+                       std::vector<int> &results) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Read(key);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  results = scheduler.schedules[0].results;
+
+  return scheduler.schedules[0].txn_result;
+}
+
+} // namespace test
+} // namespace peloton

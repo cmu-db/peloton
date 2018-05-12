@@ -23,6 +23,8 @@
 #include "storage/database.h"
 #include "storage/storage_manager.h"
 
+#include "gc/tile_group_compactor.h"
+
 namespace peloton {
 
 namespace test {
@@ -33,76 +35,6 @@ namespace test {
 
 class TransactionLevelGCManagerTests : public PelotonTest {};
 
-ResultType UpdateTuple(storage::DataTable *table, const int key) {
-  srand(15721);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Update(key, rand() % 15721);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType InsertTuple(storage::DataTable *table, const int key) {
-  srand(15721);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Insert(key, rand() % 15721);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
-    scheduler.Txn(0).Insert(i, i);
-  }
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=1; i <= num_tuples; i++) {
-    scheduler.Txn(0).Delete(i, false);
-  }
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType DeleteTuple(storage::DataTable *table, const int key) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Delete(key);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  return scheduler.schedules[0].txn_result;
-}
-
-ResultType SelectTuple(storage::DataTable *table, const int key,
-                       std::vector<int> &results) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Read(key);
-  scheduler.Txn(0).Commit();
-  scheduler.Run();
-
-  results = scheduler.schedules[0].results;
-
-  return scheduler.schedules[0].txn_result;
-}
 
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
@@ -170,6 +102,7 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
 
   return index_entries.size();
 }
+
 
 ////////////////////////////////////////////
 // NEW TESTS
@@ -1012,7 +945,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
     // insert tuples here.
     //===========================
     size_t num_inserts = 100;
-    auto insert_result = BulkInsertTuples(table.get(), num_inserts);
+    auto insert_result = TestingTransactionUtil::BulkInsertTuples(table.get(), num_inserts);
     EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
     // capture memory usage
@@ -1023,7 +956,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
     //===========================
     // delete the tuples.
     //===========================
-    auto delete_result = BulkDeleteTuples(table.get(), num_inserts);
+    auto delete_result = TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts);
     EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
     size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
@@ -1078,7 +1011,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   //===========================
   // update a version here.
   //===========================
-  auto ret = UpdateTuple(table.get(), 0);
+  auto ret = TestingTransactionUtil::UpdateTuple(table.get(), 0);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
   epoch_manager.SetCurrentEpochId(2);
@@ -1123,7 +1056,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   //===========================
   // delete a version here.
   //===========================
-  ret = DeleteTuple(table.get(), 0);
+  ret = TestingTransactionUtil::DeleteTuple(table.get(), 0);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
   epoch_manager.SetCurrentEpochId(4);
@@ -1209,7 +1142,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   //===========================
   // insert a tuple here.
   //===========================
-  auto ret = InsertTuple(table.get(), 100);
+  auto ret = TestingTransactionUtil::InsertTuple(table.get(), 100);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
   epoch_manager.SetCurrentEpochId(2);
@@ -1257,14 +1190,14 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   std::vector<int> results;
 
   results.clear();
-  ret = SelectTuple(table.get(), 100, results);
+  ret = TestingTransactionUtil::SelectTuple(table.get(), 100, results);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   EXPECT_TRUE(results[0] != -1);
 
   //===========================
   // delete the tuple.
   //===========================
-  ret = DeleteTuple(table.get(), 100);
+  ret = TestingTransactionUtil::DeleteTuple(table.get(), 100);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
   epoch_manager.SetCurrentEpochId(4);
@@ -1310,21 +1243,21 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   // select the tuple.
   //===========================
   results.clear();
-  ret = SelectTuple(table.get(), 100, results);
+  ret = TestingTransactionUtil::SelectTuple(table.get(), 100, results);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   EXPECT_TRUE(results[0] == -1);
 
   //===========================
   // insert the tuple again.
   //===========================
-  ret = InsertTuple(table.get(), 100);
+  ret = TestingTransactionUtil::InsertTuple(table.get(), 100);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
 
   //===========================
   // select the tuple.
   //===========================
   results.clear();
-  ret = SelectTuple(table.get(), 100, results);
+  ret = TestingTransactionUtil::SelectTuple(table.get(), 100, results);
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   EXPECT_TRUE(results[0] != -1);
 
@@ -1386,7 +1319,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   tile_group_header->SetImmutability();
 
   // Deleting a tuple from the 1st tilegroup
-  auto ret = DeleteTuple(table.get(), 2);
+  auto ret = TestingTransactionUtil::DeleteTuple(table.get(), 2);
   gc_manager.ClearGarbage(0);
 
   // ReturnFreeSlot() should not return a tuple slot from the immutable tile group
@@ -1395,7 +1328,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   EXPECT_NE(tile_group->GetTileGroupId(), location.block);
 
   // Deleting a tuple from the 2nd tilegroup which is mutable.
-  ret = DeleteTuple(table.get(), 6);
+  ret = TestingTransactionUtil::DeleteTuple(table.get(), 6);
 
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   epoch_manager.SetCurrentEpochId(4);

@@ -257,10 +257,6 @@ class TileGroupHeader : public Printable {
 
   inline bool GetImmutability() const { return immutable_.load(); }
 
-  inline void StopRecycling() { recycling_.store(false); }
-
-  inline bool GetRecycling() const { return recycling_.load(); }
-
   inline size_t IncrementRecycled() { return num_recycled_.fetch_add(1); }
 
   inline size_t DecrementRecycled() { return num_recycled_.fetch_sub(1); }
@@ -337,7 +333,6 @@ class TileGroupHeader : public Printable {
   std::atomic<bool> immutable_;
 
   // metadata used by the garbage collector to recycle tuples
-  std::atomic<bool> recycling_; // enables/disables recycling from this tile group
   std::atomic<size_t> num_recycled_; // num empty tuple slots available for reuse
   std::atomic<size_t> num_gc_readers_; // used as a semaphor by GC
 };
