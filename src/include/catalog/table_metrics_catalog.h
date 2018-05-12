@@ -39,6 +39,7 @@ namespace catalog {
 
 class TableMetricsCatalogObject {
  public:
+  // construct object from logical tile
   TableMetricsCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
   inline oid_t GetTableOid() { return table_oid_; }

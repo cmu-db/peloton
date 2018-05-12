@@ -55,7 +55,7 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
                           "memory_alloc     INT NOT NULL, "
                           "memory_usage     INT NOT NULL, "
                           "time_stamp     INT NOT NULL,"
-                          "PRIMARY KEY(database_oid, table_oid));",
+                          "PRIMARY KEY(table_oid));",
                       txn) {
   // Add secondary index here if necessary
 }
@@ -102,6 +102,35 @@ bool TableMetricsCatalog::DeleteTableMetrics(
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
+bool TableMetricsCatalog::UpdateTableMetrics(
+    oid_t table_oid, int64_t reads, int64_t updates, int64_t deletes,
+    int64_t inserts, int64_t memory_alloc, int64_t memory_usage,
+    int64_t time_stamp, concurrency::TransactionContext *txn) {
+  std::vector<oid_t> update_columns(all_column_ids_);
+  std::vector<type::Value> update_values;
+
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(reads).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(updates).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(inserts).Copy());
+  update_values.push_back(type::ValueFactory::GetIntegerValue(deletes).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(memory_alloc).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(memory_usage).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(time_stamp).Copy());
+
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid));
+  oid_t index_offset = IndexId::PRIMARY_KEY;
+
+  // Update the tuple
+  return UpdateWithIndexScan(update_columns, update_values, scan_values,
+                             index_offset, txn);
+}
+
 std::shared_ptr<TableMetricsCatalogObject>
 TableMetricsCatalog::GetTableMetricsObject(
     oid_t table_oid, concurrency::TransactionContext *txn) {
@@ -127,33 +156,5 @@ TableMetricsCatalog::GetTableMetricsObject(
   return nullptr;
 }
 
-bool TableMetricsCatalog::UpdateTableMetrics(
-    oid_t table_oid, int64_t reads, int64_t updates, int64_t deletes,
-    int64_t inserts, int64_t memory_alloc, int64_t memory_usage,
-    int64_t time_stamp, concurrency::TransactionContext *txn) {
-  std::vector<oid_t> update_columns(all_column_ids_);
-  std::vector<type::Value> update_values;
-
-  update_values.push_back(
-      type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(reads).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(updates).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(inserts).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(deletes).Copy());
-  update_values.push_back(
-      type::ValueFactory::GetIntegerValue(memory_alloc).Copy());
-  update_values.push_back(
-      type::ValueFactory::GetIntegerValue(memory_usage).Copy());
-  update_values.push_back(
-      type::ValueFactory::GetIntegerValue(time_stamp).Copy());
-
-  std::vector<type::Value> scan_values;
-  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid));
-  oid_t index_offset = IndexId::PRIMARY_KEY;
-
-  // Insert the tuple
-  return UpdateWithIndexScan(update_columns, update_values, scan_values,
-                             index_offset, txn);
-}
 }  // namespace catalog
 }  // namespace peloton
