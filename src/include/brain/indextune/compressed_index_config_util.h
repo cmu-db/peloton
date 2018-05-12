@@ -75,15 +75,23 @@ class CompressedIndexConfigUtil {
       const boost::dynamic_bitset<> &drop_candidate_set,
       vector_eig &query_config_vec);
 
+  /**
+   * Generate an IndexConfiguration object using a
+   * CompressedIndexConfigContainer
+   * @param index_config
+   */
+  static IndexConfiguration ToIndexConfiguration(
+      const CompressedIndexConfigContainer &container);
+
   static void GetIgnoreTables(const std::string &db_name,
-                           std::set<oid_t> &ori_table_oids);
+                              std::set<oid_t> &ori_table_oids);
 
   /**
    * @brief Get the Eigen vector/feature representation from the
    * provided config set: 1 if Index config present, else -1
    */
-  static void ConstructStateConfigFeature(const boost::dynamic_bitset<> &config_set,
-                                          vector_eig &config_vec);
+  static void ConstructStateConfigFeature(
+      const boost::dynamic_bitset<> &config_set, vector_eig &config_vec);
 
  private:
   /**

@@ -76,7 +76,8 @@ TEST_F(LSPITests, TuneTest) {
 
   brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
 
-  brain::IndexConfiguration index_config;
+  brain::CompressedIndexConfigContainer compressed_idx_config(database_name,
+                                                              ori_table_oids);
 
   int CATALOG_SYNC_INTERVAL = 2;
 
@@ -101,6 +102,8 @@ TEST_F(LSPITests, TuneTest) {
     binder->BindNameToNode(sql_statement.get());
     txn_manager.CommitTransaction(txn);
 
+    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+        compressed_idx_config);
     auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
         sql_statement, index_config, database_name);
     auto latency = result->cost;
