@@ -86,6 +86,8 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
   auto right_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
 
+  auto right_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
+  LOG_INFO("%f", right_group->GetCostLB());
   output_cost_ = (left_child_rows + right_child_rows) * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}

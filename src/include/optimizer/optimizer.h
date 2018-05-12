@@ -87,10 +87,6 @@ class Optimizer : public AbstractOptimizer {
 
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
-  void SetWorstCase(bool flag) { worst_case_ = flag; }
-
-  bool DoWorstCase() { return worst_case_; }
-
   AbstractCostCalculator *GetCostCalculator() { return cost_calculator_.get(); }
 
   /* For test purposes only */
@@ -165,7 +161,6 @@ class Optimizer : public AbstractOptimizer {
   OptimizerMetadata metadata_;
   /// Cost Model
   std::unique_ptr<AbstractCostCalculator> cost_calculator_;
-  bool worst_case_ = false;
 };
 
 }  // namespace optimizer

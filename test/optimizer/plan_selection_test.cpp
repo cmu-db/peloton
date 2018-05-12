@@ -45,6 +45,7 @@ namespace test {
 
 constexpr auto table_1_name = "test1";
 constexpr auto table_2_name = "test2";
+constexpr auto table_3_name = "test3";
 constexpr auto column_1_name = "a";
 constexpr auto column_2_name = "b";
 constexpr auto column_3_name = "c";
@@ -62,6 +63,7 @@ class PlanSelectionTest : public PelotonTest {
     auto txn = txn_manager.BeginTransaction();
     CreateTestTable(table_1_name);
     CreateTestTable(table_2_name);
+    CreateTestTable(table_3_name);
 
     txn_manager.CommitTransaction(txn);
 
@@ -132,6 +134,33 @@ class PlanSelectionTest : public PelotonTest {
     return ss.str();
   }
 
+  std::string CreateThreeWayJoinQuery(const std::string &table_1,
+                                      const std::string &table_2,
+                                      const std::string &table_3,
+                                      const std::string &column_1,
+                                      const std::string &column_2,
+                                      const std::string &column_3) {
+    return CreateThreeWayJoinQuery(table_1, table_2, table_3, column_1,
+                                   column_2, column_3, "", "");
+  }
+
+  std::string CreateThreeWayJoinQuery(
+      const std::string &table_1, const std::string &table_2,
+      const std::string &table_3, const std::string &column_1,
+      const std::string &column_2, const std::string &column_3,
+      const std::string &order_by_table, const std::string &order_by_column) {
+    std::stringstream ss;
+    ss << "SELECT * FROM " << table_1 << ", " << table_2 << "," << table_3
+       << " WHERE " << table_1 << "." << column_1 << " = " << table_2 << "."
+       << column_2 << " AND " << table_2 << "." << column_2 << " = " << table_3
+       << "." << column_3;
+    if (!order_by_column.empty() and !order_by_table.empty()) {
+      ss << " ORDER BY " << order_by_table << "." << order_by_column;
+    }
+    ss << ";";
+    return ss.str();
+  }
+
   void InsertDataHelper(const std::string &table_name, int tuple_count) {
     int batch_size = 1000;
     std::stringstream ss;
@@ -157,6 +186,7 @@ class PlanSelectionTest : public PelotonTest {
         if (i < tuple_count) {
           ss << ",";
         }
+        count++;
       }
       ss << ";";
       TestingSQLUtil::ExecuteSQLQuery(ss.str());
@@ -241,6 +271,33 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTestSmall1) {
 
   ASSERT_STREQ(left_scan->GetTable()->GetName().c_str(), table_1_name);
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_2_name);
+}
+
+TEST_F(PlanSelectionTest, ThreeWayJoinTest) {
+  // Create and populate tables
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Populate Tables table
+  int test1_table_size = 2;
+  int test2_table_size = 10;
+  int test3_table_size = 100;
+
+  InsertDataHelper(table_1_name, test1_table_size);
+  InsertDataHelper(table_2_name, test2_table_size);
+  InsertDataHelper(table_3_name, test3_table_size);
+
+  txn_manager.CommitTransaction(txn);
+
+  AnalyzeTable(table_1_name);
+  AnalyzeTable(table_2_name);
+  AnalyzeTable(table_3_name);
+
+  auto plan = PerformTransactionAndGetPlan(
+      CreateThreeWayJoinQuery(table_1_name, table_2_name, table_3_name,
+                              column_1_name, column_1_name, column_1_name));
+
+  // TODO: Add checks
 }
 
 TEST_F(PlanSelectionTest, SimpleJoinOrderTestWorstCaseSmall1) {
@@ -366,6 +423,10 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderSmallTest3) {
   ASSERT_STREQ(right_scan->GetTable()->GetName().c_str(), table_1_name);
 }
 
+/* The similarity between this and the SimpleJoinOrderSmallTest2 is to ensure
+ * that the optimizer does not pick
+ * joins simply based on the order the tables are written in the SQL query.
+ */
 TEST_F(PlanSelectionTest, SimpleJoinOrderSmallTest4) {
   // Create and populate tables
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
