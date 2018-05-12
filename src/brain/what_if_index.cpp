@@ -134,9 +134,6 @@ void WhatIfIndex::GetTablesReferenced(
               PELOTON_ASSERT(false);
             }
           }
-          //          for (auto name: table_names) {
-          //            LOG_INFO("Join Table: %s", name.c_str());
-          //          }
           break;
         }
         case TableReferenceType::SELECT: {
@@ -151,9 +148,6 @@ void WhatIfIndex::GetTablesReferenced(
           for (auto &table : *table_cp_list) {
             table_names.insert(table->GetTableName());
           }
-          //          for (auto name: table_names) {
-          //            LOG_INFO("Cross Table: %s", name.c_str());
-          //          }
           break;
         }
         case TableReferenceType::INVALID: {

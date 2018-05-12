@@ -89,7 +89,7 @@ QueryHistoryCatalog::GetQueryStringsAfterTimestamp(
         auto query_string = tile->GetValue(i, 1).GetAs<char *>();
         auto pair = std::make_pair(timestamp, query_string);
         LOG_INFO("Query: %" PRId64 ": %s", pair.first, pair.second);
-        queries->push_back(pair);
+        queries->emplace_back(pair);
       }
     }
   }
