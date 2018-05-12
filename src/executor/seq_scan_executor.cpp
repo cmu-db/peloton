@@ -220,7 +220,7 @@ bool SeqScanExecutor::DExecute() {
           } else {
             ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                      tuple_id);
-            LOG_TRACE("Evaluate predicate for a tuple");
+            LOG_DEBUG("Evaluate predicate for a tuple");
             auto eval =
                 predicate_->Evaluate(&tuple, nullptr, executor_context_);
             LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());

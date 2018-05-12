@@ -97,7 +97,9 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // Record deletion of transaction in current transaction set
-  current_transactions_.erase(current_txn->GetTransactionId());
+  if (current_transactions_.erase(current_txn->GetTransactionId()) == 0){
+    LOG_WARN("transaction record not deleted!");
+  };
 
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
