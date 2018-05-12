@@ -38,17 +38,11 @@ class AbstractRawData : public Printable {
    */
   virtual void Aggregate(AbstractRawData &other) = 0;
   /**
-   * Persist the content of this RawData into the Catalog. Expect this object
+   * Make necessary updates to the metric raw data and persist the content of
+   * this RawData into the Catalog. Expect this object
    * to be garbage-collected after this method is called.
    */
-  virtual void WriteToCatalog() = 0;
-  /**
-   * This provides an alternative way for certain metrics to be collected,
-   * if they cannot be efficiently fit into the collection point API,
-   * It's probably better to try and use the API first,
-   * and the fall through to this method if necessary.
-   */
-  virtual void FetchData(){};
+  virtual void UpdateAndPersist() = 0;
 
  protected:
   struct pair_hash {

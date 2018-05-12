@@ -62,7 +62,7 @@ void TableMetricRawData::Aggregate(AbstractRawData &other) {
   }
 }
 
-void TableMetricRawData::FetchData() {
+void TableMetricRawData::FetchMemoryStats() {
   auto &tile_group_manager = catalog::Manager::GetInstance();
   auto pg_catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -107,7 +107,10 @@ void TableMetricRawData::FetchData() {
   }
 }
 
-void TableMetricRawData::WriteToCatalog() {
+void TableMetricRawData::UpdateAndPersist() {
+
+  FetchMemoryStats();
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();

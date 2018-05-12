@@ -40,7 +40,7 @@ void IndexMetricRawData::Aggregate(AbstractRawData &other) {
   }
 }
 
-void IndexMetricRawData::WriteToCatalog() {
+void IndexMetricRawData::UpdateAndPersist() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();

@@ -74,15 +74,9 @@ class TableMetricRawData : public AbstractRawData {
 
   void Aggregate(AbstractRawData &other) override;
 
-  void WriteToCatalog() override;
+  void UpdateAndPersist() override;
 
   const std::string GetInfo() const override { return "table metric"; }
-
-  /**
-   * Fetch Usage for inlined tile memory and both allocation and usage for
-   * varlen pool
-   */
-  void FetchData() override;
 
  private:
   inline int64_t &GetCounter(std::pair<oid_t, oid_t> db_table_id,
@@ -92,6 +86,13 @@ class TableMetricRawData : public AbstractRawData {
       counters_[db_table_id] = std::vector<int64_t>(NUM_COUNTERS);
     return counters_[db_table_id][type];
   }
+
+  /**
+  * Fetch Usage for inlined tile memory and both allocation and usage for
+  * varlen pool
+  */
+  void FetchMemoryStats();
+
   std::unordered_map<std::pair<oid_t, oid_t>, std::vector<int64_t>, pair_hash>
       counters_;
 

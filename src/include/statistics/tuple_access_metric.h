@@ -43,7 +43,7 @@ class TupleAccessRawData: public AbstractRawData {
       aborts_.insert(txn);
   }
 
-  void WriteToCatalog() override;
+  void UpdateAndPersist() override;
 
   // TODO(Tianyu): Pretty Print
   const std::string GetInfo() const override { return "TupleAccessRawData"; };

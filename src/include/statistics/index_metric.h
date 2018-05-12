@@ -73,7 +73,7 @@ class IndexMetricRawData : public AbstractRawData {
 
   void Aggregate(AbstractRawData &other) override;
 
-  void WriteToCatalog() override;
+  void UpdateAndPersist() override;
 
   const std::string GetInfo() const override { return "index metric"; }
 

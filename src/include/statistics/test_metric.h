@@ -36,7 +36,7 @@ class TestMetricRawData : public AbstractRawData {
     count_ += other_test.count_;
   }
 
-  void WriteToCatalog() override {}
+  void UpdateAndPersist() override {}
 
   const std::string GetInfo() const override { return "test metric"; }
 

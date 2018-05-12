@@ -56,7 +56,7 @@ class LatencyMetricRawData : public AbstractRawData {
 
   // Computes descriptive statistics on the aggregated latencies,
   // then writes these computed values to the catalog.
-  void WriteToCatalog();
+  void UpdateAndPersist();
 
  private:
   /**

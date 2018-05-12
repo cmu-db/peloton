@@ -37,7 +37,7 @@ void TupleAccessRawData::WriteToCatalog(txn_id_t tid,
                                  commit,
                                  txn);
 }
-void TupleAccessRawData::WriteToCatalog() {
+void TupleAccessRawData::UpdateAndPersist() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 

@@ -49,7 +49,7 @@ class DatabaseMetricRawData : public AbstractRawData {
     }
   }
 
-  void WriteToCatalog() override;
+  void UpdateAndPersist() override;
 
   // TODO(Tianyu): Pretty Print
   const std::string GetInfo() const override { return ""; }
