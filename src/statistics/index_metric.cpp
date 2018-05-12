@@ -53,10 +53,26 @@ void IndexMetricRawData::WriteToCatalog() {
     oid_t table_oid = 0;  // FIXME!!
 
     auto &counts = entry.second;
-    auto system_catalogs = catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
-    system_catalogs->GetIndexMetricsCatalog()->InsertIndexMetrics(
-        table_oid, index_oid, counts[READ], counts[DELETE],
-        counts[INSERT], time_stamp, nullptr, txn);
+    auto system_catalogs =
+        catalog::Catalog::GetInstance()->GetSystemCatalogs(database_oid);
+    auto index_metrics_catalog = system_catalogs->GetIndexMetricsCatalog();
+    auto old_metric =
+        index_metrics_catalog->GetIndexMetricsObject(index_oid, txn);
+
+    if (old_metric == nullptr) {
+      index_metrics_catalog->InsertIndexMetrics(
+          index_oid, table_oid, counts[READ], counts[UPDATE], counts[INSERT],
+          counts[DELETE], counts[MEMORY_ALLOC], counts[MEMORY_USAGE],
+          time_stamp, nullptr, txn);
+    } else {
+      index_metrics_catalog->UpdateIndexMetrics(
+          index_oid, table_oid, old_metric->GetReads() + counts[READ],
+          old_metric->GetUpdates() + counts[UPDATE],
+          old_metric->GetInserts() + counts[INSERT],
+          old_metric->GetDeletes() + counts[DELETE],
+          old_metric->GetMemoryAlloc() + counts[MEMORY_ALLOC],
+          old_metric->GetMemoryUsage() + counts[MEMORY_USAGE], time_stamp, txn);
+    }
   }
 
   txn_manager.CommitTransaction(txn);
