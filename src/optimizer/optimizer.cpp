@@ -101,7 +101,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // TODO: support multi-statement queries
   auto parse_tree = parse_tree_list->GetStatement(0);
 
-  LOG_DEBUG("optimizer : %s", parse_tree->GetInfo().c_str());
+  LOG_TRACE("optimizer : %s", parse_tree->GetInfo().c_str());
   // Handle ddl statement
   auto util_plan_status = HandleUtilStatement(parse_tree, txn);
   if (util_plan_status.has_plan != false) {
