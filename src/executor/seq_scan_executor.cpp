@@ -138,22 +138,46 @@ bool SeqScanExecutor::DExecute() {
 	     ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
+    auto current_txn = executor_context_->GetTransaction();
+    concurrency::TransactionManager &transaction_manager =
+        concurrency::TransactionManagerFactory::GetInstance();
+
     PELOTON_ASSERT(target_table_ != nullptr);
     PELOTON_ASSERT(column_ids_.size() > 0);
     if (children_.size() > 0 && !index_done_) {
       LOG_DEBUG("Execute child of sequential scan");
       children_[0]->Execute();
+      if (children_.size() == 1 &&
+          // This check is only needed to pass seq_scan_test
+          // unless it is possible to add a executor child
+          // without a corresponding plan.
+          GetRawNode()->GetChildren().size() > 0 &&
+          // Check if the plan is what we actually expect.
+          GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
+              PlanNodeType::CREATE &&
+          // If it is, confirm it is for indexes
+              ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                  ->GetCreateType() == CreateType::INDEX_CONCURRENT){
+
+        LOG_DEBUG("Concurrently create index");
+        // Get concurrent transactions before scanning
+        std::unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
+        txn_set.erase(current_txn->GetTransactionId());
+
+        // Check if all concurrent transaction ends
+        while (transaction_manager.CheckConcurrentTxn(&txn_set)){
+          LOG_DEBUG("Sleep for a while, waiting other transactions");
+          // Sleep 5ms to avoid spin wait
+          usleep(5000);
+        }
+      }
       // This stops continuous executions due to
       // a parent and avoids multiple creations
       // of the same index.
       index_done_ = true;
     }
-    
-    concurrency::TransactionManager &transaction_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
 
     bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
-    auto current_txn = executor_context_->GetTransaction();
 
     LOG_DEBUG("Begin scanning table sequentially, table count = %d", table_tile_group_count_);
     // Retrieve next tile group.
@@ -175,14 +199,7 @@ bool SeqScanExecutor::DExecute() {
 
         // we don't need to check transaction visibility when building index.
         // perform predicate evaluation.
-        if (visibility == VisibilityType::OK ||
-            (GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
-            PlanNodeType::CREATE &&
-            // If it is, confirm it is for indexes
-            (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-                ->GetCreateType() == CreateType::INDEX ||
-                ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-                    ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
+        if (visibility == VisibilityType::OK || children_.size() == 1) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
 	        LOG_DEBUG("perform read in seq scan");
