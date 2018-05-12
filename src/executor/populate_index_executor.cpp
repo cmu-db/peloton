@@ -23,6 +23,7 @@
 #include "storage/tile.h"
 #include "concurrency/lock_manager.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace executor {

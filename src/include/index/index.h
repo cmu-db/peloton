@@ -435,8 +435,11 @@ class Index : public Printable {
     insert_set.clear();
   }
 
-  bool CheckDuplicate(){
-    return false;
+  bool CheckDuplicate(std::pair<storage::Tuple, ItemPointer> entry){
+    if (insert_set.find(entry) == insert_set.end()){
+      return false;
+    }
+    return true;
   }
 
   /**
