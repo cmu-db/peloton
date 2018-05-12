@@ -29,6 +29,7 @@
 #include "storage/tile.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/logger.h"
+#include "common/container/lock_free_array.h"
 
 namespace peloton {
 namespace executor {
