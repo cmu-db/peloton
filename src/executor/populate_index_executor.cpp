@@ -39,7 +39,7 @@ PopulateIndexExecutor::PopulateIndexExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool PopulateIndexExecutor::DInit() {
-  PELOTON_ASSERT((children_.size() == 1 || children_.size() == 2));
+  PELOTON_ASSERT(children_.size() == 1);
   PELOTON_ASSERT(executor_context_);
 
   // Initialize executor state
@@ -124,27 +124,10 @@ bool PopulateIndexExecutor::DExecute() {
     else{
 
       LOG_DEBUG("Non-blocking create index");
-      PELOTON_ASSERT(children_.size() == 2);
-      auto &transaction_manager =
-          concurrency::TransactionManagerFactory::GetInstance();
 
-      // Get concurrent transactions before scanning
-      std::unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
-      txn_set.erase(current_txn->GetTransactionId());
-
-      // Get the output from seq_scan (1st pass)
+      // Get the output from seq_scan
       while (children_[0]->Execute()) {
-      }
-
-      // Check if all concurrent transaction ends
-      while (transaction_manager.CheckConcurrentTxn(&txn_set)){
-        // Sleep 5ms to avoid spin wait
-        usleep(5000);
-      }
-
-      // Get the output from seq_scan (2nd pass)
-      while (children_[1]->Execute()) {
-        child_tiles_.emplace_back(children_[1]->GetOutput());
+        child_tiles_.emplace_back(children_[0]->GetOutput());
       }
 
       if (child_tiles_.size() == 0) {

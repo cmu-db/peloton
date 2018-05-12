@@ -150,20 +150,6 @@ bool UpdateExecutor::DExecute() {
   PELOTON_ASSERT(children_.size() == 1);
   PELOTON_ASSERT(executor_context_);
 
-  // We are scanning over a logical tile.
-  LOG_TRACE("Update executor :: 1 child ");
-
-  if (!children_[0]->Execute()) {
-    return false;
-  }
-
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-
-  auto &pos_lists = source_tile.get()->GetPositionLists();
-
-  auto &transaction_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
-
   auto current_txn = executor_context_->GetTransaction();
 
   oid_t table_oid = target_table_->GetOid();
@@ -177,6 +163,21 @@ bool UpdateExecutor::DExecute() {
   else {
     current_txn->AddLockShared(table_oid);
   }
+
+  // We are scanning over a logical tile.
+  LOG_DEBUG("Update executor :: 1 child ");
+
+  if (!children_[0]->Execute()) {
+
+    return false;
+  }
+
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+
+  auto &pos_lists = source_tile.get()->GetPositionLists();
+
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
   auto executor_pool = executor_context_->GetPool();
   auto target_table_schema = target_table_->GetSchema();
@@ -203,7 +204,7 @@ bool UpdateExecutor::DExecute() {
 
     ItemPointer old_location(tile_group->GetTileGroupId(), physical_tuple_id);
 
-    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
+    LOG_DEBUG("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     ///////////////////////////////////////////////////////////

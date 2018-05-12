@@ -72,17 +72,6 @@ bool DeleteExecutor::DInit() {
  */
 bool DeleteExecutor::DExecute() {
   PELOTON_ASSERT(target_table_);
-  // Retrieve next tile.
-  if (!children_[0]->Execute()) {
-    return false;
-  }
-
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-
-  auto &pos_lists = source_tile.get()->GetPositionLists();
-
-  auto &transaction_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
 
@@ -97,6 +86,18 @@ bool DeleteExecutor::DExecute() {
   else {
     current_txn->AddLockShared(table_oid);
   }
+
+  // Retrieve next tile.
+  if (!children_[0]->Execute()) {
+    return false;
+  }
+
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+
+  auto &pos_lists = source_tile.get()->GetPositionLists();
+
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
