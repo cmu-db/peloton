@@ -24,6 +24,7 @@
 #include "common/printable.h"
 #include "type/value.h"
 #include "tbb/concurrent_unordered_set.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 
