@@ -49,8 +49,8 @@ Value::Value(const Value &other) {
 
 Value::Value(Value &&other) : Value() { swap(*this, other); }
 
-Value &Value::operator=(Value other) {
-  swap(*this, other);
+Value &Value::operator=(const Value &other) {
+  new (this) Value(other);
   return *this;
 }
 

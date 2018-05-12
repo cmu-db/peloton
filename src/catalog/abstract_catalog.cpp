@@ -152,7 +152,7 @@ bool AbstractCatalog::InsertTupleWithCompiledPlan(const std::vector<std::vector<
    new executor::ExecutorContext(txn, std::move(parameters)));
 
  // search for query
- codegen::Query *query = codegen::QueryCache::Instance().Find(insert_plan);;
+ codegen::Query *query = codegen::QueryCache::Instance().Find(insert_plan);
  std::unique_ptr<codegen::Query> compiled_query(nullptr);
  cached = (query != nullptr);
 
@@ -355,7 +355,7 @@ AbstractCatalog::GetResultWithCompiledSeqScan(
 
   // search for query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
-  std::unique_ptr<codegen::Query> compiled_query(nullptr);
+ std::unique_ptr<codegen::Query> compiled_query(nullptr);
   cached = (query != nullptr);
 
   // if not cached, compile the query and save it into cache

@@ -21,8 +21,10 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
-#include "storage/zone_map_manager.h"
+#include "type/value.h"
 #include "type/value_factory.h"
+#include "storage/zone_map_manager.h"
+
 
 namespace peloton {
 namespace codegen {
@@ -90,8 +92,8 @@ void RuntimeFunctions::FillPredicateArray(
     predicate_array[i].predicate_value =
         (*parsed_predicates)[i].predicate_value;
   }
-  auto temp_expr = (expression::AbstractExpression *)expr;
-  temp_expr->ClearParsedPredicates();
+//  auto temp_expr = (expression::AbstractExpression *)expr;
+//  temp_expr->ClearParsedPredicates();
 }
 
 //===----------------------------------------------------------------------===//
