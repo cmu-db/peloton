@@ -103,8 +103,8 @@ bool TableMetricsCatalog::DeleteTableMetrics(
 }
 
 bool TableMetricsCatalog::UpdateTableMetrics(
-    oid_t table_oid, int64_t reads, int64_t updates, int64_t deletes,
-    int64_t inserts, int64_t memory_alloc, int64_t memory_usage,
+    oid_t table_oid, int64_t reads, int64_t updates, int64_t inserts,
+    int64_t deletes, int64_t memory_alloc, int64_t memory_usage,
     int64_t time_stamp, concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns(all_column_ids_);
   std::vector<type::Value> update_values;

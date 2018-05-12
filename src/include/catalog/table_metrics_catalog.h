@@ -37,6 +37,7 @@
 namespace peloton {
 namespace catalog {
 
+// helper class for reading tuples from catalog
 class TableMetricsCatalogObject {
  public:
   // construct object from logical tile
@@ -86,7 +87,7 @@ class TableMetricsCatalog : public AbstractCatalog {
                           concurrency::TransactionContext *txn);
 
   bool UpdateTableMetrics(oid_t table_oid, int64_t reads, int64_t updates,
-                          int64_t deletes, int64_t inserts,
+                          int64_t inserts, int64_t deletes,
                           int64_t memory_alloc, int64_t memory_usage,
                           int64_t time_stamp,
                           concurrency::TransactionContext *txn);
