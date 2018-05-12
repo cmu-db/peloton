@@ -276,7 +276,7 @@ value_t BytecodeBuilder::GetConstantValue(
     const llvm::Constant *constant) const {
   llvm::Type *type = constant->getType();
 
-  if (constant->isNullValue() || constant->isZeroValue()) {
+  if (constant->isNullValue() || constant->isZeroValue() || llvm::isa<llvm::UndefValue>(constant)) {
     return 0;
   } else {
     switch (type->getTypeID()) {
