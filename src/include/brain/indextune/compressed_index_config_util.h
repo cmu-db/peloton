@@ -25,11 +25,16 @@ class CompressedIndexConfigUtil {
    * SQLStatement element
    * @param container: input container
    * @param query: query in question
-   * @return the prefix closure as a bitset
+   * @param add_candidates: the resulting add_candidates
+   * @param single_col_idx: whether use single-column index
+   * @param max_index_size: max number of columns to use to build index
+   * permutations
+   * @return the permuation as a bitset
    */
   static void AddCandidates(CompressedIndexConfigContainer &container,
                             const std::string &query,
-                            boost::dynamic_bitset<> &add_candidates);
+                            boost::dynamic_bitset<> &add_candidates,
+                            bool single_col_idx, size_t max_index_size);
   /**
    * Given a SQLStatement, generate drop candidates
    * @param container: input container
@@ -107,6 +112,12 @@ class CompressedIndexConfigUtil {
   static std::shared_ptr<brain::HypotheticalIndexObject> ConvertIndexTriplet(
       CompressedIndexConfigContainer &container,
       const planner::col_triplet &idx_triplet);
+
+  static void PermuateConfigurations(
+      const CompressedIndexConfigContainer &container,
+      const std::vector<oid_t> &cols, size_t max_index_size,
+      std::vector<oid_t> &index_conf, boost::dynamic_bitset<> &bitset,
+      oid_t db_oid, oid_t table_oid);
 };
 }  // namespace brain
 }  // namespace peloton

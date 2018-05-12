@@ -48,7 +48,7 @@ class CompressedIdxConfigTest : public PelotonTest {
    * KEY.
    */
   void CreateTable_TypeA(const std::string &db_name,
-                     const std::string &table_name) {
+                         const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
         "a", true);
@@ -76,7 +76,7 @@ class CompressedIdxConfigTest : public PelotonTest {
    * @brief Create a new table with schema (a INT, b INT, c INT).
    */
   void CreateTable_TypeB(const std::string &db_name,
-                     const std::string &table_name) {
+                         const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
         "a", true);
@@ -98,8 +98,8 @@ class CompressedIdxConfigTest : public PelotonTest {
   /**
    * @brief Create two indexes on columns (a, b) and (b, c), respectively
    */
-  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> CreateIndex_TypeA(
-      const std::string &db_name, const std::string &table_name) {
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+  CreateIndex_TypeA(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
@@ -137,8 +137,8 @@ class CompressedIdxConfigTest : public PelotonTest {
   oid_t GetTableOid(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-        ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
-        ->GetTableOid();
+                               ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
+                               ->GetTableOid();
     txn_manager_->CommitTransaction(txn);
     return table_oid;
   }
@@ -146,8 +146,8 @@ class CompressedIdxConfigTest : public PelotonTest {
   /**
    * @brief Create one index on columns (a, c)
    */
-  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> CreateIndex_TypeB(
-      const std::string &db_name, const std::string &table_name) {
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+  CreateIndex_TypeB(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
@@ -211,7 +211,8 @@ class CompressedIdxConfigTest : public PelotonTest {
 };
 
 TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
-  /**This test checks for correctness of the compressed container representation*/
+  /**This test checks for correctness of the compressed container
+   * representation*/
   std::string database_name = DEFAULT_DB_NAME;
   std::string table_name_1 = "dummy_table_1";
   std::string table_name_2 = "dummy_table_2";
@@ -221,7 +222,8 @@ TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
   CreateDatabase(database_name);
 
   std::set<oid_t> ignore_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name, ignore_table_oids);
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ignore_table_oids);
 
   CreateTable_TypeA(database_name, table_name_1);
   CreateTable_TypeB(database_name, table_name_2);
@@ -240,11 +242,16 @@ TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
   LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
   EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 48);
   // 2 created + PK index being created by default
-  EXPECT_EQ(comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_1)), 3);
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_1)),
+      3);
   // 1 created
-  EXPECT_EQ(comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_2)), 1);
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_2)),
+      1);
   // No index created
-  EXPECT_TRUE(comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name_3)));
+  EXPECT_TRUE(
+      comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name_3)));
 
   // Now check that bitset positions exactly align with Indexes present
   for (const auto &idx_obj : idx_objs) {
@@ -266,12 +273,12 @@ TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
   std::string database_name = DEFAULT_DB_NAME;
   std::string table_name_1 = "dummy_table_1";
 
-  // We build a DB with 1 table, having 3 columns
+  // We build a DB with 1 table, having 3 columns (a INT, b INT, c INT). b is
+  // PRIMARY KEY.
   CreateDatabase(database_name);
-
   std::set<oid_t> ignore_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name, ignore_table_oids);
-
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ignore_table_oids);
   CreateTable_TypeA(database_name, table_name_1);
 
   // create index on (a1, b1) and (b1, c1)
@@ -280,41 +287,58 @@ TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
   auto comp_idx_config =
       brain::CompressedIndexConfigContainer(database_name, ignore_table_oids);
   LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
+  // Total configuration = total number of permutations: 1 * 3! + 3 * 2! + 3 *
+  // 1! + 1 = 16
   EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
   // 2 created + PK index being created by default
-  EXPECT_FALSE(comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name_1)));
-  EXPECT_EQ(comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_1)), 3);
+  EXPECT_FALSE(
+      comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name_1)));
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name_1)),
+      3);
 
   std::string query_string =
       "UPDATE dummy_table_1 SET a = 0 WHERE b = 1 AND c = 2;";
-  boost::dynamic_bitset<> drop_candidates, add_candidates;
+  boost::dynamic_bitset<> drop_candidates, add_candidates_single,
+      add_candidates_multiple;
   brain::CompressedIndexConfigUtil::DropCandidates(
       comp_idx_config, query_string, drop_candidates);
-  brain::CompressedIndexConfigUtil::AddCandidates(comp_idx_config, query_string,
-                                                  add_candidates);
+  brain::CompressedIndexConfigUtil::AddCandidates(
+      comp_idx_config, query_string, add_candidates_single, true, 0);
+  brain::CompressedIndexConfigUtil::AddCandidates(
+      comp_idx_config, query_string, add_candidates_multiple, false, 2);
 
   auto index_empty =
       GetHypotheticalIndexObjectFromString(database_name, table_name_1, {});
   auto index_b =
       GetHypotheticalIndexObjectFromString(database_name, table_name_1, {"b"});
-  auto index_a_b = GetHypotheticalIndexObjectFromString(
-      database_name, table_name_1, {"a", "b"});
+  auto index_c =
+      GetHypotheticalIndexObjectFromString(database_name, table_name_1, {"c"});
   auto index_b_c = GetHypotheticalIndexObjectFromString(
       database_name, table_name_1, {"b", "c"});
+  auto index_c_b = GetHypotheticalIndexObjectFromString(
+      database_name, table_name_1, {"c", "b"});
 
-  // we should have prefix closure: {}, {b}, {b, c}
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
-      add_expect_indexes = {index_empty, index_b, index_b_c};
+      add_expect_indexes_single = {index_b, index_c};
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+      add_expect_indexes_multiple = {index_empty, index_b, index_c, index_b_c,
+                                     index_c_b};
   // since b is primary key, we will ignore index {a, b}
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
       drop_expect_indexes = {};
 
-  auto add_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
-      comp_idx_config, add_expect_indexes);
+  auto add_expect_bitset_single =
+      brain::CompressedIndexConfigUtil::GenerateBitSet(
+          comp_idx_config, add_expect_indexes_single);
+  auto add_expect_bitset_multiple =
+      brain::CompressedIndexConfigUtil::GenerateBitSet(
+          comp_idx_config, add_expect_indexes_multiple);
   auto drop_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
       comp_idx_config, drop_expect_indexes);
 
-  EXPECT_EQ(*add_expect_bitset, add_candidates);
+  EXPECT_EQ(*add_expect_bitset_single, add_candidates_single);
+  EXPECT_EQ(*add_expect_bitset_multiple, add_candidates_multiple);
   EXPECT_EQ(*drop_expect_bitset, drop_candidates);
 
   DropDatabase(database_name);

@@ -32,7 +32,8 @@ class LSPIIndexTuner {
  public:
   explicit LSPIIndexTuner(
       const std::string &db_name, const std::set<oid_t> &ori_table_oids,
-      size_t max_index_size = 3, catalog::Catalog *catalog = nullptr,
+      bool single_col_idx, size_t max_index_size,
+      catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
    * Given a recent set of queries and their latency on the current
@@ -54,7 +55,7 @@ class LSPIIndexTuner {
  private:
   // Database to tune
   std::string db_name_;
-
+  bool single_col_idx_;
   size_t max_index_size_;
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm

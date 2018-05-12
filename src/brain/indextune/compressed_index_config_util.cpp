@@ -17,25 +17,37 @@ namespace brain {
 
 void CompressedIndexConfigUtil::AddCandidates(
     CompressedIndexConfigContainer &container, const std::string &query,
-    boost::dynamic_bitset<> &add_candidates) {
+    boost::dynamic_bitset<> &add_candidates, bool single_col_idx,
+    size_t max_index_size) {
   add_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
   auto txn = container.GetTransactionManager()->BeginTransaction();
   container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
-  // TODO (weichenl): Lin Ma: This result (indexable_cols_vector) only contains
-  // simple single-column indexes. Later on, if we switch to the AutoAdmin
-  // approach, then we'll have multi-column indexes. For example, if we have two
-  // indexes (AB, CDE), the closure would be (A, AB, C, CD, CDE). But you should
-  // not aggregate AB and CDE together.
+
   std::vector<planner::col_triplet> indexable_cols_vector =
       planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
                                              std::move(sql_stmt_list),
                                              container.GetDatabaseName());
   container.GetTransactionManager()->CommitTransaction(txn);
 
+  if (single_col_idx) {
+    for (const auto &each_triplet : indexable_cols_vector) {
+      const auto db_oid = std::get<0>(each_triplet);
+      const auto table_oid = std::get<1>(each_triplet);
+      const auto col_oid = std::get<2>(each_triplet);
+
+      std::vector<oid_t> col_oids = {col_oid};
+      auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
+          db_oid, table_oid, col_oids);
+
+      SetBit(container, add_candidates, idx_new);
+    }
+
+    return;
+  }
+
   // Aggregate all columns in the same table
   std::unordered_map<oid_t, brain::HypotheticalIndexObject> aggregate_map;
-
   for (const auto &each_triplet : indexable_cols_vector) {
     const auto db_oid = std::get<0>(each_triplet);
     const auto table_oid = std::get<1>(each_triplet);
@@ -54,24 +66,16 @@ void CompressedIndexConfigUtil::AddCandidates(
 
   for (const auto it : aggregate_map) {
     const auto table_oid = it.first;
-    const std::set<oid_t> temp_oids(it.second.column_oids.begin(),
-                                    it.second.column_oids.end());
-    const auto table_offset = container.GetTableOffsetStart(table_oid);
+    const auto &column_oids = it.second.column_oids;
 
     // Insert empty index
-    add_candidates.set(table_offset);
+    add_candidates.set(container.GetTableOffsetStart(table_oid));
 
-    // For each index, iterate through its columns
-    // and incrementally add the columns to the prefix closure of current table
-    std::vector<oid_t> col_oids;
-    for (const auto column_oid : temp_oids) {
-      col_oids.push_back(column_oid);
+    std::vector<oid_t> index_conf;
 
-      // Insert prefix index
-      auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
-          db_oid, table_oid, col_oids);
-      SetBit(container, add_candidates, idx_new);
-    }
+    // Insert index consisting of up to max_index_size columns
+    PermuateConfigurations(container, column_oids, max_index_size, index_conf,
+                           add_candidates, db_oid, table_oid);
   }
 }
 
@@ -234,6 +238,27 @@ IndexConfiguration CompressedIndexConfigUtil::ToIndexConfiguration(
   }
 
   return index_config;
+}
+
+void CompressedIndexConfigUtil::PermuateConfigurations(
+    const CompressedIndexConfigContainer &container,
+    const std::vector<oid_t> &cols, size_t max_index_size,
+    std::vector<oid_t> &index_conf, boost::dynamic_bitset<> &bitset,
+    oid_t db_oid, oid_t table_oid) {
+  if (index_conf.size() <= std::min<size_t>(max_index_size, cols.size())) {
+    auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
+        db_oid, table_oid, index_conf);
+    SetBit(container, bitset, idx_new);
+  }
+  for (auto col : cols) {
+    if (std::find(index_conf.begin(), index_conf.end(), col) ==
+        index_conf.end()) {
+      index_conf.push_back(col);
+      PermuateConfigurations(container, cols, max_index_size, index_conf,
+                             bitset, db_oid, table_oid);
+      index_conf.pop_back();
+    }
+  }
 }
 
 }  // namespace brain

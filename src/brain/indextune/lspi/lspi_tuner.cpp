@@ -16,9 +16,12 @@ namespace peloton {
 namespace brain {
 LSPIIndexTuner::LSPIIndexTuner(
     const std::string &db_name, const std::set<oid_t> &ori_table_oids,
-    size_t max_index_size, peloton::catalog::Catalog *catalog,
+    bool single_col_idx, size_t max_index_size,
+    peloton::catalog::Catalog *catalog,
     peloton::concurrency::TransactionManager *txn_manager)
-    : db_name_{db_name}, max_index_size_{max_index_size} {
+    : db_name_{db_name},
+      single_col_idx_{single_col_idx},
+      max_index_size_{max_index_size} {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, ori_table_oids,
                                          max_index_size, catalog, txn_manager));
@@ -44,7 +47,8 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   boost::dynamic_bitset<> add_candidate_set, drop_candidate_set;
   for (size_t i = 0; i < num_queries; i++) {
     CompressedIndexConfigUtil::AddCandidates(*index_config_, queries[i],
-                                             add_candidate_set);
+                                             add_candidate_set, single_col_idx_,
+                                             max_index_size_);
     add_candidate_sets.push_back(std::move(add_candidate_set));
     CompressedIndexConfigUtil::DropCandidates(*index_config_, queries[i],
                                               drop_candidate_set);
