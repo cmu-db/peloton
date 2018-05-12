@@ -161,11 +161,11 @@ bool SeqScanExecutor::DExecute() {
 
         LOG_DEBUG("Concurrently create index");
         // Get concurrent transactions before scanning
-        LockFreeArray txn_set = transaction_manager.GetCurrentTxn();
+        LockFreeArray<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
         for (size_t i = 0; i < txn_set.GetSize(); i++) {
           auto tmp = txn_set.Find(i);
           if (tmp == current_txn->GetTransactionId()) {
-            txn_set.erase(i);
+            txn_set.Erase(i, -1);
             break;
           }
         }
