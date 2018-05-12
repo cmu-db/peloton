@@ -24,6 +24,7 @@
 #include "common/logger.h"
 #include "common/internal_types.h"
 #include "tbb/concurrent_unordered_set.h"
+#include "mutex"
 
 namespace peloton {
 
@@ -281,6 +282,7 @@ class TransactionManager {
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
   tbb::concurrent_unordered_set<txn_id_t> current_transactions_;
+  std::mutex mtx_;
 
 };
 }  // namespace concurrency
