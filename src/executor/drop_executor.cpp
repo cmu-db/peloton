@@ -241,7 +241,6 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
     throw CatalogException("Index name " + index_name + " cannot be found");
   }
 
-
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();

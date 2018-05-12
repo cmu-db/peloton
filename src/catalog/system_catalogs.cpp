@@ -80,13 +80,11 @@ SystemCatalogs::~SystemCatalogs() {
  * @param   txn              TransactionContext
  */
 void SystemCatalogs::Bootstrap(const std::string &database_name,
-                              UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+                               concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
   if (!pg_trigger_) {
-    LOG_INFO("TriggerCatalog begin");
     pg_trigger_ = new TriggerCatalog(database_name, txn);
-    LOG_INFO("TriggerCatalog end");
   }
 
   // if (!pg_proc) {

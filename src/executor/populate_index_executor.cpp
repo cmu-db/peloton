@@ -69,7 +69,7 @@ bool PopulateIndexExecutor::DExecute() {
       // Lock the table to exclusive
       // for switching between blocking/non-blocking.
       concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-      LOG_WARN("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+      LOG_TRACE("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
       bool lock_success = lm->LockExclusive(table_oid);
       concurrency::LockManager::SafeLock dummy;
       if (!lock_success) {
@@ -102,7 +102,7 @@ bool PopulateIndexExecutor::DExecute() {
         // Go over all tuples in the logical tile
         for (oid_t tuple_id : *tile) {
           ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
-	      LOG_DEBUG("Add tuple in index");
+	      LOG_TRACE("Add tuple in index");
 
           // Materialize the logical tile tuple
           for (oid_t column_itr = 0; column_itr < column_ids_.size();
@@ -124,7 +124,7 @@ bool PopulateIndexExecutor::DExecute() {
     // build index without lock
     else{
 
-      LOG_DEBUG("Non-blocking create index");
+      LOG_TRACE("Non-blocking create index");
 
       // Get the output from seq_scan
       while (children_[0]->Execute()) {
@@ -148,7 +148,7 @@ bool PopulateIndexExecutor::DExecute() {
       // Go over the logical tile and insert in the index the values
       for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
            child_tile_itr++) {
-	    LOG_DEBUG("Add values to Index");
+	    LOG_TRACE("Add values to Index");
         auto tile = child_tiles_[child_tile_itr].get();
 
         // Go over all tuples in the logical tile

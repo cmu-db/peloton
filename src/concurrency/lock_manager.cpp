@@ -179,7 +179,7 @@ bool LockManager::UnlockShared(oid_t oid) {
   }
   rw_lock->unlock_shared();
   internal_rw_lock_.unlock_shared();
-  LOG_DEBUG("Unlock shared lock success.");
+  LOG_TRACE("Unlock shared lock success.");
   return true;
 }
 
@@ -199,7 +199,7 @@ bool LockManager::UnlockExclusive(oid_t oid) {
   }
   rw_lock->unlock();
   internal_rw_lock_.unlock_shared();
-  LOG_DEBUG("Unlock exclusive lock success.");
+  LOG_TRACE("Unlock exclusive lock success.");
   return true;
 }
 

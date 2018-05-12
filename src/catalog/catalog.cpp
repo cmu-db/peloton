@@ -42,7 +42,6 @@ namespace catalog {
 
 // Get instance of the global catalog
 Catalog *Catalog::GetInstance() {
-  LOG_TRACE("get instance");
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -54,7 +53,6 @@ Catalog *Catalog::GetInstance() {
  * 3) insert peloton into pg_database, catalog tables into pg_table
  */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
-  LOG_TRACE("init catalog");
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -86,8 +84,8 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {
   oid_t database_oid = database->GetOid();
-    LOG_INFO("database_oid = %d", database_oid);
-    LOG_INFO("database name = %s", database->GetDBName().c_str());
+  LOG_TRACE("database_oid = %d", database_oid);
+  LOG_TRACE("database name = %s", database->GetDBName().c_str());
   catalog_map_.emplace(database_oid,
                        std::shared_ptr<SystemCatalogs>(
                            new SystemCatalogs(database, pool_.get(), txn)));
@@ -161,7 +159,6 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {TableCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
 
-
   // Insert records(default + pg_catalog namespace) into pg_namespace
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
@@ -232,7 +229,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   oid_t database_oid = pg_database->GetNextOid();
 
   storage::Database *database = new storage::Database(database_oid);
-  LOG_INFO("get database");
+  LOG_TRACE("get database");
   // TODO: This should be deprecated, dbname should only exists in pg_db
   database->setDBName(database_name);
   {
@@ -245,9 +242,9 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   // add core & non-core system catalog tables into database
-  LOG_INFO("begin bootstrap %s", database_name.c_str());
+  LOG_TRACE("begin bootstrap %s", database_name.c_str());
   BootstrapSystemCatalogs(database, txn);
-  LOG_INFO("end bootstrap %s", database_name.c_str());
+  LOG_TRACE("end bootstrap %s", database_name.c_str());
   catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
@@ -272,7 +269,6 @@ ResultType Catalog::CreateDatabaseWithoutIndex(const std::string &database_name,
   oid_t database_oid = pg_database->GetNextOid();
 
   storage::Database *database = new storage::Database(database_oid);
-  LOG_INFO("get database");
   // TODO: This should be deprecated, dbname should only exists in pg_db
   database->setDBName(database_name);
   {
@@ -285,10 +281,9 @@ ResultType Catalog::CreateDatabaseWithoutIndex(const std::string &database_name,
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   // add core & non-core system catalog tables into database
-  LOG_INFO("begin bootstrap %s", database_name.c_str());
+  LOG_TRACE("begin bootstrap %s", database_name.c_str());
   BootstrapSystemCatalogs(database, txn);
-  LOG_INFO("end bootstrap %s", database_name.c_str());
-//  catalog_map_[database_oid]->Bootstrap(database_name, txn);
+  LOG_TRACE("end bootstrap %s", database_name.c_str());
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
   return ResultType::SUCCESS;
@@ -838,12 +833,11 @@ ResultType Catalog::DropIndex(std::string database_name, std::string index_name,
   auto database_oid = database_object->GetDatabaseOid();
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
-  auto index_oid = index_object->GetIndexOid();
-  if (index_object == nullptr) {
+  if (index_object == nullptr)
     throw CatalogException("Can't find index " + index_name +
                            " to drop");
-  }
 
+  auto index_oid = index_object->GetIndexOid();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(database_oid,
                                                 index_object->GetTableOid());

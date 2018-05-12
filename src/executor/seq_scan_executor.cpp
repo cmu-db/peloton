@@ -146,7 +146,7 @@ bool SeqScanExecutor::DExecute() {
     PELOTON_ASSERT(target_table_ != nullptr);
     PELOTON_ASSERT(column_ids_.size() > 0);
     if (children_.size() > 0 && !index_done_) {
-      LOG_DEBUG("Execute child of sequential scan");
+      LOG_TRACE("Execute child of sequential scan");
       children_[0]->Execute();
       if (children_.size() == 1 &&
           // This check is only needed to pass seq_scan_test
@@ -160,14 +160,14 @@ bool SeqScanExecutor::DExecute() {
               ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
                   ->GetCreateType() == CreateType::INDEX_CONCURRENT){
 
-        LOG_DEBUG("Concurrently create index");
+        LOG_TRACE("Concurrently create index");
         // Get concurrent transactions before scanning
         tbb::concurrent_unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
         txn_set.unsafe_erase(current_txn->GetTransactionId());
 
         // Check if all concurrent transaction ends
         while (transaction_manager.CheckConcurrentTxn(&txn_set)){
-          LOG_DEBUG("Sleep for a while, waiting other transactions");
+          LOG_TRACE("Sleep for a while, waiting other transactions");
           // Sleep 5ms to avoid spin wait
           usleep(5000);
         }
@@ -180,7 +180,7 @@ bool SeqScanExecutor::DExecute() {
 
     bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
-    LOG_DEBUG("Begin scanning table sequentially, table count = %d", table_tile_group_count_);
+    LOG_TRACE("Begin scanning table sequentially, table count = %d", table_tile_group_count_);
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -203,31 +203,31 @@ bool SeqScanExecutor::DExecute() {
         if (visibility == VisibilityType::OK || children_.size() == 1) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-	        LOG_DEBUG("perform read in seq scan");
+	          LOG_TRACE("perform read in seq scan");
             auto res = transaction_manager.PerformRead(current_txn, location,
                                                        acquire_owner);
             if (!res) {
-	          if (visibility == VisibilityType::OK){
-		        LOG_DEBUG("perform read failed in seq scan!");
-		        transaction_manager.SetTransactionResult(current_txn,
-                                                       ResultType::FAILURE);
-		        return res;
-	          }
-	          else{
-		        LOG_DEBUG("Encountered modified tuple");
-		        continue;
-	          }
+              if (visibility == VisibilityType::OK){
+                LOG_DEBUG("perform read failed in seq scan!");
+                transaction_manager.SetTransactionResult(current_txn,
+                                                           ResultType::FAILURE);
+                return res;
+              }
+              else{
+                LOG_TRACE("Encountered modified tuple");
+                continue;
+              }
             }
           } else {
             ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                      tuple_id);
-            LOG_DEBUG("Evaluate predicate for a tuple");
+            LOG_TRACE("Evaluate predicate for a tuple");
             auto eval =
                 predicate_->Evaluate(&tuple, nullptr, executor_context_);
             LOG_TRACE("Evaluation result: %s", eval.GetInfo().c_str());
             if (eval.IsTrue()) {
               position_list.push_back(tuple_id);
-              LOG_DEBUG("perform read with eval in seq scan");
+              LOG_TRACE("perform read with eval in seq scan");
               auto res = transaction_manager.PerformRead(current_txn, location,
                                                          acquire_owner);
               if (!res) {
@@ -238,7 +238,7 @@ bool SeqScanExecutor::DExecute() {
                   return res;
                 }
                 else{
-                  LOG_DEBUG("Encountered modified tuple");
+                  LOG_TRACE("Encountered modified tuple");
                   continue;
                 }
               } else {

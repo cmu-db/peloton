@@ -483,13 +483,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VisibilityType::DELETED) {
-        LOG_DEBUG("encounter deleted tuple: %u, %u", tuple_location.block,
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
                   tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VisibilityType::OK) {
-        LOG_DEBUG("perform read: %u, %u", tuple_location.block,
+        LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
         // Further check if the version has the secondary key
@@ -541,7 +541,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       else {
         PELOTON_ASSERT(visibility == VisibilityType::INVISIBLE);
 
-        LOG_DEBUG("Invisible read: %u, %u", tuple_location.block,
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(

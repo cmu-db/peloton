@@ -233,14 +233,14 @@ bool TransactionContext::UnlockAllLocks(){
   bool result = true;
   for (size_t i = 0; i < lock_info_.size(); i++){
     if (lock_info_[i].type == concurrency::LockManager::SHARED){
-      LOG_WARN("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
+      LOG_TRACE("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
       if(!lm->UnlockShared(lock_info_[i].oid)) {
         result = false;
         LOG_WARN("Unlock shared Lock failed: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
       }
     }
     else{
-      LOG_WARN("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
+      LOG_TRACE("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
       if(!lm->UnlockExclusive(lock_info_[i].oid)) {
         result = false;
         LOG_WARN("Unlock shared Lock failed: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
