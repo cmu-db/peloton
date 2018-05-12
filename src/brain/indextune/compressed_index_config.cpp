@@ -161,7 +161,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
 
   for (size_t current_bit = add_bitset.find_first();
        current_bit != boost::dynamic_bitset<>::npos;
-       current_bit = drop_bitset.find_next(current_bit)) {
+       current_bit = add_bitset.find_next(current_bit)) {
     // 1. set current bit
     SetBit(current_bit);
 
@@ -328,12 +328,44 @@ std::string CompressedIndexConfigContainer::ToString() const {
     str_stream << "Table OID: " << table_oid << " Compressed Section: "
                << bitset_str.substr(start_idx, end_idx - start_idx)
                << std::endl;
-    for (auto col_iter : table_indexid_map_.at(table_oid)) {
+    size_t set_idx = start_idx;
+    while (set_idx != boost::dynamic_bitset<>::npos && set_idx < end_idx) {
       str_stream << "(";
-      for (auto col_oid : col_iter.first) {
+      for (auto col_oid : indexid_table_map_.at(table_oid).at(set_idx)) {
         str_stream << col_oid << ",";
       }
-      str_stream << "):" << col_iter.second << std::endl;
+      str_stream << "):" << set_idx << std::endl;
+      set_idx = GetNextSetIndexConfig(set_idx);
+    }
+  }
+  return str_stream.str();
+}
+
+std::string CompressedIndexConfigContainer::ToString(const boost::dynamic_bitset<>& bs) const {
+  // First get the entire bitset
+  std::stringstream str_stream;
+  std::string bitset_str;
+  boost::to_string(bs, bitset_str);
+  // since bitset follows MSB <---- LSB
+  std::reverse(bitset_str.begin(), bitset_str.end());
+  str_stream << "Database: " << database_name_ << std::endl;
+  str_stream << "Compressed Index Representation: " << bitset_str << std::endl;
+  for (auto tbl_offset_iter = table_offset_reverse_map_.begin();
+       tbl_offset_iter != table_offset_reverse_map_.end(); ++tbl_offset_iter) {
+    size_t start_idx = tbl_offset_iter->first;
+    size_t end_idx = GetNextTableIdx(start_idx);
+    oid_t table_oid = tbl_offset_iter->second;
+    str_stream << "Table OID: " << table_oid << " Compressed Section: "
+               << bitset_str.substr(start_idx, end_idx - start_idx)
+               << std::endl;
+    size_t set_idx = start_idx;
+    while (set_idx != boost::dynamic_bitset<>::npos && set_idx < end_idx) {
+      str_stream << "(";
+      for (auto col_oid : indexid_table_map_.at(table_oid).at(set_idx)) {
+        str_stream << col_oid << ",";
+      }
+      str_stream << "):" << set_idx << std::endl;
+      set_idx = bs.find_next(set_idx);
     }
   }
   return str_stream.str();

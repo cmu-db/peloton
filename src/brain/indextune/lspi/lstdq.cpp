@@ -30,6 +30,7 @@ void LSTDQModel::Update(const vector_eig &state_feat_curr,
       model_variance_ * (state_feat_curr)*var1.transpose() * model_variance_;
   double epsilon = true_cost - var1.dot(weights_);
   vector_eig error = model_variance_ * state_feat_curr * (epsilon / var2);
+  weights_ += error;
   model_variance_ -= var3 / var2;
   // TODO(saatvik): Log error here?
 }

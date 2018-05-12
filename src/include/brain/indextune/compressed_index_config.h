@@ -133,6 +133,7 @@ class CompressedIndexConfigContainer {
    * @brief Extremely verbose representation
    */
   std::string ToString() const;
+  std::string ToString(const boost::dynamic_bitset<>& bs) const;
 
  private:
   std::string database_name_;

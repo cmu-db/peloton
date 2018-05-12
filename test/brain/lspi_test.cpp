@@ -70,19 +70,16 @@ TEST_F(LSPITests, TuneTest) {
   auto query_strings = config.second;
 
   // Create all the required tables for this workloads.
-  for (auto table_schema : table_schemas) {
+  for (auto &table_schema : table_schemas) {
     testing_util.CreateTable(table_schema);
   }
 
   brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids);
 
-  brain::CompressedIndexConfigContainer compressed_idx_config(database_name,
-                                                              ori_table_oids);
-
   int CATALOG_SYNC_INTERVAL = 2;
 
-  std::vector<double> query_latencies;
-  std::vector<std::string> query_strs;
+  std::vector<double> batch_costs;
+  std::vector<std::string> batch_queries;
   for (size_t i = 1; i <= query_strings.size(); i++) {
     auto query = query_strings[i - 1];
 
@@ -97,26 +94,30 @@ TEST_F(LSPITests, TuneTest) {
 
     // Get the first statement.
     auto sql_statement = std::shared_ptr<parser::SQLStatement>(
-        stmt_list.get()->PassOutStatement(0));
+        stmt_list->PassOutStatement(0));
 
     binder->BindNameToNode(sql_statement.get());
     txn_manager.CommitTransaction(txn);
 
     auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        compressed_idx_config);
+        *index_tuner.GetConfigContainer());
     auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
         sql_statement, index_config, database_name);
-    auto latency = result->cost;
+    auto cost = result->cost;
 
+    LOG_DEBUG("Iter %zu", i);
     LOG_DEBUG("query: %s", query.c_str());
-    LOG_DEBUG("latency: %f", latency);
+    LOG_DEBUG("index config(compressed): %s", index_tuner.GetConfigContainer()->ToString().c_str());
+    LOG_DEBUG("index config: %s", index_config.ToString().c_str());
+    LOG_DEBUG("cost: %f", cost);
 
-    query_strs.push_back(query);
-    query_latencies.push_back(latency);
+    batch_queries.push_back(query);
+    batch_costs.push_back(cost);
     if (i % CATALOG_SYNC_INTERVAL == 0) {
-      index_tuner.Tune(query_strs, query_latencies);
-      query_strs.clear();
-      query_latencies.clear();
+      LOG_DEBUG("Tuning...");
+      index_tuner.Tune(batch_queries, batch_costs);
+      batch_queries.clear();
+      batch_costs.clear();
     }
   }
 }
