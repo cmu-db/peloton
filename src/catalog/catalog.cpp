@@ -540,8 +540,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
 
   ResultType success = CreateIndex(
-      database_object->GetDatabaseOid(), table_object->GetTableOid(), populate, key_attrs,
-      schema_name, index_name, index_type, index_constraint, unique_keys, txn);
+      database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
+      schema_name, index_name, index_type, index_constraint, unique_keys, txn, populate);
 
   return success;
 }
