@@ -861,9 +861,11 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // before we unlink the aborted version from version list
       ItemPointer *index_entry_ptr =
           tile_group_header->GetIndirection(tuple_slot);
-      UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-          index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-      PELOTON_ASSERT(res == true);
+      if (index_entry_ptr) {
+        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+        PELOTON_ASSERT(res == true);
+      }
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.
@@ -909,9 +911,11 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // before we unlink the aborted version from version list
       ItemPointer *index_entry_ptr =
           tile_group_header->GetIndirection(tuple_slot);
-      UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-          index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-      PELOTON_ASSERT(res == true);
+      if (index_entry_ptr) {
+        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+        PELOTON_ASSERT(res == true);
+      }
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.

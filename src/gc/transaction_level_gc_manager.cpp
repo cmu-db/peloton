@@ -378,11 +378,14 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   if (!immutable && num_recycled >= max_recycled &&
       table->IsActiveTileGroup(tile_group_id) == false) {
 
+    LOG_TRACE("Setting tile_group %u to immutable", tile_group_id);
     tile_group_header->SetImmutabilityWithoutNotifyingGC();
+    LOG_TRACE("Purging tile_group %u recycled slots", tile_group_id);
     recycle_stack->RemoveAllWithTileGroup(tile_group_id);
 
     // create task to compact this tile group
     // add to the worker queue
+    LOG_TRACE("Adding tile_group %u to compaction queue", tile_group_id);
     AddToCompactionQueue(tile_group_id);
     immutable = true;
   }
@@ -396,7 +399,7 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   if (num_recycled == tuples_per_tile_group) {
     // Spin here until the other GC threads stop operating on this TileGroup
     while (tile_group_header->GetGCReaders() > 1);
-
+    LOG_TRACE("Dropping tile_group %u", tile_group_id);
     table->DropTileGroup(tile_group_id);
   }
 

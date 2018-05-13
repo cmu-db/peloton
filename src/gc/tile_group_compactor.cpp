@@ -17,6 +17,7 @@ namespace peloton {
 namespace gc {
 
 void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
+  LOG_TRACE("Attempting to move tuples out of tile_group %u", tile_group_id);
 
   size_t attempts = 0;
   size_t max_attempts = 100;
@@ -30,6 +31,7 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
     auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
+      LOG_TRACE("tile_group %u no longer exists", tile_group_id);
       return; // this tile group no longer exists
     }
 
@@ -39,13 +41,14 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
     if (table == nullptr) {
       return; // this table no longer exists
     }
-
     bool success = MoveTuplesOutOfTileGroup(table, tile_group);
 
     if (success) {
+      LOG_TRACE("Moved tuples out of tile_group %u", tile_group_id);
       return;
     }
 
+    LOG_TRACE("Moving tuples out of tile_group %u failed, retrying...", tile_group_id);
     // Otherwise, transaction failed, so we'll retry with exponential backoff
     std::this_thread::sleep_for(pause_time);
     pause_time = std::min(pause_time * 2, maxPauseTime);
