@@ -101,7 +101,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 	if (is_dict_encoded) return;
 	SetAttributes(tile);
 	std::vector<type::Value> element_array;
-	LOG_DEBUG("dictionary encode, database_id: %d, table_id: %d, tile_group_id: %d"
+	LOG_TRACE("dictionary encode, database_id: %d, table_id: %d, tile_group_id: %d"
 				", tile_id: %d", database_id, table_id, tile_group_id, tile_id);
 
 	// use a 2d vector to save the data
@@ -110,7 +110,7 @@ void DictEncodedTile::DictEncode(Tile *tile) {
 	for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
 		// if it is inlined, no need to compress!
 		if (dict_encoded_columns.count(column_idx) > 0) {
-			LOG_DEBUG("encoding column %s", schema.GetColumn(column_idx).column_name.c_str());
+			LOG_TRACE("encoding column %s", schema.GetColumn(column_idx).column_name.c_str());
 			for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
 				type::Value curr_old_val = tile->GetValue(tuple_offset, column_idx);
 				type::Value curr_val;
@@ -185,7 +185,7 @@ Tile* DictEncodedTile::DictDecode() {
     	}
 	}
 
-	auto *new_tile = new Tile(backend_type, tile_group_header, *GetSchema(), tile_group, num_tuple_slots);
+	auto *new_tile = new Tile(backend_type, tile_group_header, original_schema, tile_group, num_tuple_slots);
   for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
 		for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
 			new_tile->SetValueFast(new_data_vector[column_idx][tuple_offset], tuple_offset, 
