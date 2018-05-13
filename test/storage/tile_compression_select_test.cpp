@@ -18,39 +18,39 @@ namespace test {
 class CompressionSelectTest : public PelotonTest {};
 TEST_F(CompressionSelectTest, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // create database
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
-  // Create a t
+  // Create a txn
   txn = txn_manager.BeginTransaction();
 
+  std::string testTableName = "foo";
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE foo(id integer, name varchar(32));");
-  std::string testTableName = "foo";
+  TestingSQLUtil::ExecuteSQLQuery("insert into foo values(1, 'taodai')");
+  TestingSQLUtil::ExecuteSQLQuery("insert into foo values(2, 'bohan')");
+  TestingSQLUtil::ExecuteSQLQuery("insert into foo values(3, 'siyuan')");
+  txn_manager.CommitTransaction(txn);
+  LOG_INFO("insert finish");
 
-	TestingSQLUtil::ExecuteSQLQuery("insert into foo values(1, 'taodai')");
-	TestingSQLUtil::ExecuteSQLQuery("insert into foo values(2, 'bohan')");
-	TestingSQLUtil::ExecuteSQLQuery("insert into foo values(3, 'siyuan')");
-	txn_manager.CommitTransaction(txn);
-	LOG_INFO("insert finish");
-	txn = txn_manager.BeginTransaction();
-	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
-	auto TGiterator = storage::TileGroupIterator(dataTable_object);
-	std::shared_ptr<storage::TileGroup> tg;
+  txn = txn_manager.BeginTransaction();
+  auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
+  auto TGiterator = storage::TileGroupIterator(dataTable_object);
+  std::shared_ptr<storage::TileGroup> tg;
 
-	while (TGiterator.HasNext()) {
-		TGiterator.Next(tg);
-		if (!tg->IsDictEncoded()) {
-			LOG_INFO("tile group not encoded. Encode now...");
-			tg->DictEncode();
-		}
-	}
+  while (TGiterator.HasNext()) {
+    TGiterator.Next(tg);
+    if (!tg->IsDictEncoded()) {
+        LOG_INFO("tile group not encoded. Encode now...");
+        tg->DictEncode();
+    }
+  }
 
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
-
   std::ostringstream os;
   txn_manager.CommitTransaction(txn);
 
@@ -63,14 +63,14 @@ TEST_F(CompressionSelectTest, BasicTest) {
   dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
   TGiterator = storage::TileGroupIterator(dataTable_object);
   while (TGiterator.HasNext()) {
-		TGiterator.Next(tg);
-		oid_t num_tile = tg->NumTiles();
-		for (oid_t to = 0; to < num_tile; to++) {
-			auto curr_tile = tg->GetTileReference(to);
-			LOG_DEBUG("curr_tile id: %d, isEncoded: %d", curr_tile->GetTileId(), curr_tile->IsDictEncoded());
-		}
-	}
-
+    TGiterator.Next(tg);
+    oid_t num_tile = tg->NumTiles();
+    for (oid_t to = 0; to < num_tile; to++) {
+        auto curr_tile = tg->GetTileReference(to);
+        LOG_DEBUG("curr_tile id: %d, isEncoded: %d", curr_tile->GetTileId(), curr_tile->IsDictEncoded());
+    }
+  }
+  // drop database
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
