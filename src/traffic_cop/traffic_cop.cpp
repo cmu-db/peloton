@@ -88,6 +88,8 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
       LOG_DEBUG("Begin txn failed");
       return ResultType::FAILURE;
     }
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionBegin(
+        txn);
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
@@ -170,6 +172,8 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     single_statement_txn_ = true;
     txn = txn_manager.BeginTransaction(thread_id);
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionBegin(
+        txn);
   }
 
   // skip if already aborted
@@ -309,6 +313,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (txn == nullptr) {
       LOG_TRACE("Begin txn failed");
     }
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionBegin(
+        txn);
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
@@ -386,6 +392,8 @@ bool TrafficCop::BindParamsForCachePlan(
     if (txn == nullptr) {
       LOG_ERROR("Begin txn failed");
     }
+    stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionBegin(
+        txn);
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }

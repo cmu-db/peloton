@@ -43,7 +43,8 @@ ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
     RegisterMetric<DatabaseMetric>({StatsEventType::TXN_BEGIN,
                                     StatsEventType::TXN_COMMIT,
                                     StatsEventType::TXN_ABORT});
-    RegisterMetric<TupleAccessMetric>({StatsEventType::TXN_ABORT,
+    RegisterMetric<TupleAccessMetric>({StatsEventType::TXN_BEGIN,
+                                       StatsEventType::TXN_ABORT,
                                        StatsEventType::TXN_COMMIT,
                                        StatsEventType::TUPLE_READ});
   } else if (stats_mode == StatsModeType::TEST)

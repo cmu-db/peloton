@@ -67,8 +67,6 @@ TransactionContext *TransactionManager::BeginTransaction(
   }
 
   txn->SetTimestamp(function::DateFunctions::Now());
-  stats::ThreadLevelStatsCollector::GetCollectorForThread().CollectTransactionBegin(
-      txn);
   return txn;
 }
 

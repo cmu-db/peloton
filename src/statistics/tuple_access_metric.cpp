@@ -23,7 +23,6 @@ void TupleAccessRawData::WriteToCatalog(txn_id_t tid,
                                         concurrency::TransactionContext *txn) {
   auto catalog = catalog::TupleAccessMetricsCatalog::GetInstance(txn);
   auto old = catalog->GetTupleAccessMetricsCatalogObject(tid, txn);
-  auto count = tuple_access_counters_[tid];
   if (old == nullptr)
     catalog->InsertAccessMetric(tid,
                                 tuple_access_counters_[tid],

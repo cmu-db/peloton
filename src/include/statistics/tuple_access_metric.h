@@ -19,18 +19,25 @@
 
 namespace peloton {
 namespace stats {
+// TODO(tianyu): This is a hack to not log internal transactions. Fix this eventually
 class TupleAccessRawData: public AbstractRawData {
  public:
   inline void LogTupleRead(txn_id_t tid) {
-    tuple_access_counters_[tid]++;
+    if (begins_.find(tid) != begins_.end())
+      tuple_access_counters_[tid]++;
   }
-
   inline void LogCommit(txn_id_t tid) {
-    commits_.insert(tid);
+    if (begins_.find(tid) != begins_.end())
+      commits_.insert(tid);
   }
 
   inline void LogAbort(txn_id_t tid) {
-    aborts_.insert(tid);
+    if (begins_.find(tid) != begins_.end())
+      aborts_.insert(tid);
+  }
+
+  inline void LogTxnBegin(txn_id_t tid) {
+    begins_.insert(tid);
   }
 
   inline void Aggregate(AbstractRawData &other) override {
@@ -50,11 +57,14 @@ class TupleAccessRawData: public AbstractRawData {
  private:
   void WriteToCatalog(txn_id_t tid, bool complete, bool commit, concurrency::TransactionContext *txn);
   std::unordered_map<txn_id_t, uint64_t> tuple_access_counters_;
-  std::unordered_set<txn_id_t> commits_, aborts_;
+  std::unordered_set<txn_id_t> begins_, commits_, aborts_;
 };
 
 class TupleAccessMetric : public AbstractMetric<TupleAccessRawData> {
  public:
+  void OnTransactionBegin(const concurrency::TransactionContext *context) override {
+    GetRawData()->LogTxnBegin(context->GetTransactionId());
+  }
   void OnTransactionCommit(const concurrency::TransactionContext *context,
                            oid_t) override {
     GetRawData()->LogCommit(context->GetTransactionId());
