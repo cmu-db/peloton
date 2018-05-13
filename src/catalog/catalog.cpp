@@ -1099,8 +1099,8 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid, const std::s
             txn);
         column_offset++;
       }
-      // TODO: Add gc logic
-      // txn->RecordDrop(database_oid, old_table->GetOid(), INVALID_OID);
+      // Garbage collection
+      txn->RecordDropTable(old_table);
 
       // Final step of physical change should be moved to commit time
       database->ReplaceTableWithOid(table_oid, new_table);

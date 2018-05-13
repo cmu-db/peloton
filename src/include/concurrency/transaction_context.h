@@ -33,6 +33,10 @@ class TriggerSet;
 class TriggerData;
 }  // namespace trigger
 
+namespace storage {
+class DataTable;
+}
+
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
@@ -172,6 +176,14 @@ class TransactionContext : public Printable {
   void RecordUpdate(const ItemPointer &);
 
   void RecordInsert(const ItemPointer &);
+
+  void RecordDropTable(storage::DataTable *table) {
+    dropped_tables.push_back(table);
+  }
+
+  std::vector<storage::DataTable *> &GetDroppedTables() {
+    return dropped_tables;
+  }
 
   /**
    * @brief      Delete the record.
@@ -341,6 +353,9 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  /** vector of dropped data tables **/
+  std::vector<storage::DataTable *> dropped_tables;
 };
 
 }  // namespace concurrency
