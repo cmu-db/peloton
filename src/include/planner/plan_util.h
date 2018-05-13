@@ -104,6 +104,12 @@ inline void PlanUtil::GetInfo(const planner::AbstractPlan *plan,
      << std::endl;
   os << StringUtil::Indent(num_indent + peloton::ARROW_INDENT)
      << "Info: " << plan->GetInfo() << std::endl;
+  if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
+    auto tmp = const_cast<planner::AbstractPlan *>(plan);
+    auto scan = dynamic_cast<planner::AbstractScan *>(tmp);
+    os << StringUtil::Indent(num_indent + peloton::ARROW_INDENT)
+       << "Table: " << scan->GetTable()->GetName() << std::endl;
+  }
 
   auto &children = plan->GetChildren();
   os << StringUtil::Indent(num_indent + peloton::ARROW_INDENT)
