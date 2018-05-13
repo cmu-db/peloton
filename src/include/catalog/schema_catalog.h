@@ -35,7 +35,7 @@ class SchemaCatalogObject {
   friend class DatabaseCatalogObject;
 
  public:
-  SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
+  SchemaCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                       concurrency::TransactionContext *txn);
 
   inline oid_t GetSchemaOid() { return schema_oid; }

@@ -47,7 +47,7 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(codegen::WrappedTuple wrapped_tuple,
+  TableCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                      concurrency::TransactionContext *txn);
 
  public:

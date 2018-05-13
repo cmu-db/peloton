@@ -28,7 +28,7 @@
 namespace peloton {
 namespace catalog {
 
-IndexCatalogObject::IndexCatalogObject(codegen::WrappedTuple wrapped_tuple)
+IndexCatalogObject::IndexCatalogObject(codegen::WrappedTuple &wrapped_tuple)
     : index_oid(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_OID)
                     .GetAs<oid_t>()),
       index_name(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_NAME)
@@ -137,9 +137,8 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
                                IndexType index_type,
                                IndexConstraintType index_constraint,
                                bool unique_keys, std::vector<oid_t> indekeys,
-                               type::AbstractPool *pool,
+                               UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
-  (void) pool;
   // Create the tuple first
   std::vector<std::vector<ExpressionPtr>> tuples;
 

@@ -143,9 +143,8 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  oid_t column_id, oid_t column_offset,
                                  type::TypeId column_type, bool is_inlined,
                                  const std::vector<Constraint> &constraints,
-                                 type::AbstractPool *pool,
+                                 UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
-  (void) pool;
   // Create the tuple first
   std::vector<std::vector<ExpressionPtr>> tuples;
 

@@ -38,7 +38,7 @@ namespace catalog {
 
 class LanguageCatalogObject {
  public:
-  LanguageCatalogObject(codegen::WrappedTuple tuple);
+  LanguageCatalogObject(codegen::WrappedTuple &tuple);
 
   oid_t GetOid() const { return lang_oid_; }
 

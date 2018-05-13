@@ -25,7 +25,7 @@ namespace catalog {
 
 #define PROC_CATALOG_NAME "pg_proc"
 
-ProcCatalogObject::ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
+ProcCatalogObject::ProcCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                                      concurrency::TransactionContext *txn)
     : oid_(wrapped_tuple.GetValue(0).GetAs<oid_t>()),
       name_(wrapped_tuple.GetValue(1).GetAs<const char *>()),
@@ -67,9 +67,8 @@ bool ProcCatalog::InsertProc(const std::string &proname,
                              type::TypeId prorettype,
                              const std::vector<type::TypeId> &proargtypes,
                              oid_t prolang, const std::string &prosrc,
-                             type::AbstractPool *pool,
+                             UNUSED_ATTRIBUTE type::AbstractPool *pool,
                              concurrency::TransactionContext *txn) {
-  (void) pool;
   // Create the tuple first
   std::vector<std::vector<ExpressionPtr>> tuples;
 

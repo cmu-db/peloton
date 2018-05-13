@@ -41,7 +41,7 @@ class LanguageCatalogObject;
 //===----------------------------------------------------------------------===//
 class ProcCatalogObject {
  public:
-  ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
+  ProcCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                     concurrency::TransactionContext *txn);
   // Accessors
 

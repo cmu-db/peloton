@@ -44,7 +44,7 @@ class IndexCatalogObject {
   friend class TableCatalogObject;
 
  public:
-  IndexCatalogObject(codegen::WrappedTuple wrapped_tuple);
+  IndexCatalogObject(codegen::WrappedTuple &wrapped_tuple);
 
   inline oid_t GetIndexOid() { return index_oid; }
   inline const std::string &GetIndexName() { return index_name; }

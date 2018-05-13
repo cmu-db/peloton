@@ -32,7 +32,7 @@
 namespace peloton {
 namespace catalog {
 
-TableCatalogObject::TableCatalogObject(codegen::WrappedTuple wrapped_tuple,
+TableCatalogObject::TableCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                                        concurrency::TransactionContext *txn)
     : table_oid(wrapped_tuple.GetValue(TableCatalog::ColumnId::TABLE_OID)
                     .GetAs<oid_t>()),
@@ -389,9 +389,8 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                const std::string &schema_name,
-                               oid_t database_oid, type::AbstractPool *pool,
+                               oid_t database_oid, UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
-  (void) pool;
   // Create the tuple first
   std::vector<std::vector<ExpressionPtr>> tuples;
 

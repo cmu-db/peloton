@@ -28,7 +28,7 @@ namespace peloton {
 namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(
-    codegen::WrappedTuple wrapped_tuple, concurrency::TransactionContext *txn)
+    codegen::WrappedTuple &wrapped_tuple, concurrency::TransactionContext *txn)
     : database_oid(
           wrapped_tuple.GetValue(DatabaseCatalog::ColumnId::DATABASE_OID)
               .GetAs<oid_t>()),
@@ -296,11 +296,8 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
 
 bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
                                      const std::string &database_name,
-                                     type::AbstractPool *pool,
+                                     UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-
-  (void) pool;
-
   std::vector<std::vector<ExpressionPtr>> tuples;
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);

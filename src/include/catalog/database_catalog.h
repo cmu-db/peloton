@@ -41,7 +41,7 @@ class DatabaseCatalogObject {
   friend class CatalogCache;
 
  public:
-  DatabaseCatalogObject(codegen::WrappedTuple wrapped_tuple,
+  DatabaseCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                         concurrency::TransactionContext *txn);
 
   void EvictAllTableObjects();

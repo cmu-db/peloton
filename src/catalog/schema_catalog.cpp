@@ -26,7 +26,7 @@
 namespace peloton {
 namespace catalog {
 
-SchemaCatalogObject::SchemaCatalogObject(codegen::WrappedTuple wrapped_tuple,
+SchemaCatalogObject::SchemaCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                                          concurrency::TransactionContext *txn)
     : schema_oid(wrapped_tuple.GetValue(SchemaCatalog::ColumnId::SCHEMA_OID)
                      .GetAs<oid_t>()),
@@ -75,10 +75,9 @@ std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
 
 bool SchemaCatalog::InsertSchema(oid_t schema_oid,
                                  const std::string &schema_name,
-                                 type::AbstractPool *pool,
+                                 UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
-  (void)pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(schema_oid);

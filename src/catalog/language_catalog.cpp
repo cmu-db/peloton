@@ -22,7 +22,7 @@
 namespace peloton {
 namespace catalog {
 
-LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple tuple)
+LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple &tuple)
     : lang_oid_(tuple.GetValue(0).GetAs<oid_t>()),
       lang_name_(tuple.GetValue(1).GetAs<const char *>()) {}
 
@@ -48,9 +48,8 @@ LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
 
 // insert a new language by name
 bool LanguageCatalog::InsertLanguage(const std::string &lanname,
-                                     type::AbstractPool *pool,
+                                     UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-  (void) pool;
   std::vector<std::vector<ExpressionPtr>> tuples;
   tuples.emplace_back();
   auto &values = tuples[0];
@@ -115,7 +114,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (!result_tuples.empty()) {
-    ret.reset(new LanguageCatalogObject(std::move(result_tuples[0])));
+    ret.reset(new LanguageCatalogObject(result_tuples[0]));
   }
 
   return ret;
@@ -145,7 +144,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
 
   std::unique_ptr<LanguageCatalogObject> ret;
   if (!result_tuples.empty()) {
-    ret.reset(new LanguageCatalogObject(std::move(result_tuples[0])));
+    ret.reset(new LanguageCatalogObject(result_tuples[0]));
   }
 
   return ret;
