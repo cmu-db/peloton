@@ -131,12 +131,12 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
     if (node.GetForeignKeys().empty() == false) {
       int count = 1;
       auto catalog = catalog::Catalog::GetInstance();
-      auto source_table = catalog->GetTableWithName(database_name, schema_name, schema_name,
+      auto source_table = catalog->GetTableWithName(database_name, schema_name, session_namespace,
                                                     table_name, current_txn);
 
       for (auto fk : node.GetForeignKeys()) {
         auto sink_table = catalog->GetTableWithName(
-            database_name, schema_name, schema_name, fk.sink_table_name, current_txn);
+            database_name, fk.sink_table_schema, session_namespace, fk.sink_table_name, current_txn);
         // Source Column Offsets
         std::vector<oid_t> source_col_ids;
         for (auto col_name : fk.foreign_key_sources) {

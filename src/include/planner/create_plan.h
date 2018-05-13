@@ -43,6 +43,7 @@ struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
   std::string sink_table_name;
+  std::string sink_table_schema;
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
