@@ -181,12 +181,13 @@ void *ForeignKeyTest(int port) {
                ConstraintException);
   txn5.commit();
 
+  pqxx::work txn6(C);
   // Create temp table "student"
-  txn1.exec("CREATE TEMP TABLE student(id INT PRIMARY KEY, name VARCHAR);");
+  txn6.exec("CREATE TEMP TABLE student(id INT PRIMARY KEY, name VARCHAR);");
   // Now the permanent table "student" becomes invisible. However, it can still
   // be referenced as a foreign key by a permanent table by explicitly
   // specifying the "public" namespace
-  pqxx::work txn6(C);
+  
   txn6.exec(
       "CREATE TABLE enroll5(s_id INT, c_id INT, "
       "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
