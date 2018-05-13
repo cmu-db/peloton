@@ -273,6 +273,24 @@ CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
                                                           col_oids);
 }
 
+std::vector<oid_t> CompressedIndexConfigContainer::GetIndexColumns(size_t global_offset) const {
+  size_t table_offset;
+  if(table_offset_reverse_map_.find(global_offset) == table_offset_reverse_map_.end()) {
+    auto it = table_offset_reverse_map_.lower_bound(global_offset);
+    if (it == table_offset_reverse_map_.end()) {
+      table_offset = table_offset_reverse_map_.rbegin()->first;
+    } else {
+      --it;
+      table_offset = it->first;
+    }
+  } else {
+    table_offset = global_offset;
+  }
+
+  const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
+  return indexid_table_map_.at(table_oid).at(global_offset);
+}
+
 size_t CompressedIndexConfigContainer::GetConfigurationCount() const {
   return next_table_offset_;
 }

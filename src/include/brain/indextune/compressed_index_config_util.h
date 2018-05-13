@@ -97,6 +97,11 @@ class CompressedIndexConfigUtil {
   static void ConstructStateConfigFeature(
       const boost::dynamic_bitset<> &config_set, vector_eig &config_vec);
 
+  /**
+   * @brief: A general util to print a vector
+   */
+   static std::string ToString(std::vector<oid_t> config_vector);
+
  private:
   /**
    * @brief: converts query string to a binded sql-statement list

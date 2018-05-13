@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/indextune/lspi/rlse.h"
+#include <iostream>
 
 namespace peloton {
 namespace brain {

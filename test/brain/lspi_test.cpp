@@ -87,9 +87,9 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
-  std::set<oid_t> ori_table_oids;
+  std::set<oid_t> ignore_table_oids;
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ori_table_oids);
+                                                    ignore_table_oids);
 
   auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
   auto table_schemas = config.first;
@@ -101,7 +101,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
                                     MAX_INDEX_SIZE);
 
 
@@ -158,9 +158,9 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
-  std::set<oid_t> ori_table_oids;
+  std::set<oid_t> ignore_table_oids;
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ori_table_oids);
+                                                    ignore_table_oids);
 
   auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
   auto table_schemas = config.first;
@@ -172,7 +172,7 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
                                     MAX_INDEX_SIZE);
 
 
@@ -229,9 +229,9 @@ TEST_F(LSPITests, TuneTestFiveColTable) {
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
-  std::set<oid_t> ori_table_oids;
+  std::set<oid_t> ignore_table_oids;
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ori_table_oids);
+                                                    ignore_table_oids);
 
   auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableFiveColW}, 2);
   auto table_schemas = config.first;
@@ -243,7 +243,7 @@ TEST_F(LSPITests, TuneTestFiveColTable) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
                                     MAX_INDEX_SIZE);
 
 
@@ -301,9 +301,9 @@ TEST_F(LSPITests, TuneTestFiveColTable) {
 //
 //  index_selection::TestingIndexSelectionUtil testing_util(database_name);
 //
-//  std::set<oid_t> ori_table_oids;
+//  std::set<oid_t> ignore_table_oids;
 //  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-//                                                    ori_table_oids);
+//                                                    ignore_table_oids);
 //
 //  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::MultiTableMultiColW}, 2);
 //  auto table_schemas = config.first;
@@ -315,7 +315,7 @@ TEST_F(LSPITests, TuneTestFiveColTable) {
 //    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
 //  }
 //
-//  brain::LSPIIndexTuner index_tuner(database_name, ori_table_oids, false,
+//  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
 //                                    MAX_INDEX_SIZE);
 //
 //

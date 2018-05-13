@@ -82,11 +82,19 @@ class CompressedIndexConfigContainer {
   size_t GetConfigurationCount() const;
 
   /**
-   * Given a global offset, get the corresponding index
+   * Given a global offset, get the corresponding hypothetical index object
    * @param global_offset: the global offset
    * @return the index object at "global_offset" of current configuration
    */
   std::shared_ptr<brain::HypotheticalIndexObject> GetIndex(
+      size_t global_offset) const;
+
+  /**
+ * Given a global offset, get the corresponding internal index config repr
+ * @param global_offset: the global offset
+ * @return the internal index config mapped to this "global_offset"
+ */
+  std::vector<oid_t> GetIndexColumns(
       size_t global_offset) const;
 
   /**
