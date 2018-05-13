@@ -195,7 +195,7 @@ void Catalog::Bootstrap() {
   // TODO: change pg_proc to per database
   ProcCatalog::GetInstance(txn);
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
 
