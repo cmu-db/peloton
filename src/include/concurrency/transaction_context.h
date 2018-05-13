@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "catalog/catalog_cache.h"
+#include "catalog/table_catalog.h"
 #include "common/exception.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
@@ -286,8 +287,16 @@ class TransactionContext : public Printable {
    * @brief table_oid add table oid created in the transaction into table
    * @param table_oid the temp table oid to be added
    */
-  inline void AddTempTableOid(oid_t table_oid) {
-    temp_table_oids.push_back(table_oid);
+  inline void AddTempTableObject(std::shared_ptr<catalog::TableCatalogObject> table_object) {
+    temp_table_objects.push_back(table_object);
+  }
+
+  /**
+   * @breif get temp table objects
+   * @return the temp table objects
+   */
+  inline std::vector<std::shared_ptr<catalog::TableCatalogObject>> GetTempTableObjects() {
+    return temp_table_objects;
   }
 
   /**
@@ -368,7 +377,7 @@ class TransactionContext : public Printable {
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
   //temp table oid.
-  std::vector<oid_t> temp_table_oids;
+  std::vector<std::shared_ptr<catalog::TableCatalogObject>> temp_table_objects;
   OnCommitAction commit_option_; //what we do on commit?
 };
 

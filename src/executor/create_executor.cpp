@@ -129,7 +129,10 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
       //get the table object
       auto table_object = catalog->GetTableObject(database_name, schema_name, session_namespace, 
                                                   table_name, current_txn);
-      current_txn->AddTempTableOid(table_object->GetTableOid());
+      //record the table oid if we need to delete rows or drop the temp table.
+      if (node.GetCommitOption() == ONCOMMIT_DROP || node.GetCommitOption() == ONCOMMIT_DELETE_ROWS) {
+          current_txn->AddTempTableObject(table_object);
+      }
     }
     LOG_TRACE("Creating table succeeded!");
 

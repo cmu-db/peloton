@@ -105,6 +105,14 @@ ResultType TrafficCop::CommitQueryHelper() {
   // I will block following queries in that transaction until 'COMMIT' or
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
+    //drop all the temp tables if chosen
+    if (txn->GetCommitOption() == ONCOMMIT_DROP) {
+      auto temp_table_objects = txn->GetTempTableObjects();
+      for (auto iter = temp_table_objects.begin(); iter != temp_table_objects.end(); iter++) {
+        auto table_ptr = *iter;
+        catalog::Catalog::GetInstance()->DropTable(table_ptr->GetDatabaseOid(), table_ptr->GetTableOid(), txn);
+      }
+    }
     // txn committed
     return txn_manager.CommitTransaction(txn);
   } else {

@@ -966,7 +966,6 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   parser::CreateStatement *result =
       new CreateStatement(CreateStatement::CreateType::kTable);
   result->commit_option = root->oncommit;
-  LOG_INFO("commit option is %d", root->oncommit);
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
   // relpersistence == 't' indicates that it's a temporary table. It's the
