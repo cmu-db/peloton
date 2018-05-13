@@ -45,6 +45,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
   // Procedure to add a new workload:
   // 1. Create all the table schemas required for the workload queries.
   // 2. Create all the required workload query strings.
+  // Note on Naming of workloads: <num_tables>Table<num_accessed_cols>ColW
   switch (type) {
     case SingleTableTwoColW1: {
       table_name = "dummy1";
@@ -89,7 +90,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
                            " WHERE a = 190 and c = 250");
       break;
     }
-    case SingleTableFiveColW: {
+    case SingleTableThreeColW: {
       table_name = "dummy3";
       table_schemas.emplace_back(
           table_name,

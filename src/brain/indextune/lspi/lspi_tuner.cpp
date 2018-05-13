@@ -114,6 +114,7 @@ void LSPIIndexTuner::FindOptimalConfig(
       hypothetical_config.set(index_id_rec);
       LOG_DEBUG("Prev: %s", index_config_->ToString(curr_config_set).c_str());
       LOG_DEBUG("Trying Add Cand: %s", index_config_->ToString(hypothetical_config).c_str());
+      LOG_DEBUG("Eigen Vector: %s", CompressedIndexConfigUtil::ToString(query_config_vec).c_str());
       // Construct the query-state and state feature
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,

@@ -102,6 +102,11 @@ class CompressedIndexConfigUtil {
    */
    static std::string ToString(std::vector<oid_t> config_vector);
 
+  /**
+  * @brief: A general util to print an Eigen vector
+  */
+  static std::string ToString(vector_eig v);
+
  private:
   /**
    * @brief: converts query string to a binded sql-statement list

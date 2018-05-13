@@ -275,5 +275,11 @@ std::string CompressedIndexConfigUtil::ToString(std::vector<oid_t> config_vector
   return str_stream.str();
 }
 
+std::string CompressedIndexConfigUtil::ToString(peloton::vector_eig v) {
+  std::stringstream str_stream;
+  str_stream << v.transpose() << std::endl;
+  return str_stream.str();
+}
+
 }  // namespace brain
 }  // namespace peloton
