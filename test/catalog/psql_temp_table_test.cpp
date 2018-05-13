@@ -249,6 +249,136 @@ void ForeignKeyTest(int port) {
   }
 }
 
+/**
+ * On-commit options test - check the options [ON COMMIT PRESERVE ROWS |
+ * DELETE ROWS | DROP] are handled correctly
+ */
+void OnCommitOptionsTest(int port) {
+  LOG_INFO("Start OnCommitOptionsTest");
+
+  try {
+    pqxx::connection C1(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable "
+        "application_name=psql",
+        port));
+    pqxx::work txn11(C1);
+
+    // Begin a transaction
+    txn11.exec("BEGIN;");
+
+    LOG_INFO("Creating temp table with default on-commit option");
+    // The default option is ON COMMIT PRESERVE ROWS
+    txn11.exec("DROP TABLE IF EXISTS employee1;");
+    txn11.exec("CREATE TEMP TABLE employee1(id INT, name VARCHAR(100));");
+    txn11.exec("INSERT INTO employee1 VALUES(1, 'trump');");
+
+    LOG_INFO("Creating temp table with \"ON COMMIT PRESERVE ROWS\"");
+    txn11.exec("DROP TABLE IF EXISTS employee2;");
+    txn11.exec(
+        "CREATE TEMP TABLE employee2(id INT, name VARCHAR(100)) ON COMMIT "
+        "PRESERVE ROWS;");
+    txn11.exec("INSERT INTO employee2 VALUES(1, 'trump');");
+    txn11.exec("INSERT INTO employee2 VALUES(2, 'trumpet');");
+
+    LOG_INFO("Creating temp table with \"ON COMMIT DELETE ROWS\"");
+    txn11.exec("DROP TABLE IF EXISTS employee3;");
+    txn11.exec(
+        "CREATE TEMP TABLE employee3(id INT, name VARCHAR(100)) ON COMMIT "
+        "DELETE ROWS;");
+    txn11.exec("INSERT INTO employee3 VALUES(1, 'trump');");
+    txn11.exec("INSERT INTO employee3 VALUES(2, 'trumpet');");
+    txn11.exec("INSERT INTO employee3 VALUES(3, 'trumpette');");
+
+    LOG_INFO("Creating temp table with \"ON COMMIT DROP\"");
+    txn11.exec("DROP TABLE IF EXISTS employee4;");
+    txn11.exec(
+        "CREATE TEMP TABLE employee4(id INT, name VARCHAR(100)) ON COMMIT "
+        "DROP;");
+
+    LOG_INFO("Check: all four tables have been created successfully");
+    pqxx::result R = txn11.exec("select * from employee1;");
+    EXPECT_EQ(R.size(), 1);
+
+    R = txn11.exec("select * from employee2;");
+    EXPECT_EQ(R.size(), 2);
+
+    R = txn11.exec("select * from employee3;");
+    EXPECT_EQ(R.size(), 3);
+
+    R = txn11.exec("select * from employee4;");
+    EXPECT_EQ(R.size(), 0);
+
+    // Commit the transaction
+    txn11.exec("COMMIT;");
+
+    LOG_INFO(
+        "Check: all rows are preserved for the table created with default "
+        "on-commit option");
+    R = txn11.exec("select * from employee1;");
+    EXPECT_EQ(R.size(), 1);
+
+    LOG_INFO(
+        "Check: all rows are preserved for the table created with \"ON COMMIT "
+        "PRESERVE ROWS\"");
+    R = txn11.exec("select * from employee2;");
+    EXPECT_EQ(R.size(), 2);
+
+    LOG_INFO(
+        "Check: all rows are deleted for the table created with \"ON COMMIT "
+        "DELETE ROWS\"");
+    R = txn11.exec("select * from employee3;");
+    EXPECT_EQ(R.size(), 0);
+    txn11.commit();
+
+    LOG_INFO("Check: the table created with \"ON COMMIT DROP\" is dropped");
+    pqxx::work txn12(C1);
+    try {
+      txn12.exec("select * from employee4;");
+      EXPECT_TRUE(false);
+    } catch (const std::exception &e) {
+      EXPECT_TRUE(strstr(e.what(), "employee4 is not found") != nullptr);
+    }
+
+    C1.disconnect();
+
+    pqxx::connection C2(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable "
+        "application_name=psql",
+        port));
+
+    LOG_INFO("Check: all tables are dropped when the session is closed");
+    pqxx::work txn21(C2);
+    try {
+      txn21.exec("select * from employee1;");
+      EXPECT_TRUE(false);
+    } catch (const std::exception &e) {
+      EXPECT_TRUE(strstr(e.what(), "employee1 is not found") != nullptr);
+    }
+
+    pqxx::work txn22(C2);
+    try {
+      txn22.exec("select * from employee2;");
+      EXPECT_TRUE(false);
+    } catch (const std::exception &e) {
+      EXPECT_TRUE(strstr(e.what(), "employee2 is not found") != nullptr);
+    }
+
+    pqxx::work txn23(C2);
+    try {
+      txn23.exec("select * from employee3;");
+      EXPECT_TRUE(false);
+    } catch (const std::exception &e) {
+      EXPECT_TRUE(strstr(e.what(), "employee3 is not found") != nullptr);
+    }
+
+    C2.disconnect();
+    LOG_INFO("Passed OnCommitOptionsTest");
+  } catch (const std::exception &e) {
+    LOG_ERROR("[OnCommitOptionsTest] Exception occurred: %s", e.what());
+    EXPECT_TRUE(false);
+  }
+}
+
 TEST_F(PsqlTempTableTests, PsqlTempTableTests) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
@@ -266,6 +396,7 @@ TEST_F(PsqlTempTableTests, PsqlTempTableTests) {
 
   TableVisibilityTest(port);
   ForeignKeyTest(port);
+  OnCommitOptionsTest(port);
 
   server.Close();
   serverThread.join();
