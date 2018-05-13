@@ -561,7 +561,7 @@ TableCatalog::GetTableObjects(concurrency::TransactionContext *txn) {
   return database_object->GetTableObjects();
 }
 
-/*@brief   read table catalog objects from pg_table using database oid
+/*@brief   read table catalog objects from pg_table using schema_name
  * @param   schema_name  the schema name we want to search
  * @param   txn     TransactionContext
  * @return  table catalog objects

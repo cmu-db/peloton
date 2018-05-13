@@ -314,7 +314,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   try {
     // Run binder
     auto bind_node_visitor = binder::BindNodeVisitor(
-        tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
+        tcop_txn_state_.top().first, default_database_name_, session_namespace_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
     auto plan = optimizer_->BuildPelotonPlanTree(
@@ -382,7 +382,11 @@ bool TrafficCop::BindParamsForCachePlan(
   }
   // Run binder
   auto bind_node_visitor = binder::BindNodeVisitor(tcop_txn_state_.top().first,
+<<<<<<< HEAD
                                                    default_database_name_, temp_session_name_);
+=======
+                                                   default_database_name_, session_namespace_);
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
 
   std::vector<type::Value> param_values;
   for (const std::unique_ptr<expression::AbstractExpression> &param :
@@ -420,7 +424,11 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
       auto columns =
           static_cast<storage::DataTable *>(
               catalog::Catalog::GetInstance()->GetTableWithName(
+<<<<<<< HEAD
                   from_table->GetDatabaseName(), from_table->GetSchemaName(), temp_session_name_,
+=======
+                  from_table->GetDatabaseName(), from_table->GetSchemaName(), session_namespace_,
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
                   from_table->GetTableName(), GetCurrentTxnState().first))
               ->GetSchema()
               ->GetColumns();
@@ -585,7 +593,11 @@ ResultType TrafficCop::ExecuteStatement(
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
           auto bind_node_visitor = binder::BindNodeVisitor(
+<<<<<<< HEAD
               tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
+=======
+              tcop_txn_state_.top().first, default_database_name_, session_namespace_);
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
           bind_node_visitor.BindNameToNode(
               statement->GetStmtParseTreeList()->GetStatement(0));
           auto plan = optimizer_->BuildPelotonPlanTree(
@@ -614,9 +626,15 @@ void TrafficCop::DropTempTables() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   //drop all the temp tables under this namespace
+<<<<<<< HEAD
   catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, temp_session_name_, txn);
   //drop the schema
   catalog::Catalog::GetInstance()->DropSchema(default_database_name_, temp_session_name_, txn);
+=======
+  catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, session_namespace_, txn);
+  //drop the schema
+  catalog::Catalog::GetInstance()->DropSchema(default_database_name_, session_namespace_, txn);
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   txn_manager.CommitTransaction(txn);
 }
 
@@ -624,7 +642,11 @@ void TrafficCop::CreateTempSchema() {
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+<<<<<<< HEAD
   catalog::Catalog::GetInstance()->CreateSchema(default_database_name_, temp_session_name_, txn);
+=======
+  catalog::Catalog::GetInstance()->CreateSchema(default_database_name_, session_namespace_, txn);
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   txn_manager.CommitTransaction(txn);
 }
 

@@ -176,7 +176,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       new catalog::Schema({id_column, manager_id_column, name_column}));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME,
                            DEFAULT_DB_NAME, std::move(table_schema),
                            CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
@@ -185,8 +185,9 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Table created!");
 
-  storage::DataTable *table = catalog->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+  storage::DataTable *table =
+      catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                DEFAULT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
@@ -211,7 +212,8 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Binding parse tree...");
   auto parse_tree = insert_stmt->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -259,7 +261,8 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -304,7 +307,8 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -344,7 +348,8 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -385,7 +390,8 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = delete_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 

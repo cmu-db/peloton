@@ -83,7 +83,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Binding parse tree...");
   auto parse_tree = create_stmt->GetStatement(0);
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -134,7 +135,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = insert_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -176,7 +178,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
-  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
@@ -205,7 +208,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME,
+      "department_table", txn);
   // Expected 2 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 

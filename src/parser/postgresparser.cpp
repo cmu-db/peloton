@@ -967,6 +967,8 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
       new CreateStatement(CreateStatement::CreateType::kTable);
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
+  // relpersistence == 't' indicates that it's a temporary table. It's the
+  // result produced by postgresparser.
   if (relation->relpersistence == 't') {
     result->is_temp_table = true;
   }

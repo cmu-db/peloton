@@ -111,7 +111,8 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parsed_stmt->GetStatement(0));
 
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
@@ -150,7 +151,8 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
-  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  auto bind_node_visitor =
+      binder::BindNodeVisitor(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME);
   bind_node_visitor.BindNameToNode(parsed_stmt->GetStatement(0));
 
   auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
