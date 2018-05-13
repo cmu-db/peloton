@@ -125,15 +125,14 @@ void PostgresCostCalculator::Visit(
       } else {
         frac_est = 1.0 / stats->cardinality;
       }
-
       /* Average frequency of values, taken from Postgres */
       auto avgfreq = (1.0 - stats->frac_null) / stats->cardinality;
 
-      // Adjust for skew
+      // Adjust for skew (Highest freq / avg freq)
       if (avgfreq > 0.0 && !stats->most_common_vals.empty() &&
           !stats->most_common_freqs.empty() &&
-          stats->most_common_freqs[0] > avgfreq) {
-        frac_est *= stats->most_common_freqs[0] / avgfreq;
+          (stats->most_common_freqs[0] / stats->num_rows) > avgfreq) {
+        frac_est *= (stats->most_common_freqs[0] / stats->num_rows) / avgfreq;
       }
 
       // Clamp the bucket frac estimate (taken from postgres)
@@ -145,6 +144,7 @@ void PostgresCostCalculator::Visit(
       bucket_size_frac = std::min(bucket_size_frac, frac_est);
     }
   }
+  LOG_TRACE("Bucket_size_frac: %f", bucket_size_frac);
 
   auto left_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
