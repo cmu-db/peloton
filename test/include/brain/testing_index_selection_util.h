@@ -29,7 +29,7 @@ enum TupleValueType { INTEGER, FLOAT, STRING };
 /**
  * Represents workload types used in the test cases.
  */
-enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2, SingleTableThreeColW = 3, MultiTableMultiColW = 4 };
+enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2, SingleTableFiveColW = 3, MultiTableMultiColW = 4 };
 
 /**
  * Represents the schema for creating tables in the test cases.

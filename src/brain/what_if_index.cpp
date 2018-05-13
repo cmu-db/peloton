@@ -71,10 +71,10 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   optimizer::Optimizer optimizer;
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query, txn);
 
-  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
-  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
-  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
-  LOG_DEBUG("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
+//  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
+//  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
+//  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
+//  LOG_DEBUG("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
   return opt_info_obj;
 }
 

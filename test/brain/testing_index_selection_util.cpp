@@ -89,7 +89,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
                            " WHERE a = 190 and c = 250");
       break;
     }
-    case SingleTableThreeColW: {
+    case SingleTableFiveColW: {
       table_name = "dummy3";
       table_schemas.emplace_back(
           table_name,
