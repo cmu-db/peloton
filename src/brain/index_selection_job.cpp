@@ -20,35 +20,19 @@
 namespace peloton {
 namespace brain {
 
-#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index_"
+#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index"
 
 void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
 
-  // Generate column stats for all the tables before we begin.
-  // TODO[vamshi]
-  // Instead of collecting stats for every table, collect them only for the
-  // tables
-  // we are analyzing i.e. tables that are referenced in the current workload.
-  optimizer::StatsStorage *stats_storage =
-      optimizer::StatsStorage::GetInstance();
-  ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
-  if (result != ResultType::SUCCESS) {
-    LOG_ERROR(
-        "Cannot generate stats for table columns. Not performing index "
-        "suggestion...");
-    txn_manager.AbortTransaction(txn);
-    return;
-  }
-
   // Query the catalog for new SQL queries.
   // New SQL queries are the queries that were added to the system
   // after the last_timestamp_
-  auto query_catalog = &catalog::QueryHistoryCatalog::GetInstance(txn);
+  auto &query_catalog = catalog::QueryHistoryCatalog::GetInstance(txn);
   auto query_history =
-      query_catalog->GetQueryStringsAfterTimestamp(last_timestamp_, txn);
+      query_catalog.GetQueryStringsAfterTimestamp(last_timestamp_, txn);
   if (query_history->size() > num_queries_threshold_) {
     LOG_INFO("Tuning threshold has crossed. Time to tune the DB!");
 
@@ -125,12 +109,12 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
 
   // Create the index name: concat - db_id, table_id, col_ids
   std::stringstream sstream;
-  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << ":" << index->db_oid << ":"
-          << index->table_oid << ":";
+  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << "_" << index->db_oid << "_"
+          << index->table_oid << "_";
   std::vector<oid_t> col_oid_vector;
   for (auto col : index->column_oids) {
     col_oid_vector.push_back(col);
-    sstream << col << ",";
+    sstream << col << "_";
   }
   auto index_name = sstream.str();
 

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#include <random>
 #include "capnp/ez-rpc.h"
 #include "capnp/message.h"
 #include "catalog/catalog.h"
@@ -19,26 +20,31 @@
 #include "common/internal_types.h"
 #include "kj/debug.h"
 #include "peloton/capnp/peloton_service.capnp.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "codegen/buffering_consumer.h"
 #include "executor/executor_context.h"
-#include "codegen/buffering_consumer.h"
-#include "codegen/proxy/string_functions_proxy.h"
-#include "codegen/query.h"
-#include "codegen/query_cache.h"
-#include "codegen/query_compiler.h"
-#include "codegen/type/decimal_type.h"
-#include "codegen/type/integer_type.h"
-#include "codegen/type/type.h"
-#include "codegen/value.h"
 #include "planner/populate_index_plan.h"
-#include "traffic_cop/traffic_cop.h"
 #include "storage/storage_manager.h"
 #include "planner/seq_scan_plan.h"
+#include "catalog/system_catalogs.h"
+#include "catalog/column_catalog.h"
+#include "binder/bind_node_visitor.h"
+#include "catalog/catalog.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/plan_executor.h"
+#include "gmock/gtest/gtest.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/rule.h"
+#include "parser/postgresparser.h"
+#include "planner/plan_util.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace network {
 class PelotonRpcServerImpl final : public PelotonService::Server {
+ private:
+  static std::atomic_int counter_;
+
  protected:
   kj::Promise<void> dropIndex(DropIndexContext request) override {
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
@@ -62,13 +68,37 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     return kj::READY_NOW;
   }
 
+  //  kj::Promise<void> analyzeTableStats(AnalyzeTableStatsRequest req) override
+  //  {
+  //    auto &txn_manager =
+  //    concurrency::TransactionManagerFactory::GetInstance();
+  //    auto txn = txn_manager.BeginTransaction();
+  //    // Generate column stats for all the tables before we begin.
+  //    // TODO[vamshi]
+  //    // Instead of collecting stats for every table, collect them only for
+  //    the
+  //    // tables
+  //    // we are analyzing i.e. tables that are referenced in the current
+  //    workload.
+  //    optimizer::StatsStorage *stats_storage =
+  //      optimizer::StatsStorage::GetInstance();
+  //    ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
+  //    if (result != ResultType::SUCCESS) {
+  //      LOG_ERROR(
+  //        "Cannot generate stats for table columns. Not performing index "
+  //          "suggestion...");
+  //      txn_manager.AbortTransaction(txn);
+  //      return;
+  //    }
+  //    txn_manager.CommitTransaction(txn);
+  //  }
+
   kj::Promise<void> createIndex(CreateIndexContext request) override {
     LOG_DEBUG("Received RPC to create index");
 
     auto database_oid = request.getParams().getRequest().getDatabaseOid();
     auto table_oid = request.getParams().getRequest().getTableOid();
     auto col_oids = request.getParams().getRequest().getKeyAttrOids();
-    auto is_unique = request.getParams().getRequest().getUniqueKeys();
     auto index_name = request.getParams().getRequest().getIndexName();
 
     std::vector<oid_t> col_oid_vector;
@@ -79,71 +109,125 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
       col_oid_vector.push_back(col);
     }
 
+    // ** Get the table name and column names. **
+    // Create transaction to query the catalog.
+
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    // Create index. Fail if it already exists.
-    auto catalog = catalog::Catalog::GetInstance();
+    // Get the existing table so that we can find its oid and the cols oids.
+    std::shared_ptr<catalog::TableCatalogObject> table_object;
     try {
-      catalog->CreateIndex(database_oid, table_oid, col_oid_vector,
-                           DEFUALT_SCHEMA_NAME, index_name, IndexType::BWTREE,
-                           IndexConstraintType::DEFAULT, is_unique, txn);
+      table_object = catalog::Catalog::GetInstance()->GetTableObject(
+          database_oid, table_oid, txn);
     } catch (CatalogException e) {
-      LOG_ERROR("Create Index Failed: %s", e.GetMessage().c_str());
-      // TODO [vamshi]: Do we commit or abort?
-      txn_manager.CommitTransaction(txn);
-      return kj::READY_NOW;
+      LOG_ERROR("Exception ocurred while getting table: %s",
+                e.GetMessage().c_str());
+      PELOTON_ASSERT(false);
     }
 
-    // TODO [vamshi]: Hack change this.
-    // Index created. Populate it.
-    auto storage_manager = storage::StorageManager::GetInstance();
-    auto table_object =
-        storage_manager->GetTableWithOid(database_oid, table_oid);
+    auto table_name = table_object->GetTableName();
+    auto col_obj_pairs = table_object->GetColumnObjects();
 
-    // Create a seq plan to retrieve data
-    std::unique_ptr<planner::SeqScanPlan> populate_seq_plan(
-      new planner::SeqScanPlan(table_object, nullptr, col_oid_vector, false));
+    // Done with the transaction.
+    txn_manager.CommitTransaction(txn);
 
-    // Create a index plan
-    std::shared_ptr<planner::AbstractPlan> populate_index_plan(
-      new planner::PopulateIndexPlan(table_object, col_oid_vector));
-    populate_index_plan->AddChild(std::move(populate_seq_plan));
-
-    std::vector<type::Value> params;
-    std::vector<ResultValue> result;
-    std::atomic_int counter;
-    std::vector<int> result_format;
-
-    auto callback = [](void *arg) {
-      std::atomic_int *count = static_cast<std::atomic_int *>(arg);
-      count->store(0);
-    };
-
-    // Set the callback and context state.
-    auto &traffic_cop = tcop::TrafficCop::GetInstance();
-    traffic_cop.SetTaskCallback(callback, &counter);
-    traffic_cop.SetTcopTxnState(txn);
-
-    // Execute the plan through the traffic cop so that it runs on a separate
-    // thread and we don't have to wait for the output.
-    executor::ExecutionResult status = traffic_cop.ExecuteHelper(
-        populate_index_plan, params, result, result_format);
-
-    if (traffic_cop.GetQueuing()) {
-      while (counter.load() == 1) {
-        usleep(10);
-      }
-      if (traffic_cop.p_status_.m_result == ResultType::SUCCESS) {
-        LOG_INFO("Index populate succeeded");
+    // Get all the column names from the oids.
+    std::vector<std::string> column_names;
+    for (auto col_oid : col_oid_vector) {
+      auto found_itr = col_obj_pairs.find(col_oid);
+      if (found_itr != col_obj_pairs.end()) {
+        auto col_obj = found_itr->second;
+        column_names.push_back(col_obj->GetColumnName());
       } else {
-        LOG_ERROR("Index populate failed");
+        PELOTON_ASSERT(false);
       }
-      traffic_cop.SetQueuing(false);
     }
-    traffic_cop.CommitQueryHelper();
+
+    // Create "CREATE INDEX" query.
+    std::ostringstream oss;
+    oss << "CREATE INDEX " << index_name.cStr() << " ON ";
+    oss << table_name << "(";
+    for (auto i = 0UL; i < column_names.size(); i++) {
+      oss << column_names[i];
+      if (i < (column_names.size() - 1)) {
+        oss << ",";
+      }
+    }
+    oss << ")";
+
+    LOG_DEBUG("Executing Create Index Query: %s", oss.str().c_str());
+
+    // Execute the SQL query
+    std::vector<ResultValue> result;
+    std::vector<FieldInfo> tuple_descriptor;
+    std::string error_message;
+    int rows_affected;
+
+    ExecuteSQLQuery(oss.str(), result, tuple_descriptor, rows_affected,
+                    error_message);
+    LOG_INFO("Execute query done");
 
     return kj::READY_NOW;
+  }
+
+  static void UtilTestTaskCallback(void *arg) {
+    std::atomic_int *count = static_cast<std::atomic_int *>(arg);
+    count->store(0);
+  }
+
+  // TODO: Avoid using this function.
+  // Copied from SQL testing util.
+  // Execute a SQL query end-to-end
+  ResultType ExecuteSQLQuery(const std::string query,
+                             std::vector<ResultValue> &result,
+                             std::vector<FieldInfo> &tuple_descriptor,
+                             int &rows_changed, std::string &error_message) {
+    std::atomic_int counter_;
+
+    LOG_INFO("Query: %s", query.c_str());
+    // prepareStatement
+    std::string unnamed_statement = "unnamed";
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+    PELOTON_ASSERT(sql_stmt_list);
+    if (!sql_stmt_list->is_valid) {
+      return ResultType::FAILURE;
+    }
+
+    tcop::TrafficCop traffic_cop_(UtilTestTaskCallback, &counter_);
+
+    auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                   std::move(sql_stmt_list));
+    if (statement.get() == nullptr) {
+      traffic_cop_.setRowsAffected(0);
+      rows_changed = 0;
+      error_message = traffic_cop_.GetErrorMessage();
+      return ResultType::FAILURE;
+    }
+    // Execute Statement
+    std::vector<type::Value> param_values;
+    bool unnamed = false;
+    std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+    // SetTrafficCopCounter();
+    counter_.store(1);
+    auto status = traffic_cop_.ExecuteStatement(
+        statement, param_values, unnamed, nullptr, result_format, result);
+    if (traffic_cop_.GetQueuing()) {
+      while (counter_.load() == 1) {
+        usleep(10);
+      }
+      traffic_cop_.ExecuteStatementPlanGetResult();
+      status = traffic_cop_.ExecuteStatementGetResult();
+      traffic_cop_.SetQueuing(false);
+    }
+    if (status == ResultType::SUCCESS) {
+      tuple_descriptor = statement->GetTupleDescriptor();
+    }
+    LOG_INFO("Statement executed. Result: %s",
+             ResultTypeToString(status).c_str());
+    rows_changed = traffic_cop_.getRowsAffected();
+    return status;
   }
 };
 

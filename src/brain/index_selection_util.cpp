@@ -161,6 +161,12 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
   for (auto query : queries) {
     LOG_DEBUG("Query: %s", query.c_str());
 
+    // TODO: Remove this.
+    // Hack to filter out pg_catalog queries.
+    if (query.find("pg_") != std::string::npos) {
+      continue;
+    }
+
     // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
     auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
@@ -177,8 +183,13 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
     auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.release());
     PELOTON_ASSERT(stmt_shared->GetType() != StatementType::INVALID);
 
-    // Bind the query
-    binder->BindNameToNode(stmt_shared.get());
+    try {
+      // Bind the query
+      binder->BindNameToNode(stmt_shared.get());
+    } catch (Exception e) {
+      LOG_DEBUG("Cannot bind this query");
+      continue;
+    }
 
     // Only take the DML queries from the workload
     switch (stmt_shared->GetType()) {
