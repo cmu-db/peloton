@@ -77,16 +77,6 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *column_layouts = codegen.AllocateBuffer(
       ColumnLayoutInfoProxy::GetType(codegen), num_columns, "columnLayout");
 
-  // Allocate some space for the parsed predicates (if need be!)
-  llvm::Value *predicate_array =
-      codegen.NullPtr(PredicateInfoProxy::GetType(codegen)->getPointerTo());
-  if (num_predicates != 0) {
-    predicate_array = codegen.AllocateBuffer(
-        PredicateInfoProxy::GetType(codegen), num_predicates, "predicateInfo");
-    codegen.Call(RuntimeFunctionsProxy::FillPredicateArray,
-                 {predicate_ptr, predicate_array});
-  }
-
   // Get the number of tile groups in the given table
   llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
@@ -105,7 +95,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     // Check zone map
     llvm::Value *cond = codegen.Call(
         ZoneMapManagerProxy::ShouldScanTileGroup,
-        {GetZoneMapManager(codegen), predicate_array,
+        {GetZoneMapManager(codegen), predicate_ptr,
          codegen.Const32(num_predicates), table_ptr, tile_group_idx});
 
     codegen::lang::If should_scan_tilegroup{codegen, cond};

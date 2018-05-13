@@ -19,7 +19,9 @@
 #include "concurrency/transaction_context.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/transaction_context_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/data_table_proxy.h"
+#include "expression/abstract_expression.h"
 #include "type/value.h"
 
 namespace peloton {

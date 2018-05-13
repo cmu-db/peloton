@@ -49,8 +49,9 @@ Value::Value(const Value &other) {
 
 Value::Value(Value &&other) : Value() { swap(*this, other); }
 
-Value &Value::operator=(const Value &other) {
-  new (this) Value(other);
+Value &Value::operator=(Value other) {
+  swap(*this, other);
+  other.type_id_ = type::TypeId::INVALID;
   return *this;
 }
 

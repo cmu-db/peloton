@@ -197,7 +197,7 @@ ZoneMapManager::GetResultVectorAsZoneMap(
  *          False if tile group can be skipped.
  */
 bool ZoneMapManager::ShouldScanTileGroup(
-    storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
+      expression::AbstractExpression * predicate_ptr, int32_t num_predicates,
     storage::DataTable *table, int64_t tile_group_idx) {
   // always scan the zone_map catalog to avoid chicken and egg problem
   if (table->GetName() == ZONE_MAP_CATALOG_NAME) {
@@ -205,9 +205,10 @@ bool ZoneMapManager::ShouldScanTileGroup(
   }
   for (int32_t i = 0; i < num_predicates; i++) {
     // Extract the col_id, operator and predicate_value
-    int col_id = parsed_predicates[i].col_id;
-    int comparison_operator = parsed_predicates[i].comparison_operator;
-    type::Value predicate_value = parsed_predicates[i].predicate_value;
+   auto parsed_predicates = predicate_ptr->GetParsedPredicates();
+    int col_id = (*parsed_predicates)[i].col_id;
+    int comparison_operator = (*parsed_predicates)[i].comparison_operator;
+    type::Value predicate_value = (*parsed_predicates)[i].predicate_value;
 
     oid_t database_id = table->GetDatabaseOid();
     oid_t table_id = table->GetOid();

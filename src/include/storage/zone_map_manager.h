@@ -62,7 +62,7 @@ class ZoneMapManager {
   std::unique_ptr<ZoneMapManager::ColumnStatistics> GetZoneMapFromCatalog(
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t col_itr);
 
-  bool ShouldScanTileGroup(storage::PredicateInfo *parsed_predicates,
+  bool ShouldScanTileGroup(expression::AbstractExpression * predicate_ptr,
                                       int32_t num_predicates,
                                       storage::DataTable *table,
                                       int64_t tile_group_id);
