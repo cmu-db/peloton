@@ -320,14 +320,9 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     throw CatalogException("Can't find namespace " + schema_name +
                            " to create table");
 
-<<<<<<< HEAD
-  // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name, schema_name, schema_name);
-=======
   // Get table oid from pg_table
   auto table_object =
       database_object->GetTableObject(table_name, schema_name, schema_name);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
                            " already exists");
@@ -377,13 +372,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     if (column.IsUnique()) {
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-<<<<<<< HEAD
-      CreateIndex(database_name, schema_name, schema_name, table_name, {column_id},
-                  index_name, true, IndexType::BWTREE, txn);
-=======
       CreateIndex(database_name, schema_name, schema_name, table_name,
                   {column_id}, index_name, true, IndexType::BWTREE, txn);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
     }
@@ -465,11 +455,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 /* @brief   create index on table
  * @param   database_name    the database which the indexed table belongs to
  * @param   schema_name      the namespace which the indexed table belongs to
-<<<<<<< HEAD
- 8 @param   session_namespace   the session namespace of the query running on
-=======
  * @param   session_namespace   the session namespace of the query running on
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
  * @param   table_name       name of the table to add index on
  * @param   index_attr       collection of the indexed attribute(column) name
  * @param   index_name       name of the table to add index on
@@ -501,15 +487,9 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
                            " to create index");
-
-<<<<<<< HEAD
-  // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
-=======
   // Check if table exists
   auto table_object = database_object->GetTableObject(table_name, schema_name,
                                                       session_namespace);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   if (table_object == nullptr)
     throw CatalogException("Can't find table " + schema_name + "." +
                            table_name + " to create index");
@@ -517,18 +497,11 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   IndexConstraintType index_constraint =
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
 
-<<<<<<< HEAD
-  //schema not sure. should get from the table object
-  ResultType success = CreateIndex(
-      database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
-      table_object->GetSchemaName(), index_name, index_type, index_constraint, unique_keys, txn);
-=======
   // Schema not sure. should get from the table object
   ResultType success = CreateIndex(
       database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
       table_object->GetSchemaName(), index_name, index_type, index_constraint,
       unique_keys, txn);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
 
   return success;
 }
@@ -706,14 +679,10 @@ ResultType Catalog::DropTable(const std::string &database_name,
     throw CatalogException("Drop Table: database " + database_name +
                            " does not exist");
 
-<<<<<<< HEAD
-  // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
-=======
   // Check if table exists
   auto table_object = database_object->GetTableObject(table_name, schema_name,
                                                       session_namespace);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
+
   if (table_object == nullptr)
     throw CatalogException("Drop Table: table " + schema_name + "." +
                            table_name + " does not exist");
@@ -838,27 +807,16 @@ storage::Database *Catalog::GetDatabaseWithName(
  * throw exception and abort txn if not exists/invisible
  * */
 storage::DataTable *Catalog::GetTableWithName(
-<<<<<<< HEAD
-    const std::string &database_name, const std::string &schema_name, 
-    const std::string &session_namespace,
-    const std::string &table_name, concurrency::TransactionContext *txn) {
-=======
     const std::string &database_name, const std::string &schema_name,
     const std::string &session_namespace, const std::string &table_name,
     concurrency::TransactionContext *txn) {
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   PELOTON_ASSERT(txn != nullptr);
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
 
   // Check in pg_table, throw exception and abort txn if not exists
-<<<<<<< HEAD
-  auto table_object =
-      GetTableObject(database_name, schema_name, session_namespace, table_name, txn);
-=======
   auto table_object = GetTableObject(database_name, schema_name,
                                      session_namespace, table_name, txn);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
 
   // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -917,13 +875,8 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &schema_name,
-<<<<<<< HEAD
-    const std::string &session_namespace,
-    const std::string &table_name, concurrency::TransactionContext *txn) {
-=======
     const std::string &session_namespace, const std::string &table_name,
     concurrency::TransactionContext *txn) {
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
                            database_name + "." + table_name);
@@ -941,12 +894,8 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   }
 
   // Check in pg_table using txn
-<<<<<<< HEAD
-  auto table_object = database_object->GetTableObject(table_name, schema_name, session_namespace);
-=======
   auto table_object = database_object->GetTableObject(table_name, schema_name,
                                                       session_namespace);
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // Throw table not found exception and explicitly abort txn
@@ -996,17 +945,6 @@ void Catalog::DropTempTables(const std::string &database_name,
                              concurrency::TransactionContext *txn) {
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
-<<<<<<< HEAD
-  //get pg_table
-  auto pg_table =
-      catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
-  // get all the tables to be dropped
-  auto tables_dropped = pg_table->GetTableObjects(session_namespace, txn);
-  // drop all tables.
-  for (auto iter = tables_dropped.begin(); iter != tables_dropped.end();
-       iter++) {
-    // is this a safeway to use?
-=======
   // Get pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
@@ -1016,7 +954,6 @@ void Catalog::DropTempTables(const std::string &database_name,
   for (auto iter = tables_dropped.begin(); iter != tables_dropped.end();
        iter++) {
     // Is this a safeway to use?
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
     auto table_ptr = *iter;
     DropTable(table_ptr->GetDatabaseOid(), table_ptr->GetTableOid(), txn);
   }

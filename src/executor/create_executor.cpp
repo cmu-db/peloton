@@ -11,13 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "executor/create_executor.h"
-
+#include "common/exception.h"
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
 #include "catalog/system_catalogs.h"
-#include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
-#include "planner/create_plan.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "type/value_factory.h"
@@ -137,6 +135,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
       for (auto fk : node.GetForeignKeys()) {
         auto sink_table = catalog->GetTableWithName(
             database_name, fk.sink_table_schema, session_namespace, fk.sink_table_name, current_txn);
+        CheckForeignKeySchema(schema_name, database_name, session_namespace, fk, current_txn);
         // Source Column Offsets
         std::vector<oid_t> source_col_ids;
         for (auto col_name : fk.foreign_key_sources) {
@@ -208,6 +207,30 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   }
 
   return (true);
+}
+
+//check whether the foriegn key schema and the current schema are not only one in temp.
+void CreateExecutor::CheckForeignKeySchema(
+  const std::string &schema_name, const std::string &database_name,
+  const std::string &session_namespace, planner::ForeignKeyInfo &fk, concurrency::TransactionContext *txn) {
+  auto catalog = catalog::Catalog::GetInstance();
+  //get table obejct for use
+  auto sink_table_object = catalog->GetTableObject(database_name, fk.sink_table_schema,
+                                              session_namespace, fk.sink_table_name, txn);
+  std::string sink_table_schema = sink_table_object->GetSchemaName();
+  //if target is under temp but current not.
+  if (schema_name.find(TEMP_NAMESPACE_PREFIX) == std::string::npos) {
+      if (sink_table_schema.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
+         throw ConstraintException("ERROR: constraints on permanent tables may reference only permanent tables");
+      }
+  }
+
+  //if current is temp, but target is not
+  if (schema_name.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
+    if (sink_table_schema.find(TEMP_NAMESPACE_PREFIX) == std::string::npos) {
+        throw ConstraintException("ERROR: constraints on temporary tables may reference only temporary tables");
+    }
+  }
 }
 
 bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {

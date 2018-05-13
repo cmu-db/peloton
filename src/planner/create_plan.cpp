@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/create_plan.h"
-
 #include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 #include "expression/constant_value_expression.h"
@@ -224,12 +223,6 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
 void CreatePlan::ProcessForeignKeyConstraint(
     const std::string &table_name, const parser::ColumnDefinition *col) {
-
-  //check foriegn key table and this table under the same scope.
-  if (is_temp_table) {
-    auto target_table_name = col->fk_sink_table_name;
-
-  }
   ForeignKeyInfo fkey_info;
 
   // Extract source and sink column names

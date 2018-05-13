@@ -177,11 +177,7 @@ class TrafficCop {
   std::string default_database_name_ = DEFAULT_DB_NAME;
 
   // Default session namespace
-<<<<<<< HEAD
-  std::string temp_session_name_;
-=======
   std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
->>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
 
   int rows_affected_;
 

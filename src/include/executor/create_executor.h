@@ -13,6 +13,8 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
+#include "concurrency/transaction_context.h"
+#include "planner/create_plan.h"
 
 namespace peloton {
 
@@ -55,6 +57,9 @@ class CreateExecutor : public AbstractExecutor {
   bool CreateTrigger(const planner::CreatePlan &node);
 
  private:
+  void CheckForeignKeySchema(
+    const std::string &schema_name, const std::string &database_name,
+    const std::string &session_namespace, planner::ForeignKeyInfo &fk, concurrency::TransactionContext *txn);
   ExecutorContext *context_;
 
   // Abstract Pool to hold strings
