@@ -122,6 +122,8 @@ class CreatePlan : public AbstractPlan {
 
   int16_t GetTriggerType() const { return trigger_type; }
 
+  OnCommitAction GetCommitOption() const { return commit_option; }
+
  protected:
   // This is a helper method for extracting foreign key information
   // and storing it in an internal struct.
@@ -160,6 +162,7 @@ class CreatePlan : public AbstractPlan {
   // UNIQUE INDEX flag
   bool unique;
 
+  OnCommitAction commit_option; //what we do on commit?
   // ColumnDefinition for multi-column constraints (including foreign key)
   std::vector<ForeignKeyInfo> foreign_keys;
   std::string trigger_name;

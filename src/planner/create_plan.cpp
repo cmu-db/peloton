@@ -50,6 +50,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
       schema_name = std::string(parse_tree->GetSchemaName());
+      commit_option = parse_tree->commit_option;
       //if schema name is not set. then set it to session namespace if temp
       if(schema_name.empty()) {
         if (parse_tree->is_temp_table) {

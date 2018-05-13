@@ -18,6 +18,7 @@
 #include "expression/abstract_expression.h"
 #include "parser/select_statement.h"
 #include "parser/sql_statement.h"
+#include "parser/parsenodes.h"
 
 namespace peloton {
 namespace parser {
@@ -247,6 +248,7 @@ class CreateStatement : public TableRefStatement {
 
   bool unique = false;
 
+  OnCommitAction commit_option; //what we do on commit?
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;

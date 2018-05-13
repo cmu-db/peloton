@@ -965,6 +965,8 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   UNUSED_ATTRIBUTE CreateStmt *temp = root;
   parser::CreateStatement *result =
       new CreateStatement(CreateStatement::CreateType::kTable);
+  result->commit_option = root->oncommit;
+  LOG_INFO("commit option is %d", root->oncommit);
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
   // relpersistence == 't' indicates that it's a temporary table. It's the
@@ -1956,7 +1958,7 @@ parser::SQLStatementList *PostgresParser::ParseSQLString(const char *text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  // print_pg_parse_tree(result.tree);
+  //print_pg_parse_tree(result.tree);
   parser::SQLStatementList *transform_result;
   try {
     transform_result = ListTransform(result.tree);

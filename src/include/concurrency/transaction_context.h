@@ -23,6 +23,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
+#include "parser/parsenodes.h"
 
 #define INTITIAL_RW_SET_SIZE 64
 
@@ -285,8 +286,24 @@ class TransactionContext : public Printable {
    * @brief table_oid add table oid created in the transaction into table
    * @param table_oid the temp table oid to be added
    */
-  inline void AddTempTableOid(oid table_oid) {
+  inline void AddTempTableOid(oid_t table_oid) {
     temp_table_oids.push_back(table_oid);
+  }
+
+  /**
+   * @brief set the commit option for create table
+   * @param the commit option
+   */
+  inline void SetCommitOption(OnCommitAction commit_option) {
+    commit_option_ = commit_option;
+  }
+
+  /***
+   * @brief get the commit option
+   * @return the commit option
+   */
+  inline OnCommitAction GetCommitOption() {
+    return commit_option_;
   }
 
   /** cache for table catalog objects */
@@ -352,6 +369,7 @@ class TransactionContext : public Printable {
 
   //temp table oid.
   std::vector<oid_t> temp_table_oids;
+  OnCommitAction commit_option_; //what we do on commit?
 };
 
 }  // namespace concurrency

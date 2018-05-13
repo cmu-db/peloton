@@ -121,7 +121,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
       database_name, schema_name, table_name, std::move(schema), current_txn);
   current_txn->SetResult(result);
-
+  current_txn->SetCommitOption(node.GetCommitOption());
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     //if created a temp table.
     if (schema_name.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
