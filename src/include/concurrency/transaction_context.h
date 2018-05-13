@@ -281,6 +281,14 @@ class TransactionContext : public Printable {
     return isolation_level_;
   }
 
+  /**
+   * @brief table_oid add table oid created in the transaction into table
+   * @param table_oid the temp table oid to be added
+   */
+  inline void AddTempTableOid(oid table_oid) {
+    temp_table_oids.push_back(table_oid);
+  }
+
   /** cache for table catalog objects */
   catalog::CatalogCache catalog_cache;
 
@@ -341,6 +349,9 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  //temp table oid.
+  std::vector<oid_t> temp_table_oids;
 };
 
 }  // namespace concurrency

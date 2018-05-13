@@ -123,6 +123,14 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
   current_txn->SetResult(result);
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
+    //if created a temp table.
+    if (schema_name.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
+      auto catalog = catalog::Catalog::GetInstance();
+      //get the table object
+      auto table_object = catalog->GetTableObject(database_name, schema_name, session_namespace, 
+                                                  table_name, current_txn);
+      current_txn->AddTempTableOid(table_object->GetTableOid());
+    }
     LOG_TRACE("Creating table succeeded!");
 
     // Add the foreign key constraint (or other multi-column constraints)
