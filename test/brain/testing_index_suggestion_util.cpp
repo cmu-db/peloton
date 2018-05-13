@@ -46,7 +46,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
   // 1. Create all the table schemas required for the workload queries.
   // 2. Create all the required workload query strings.
   switch (type) {
-    case A: {
+    case SingleTableTwoColW1: {
       table_name = "dummy1";
       table_schemas.emplace_back(
           table_name,
@@ -63,7 +63,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE a = 190 and c = 250");
       break;
     }
-    case B: {
+    case SingleTableTwoColW2: {
       table_name = "dummy2";
       table_schemas.emplace_back(
           table_name,
@@ -81,7 +81,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE b = 190 and c = 250");
       break;
     }
-    case C: {
+    case SingleTableThreeColW: {
       table_name = "dummy3";
       table_schemas.emplace_back(
           table_name,
@@ -100,7 +100,7 @@ TestingIndexSuggestionUtil::GetQueryStringsWorkload(
                            " WHERE b = 81 and c = 123 and d = 122");
       break;
     }
-    case D: {
+    case MultiTableMultiColW: {
       std::string table_name_1 = "d_student";
       table_schemas.emplace_back(
           table_name_1,
@@ -309,6 +309,13 @@ void TestingIndexSuggestionUtil::DropDatabase() {
 void TestingIndexSuggestionUtil::DropTable(std::string table_name) {
   std::string create_str = "DROP TABLE " + table_name + ";";
   TestingSQLUtil::ExecuteSQLQuery(create_str);
+}
+
+double TestingIndexSuggestionUtil::WhatIfIndexCost(std::shared_ptr<parser::SQLStatement> query,
+                                                   brain::IndexConfiguration &config,
+                                                   std::string database_name) {
+  return brain::WhatIfIndex::GetCostAndBestPlanTree(
+      query, config, database_name)->cost;
 }
 
 }  // namespace index_suggestion

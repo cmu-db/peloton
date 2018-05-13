@@ -225,15 +225,11 @@ IndexConfiguration CompressedIndexConfigUtil::ToIndexConfiguration(
   for (const auto it : container.table_offset_map_) {
     const auto start_idx = it.second;
     size_t end_idx = container.GetNextTableIdx(start_idx);
-
-    if (container.IsSet(start_idx)) {
-      continue;
-    } else {
-      auto idx = container.GetNextSetIndexConfig(start_idx);
-      while (idx != boost::dynamic_bitset<>::npos && idx < end_idx) {
-        auto hypo_index_obj = container.GetIndex(idx);
-        index_config.AddIndexObject(hypo_index_obj);
-      }
+    auto idx = start_idx;
+    while (idx != boost::dynamic_bitset<>::npos && idx < end_idx) {
+      auto hypo_index_obj = container.GetIndex(idx);
+      index_config.AddIndexObject(hypo_index_obj);
+      idx = container.GetNextSetIndexConfig(idx);
     }
   }
 

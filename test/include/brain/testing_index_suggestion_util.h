@@ -14,6 +14,7 @@
 
 #include "brain/index_selection_util.h"
 #include "brain/index_selection.h"
+#include "brain/what_if_index.h"
 
 namespace peloton {
 namespace test {
@@ -28,7 +29,7 @@ enum TupleValueType { INTEGER, FLOAT, STRING };
 /**
  * Represents workload types used in the test cases.
  */
-enum QueryStringsWorkloadType { A = 1, B = 2, C = 3, D = 4 };
+enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2, SingleTableThreeColW = 3, MultiTableMultiColW = 4 };
 
 /**
  * Represents the schema for creating tables in the test cases.
@@ -101,6 +102,18 @@ class TestingIndexSuggestionUtil {
    */
   std::pair<std::vector<TableSchema>, std::vector<std::string>>
   GetQueryStringsWorkload(QueryStringsWorkloadType workload_type);
+
+  /**
+   * Get the an estimate of cost of running a query on a given
+   * index configuration by the cost model(Available via What-If API)
+   * @param query: the query string
+   * @param config: Index configuration
+   * @param database_name: DB name
+   * @return: "What-If" Index cost
+   */
+  double WhatIfIndexCost(std::shared_ptr<parser::SQLStatement> query,
+                         brain::IndexConfiguration &config,
+                         std::string database_name);
 
  private:
   std::string database_name_;

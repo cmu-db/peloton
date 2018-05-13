@@ -27,8 +27,11 @@ namespace test {
 
 class LSPITests : public PelotonTest {};
 
+/**
+ * @brief: Attempt to fit y = m*x with Recursive Least Squares
+ */
 TEST_F(LSPITests, RLSETest) {
-  // Attempt to fit y = m*x
+  //
   int NUM_SAMPLES = 500;
   int LOG_INTERVAL = 100;
   int m = 3;
@@ -53,9 +56,12 @@ TEST_F(LSPITests, RLSETest) {
   }
 }
 
-TEST_F(LSPITests, TuneTest) {
-  // Sanity test that all components are running
-  // Need more ri
+/**
+ * @brief: Simple tuning test -I
+ * The suite of simple tuning tests run o
+ */
+TEST_F(LSPITests, SimpleTuneTest1) {
+
   std::string database_name = DEFAULT_DB_NAME;
   size_t max_index_size = 3;
 
@@ -66,7 +72,7 @@ TEST_F(LSPITests, TuneTest) {
                                                     ori_table_oids);
 
   auto config = testing_util.GetQueryStringsWorkload(
-      index_suggestion::QueryStringsWorkloadType::A);
+      index_suggestion::QueryStringsWorkloadType::SingleTableTwoColW1);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -85,6 +91,7 @@ TEST_F(LSPITests, TuneTest) {
   for (size_t i = 1; i <= query_strings.size(); i++) {
     auto query = query_strings[i - 1];
 
+    // Execute the Txn
     std::unique_ptr<parser::SQLStatementList> stmt_list(
         parser::PostgresParser::ParseSQLString(query));
 
@@ -101,11 +108,10 @@ TEST_F(LSPITests, TuneTest) {
     binder->BindNameToNode(sql_statement.get());
     txn_manager.CommitTransaction(txn);
 
+    // Measure the What-If Index cost
     auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
         *index_tuner.GetConfigContainer());
-    auto result = brain::WhatIfIndex::GetCostAndBestPlanTree(
-        sql_statement, index_config, database_name);
-    auto cost = result->cost;
+    auto cost = testing_util.WhatIfIndexCost(sql_statement, index_config, database_name);
 
     LOG_DEBUG("Iter %zu", i);
     LOG_DEBUG("query: %s", query.c_str());

@@ -31,7 +31,7 @@ namespace brain {
 class LSPIIndexTuner {
  public:
   explicit LSPIIndexTuner(
-      const std::string &db_name, const std::set<oid_t> &ori_table_oids,
+      const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
       bool single_col_idx, size_t max_index_size,
       catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);

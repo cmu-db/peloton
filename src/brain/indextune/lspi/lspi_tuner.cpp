@@ -15,7 +15,7 @@
 namespace peloton {
 namespace brain {
 LSPIIndexTuner::LSPIIndexTuner(
-    const std::string &db_name, const std::set<oid_t> &ori_table_oids,
+    const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
     bool single_col_idx, size_t max_index_size,
     peloton::catalog::Catalog *catalog,
     peloton::concurrency::TransactionManager *txn_manager)
@@ -23,7 +23,7 @@ LSPIIndexTuner::LSPIIndexTuner(
       single_col_idx_{single_col_idx},
       max_index_size_{max_index_size} {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
-      new CompressedIndexConfigContainer(db_name, ori_table_oids,
+      new CompressedIndexConfigContainer(db_name, ignore_table_oids,
                                          max_index_size, catalog, txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));

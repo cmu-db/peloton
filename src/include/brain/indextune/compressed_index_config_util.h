@@ -21,8 +21,7 @@ namespace brain {
 class CompressedIndexConfigUtil {
  public:
   /**
-   * Given a SQLStatementList, generate the prefix closure from the first
-   * SQLStatement element
+   * Given a SQLStatementList, generates a suitable set of add candidates
    * @param container: input container
    * @param query: query in question
    * @param add_candidates: the resulting add_candidates
