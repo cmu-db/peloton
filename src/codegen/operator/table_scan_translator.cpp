@@ -37,7 +37,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
     : OperatorTranslator(context, pipeline),
       scan_(scan),
       table_(*scan_.GetTable()) {
-  LOG_DEBUG("Constructing TableScanTranslator ...");
+//  LOG_DEBUG("Constructing TableScanTranslator ...");
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
@@ -210,7 +210,7 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();
-  LOG_DEBUG("Is Predicate SIMDable : %d", predicate->IsSIMDable());
+//  LOG_DEBUG("Is Predicate SIMDable : %d", predicate->IsSIMDable());
   // Determine the attributes the predicate needs
   std::unordered_set<const planner::AttributeInfo *> used_attributes;
   predicate->GetUsedAttributes(used_attributes);
