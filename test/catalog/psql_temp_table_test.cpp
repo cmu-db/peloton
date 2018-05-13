@@ -38,19 +38,20 @@ class PsqlTempTableTests : public PelotonTest {};
  *   2. a temp table created by one session is invisible to another session
  */
 void *TableVisibilityTest(int port) {
-  // Set up connection 1
   pqxx::connection C1(StringUtil::Format(
       "host=127.0.0.1 port=%d user=default_database sslmode=disable "
       "application_name=psql",
       port));
 
   // Connection 1 creates a permanent table, which has one tuple
+  LOG_INFO("Connection 1 is creating a permanent table");
   pqxx::work txn11(C1);
   txn11.exec("DROP TABLE IF EXISTS employee;");
   txn11.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
   txn11.exec("INSERT INTO employee VALUES(1, 'trump');");
 
   // Connection 1 creates a temp table with the same name, which has 2 tuples
+  LOG_INFO("Connection 1 is creating a temporary table");
   txn11.exec("CREATE TEMP TABLE employee(id INT, name VARCHAR(100));");
   txn11.exec("INSERT INTO employee VALUES(1, 'trump');");
   txn11.exec("INSERT INTO employee VALUES(2, 'trumpet');");
@@ -74,6 +75,7 @@ void *TableVisibilityTest(int port) {
   txn21.commit();
 
   // Connection 2 drops the permanent table
+  LOG_INFO("Connection 2 is dropping the permanent table");
   pqxx::work txn22(C2);
   txn22.exec("drop table employee;");
   txn22.commit();
@@ -86,8 +88,7 @@ void *TableVisibilityTest(int port) {
     txn23.exec("select * from employee;");
     EXPECT_TRUE(false);
   } catch (const std::exception &e) {
-    LOG_INFO("[TableVisibilityTest] Exception occurred (as expected): %s",
-             e.what());
+    LOG_INFO("Exception occurred (as expected): %s", e.what());
   }
   C2.disconnect();
 
@@ -98,6 +99,7 @@ void *TableVisibilityTest(int port) {
   txn13.commit();
 
   // Connection 1 drops its temp table
+  LOG_INFO("Connection 1 is dropping the temporary table");
   pqxx::work txn14(C1);
   txn14.exec("drop table employee;");
   txn14.commit();
@@ -109,18 +111,100 @@ void *TableVisibilityTest(int port) {
     txn15.exec("select * from employee;");
     EXPECT_TRUE(false);
   } catch (const std::exception &e) {
-    LOG_INFO("[TableVisibilityTest] Exception occurred (as expected): %s",
-             e.what());
+    LOG_INFO("Exception occurred (as expected): %s", e.what());
   }
   C1.disconnect();
 
-  LOG_INFO("[TableVisibilityTest] Client has closed");
+  LOG_INFO("Client has closed");
+  LOG_INFO("Passed TableVisibilityTest");
   return NULL;
 }
 
-TEST_F(PsqlTempTableTests, TableVisibilityTest) {
+/**
+ * Foreign key test - check foreign key constraints cannot be defined between
+ * temporary tables and permanent tables.
+ */
+void *ForeignKeyTest(int port) {
+  // Set up connection
+  pqxx::connection C(StringUtil::Format(
+      "host=127.0.0.1 port=%d user=default_database sslmode=disable "
+      "application_name=psql",
+      port));
+
+  pqxx::work txn1(C);
+  // Create permanent table "student"
+  txn1.exec("DROP TABLE IF EXISTS student;");
+  txn1.exec("CREATE TABLE student(id INT PRIMARY KEY, name VARCHAR);");
+  // Create temp table "course"
+  txn1.exec("DROP TABLE IF EXISTS course;");
+  txn1.exec("CREATE TEMP TABLE course(id INT PRIMARY KEY, name VARCHAR);");
+  txn1.commit();
+
+  // Check a permanent table cannot reference a temp table directly
+  pqxx::work txn2(C);
+  EXPECT_THROW(txn2.exec(
+                   "CREATE TABLE enroll(s_id INT, c_id INT, "
+                   "CONSTRAINT FK_EnrollCourse FOREIGN KEY (c_id) "
+                   "REFERENCES course(id)"  // "course" is a temp table
+                   ");"),
+               ConstraintException);
+  txn2.commit();
+
+  pqxx::work txn3(C);
+  EXPECT_THROW(txn3.exec(
+                   "CREATE TABLE enroll2(s_id INT, c_id INT, "
+                   "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
+                   "REFERENCES student(id), "
+                   "CONSTRAINT FK_EnrollCourse FOREIGN KEY (c_id) "
+                   "REFERENCES course(id)"  // "course" is a temp table
+                   ");"),
+               ConstraintException);
+  txn3.commit();
+
+  // Check a temp table cannot reference a permanent table directly
+  pqxx::work txn4(C);
+  EXPECT_THROW(txn4.exec(
+                   "CREATE TEMP TABLE enroll3(s_id INT, c_id INT, "
+                   "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
+                   "REFERENCES student(id)"  // "student" is a permanent table
+                   ");"),
+               ConstraintException);
+  txn4.commit();
+
+  pqxx::work txn5(C);
+  EXPECT_THROW(txn5.exec(
+                   "CREATE TEMP TABLE enroll4(s_id INT, c_id INT, "
+                   "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
+                   "REFERENCES student(id), "  // "student" is a permanent table
+                   "CONSTRAINT FK_EnrollCourse FOREIGN KEY (c_id) "
+                   "REFERENCES course(id)"
+                   ");"),
+               ConstraintException);
+  txn5.commit();
+
+  // Create temp table "student"
+  txn1.exec("CREATE TEMP TABLE student(id INT PRIMARY KEY, name VARCHAR);");
+  // Now the permanent table "student" becomes invisible. However, it can still
+  // be referenced as a foreign key by a permanent table by explicitly
+  // specifying the "public" namespace
+  pqxx::work txn6(C);
+  txn6.exec(
+      "CREATE TABLE enroll5(s_id INT, c_id INT, "
+      "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
+      "REFERENCES public.student(id)"  // note the "public." here
+      ");");
+  txn6.commit();
+
+  C.disconnect();
+  LOG_INFO("Client has closed");
+  LOG_INFO("Passed ForeignKeyTest");
+  return NULL;
+}
+
+TEST_F(PsqlTempTableTests, PsqlTempTableTests) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
+
   peloton::network::PelotonServer server;
 
   int port = 15721;
@@ -128,12 +212,12 @@ TEST_F(PsqlTempTableTests, TableVisibilityTest) {
     server.SetPort(port);
     server.SetupServer();
   } catch (peloton::ConnectionException &exception) {
-    LOG_INFO("[LaunchServer] exception when launching server");
+    LOG_INFO("[LaunchServer] Exception when launching server");
   }
   std::thread serverThread([&]() { server.ServerLoop(); });
 
-  // server & client running correctly
   TableVisibilityTest(port);
+  ForeignKeyTest(port);
 
   server.Close();
   serverThread.join();
