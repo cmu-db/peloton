@@ -36,17 +36,16 @@ TEST_F(CompressionSelectTest, BasicTest) {
 	LOG_INFO("insert finish");
 	txn = txn_manager.BeginTransaction();
 	auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
-	auto TGiterator = new storage::TileGroupIterator(dataTable_object);
+	auto TGiterator = storage::TileGroupIterator(dataTable_object);
 	std::shared_ptr<storage::TileGroup> tg;
 
-	while (TGiterator->HasNext()) {
-		TGiterator->Next(tg);
+	while (TGiterator.HasNext()) {
+		TGiterator.Next(tg);
 		if (!tg->IsDictEncoded()) {
 			LOG_INFO("tile group not encoded. Encode now...");
 			tg->DictEncode();
 		}
 	}
-	delete TGiterator;
 
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -62,9 +61,9 @@ TEST_F(CompressionSelectTest, BasicTest) {
   txn = txn_manager.BeginTransaction();
 
   dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
-  TGiterator = new storage::TileGroupIterator(dataTable_object);
-  while (TGiterator->HasNext()) {
-		TGiterator->Next(tg);
+  TGiterator = storage::TileGroupIterator(dataTable_object);
+  while (TGiterator.HasNext()) {
+		TGiterator.Next(tg);
 		oid_t num_tile = tg->NumTiles();
 		for (oid_t to = 0; to < num_tile; to++) {
 			auto curr_tile = tg->GetTileReference(to);

@@ -58,7 +58,7 @@ DictEncodedTile::DictEncodedTile(BackendType backend_type, TileGroupHeader *tile
 DictEncodedTile::~DictEncodedTile(){
 	auto * str_ptrs = reinterpret_cast<const char**>(varlen_val_ptrs);
 	for (size_t element_idx = 0; element_idx < dict.size(); element_idx++) {
-		delete str_ptrs[element_idx];
+		delete[] str_ptrs[element_idx];
 	}
 	delete[] varlen_val_ptrs;
 }
