@@ -44,23 +44,25 @@ void *TableVisibilityTest(int port) {
       port));
 
   // Connection 1 creates a permanent table, which has one tuple
-  LOG_INFO("Connection 1 is creating a permanent table");
   pqxx::work txn11(C1);
   txn11.exec("DROP TABLE IF EXISTS employee;");
   txn11.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
   txn11.exec("INSERT INTO employee VALUES(1, 'trump');");
 
   // Connection 1 creates a temp table with the same name, which has 2 tuples
-  LOG_INFO("Connection 1 is creating a temporary table");
   txn11.exec("CREATE TEMP TABLE employee(id INT, name VARCHAR(100));");
   txn11.exec("INSERT INTO employee VALUES(1, 'trump');");
   txn11.exec("INSERT INTO employee VALUES(2, 'trumpet');");
   txn11.commit();
 
-  // Temp table should make permanent table invisible
+  // Temp table makes the permanent table invisible
   pqxx::work txn12(C1);
-  pqxx::result R12 = txn12.exec("select * from employee;");
-  EXPECT_EQ(R12.size(), 2);
+  pqxx::result R = txn12.exec("select * from employee;");
+  EXPECT_EQ(R.size(), 2);
+  // However the permanent table is still visible if we explicitly specify
+  // the "public" namespace
+  R = txn12.exec("select * from public.employee;");
+  EXPECT_EQ(R.size(), 1);
   txn12.commit();
 
   // Set up connection 2
@@ -70,12 +72,11 @@ void *TableVisibilityTest(int port) {
       "application_name=psql",
       port));
   pqxx::work txn21(C2);
-  pqxx::result R21 = txn21.exec("select * from employee;");
-  EXPECT_EQ(R21.size(), 1);
+  R = txn21.exec("select * from employee;");
+  EXPECT_EQ(R.size(), 1);
   txn21.commit();
 
   // Connection 2 drops the permanent table
-  LOG_INFO("Connection 2 is dropping the permanent table");
   pqxx::work txn22(C2);
   txn22.exec("drop table employee;");
   txn22.commit();
@@ -94,12 +95,11 @@ void *TableVisibilityTest(int port) {
 
   // Connection 1 can still see its temp table
   pqxx::work txn13(C1);
-  pqxx::result R13 = txn13.exec("select * from employee;");
-  EXPECT_EQ(R13.size(), 2);
+  R = txn13.exec("select * from employee;");
+  EXPECT_EQ(R.size(), 2);
   txn13.commit();
 
   // Connection 1 drops its temp table
-  LOG_INFO("Connection 1 is dropping the temporary table");
   pqxx::work txn14(C1);
   txn14.exec("drop table employee;");
   txn14.commit();
@@ -115,7 +115,6 @@ void *TableVisibilityTest(int port) {
   }
   C1.disconnect();
 
-  LOG_INFO("Client has closed");
   LOG_INFO("Passed TableVisibilityTest");
   return NULL;
 }
@@ -196,7 +195,6 @@ void *ForeignKeyTest(int port) {
   txn6.commit();
 
   C.disconnect();
-  LOG_INFO("Client has closed");
   LOG_INFO("Passed ForeignKeyTest");
   return NULL;
 }
