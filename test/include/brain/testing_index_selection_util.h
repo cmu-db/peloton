@@ -104,6 +104,17 @@ class TestingIndexSelectionUtil {
   GetQueryStringsWorkload(QueryStringsWorkloadType workload_type);
 
   /**
+   * Return a cyclic workload
+   * This function accepts a list of workload types and number of
+   * workload cycles and returns the representative cyclic workload
+   * eg. ((W1, W2), 3) -> (W1, W2, W1, W2, W1, W2)
+   * @param workload_types sequence of the workloads - you can assume one cycle involves running such a sequence
+   * @return workload query strings along with the table schema
+   */
+  std::pair<std::vector<TableSchema>, std::vector<std::string>>
+  GetCyclicWorkload(std::vector<QueryStringsWorkloadType> workload_types, int num_cycles);
+
+  /**
    * Get the an estimate of cost of running a query on a given
    * index configuration by the cost model(Available via What-If API)
    * @param query: the query string

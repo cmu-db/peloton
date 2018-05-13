@@ -58,7 +58,9 @@ TEST_F(LSPITests, RLSETest) {
 
 /**
  * @brief: Simple tuning test -I
- * The suite of simple tuning tests run o
+ * The suite of simple tuning tests uses the
+ * `testing_index_selection_util` to build a cyclic query workload
+ * and observe improvement in cost metrics over time.
  */
 TEST_F(LSPITests, SimpleTuneTest1) {
 
@@ -71,8 +73,7 @@ TEST_F(LSPITests, SimpleTuneTest1) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ori_table_oids);
 
-  auto config = testing_util.GetQueryStringsWorkload(
-      index_selection::QueryStringsWorkloadType::SingleTableTwoColW1);
+  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 4);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 

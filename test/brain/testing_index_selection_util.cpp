@@ -192,6 +192,31 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
   return std::make_pair(table_schemas, query_strs);
 }
 
+std::pair<std::vector<TableSchema>, std::vector<std::string>>
+TestingIndexSelectionUtil::GetCyclicWorkload(std::vector<QueryStringsWorkloadType> workload_types,
+                                             int num_cycles) {
+  // Using table names to prevent duplication
+  std::set<std::string> schemas_processed;
+  std::vector<std::string> query_strs;
+  std::vector<TableSchema> table_schemas;
+  for(const auto &w_type: workload_types) {
+    auto config = GetQueryStringsWorkload(w_type);
+    auto config_schemas = config.first;
+    for(const auto &table_schema: config_schemas) {
+      if(schemas_processed.find(table_schema.table_name) == schemas_processed.end()) {
+        schemas_processed.insert(table_schema.table_name);
+        table_schemas.push_back(table_schema);
+      }
+    }
+    auto config_queries = config.second;
+    query_strs.insert(query_strs.end(), config_queries.begin(), config_queries.end());
+  }
+  for(int i = 0; i < num_cycles - 1; i++) {
+    query_strs.insert(query_strs.end(), query_strs.begin(), query_strs.end());
+  }
+  return std::make_pair(table_schemas, query_strs);
+}
+
 // Creates a new table with the provided schema.
 void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
   // Create table.
@@ -347,7 +372,7 @@ double TestingIndexSelectionUtil::WhatIfIndexCost(std::string query,
       stmt_list->PassOutStatement(0));
 
   binder->BindNameToNode(sql_statement.get());
-  auto cost = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config, 
+  auto cost = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
                                                          database_name, txn)->cost;
   txn_manager.CommitTransaction(txn);
   return cost;
