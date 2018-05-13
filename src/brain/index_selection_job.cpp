@@ -10,26 +10,29 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/brain/index_selection_util.h>
-#include "include/brain/index_selection_job.h"
+#include "brain/index_selection_util.h"
+#include "brain/index_selection_job.h"
+#include "brain/index_selection.h"
 #include "catalog/query_history_catalog.h"
 #include "catalog/system_catalogs.h"
-#include "brain/index_selection.h"
+#include "optimizer/stats/stats_storage.h"
 
 namespace peloton {
 namespace brain {
 
-#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index_"
+#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index"
 
 void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
 
-  // Query the catalog for new queries.
-  auto query_catalog = &catalog::QueryHistoryCatalog::GetInstance(txn);
+  // Query the catalog for new SQL queries.
+  // New SQL queries are the queries that were added to the system
+  // after the last_timestamp_
+  auto &query_catalog = catalog::QueryHistoryCatalog::GetInstance(txn);
   auto query_history =
-      query_catalog->GetQueryStringsAfterTimestamp(last_timestamp_, txn);
+      query_catalog.GetQueryStringsAfterTimestamp(last_timestamp_, txn);
   if (query_history->size() > num_queries_threshold_) {
     LOG_INFO("Tuning threshold has crossed. Time to tune the DB!");
 
@@ -39,30 +42,48 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
       queries.push_back(query_pair.second);
     }
 
+    // TODO: Handle multiple databases
+    brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
+    LOG_INFO("Knob Num Indexes: %zu", env->GetIndexSelectionKnobs().num_indexes_);
+    LOG_INFO("Knob Naive: %zu", env->GetIndexSelectionKnobs().naive_enumeration_threshold_);
+    LOG_INFO("Knob Num Iterations: %zu", env->GetIndexSelectionKnobs().num_iterations_);
+    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
+    brain::IndexConfiguration best_config;
+    is.GetBestIndexes(best_config);
+
+    if (best_config.IsEmpty()) {
+      LOG_INFO("Best config is empty");
+    }
+
     // Get the existing indexes and drop them.
     // TODO: Handle multiple databases
     auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-        DEFAULT_DB_NAME, txn);
+      DEFAULT_DB_NAME, txn);
     auto pg_index = catalog::Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_object->GetDatabaseOid())
-                        ->GetIndexCatalog();
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetIndexCatalog();
     auto indexes = pg_index->GetIndexObjects(txn);
     for (auto index : indexes) {
       auto index_name = index.second->GetIndexName();
-      // TODO: This is a hack for now. Add a boolean to the index catalog to
+      // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
+      // This is a hack for now. Add a boolean to the index catalog to
       // find out if an index is a brain suggested index/user created index.
       if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
           std::string::npos) {
-        LOG_DEBUG("Dropping Index: %s", index_name.c_str());
-        DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+        bool found = false;
+        for (auto installed_index: best_config.GetIndexes()) {
+          if ((index.second.get()->GetTableOid() == installed_index.get()->table_oid) &&
+          (index.second.get()->GetKeyAttrs() == installed_index.get()->column_oids)) {
+            found = true;
+          }
+        }
+        // Drop only indexes which are not suggested this time.
+        if (!found) {
+          LOG_DEBUG("Dropping Index: %s", index_name.c_str());
+          DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
+        }
       }
     }
-
-    // TODO: Handle multiple databases
-    brain::Workload workload(queries, DEFAULT_DB_NAME);
-    brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs()};
-    brain::IndexConfiguration best_config;
-    is.GetBestIndexes(best_config);
 
     for (auto index : best_config.GetIndexes()) {
       // Create RPC for index creation on the server side.
@@ -88,12 +109,12 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
 
   // Create the index name: concat - db_id, table_id, col_ids
   std::stringstream sstream;
-  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << ":" << index->db_oid << ":"
-          << index->table_oid << ":";
+  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << "_" << index->db_oid << "_"
+          << index->table_oid << "_";
   std::vector<oid_t> col_oid_vector;
   for (auto col : index->column_oids) {
     col_oid_vector.push_back(col);
-    sstream << col << ",";
+    sstream << col << "_";
   }
   auto index_name = sstream.str();
 

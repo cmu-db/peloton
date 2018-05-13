@@ -42,11 +42,12 @@ class WhatIfIndex {
    * @param query - parsed and bound query
    * @param config - a hypothetical index configuration
    * @param database_name - database name string
+   * @param transaction - already created transaction object.
    * @return physical plan info
    */
   static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndBestPlanTree(
       std::shared_ptr<parser::SQLStatement> query, IndexConfiguration &config,
-      std::string database_name);
+      std::string database_name, concurrency::TransactionContext *txn);
 
  private:
   /**

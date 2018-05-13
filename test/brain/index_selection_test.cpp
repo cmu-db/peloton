@@ -23,12 +23,12 @@
 #include "optimizer/stats/table_stats.h"
 #include "sql/testing_sql_util.h"
 
-#include "brain/testing_index_suggestion_util.h"
+#include "brain/testing_index_selection_util.h"
 
 namespace peloton {
 namespace test {
 
-using namespace index_suggestion;
+using namespace index_selection;
 
 //===--------------------------------------------------------------------===//
 // IndexSelectionTest
@@ -57,7 +57,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
                                   {"b", TupleValueType::INTEGER},
                                   {"c", TupleValueType::INTEGER},
                                   {"d", TupleValueType::INTEGER}});
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   testing_util.CreateTable(schema);
   testing_util.InsertIntoTable(schema, num_tuples);
 
@@ -77,15 +77,17 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
 
   admissible_indexes.push_back(2);
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
   // Create a new workload
-  brain::Workload workload(query_strs, database_name);
+  brain::Workload workload(query_strs, database_name, txn);
   EXPECT_GT(workload.Size(), 0);
 
   // Verify the admissible indexes.
   auto queries = workload.GetQueries();
   for (unsigned long i = 0; i < queries.size(); i++) {
     brain::Workload w(queries[i], workload.GetDatabaseName());
-    brain::IndexSelection is(w, knobs);
+    brain::IndexSelection is(w, knobs, txn);
 
     brain::IndexConfiguration ic;
     is.GetAdmissibleIndexes(queries[i], ic);
@@ -93,6 +95,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
     auto indexes = ic.GetIndexes();
     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
   }
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -111,7 +114,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
 
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   auto config =
       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::A);
   auto table_schemas = config.first;
@@ -122,7 +125,10 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
     testing_util.CreateTable(table_schema);
   }
 
-  brain::Workload workload(query_strings, database_name);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::Workload workload(query_strings, database_name, txn);
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   // Generate candidate configurations.
@@ -131,7 +137,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexConfiguration candidate_config;
   brain::IndexConfiguration admissible_config;
 
-  brain::IndexSelection index_selection(workload, knobs);
+  brain::IndexSelection index_selection(workload, knobs, txn);
   index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
                                            workload);
 
@@ -154,7 +160,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   candidate_config.Clear();
   admissible_config.Clear();
 
-  brain::IndexSelection is(workload, knobs);
+  brain::IndexSelection is(workload, knobs, txn);
   is.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
 
   LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
@@ -184,6 +190,8 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
     }
     EXPECT_TRUE(found);
   }
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -205,7 +213,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
 
-  brain::IndexSelection index_selection(workload, knobs);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::IndexSelection index_selection(workload, knobs, txn);
 
   std::vector<oid_t> cols;
 
@@ -332,6 +343,8 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
     EXPECT_EQ(1, count);
   }
   EXPECT_EQ(expected_indexes.size(), chosen_indexes.size());
+
+  txn_manager.CommitTransaction(txn);
 }
 
 /**
@@ -339,214 +352,231 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * and spits out the set of indexes that are the best ones for the
  * workload.
  */
-// TEST_F(IndexSelectionTest, IndexSelectionTest1) {
-//   std::string database_name = DEFAULT_DB_NAME;
+TEST_F(IndexSelectionTest, IndexSelectionTest1) {
+  std::string database_name = DEFAULT_DB_NAME;
 
-//   int num_rows = 2000;  // number of rows to be inserted.
+  int num_rows = 2000;  // number of rows to be inserted.
 
-//   TestingIndexSuggestionUtil testing_util(database_name);
-//   auto config =
-//       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::B);
-//   auto table_schemas = config.first;
-//   auto query_strings = config.second;
+  TestingIndexSelectionUtil testing_util(database_name);
+  auto config =
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::B);
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
 
-//   // Create and populate tables.
-//   for (auto table_schema : table_schemas) {
-//     testing_util.CreateTable(table_schema);
-//     testing_util.InsertIntoTable(table_schema, num_rows);
-//   }
+  // Create and populate tables.
+  for (auto table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+    testing_util.InsertIntoTable(table_schema, num_rows);
+  }
 
-//   brain::Workload workload(query_strings, database_name);
-//   EXPECT_EQ(workload.Size(), query_strings.size());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
-//   brain::IndexConfiguration best_config;
-//   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
-//   brain::IndexConfiguration expected_config;
+  brain::Workload workload(query_strings, database_name, txn);
+  EXPECT_EQ(workload.Size(), query_strings.size());
 
-//   /** Test 1
-//    * Choose only 1 index with 1 column
-//    * it should choose {B}
-//    */
-//   size_t max_index_cols = 1;         // multi-column index limit
-//   size_t enumeration_threshold = 2;  // naive enumeration threshold
-//   size_t num_indexes = 1;            // top num_indexes will be returned.
+  brain::IndexConfiguration best_config;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
+  brain::IndexConfiguration expected_config;
 
-//   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
-//                                       num_indexes};
+  /** Test 1
+   * Choose only 1 index with 1 column
+   * it should choose {B}
+   */
+  size_t max_index_cols = 1;         // multi-column index limit
+  size_t enumeration_threshold = 2;  // naive enumeration threshold
+  size_t num_indexes = 1;            // top num_indexes will be returned.
 
-//   brain::IndexSelection is = {workload, knobs};
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
 
-//   is.GetBestIndexes(best_config);
+  brain::IndexSelection is = {workload, knobs, txn};
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   EXPECT_EQ(1, best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
-//   expected_config = {expected_indexes};
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
+  expected_config = {expected_indexes};
 
-//   /** Test 2
-//    * Choose 2 indexes with 1 column
-//    * it should choose {A} and {B}
-//    */
-//   max_index_cols = 1;
-//   enumeration_threshold = 2;
-//   num_indexes = 2;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  EXPECT_TRUE(expected_config == best_config);
 
-//   is.GetBestIndexes(best_config);
+  /** Test 2
+   * Choose 2 indexes with 1 column
+   * it should choose {A} and {B}
+   */
+  max_index_cols = 1;
+  enumeration_threshold = 2;
+  num_indexes = 2;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   EXPECT_EQ(2, best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"a"}, &is),
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
-//   expected_config = {expected_indexes};
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b"}, &is)};
+  expected_config = {expected_indexes};
 
-//   /** Test 3
-//    * Choose 1 index with up to 2 columns
-//    * it should choose {BA}
-//    */
-//   max_index_cols = 2;
-//   enumeration_threshold = 2;
-//   num_indexes = 1;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  EXPECT_TRUE(expected_config == best_config);
 
-//   is.GetBestIndexes(best_config);
+  /** Test 3
+   * Choose 1 index with up to 2 columns
+   * it should choose {BA}
+   */
+  max_index_cols = 2;
+  enumeration_threshold = 2;
+  num_indexes = 1;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   EXPECT_EQ(1, best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
-//   expected_config = {expected_indexes};
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
+  expected_config = {expected_indexes};
 
-//   /** Test 4
-//    * Choose 2 indexes with up to 2 columns
-//    * it should choose {AB} and {BC}
-//    */
-//   max_index_cols = 2;
-//   enumeration_threshold = 2;
-//   num_indexes = 2;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  EXPECT_TRUE(expected_config == best_config);
 
-//   is.GetBestIndexes(best_config);
+  /** Test 4
+   * Choose 2 indexes with up to 2 columns
+   * it should choose {AB} and {BC}
+   */
+  max_index_cols = 2;
+  enumeration_threshold = 2;
+  num_indexes = 2;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   EXPECT_EQ(2, best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-//   expected_config = {expected_indexes};
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  expected_config = {expected_indexes};
 
-//   /** Test 5
-//    * Choose 4 indexes with up to 2 columns
-//    * it should choose {AB} and {BC}
-//    * more indexes donot give any added benefit
-//    */
-//   max_index_cols = 2;
-//   enumeration_threshold = 2;
-//   num_indexes = 4;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  EXPECT_TRUE(expected_config == best_config);
 
-//   is.GetBestIndexes(best_config);
+  /** Test 5
+   * Choose 4 indexes with up to 2 columns
+   * it should choose {AB}, {BC} from exhaustive and {AC} or {CA} from greedy
+   * more indexes donot give any added benefit
+   */
+  max_index_cols = 2;
+  enumeration_threshold = 2;
+  num_indexes = 4;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   EXPECT_EQ(2, best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-//   expected_config = {expected_indexes};
+  EXPECT_EQ(3, best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "c"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  expected_config = {expected_indexes};
 
-//   /** Test 6
-//    * Choose 1 index with up to 3 columns
-//    * it should choose {BA}
-//    * more indexes / columns donot give any added benefit
-//    */
-//   max_index_cols = 3;
-//   enumeration_threshold = 2;
-//   num_indexes = 1;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> 
+  alternate_expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  brain::IndexConfiguration alternate_expected_config = 
+      {alternate_expected_indexes};
 
-//   is.GetBestIndexes(best_config);
+  // It can choose either AC or CA based on the distribution of C and A
+  EXPECT_TRUE((expected_config == best_config) || 
+              (alternate_expected_config == best_config));
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  /** Test 6
+   * Choose 1 index with up to 3 columns
+   * it should choose {BA}
+   * more indexes / columns donot give any added benefit
+   */
+  max_index_cols = 3;
+  enumeration_threshold = 2;
+  num_indexes = 1;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   EXPECT_EQ(1, best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
-//   expected_config = {expected_indexes};
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
+  EXPECT_EQ(1, best_config.GetIndexCount());
 
-//   // TODO[Siva]: This test non-deterministically fails :(
-//   /** Test 7
-//    * Choose 4 indexes with up to 3 columns
-//    * it should choose {AB} and {BC}
-//    * more indexes / columns donot give any added benefit
-//    */
-//   max_index_cols = 3;
-//   enumeration_threshold = 2;
-//   num_indexes = 4;
-//   knobs = {max_index_cols, enumeration_threshold, num_indexes};
-//   is = {workload, knobs};
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is)};
+  expected_config = {expected_indexes};
 
-//   is.GetBestIndexes(best_config);
+  EXPECT_TRUE(expected_config == best_config);
 
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  /** Test 7
+   * Choose 2 indexes with up to 2 columns
+   * it should choose {BA} and {AC}
+   * This has a naive threshold of 1, it chooses BA from exhaustive
+   * enumeration and AC greedily
+   */
+  max_index_cols = 2;
+  enumeration_threshold = 1;
+  num_indexes = 2;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-//   EXPECT_EQ(2, best_config.GetIndexCount());
+  is.GetBestIndexes(best_config);
 
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
-//       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-//   expected_config = {expected_indexes};
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-//   EXPECT_TRUE(expected_config == best_config);
-// }
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy2", {"b", "a"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy2", {"a", "c"}, &is)};
+  expected_config = {expected_indexes};
+
+  EXPECT_TRUE(expected_config == best_config);
+
+  txn_manager.CommitTransaction(txn);
+}
+
+// It is difficult to predict the output of this test, should remove it or
+// think of a better way of writing this test
 /**
  * @brief end-to-end test which takes in a workload of queries
  * and spits out the set of indexes that are the best ones for more
  * complex workloads.
  */
 // TEST_F(IndexSelectionTest, IndexSelectionTest2) {
-//   // TODO[Siva]: This test non-deterministically fails :( comparator issues
 //   std::string database_name = DEFAULT_DB_NAME;
 //   int num_rows = 1000;  // number of rows to be inserted.
 
-//   TestingIndexSuggestionUtil testing_util(database_name);
+//   TestingIndexSelectionUtil testing_util(database_name);
 //   auto config =
 //     testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
 //   auto table_schemas = config.first;
@@ -558,7 +588,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 //     testing_util.InsertIntoTable(table_schema, num_rows);
 //   }
 
-//   brain::Workload workload(query_strings, database_name);
+//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//   auto txn = txn_manager.BeginTransaction();
+
+//   brain::Workload workload(query_strings, database_name, txn);
 //   EXPECT_EQ(workload.Size(), query_strings.size());
 
 //   brain::IndexConfiguration best_config;
@@ -566,26 +599,28 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 //   brain::IndexConfiguration expected_config;
 
 //   size_t max_index_cols = 3;
-//   size_t enumeration_threshold = 2;
+//   size_t enumeration_threshold = 1;
 //   size_t num_indexes = 2;
 //   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
 //                                       num_indexes};
-//   brain::IndexSelection is = {workload, knobs};
+//   brain::IndexSelection is = {workload, knobs, txn};
 
 //   is.GetBestIndexes(best_config);
 
-//   LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
+//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
 //   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
 //   EXPECT_EQ(2, best_config.GetIndexCount());
 
 //   expected_indexes = {
 //       testing_util.CreateHypotheticalIndex("d_student", {"id", "name"}, &is),
-//       testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa"},
+//       testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa", "name"},
 //           &is)};
 //   expected_config = {expected_indexes};
 
 //   EXPECT_TRUE(expected_config == best_config);
+
+//   txn_manager.CommitTransaction(txn);
 // }
 
 /**
@@ -594,11 +629,10 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
  * complex workloads.
  */
 TEST_F(IndexSelectionTest, IndexSelectionTest3) {
-  // TODO[Siva]: This test non-deterministically fails :( comparator issues
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
-  TestingIndexSuggestionUtil testing_util(database_name);
+  TestingIndexSelectionUtil testing_util(database_name);
   auto config =
       testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::C);
   auto table_schemas = config.first;
@@ -610,7 +644,10 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
     testing_util.InsertIntoTable(table_schema, num_rows);
   }
 
-  brain::Workload workload(query_strings, database_name);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  brain::Workload workload(query_strings, database_name, txn);
   EXPECT_EQ(workload.Size(), query_strings.size());
 
   brain::IndexConfiguration best_config;
@@ -619,18 +656,18 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   /** Test 1
    * Choose only 1 index with up to 3 column
-   * it should choose {BCA} or {CBA} - comparator non-determinism
+   * it should choose {BCA}
    */
   size_t max_index_cols = 3;
   size_t enumeration_threshold = 2;
   size_t num_indexes = 1;
   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
                                       num_indexes};
-  brain::IndexSelection is = {workload, knobs};
+  brain::IndexSelection is = {workload, knobs, txn};
 
   is.GetBestIndexes(best_config);
 
-  LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
@@ -643,27 +680,29 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   /** Test 2
    * Choose only 2 indexes with up to 3 column
-   * it should choose some permutation of {ABC} and {BCD}
+   * it should choose some permutation of {BCA} and {DEF}
    */
-  // max_index_cols = 3;
-  // enumeration_threshold = 2;
-  // num_indexes = 2;
-  // knobs = {max_index_cols, enumeration_threshold, num_indexes};
-  // is = {workload, knobs};
+  max_index_cols = 3;
+  enumeration_threshold = 2;
+  num_indexes = 2;
+  knobs = {max_index_cols, enumeration_threshold, num_indexes};
+  is = {workload, knobs, txn};
 
-  // is.GetBestIndexes(best_config);
+  is.GetBestIndexes(best_config);
 
-  // LOG_INFO("Best Indexes: %s", best_config.ToString().c_str());
-  // LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
 
-  // EXPECT_EQ(2, best_config.GetIndexCount());
+  EXPECT_EQ(2, best_config.GetIndexCount());
 
-  // expected_indexes = {
-  //     testing_util.CreateHypotheticalIndex("dummy3", {"b", "c", "a"}, &is),
-  //     testing_util.CreateHypotheticalIndex("dummy3", {"b", "c", "d"}, &is)};
-  // expected_config = {expected_indexes};
+  expected_indexes = {
+      testing_util.CreateHypotheticalIndex("dummy3", {"b", "c", "a"}, &is),
+      testing_util.CreateHypotheticalIndex("dummy3", {"d", "e", "f"}, &is)};
+  expected_config = {expected_indexes};
 
-  // EXPECT_TRUE(expected_config == best_config);
+  EXPECT_TRUE(expected_config == best_config);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

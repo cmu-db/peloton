@@ -313,9 +313,6 @@ void GetToIndexScan::Transform(
 
   // Check whether any index can fulfill predicate predicate evaluation
   if (!get->predicates.empty()) {
-    std::vector<oid_t> key_column_id_list;
-    std::vector<ExpressionType> expr_type_list;
-    std::vector<type::Value> value_list;
     std::unordered_map<oid_t, std::pair<ExpressionType, type::Value>>
         type_value_pair_by_key_id;
     for (auto &pred : get->predicates) {

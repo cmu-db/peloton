@@ -84,6 +84,10 @@ class TableCatalogObject {
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
 
+
+  // NOTE: should be only used by What-if API.
+  void SetValidIndexObjects(bool is_valid);
+
  private:
   // member variables
   oid_t table_oid;

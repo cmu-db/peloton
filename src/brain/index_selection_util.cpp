@@ -146,20 +146,26 @@ std::shared_ptr<HypotheticalIndexObject> IndexObjectPool::PutIndexObject(
   return index_s_ptr;
 }
 
-Workload::Workload(std::vector<std::string> &queries, std::string database_name)
+//===--------------------------------------------------------------------===//
+// Workload
+//===--------------------------------------------------------------------===//
+
+Workload::Workload(std::vector<std::string> &queries, std::string database_name,
+                   concurrency::TransactionContext *txn)
     : database_name(database_name) {
   LOG_TRACE("Initializing workload with %ld queries", queries.size());
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto parser = parser::PostgresParser::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
   std::unique_ptr<binder::BindNodeVisitor> binder(
       new binder::BindNodeVisitor(txn, database_name));
 
   // Parse and bind every query. Store the results in the workload vector.
   for (auto query : queries) {
     LOG_DEBUG("Query: %s", query.c_str());
+
+    // TODO: Remove this.
+    // Hack to filter out pg_catalog queries.
+    if (query.find("pg_") != std::string::npos) {
+      continue;
+    }
 
     // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
@@ -171,14 +177,19 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
 
     // Create a new shared ptr from the unique ptr because
     // these queries will be referenced by multiple objects later.
-    // Release the unique ptr from the stmt list to avoid freeing at the end of
-    // this loop iteration.
+    // Release the unique ptr from the stmt list to avoid freeing at the end
+    // of this loop iteration.
     auto stmt = stmt_list->PassOutStatement(0);
     auto stmt_shared = std::shared_ptr<parser::SQLStatement>(stmt.release());
     PELOTON_ASSERT(stmt_shared->GetType() != StatementType::INVALID);
 
-    // Bind the query
-    binder->BindNameToNode(stmt_shared.get());
+    try {
+      // Bind the query
+      binder->BindNameToNode(stmt_shared.get());
+    } catch (Exception e) {
+      LOG_DEBUG("Cannot bind this query");
+      continue;
+    }
 
     // Only take the DML queries from the workload
     switch (stmt_shared->GetType()) {
@@ -189,10 +200,9 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name)
         AddQuery(stmt_shared);
       default:
         // Ignore other queries.
-        LOG_TRACE("Ignoring query: %s" + stmt->GetInfo().c_str());
+        LOG_TRACE("Ignoring query: %s", stmt->GetInfo().c_str());
     }
   }
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace brain

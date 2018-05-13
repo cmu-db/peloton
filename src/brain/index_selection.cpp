@@ -19,8 +19,9 @@
 namespace peloton {
 namespace brain {
 
-IndexSelection::IndexSelection(Workload &query_set, IndexSelectionKnobs knobs)
-    : query_set_(query_set), context_(knobs) {}
+IndexSelection::IndexSelection(Workload &query_set, IndexSelectionKnobs knobs,
+                               concurrency::TransactionContext *txn)
+    : query_set_(query_set), context_(knobs), txn_(txn) {}
 
 void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
   // http://www.vldb.org/conf/1997/P146.PDF
@@ -33,24 +34,24 @@ void IndexSelection::GetBestIndexes(IndexConfiguration &final_indexes) {
 
   // The best indexes after every iteration
   IndexConfiguration candidate_indexes;
-  // Single column indexes that are useful for at least one quey
+  // Single column indexes that are useful for at least one query
   IndexConfiguration admissible_indexes;
 
   // Start the index selection.
   for (unsigned long i = 0; i < context_.knobs_.num_iterations_; i++) {
-    LOG_INFO("******* Iteration %ld **********", i);
-    LOG_TRACE("Candidate Indexes Before: %s",
+    LOG_DEBUG("******* Iteration %ld **********", i);
+    LOG_DEBUG("Candidate Indexes Before: %s",
               candidate_indexes.ToString().c_str());
     GenerateCandidateIndexes(candidate_indexes, admissible_indexes, query_set_);
-    LOG_TRACE("Admissible Indexes: %s", admissible_indexes.ToString().c_str());
-    LOG_TRACE("Candidate Indexes After: %s",
+    LOG_DEBUG("Admissible Indexes: %s", admissible_indexes.ToString().c_str());
+    LOG_DEBUG("Candidate Indexes After: %s",
               candidate_indexes.ToString().c_str());
 
     // Configuration Enumeration
     IndexConfiguration top_candidate_indexes;
     Enumerate(candidate_indexes, top_candidate_indexes, query_set_,
               context_.knobs_.num_indexes_);
-    LOG_TRACE("Top Candidate Indexes: %s",
+    LOG_DEBUG("Top Candidate Indexes: %s",
               candidate_indexes.ToString().c_str());
 
     candidate_indexes = top_candidate_indexes;
@@ -85,8 +86,9 @@ void IndexSelection::GenerateCandidateIndexes(
       // candidates for each query.
       candidate_config.Merge(pruned_ai);
     }
+    LOG_DEBUG("Single column candidate indexes: %lu", candidate_config.GetIndexCount());
   } else {
-    LOG_TRACE("Pruning multi-column indexes");
+    LOG_DEBUG("Pruning multi-column indexes");
     IndexConfiguration pruned_ai;
     PruneUselessIndexes(candidate_config, workload, pruned_ai);
     candidate_config.Set(pruned_ai);
@@ -110,8 +112,8 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       auto c1 = ComputeCost(c, w);
       auto c2 = ComputeCost(empty_config, w);
-      LOG_TRACE("Cost with index %s is %lf", c.ToString().c_str(), c1);
-      LOG_TRACE("Cost without is %lf", c2);
+      LOG_DEBUG("Cost with index %s is %lf", c.ToString().c_str(), c1);
+      LOG_DEBUG("Cost without is %lf", c2);
 
       if (c1 < c2) {
         is_useful = true;
@@ -150,11 +152,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // 3. If Cost (S U {I}) >= Cost(S) then exit
   // Else S = S U {I}
   // 4. If |S| = k then exit
-  LOG_INFO("GREEDY: Starting with the following index: %s",
+  LOG_DEBUG("GREEDY: Starting with the following index: %s",
            indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
 
-  LOG_INFO("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
+  LOG_DEBUG("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
            current_index_count, k);
 
   if (current_index_count >= k) return;
@@ -172,9 +174,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes = indexes;
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
-      LOG_INFO("GREEDY: Considering this index: %s \n with cost: %lf",
-               best_index->ToString().c_str(), cur_cost);
-      if (cur_cost < cur_min_cost) {
+      LOG_DEBUG("GREEDY: Considering this index: %s \n with cost: %lf",
+               index->ToString().c_str(), cur_cost);
+      if (cur_cost < cur_min_cost || (best_index != nullptr &&
+          cur_cost == cur_min_cost &&
+          new_indexes.ToString() < best_index->ToString())) {
         cur_min_cost = cur_cost;
         best_index = index;
       }
@@ -182,7 +186,7 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
-      LOG_INFO("GREEDY: Adding the following index: %s",
+      LOG_DEBUG("GREEDY: Adding the following index: %s",
                best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
@@ -191,12 +195,12 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
       // we are done with all remaining indexes
       if (remaining_indexes.GetIndexCount() == 0) {
-        LOG_INFO("GREEDY: Breaking because nothing more");
+        LOG_DEBUG("GREEDY: Breaking because nothing more");
         break;
       }
     } else {  // we did not find any better index to add to our current
               // configuration
-      LOG_INFO("GREEDY: Breaking because nothing better found");
+      LOG_DEBUG("GREEDY: Breaking because nothing better found");
       break;
     }
   }
@@ -224,7 +228,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   IndexConfiguration empty;
   // The running index configuration contains the possible subsets generated so
   // far. It is updated after every iteration
-  running_index_config.emplace(empty, 0.0);
+  auto cost_empty = ComputeCost(empty, workload);
+  running_index_config.emplace(empty, cost_empty);
 
   for (auto const &index : indexes.GetIndexes()) {
     // Make a copy of the running index configuration and add each element to it
@@ -250,16 +255,22 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.insert(running_index_config.begin(),
                              running_index_config.end());
   // Remove the starting empty set that we added
-  result_index_config.erase({empty, 0.0});
+  result_index_config.erase({empty, cost_empty});
 
   for (auto index : result_index_config) {
-    LOG_INFO("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
+
+    LOG_DEBUG("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
              index.second);
   }
 
   // Since the insertion into the sets ensures the order of cost, get the first
   // m configurations
   if (result_index_config.empty()) return;
+
+  // if having no indexes is better (for eg. for insert heavy workload),
+  // then don't choose anything
+  if (cost_empty < result_index_config.begin()->second) return;
+
   auto best_m_index = result_index_config.begin()->first;
   top_indexes.Merge(best_m_index);
 }
@@ -315,7 +326,7 @@ void IndexSelection::IndexColsParseWhereHelper(
     const expression::AbstractExpression *where_expr,
     IndexConfiguration &config) {
   if (where_expr == nullptr) {
-    LOG_TRACE("No Where Clause Found");
+    LOG_DEBUG("No Where Clause Found");
     return;
   }
   auto expr_type = where_expr->GetExpressionType();
@@ -336,6 +347,18 @@ void IndexSelection::IndexColsParseWhereHelper(
       // Get left and right child and extract the column name.
       left_child = where_expr->GetChild(0);
       right_child = where_expr->GetChild(1);
+
+      // if where clause is something like a = b, we don't benefit from index
+      if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          right_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        return;
+      }
+
+      // if where clause is something like 1 = 2, we don't benefit from index
+      if (left_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+          right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+        return;
+      }
 
       if (left_child->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         PELOTON_ASSERT(right_child->GetExpressionType() !=
@@ -374,7 +397,7 @@ void IndexSelection::IndexColsParseGroupByHelper(
     std::unique_ptr<parser::GroupByDescription> &group_expr,
     IndexConfiguration &config) {
   if ((group_expr == nullptr) || (group_expr->columns.size() == 0)) {
-    LOG_TRACE("Group by expression not present");
+    LOG_DEBUG("Group by expression not present");
     return;
   }
   auto &columns = group_expr->columns;
@@ -389,7 +412,7 @@ void IndexSelection::IndexColsParseOrderByHelper(
     std::unique_ptr<parser::OrderDescription> &order_expr,
     IndexConfiguration &config) {
   if ((order_expr == nullptr) || (order_expr->exprs.size() == 0)) {
-    LOG_TRACE("Order by expression not present");
+    LOG_DEBUG("Order by expression not present");
     return;
   }
   auto &exprs = order_expr->exprs;
@@ -427,7 +450,7 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
       cost += context_.memo_[state];
     } else {
       auto result = WhatIfIndex::GetCostAndBestPlanTree(
-          query, config, workload.GetDatabaseName());
+          query, config, workload.GetDatabaseName(), txn_);
       context_.memo_[state] = result->cost;
       cost += result->cost;
     }

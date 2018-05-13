@@ -15,7 +15,7 @@
 #include "brain/indextune/lspi/rlse.h"
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"
-#include "brain/testing_index_suggestion_util.h"
+#include "brain/testing_index_selection_util.h"
 #include "brain/what_if_index.h"
 
 namespace peloton {
@@ -65,14 +65,14 @@ TEST_F(LSPITests, SimpleTuneTest1) {
   std::string database_name = DEFAULT_DB_NAME;
   size_t max_index_size = 3;
 
-  index_suggestion::TestingIndexSuggestionUtil testing_util(database_name);
+  index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
   std::set<oid_t> ori_table_oids;
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ori_table_oids);
 
   auto config = testing_util.GetQueryStringsWorkload(
-      index_suggestion::QueryStringsWorkloadType::SingleTableTwoColW1);
+      index_selection::QueryStringsWorkloadType::SingleTableTwoColW1);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -106,12 +106,13 @@ TEST_F(LSPITests, SimpleTuneTest1) {
         stmt_list->PassOutStatement(0));
 
     binder->BindNameToNode(sql_statement.get());
-    txn_manager.CommitTransaction(txn);
 
     // Measure the What-If Index cost
     auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
         *index_tuner.GetConfigContainer());
-    auto cost = testing_util.WhatIfIndexCost(sql_statement, index_config, database_name);
+//    auto cost = testing_util.WhatIfIndexCost(sql_statement, index_config, database_name);
+    auto cost = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, index_config, database_name, txn)->cost;
+    txn_manager.CommitTransaction(txn);
 
     LOG_DEBUG("Iter %zu", i);
     LOG_DEBUG("query: %s", query.c_str());

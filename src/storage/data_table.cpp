@@ -1092,7 +1092,12 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_.Update(index_offset, nullptr);
 
   // Drop index column info
-  indexes_columns_[index_offset].clear();
+  // indexes_columns_[index_offset].clear();
+
+  // Doing this because StatsStorage::AnalyzeStatsForAllTables
+  // assumes that the set is completely erased when the index is
+  // deleted.
+  indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
 void DataTable::DropIndexes() {
