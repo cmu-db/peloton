@@ -15,19 +15,21 @@
 #include "statistics/stats_event_type.h"
 #include "statistics/table_metric.h"
 #include "statistics/test_metric.h"
+#include "statistics/tuple_access_metric.h"
 
 namespace peloton {
 namespace stats {
 using CollectorsMap =
-    tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
-                                  std::hash<std::thread::id>>;
+tbb::concurrent_unordered_map<std::thread::id, ThreadLevelStatsCollector,
+                              std::hash<std::thread::id>>;
 
 CollectorsMap ThreadLevelStatsCollector::collector_map_ = CollectorsMap();
 
 ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
   // TODO(tianyu): Write stats to register here
-  auto stats_mode = static_cast<StatsModeType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode));
+  auto
+      stats_mode = static_cast<StatsModeType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode));
   if (stats_mode == StatsModeType::ENABLE) {
     RegisterMetric<TableMetric>(
         {StatsEventType::TUPLE_READ, StatsEventType::TUPLE_UPDATE,
@@ -41,6 +43,9 @@ ThreadLevelStatsCollector::ThreadLevelStatsCollector() {
     RegisterMetric<DatabaseMetric>({StatsEventType::TXN_BEGIN,
                                     StatsEventType::TXN_COMMIT,
                                     StatsEventType::TXN_ABORT});
+    RegisterMetric<TupleAccessMetric>({StatsEventType::TXN_ABORT,
+                                       StatsEventType::TXN_COMMIT,
+                                       StatsEventType::TUPLE_READ});
   } else if (stats_mode == StatsModeType::TEST)
     RegisterMetric<TestMetric>({StatsEventType::TEST});
 }
