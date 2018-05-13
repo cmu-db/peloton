@@ -31,8 +31,8 @@ namespace codegen {
 void Updater::Init(storage::DataTable *table,
                    executor::ExecutorContext *executor_context,
                    Target *target_vector, uint32_t target_vector_size) {
-  PELOTON_ASSERT(table != nullptr && executor_context != nullptr&&
-            target_vector != nullptr);
+  PELOTON_ASSERT(table != nullptr && executor_context != nullptr &&
+                 target_vector != nullptr);
   table_ = table;
   executor_context_ = executor_context;
   // Target list is kept since it is required at a new version update
@@ -58,7 +58,7 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
   if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
     return nullptr;
   }
-  
+
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
@@ -66,23 +66,20 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
   old_location_.offset = tuple_offset;
 
   // If I am the owner, update in-place
-  is_owner_ = TransactionRuntime::IsOwner(*txn, tile_group_header,
-                                          tuple_offset);
-  if (is_owner_ == true)
-    return GetDataPtr(tile_group_id, tuple_offset);
+  is_owner_ =
+      TransactionRuntime::IsOwner(*txn, tile_group_header, tuple_offset);
+  if (is_owner_ == true) return GetDataPtr(tile_group_id, tuple_offset);
 
   // If not the owner, acquire ownership and build a new version tuple
-  acquired_ownership_ = TransactionRuntime::AcquireOwnership(*txn,
-      tile_group_header, tuple_offset);
-  if (acquired_ownership_ == false)
-    return nullptr;
+  acquired_ownership_ = TransactionRuntime::AcquireOwnership(
+      *txn, tile_group_header, tuple_offset);
+  if (acquired_ownership_ == false) return nullptr;
 
   new_location_ = table_->AcquireVersion();
   return GetDataPtr(new_location_.block, new_location_.offset);
 }
 
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
-
   PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
 
   if (IsInStatementWriteSet(ItemPointer(tile_group_id, tuple_offset))) {
@@ -94,22 +91,20 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
   auto *tile_group_header = tile_group->GetHeader();
 
   // Check ownership
-  is_owner_ = TransactionRuntime::IsOwner(*txn, tile_group_header,
-                                          tuple_offset);
+  is_owner_ =
+      TransactionRuntime::IsOwner(*txn, tile_group_header, tuple_offset);
   acquired_ownership_ = false;
   if (is_owner_ == false) {
     acquired_ownership_ = TransactionRuntime::AcquireOwnership(
         *txn, tile_group_header, tuple_offset);
-    if (acquired_ownership_ == false)
-      return nullptr;
+    if (acquired_ownership_ == false) return nullptr;
   }
 
   // Delete the old tuple
   ItemPointer old_location(tile_group_id, tuple_offset);
   ItemPointer empty_location = table_->InsertEmptyVersion();
   if (empty_location.IsNull() == true && acquired_ownership_ == true) {
-    TransactionRuntime::YieldOwnership(*txn, tile_group_header,
-                                       tuple_offset);
+    TransactionRuntime::YieldOwnership(*txn, tile_group_header, tuple_offset);
     return nullptr;
   }
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -141,12 +136,13 @@ void Updater::Update() {
   oid_t table_oid = table_->GetOid();
   // Lock the table (reader lock)
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-  LOG_TRACE("Shared Lock in update: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+  LOG_TRACE(
+      "Shared Lock in update: lock mamager address is %p, table oid is %u",
+      (void *)lm, table_oid);
   bool lock_success = lm->LockShared(table_oid);
   if (!lock_success) {
     LOG_TRACE("Cannot obtain lock for the table, abort!");
-  }
-  else {
+  } else {
     txn->AddLockShared(table_oid);
   }
 
@@ -161,11 +157,12 @@ void Updater::Update() {
 
   // Or, update with a new version
   ContainerTuple<storage::TileGroup> new_tuple(
-    table_->GetTileGroupById(new_location_.block).get(), new_location_.offset);
+      table_->GetTileGroupById(new_location_.block).get(),
+      new_location_.offset);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location_.offset);
-  auto result = table_->InstallVersion(&new_tuple, target_list_, txn,
-                                       indirection);
+  auto result =
+      table_->InstallVersion(&new_tuple, target_list_, txn, indirection);
   if (result == false) {
     TransactionRuntime::YieldOwnership(*txn, tile_group_header,
                                        old_location_.offset);
@@ -189,8 +186,8 @@ void Updater::UpdatePK() {
   // Insert a new tuple
   ContainerTuple<storage::TileGroup> tuple(tile_group, new_location_.offset);
   ItemPointer *index_entry_ptr = nullptr;
-  bool result = table_->InsertTuple(&tuple, new_location_, txn,
-                                    &index_entry_ptr);
+  bool result =
+      table_->InsertTuple(&tuple, new_location_, txn, &index_entry_ptr);
   if (result == false) {
     txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;

@@ -185,4 +185,3 @@ TEST_F(TransactionIndexTests, BasicIndexTest) {
 
 }  // namespace test
 }  // namespace peloton
-

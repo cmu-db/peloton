@@ -155,7 +155,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       break;
     }
     case parser::CreateStatement::CreateType::kIndex:
-    case parser::CreateStatement::CreateType::kIndexConcurrent: // support concurrent create index
+    case parser::CreateStatement::CreateType::kIndexConcurrent:  // support
+                                                                 // concurrent
+                                                                 // create index
     {
       if (parse_tree->type == parser::CreateStatement::CreateType::kIndex) {
         create_type = CreateType::INDEX;

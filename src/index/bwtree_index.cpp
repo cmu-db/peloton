@@ -16,7 +16,7 @@
 #include "index/scan_optimizer.h"
 #include "statistics/stats_aggregator.h"
 #include "settings/settings_manager.h"
- 
+
 namespace peloton {
 namespace index {
 
@@ -38,7 +38,7 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
       container{false, comparator, equals, hash_func} {
   return;
 }
-        
+
 BWTREE_TEMPLATE_ARGUMENTS
 BWTREE_INDEX_TYPE::~BWTreeIndex() {}
 
@@ -54,25 +54,24 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   index_key.SetFromKey(key);
 
   bool ret;
-  if (populated){
+  if (populated) {
     std::pair<storage::Tuple, ItemPointer> tmp(*key, *value);
     insert_set.insert(tmp);
   }
-  if(HasUniqueKeys() == true) {
+  if (HasUniqueKeys() == true) {
     ret = container.Insert(index_key, value, true);
   } else {
     ret = container.Insert(index_key, value, false);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
   // NOTE: If I use index_key.GetInfo() here, I always get an empty key?
-  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
-            key->GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(),
-            (ret ? "SUCCESS" : "FAIL"));
+  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", key->GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
@@ -94,15 +93,14 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   // it is unnecessary for us to allocate memory
   bool ret = container.Delete(index_key, value);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
   }
 
-  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
-            key->GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(),
-            (ret ? "SUCCESS" : "FAIL"));
+  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", key->GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
@@ -116,7 +114,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
 
   bool predicate_satisfied = false;
 
-  if (populated){
+  if (populated) {
     std::pair<storage::Tuple, ItemPointer> tmp(*key, *value);
     insert_set.insert(tmp);
   }
@@ -135,7 +133,8 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
     assert(ret == false);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
@@ -209,7 +208,8 @@ void BWTREE_INDEX_TYPE::Scan(
     }
   }  // if is full scan
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
@@ -233,7 +233,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const std::vector<ExpressionType> &expr_list,
     ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
-
   // Only work with limit == 1 and offset == 0
   // Because that gets translated to "min"
   // But still since we could not access tuples in the table
@@ -255,7 +254,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     auto scan_itr = container.Begin(index_low_key);
     if ((scan_itr.IsEnd() == false) &&
         (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
-
       result.push_back(scan_itr->second);
     }
   } else {
@@ -276,7 +274,8 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
     it++;
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
@@ -292,7 +291,8 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   // This function in BwTree fills a given vector
   container.GetValue(index_key, result);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }

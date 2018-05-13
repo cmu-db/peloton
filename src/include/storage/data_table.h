@@ -125,8 +125,8 @@ class DataTable : public AbstractTable {
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
-      bool check_fk = true);
+                   concurrency::TransactionContext *transaction,
+                   ItemPointer **index_entry_ptr, bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -158,12 +158,11 @@ class DataTable : public AbstractTable {
 
   int GetTriggerNumber();
 
-  trigger::Trigger* GetTriggerByIndex(int n);
+  trigger::Trigger *GetTriggerByIndex(int n);
 
-  trigger::TriggerList* GetTriggerList();
+  trigger::TriggerList *GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn);
-
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -196,11 +195,10 @@ class DataTable : public AbstractTable {
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
-  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
-                                    storage::Tuple *new_tuple,
-                                    concurrency::TransactionContext *transaction,
-                                    executor::ExecutorContext *context,
-                                    bool is_update);
+  bool CheckForeignKeySrcAndCascade(
+      storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
+      concurrency::TransactionContext *transaction,
+      executor::ExecutorContext *context, bool is_update);
 
   void AddForeignKey(catalog::ForeignKey *key);
 
@@ -290,8 +288,8 @@ class DataTable : public AbstractTable {
 
   // try to insert into one specific index.
   bool InsertInIndex(const AbstractTuple *tuple, ItemPointer location,
-                       concurrency::TransactionContext *transaction,
-                       ItemPointer **index_entry_ptr, std::string index_name);
+                     concurrency::TransactionContext *transaction,
+                     ItemPointer **index_entry_ptr, std::string index_name);
 
   inline static size_t GetActiveTileGroupCount() {
     return default_active_tilegroup_count_;
@@ -325,8 +323,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
-//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
-//                          std::vector<oid_t> cols) const;
+  //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+  //                          std::vector<oid_t> cols) const;
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   //              std::pair<ExpressionType, type::Value> exp) const;

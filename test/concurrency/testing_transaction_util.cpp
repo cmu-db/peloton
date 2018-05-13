@@ -216,7 +216,8 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 }
 
 storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
-    std::string database_name, std::string schema_name, std::string table_name) {
+    std::string database_name, std::string schema_name,
+    std::string table_name) {
   LOG_INFO("database name = %s", database_name.c_str());
 
   auto id_column = catalog::Column(
@@ -245,12 +246,14 @@ storage::DataTable *TestingTransactionUtil::CreateTableWithoutIndex(
   LOG_INFO("create schema %s", schema_name.c_str());
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(database_name, schema_name, table_name, std::move(table_schema), txn);
+  catalog->CreateTable(database_name, schema_name, table_name,
+                       std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("create table %s", table_name.c_str());
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(database_name, schema_name, table_name, txn);
+  auto table =
+      catalog->GetTableWithName(database_name, schema_name, table_name, txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("table name = %s", table->GetName().c_str());
   LOG_INFO("table oid = %d", table->GetOid());
@@ -504,58 +507,58 @@ bool TestingTransactionUtil::ExecuteScan(
   return true;
 }
 
-  bool TestingTransactionUtil::ExecuteCreateIndex(concurrency::TransactionContext *txn, std::string index_name,
-                          std::string database_name, std::string schema_name,
-                          std::string table_name, std::vector<oid_t> key_attrs){
-    std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn));
-    // Index create
-    parser::CreateStatement *tree = new parser::CreateStatement(parser::CreateStatement::kIndex);
-    tree->index_name = index_name;
-    tree->table_info_.reset(new parser::TableInfo());
-    tree->table_info_->table_name = table_name;
-    tree->table_info_->database_name = database_name;
-    tree->table_info_->schema_name = schema_name;
-    tree->index_type = IndexType::BWTREE;
-    tree->unique = true;
+bool TestingTransactionUtil::ExecuteCreateIndex(
+    concurrency::TransactionContext *txn, std::string index_name,
+    std::string database_name, std::string schema_name, std::string table_name,
+    std::vector<oid_t> key_attrs) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  // Index create
+  parser::CreateStatement *tree =
+      new parser::CreateStatement(parser::CreateStatement::kIndex);
+  tree->index_name = index_name;
+  tree->table_info_.reset(new parser::TableInfo());
+  tree->table_info_->table_name = table_name;
+  tree->table_info_->database_name = database_name;
+  tree->table_info_->schema_name = schema_name;
+  tree->index_type = IndexType::BWTREE;
+  tree->unique = true;
 
-    std::unique_ptr<planner::CreatePlan> idx_create_node(
-        new planner::CreatePlan(tree));
-    idx_create_node->SetKeyAttrs(key_attrs);
-    executor::CreateExecutor create_executor(idx_create_node.get(),
-                                                  context.get());
-    EXPECT_TRUE(create_executor.Init());
+  std::unique_ptr<planner::CreatePlan> idx_create_node(
+      new planner::CreatePlan(tree));
+  idx_create_node->SetKeyAttrs(key_attrs);
+  executor::CreateExecutor create_executor(idx_create_node.get(),
+                                           context.get());
+  EXPECT_TRUE(create_executor.Init());
 
-    bool result = create_executor.Execute();
+  bool result = create_executor.Execute();
 
-    delete(tree);
-    return result;
-  }
-
-  bool TestingTransactionUtil::ExecuteDropIndex(concurrency::TransactionContext *txn, std::string index_name,
-                          std::string database_name, std::string schema_name,
-                          std::string table_name){
-    std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn));
-    // Index create
-    parser::DropStatement *tree = new parser::DropStatement(parser::DropStatement::kIndex);
-    tree->SetIndexName(index_name);
-    tree->table_info_.reset(new parser::TableInfo());
-    tree->table_info_->table_name = table_name;
-    tree->table_info_->database_name = database_name;
-    tree->table_info_->schema_name = schema_name;
-    std::unique_ptr<planner::DropPlan> idx_drop_node(
-        new planner::DropPlan(tree));
-    executor::DropExecutor drop_executor(idx_drop_node.get(),
-                                             context.get());
-    EXPECT_TRUE(drop_executor.Init());
-
-    bool result = drop_executor.Execute();
-
-    delete(tree);
-    return result;
-  }
-
-}
+  delete (tree);
+  return result;
 }
 
+bool TestingTransactionUtil::ExecuteDropIndex(
+    concurrency::TransactionContext *txn, std::string index_name,
+    std::string database_name, std::string schema_name,
+    std::string table_name) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  // Index create
+  parser::DropStatement *tree =
+      new parser::DropStatement(parser::DropStatement::kIndex);
+  tree->SetIndexName(index_name);
+  tree->table_info_.reset(new parser::TableInfo());
+  tree->table_info_->table_name = table_name;
+  tree->table_info_->database_name = database_name;
+  tree->table_info_->schema_name = schema_name;
+  std::unique_ptr<planner::DropPlan> idx_drop_node(new planner::DropPlan(tree));
+  executor::DropExecutor drop_executor(idx_drop_node.get(), context.get());
+  EXPECT_TRUE(drop_executor.Init());
+
+  bool result = drop_executor.Execute();
+
+  delete (tree);
+  return result;
+}
+}
+}

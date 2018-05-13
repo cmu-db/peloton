@@ -96,9 +96,8 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-      true,
-      {ColumnCatalog::ColumnId::TABLE_OID,
-       ColumnCatalog::ColumnId::COLUMN_NAME},
+      true, {ColumnCatalog::ColumnId::TABLE_OID,
+             ColumnCatalog::ColumnId::COLUMN_NAME},
       pool_.get(), txn);
   system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
@@ -251,9 +250,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
-
-ResultType Catalog::CreateDatabaseWithoutIndex(const std::string &database_name,
-                                   concurrency::TransactionContext *txn) {
+ResultType Catalog::CreateDatabaseWithoutIndex(
+    const std::string &database_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            database_name);
@@ -503,14 +501,11 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
  * catalog table Initialization)
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::CreateIndex(const std::string &database_name,
-                                const std::string &schema_name,
-                                const std::string &table_name,
-                                const std::vector<oid_t> &key_attrs,
-                                const std::string &index_name, bool unique_keys,
-                                IndexType index_type,
-                                concurrency::TransactionContext *txn,
-                                bool populate) {
+ResultType Catalog::CreateIndex(
+    const std::string &database_name, const std::string &schema_name,
+    const std::string &table_name, const std::vector<oid_t> &key_attrs,
+    const std::string &index_name, bool unique_keys, IndexType index_type,
+    concurrency::TransactionContext *txn, bool populate) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            index_name);
@@ -536,7 +531,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   ResultType success = CreateIndex(
       database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
-      schema_name, index_name, index_type, index_constraint, unique_keys, txn, populate);
+      schema_name, index_name, index_type, index_constraint, unique_keys, txn,
+      populate);
 
   return success;
 }
@@ -545,7 +541,8 @@ ResultType Catalog::CreateIndex(
     oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &key_attrs,
     const std::string &schema_name, const std::string &index_name,
     IndexType index_type, IndexConstraintType index_constraint,
-    bool unique_keys, concurrency::TransactionContext *txn, bool is_catalog, bool populate) {
+    bool unique_keys, concurrency::TransactionContext *txn, bool is_catalog,
+    bool populate) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create index " +
                            index_name);
@@ -834,8 +831,7 @@ ResultType Catalog::DropIndex(std::string database_name, std::string index_name,
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
   if (index_object == nullptr)
-    throw CatalogException("Can't find index " + index_name +
-                           " to drop");
+    throw CatalogException("Can't find index " + index_name + " to drop");
 
   auto index_oid = index_object->GetIndexOid();
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -1304,9 +1300,8 @@ void Catalog::InitializeFunctions() {
                          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
@@ -1316,21 +1311,18 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
@@ -1399,16 +1391,14 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
@@ -1420,16 +1410,14 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(

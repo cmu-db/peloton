@@ -99,7 +99,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
   // TODO: support multi-statement queries
   auto parse_tree = parse_tree_list->GetStatement(0);
-  LOG_TRACE("parse tree stmt type = %d", static_cast<int>(parse_tree->GetType()));
+  LOG_TRACE("parse tree stmt type = %d",
+            static_cast<int>(parse_tree->GetType()));
 
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
@@ -163,10 +164,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
-      LOG_TRACE("create plan type = %d", static_cast<int>(create_plan->GetCreateType()));
+      LOG_TRACE("create plan type = %d",
+                static_cast<int>(create_plan->GetCreateType()));
 
-      if (create_plan->GetCreateType() == peloton::CreateType::INDEX
-          || create_plan->GetCreateType() == peloton::CreateType::INDEX_CONCURRENT) {
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX ||
+          create_plan->GetCreateType() ==
+              peloton::CreateType::INDEX_CONCURRENT) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
@@ -200,11 +203,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
         bool concurrent = false;
         // Create a plan to add data to index
-        if (create_plan->GetCreateType() == peloton::CreateType::INDEX_CONCURRENT){
+        if (create_plan->GetCreateType() ==
+            peloton::CreateType::INDEX_CONCURRENT) {
           concurrent = true;
         }
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
-            new planner::PopulateIndexPlan(target_table, column_ids, index_name, concurrent));
+            new planner::PopulateIndexPlan(target_table, column_ids, index_name,
+                                           concurrent));
         child_PopulateIndexPlan->AddChild(std::move(ddl_plan));
         create_plan->SetKeyAttrs(column_ids);
         ddl_plan = std::move(child_PopulateIndexPlan);

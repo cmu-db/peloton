@@ -110,8 +110,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid,
-       this](concurrency::TransactionContext *txn_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid, this](
+          concurrency::TransactionContext *txn_ctx) -> bool {
         bool res = txn_ctx->GetEpochId() <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
@@ -179,7 +179,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
   for (auto &item : garbages) {
     reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));
   }
-  //LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
+  // LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
   return tuple_counter;
 }
 
@@ -207,7 +207,7 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
       break;
     }
   }
-  //LOG_TRACE("Marked %d txn contexts as recycled", gc_counter);
+  // LOG_TRACE("Marked %d txn contexts as recycled", gc_counter);
   return gc_counter;
 }
 

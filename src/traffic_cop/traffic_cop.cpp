@@ -267,7 +267,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
   std::shared_ptr<Statement> statement = std::make_shared<Statement>(
       stmt_name, query_type, query_string, std::move(sql_stmt_list));
-  LOG_TRACE("stmt type = %d, query type = %d", static_cast<int>(stmt_type), static_cast<int>(query_type));
+  LOG_TRACE("stmt type = %d, query type = %d", static_cast<int>(stmt_type),
+            static_cast<int>(query_type));
 
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
@@ -368,8 +369,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>>
-        &parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;

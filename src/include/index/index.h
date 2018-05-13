@@ -428,15 +428,15 @@ class Index : public Printable {
 
   type::AbstractPool *GetPool() const { return pool; }
 
-  void SetPopulated(bool populate){ populated = populate; }
+  void SetPopulated(bool populate) { populated = populate; }
 
-  void ResetPopulated(){
+  void ResetPopulated() {
     populated = false;
     insert_set.clear();
   }
 
-  bool CheckDuplicate(std::pair<storage::Tuple, ItemPointer> entry){
-    return(insert_set.find(entry) != insert_set.end());
+  bool CheckDuplicate(std::pair<storage::Tuple, ItemPointer> entry) {
+    return (insert_set.find(entry) != insert_set.end());
   }
 
   /**
@@ -488,7 +488,8 @@ class Index : public Printable {
   bool populated = false;
 
   // set that records current insertions in index, used in populate index
-  tbb::concurrent_unordered_set<std::pair<storage::Tuple, ItemPointer> > insert_set;
+  tbb::concurrent_unordered_set<std::pair<storage::Tuple, ItemPointer> >
+      insert_set;
 };
 
 }  // namespace index

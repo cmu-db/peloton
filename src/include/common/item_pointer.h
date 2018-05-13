@@ -36,9 +36,7 @@ class ItemPointer {
     return (block == INVALID_OID && offset == INVALID_OID);
   }
 
-  operator size_t() const {
-    return block*offset+block+offset;
-  }
+  operator size_t() const { return block * offset + block + offset; }
 
   bool operator<(const ItemPointer &rhs) const {
     if (block != rhs.block) {
@@ -76,16 +74,16 @@ struct ItemPointerHasher {
     // [Source libcuckoo/default_hasher.hh]
     // std::hash returns the same number for unsigned int which causes
     // too many collisions in the Cuckoohash leading to too many collisions
-    return (std::hash<oid_t>()(item.block)*0x9ddfea08eb382d69ULL) ^
-      std::hash<oid_t>()(item.offset);
+    return (std::hash<oid_t>()(item.block) * 0x9ddfea08eb382d69ULL) ^
+           std::hash<oid_t>()(item.offset);
   }
 };
 
 class ItemPointerHashFunc {
  public:
   size_t operator()(ItemPointer *const &p) const {
-    return (std::hash<oid_t>()(p->block)*0x9ddfea08eb382d69ULL) ^
-    std::hash<oid_t>()(p->offset);
+    return (std::hash<oid_t>()(p->block) * 0x9ddfea08eb382d69ULL) ^
+           std::hash<oid_t>()(p->offset);
   }
 
   ItemPointerHashFunc(const ItemPointerHashFunc &) {}

@@ -77,7 +77,6 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
-
   // Scanning over a logical tile.
   if (children_.size() == 1 &&
       // There will be a child node on the create index scenario,
@@ -86,9 +85,9 @@ bool SeqScanExecutor::DExecute() {
         GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
             PlanNodeType::CREATE &&
         (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-	 ->GetCreateType() == CreateType::INDEX ||
-      ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-	 ->GetCreateType() == CreateType::INDEX_CONCURRENT))){
+                 ->GetCreateType() == CreateType::INDEX ||
+         ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                 ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
 
@@ -134,9 +133,9 @@ bool SeqScanExecutor::DExecute() {
                 PlanNodeType::CREATE &&
             // If it is, confirm it is for indexes
             (((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-	     ->GetCreateType() == CreateType::INDEX ||
-	   ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-	     ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
+                     ->GetCreateType() == CreateType::INDEX ||
+             ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                     ->GetCreateType() == CreateType::INDEX_CONCURRENT))) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
     auto current_txn = executor_context_->GetTransaction();
@@ -157,16 +156,16 @@ bool SeqScanExecutor::DExecute() {
           GetRawNode()->GetChildren()[0].get()->GetPlanNodeType() ==
               PlanNodeType::CREATE &&
           // If it is, confirm it is for indexes
-              ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
-                  ->GetCreateType() == CreateType::INDEX_CONCURRENT){
-
+          ((planner::CreatePlan *)GetRawNode()->GetChildren()[0].get())
+                  ->GetCreateType() == CreateType::INDEX_CONCURRENT) {
         LOG_TRACE("Concurrently create index");
         // Get concurrent transactions before scanning
-        tbb::concurrent_unordered_set<txn_id_t> txn_set = transaction_manager.GetCurrentTxn();
+        tbb::concurrent_unordered_set<txn_id_t> txn_set =
+            transaction_manager.GetCurrentTxn();
         txn_set.unsafe_erase(current_txn->GetTransactionId());
 
         // Check if all concurrent transaction ends
-        while (transaction_manager.CheckConcurrentTxn(&txn_set)){
+        while (transaction_manager.CheckConcurrentTxn(&txn_set)) {
           LOG_TRACE("Sleep for a while, waiting other transactions");
           // Sleep 5ms to avoid spin wait
           usleep(5000);
@@ -180,7 +179,8 @@ bool SeqScanExecutor::DExecute() {
 
     bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
-    LOG_TRACE("Begin scanning table sequentially, table count = %d", table_tile_group_count_);
+    LOG_TRACE("Begin scanning table sequentially, table count = %d",
+              table_tile_group_count_);
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -203,17 +203,16 @@ bool SeqScanExecutor::DExecute() {
         if (visibility == VisibilityType::OK || children_.size() == 1) {
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-	          LOG_TRACE("perform read in seq scan");
+            LOG_TRACE("perform read in seq scan");
             auto res = transaction_manager.PerformRead(current_txn, location,
                                                        acquire_owner);
             if (!res) {
-              if (visibility == VisibilityType::OK){
+              if (visibility == VisibilityType::OK) {
                 LOG_DEBUG("perform read failed in seq scan!");
                 transaction_manager.SetTransactionResult(current_txn,
-                                                           ResultType::FAILURE);
+                                                         ResultType::FAILURE);
                 return res;
-              }
-              else{
+              } else {
                 LOG_TRACE("Encountered modified tuple");
                 continue;
               }
@@ -231,13 +230,12 @@ bool SeqScanExecutor::DExecute() {
               auto res = transaction_manager.PerformRead(current_txn, location,
                                                          acquire_owner);
               if (!res) {
-                if (visibility == VisibilityType::OK){
+                if (visibility == VisibilityType::OK) {
                   LOG_DEBUG("perform read failed in seq scan!");
                   transaction_manager.SetTransactionResult(current_txn,
-                                       ResultType::FAILURE);
+                                                           ResultType::FAILURE);
                   return res;
-                }
-                else{
+                } else {
                   LOG_TRACE("Encountered modified tuple");
                   continue;
                 }

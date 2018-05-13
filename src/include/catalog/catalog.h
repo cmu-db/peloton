@@ -105,14 +105,11 @@ class Catalog {
       oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Create index for a table
-  ResultType CreateIndex(const std::string &database_name,
-                         const std::string &schema_name,
-                         const std::string &table_name,
-                         const std::vector<oid_t> &key_attrs,
-                         const std::string &index_name, bool unique_keys,
-                         IndexType index_type,
-                         concurrency::TransactionContext *txn,
-                         bool populate = false);
+  ResultType CreateIndex(
+      const std::string &database_name, const std::string &schema_name,
+      const std::string &table_name, const std::vector<oid_t> &key_attrs,
+      const std::string &index_name, bool unique_keys, IndexType index_type,
+      concurrency::TransactionContext *txn, bool populate = false);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
@@ -120,8 +117,7 @@ class Catalog {
                          const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
-                         bool is_catalog = false,
-                         bool populate = false);
+                         bool is_catalog = false, bool populate = false);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
@@ -152,8 +148,8 @@ class Catalog {
                        concurrency::TransactionContext *txn);
   // Drop an index, using its name
   ResultType DropIndex(std::string database_name, std::string index_name,
-                      std::string schema_name,
-                      concurrency::TransactionContext *txn);
+                       std::string schema_name,
+                       concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//

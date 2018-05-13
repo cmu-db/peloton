@@ -1217,8 +1217,7 @@ typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
-                                      ItemPointerComparator>
-    WriteSet;
+                                      ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
@@ -1390,12 +1389,12 @@ typedef std::unordered_map<
 // TODO(boweic): use raw ptr
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<expression::AbstractExpression *, unsigned,
-                           expression::ExprHasher, expression::ExprEqualCmp>
-    ExprMap;
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
 typedef std::unordered_set<expression::AbstractExpression *,
-                           expression::ExprHasher, expression::ExprEqualCmp>
-    ExprSet;
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

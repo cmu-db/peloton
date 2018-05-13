@@ -513,9 +513,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval =
-              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
-                  .IsTrue();
+          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
+                                      executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -556,11 +555,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // chain.
           // Wire back because the current version is expired. have to search
           // from scratch.
-          //tuple_location =
+          // tuple_location =
           //    *(tile_group_header->GetIndirection(tuple_location.offset));
-          //tile_group = manager.GetTileGroup(tuple_location.block);
-          //tile_group_header = tile_group.get()->GetHeader();
-          //chain_length = 0;
+          // tile_group = manager.GetTileGroup(tuple_location.block);
+          // tile_group_header = tile_group.get()->GetHeader();
+          // chain_length = 0;
           break;
         }
 

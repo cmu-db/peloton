@@ -28,7 +28,6 @@ namespace concurrency {
 
 class LockManager {
  public:
-
   //===--------------------------------------------------------------------===//
   // Safe lock
   //===--------------------------------------------------------------------===//
@@ -42,34 +41,33 @@ class LockManager {
     enum RWLockType { SHARED, EXCLUSIVE, INVALID };
 
     // Default Constructor
-    SafeLock(){
+    SafeLock() {
       oid_ = INVALID_OID;
       type_ = RWLockType::INVALID;
     };
 
-    SafeLock(oid_t oid, RWLockType type){
+    SafeLock(oid_t oid, RWLockType type) {
       oid_ = oid;
       type_ = type;
     }
 
     // Set the oid and type for the lock
-    void Set(oid_t oid, RWLockType type){
+    void Set(oid_t oid, RWLockType type) {
       oid_ = oid;
       type_ = type;
     }
 
     // Unlock the given lock in the constructor
-    ~SafeLock(){
+    ~SafeLock() {
       LockManager *lm = LockManager::GetInstance();
-      if (type_ == RWLockType::EXCLUSIVE){
+      if (type_ == RWLockType::EXCLUSIVE) {
         lm->UnlockExclusive(oid_);
-      }
-      else if (type_ == RWLockType::SHARED){
+      } else if (type_ == RWLockType::SHARED) {
         lm->UnlockShared(oid_);
       }
     }
 
-   // Members
+    // Members
    private:
     oid_t oid_;
     RWLockType type_;
@@ -82,7 +80,7 @@ class LockManager {
   enum RWLockType { SHARED, EXCLUSIVE, INVALID };
 
   // This is used by transaction manager to properly release locks.
-  struct LockWithOid{
+  struct LockWithOid {
     oid_t oid;
     RWLockType type;
   };
@@ -95,7 +93,7 @@ class LockManager {
     // Iterate through mapped locks
     std::vector<oid_t> v;
     auto itr = lock_map_.begin();
-    for (; itr != lock_map_.end(); itr++){
+    for (; itr != lock_map_.end(); itr++) {
       v.push_back(itr->first);
     }
 

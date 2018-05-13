@@ -61,22 +61,22 @@ bool PopulateIndexExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
   auto executor_pool = executor_context_->GetPool();
   if (done_ == false) {
-
     // Build index with lock
-    if (concurrent_ == false){
+    if (concurrent_ == false) {
       PELOTON_ASSERT(children_.size() == 1);
       oid_t table_oid = target_table_->GetOid();
       // Lock the table to exclusive
       // for switching between blocking/non-blocking.
       concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
-      LOG_TRACE("Exclusive Lock: lock mamager address is %p, table oid is %u", (void *)lm, table_oid);
+      LOG_TRACE("Exclusive Lock: lock mamager address is %p, table oid is %u",
+                (void *)lm, table_oid);
       bool lock_success = lm->LockExclusive(table_oid);
       concurrency::LockManager::SafeLock dummy;
       if (!lock_success) {
         LOG_TRACE("Cannot obtain lock for the table, abort!");
-      }
-      else{
-        LOG_WARN("Exclusive lock success, will last until populate index is over.");
+      } else {
+        LOG_WARN(
+            "Exclusive lock success, will last until populate index is over.");
         dummy.Set(table_oid, concurrency::LockManager::SafeLock::EXCLUSIVE);
       }
 
@@ -102,7 +102,7 @@ bool PopulateIndexExecutor::DExecute() {
         // Go over all tuples in the logical tile
         for (oid_t tuple_id : *tile) {
           ContainerTuple<LogicalTile> cur_tuple(tile, tuple_id);
-	      LOG_TRACE("Add tuple in index");
+          LOG_TRACE("Add tuple in index");
 
           // Materialize the logical tile tuple
           for (oid_t column_itr = 0; column_itr < column_ids_.size();
@@ -111,8 +111,8 @@ bool PopulateIndexExecutor::DExecute() {
             tuple->SetValue(column_ids_[column_itr], val, executor_pool);
           }
 
-          ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
-                               tuple_id);
+          ItemPointer location(
+              tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(), tuple_id);
 
           // insert tuple into the index.
           ItemPointer *index_entry_ptr = nullptr;
@@ -122,8 +122,7 @@ bool PopulateIndexExecutor::DExecute() {
       }
     }
     // build index without lock
-    else{
-
+    else {
       LOG_TRACE("Non-blocking create index");
 
       // Get the output from seq_scan
@@ -140,15 +139,16 @@ bool PopulateIndexExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(target_table_schema, true));
 
-      std::shared_ptr<index::Index> idx = target_table_->GetIndexWithName(index_name_);
-      if (idx == nullptr){
+      std::shared_ptr<index::Index> idx =
+          target_table_->GetIndexWithName(index_name_);
+      if (idx == nullptr) {
         LOG_DEBUG("create index error, cannot find the index");
       }
 
       // Go over the logical tile and insert in the index the values
       for (size_t child_tile_itr = 0; child_tile_itr < child_tiles_.size();
            child_tile_itr++) {
-	    LOG_TRACE("Add values to Index");
+        LOG_TRACE("Add values to Index");
         auto tile = child_tiles_[child_tile_itr].get();
 
         // Go over all tuples in the logical tile
@@ -162,13 +162,13 @@ bool PopulateIndexExecutor::DExecute() {
             tuple->SetValue(column_ids_[column_itr], val, executor_pool);
           }
 
-          ItemPointer location(tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(),
-                               tuple_id);
+          ItemPointer location(
+              tile->GetBaseTile(0)->GetTileGroup()->GetTileGroupId(), tuple_id);
 
           // insert tuple into the index.
           ItemPointer *index_entry_ptr = nullptr;
           std::pair<storage::Tuple, ItemPointer> tmp(*tuple, location);
-          if (!idx->CheckDuplicate(tmp)){
+          if (!idx->CheckDuplicate(tmp)) {
             target_table_->InsertInIndex(tuple.get(), location, current_txn,
                                          &index_entry_ptr, index_name_);
           }
@@ -176,7 +176,6 @@ bool PopulateIndexExecutor::DExecute() {
       }
       idx->ResetPopulated();
     }
-
 
     done_ = true;
   }

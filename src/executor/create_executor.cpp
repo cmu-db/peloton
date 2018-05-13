@@ -276,8 +276,7 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // catalog table
   auto time_stamp = type::ValueFactory::GetTimestampValue(
       std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch())
-          .count());
+          std::chrono::system_clock::now().time_since_epoch()).count());
 
   CopySerializeOutput output;
   newTrigger.SerializeWhen(output, table_object->GetDatabaseOid(),

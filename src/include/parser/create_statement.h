@@ -215,7 +215,15 @@ struct ColumnDefinition {
  */
 class CreateStatement : public TableRefStatement {
  public:
-  enum CreateType { kTable, kDatabase, kIndex, kIndexConcurrent, kTrigger, kSchema, kView };
+  enum CreateType {
+    kTable,
+    kDatabase,
+    kIndex,
+    kIndexConcurrent,
+    kTrigger,
+    kSchema,
+    kView
+  };
 
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),

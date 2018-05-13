@@ -224,32 +224,42 @@ void TransactionContext::ExecOnCommitTriggers() {
   }
 }
 
-bool TransactionContext::UnlockAllLocks(){
-  if (lock_info_.size() == 0){
+bool TransactionContext::UnlockAllLocks() {
+  if (lock_info_.size() == 0) {
     LOG_WARN("Unlock shared Lock: no lock found!");
     return true;
   }
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool result = true;
-  for (size_t i = 0; i < lock_info_.size(); i++){
-    if (lock_info_[i].type == concurrency::LockManager::SHARED){
-      LOG_TRACE("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
-      if(!lm->UnlockShared(lock_info_[i].oid)) {
+  for (size_t i = 0; i < lock_info_.size(); i++) {
+    if (lock_info_[i].type == concurrency::LockManager::SHARED) {
+      LOG_TRACE(
+          "Unlock shared Lock when txn ends: lock mamager address is %p, table "
+          "oid is %u",
+          (void *)lm, lock_info_[i].oid);
+      if (!lm->UnlockShared(lock_info_[i].oid)) {
         result = false;
-        LOG_WARN("Unlock shared Lock failed: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
+        LOG_WARN(
+            "Unlock shared Lock failed: lock mamager address is %p, table oid "
+            "is %u",
+            (void *)lm, lock_info_[i].oid);
       }
-    }
-    else{
-      LOG_TRACE("Unlock shared Lock when txn ends: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
-      if(!lm->UnlockExclusive(lock_info_[i].oid)) {
+    } else {
+      LOG_TRACE(
+          "Unlock shared Lock when txn ends: lock mamager address is %p, table "
+          "oid is %u",
+          (void *)lm, lock_info_[i].oid);
+      if (!lm->UnlockExclusive(lock_info_[i].oid)) {
         result = false;
-        LOG_WARN("Unlock shared Lock failed: lock mamager address is %p, table oid is %u", (void *)lm, lock_info_[i].oid);
+        LOG_WARN(
+            "Unlock shared Lock failed: lock mamager address is %p, table oid "
+            "is %u",
+            (void *)lm, lock_info_[i].oid);
       }
     }
   }
   return result;
 }
-
 
 }  // namespace concurrency
 }  // namespace peloton

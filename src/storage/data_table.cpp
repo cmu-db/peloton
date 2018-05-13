@@ -97,10 +97,9 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   // Initialize lock
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
   bool success = lm->InitLock(table_oid, concurrency::LockManager::RW_LOCK);
-  if (!success){
+  if (!success) {
     LOG_TRACE("Initialize lock in create table failed! oid is %u", table_oid);
   }
-
 }
 
 DataTable::~DataTable() {
@@ -396,7 +395,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -518,11 +517,10 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-bool DataTable::InsertInIndex(const AbstractTuple *tuple,
-                                ItemPointer location,
-                                concurrency::TransactionContext *transaction,
-                                ItemPointer **index_entry_ptr,
-                                std::string index_name) {
+bool DataTable::InsertInIndex(const AbstractTuple *tuple, ItemPointer location,
+                              concurrency::TransactionContext *transaction,
+                              ItemPointer **index_entry_ptr,
+                              std::string index_name) {
   int index_count = GetIndexCount();
 
   size_t active_indirection_array_id =
@@ -1174,20 +1172,18 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
   return ret_index;
 }
 
-std::shared_ptr<index::Index> DataTable::GetIndexWithName(
-    std::string name) {
+std::shared_ptr<index::Index> DataTable::GetIndexWithName(std::string name) {
   std::shared_ptr<index::Index> ret_index;
   auto index_count = indexes_.GetSize();
 
   for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     ret_index = indexes_.Find(index_itr);
-    if (ret_index != nullptr && ret_index->GetName()== name) {
+    if (ret_index != nullptr && ret_index->GetName() == name) {
       break;
     }
   }
   if (ret_index == nullptr) {
-    throw CatalogException("No index with name = " + name +
-        " is found");
+    throw CatalogException("No index with name = " + name + " is found");
   }
   return ret_index;
 }
