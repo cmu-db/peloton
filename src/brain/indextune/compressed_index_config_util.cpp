@@ -30,6 +30,14 @@ void CompressedIndexConfigUtil::AddCandidates(
                                              container.GetDatabaseName());
   container.GetTransactionManager()->CommitTransaction(txn);
 
+  if (indexable_cols_vector.empty()) {
+    for (const auto it : container.table_offset_map_) {
+      const auto table_offset = it.second;
+      add_candidates.set(table_offset);
+    }
+    return;
+  }
+
   if (single_col_idx) {
     for (const auto &each_triplet : indexable_cols_vector) {
       const auto db_oid = std::get<0>(each_triplet);
