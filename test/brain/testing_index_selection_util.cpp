@@ -330,12 +330,28 @@ void TestingIndexSelectionUtil::DropTable(std::string table_name) {
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
-//double TestingIndexSelectionUtil::WhatIfIndexCost(std::shared_ptr<parser::SQLStatement> query,
-//                                                   brain::IndexConfiguration &config,
-//                                                   std::string database_name) {
-//  return brain::WhatIfIndex::GetCostAndBestPlanTree(
-//      query, config, database_name)->cost;
-//}
+double TestingIndexSelectionUtil::WhatIfIndexCost(std::string query,
+                                                   brain::IndexConfiguration &config,
+                                                   std::string database_name) {
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, database_name));
+
+  // Get the first statement.
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+      stmt_list->PassOutStatement(0));
+
+  binder->BindNameToNode(sql_statement.get());
+  auto cost = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config, 
+                                                         database_name, txn)->cost;
+  txn_manager.CommitTransaction(txn);
+  return cost;
+}
 
 }  // namespace index_suggestion
 }  // namespace test

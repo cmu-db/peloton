@@ -91,28 +91,11 @@ TEST_F(LSPITests, SimpleTuneTest1) {
   for (size_t i = 1; i <= query_strings.size(); i++) {
     auto query = query_strings[i - 1];
 
-    // Execute the Txn
-    std::unique_ptr<parser::SQLStatementList> stmt_list(
-        parser::PostgresParser::ParseSQLString(query));
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-
-    std::unique_ptr<binder::BindNodeVisitor> binder(
-        new binder::BindNodeVisitor(txn, database_name));
-
-    // Get the first statement.
-    auto sql_statement = std::shared_ptr<parser::SQLStatement>(
-        stmt_list->PassOutStatement(0));
-
-    binder->BindNameToNode(sql_statement.get());
-
-    // Measure the What-If Index cost
     auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
         *index_tuner.GetConfigContainer());
-//    auto cost = testing_util.WhatIfIndexCost(sql_statement, index_config, database_name);
-    auto cost = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, index_config, database_name, txn)->cost;
-    txn_manager.CommitTransaction(txn);
+
+    // Measure the What-If Index cost
+    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     LOG_DEBUG("Iter %zu", i);
     LOG_DEBUG("query: %s", query.c_str());

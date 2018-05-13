@@ -111,7 +111,7 @@ class TestingIndexSelectionUtil {
    * @param database_name: DB name
    * @return: "What-If" Index cost
    */
-  double WhatIfIndexCost(std::shared_ptr<parser::SQLStatement> query,
+  double WhatIfIndexCost(std::string query,
                          brain::IndexConfiguration &config,
                          std::string database_name);
 
