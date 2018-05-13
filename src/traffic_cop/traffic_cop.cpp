@@ -168,9 +168,9 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  if (settings::SettingsManager::GetBool(
-          settings::SettingId::brain)) {
-    tcop_txn_state_.top().first->AddQueryString(
+  // TODO: Handle this correctly.
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain) && statement_) {
+      tcop_txn_state_.top().first->AddQueryString(
         statement_->GetQueryString().c_str());
   }
 
