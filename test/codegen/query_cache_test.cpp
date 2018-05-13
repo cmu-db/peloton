@@ -40,7 +40,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   oid_t TestTableId() { return test_table_oids[0]; }
   oid_t RightTableId() { return test_table_oids[1]; }
 
-  // SELECT b FROM table where a >= 40;
+  // SELECT a FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
     auto *a_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
@@ -51,11 +51,15 @@ class QueryCacheTest : public PelotonCodeGenTest {
         &GetTestTable(TestTableId()), a_gt_40, {0, 1}));
   }
 
+  /* SELECT a FROM table where a >= 40;
+     bind_tve: flag for binding the tuple value expression
+  */
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanA(bool bind_tve) {
     auto *a_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-    if (bind_tve)
+    if (bind_tve) {
       a_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 0);
+    }
     auto *const_40_exp = PelotonCodeGenTest::ConstIntExpr(40).release();
     auto *a_eq_40 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_EQUAL, a_col_exp, const_40_exp);
@@ -63,11 +67,15 @@ class QueryCacheTest : public PelotonCodeGenTest {
         &GetTestTable(TestTableId()), a_eq_40, {0, 1}));
   }
 
+  /* SELECT b FROM table where b >= 41;
+     bind_tve: flag for binding the tuple value expression
+  */
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanB(bool bind_tve) {
     auto *b_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
-    if (bind_tve)
+    if (bind_tve) {
       b_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 1);
+    }
     auto *const_41_exp = PelotonCodeGenTest::ConstIntExpr(41).release();
     auto *b_eq_41 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_EQUAL, b_col_exp, const_41_exp);
@@ -301,6 +309,12 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
 
   std::shared_ptr<planner::SeqScanPlan> plan_b = GetSeqScanPlanB(true);
 
+  auto hash_equal_2 = (plan_a->Hash() == plan_b->Hash());
+  EXPECT_FALSE(hash_equal_2);
+
+  auto is_equal_2 = (*plan_a.get() == *plan_b.get());
+  EXPECT_FALSE(is_equal_2);
+
   // Do binding
   planner::BindingContext context_a;
   plan_a->PerformBinding(context_a);
@@ -313,6 +327,7 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
   CompileAndExecuteCache(plan_a, buffer_1, cached);
   auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(1, results_1.size());
+  EXPECT_EQ(40, results_1[0].GetValue(0).GetAs<int32_t>());
   EXPECT_FALSE(cached);
 
   // clear the cache
@@ -325,6 +340,7 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());
+  EXPECT_EQ(41, results_2[0].GetValue(1).GetAs<int32_t>());
   EXPECT_FALSE(cached);
 
   // cache has plan_b
@@ -338,6 +354,7 @@ TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
   EXPECT_FALSE(cached);
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(1, results_3.size());
+  EXPECT_EQ(40, results_1[0].GetValue(0).GetAs<int32_t>());
 
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
