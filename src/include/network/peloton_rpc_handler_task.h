@@ -37,6 +37,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
+#include "optimizer/stats/stats_storage.h"
 #include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
@@ -68,31 +69,6 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     return kj::READY_NOW;
   }
 
-  //  kj::Promise<void> analyzeTableStats(AnalyzeTableStatsRequest req) override
-  //  {
-  //    auto &txn_manager =
-  //    concurrency::TransactionManagerFactory::GetInstance();
-  //    auto txn = txn_manager.BeginTransaction();
-  //    // Generate column stats for all the tables before we begin.
-  //    // TODO[vamshi]
-  //    // Instead of collecting stats for every table, collect them only for
-  //    the
-  //    // tables
-  //    // we are analyzing i.e. tables that are referenced in the current
-  //    workload.
-  //    optimizer::StatsStorage *stats_storage =
-  //      optimizer::StatsStorage::GetInstance();
-  //    ResultType result = stats_storage->AnalyzeStatsForAllTables(txn);
-  //    if (result != ResultType::SUCCESS) {
-  //      LOG_ERROR(
-  //        "Cannot generate stats for table columns. Not performing index "
-  //          "suggestion...");
-  //      txn_manager.AbortTransaction(txn);
-  //      return;
-  //    }
-  //    txn_manager.CommitTransaction(txn);
-  //  }
-
   kj::Promise<void> createIndex(CreateIndexContext request) override {
     LOG_DEBUG("Received RPC to create index");
 
@@ -109,9 +85,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
       col_oid_vector.push_back(col);
     }
 
-    // ** Get the table name and column names. **
     // Create transaction to query the catalog.
-
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 

@@ -27,6 +27,18 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
 
+  optimizer::StatsStorage *stats_storage =
+    optimizer::StatsStorage::GetInstance();
+
+  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
+  if (stats_result != ResultType::SUCCESS) {
+    LOG_ERROR(
+      "Cannot generate stats for table columns. Not performing index "
+        "suggestion...");
+    txn_manager.AbortTransaction(txn);
+    return;
+  }
+
   // Query the catalog for new SQL queries.
   // New SQL queries are the queries that were added to the system
   // after the last_timestamp_
@@ -157,5 +169,6 @@ uint64_t IndexSelectionJob::GetLatestQueryTimestamp(
   }
   return latest_time;
 }
+
 }
 }

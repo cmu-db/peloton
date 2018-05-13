@@ -168,6 +168,12 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
+  if (settings::SettingsManager::GetBool(
+          settings::SettingId::brain)) {
+    tcop_txn_state_.top().first->AddQueryString(
+        statement_->GetQueryString().c_str());
+  }
+
   // skip if already aborted
   if (curr_state.second == ResultType::ABORTED) {
     // If the transaction state is ABORTED, the transaction should be aborted
@@ -303,10 +309,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  }
-
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
 
   // TODO(Tianyi) Move Statement Planing into Statement's method
