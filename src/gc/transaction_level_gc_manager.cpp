@@ -278,6 +278,11 @@ void TransactionLevelGCManager::AddToRecycleMap(
     LOG_DEBUG("GCing index %u", index_oid);
   }
 
+  for (auto table : txn_ctx->GetDroppedTables()) {
+    LOG_TRACE("deleting table when txn commits");
+    delete table;
+  }
+
   delete txn_ctx;
 }
 
