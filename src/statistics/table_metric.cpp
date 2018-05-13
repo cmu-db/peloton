@@ -108,7 +108,6 @@ void TableMetricRawData::FetchMemoryStats() {
 }
 
 void TableMetricRawData::UpdateAndPersist() {
-
   FetchMemoryStats();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -134,7 +133,8 @@ void TableMetricRawData::UpdateAndPersist() {
       table_metrics_catalog->InsertTableMetrics(
           table_oid, counts[READ], counts[UPDATE], counts[INSERT],
           counts[DELETE], counts[INLINE_MEMORY_ALLOC],
-          counts[INLINE_MEMORY_USAGE], time_stamp, nullptr, txn);
+          counts[INLINE_MEMORY_USAGE], counts[VARLEN_MEMORY_ALLOC],
+          counts[VARLEN_MEMORY_USAGE], time_stamp, nullptr, txn);
     } else {
       // update existing entry
       table_metrics_catalog->UpdateTableMetrics(
@@ -142,11 +142,9 @@ void TableMetricRawData::UpdateAndPersist() {
           old_metric->GetUpdates() + counts[UPDATE],
           old_metric->GetInserts() + counts[INSERT],
           old_metric->GetDeletes() + counts[DELETE],
-          old_metric->GetMemoryAlloc() + counts[INLINE_MEMORY_ALLOC],
-          counts[INLINE_MEMORY_USAGE] +
-              counts[VARLEN_MEMORY_USAGE],  // memory usage is not a delta
-          time_stamp,
-          txn);
+          old_metric->GetInlineMemoryAlloc() + counts[INLINE_MEMORY_ALLOC],
+          counts[INLINE_MEMORY_USAGE], counts[VARLEN_MEMORY_ALLOC],
+          counts[VARLEN_MEMORY_USAGE], time_stamp, txn);
     }
   }
 

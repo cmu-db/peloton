@@ -19,9 +19,11 @@
 // 3: updates
 // 4: deletes
 // 5: inserts
-// 6: memory_alloc
-// 7: memory_usage
-// 8: time_stamp
+// 6: inline_memory_alloc
+// 7: inline_memory_usage
+// 8: varlen_memory_alloc
+// 9: varlen_memory_usage
+// 10: time_stamp
 //
 // Indexes: (index offset: indexed columns)
 // 0: index_oid (unique & primary key)
@@ -48,8 +50,10 @@ class TableMetricsCatalogObject {
   inline int64_t GetUpdates() { return updates_; }
   inline int64_t GetInserts() { return inserts_; }
   inline int64_t GetDeletes() { return deletes_; }
-  inline int64_t GetMemoryAlloc() { return memory_alloc_; }
-  inline int64_t GetMemoryUsage() { return memory_usage_; }
+  inline int64_t GetInlineMemoryAlloc() { return inline_memory_alloc_; }
+  inline int64_t GetInlineMemoryUsage() { return inline_memory_usage_; }
+  inline int64_t GetVarlenMemoryAlloc() { return varlen_memory_alloc_; }
+  inline int64_t GetVarlenMemoryUsage() { return varlen_memory_usage_; }
   inline int64_t GetTimeStamp() { return time_stamp_; }
 
  private:
@@ -58,8 +62,10 @@ class TableMetricsCatalogObject {
   int64_t updates_;
   int64_t inserts_;
   int64_t deletes_;
-  int64_t memory_alloc_;
-  int64_t memory_usage_;
+  int64_t inline_memory_alloc_;
+  int64_t inline_memory_usage_;
+  int64_t varlen_memory_alloc_;
+  int64_t varlen_memory_usage_;
   int64_t time_stamp_;
 };
 
@@ -80,16 +86,21 @@ class TableMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertTableMetrics(oid_t table_oid, int64_t reads, int64_t updates,
                           int64_t inserts, int64_t deletes,
-                          int64_t memory_alloc, int64_t memory_usage,
-                          int64_t time_stamp, type::AbstractPool *pool,
+                          int64_t inline_memory_alloc,
+                          int64_t inline_memory_usage,
+                          int64_t varlen_memory_alloc,
+                          int64_t varlen_memory_usage, int64_t time_stamp,
+                          type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
   bool DeleteTableMetrics(oid_t table_oid,
                           concurrency::TransactionContext *txn);
 
   bool UpdateTableMetrics(oid_t table_oid, int64_t reads, int64_t updates,
                           int64_t inserts, int64_t deletes,
-                          int64_t memory_alloc, int64_t memory_usage,
-                          int64_t time_stamp,
+                          int64_t inline_memory_alloc,
+                          int64_t inline_memory_usage,
+                          int64_t varlen_memory_alloc,
+                          int64_t varlen_memory_usage, int64_t time_stamp,
                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
@@ -105,12 +116,14 @@ class TableMetricsCatalog : public AbstractCatalog {
     UPDATES = 2,
     INSERTS = 3,
     DELETES = 4,
-    MEMORY_ALLOC = 5,
-    MEMORY_USAGE = 6,
-    TIME_STAMP = 7,
+    INLINE_MEMORY_ALLOC = 5,
+    INLINE_MEMORY_USAGE = 6,
+    VARLEN_MEMORY_ALLOC = 7,
+    VARLEN_MEMORY_USAGE = 8,
+    TIME_STAMP = 9,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5, 6, 7};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
   enum IndexId {
     PRIMARY_KEY = 0,

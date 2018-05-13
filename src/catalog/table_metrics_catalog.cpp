@@ -32,11 +32,21 @@ TableMetricsCatalogObject::TableMetricsCatalogObject(
                    .GetAs<int64_t>()),
       deletes_(tile->GetValue(tupleId, TableMetricsCatalog::ColumnId::DELETES)
                    .GetAs<int64_t>()),
-      memory_alloc_(
-          tile->GetValue(tupleId, TableMetricsCatalog::ColumnId::MEMORY_ALLOC)
+      inline_memory_alloc_(
+          tile->GetValue(tupleId,
+                         TableMetricsCatalog::ColumnId::INLINE_MEMORY_ALLOC)
               .GetAs<int64_t>()),
-      memory_usage_(
-          tile->GetValue(tupleId, TableMetricsCatalog::ColumnId::MEMORY_USAGE)
+      inline_memory_usage_(
+          tile->GetValue(tupleId,
+                         TableMetricsCatalog::ColumnId::INLINE_MEMORY_USAGE)
+              .GetAs<int64_t>()),
+      varlen_memory_alloc_(
+          tile->GetValue(tupleId,
+                         TableMetricsCatalog::ColumnId::VARLEN_MEMORY_ALLOC)
+              .GetAs<int64_t>()),
+      varlen_memory_usage_(
+          tile->GetValue(tupleId,
+                         TableMetricsCatalog::ColumnId::VARLEN_MEMORY_USAGE)
               .GetAs<int64_t>()),
       time_stamp_(
           tile->GetValue(tupleId, TableMetricsCatalog::ColumnId::TIME_STAMP)
@@ -52,8 +62,10 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
                           "updates        INT NOT NULL, "
                           "inserts        INT NOT NULL, "
                           "deletes        INT NOT NULL, "
-                          "memory_alloc     INT NOT NULL, "
-                          "memory_usage     INT NOT NULL, "
+                          "inline_memory_alloc     INT NOT NULL, "
+                          "inline_memory_usage     INT NOT NULL, "
+                          "varlen_memory_alloc     INT NOT NULL, "
+                          "varlen_memory_usage     INT NOT NULL, "
                           "time_stamp     INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
@@ -63,7 +75,8 @@ TableMetricsCatalog::~TableMetricsCatalog() {}
 
 bool TableMetricsCatalog::InsertTableMetrics(
     oid_t table_oid, int64_t reads, int64_t updates, int64_t inserts,
-    int64_t deletes, int64_t memory_alloc, int64_t memory_usage,
+    int64_t deletes, int64_t inline_memory_alloc, int64_t inline_memory_usage,
+    int64_t varlen_memory_alloc, int64_t varlen_memory_usage,
     int64_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
@@ -74,18 +87,22 @@ bool TableMetricsCatalog::InsertTableMetrics(
   auto val3 = type::ValueFactory::GetIntegerValue(updates);
   auto val4 = type::ValueFactory::GetIntegerValue(inserts);
   auto val5 = type::ValueFactory::GetIntegerValue(deletes);
-  auto val6 = type::ValueFactory::GetIntegerValue(memory_alloc);
-  auto val7 = type::ValueFactory::GetIntegerValue(memory_usage);
-  auto val8 = type::ValueFactory::GetIntegerValue(time_stamp);
+  auto val6 = type::ValueFactory::GetIntegerValue(inline_memory_alloc);
+  auto val7 = type::ValueFactory::GetIntegerValue(inline_memory_usage);
+  auto val8 = type::ValueFactory::GetIntegerValue(varlen_memory_alloc);
+  auto val9 = type::ValueFactory::GetIntegerValue(varlen_memory_usage);
+  auto val10 = type::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
   tuple->SetValue(ColumnId::READS, val2, pool);
   tuple->SetValue(ColumnId::UPDATES, val3, pool);
   tuple->SetValue(ColumnId::INSERTS, val4, pool);
   tuple->SetValue(ColumnId::DELETES, val5, pool);
-  tuple->SetValue(ColumnId::MEMORY_ALLOC, val6, pool);
-  tuple->SetValue(ColumnId::MEMORY_USAGE, val7, pool);
-  tuple->SetValue(ColumnId::TIME_STAMP, val8, pool);
+  tuple->SetValue(ColumnId::INLINE_MEMORY_ALLOC, val6, pool);
+  tuple->SetValue(ColumnId::INLINE_MEMORY_USAGE, val7, pool);
+  tuple->SetValue(ColumnId::VARLEN_MEMORY_ALLOC, val8, pool);
+  tuple->SetValue(ColumnId::VARLEN_MEMORY_USAGE, val9, pool);
+  tuple->SetValue(ColumnId::TIME_STAMP, val10, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -103,7 +120,8 @@ bool TableMetricsCatalog::DeleteTableMetrics(
 
 bool TableMetricsCatalog::UpdateTableMetrics(
     oid_t table_oid, int64_t reads, int64_t updates, int64_t inserts,
-    int64_t deletes, int64_t memory_alloc, int64_t memory_usage,
+    int64_t deletes, int64_t inline_memory_alloc, int64_t inline_memory_usage,
+    int64_t varlen_memory_alloc, int64_t varlen_memory_usage,
     int64_t time_stamp, concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns(all_column_ids_);
   std::vector<type::Value> update_values;
@@ -115,9 +133,13 @@ bool TableMetricsCatalog::UpdateTableMetrics(
   update_values.push_back(type::ValueFactory::GetIntegerValue(inserts).Copy());
   update_values.push_back(type::ValueFactory::GetIntegerValue(deletes).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(memory_alloc).Copy());
+      type::ValueFactory::GetIntegerValue(inline_memory_alloc).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(memory_usage).Copy());
+      type::ValueFactory::GetIntegerValue(inline_memory_usage).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(varlen_memory_alloc).Copy());
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(varlen_memory_usage).Copy());
   update_values.push_back(
       type::ValueFactory::GetIntegerValue(time_stamp).Copy());
 
