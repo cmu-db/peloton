@@ -85,12 +85,7 @@ void *TableVisibilityTest(int port) {
   // connection 1 is invisible.)
   // Expect an exception: "Table employee is not found"
   pqxx::work txn23(C2);
-  try {
-    txn23.exec("select * from employee;");
-    EXPECT_TRUE(false);
-  } catch (const std::exception &e) {
-    LOG_INFO("Exception occurred (as expected): %s", e.what());
-  }
+  EXPECT_THROW(txn23.exec("select * from employee;"), CatalogException);
   C2.disconnect();
 
   // Connection 1 can still see its temp table
@@ -107,12 +102,7 @@ void *TableVisibilityTest(int port) {
   // Now no table is visible to connection 1
   // Expect an exception: "Table employee is not found"
   pqxx::work txn15(C1);
-  try {
-    txn15.exec("select * from employee;");
-    EXPECT_TRUE(false);
-  } catch (const std::exception &e) {
-    LOG_INFO("Exception occurred (as expected): %s", e.what());
-  }
+  EXPECT_THROW(txn15.exec("select * from employee;"), CatalogException);
   C1.disconnect();
 
   LOG_INFO("Passed TableVisibilityTest");
@@ -187,7 +177,7 @@ void *ForeignKeyTest(int port) {
   // Now the permanent table "student" becomes invisible. However, it can still
   // be referenced as a foreign key by a permanent table by explicitly
   // specifying the "public" namespace
-  
+
   txn6.exec(
       "CREATE TABLE enroll5(s_id INT, c_id INT, "
       "CONSTRAINT FK_StudentEnroll FOREIGN KEY (stu_id) "
