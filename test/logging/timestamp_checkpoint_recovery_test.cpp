@@ -56,54 +56,55 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
   for (auto table_catalog :
        default_db_catalog->GetTableObjects((std::string)DEFUALT_SCHEMA_NAME)) {
+  	auto table_name = table_catalog->GetTableName();
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
     LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
-             table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
+             table_name.c_str(), table->GetInfo().c_str());
 
     // check the basic information of columns
-    if (table_catalog->GetTableName() == "checkpoint_table_test") {
-//      for (auto column_pair : table_catalog->GetColumnObjects()) {
-//        auto column_catalog = column_pair.second;
-//        auto column =
-//            table->GetSchema()->GetColumn(column_catalog->GetColumnId());
-//
-//        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
-//                 column_catalog->GetColumnName().c_str(),
-//                 column.GetInfo().c_str());
-//
-//        if (column_catalog->GetColumnName() == "id") {
-//          EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
-//          EXPECT_EQ(0, column_catalog->GetColumnOffset());
-//          EXPECT_EQ(4, column.GetLength());
-//          EXPECT_TRUE(column_catalog->IsInlined());
-//          EXPECT_FALSE(column_catalog->IsNotNull());
-//          EXPECT_TRUE(column_catalog->IsPrimary());
-//        } else if (column_catalog->GetColumnName() == "value1") {
-//          EXPECT_EQ(type::TypeId::DECIMAL, column_catalog->GetColumnType());
-//          EXPECT_EQ(4, column_catalog->GetColumnOffset());
-//          EXPECT_EQ(8, column.GetLength());
-//          EXPECT_TRUE(column_catalog->IsInlined());
-//          EXPECT_FALSE(column_catalog->IsNotNull());
-//          EXPECT_FALSE(column_catalog->IsPrimary());
-//        } else if (column_catalog->GetColumnName() == "value2") {
-//          EXPECT_EQ(type::TypeId::VARCHAR, column_catalog->GetColumnType());
-//          EXPECT_EQ(12, column_catalog->GetColumnOffset());
-//          EXPECT_EQ(32, column.GetLength());
-//          EXPECT_FALSE(column_catalog->IsInlined());
-//          EXPECT_FALSE(column_catalog->IsNotNull());
-//          EXPECT_FALSE(column_catalog->IsPrimary());
-//        } else {
-//          LOG_ERROR("Unexpected column is found: %s",
-//                    column_catalog->GetColumnName().c_str());
-//        }
-//      }
+    if (table_name == "checkpoint_table_test") {
+      for (auto column_pair : table_catalog->GetColumnObjects()) {
+        auto column_catalog = column_pair.second;
+        auto column =
+            table->GetSchema()->GetColumn(column_catalog->GetColumnId());
+
+        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
+                 column_catalog->GetColumnName().c_str(),
+                 column.GetInfo().c_str());
+
+        if (column_catalog->GetColumnName() == "id") {
+          EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
+          EXPECT_EQ(0, column_catalog->GetColumnOffset());
+          EXPECT_EQ(4, column.GetLength());
+          EXPECT_TRUE(column_catalog->IsInlined());
+          EXPECT_FALSE(column_catalog->IsNotNull());
+          EXPECT_TRUE(column_catalog->IsPrimary());
+        } else if (column_catalog->GetColumnName() == "value1") {
+          EXPECT_EQ(type::TypeId::DECIMAL, column_catalog->GetColumnType());
+          EXPECT_EQ(4, column_catalog->GetColumnOffset());
+          EXPECT_EQ(8, column.GetLength());
+          EXPECT_TRUE(column_catalog->IsInlined());
+          EXPECT_FALSE(column_catalog->IsNotNull());
+          EXPECT_FALSE(column_catalog->IsPrimary());
+        } else if (column_catalog->GetColumnName() == "value2") {
+          EXPECT_EQ(type::TypeId::VARCHAR, column_catalog->GetColumnType());
+          EXPECT_EQ(12, column_catalog->GetColumnOffset());
+          EXPECT_EQ(32, column.GetLength());
+          EXPECT_FALSE(column_catalog->IsInlined());
+          EXPECT_FALSE(column_catalog->IsNotNull());
+          EXPECT_FALSE(column_catalog->IsPrimary());
+        } else {
+          LOG_ERROR("Unexpected column is found: %s",
+                    column_catalog->GetColumnName().c_str());
+        }
+      }
     }
     // end: check the basic information of columns
 
     // check the index recovery
-    else if (table_catalog->GetTableName() == "checkpoint_index_test") {
+    else if (table_name == "checkpoint_index_test") {
       for (auto index_pair : table_catalog->GetIndexObjects()) {
         auto index_catalog = index_pair.second;
 
@@ -177,7 +178,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     // end: check the index recovery
 
     // check the column constraint recovery
-    else if (table_catalog->GetTableName() == "checkpoint_constraint_test") {
+    else if (table_name == "checkpoint_constraint_test") {
       // multiple attributes constraint
       for (auto multi_constraint : table->GetSchema()->GetMultiConstraints()) {
         // currently nothing (this might not be used)
@@ -419,8 +420,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       }  // loop end: single attribute constraint
       // end: check the column constraint recovery
     } else {
-      LOG_ERROR("Unexpected table is found: %s",
-                table_catalog->GetTableName().c_str());
+      LOG_ERROR("Unexpected table is found: %s", table_name.c_str());
     }
   }  // table loop end
 
