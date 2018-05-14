@@ -16,15 +16,17 @@ namespace peloton {
 namespace brain {
 LSPIIndexTuner::LSPIIndexTuner(
     const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
-    bool single_col_idx, size_t max_index_size,
+    bool single_col_idx, size_t max_index_size, bool dry_run,
     peloton::catalog::Catalog *catalog,
     peloton::concurrency::TransactionManager *txn_manager)
     : db_name_{db_name},
       single_col_idx_{single_col_idx},
-      max_index_size_{max_index_size} {
+      max_index_size_{max_index_size},
+      dry_run_{dry_run} {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, ignore_table_oids,
-                                         max_index_size, catalog, txn_manager));
+                                         max_index_size, dry_run, catalog,
+                                         txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
   lstdq_model_ = std::unique_ptr<LSTDQModel>(new LSTDQModel(feat_len));
@@ -33,7 +35,8 @@ LSPIIndexTuner::LSPIIndexTuner(
   prev_config_vec[0] = 1.0;
 }
 
-const CompressedIndexConfigContainer *LSPIIndexTuner::GetConfigContainer() const {
+const CompressedIndexConfigContainer *LSPIIndexTuner::GetConfigContainer()
+    const {
   return index_config_.get();
 }
 
@@ -72,9 +75,8 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   // config
   auto optimal_config_set = curr_config_set;
   for (size_t i = 0; i < num_queries; i++) {
-    FindOptimalConfig(curr_config_set,
-                      add_candidate_sets[i], drop_candidate_sets[i],
-                      optimal_config_set);
+    FindOptimalConfig(curr_config_set, add_candidate_sets[i],
+                      drop_candidate_sets[i], optimal_config_set);
   }
 
   vector_eig new_config_vec;
@@ -99,8 +101,7 @@ void LSPIIndexTuner::FindOptimalConfig(
   vector_eig query_config_vec, config_vec;
   // Find current cost
   CompressedIndexConfigUtil::ConstructQueryConfigFeature(
-      curr_config_set, add_candidate_set, drop_candidate_set,
-      query_config_vec);
+      curr_config_set, add_candidate_set, drop_candidate_set, query_config_vec);
   CompressedIndexConfigUtil::ConstructStateConfigFeature(
       *index_config_->GetCurrentIndexConfig(), config_vec);
   double max_exec_cost = rlse_model_->Predict(query_config_vec);
@@ -113,8 +114,10 @@ void LSPIIndexTuner::FindOptimalConfig(
       // Set the corresponding bit for candidate
       hypothetical_config.set(index_id_rec);
       LOG_DEBUG("Prev: %s", index_config_->ToString(curr_config_set).c_str());
-      LOG_DEBUG("Trying Add Cand: %s", index_config_->ToString(hypothetical_config).c_str());
-      LOG_DEBUG("Eigen Vector: %s", CompressedIndexConfigUtil::ToString(query_config_vec).c_str());
+      LOG_DEBUG("Trying Add Cand: %s",
+                index_config_->ToString(hypothetical_config).c_str());
+      LOG_DEBUG("Eigen Vector: %s",
+                CompressedIndexConfigUtil::ToString(query_config_vec).c_str());
       // Construct the query-state and state feature
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,
@@ -150,7 +153,8 @@ void LSPIIndexTuner::FindOptimalConfig(
       double hypothetical_config_cost = lstdq_model_->Predict(config_vec);
       double cost = hypothetical_config_cost + hypothetical_exec_cost;
       LOG_DEBUG("Prev: %s", index_config_->ToString(curr_config_set).c_str());
-      LOG_DEBUG("Trying Drop Cand: %s", index_config_->ToString(hypothetical_config).c_str());
+      LOG_DEBUG("Trying Drop Cand: %s",
+                index_config_->ToString(hypothetical_config).c_str());
       LOG_DEBUG("Candidate Cost: %f, Max Cost: %f", cost, max_cost);
       if (cost < max_cost) {
         optimal_config_set.reset(index_id_drop);

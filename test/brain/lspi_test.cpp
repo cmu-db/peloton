@@ -68,7 +68,8 @@ TEST_F(LSPITests, RLSETest) {
  * We also perform a run of the workload with and without the tuning enabled
  * and perform a hard check that the overall cost should be lower with tuning.
  *
- * In addition these microworkloads serve as a useful way to analyze the behavior
+ * In addition these microworkloads serve as a useful way to analyze the
+ * behavior
  * of the tuner.
  * TODO(saatviks): Add analysis and observations here?
  */
@@ -81,6 +82,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 0.04;
   UNUSED_ATTRIBUTE size_t MAX_NUMINDEXES_WHATIF = 10;
+  bool DRY_RUN_MODE = true;
   int TBL_ROWS = 100;
   auto timer = Timer<std::ratio<1>>();
   std::vector<double> batch_costs;
@@ -92,7 +94,8 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
+  auto config = testing_util.GetCyclicWorkload(
+      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -102,13 +105,11 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-
-  // ** No Tuning Setup ** //
+  // ** No Tuning ** //
   brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
-                                    MAX_INDEX_SIZE);
-  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
-  vector_eig search_time_no_tuning = vector_eig::Zero(query_strings.size());
-
+                                    MAX_INDEX_SIZE, DRY_RUN_MODE);
+  vector_eig query_costs_notuning = vector_eig::Zero(query_strings.size());
+  vector_eig search_time_notuning = vector_eig::Zero(query_strings.size());
 
   LOG_DEBUG("Run without Tuning:");
   for (size_t i = 1; i <= query_strings.size(); i++) {
@@ -118,10 +119,11 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     // No tuning performed here
-    query_costs_no_tuning[i - 1] = cost;
+    query_costs_notuning[i - 1] = cost;
   }
 
   // ** Exhaustive What-If Tuning Setup(Closest to Ideal) ** //
@@ -167,6 +169,8 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
 
   // ** LSPI Tuning Setup(Exhaustive: with max add candidate search) ** //
+  brain::LSPIIndexTuner index_tuner_exhaustive(database_name, ignore_table_oids, false,
+                                    MAX_INDEX_SIZE, DRY_RUN_MODE);
   double prev_cost = DBL_MAX;
   vector_eig cost_vector_lspiexhaustive = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
   vector_eig query_costs_lspiexhaustive = vector_eig::Zero(query_strings.size());
@@ -178,10 +182,11 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     auto query = query_strings[i - 1];
 
     auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
+        *index_tuner_exhaustive.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
@@ -193,7 +198,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
       LOG_DEBUG("COREIL Tuning...");
       timer.Reset();
       timer.Start();
-      index_tuner.Tune(batch_queries, batch_costs);
+      index_tuner_exhaustive.Tune(batch_queries, batch_costs);
       timer.Stop();
       search_time_lspiexhaustive[i-1] = timer.GetDuration();
       batch_queries.clear();
@@ -211,12 +216,12 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     LOG_DEBUG("%zu\t"
               "No Tuning Cost: %f\tLSPI(Exhaustive) Tuning Cost: %f\t"
               "No Tuning Time: %f\tLSPI(Exhaustive) Tuning Time: %f\t"
-              "%s", i, query_costs_no_tuning[i], query_costs_lspiexhaustive[i],
-              search_time_no_tuning[i], search_time_lspiexhaustive[i],
+              "%s", i, query_costs_notuning[i], query_costs_lspiexhaustive[i],
+              search_time_notuning[i], search_time_lspiexhaustive[i],
               query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_lspiexhaustive.array().sum();
-  float notuning_overall_cost = query_costs_no_tuning.array().sum();
+  float notuning_overall_cost = query_costs_notuning.array().sum();
   LOG_DEBUG("No Tuning: %f, LSPI(Exhaustive) Tuning: %f", notuning_overall_cost, tuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }

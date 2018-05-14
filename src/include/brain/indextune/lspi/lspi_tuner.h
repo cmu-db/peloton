@@ -32,7 +32,7 @@ class LSPIIndexTuner {
  public:
   explicit LSPIIndexTuner(
       const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
-      bool single_col_idx, size_t max_index_size,
+      bool single_col_idx, size_t max_index_size, bool dry_run = false,
       catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
@@ -57,6 +57,7 @@ class LSPIIndexTuner {
   std::string db_name_;
   bool single_col_idx_;
   size_t max_index_size_;
+  bool dry_run_;
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;

@@ -265,10 +265,11 @@ void CompressedIndexConfigUtil::PermuateConfigurations(
   }
 }
 
-std::string CompressedIndexConfigUtil::ToString(std::vector<oid_t> config_vector) {
+std::string CompressedIndexConfigUtil::ToString(
+    std::vector<oid_t> config_vector) {
   std::stringstream str_stream;
   str_stream << "(";
-  for(auto idx: config_vector) {
+  for (auto idx : config_vector) {
     str_stream << idx << ",";
   }
   str_stream << ")" << std::endl;
