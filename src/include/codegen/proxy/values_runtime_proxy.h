@@ -35,6 +35,7 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(InputSmallInt);
   DECLARE_METHOD(InputInteger);
   DECLARE_METHOD(InputBigInt);
+  DECLARE_METHOD(InputDecimal);
 
   DECLARE_METHOD(CompareStrings);
 

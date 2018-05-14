@@ -87,6 +87,9 @@ class ValuesRuntime {
   static int64_t InputBigInt(const type::Type &type, const char *ptr,
                              uint32_t len);
 
+  static double InputDecimal(const type::Type &type, const char *ptr,
+                             uint32_t len);
+
   /**
    * Compare two strings, returning an integer value indicating their sort order
    *

@@ -559,9 +559,9 @@ void Decimal::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 }
 
 llvm::Function *Decimal::GetInputFunction(
-    UNUSED_ATTRIBUTE CodeGen &codegen,
-    UNUSED_ATTRIBUTE const Type &type) const {
-  throw NotImplementedException{"Decimal inputs not implemented yet"};
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  // TODO: We should be using the precision/scale in the output function
+  return ValuesRuntimeProxy::InputDecimal.GetFunction(codegen);
 }
 
 llvm::Function *Decimal::GetOutputFunction(

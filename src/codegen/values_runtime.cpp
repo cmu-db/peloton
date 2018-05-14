@@ -189,6 +189,32 @@ typename std::enable_if<std::is_integral<T>::value, T>::type ToNum(
   return static_cast<T>(num);
 }
 
+template <typename T>
+typename std::enable_if<std::is_floating_point<T>::value, T>::type ToNum(
+    const char *ptr, uint32_t len) {
+  if (len == 0) {
+    RuntimeFunctions::ThrowInvalidInputStringException();
+    __builtin_unreachable();
+  }
+
+  // TODO(pmenon): Optimize me later
+  char *end = nullptr;
+  auto ret = std::strtod(ptr, &end);
+
+  if (unlikely_branch(end == ptr)) {
+    if (errno == ERANGE) {
+      RuntimeFunctions::ThrowOverflowException();
+      __builtin_unreachable();
+    } else {
+      RuntimeFunctions::ThrowInvalidInputStringException();
+      __builtin_unreachable();
+    }
+  }
+
+  // Done
+  return static_cast<T>(ret);
+}
+
 }  // namespace
 
 bool ValuesRuntime::InputBoolean(UNUSED_ATTRIBUTE const type::Type &type,
@@ -301,6 +327,18 @@ int64_t ValuesRuntime::InputBigInt(UNUSED_ATTRIBUTE const type::Type &type,
   PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
   return ToNum<int64_t>(ptr, len);
 }
+
+double ValuesRuntime::InputDecimal(UNUSED_ATTRIBUTE const type::Type &type,
+                                   const char *ptr, uint32_t len) {
+  PELOTON_ASSERT(ptr != nullptr && "Input is assumed to be non-NULL");
+  return ToNum<double>(ptr, len);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// String comparison
+///
+////////////////////////////////////////////////////////////////////////////////
 
 int32_t ValuesRuntime::CompareStrings(const char *str1, uint32_t len1,
                                       const char *str2, uint32_t len2) {

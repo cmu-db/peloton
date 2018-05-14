@@ -35,6 +35,7 @@ DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputTinyInt);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputSmallInt);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputInteger);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputBigInt);
+DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputDecimal);
 
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, CompareStrings);
 
