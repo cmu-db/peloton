@@ -25,6 +25,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/tuple_access_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
@@ -191,6 +192,7 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
+  TupleAccessMetricsCatalog::GetInstance(txn);
 
   // TODO: change pg_proc to per database
   ProcCatalog::GetInstance(txn);
