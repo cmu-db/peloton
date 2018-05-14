@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tile_compression_select_test.cpp
+//
+// Identification: test/storage/tile_compression_select_test.cpp
+//
+// Copyright (c) 2017-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <memory>
 #include <math.h>
 #include "sql/testing_sql_util.h"
@@ -11,7 +23,7 @@
 #include "planner/create_plan.h"
 #include "storage/tile_group_iterator.h"
 #include "storage/tile_group.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 
 namespace peloton {
 namespace test {

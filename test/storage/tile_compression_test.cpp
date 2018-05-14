@@ -6,14 +6,14 @@
 //
 // Identification: test/storage/tile_compression_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2017-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
 
 #include "storage/tile.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple_iterator.h"
 #include "type/value_factory.h"

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/storage/dictionary_encoding_tile.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2017-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,7 +36,7 @@ class GCManager;
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Tile
+// DictEncodedTile
 //===--------------------------------------------------------------------===//
 
 class Tuple;
@@ -45,11 +45,18 @@ class TileGroupHeader;
 class TupleIterator;
 class Tile;
 /**
- * Represents a Tile.
+ * Represents a Dictionary Encoded Tile.
  *
- * Tiles are only instantiated via TileFactory.
+ * DictEncodedTiles are only instantiated via TileGroup.
  *
- * NOTE: MVCC is implemented on the shared TileGroupHeader.
+ * DictEncodedTile is subclass of Tile.
+ * 
+ * The DictEncodedTile can only be read. The only two operations it supports
+ * are GetValue and GetValueFast. 
+ * 
+ * The ColumnIsEncoded and GetElementArray is used in Codegen. They support
+ * queries on encoded data. GetElementArray gives the query the index the query needs
+ * to decode the data.
  */
 class DictEncodedTile : public Tile {
   friend class TileFactory;
@@ -61,7 +68,7 @@ class DictEncodedTile : public Tile {
   DictEncodedTile(DictEncodedTile const &) = delete;
 
  public:
-  // Tile creator
+  // DictEncodedTile creator
   DictEncodedTile(BackendType backend_type, TileGroupHeader *tile_header,
        const catalog::Schema &tuple_schema, TileGroup *tile_group,
        int tuple_count);
@@ -73,20 +80,12 @@ class DictEncodedTile : public Tile {
   //===--------------------------------------------------------------------===//
 
   /**
-   * Insert tuple at slot
-   * NOTE : No checks, must be at valid slot.
-   */
-	// this function is used before GetValueFast which use
-	// original schema, so return original schema
-  //  const catalog::Schema *GetSchema() const override { return &original_schema; }  ;
-
-  /**
-   * Returns value present at slot
+   * Returns original value after decoded present at slot
    */
   type::Value GetValue(const oid_t tuple_offset, const oid_t column_id) override ;
 
   /*
-   * Faster way to get value
+   * Faster way to get original value after decoded
    * By amortizing schema lookups
    */
    // since we know that to use this function, we first get schema and extract
@@ -100,7 +99,6 @@ class DictEncodedTile : public Tile {
   // Dictionary Encoding
   //===--------------------------------------------------------------------===//
 
-  //	inline bool IsDictEncoded() const { return is_dict_encoded; }
 
 	// given a tile, encode this tile in current tile
 	// when initializing this encoded tile, use original tile's schema
@@ -109,12 +107,13 @@ class DictEncodedTile : public Tile {
 	// decode tile and return a new tile that contain the decoded data
   Tile* DictDecode() override ;
 
-	inline bool IsColumnEncoded(oid_t column_offset) const override {
+  // check whether the column is encoded or not
+	inline bool ColumnIsEncoded(oid_t column_offset) const override {
 		return dict_encoded_columns.find(column_offset) != dict_encoded_columns.end();
 	}
-
+  // get the idx-string mapping array pointer
 	inline char *GetElementArray(oid_t column_offset) override {
-		if (IsColumnEncoded(column_offset)) {
+		if (ColumnIsEncoded(column_offset)) {
 			return varlen_val_ptrs;
 		}
 		return nullptr;
@@ -122,7 +121,7 @@ class DictEncodedTile : public Tile {
 
  protected:
 	// the string-idx mapping
-  std::unordered_map<type::Value, uint8_t, type::Value::hash, type::Value::compress_equal_to> dict;
+  std::unordered_map<type::Value, uint32_t, type::Value::hash, type::Value::compress_equal_to> dict;
 	// columns being encoded
   std::map<oid_t, oid_t> dict_encoded_columns;
 	// original schema

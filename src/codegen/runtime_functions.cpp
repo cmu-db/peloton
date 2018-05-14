@@ -19,7 +19,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
@@ -100,6 +100,7 @@ void RuntimeFunctions::FillPredicateArray(
 // column in the provided 'infos' array.  Specifically, we need a pointer to
 // where the first value of the column can be found, and the amount of bytes
 // to skip over to find successive values of the column.
+// Now we support Dictionary Encoded Tile decoding here.
 //===----------------------------------------------------------------------===//
 void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
                                           ColumnLayoutInfo *infos,
@@ -119,7 +120,7 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
     
 		// now, the layout of column being encoded will have non-null element array pointer
     infos[col_idx].element_array = tile->GetElementArray(tile_column_offset);
-    infos[col_idx].is_dict_encoded = tile->IsColumnEncoded(tile_column_offset);
+    infos[col_idx].is_dict_encoded = tile->ColumnIsEncoded(tile_column_offset);
     LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s, is_dict_encoded: %d, element_array: %p", 
               col_idx,
               infos[col_idx].column, infos[col_idx].stride,
