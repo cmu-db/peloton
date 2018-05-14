@@ -169,7 +169,7 @@ TEST_F(SequenceTests, DropTest) {
   // Drop statement
   std::string dropQuery =
       "DROP SEQUENCE seq";
-  
+
   // Expect exception
   try {
     CreateSequenceHelper(query, txn);
@@ -286,7 +286,7 @@ TEST_F(SequenceTests, InvalidArgumentTest) {
     CreateSequenceHelper(query, txn);
     EXPECT_EQ(0, 1);
   } catch (const SequenceException &expected) {
-    ASSERT_STREQ("MINVALUE (50) must be less than MAXVALUE (10)", expected.what());
+    ASSERT_STREQ("MINVALUE (50) must be no greater than MAXVALUE (10)", expected.what());
   }
 
   query =
