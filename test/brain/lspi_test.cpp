@@ -223,6 +223,52 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
       prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
     }
   }
+  batch_costs.clear();
+  batch_queries.clear();
+
+  // ** LSPI Tuning Setup(Non-Exhaustive: with only single-column indexes) ** //
+  brain::LSPIIndexTuner index_tuner_nonexhaustive(
+      database_name, ignore_table_oids, true, MAX_INDEX_SIZE, DRY_RUN_MODE);
+  prev_cost = DBL_MAX;
+  vector_eig cost_vector_lspinonexhaustive =
+      vector_eig::Zero(CATALOG_SYNC_INTERVAL);
+  vector_eig query_costs_lspinonexhaustive =
+      vector_eig::Zero(query_strings.size());
+  vector_eig search_time_lspinonexhaustive =
+      vector_eig::Zero(query_strings.size());
+
+  LOG_DEBUG("Run with LSPI(Non-Exhaustive) Tuning:");
+  for (size_t i = 1; i <= query_strings.size(); i++) {
+    auto query = query_strings[i - 1];
+
+    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+        *index_tuner_nonexhaustive.GetConfigContainer());
+
+    // Measure the What-If Index cost
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
+
+    batch_queries.push_back(query);
+    batch_costs.push_back(cost);
+    query_costs_lspinonexhaustive[i - 1] = cost;
+    cost_vector_lspinonexhaustive[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+
+    // Perform tuning
+    if (i % CATALOG_SYNC_INTERVAL == 0) {
+      LOG_DEBUG("COREIL Tuning...");
+      timer.Reset();
+      timer.Start();
+      index_tuner_nonexhaustive.Tune(batch_queries, batch_costs);
+      timer.Stop();
+      search_time_lspinonexhaustive[i - 1] = timer.GetDuration();
+      batch_queries.clear();
+      batch_costs.clear();
+      double mean_cost = cost_vector_lspinonexhaustive.array().mean();
+      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
+      EXPECT_LE(mean_cost, prev_cost);
+      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
+    }
+  }
 
   // For analysis
   LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW1 Workload:");
@@ -230,19 +276,27 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     LOG_DEBUG(
         "%zu\t"
         "No Tuning Cost: %f\tLSPI(Exhaustive) Tuning Cost: "
-        "%f\tWhatIf(Exhaustive) Tuning Cost: %f\t"
+        "%f\tWhatIf(Exhaustive) Tuning Cost: %f\tLSPI(Non-Exhaustive) Tuning "
+        "Cost: %f\t"
         "No Tuning Time: %f\tLSPI(Exhaustive) Tuning Time: "
-        "%f\tWhatIf(Exhaustive) Tuning Time: %f\t"
+        "%f\tWhatIf(Exhaustive) Tuning Time: %f\tLSPI(Non-Exhaustive) Tuning "
+        "Time: %f\t"
         "%s",
         i, query_costs_notuning[i], query_costs_lspiexhaustive[i],
-        query_costs_exhaustivewhatif[i], search_time_notuning[i],
-        search_time_lspiexhaustive[i], search_time_exhaustivewhatif[i],
+        query_costs_exhaustivewhatif[i], query_costs_lspinonexhaustive[i],
+        search_time_notuning[i], search_time_lspiexhaustive[i],
+        search_time_exhaustivewhatif[i], search_time_lspinonexhaustive[i],
         query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_lspiexhaustive.array().sum();
+  float tuning_overall_cost_nonexhaustive =
+      query_costs_lspinonexhaustive.array().sum();
   float notuning_overall_cost = query_costs_notuning.array().sum();
-  LOG_DEBUG("No Tuning: %f, LSPI(Exhaustive) Tuning: %f", notuning_overall_cost,
-            tuning_overall_cost);
+  LOG_DEBUG(
+      "No Tuning: %f, LSPI(Exhaustive) Tuning: %f, LSPI(Non-Exhaustive) "
+      "Tuning: %f",
+      notuning_overall_cost, tuning_overall_cost,
+      tuning_overall_cost_nonexhaustive);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 
