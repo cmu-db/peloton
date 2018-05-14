@@ -540,6 +540,7 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
 
 Transition ConnectionHandle::CloseSocket() {
   LOG_DEBUG("Attempt to close the connection %d", sock_fd_);
+  traffic_cop_.DropTempTables();
   // Remove listening event
   handler_->UnregisterEvent(network_event);
   handler_->UnregisterEvent(workpool_event);
@@ -560,7 +561,6 @@ Transition ConnectionHandle::CloseSocket() {
     SSL_free(conn_SSL_context);
     conn_SSL_context = nullptr;
   }
-  traffic_cop_.DropTempTables();
   peloton_close(sock_fd_);
   return Transition::NONE;
 
