@@ -196,16 +196,6 @@ class Catalog {
                         std::unique_ptr<catalog::Schema> &new_schema,
                         concurrency::TransactionContext *txn);
 
-  ResultType AddColumn(const std::string &database_name,
-                       const std::string &table_name,
-                       const std::vector<Column> &columns,
-                       concurrency::TransactionContext *txn);
-
-  ResultType DropColumn(const std::string &database_name,
-                        const std::string &table_name,
-                        const std::vector<Column> &columns,
-                        concurrency::TransactionContext *txn);
-
   ResultType RenameColumn(const std::string &database_name,
                           const std::string &table_name,
                           const std::string &old_name,

@@ -1117,40 +1117,6 @@ ResultType Catalog::AlterTable(oid_t database_oid, oid_t table_oid, const std::s
 }
 
 /**
- * @brief Add new columns to the table.
- * @param database_name database to which the table belongs to
- * @param table_name table to which the column belongs to
- * @param columns the column to be added
- * @param txn the transaction Context
- * @return TransactionContext ResultType(SUCCESS or FAILURE)
- *
- */
-ResultType Catalog::AddColumn(
-    UNUSED_ATTRIBUTE const std::string &database_name,
-    UNUSED_ATTRIBUTE const std::string &table_name,
-    UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
-  // TODO: perform ADD Operation
-  return ResultType::SUCCESS;
-}
-
-/**
- * @brief Drop the column from the table.
- * @param database_name database to which the table belongs to
- * @param table_name table to which the columns belong to
- * @param columns the columns to be dropped
- * @param txn the transaction Context
- * @return TransactionContext ResultType(SUCCESS or FAILURE)
- */
-
-ResultType Catalog::DropColumn(UNUSED_ATTRIBUTE const std::string &database_name,
-                               UNUSED_ATTRIBUTE const std::string &table_name,
-                               UNUSED_ATTRIBUTE const std::vector<std::string> &columns,
-                               UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
-  return ResultType::SUCCESS;
-}
-
-/**
  * @brief Change the column name in the catalog.
  * @param database_name database to which the table belongs to
  * @param table_name table to which the column belongs to
