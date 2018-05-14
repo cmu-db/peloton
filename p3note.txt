@@ -1,0 +1,47 @@
+TableScanTranslator::Produce() produce all tuples (src/codegen/operator/table_scan_translator.cpp:61)
+
+table_.GenerateScan() scab the table and hand to consumer
+
+GetTileGroup() get the tile group (there is a GetTileGroupId() next to it, may take into consideration)
+
+GetTileGroup() is runtime_function_proxy, it calls
+storage::DataTable::GetTileGroup()
+
+storage::DataTable::GetTileGroup() calls 
+storage::DataTable::GetTileGroupById()
+
+my plan:
+
+add encode/decode function to tile group
+
+
+Now, row level.
+zone map is okay, since it is set before tile being encoded
+
+table_scan_translator.cpp: void TableScanTranslator::ScanConsumer::ProcessTuples
+
+SetupRowBatch
+
+First, batch is formed and pushed into pipeline, the real value of tuple is got from bufferconsumer:
+CompileAndExecutePlan->...->consumeResult->DeriveValue->Access(table_scan_translator.cpp)->loadColumn (table_scan_translator.cpp)->loadColumn (codegen/tile_group.cpp)
+
+It will be the best if we can store the vector in heap
+
+use columnlayout, add a new ptr, pointing to the address of vector, and a boolean to indicate whether 
+this column is encoded.
+
+The core shit: GetColumnLayouts, columnLayouts (codegen/tile_group.cpp and h) and columnlayoutInfo (runtimefunctions.h and cpp)
+
+
+yes, it is fucking load column.
+
+
+
+varlen_ptrs: 0x00007f832515e8f0
+0x7f8325211790
+0x7f8325054540
+0x7f8325216530
+0x7f832515e908
+
+
+one thing, the codegen code may have use original tile schema

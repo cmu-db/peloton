@@ -62,6 +62,8 @@ class RuntimeFunctions {
     char *column;
     uint32_t stride;
     bool is_columnar;
+    char *element_array;
+    bool is_dict_encoded;
   };
 
   // Get the column configuration for every column in the tile group

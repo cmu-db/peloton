@@ -47,7 +47,8 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
       uninlined_data_size(0),
       column_header(NULL),
       column_header_size(INVALID_OID),
-      tile_group_header(tile_header) {
+      tile_group_header(tile_header),
+      is_dict_encoded(false) {
   PELOTON_ASSERT(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
@@ -109,7 +110,6 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
 /**
  * Returns value present at slot
  */
-// column id is a 0-based column number
 type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   PELOTON_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PELOTON_ASSERT(column_id < schema.GetColumnCount());
@@ -120,14 +120,14 @@ type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
-  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+	return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+
 }
 
 /*
  * Faster way to get value
  * By amortizing schema lookups
  */
-// column offset is the actual offset of the column within the tuple slot
 type::Value Tile::GetValueFast(const oid_t tuple_offset,
                                const size_t column_offset,
                                const type::TypeId column_type,
@@ -138,7 +138,8 @@ type::Value Tile::GetValueFast(const oid_t tuple_offset,
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
-  return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+	return type::Value::DeserializeFrom(field_location, column_type, is_inlined);
+
 }
 
 /**
@@ -224,6 +225,16 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
+
+void Tile::SetAttributes(Tile* tile) {
+	database_id = tile->database_id;
+	table_id = tile->table_id;
+	tile_group_id = tile->tile_group_id;
+	tile_id = tile->tile_id;
+	tile_group_header = tile->tile_group_header;
+	tile_group = tile->tile_group;
+	backend_type = tile->backend_type;
+}
 
 const std::string Tile::GetInfo() const {
   std::ostringstream os;

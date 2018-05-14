@@ -282,6 +282,20 @@ class Value : public Printable {
   // For unordered_map
   struct equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
+      if (x.GetTypeId() != y.GetTypeId())
+        return false;
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::CmpTrue;
+    }
+  };
+
+  // This comparator is for the dictionary encoding to add the feature that
+  // null is equal to null
+  struct compress_equal_to {
+    inline bool operator()(const Value &x, const Value &y) const {
+      if (x.GetTypeId() != y.GetTypeId())
+        return false;
+      if (x.IsNull() && y.IsNull())
+        return true;
       return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::CmpTrue;
     }
   };
