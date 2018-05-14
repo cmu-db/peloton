@@ -237,9 +237,9 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables inside
   EXPECT_EQ(
-      11,
+      12,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
@@ -254,7 +254,7 @@ TEST_F(CatalogTests, DroppingTable) {
   auto department_table_object = database_object->GetTableObject(
       "department_table", DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME);
   EXPECT_EQ(
-      10,
+      11,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -268,7 +268,7 @@ TEST_F(CatalogTests, DroppingTable) {
                CatalogException);
   //
   EXPECT_EQ(
-      10,
+      11,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -279,7 +279,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    "void_table", txn),
                CatalogException);
   EXPECT_EQ(
-      10,
+      11,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -288,7 +288,7 @@ TEST_F(CatalogTests, DroppingTable) {
   catalog::Catalog::GetInstance()->DropTable(
       "emp_db", DEFAULT_SCHEMA_NAME, DEFAULT_SCHEMA_NAME, "emp_table", txn);
   EXPECT_EQ(
-      9,
+      10,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }

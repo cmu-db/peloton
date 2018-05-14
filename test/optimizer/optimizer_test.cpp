@@ -120,7 +120,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables inside
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
