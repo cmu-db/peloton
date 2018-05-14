@@ -62,14 +62,11 @@ class SequenceFunctionsTests : public PelotonTest {
     EXPECT_EQ(CreateType::SEQUENCE, plan.GetCreateType());
 
     // Execute the create sequence
-    test_ctx_ = new executor::ExecutorContext(txn, {}, DEFAULT_DB_NAME);
-    executor::CreateExecutor createSequenceExecutor(&plan, test_ctx_);
+    executor::ExecutorContext * ctx = new executor::ExecutorContext(txn, {}, DEFAULT_DB_NAME);
+    executor::CreateExecutor createSequenceExecutor(&plan, ctx);
     createSequenceExecutor.Init();
     createSequenceExecutor.Execute();
   }
-
- private:
-  executor::ExecutorContext * test_ctx_;
 
 };
 TEST_F(SequenceFunctionsTests, BasicTest) {
@@ -98,8 +95,14 @@ TEST_F(SequenceFunctionsTests, FunctionsTest) {
     ASSERT_STREQ("currval for sequence \"seq\" is undefined for this session", expected.what());
   }
 
+  // Check nextval & currval functionality
+  auto res = function::SequenceFunctions::Nextval(*(context.get()), "seq");
+  EXPECT_EQ(1, res);
+
+  res = function::SequenceFunctions::Currval(*(context.get()), "seq");
+  EXPECT_EQ(1, res);
+
   txn_manager.CommitTransaction(txn);
 }
-
 }  // namespace test
 }  // namespace peloton
