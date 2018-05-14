@@ -160,8 +160,8 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 }
 
 /*@brief   insert sequence catalog object into cache
- * @param   sequence_object
- * @return  false only if sequence already exists in cache
+ * @param  sequence_object
+ * @return  false only if sequence already exists in cache or invalid
  */
 bool CatalogCache::InsertSequenceObject(
     std::shared_ptr<SequenceCatalogObject> sequence_object) {
@@ -186,7 +186,8 @@ bool CatalogCache::InsertSequenceObject(
 }
 
 /*@brief   evict sequence catalog object from cache
- * @param   sequence_name, database_oid
+ * @param  sequence_name
+ * @param  database_oid
  * @return  true if specified sequence is found and evicted;
  *          false if not found
  */
@@ -206,7 +207,8 @@ bool CatalogCache::EvictSequenceObject(const std::string & sequence_name,
 }
 
 /*@brief   get sequence catalog object from cache
- * @param  sequence_name, database_oid
+ * @param  sequence_name
+ * @param  database_oid
  * @return  sequence catalog object; if not found return object with invalid oid
  */
 std::shared_ptr<SequenceCatalogObject> CatalogCache::GetSequenceObject(
@@ -220,7 +222,8 @@ std::shared_ptr<SequenceCatalogObject> CatalogCache::GetSequenceObject(
 }
 
 /*@brief  get the hash key given the sequence information
- * @param  sequence_name, database_oid
+ * @param  sequence_name
+ * @param  database_oid
  * @return  hash key
  */
 std::size_t CatalogCache::GetHashKey(const std::string sequence_name,

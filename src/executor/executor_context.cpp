@@ -16,7 +16,6 @@
 #include "executor/executor_context.h"
 #include "concurrency/transaction_context.h"
 
-
 namespace peloton {
 namespace executor {
 

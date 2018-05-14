@@ -25,7 +25,8 @@ namespace peloton {
 namespace function {
 
 /*@brief   The actual implementation to get the incremented value for the specified sequence
- * @param   sequence name, executor context
+ * @param  sequence name
+ * @param  executor context
  * @return  the next value for the sequence
  * @exception the sequence does not exist
  */
@@ -72,7 +73,8 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
 }
 
 /*@brief   The actual implementation to get the current value for the specified sequence
- * @param   sequence name, executor context
+ * @param  sequence name
+ * @param  executor context
  * @return  the current value of a sequence
  * @exception either the sequence does not exist, or 'call nextval before currval'
  */
@@ -108,21 +110,23 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
 }
 
 /*@brief   The wrapper function to get the incremented value for the specified sequence
- * @param   sequence name, executor context
+ * @param  sequence name
+ * @param  executor context
  * @return  the result of executing NextVal
  */
 type::Value SequenceFunctions::_Nextval(const std::vector<type::Value> &args) {
-  executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
+  executor::ExecutorContext* ctx = (executor::ExecutorContext*)args[1].GetAs<uint64_t>();
   uint32_t ret = SequenceFunctions::Nextval(*ctx, args[0].GetAs<const char *>());
   return type::ValueFactory::GetIntegerValue(ret);
 }
 
 /*@brief   The wrapper function to get the current value for the specified sequence
- * @param   sequence name, executor context
+ * @param  sequence name
+ * @param  executor context
  * @return  the result of executing CurrVal
  */
 type::Value SequenceFunctions::_Currval(const std::vector<type::Value> &args) {
-  executor::ExecutorContext* ctx=(executor::ExecutorContext*)args[1].GetAs<uint64_t>();
+  executor::ExecutorContext* ctx = (executor::ExecutorContext*)args[1].GetAs<uint64_t>();
   uint32_t ret = SequenceFunctions::Currval(*ctx, args[0].GetAs<const char *>());
   return type::ValueFactory::GetIntegerValue(ret);
 }

@@ -74,6 +74,32 @@ class SequenceTests : public PelotonTest {
     createSequenceExecutor.Init();
     createSequenceExecutor.Execute();
   }
+
+  void DropSequenceHelper(std::string query,
+                            concurrency::TransactionContext *txn) {
+    auto parser = parser::PostgresParser::GetInstance();
+
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser.BuildParseTree(query).release());
+    EXPECT_TRUE(stmt_list->is_valid);
+    EXPECT_EQ(StatementType::DROP, stmt_list->GetStatement(0)->GetType());
+    auto drop_sequence_stmt =
+        static_cast<parser::DropStatement *>(stmt_list->GetStatement(0));
+
+    drop_sequence_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
+    // Drop plans
+    planner::DropPlan plan(drop_sequence_stmt);
+
+    // Plan type
+    EXPECT_EQ(DropType::SEQUENCE, plan.GetDropType());
+
+    // Execute the drop sequence
+    std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(txn));
+    executor::DropExecutor dropSequenceExecutor(&plan, context.get());
+    dropSequenceExecutor.Init();
+    dropSequenceExecutor.Execute();
+  }
 };
 
 TEST_F(SequenceTests, BasicTest) {
@@ -125,6 +151,44 @@ TEST_F(SequenceTests, NoDuplicateTest) {
     ASSERT_STREQ("Sequence seq already exists!",
                  expected.what());
   }
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(SequenceTests, DropTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Create statement
+  std::string query =
+      "CREATE SEQUENCE seq "
+      "INCREMENT BY 2 "
+      "MINVALUE 10 MAXVALUE 50 "
+      "START 10 CYCLE;";
+  std::string name = "seq";
+
+  // Drop statement
+  std::string dropQuery =
+      "DROP SEQUENCE seq";
+  
+  // Expect exception
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(0, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("Sequence seq already exists!",
+                 expected.what());
+  }
+
+
+  DropSequenceHelper(dropQuery, txn);
+  try {
+    CreateSequenceHelper(query, txn);
+    EXPECT_EQ(1, 1);
+  } catch (const SequenceException &expected) {
+    ASSERT_STREQ("Sequence seq already exists!",
+                 expected.what());
+  }
+
   txn_manager.CommitTransaction(txn);
 }
 

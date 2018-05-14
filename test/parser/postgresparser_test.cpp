@@ -1,4 +1,5 @@
 //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -1094,6 +1095,24 @@ TEST_F(PostgresParserTests, CreateSequenceTest) {
   EXPECT_EQ(50, create_sequence_stmt->seq_max_value);
   EXPECT_EQ(10, create_sequence_stmt->seq_min_value);
   EXPECT_EQ(true, create_sequence_stmt->seq_cycle);
+}
+
+TEST_F(PostgresParserTests, DropSequenceTest) {
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query = "DROP SEQUENCE seq;";
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (!stmt_list->is_valid) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  EXPECT_EQ(StatementType::DROP, stmt_list->GetStatement(0)->GetType());
+  auto drop_sequence_stmt =
+      static_cast<parser::DropStatement *>(stmt_list->GetStatement(0));
+  // drop type
+  EXPECT_EQ(parser::DropStatement::EntityType::kSequence,
+            drop_sequence_stmt->GetDropType());
 }
 
 TEST_F(PostgresParserTests, FuncCallTest) {
