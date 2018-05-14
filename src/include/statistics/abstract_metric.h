@@ -53,83 +53,111 @@ class Metric {
   virtual ~Metric() = default;
 
   // TODO(tianyu): Add more parameters for events as needed
-  // TODO(tianyu): @Tianyi Can you add documentation for what tile_group_id means? Same for the ones below.
   /**
    * @param Context of the transaction beginning
    */
   virtual void OnTransactionBegin(const concurrency::TransactionContext *) {};
+
   /**
    * @param Context of the transaction committing
-   * @param ?
+   * @param Tile Group ID that used to track database where the txn happens.
    */
   virtual void OnTransactionCommit(const concurrency::TransactionContext *,
                                    oid_t) {};
+
   /**
    * @param Context of the transaction aborting
-   * @param ?
+   * @param Tile Group ID that used to track database where the txn happens.
    */
   virtual void OnTransactionAbort(const concurrency::TransactionContext *,
                                   oid_t) {};
+
   /**
    * @param Context of the transaction performing read
-   * @param ?
+   * @param Tile Group ID that used to track database and table
+   *        where the read happens.
    */
   virtual void OnTupleRead(const concurrency::TransactionContext *, oid_t) {};
+
   /**
    * @param Context of the transaction performing update
-   * @param ?
+   * @param Tile Group ID that used to track database and table
+   *        where the update happens.
    */
   virtual void OnTupleUpdate(const concurrency::TransactionContext *, oid_t) {};
+
   /**
    * @param Context of the transaction performing insert
-   * @param ?
+   * @param Tile Group ID that used to track database and table
+   *        where the insert happens.
    */
   virtual void OnTupleInsert(const concurrency::TransactionContext *, oid_t) {};
+
   /**
- * @param Context of the transaction performing delete
- * @param ?
- */
+   * @param Context of the transaction performing delete
+   * @param Tile Group ID that used to track database and table
+   *        where the delete happens.
+  */
   virtual void OnTupleDelete(const concurrency::TransactionContext *, oid_t) {};
+
   /**
-   * ?
+   * @param Database and index id pair that the index read happens
+   * @param Number of read happening
    */
   virtual void OnIndexRead(std::pair<oid_t, oid_t>, size_t) {};
+
   /**
-   * ?
+   * @param Database and index id pair that the index update happens
    */
   virtual void OnIndexUpdate(std::pair<oid_t, oid_t>) {};
+
   /**
-   * ?
+   * @param Database and index id pair that the index insert happens
    */
   virtual void OnIndexInsert(std::pair<oid_t, oid_t>) {};
+
   /**
-   * ?
+   * @param Database and index id pair that the index delete happens
    */
   virtual void OnIndexDelete(std::pair<oid_t, oid_t>) {};
+
   /**
-   * ?
+   * @param Database and index/table id pair that the memory allocation happens
+   * @param Number of bytes being allocated
    */
   virtual void OnMemoryAlloc(std::pair<oid_t, oid_t>, size_t) {};
+
   /**
-   * ?
+   * @param Database and index/table id pair that the memory free happens
+   * @param Number of bytes being freed
    */
   virtual void OnMemoryFree(std::pair<oid_t, oid_t>, size_t) {};
+
   /**
-   * ?
+   * @param Database and index/table id pair that the memory usage happens
+   * @param Number of bytes being used
    */
   virtual void OnMemoryUsage(std::pair<oid_t, oid_t>, size_t) {};
+
   /**
-   * ?
+   * @param Database and index/table id pair that the memory reclaim happens
+   * @param Number of bytes being reclaim
    */
   virtual void OnMemoryReclaim(std::pair<oid_t, oid_t>, size_t) {};
+
   /**
-   * ?
+   * @brief collect the signal of query begin
    */
   virtual void OnQueryBegin() {};
+
   /**
-   * ?
+   * @brief collect the signal of query end
    */
   virtual void OnQueryEnd() {};
+
+  /**
+   * @brief Event used to test the framework
+   */
   virtual void OnTest(int) {};
 
   /**
