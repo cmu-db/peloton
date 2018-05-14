@@ -6,7 +6,7 @@
 //
 // Identification: src/traffic_cop/traffic_cop.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -169,8 +169,9 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   }
 
   // Log the query only if we have a statement.
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain) && statement_) {
-      tcop_txn_state_.top().first->AddQueryString(
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain) &&
+      statement_) {
+    tcop_txn_state_.top().first->AddQueryString(
         statement_->GetQueryString().c_str());
   }
 

@@ -101,7 +101,8 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
 std::vector<std::shared_ptr<catalog::IndexCatalogObject>>
 IndexSelectionJob::GetIndexesToDrop(
-    std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>> &index_objects,
+    std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>>
+        &index_objects,
     brain::IndexConfiguration best_config) {
   std::vector<std::shared_ptr<catalog::IndexCatalogObject>> ret_indexes;
   // Get the existing indexes and drop them.
