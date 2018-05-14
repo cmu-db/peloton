@@ -37,11 +37,10 @@ class LSPIIndexTuner {
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
    * Given a recent set of queries and their latency on the current
-   * configuration
-   * this function will automatically tune the database for future workloads.
+   * configuration this function will automatically tune the database for future
+   * workloads.
    * Currently it only supports IndexTuning but should be relatively simple to
-   * support
-   * more utility functions.
+   * support more utility functions.
    * @param query_latency_pairs: vector of <query string, latency> pairs
    */
   void Tune(const std::vector<std::string> &queries,
