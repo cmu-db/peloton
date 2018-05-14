@@ -130,9 +130,10 @@ SETTING_int(min_parallel_table_scan_size,
 //===----------------------------------------------------------------------===//
 // Garbage Collection and TileGroup Compaction
 //===----------------------------------------------------------------------===//
-//SETTING_double(name, description, default_value, min_value, max_value, is_mutable, is_persistent)
 
-SETTING_double(compaction_threshold, "Fraction of recycled slots that can exist in a tile group before compaction is triggered", 0.75, 0.25, 1.0, false, false)
+// By default compaction is turned off. This is accomplished by setting
+// the compaction threshold to 1.0. For normal use, try 0.7 to 0.9
+SETTING_double(compaction_threshold, "Fraction of recycled slots that can exist in a tile group before compaction is triggered", 1.0, 0.5, 1.0, false, false)
 
 
 

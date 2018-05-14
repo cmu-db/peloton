@@ -44,6 +44,9 @@ class TileGroupCompactor {
 
  public:
 
+  // This function is what gets put in the MonoQueuePool as a task
+  // It repeatedly tries to compact a tile group, until it succeeds
+  // or max_attempts is exceeded.
   static void CompactTileGroup(const oid_t &tile_group_id);
 
   // Worker function used by CompactTileGroup() to move tuples to new tile group

@@ -37,12 +37,9 @@ namespace gc {
 TransactionLevelGCManager::TransactionLevelGCManager(const int thread_count)
     : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
 
-  compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
-
   unlink_queues_.reserve(thread_count);
 
   for (int i = 0; i < gc_thread_count_; ++i) {
-
     unlink_queues_.emplace_back(std::make_shared<
         LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
   }
@@ -105,7 +102,7 @@ void TransactionLevelGCManager::StartGC()  {
 };
 
 void TransactionLevelGCManager::RegisterTable(oid_t table_id) {
-  // if table already registered, ignore
+  // if table already registered, ignore it
   if (recycle_stacks_->Contains(table_id)) {
     return;
   }
@@ -118,7 +115,7 @@ void TransactionLevelGCManager::DeregisterTable(const oid_t &table_id) {
   recycle_stacks_->Erase(table_id);
 }
 
-// Assumes that location is valid
+// Assumes that location is a valid ItemPointer
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto storage_manager = storage::StorageManager::GetInstance();
   auto tile_group = storage_manager->GetTileGroup(location.block).get();
@@ -733,39 +730,3 @@ int TransactionLevelGCManager::ProcessCompactionQueue() {
 
 }  // namespace gc
 }  // namespace peloton
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

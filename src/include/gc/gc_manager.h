@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "settings/settings_manager.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -45,7 +46,9 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(false) {}
+  GCManager() : is_running_(false)  {
+    compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+  }
 
   virtual ~GCManager() {}
 
@@ -83,12 +86,17 @@ class GCManager {
 
   virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
 
+  void SetCompactionThreshold(double threshold) {
+    compaction_threshold_ = threshold;
+  }
+
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
                                     oid_t tuple_id);
 
  protected:
   volatile bool is_running_;
+  volatile double compaction_threshold_;
 };
 
 }  // namespace gc

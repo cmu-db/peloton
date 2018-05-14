@@ -6,7 +6,7 @@
 //
 // Identification: src/include/gc/transaction_level_gc_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -43,9 +43,9 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual ~TransactionLevelGCManager() {}
 
-  // this function cleans up only the member variables in the class object.
-  // leaks tuples slots, txns, etc. if StopGC() not called first
-  // only used for testing purposes currently
+  // This function cleans up only the member variables in the class object.
+  // It leaks tuples slots, txns, etc. if StopGC() not called first.
+  // Only used for testing purposes currently.
   virtual void Reset() override;
 
   static TransactionLevelGCManager &GetInstance(const int thread_count = 1);
@@ -55,11 +55,7 @@ class TransactionLevelGCManager : public GCManager {
 
   virtual void StartGC() override;
 
-  /**
-   * @brief This stops the Garbage Collector when Peloton shuts down
-   *
-   * @return No return value.
-   */
+  // This stops the Garbage Collector when Peloton shuts down
   virtual void StopGC() override;
 
   virtual void RegisterTable(oid_t table_id) override;
@@ -85,12 +81,9 @@ class TransactionLevelGCManager : public GCManager {
 
   void AddToCompactionQueue(const oid_t &tile_group_id);
 
-  /**
-* @brief Unlink and reclaim the tuples that remain in a garbage collection
-* thread when the Garbage Collector stops. Used primarily by tests. Also used internally
-*
-* @return No return value.
-*/
+  // Unlink and reclaim the tuples that remain in a garbage collection
+  // thread when the Garbage Collector stops.
+  // Used primarily by tests. Also used internally.
   void ClearGarbage(int thread_id);
 
   // iterates through immutable tile group queue and purges all tile groups
@@ -98,11 +91,8 @@ class TransactionLevelGCManager : public GCManager {
   int ProcessImmutableQueue();
 
   int ProcessCompactionQueue();
-
-
+  
  private:
-
-  double compaction_threshold_;
 
   // convenience function to get table's recycle queue
   std::shared_ptr<RecycleStack>

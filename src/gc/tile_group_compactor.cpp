@@ -6,12 +6,11 @@
 //
 // Identification: src/gc/transaction_level_gc_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "gc/tile_group_compactor.h"
-
 
 namespace peloton {
 namespace gc {
@@ -57,7 +56,9 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
 // Compacts tile group by moving all of its tuples to other tile groups
 // Once empty, it will eventually get freed by the GCM
-// returns true if txn succeeds or should not be retried, otherwise false
+// It returns true if txn succeeds, otherwise returns false.
+// Future Work: Take in project_info as a parameter
+// Then it can be used for online schema changes
 bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     storage::DataTable *table, std::shared_ptr<storage::TileGroup> tile_group) {
 
@@ -161,39 +162,3 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
 
 }  // namespace gc
 }  // namespace peloton
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

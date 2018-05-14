@@ -35,6 +35,7 @@ namespace test {
 class TileGroupCompactorTests : public PelotonTest {};
 
 oid_t test_index_oid = 1234;
+double compaction_threshold = 0.8;
 
 // Test that GCManager triggers compaction for sparse tile groups
 // And test it doesn't trigger compaction for dense tile groups
@@ -52,6 +53,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
 
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.SetCompactionThreshold(compaction_threshold);
   gc_manager.Reset();
 
   // create database
@@ -137,6 +139,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
 
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.SetCompactionThreshold(compaction_threshold);
   gc_manager.Reset();
 
   // create database
@@ -217,6 +220,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   std::vector<std::unique_ptr<std::thread>> gc_threads;
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.SetCompactionThreshold(compaction_threshold);
   gc_manager.Reset();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
@@ -323,6 +327,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   std::vector<std::unique_ptr<std::thread>> gc_threads;
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.SetCompactionThreshold(compaction_threshold);
   gc_manager.Reset();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
@@ -389,16 +394,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
-//Test retry mechanism
-//    Create tile group
-//Delete 80%
-//Start txn that updates 1 of these tuples but does not commit
-//    Run CompactTileGroups in separate thread
-//Sleep .1 second
-//    Commit txn
-//    Sleep .1 second
-//    Test that tile group was compacted
-// Test compaction during a concurrent update txn
+// Test retry mechanism
 TEST_F(TileGroupCompactorTests, RetryTest) {
   std::string test_name = "retrytest";
 
@@ -411,6 +407,7 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
   std::vector<std::unique_ptr<std::thread>> gc_threads;
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.SetCompactionThreshold(compaction_threshold);
   gc_manager.Reset();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
