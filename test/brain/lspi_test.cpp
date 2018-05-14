@@ -67,13 +67,13 @@ TEST_F(LSPITests, RLSETest) {
  * We also perform a run of the workload with and without the tuning enabled
  * and perform a hard check that the overall cost should be lower with tuning.
  *
- * In addition these microworkloads serve as a useful way to analyze the behavior
+ * In addition these microworkloads serve as a useful way to analyze the
+ * behavior
  * of the tuner.
  * TODO(saatviks): Add analysis and observations here?
  */
 
 TEST_F(LSPITests, TuneTestTwoColTable1) {
-
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
@@ -87,7 +87,8 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
+  auto config = testing_util.GetCyclicWorkload(
+      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -109,7 +110,8 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     // No tuning performed here
     query_costs_no_tuning[i - 1] = cost;
@@ -129,7 +131,8 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
@@ -151,17 +154,19 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
   // For analysis
   LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW1 Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+  for (size_t i = 0; i < query_strings.size(); i++) {
+    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i,
+              query_costs_no_tuning[i], query_costs_tuning[i],
+              query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_tuning.array().sum();
   float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost,
+            notuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 
 TEST_F(LSPITests, TuneTestTwoColTable2) {
-
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
@@ -175,7 +180,8 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
+  auto config = testing_util.GetCyclicWorkload(
+      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -197,7 +203,8 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     // No tuning performed here
     query_costs_no_tuning[i - 1] = cost;
@@ -217,7 +224,8 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
@@ -239,17 +247,19 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
 
   // For analysis
   LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW2 Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+  for (size_t i = 0; i < query_strings.size(); i++) {
+    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i,
+              query_costs_no_tuning[i], query_costs_tuning[i],
+              query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_tuning.array().sum();
   float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost,
+            notuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 
 TEST_F(LSPITests, TuneTestThreeColTable) {
-
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
@@ -263,7 +273,8 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableThreeColW}, 2);
+  auto config = testing_util.GetCyclicWorkload(
+      {index_selection::QueryStringsWorkloadType::SingleTableThreeColW}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -285,7 +296,8 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     // No tuning performed here
     query_costs_no_tuning[i - 1] = cost;
@@ -305,7 +317,8 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
@@ -327,17 +340,19 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
 
   // For analysis
   LOG_DEBUG("Overall Cost Trend for SingleTableThreeColW Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+  for (size_t i = 0; i < query_strings.size(); i++) {
+    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i,
+              query_costs_no_tuning[i], query_costs_tuning[i],
+              query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_tuning.array().sum();
   float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost,
+            notuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 
 TEST_F(LSPITests, TuneTestMultiColMultiTable) {
-
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
@@ -351,7 +366,8 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::MultiTableMultiColW}, 2);
+  auto config = testing_util.GetCyclicWorkload(
+      {index_selection::QueryStringsWorkloadType::MultiTableMultiColW}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -373,7 +389,8 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     // No tuning performed here
     query_costs_no_tuning[i - 1] = cost;
@@ -393,7 +410,8 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
         *index_tuner.GetConfigContainer());
 
     // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+    auto cost =
+        testing_util.WhatIfIndexCost(query, index_config, database_name);
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
@@ -415,12 +433,15 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
 
   // For analysis
   LOG_DEBUG("Overall Cost Trend for MultiTableMultiColW Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+  for (size_t i = 0; i < query_strings.size(); i++) {
+    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i,
+              query_costs_no_tuning[i], query_costs_tuning[i],
+              query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_tuning.array().sum();
   float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost,
+            notuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 

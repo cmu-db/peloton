@@ -42,7 +42,7 @@ class CompressedIndexConfigContainer {
   explicit CompressedIndexConfigContainer(
       const std::string &database_name,
       const std::set<oid_t> &ignore_table_oids, size_t max_index_size = 3,
-      catalog::Catalog *catalog = nullptr,
+      bool dry_run = false, catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
   /**
@@ -94,8 +94,7 @@ class CompressedIndexConfigContainer {
  * @param global_offset: the global offset
  * @return the internal index config mapped to this "global_offset"
  */
-  std::vector<oid_t> GetIndexColumns(
-      size_t global_offset) const;
+  std::vector<oid_t> GetIndexColumns(size_t global_offset) const;
 
   /**
    * @brief Get the current index configuration as a bitset(read-only)
@@ -141,10 +140,11 @@ class CompressedIndexConfigContainer {
    * @brief Extremely verbose representation
    */
   std::string ToString() const;
-  std::string ToString(const boost::dynamic_bitset<>& bs) const;
+  std::string ToString(const boost::dynamic_bitset<> &bs) const;
 
  private:
   std::string database_name_;
+  bool dry_run_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
 

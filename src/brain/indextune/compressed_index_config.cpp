@@ -17,9 +17,10 @@ namespace brain {
 
 CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
-    size_t max_index_size, catalog::Catalog *catalog,
+    size_t max_index_size, bool dry_run, catalog::Catalog *catalog,
     concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
+      dry_run_{dry_run},
       catalog_{catalog},
       txn_manager_{txn_manager},
       next_table_offset_{0},
@@ -125,6 +126,10 @@ void CompressedIndexConfigContainer::EnumerateConfigurations(
 
 void CompressedIndexConfigContainer::AdjustIndexes(
     const boost::dynamic_bitset<> &new_bitset) {
+  if (dry_run_) {
+    return;
+  }
+
   boost::dynamic_bitset<> &ori_bitset = *cur_index_config_;
 
   const auto drop_bitset = ori_bitset - new_bitset;
@@ -247,7 +252,8 @@ bool CompressedIndexConfigContainer::IsSet(const size_t offset) const {
 std::shared_ptr<brain::HypotheticalIndexObject>
 CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
   size_t table_offset;
-  if(table_offset_reverse_map_.find(global_offset) == table_offset_reverse_map_.end()) {
+  if (table_offset_reverse_map_.find(global_offset) ==
+      table_offset_reverse_map_.end()) {
     auto it = table_offset_reverse_map_.lower_bound(global_offset);
     if (it == table_offset_reverse_map_.end()) {
       table_offset = table_offset_reverse_map_.rbegin()->first;
@@ -258,7 +264,6 @@ CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
   } else {
     table_offset = global_offset;
   }
-
 
   const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
   std::vector<oid_t> col_oids =
@@ -273,9 +278,11 @@ CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
                                                           col_oids);
 }
 
-std::vector<oid_t> CompressedIndexConfigContainer::GetIndexColumns(size_t global_offset) const {
+std::vector<oid_t> CompressedIndexConfigContainer::GetIndexColumns(
+    size_t global_offset) const {
   size_t table_offset;
-  if(table_offset_reverse_map_.find(global_offset) == table_offset_reverse_map_.end()) {
+  if (table_offset_reverse_map_.find(global_offset) ==
+      table_offset_reverse_map_.end()) {
     auto it = table_offset_reverse_map_.lower_bound(global_offset);
     if (it == table_offset_reverse_map_.end()) {
       table_offset = table_offset_reverse_map_.rbegin()->first;
@@ -363,7 +370,8 @@ std::string CompressedIndexConfigContainer::ToString() const {
   return str_stream.str();
 }
 
-std::string CompressedIndexConfigContainer::ToString(const boost::dynamic_bitset<>& bs) const {
+std::string CompressedIndexConfigContainer::ToString(
+    const boost::dynamic_bitset<> &bs) const {
   // First get the entire bitset
   std::stringstream str_stream;
   std::string bitset_str;
