@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/executor/executors.h>
+#include "include/executor/executors.h"
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
