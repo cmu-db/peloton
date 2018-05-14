@@ -58,7 +58,7 @@ IndexCatalogObject::IndexCatalogObject(oid_t index_oid, std::string index_name,
                                        oid_t table_oid, IndexType index_type,
                                        IndexConstraintType index_constraint,
                                        bool unique_keys,
-                                       std::vector<oid_t> key_attrs)
+                                       std::vector<oid_t> &key_attrs)
     : index_oid(index_oid),
       index_name(index_name),
       table_oid(table_oid),

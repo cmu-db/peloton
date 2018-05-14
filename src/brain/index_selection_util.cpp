@@ -77,12 +77,12 @@ void IndexConfiguration::Set(IndexConfiguration &config) {
 }
 
 void IndexConfiguration::RemoveIndexObject(
-    std::shared_ptr<HypotheticalIndexObject> index_info) {
+    const std::shared_ptr<HypotheticalIndexObject> &index_info) {
   indexes_.erase(index_info);
 }
 
 void IndexConfiguration::AddIndexObject(
-    std::shared_ptr<HypotheticalIndexObject> index_info) {
+    const std::shared_ptr<HypotheticalIndexObject> &index_info) {
   indexes_.insert(index_info);
 }
 

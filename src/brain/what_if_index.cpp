@@ -179,12 +179,12 @@ WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
   // hypothetical indexes
   // TODO: Support unique keys.
   // Create a dummy catalog object.
+  auto col_oids = std::vector<oid_t>(index_obj->column_oids.begin(),
+                             index_obj->column_oids.end());
   auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
       new catalog::IndexCatalogObject(
           index_seq_no++, index_name_oss.str(), index_obj->table_oid,
-          IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
-          std::vector<oid_t>(index_obj->column_oids.begin(),
-                             index_obj->column_oids.end())));
+          IndexType::BWTREE, IndexConstraintType::DEFAULT, false, col_oids));
   return index_cat_obj;
 }
 

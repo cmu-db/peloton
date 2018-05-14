@@ -66,6 +66,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::vector<int> admissible_indexes;
   query_strs.push_back("SELECT * FROM " + table_name +
                        " WHERE a < 1 or b > 4 GROUP BY a");
+  // 2 indexes will be choosen in GetAdmissibleIndexes - a, b 
   admissible_indexes.push_back(2);
   query_strs.push_back("SELECT a, b, c FROM " + table_name +
                        " WHERE a < 1 or b > 4 ORDER BY a");
@@ -148,7 +149,8 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // TODO: There is no data in the table. Indexes should not help. Should return
   // 0. But currently, the cost with index for a query if 0.0 if there are no
-  // rows in the table where as the cost without the index is 1.0
+  // rows in the table where as the cost without the index is 1.0. This needs to
+  // be fixed in the cost model. Or is this behaviour of optimizer fine?
   // EXPECT_EQ(candidate_config.GetIndexCount(), 0);
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
 

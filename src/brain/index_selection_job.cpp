@@ -87,6 +87,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
           if ((index.second.get()->GetTableOid() == installed_index.get()->table_oid) &&
           (index.second.get()->GetKeyAttrs() == installed_index.get()->column_oids)) {
             found = true;
+            break;
           }
         }
         // Drop only indexes which are not suggested this time.

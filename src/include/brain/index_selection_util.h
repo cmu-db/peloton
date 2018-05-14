@@ -135,12 +135,12 @@ class IndexConfiguration {
   /**
    * @brief - Adds an index into the configuration
    */
-  void AddIndexObject(std::shared_ptr<HypotheticalIndexObject> index_info);
+  void AddIndexObject(const std::shared_ptr<HypotheticalIndexObject> &index_info);
 
   /**
    * @brief - Removes an index from the configuration
    */
-  void RemoveIndexObject(std::shared_ptr<HypotheticalIndexObject> index_info);
+  void RemoveIndexObject(const std::shared_ptr<HypotheticalIndexObject> &index_info);
 
   /**
    * @brief - Returns the number of indexes in the configuration
