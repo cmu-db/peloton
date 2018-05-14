@@ -47,7 +47,10 @@ namespace util {
 class CSVScanner {
  public:
   // 64K buffer size
-  static constexpr uint32_t kDefaultBufferSize = (1ul << 16);
+  static constexpr uint32_t kDefaultBufferSize = (1ul << 16ul);
+
+  // We allocate a maximum of 1GB for the line buffer
+  static constexpr uint64_t kMaxAllocSize = (1ul << 30ul);
 
   // The signature of the callback function
   using Callback = void (*)(void *);
@@ -70,7 +73,7 @@ class CSVScanner {
   };
 
   /**
-   * Various statistics tracked while we scan the CSV
+   * This structure tracks various statistics while we scan the CSV
    */
   struct Stats {
     // The number of times the read-buffer was copied into the line-buffer

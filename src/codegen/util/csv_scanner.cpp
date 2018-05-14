@@ -37,6 +37,7 @@ CSVScanner::CSVScanner(peloton::type::AbstractPool &pool,
       line_(nullptr),
       line_len_(0),
       line_maxlen_(0),
+      line_number_(0),
       delimiter_(delimiter),
       quote_(quote),
       escape_(escape),
@@ -110,15 +111,16 @@ void CSVScanner::Initialize() {
   file_.Open(file_path_, peloton::util::File::AccessMode::ReadOnly);
 
   // Allocate buffer space
-  buffer_ = static_cast<char *>(memory_.Allocate(kDefaultBufferSize + 1));
+  buffer_ = static_cast<char *>(memory_.Allocate(kDefaultBufferSize));
 
   // Fill read-buffer
   NextBuffer();
 
-  // Allocate space for the full line, if it doesn't fit into the buffer
+  // Allocate space for the full line, if it doesn't fit into the buffer. We
+  // reserve the last byte for the null-byte terminator.
   line_ = static_cast<char *>(memory_.Allocate(kDefaultBufferSize));
   line_len_ = 0;
-  line_maxlen_ = kDefaultBufferSize;
+  line_maxlen_ = kDefaultBufferSize - 1;
 }
 
 bool CSVScanner::NextBuffer() {
@@ -139,12 +141,25 @@ void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
   }
 
   if (line_len_ + len > line_maxlen_) {
+    // Check if we can even allocate any more bytes
+    if (static_cast<uint64_t>(len) > kMaxAllocSize - line_len_) {
+      const auto msg = StringUtil::Format(
+          "Line %u in file '%s' exceeds maximum line length: %lu",
+          line_number_ + 1, file_path_.c_str(), kMaxAllocSize);
+      throw Exception{msg};
+    }
+
     // The current line buffer isn't large enough to store the new bytes, so we
-    // need to resize it. By default, we double the capacity.
-    auto new_maxlen = line_maxlen_ * 2;
+    // need to resize it. Let's find an allocation size large enough to fit the
+    // new bytes.
+    uint32_t new_maxlen = line_maxlen_ * 2;
     while (new_maxlen < len) {
       new_maxlen *= 2;
     }
+
+    // Clamp
+    new_maxlen = std::min(new_maxlen, static_cast<uint32_t>(kMaxAllocSize));
+
     auto *new_line = static_cast<char *>(memory_.Allocate(new_maxlen));
 
     // Copy the old data
@@ -155,15 +170,14 @@ void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
 
     // Setup pointers and sizes
     line_ = new_line;
-    line_maxlen_ = new_maxlen;
+    line_maxlen_ = new_maxlen - 1;
 
     stats_.num_reallocs++;
   }
 
-  // At this point, we've guaranteed that the line is large enough to
-  // accommodate the new bytes, so let's go ahead and perform the copy.
-
+  // Copy provided data into the line buffer, ensuring null-byte termination.
   PELOTON_MEMCPY(line_ + line_len_, data, len);
+  line_[line_len_ + len] = '\0';
 
   // Increase the length of the line
   line_len_ += len;
@@ -246,11 +260,22 @@ void CSVScanner::ProduceCSV(const char *line) {
 
   const auto *iter = line;
   for (uint32_t col_idx = 0; col_idx < num_cols_; col_idx++) {
+    // Start points to the beginning of the column's data value
     const char *start = iter;
-    for (; *iter != 0 && *iter != delimiter_; iter++) {}
+
+    // Eat text until the next delimiter
+    while (*iter != 0 && *iter != delimiter_) {
+      iter++;
+    }
+
+    // At this point, iter points to the end of the column's data value
+
+    // Let's setup the columns
     cols_[col_idx].ptr = start;
     cols_[col_idx].len = static_cast<uint32_t>(iter - start);
     cols_[col_idx].is_null = (cols_[col_idx].len == 0);
+
+    // Eat delimiter, moving to next column
     iter++;
   }
 
