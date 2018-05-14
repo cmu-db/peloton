@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -147,7 +147,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
     case StatementType::ALTER: {
-      // TODO (shilun) adding support of Alter
       LOG_TRACE("Adding Alter Plan");
       unique_ptr<planner::AbstractPlan> alter_plan(
           new planner::AlterPlan((parser::AlterTableStatement *)tree));

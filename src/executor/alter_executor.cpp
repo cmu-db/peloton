@@ -29,7 +29,7 @@ AlterExecutor::AlterExecutor(const planner::AbstractPlan *node,
 // Initialize executor
 // Nothing to initialize for now
 bool AlterExecutor::DInit() {
-  LOG_TRACE("Initializing Alter Executer...");
+  LOG_TRACE("Initializing Alter Executor...");
 
   LOG_TRACE("Alter Executor initialized!");
   return true;
@@ -37,10 +37,12 @@ bool AlterExecutor::DInit() {
 
 bool AlterExecutor::DExecute() {
   LOG_TRACE("Executing Alter...");
-  bool result = false;
+  bool result;
   const planner::AlterPlan &node = GetPlanNode<planner::AlterPlan>();
   auto current_txn = executor_context_->GetTransaction();
   AlterType type = node.GetAlterTableType();
+
+  // TODO: grab per-table lock before execution.
   switch (type) {
     case AlterType::RENAME:
       result = RenameColumn(node, current_txn);
@@ -65,13 +67,13 @@ bool AlterExecutor::RenameColumn(
   auto old_column_name = node.GetOldName();
 
   ResultType result = catalog::Catalog::GetInstance()->RenameColumn(
-      database_name, table_name, old_column_name, new_column_name, schema_name, txn);
+      database_name, table_name, old_column_name, new_column_name, schema_name,
+      txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Rename column succeeded!");
 
-    // TODO: Add on succeed logic if necessary
     executor_context_->num_processed = 1;
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
@@ -133,8 +135,6 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
       return false;
     } else {
       columns[i] = std::move(change_col);
-      // TODO: decide VARCHAR's size when change type
-      // if (change_pair.second == type::TypeId::VARCHAR) {}
     }
   }
 
@@ -168,13 +168,11 @@ bool AlterExecutor::AlterTable(const peloton::planner::AlterPlan &node,
     case ResultType::SUCCESS:
       LOG_TRACE("Alter table succeed!");
 
-      // TODO: Add on succeed logic if necessary
       executor_context_->num_processed = 1;
       break;
     case ResultType::FAILURE:
       LOG_TRACE("Alter table failed!");
 
-      // TODO: Add on failed logic if necessary
       break;
     default:
       LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());

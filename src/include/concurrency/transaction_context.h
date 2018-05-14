@@ -51,14 +51,14 @@ class TransactionContext : public Printable {
 
  public:
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id);
+                     const cid_t &read_id);
 
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id);
- 
+                     const cid_t &read_id, const cid_t &commit_id);
+
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id, 
-              const size_t read_write_set_size);
+                     const cid_t &read_id, const cid_t &commit_id,
+                     const size_t read_write_set_size);
 
   /**
    * @brief      Destroys the object.
@@ -126,8 +126,9 @@ class TransactionContext : public Printable {
    *
    * @return     The query strings.
    */
-  inline const std::vector<std::string>& GetQueryStrings() const {
-                                                      return query_strings_; }
+  inline const std::vector<std::string> &GetQueryStrings() const {
+    return query_strings_;
+  }
 
   /**
    * @brief      Sets the commit identifier.
@@ -142,7 +143,7 @@ class TransactionContext : public Printable {
    * @param[in]  epoch_id  The epoch identifier
    */
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
-  
+
   /**
    * @brief      Sets the timestamp.
    *
@@ -155,18 +156,18 @@ class TransactionContext : public Printable {
    *
    * @param[in]  query_string  The query string
    */
-  inline void AddQueryString(const char* query_string) {
+  inline void AddQueryString(const char *query_string) {
     query_strings_.push_back(std::string(query_string));
   }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.push_back(std::make_tuple(database_oid, table_oid,
-                                index_oid, DDLType::CREATE));
+    rw_object_set_.push_back(
+        std::make_tuple(database_oid, table_oid, index_oid, DDLType::CREATE));
   }
 
   void RecordDrop(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.push_back(std::make_tuple(database_oid, table_oid,
-                                index_oid, DDLType::DROP));
+    rw_object_set_.push_back(
+        std::make_tuple(database_oid, table_oid, index_oid, DDLType::DROP));
   }
 
   void RecordRead(const ItemPointer &);
@@ -177,10 +178,18 @@ class TransactionContext : public Printable {
 
   void RecordInsert(const ItemPointer &);
 
+  /**
+   * @brief Record drop of a data table.
+   * @param table the table dropped.
+   */
   void RecordDropTable(storage::DataTable *table) {
     dropped_tables.push_back(table);
   }
 
+  /**
+   * @brief Get the dropped tables.
+   * @return vector of dropped tables.
+   */
   std::vector<storage::DataTable *> &GetDroppedTables() {
     return dropped_tables;
   }
@@ -338,8 +347,8 @@ class TransactionContext : public Printable {
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;
 
-  /** 
-   * this set contains data location that needs to be gc'd in the transaction. 
+  /**
+   * this set contains data location that needs to be gc'd in the transaction.
    */
   std::shared_ptr<GCSet> gc_set_;
   std::shared_ptr<GCObjectSet> gc_object_set_;

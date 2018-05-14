@@ -6,7 +6,7 @@
 //
 // Identification: src/planner/alter_table_plan.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,14 +37,12 @@ AlterPlan::AlterPlan(
 }
 
 AlterPlan::AlterPlan(const std::string &database_name,
-                     const std::string &table_name,
-                     const std::vector<std::string> &old_names,
-                     const std::vector<std::string> &new_names,
-                     const AlterType a_type)
+                     const std::string &table_name, const std::string &old_name,
+                     const std::string &new_name, const AlterType a_type)
     : table_name(table_name),
       database_name(database_name),
-      old_names_(old_names),
-      new_names_(new_names),
+      old_name_(old_name),
+      new_name_(new_name),
       type(a_type) {}
 
 AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
@@ -53,8 +51,8 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
   schema_name = std::string(parse_tree->GetSchemaName());
   switch (parse_tree->type) {
     case parser::AlterTableStatement::AlterTableType::RENAME: {
-      old_names_.emplace_back(std::string{parse_tree->oldName});
-      new_names_.emplace_back(std::string{parse_tree->newName});
+      old_name_ = std::string(parse_tree->oldName);
+      new_name_ = std::string(parse_tree->newName);
       type = AlterType::RENAME;
       break;
     }
@@ -71,14 +69,10 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
       for (size_t i = 0; i < (*parse_tree->added_columns).size(); i++) {
         type::TypeId val = parser::ColumnDefinition::GetValueType(
             (*parse_tree->added_columns)[i].get()->type);
-        // LOG_TRACE("Column Name: %s", (char
-        // *)((*parse_tree->columns)[i].get()->name.c_str()));
 
-        bool is_inline = (val == type::TypeId::VARCHAR) ? false : true;
         auto column = catalog::Column(
             val, type::Type::GetTypeSize(val),
-            std::string((*parse_tree->added_columns)[i].get()->name),
-            is_inline);
+            std::string((*parse_tree->added_columns)[i].get()->name));
 
         if ((*parse_tree->added_columns)[i].get()->not_null) {
           catalog::Constraint constraint(ConstraintType::NOTNULL,
@@ -98,6 +92,7 @@ AlterPlan::AlterPlan(parser::AlterTableStatement *parse_tree) {
         auto column = catalog::Column(
             val, type::Type::GetTypeSize(val),
             std::string((*parse_tree->changed_type_columns)[i].get()->name));
+
         if ((*parse_tree->changed_type_columns)[i].get()->not_null) {
           catalog::Constraint constraint(ConstraintType::NOTNULL,
                                          "con_not_null");

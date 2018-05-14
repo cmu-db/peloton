@@ -14,8 +14,8 @@
 
 // This is just for convenience
 
-#include "analyze_statement.h"
 #include "alter_statement.h"
+#include "analyze_statement.h"
 #include "copy_statement.h"
 #include "create_function_statement.h"
 #include "create_statement.h"
