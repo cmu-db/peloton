@@ -56,8 +56,8 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
     uint32_t val = sequence_object->GetNextVal();
     int64_t curr_val = sequence_object->GetCurrVal();
     // insert the new copy of sequence into cache for future currval
-    bool insert = txn->catalog_cache.InsertSequenceObject(sequence_object);
-    PELOTON_ASSERT(insert);
+    txn->catalog_cache.InsertSequenceObject(sequence_object);
+
     auto ret = txn_manager.CommitTransaction(mini_txn);
     if (ret != ResultType::SUCCESS) {
       txn_manager.AbortTransaction(mini_txn);
