@@ -62,8 +62,9 @@ class SequenceFunctionsTests : public PelotonTest {
     EXPECT_EQ(CreateType::SEQUENCE, plan.GetCreateType());
 
     // Execute the create sequence
-    executor::ExecutorContext * ctx = new executor::ExecutorContext(txn, {}, DEFAULT_DB_NAME);
-    executor::CreateExecutor createSequenceExecutor(&plan, ctx);
+    std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(txn, {}, DEFAULT_DB_NAME));
+    executor::CreateExecutor createSequenceExecutor(&plan, context.get());
     createSequenceExecutor.Init();
     createSequenceExecutor.Execute();
   }
