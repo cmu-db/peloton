@@ -212,9 +212,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
-      parser::AnalyzeStatement *analyze_parse_tree = static_cast<parser::AnalyzeStatement *>(tree);
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          analyze_parse_tree, txn));
+          static_cast<parser::AnalyzeStatement *>(tree), txn));
       ddl_plan = move(analyze_plan);
       break;
     }

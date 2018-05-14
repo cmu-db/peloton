@@ -977,13 +977,16 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
+
   if (relation->schemaname) {
+    //a temp table cannot specify the schema name
     if(result->is_temp_table) {
       throw ParserException(StringUtil::Format(
               "Cannot create temp table with specified schema %s", relation->schemaname));
     }
     result->table_info_->schema_name = relation->schemaname;
   }
+
   if (relation->catalogname) {
     result->table_info_->database_name = relation->catalogname;
   }

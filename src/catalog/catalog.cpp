@@ -269,10 +269,6 @@ ResultType Catalog::CreateSchema(const std::string &database_name,
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
   auto schema_object = pg_namespace->GetSchemaObject(schema_name, txn);
   if (schema_object != nullptr) {
-    // If the temporary schema exists
-    if (schema_name.find(TEMP_NAMESPACE_PREFIX) != std::string::npos) {
-      return ResultType::SUCCESS;
-    }
     throw CatalogException("Schema(namespace) " + schema_name +
                            " already exists");
   }
@@ -321,8 +317,10 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                            " to create table");
 
   // Get table oid from pg_table
+  // here we don't care about session namespace because schema_name cannot be empty.
+  PELOTON_ASSERT(!schema_name.empty());
   auto table_object =
-      database_object->GetTableObject(table_name, schema_name, schema_name);
+      database_object->GetTableObject(table_name, schema_name, std::string());
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
                            " already exists");
@@ -372,7 +370,9 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     if (column.IsUnique()) {
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-      CreateIndex(database_name, schema_name, schema_name, table_name,
+      //similarly, we don't care about session_namespace here.
+      //already pass the assertion that the schema name is not empty
+      CreateIndex(database_name, schema_name, std::string(), table_name,
                   {column_id}, index_name, true, IndexType::BWTREE, txn);
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
