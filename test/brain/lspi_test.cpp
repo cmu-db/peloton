@@ -209,12 +209,24 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
+      const boost::dynamic_bitset<> prev_config(
+          *index_tuner_exhaustive.GetConfigContainer()
+               ->GetCurrentIndexConfig());
       LOG_DEBUG("COREIL Tuning...");
       timer.Reset();
       timer.Start();
       index_tuner_exhaustive.Tune(batch_queries, batch_costs);
       timer.Stop();
       search_time_lspiexhaustive[i - 1] = timer.GetDuration();
+      const boost::dynamic_bitset<> cur_config(
+          *index_tuner_exhaustive.GetConfigContainer()
+               ->GetCurrentIndexConfig());
+      const auto drop_bitset = prev_config - cur_config;
+      const auto add_bitset = cur_config - prev_config;
+
+      LOG_DEBUG("#Dropped Indexes: %lu, #Added Indexes: %lu",
+                drop_bitset.count(), add_bitset.count());
+
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector_lspiexhaustive.array().mean();
@@ -255,12 +267,23 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
+      const boost::dynamic_bitset<> prev_config(
+          *index_tuner_nonexhaustive.GetConfigContainer()
+               ->GetCurrentIndexConfig());
       LOG_DEBUG("COREIL Tuning...");
       timer.Reset();
       timer.Start();
       index_tuner_nonexhaustive.Tune(batch_queries, batch_costs);
       timer.Stop();
       search_time_lspinonexhaustive[i - 1] = timer.GetDuration();
+      const boost::dynamic_bitset<> cur_config(
+          *index_tuner_nonexhaustive.GetConfigContainer()
+               ->GetCurrentIndexConfig());
+      const auto drop_bitset = prev_config - cur_config;
+      const auto add_bitset = cur_config - prev_config;
+
+      LOG_DEBUG("#Dropped Indexes: %lu, #Added Indexes: %lu",
+                drop_bitset.count(), add_bitset.count());
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector_lspinonexhaustive.array().mean();
