@@ -66,6 +66,14 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(expression::ComparisonExpression *expr) override;
   void Visit(expression::OperatorExpression *expr) override;
 
+  std::string GetSessionNamespace() const {
+    return session_namespace_;
+  }
+
+  void SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
+
  private:
   inline oid_t GetAndIncreaseGetId() { return get_id++; }
 
@@ -137,6 +145,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
    *  generate filter operator
    */
   std::vector<AnnotatedExpression> predicates_;
+  std::string session_namespace_;
 };
 
 }  // namespace optimizer

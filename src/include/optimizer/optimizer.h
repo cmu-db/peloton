@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "catalog/catalog.h"
 #include "optimizer/abstract_optimizer.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"

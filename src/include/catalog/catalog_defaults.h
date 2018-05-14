@@ -54,7 +54,8 @@ namespace catalog {
 #define CATALOG_SCHEMA_OID (0 | SCHEMA_OID_MASK)
 #define DEFUALT_SCHEMA_OID (1 | SCHEMA_OID_MASK)
 #define CATALOG_SCHEMA_NAME "pg_catalog"
-#define DEFUALT_SCHEMA_NAME "public"
+#define DEFAULT_SCHEMA_NAME "public"
+#define TEMP_NAMESPACE_PREFIX "pg_temp_"
 
 // Reserved pg_xxx table oid
 #define DATABASE_CATALOG_OID (0 | TABLE_OID_MASK)

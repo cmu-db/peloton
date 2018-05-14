@@ -43,7 +43,7 @@ SettingsCatalog::SettingsCatalog(concurrency::TransactionContext *txn)
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, SETTINGS_CATALOG_NAME, {0},
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, SETTINGS_CATALOG_NAME, {0},
       SETTINGS_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 

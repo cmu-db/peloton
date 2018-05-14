@@ -51,6 +51,7 @@ class BinderContext {
    */
   void AddRegularTable(parser::TableRef *table_ref,
                        const std::string default_database_name,
+                       const std::string session_namespace,
                        concurrency::TransactionContext *txn);
 
   /**
@@ -59,6 +60,7 @@ class BinderContext {
    */
   void AddRegularTable(const std::string db_name, const std::string schema_name,
                        std::string table_name, const std::string table_alias,
+                       const std::string session_namespace,
                        concurrency::TransactionContext *txn);
 
   /**

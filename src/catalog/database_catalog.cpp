@@ -141,28 +141,61 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
             or all the way from storage (cached_only == false)
  * @param   table_name     table name of the requested table catalog object
  * @param   schema_name    schema name of the requested table catalog object
+ * @param   session_namespace session namespace of the session that transaction running on.
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */
 std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     const std::string &table_name, const std::string &schema_name,
+    const std::string &session_namespace,
     bool cached_only) {
-  std::string key = schema_name + "." + table_name;
-  auto it = table_name_cache.find(key);
-  if (it != table_name_cache.end()) {
-    return it->second;
-  }
+  //no schema specified
+  if (schema_name.empty()) {
+    //search under temporary namespace
+    std::string key = session_namespace + "." + table_name;
+    auto it = table_name_cache.find(key);
+    if (it != table_name_cache.end()) return it->second;
 
-  if (cached_only) {
-    // cache miss return empty object
-    return nullptr;
-  } else {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
-                        ->GetTableCatalog();
-    return pg_table->GetTableObject(table_name, schema_name, txn);
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+    auto table_object = pg_table->GetTableObject(table_name, session_namespace, txn);
+    if (table_object == nullptr) {
+      //search under public namespace
+      return GetTableObjectHelper(table_name, DEFAULT_SCHEMA_NAME, cached_only);
+    }
+    return table_object;
   }
+  //search under a specific namespace
+  return GetTableObjectHelper(table_name, schema_name, cached_only);
+}
+
+/* @brief   helper to get table catalog object
+ * @param   table_name     table name of the requested table catalog object
+ * @param   schema_name    schema name of the requested table catalog object
+ * @param   cached_only   if cached only, return nullptr on a cache miss
+ * @return  Shared pointer to the requested table catalog object
+ */
+std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObjectHelper(
+    const std::string &table_name, const std::string &schema_name,
+    bool cached_only) {
+    std::string key = schema_name + "." + table_name;
+    auto it = table_name_cache.find(key);
+    if (it != table_name_cache.end()) {
+      return it->second;
+    }
+
+    if (cached_only) {
+      // cache miss return empty object
+      return nullptr;
+    } else {
+      // cache miss get from pg_table
+      auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+      return pg_table->GetTableObject(table_name, schema_name, txn);
+    }
 }
 
 /*@brief    Get table catalog object from cache (cached_only == true),

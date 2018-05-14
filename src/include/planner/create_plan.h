@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog_defaults.h"
 #include "parser/create_statement.h"
 #include "planner/abstract_plan.h"
 
@@ -42,6 +43,7 @@ struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
   std::string sink_table_name;
+  std::string sink_table_schema;
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
@@ -77,6 +79,12 @@ class CreatePlan : public AbstractPlan {
   std::string GetTableName() const { return table_name; }
 
   std::string GetSchemaName() const { return schema_name; }
+
+  std::string GetSessionNamespace() const { return session_namespace_; }
+
+  void SetSessionNamespace(const std::string session_namespace) {
+    session_namespace_ = std::move(session_namespace);
+  }
 
   std::string GetDatabaseName() const { return database_name; }
 
@@ -114,6 +122,8 @@ class CreatePlan : public AbstractPlan {
 
   int16_t GetTriggerType() const { return trigger_type; }
 
+  OnCommitAction GetCommitOption() const { return commit_option; }
+
  protected:
   // This is a helper method for extracting foreign key information
   // and storing it in an internal struct.
@@ -126,6 +136,9 @@ class CreatePlan : public AbstractPlan {
 
   // namespace Name
   std::string schema_name;
+
+  //session namespace;
+  std::string session_namespace_ = DEFAULT_SCHEMA_NAME;
 
   // Database Name
   std::string database_name;
@@ -149,6 +162,7 @@ class CreatePlan : public AbstractPlan {
   // UNIQUE INDEX flag
   bool unique;
 
+  OnCommitAction commit_option; //what we do on commit?
   // ColumnDefinition for multi-column constraints (including foreign key)
   std::vector<ForeignKeyInfo> foreign_keys;
   std::string trigger_name;

@@ -74,10 +74,6 @@ struct TableRef {
     if (table_info_->database_name.empty()) {
       table_info_->database_name = default_database_name;
     }
-
-    if (table_info_->schema_name.empty()) {
-      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
-    }
   }
 
   // Get the name of the table

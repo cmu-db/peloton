@@ -25,21 +25,23 @@ namespace binder {
 
 void BinderContext::AddRegularTable(parser::TableRef *table_ref,
                                     const std::string default_database_name,
+                                    const std::string session_namespace,
                                     concurrency::TransactionContext *txn) {
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_alias = table_ref->GetTableAlias();
   AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetSchemaName(),
-                  table_ref->GetTableName(), table_alias, txn);
+                  table_ref->GetTableName(), table_alias, session_namespace, txn);
 }
 
 void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string schema_name,
                                     const std::string table_name,
                                     const std::string table_alias,
+                                    const std::string session_namespace,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      db_name, schema_name, table_name, txn);
+      db_name, schema_name, session_namespace, table_name, txn);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||

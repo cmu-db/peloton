@@ -147,11 +147,12 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   std::string database_name = node.GetDatabaseName();
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   if (node.IsMissing()) {
     try {
       auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-          database_name, schema_name, table_name, txn);
+          database_name, schema_name, session_namespace, table_name, txn);
     } catch (CatalogException &e) {
       LOG_TRACE("Table %s does not exist.", table_name.c_str());
       return false;
@@ -159,7 +160,7 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
   }
 
   ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -168,7 +169,7 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id =
           catalog::Catalog::GetInstance()
-              ->GetTableObject(database_name, schema_name, table_name, txn)
+              ->GetTableObject(database_name, schema_name, session_namespace, table_name, txn)
               ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
@@ -185,9 +186,10 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   std::string schema_name = node.GetSchemaName();
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
+  std::string session_namespace = node.GetSessionNamespace();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+      database_name, schema_name, session_namespace, table_name, txn);
   // drop trigger
   ResultType result =
       catalog::Catalog::GetInstance()
@@ -219,6 +221,7 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
   std::string index_name = node.GetIndexName();
   std::string schema_name = node.GetSchemaName();
+  std::string session_namespace = node.GetSessionNamespace();
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       node.GetDatabaseName(), txn);
   if (database_object == nullptr) {
@@ -228,10 +231,27 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
-  if (index_object == nullptr) {
-    throw CatalogException("Can't find index " + schema_name + "." +
-                           index_name + " to drop");
+
+  std::shared_ptr<catalog::IndexCatalogObject> index_object;
+  // if no schema name specified.
+  if (schema_name.empty()) {
+    // search under session_namespace
+    index_object = pg_index->GetIndexObject(index_name, session_namespace, txn);
+    if (index_object == nullptr) {
+      // search under public namespace if not under temp session
+      index_object =
+          pg_index->GetIndexObject(index_name, DEFAULT_SCHEMA_NAME, txn);
+      if (index_object == nullptr) {
+        throw CatalogException("Can't find index " + schema_name + "." +
+                               index_name + " to drop");
+      }
+    }
+  } else {
+    index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
+    if (index_object == nullptr) {
+      throw CatalogException("Can't find index " + schema_name + "." +
+                             index_name + " to drop");
+    }
   }
   // invoke directly using oid
   ResultType result = catalog::Catalog::GetInstance()->DropIndex(

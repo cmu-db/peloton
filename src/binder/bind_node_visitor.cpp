@@ -28,8 +28,10 @@ namespace peloton {
 namespace binder {
 
 BindNodeVisitor::BindNodeVisitor(concurrency::TransactionContext *txn,
-                                 std::string default_database_name)
-    : txn_(txn), default_database_name_(default_database_name) {
+                                 std::string default_database_name,
+                                 std::string session_namespace)
+    : txn_(txn), default_database_name_(default_database_name), 
+      session_namespace_(session_namespace) {
   catalog_ = catalog::Catalog::GetInstance();
   context_ = nullptr;
 }
@@ -117,7 +119,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddRegularTable(node, default_database_name_, txn_);
+    context_->AddRegularTable(node, default_database_name_, session_namespace_, txn_);
   }
 }
 
@@ -156,7 +158,8 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>(nullptr);
   node->TryBindDatabaseName(default_database_name_);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetSchemaName(),
-                            node->GetTableName(), node->GetTableName(), txn_);
+                            node->GetTableName(), node->GetTableName(),
+                            session_namespace_, txn_);
 
   if (node->expr != nullptr) {
     node->expr->Accept(this);
@@ -175,7 +178,8 @@ void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
   context_ = std::make_shared<BinderContext>(nullptr);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetSchemaName(),
-                            node->GetTableName(), node->GetTableName(), txn_);
+                            node->GetTableName(), node->GetTableName(),
+                            session_namespace_, txn_);
   if (node->select != nullptr) {
     node->select->Accept(this);
   }

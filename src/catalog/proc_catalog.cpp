@@ -56,7 +56,7 @@ ProcCatalog::ProcCatalog(concurrency::TransactionContext *txn)
                       "prosrc        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, PROC_CATALOG_NAME, {1, 3},
+      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, CATALOG_SCHEMA_NAME, PROC_CATALOG_NAME, {1, 3},
       PROC_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
