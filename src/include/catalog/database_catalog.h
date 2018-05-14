@@ -49,13 +49,18 @@ class DatabaseCatalogObject {
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
                                                      bool cached_only = false);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, bool cached_only = false);
+      const std::string &table_name, const std::string &schema_name,
+      bool cached_only = false);
 
   bool IsValidTableObjects() {
     // return true if this database object contains all table
     // objects within the database
     return valid_table_objects;
   }
+
+  std::vector<std::shared_ptr<TableCatalogObject>> GetTableObjects(
+      const std::string &schema_name);
+
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(bool cached_only = false);
 
@@ -69,12 +74,13 @@ class DatabaseCatalogObject {
 
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
   bool EvictTableObject(oid_t table_oid);
-  bool EvictTableObject(const std::string &table_name);
+  bool EvictTableObject(const std::string &table_name,
+                        const std::string &schema_name);
   void SetValidTableObjects(bool valid = true) { valid_table_objects = valid; }
 
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
-      const std::string &index_name);
+      const std::string &index_name, const std::string &schema_name);
 
   // cache for table name to oid translation
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
@@ -98,9 +104,10 @@ class DatabaseCatalog : public AbstractCatalog {
   ~DatabaseCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                      type::AbstractPool *pool = nullptr,
-                                      concurrency::TransactionContext *txn = nullptr);
+  static DatabaseCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
@@ -108,7 +115,8 @@ class DatabaseCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
-                      type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                      type::AbstractPool *pool,
+                      concurrency::TransactionContext *txn);
   bool DeleteDatabase(oid_t database_oid, concurrency::TransactionContext *txn);
 
  private:

@@ -101,11 +101,6 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
-                ->GetTableCount(),
-            1);
-
   // Inserting a tuple end-to-end
   traffic_cop.SetTcopTxnState(txn);
   LOG_TRACE("Inserting a tuple...");
@@ -176,7 +171,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
 
   txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
   // Expected 1 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
   txn_manager.CommitTransaction(txn);

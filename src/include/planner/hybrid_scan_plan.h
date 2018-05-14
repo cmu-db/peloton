@@ -54,10 +54,6 @@ class HybridScanPlan : public AbstractScan {
     return expr_types_;
   }
 
-  const index::IndexScanPredicate &GetIndexPredicate() const {
-    return index_predicate_;
-  }
-
   const std::vector<type::Value> &GetValues() const { return values_; }
 
   const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
@@ -80,8 +76,6 @@ class HybridScanPlan : public AbstractScan {
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 
   oid_t index_id_;
-
-  index::IndexScanPredicate index_predicate_;
 
  private:
   DISALLOW_COPY_AND_MOVE(HybridScanPlan);

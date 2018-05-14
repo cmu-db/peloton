@@ -32,8 +32,7 @@ HybridScanPlan::HybridScanPlan(
       expr_types_(std::move(index_scan_desc.expr_list)),
       values_(std::move(index_scan_desc.value_list)),
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
-      index_id_(index_scan_desc.index_id),
-      index_predicate_() {}
+      index_id_(index_scan_desc.index_id) {}
 
 }  // namespace planner
 }  // namespace peloton

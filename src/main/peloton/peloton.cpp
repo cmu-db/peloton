@@ -22,7 +22,8 @@
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
 
-void RunPelotonServer() {
+int RunPelotonServer() {
+  int return_code = 0;
   try {
     // Setup
     peloton::PelotonInit::Initialize();
@@ -34,15 +35,18 @@ void RunPelotonServer() {
 
     peloton_server.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
-    // Nothing to do here!
+    //log error message and mark failure
+    peloton::LOG_ERROR("Cannot start server. Failure detail : %s\n", exception.GetMessage().c_str());
+    return_code = EXIT_FAILURE;
   }
 
   // Teardown
   peloton::PelotonInit::Shutdown();
+  return return_code;
 }
 
 
-void RunPelotonBrain() {
+int RunPelotonBrain() {
   // TODO(tianyu): boot up other peloton resources as needed here
   peloton::brain::Brain brain;
   evthread_use_pthreads();
@@ -62,6 +66,7 @@ void RunPelotonBrain() {
 
   brain.RegisterJob<peloton::brain::SimpleBrainJob>(&one_second, "test", example_task);
   brain.Run();
+  return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -84,13 +89,14 @@ int main(int argc, char *argv[]) {
     }
   } catch (peloton::SettingsException &exception) {
     peloton::LOG_ERROR("Cannot load settings. Failed with %s\n", exception.GetMessage().c_str());
-    return 0; // TODO: Use an enum with exit error codes
+    return EXIT_FAILURE; // TODO: Use an enum with exit error codes
   }
 
+  int exit_code = 0;
   if (peloton::settings::SettingsManager::GetBool(
       peloton::settings::SettingId::brain))
-    RunPelotonBrain();
+    exit_code =  RunPelotonBrain();
   else
-    RunPelotonServer();
-  return 0;
+    exit_code = RunPelotonServer();
+  return exit_code;
 }

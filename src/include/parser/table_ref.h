@@ -15,11 +15,11 @@
 #include <stdio.h>
 #include <vector>
 
+#include "common/internal_types.h"
+#include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
 #include "util/string_util.h"
-#include "common/sql_node_visitor.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 namespace parser {
@@ -56,8 +56,6 @@ struct TableRef {
 
   TableReferenceType type;
 
-  std::string schema;
-
   // Expression of database name and table name
   std::unique_ptr<TableInfo> table_info_ = nullptr;
 
@@ -66,9 +64,6 @@ struct TableRef {
   SelectStatement *select;
   std::vector<std::unique_ptr<TableRef>> list;
   std::unique_ptr<JoinDefinition> join;
-
-  // Convenience accessor methods
-  inline bool HasSchema() { return !schema.empty(); }
 
   // Try to bind the database name to the node if not specified
   inline void TryBindDatabaseName(std::string default_database_name) {
@@ -79,11 +74,10 @@ struct TableRef {
     if (table_info_->database_name.empty()) {
       table_info_->database_name = default_database_name;
     }
-  }
 
-  // Get the name of the database of this table
-  inline std::string GetDatabaseName() const {
-    return table_info_->database_name;
+    if (table_info_->schema_name.empty()) {
+      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
+    }
   }
 
   // Get the name of the table
@@ -95,6 +89,14 @@ struct TableRef {
   }
 
   inline std::string GetTableName() const { return table_info_->table_name; }
+
+  // Get the name of the schema of this table
+  inline std::string GetSchemaName() const { return table_info_->schema_name; }
+
+  // Get the name of the database of this table
+  inline std::string GetDatabaseName() const {
+    return table_info_->database_name;
+  }
 
   const std::string GetInfo(int num_indent) const;
 
