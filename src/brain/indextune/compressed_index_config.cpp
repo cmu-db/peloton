@@ -128,6 +128,8 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     const boost::dynamic_bitset<> &new_bitset) {
   boost::dynamic_bitset<> &ori_bitset = *cur_index_config_;
 
+  int index_added = 0, index_dropped = 0;
+
   const auto drop_bitset = ori_bitset - new_bitset;
 
   auto txn = txn_manager_->BeginTransaction();
@@ -138,6 +140,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
        current_bit = drop_bitset.find_next(current_bit)) {
     // 1. unset current bit
     UnsetBit(current_bit);
+    index_dropped++;
 
     // Current bit is not an empty index (empty set)
     if (!dry_run_ &&
@@ -165,6 +168,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
        current_bit = add_bitset.find_next(current_bit)) {
     // 1. set current bit
     SetBit(current_bit);
+    index_added++;
 
     // Current bit is not an empty index (empty set)
     if (!dry_run_ &&
@@ -206,6 +210,9 @@ void CompressedIndexConfigContainer::AdjustIndexes(
       offset_to_indexoid_[current_bit] = index_oid;
     }
   }
+
+  LOG_DEBUG("#Added Indexes: %d, #Dropped Indexes: %d", index_added,
+            index_dropped);
 }
 
 //**Setter fns**/
