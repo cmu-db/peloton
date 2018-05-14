@@ -66,11 +66,11 @@ void TupleSamplesStorage::AddSamplesTable(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateTable(std::string(SAMPLES_DB_NAME),
-                       std::string(DEFUALT_SCHEMA_NAME), samples_table_name,
+                       std::string(DEFAULT_SCHEMA_NAME), samples_table_name,
                        std::move(schema_ptr), txn, is_catalog);
 
   auto samples_table = catalog->GetTableWithName(
-      std::string(SAMPLES_DB_NAME), std::string(DEFUALT_SCHEMA_NAME),
+      std::string(SAMPLES_DB_NAME), std::string(DEFAULT_SCHEMA_NAME),
       samples_table_name, txn);
 
   for (auto &tuple : sampled_tuples) {
@@ -94,7 +94,7 @@ ResultType TupleSamplesStorage::DeleteSamplesTable(
   ResultType result = ResultType::FAILURE;
   try {
     result = catalog->DropTable(std::string(SAMPLES_DB_NAME),
-                                std::string(DEFUALT_SCHEMA_NAME),
+                                std::string(DEFAULT_SCHEMA_NAME),
                                 samples_table_name, txn);
   } catch (CatalogException &e) {
     // Samples table does not exist, no need to drop
@@ -187,7 +187,7 @@ TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto data_table = catalog->GetTableWithName(std::string(SAMPLES_DB_NAME),
-                                              std::string(DEFUALT_SCHEMA_NAME),
+                                              std::string(DEFAULT_SCHEMA_NAME),
                                               samples_table_name, txn);
 
   auto col_count = data_table->GetSchema()->GetColumnCount();
@@ -214,7 +214,7 @@ void TupleSamplesStorage::GetColumnSamples(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto data_table = catalog->GetTableWithName(std::string(SAMPLES_DB_NAME),
-                                              std::string(DEFUALT_SCHEMA_NAME),
+                                              std::string(DEFAULT_SCHEMA_NAME),
                                               samples_table_name, txn);
 
   std::vector<oid_t> column_ids({column_id});

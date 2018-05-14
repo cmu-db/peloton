@@ -52,7 +52,8 @@ class PelotonCodeGenTest : public PelotonTest {
                                                "table4", "table5"};
   std::vector<oid_t> test_table_oids;
 
-  PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
+  PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
+                     peloton::LayoutType layout_type = LayoutType::ROW);
 
   virtual ~PelotonCodeGenTest();
 
@@ -64,6 +65,9 @@ class PelotonCodeGenTest : public PelotonTest {
     return *GetDatabase().GetTableWithOid(static_cast<uint32_t>(table_id));
   }
 
+  // Get the layout table
+  storage::DataTable *GetLayoutTable() const { return layout_table; }
+
   // Create the schema (common among all tables)
   catalog::Column GetTestColumn(uint32_t col_id) const;
 
@@ -71,13 +75,19 @@ class PelotonCodeGenTest : public PelotonTest {
       bool add_primary = false) const;
 
   // Create the test tables
-  void CreateTestTables(
-      concurrency::TransactionContext *txn,
-      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
+  void CreateTestTables(concurrency::TransactionContext *txn,
+                        oid_t tuples_per_tilegroup,
+                        peloton::LayoutType layout_type);
 
   // Load the given table with the given number of rows
   void LoadTestTable(oid_t table_id, uint32_t num_rows,
                      bool insert_nulls = false);
+
+  // Load tables with the specified layout
+  void CreateAndLoadTableWithLayout(peloton::LayoutType layout_type,
+                                    oid_t tuples_per_tilegroup,
+                                    oid_t tile_group_count, oid_t column_count,
+                                    bool is_inlined);
 
   static void ExecuteSync(
       codegen::Query &query,
@@ -117,6 +127,7 @@ class PelotonCodeGenTest : public PelotonTest {
 
  private:
   storage::Database *test_db;
+  storage::DataTable *layout_table;
 };
 
 //===----------------------------------------------------------------------===//

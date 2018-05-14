@@ -59,7 +59,8 @@ enum class ExceptionType {
   SETTINGS = 23,          // settings related
   BINDER = 24,            // binder related
   NETWORK = 25,           // network related
-  OPTIMIZER = 26          // optimizer related
+  OPTIMIZER = 26,         // optimizer related
+  NULL_POINTER = 27       // nullptr exception
 };
 
 class Exception : public std::runtime_error {
@@ -132,6 +133,8 @@ class Exception : public std::runtime_error {
         return "Settings";
       case ExceptionType::OPTIMIZER:
         return "Optimizer";
+      case ExceptionType::NULL_POINTER:
+        return "NullPointer";
       default:
         return "Unknown";
     }
@@ -465,6 +468,14 @@ class OptimizerException : public Exception {
  public:
   OptimizerException(std::string msg)
       : Exception(ExceptionType::OPTIMIZER, msg) {}
+};
+
+class NullPointerException : public Exception {
+  NullPointerException() = delete;
+
+ public:
+  NullPointerException(std::string msg)
+      : Exception(ExceptionType::NULL_POINTER, msg) {}
 };
 
 }  // namespace peloton

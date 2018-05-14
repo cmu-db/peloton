@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -1395,6 +1396,15 @@ typedef std::unordered_map<expression::AbstractExpression *, unsigned,
 typedef std::unordered_set<expression::AbstractExpression *,
                            expression::ExprHasher, expression::ExprEqualCmp>
     ExprSet;
+
+//===--------------------------------------------------------------------===//
+// Storage
+//===--------------------------------------------------------------------===//
+
+/* column_map_type used to store the layout of a tile_group
+ * <column offset> to <tile offset, tile column offset>
+ */
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

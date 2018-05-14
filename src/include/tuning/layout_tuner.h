@@ -81,22 +81,15 @@ class LayoutTuner {
    */
   void ClearTables();
 
-  /**
-   * @brief      Gets the column map information.
-   *
-   * @param[in]  column_map  The column map
-   *
-   * @return     The column map information.
-   */
-  std::string GetColumnMapInfo(const column_map_type &column_map);
 
  protected:
   /**
    * Update layout of table
    *
    * @param      table  The table
+   * @return     true if the update succeeds, false otherwise
    */
-  void UpdateDefaultPartition(storage::DataTable *table);
+  bool UpdateDefaultPartition(storage::DataTable *table);
 
  private:
   /**

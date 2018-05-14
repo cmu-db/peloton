@@ -205,14 +205,15 @@ Schema *Schema::FilterSchema(const Schema *schema,
 }
 
 // Append two schema objects
-Schema *Schema::AppendSchema(Schema *first, Schema *second) {
+Schema *Schema::AppendSchema(const Schema *first, const Schema *second) {
   return AppendSchemaPtrList({first, second});
 }
 
 // Append subset of columns in the two given schemas
-Schema *Schema::AppendSchema(Schema *first, std::vector<oid_t> &first_set,
-                             Schema *second, std::vector<oid_t> &second_set) {
-  const std::vector<Schema *> schema_list({first, second});
+Schema *Schema::AppendSchema(const Schema *first, std::vector<oid_t> &first_set,
+                             const Schema *second,
+                             std::vector<oid_t> &second_set) {
+  const std::vector<const Schema *> schema_list({first, second});
   const std::vector<std::vector<oid_t>> subsets({first_set, second_set});
   return AppendSchemaPtrList(schema_list, subsets);
 }
@@ -221,7 +222,7 @@ Schema *Schema::AppendSchema(Schema *first, std::vector<oid_t> &first_set,
 Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   // All we do here is convert vector<Schema> to vector<Schema *>.
   // This is a convenience function.
-  std::vector<Schema *> schema_ptr_list;
+  std::vector<const Schema *> schema_ptr_list;
   for (unsigned int i = 0; i < schema_list.size(); i++) {
     schema_ptr_list.push_back(&schema_list[i]);
   }
@@ -229,7 +230,8 @@ Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
 }
 
 // Append given schemas.
-Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
+Schema *Schema::AppendSchemaPtrList(
+    const std::vector<const Schema *> &schema_list) {
   std::vector<std::vector<oid_t>> subsets;
 
   for (unsigned int i = 0; i < schema_list.size(); i++) {
@@ -246,13 +248,13 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 
 // Append subsets of columns in the given schemas.
 Schema *Schema::AppendSchemaPtrList(
-    const std::vector<Schema *> &schema_list,
+    const std::vector<const Schema *> &schema_list,
     const std::vector<std::vector<oid_t>> &subsets) {
   PELOTON_ASSERT(schema_list.size() == subsets.size());
 
   std::vector<Column> columns;
   for (unsigned int i = 0; i < schema_list.size(); i++) {
-    Schema *schema = schema_list[i];
+    const Schema *schema = schema_list[i];
     const std::vector<oid_t> &subset = subsets[i];
     unsigned int column_count = schema->GetColumnCount();
 
