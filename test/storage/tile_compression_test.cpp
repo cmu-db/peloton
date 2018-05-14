@@ -6,14 +6,14 @@
 //
 // Identification: test/storage/tile_compression_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2017-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
 
 #include "storage/tile.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple_iterator.h"
 #include "type/value_factory.h"
@@ -93,14 +93,10 @@ TEST_F(TileCompressionTests, BasicTest) {
   // encode the tile
 	std::unique_ptr<storage::DictEncodedTile> encodedTile(
 		new storage::DictEncodedTile(BackendType::MM, header.get(), *schema, nullptr, tuple_count));
-//  tile->DictEncode();
 	encodedTile->DictEncode(tile.get());
   // decode the tile
-//  tile->DictDecode();
-//	auto ut = std::make_unique<storage::Tile>(encodedTile->DictDecode());
 	std::unique_ptr<storage::Tile> ut(encodedTile->DictDecode());
 	tile.swap(ut);
-
 
   // Check whether the decoded tile is same as the original tile.
   
@@ -110,7 +106,6 @@ TEST_F(TileCompressionTests, BasicTest) {
   type::Value val2 = (tile->GetValue(0, 2));
   type::Value val3 = (tile->GetValue(0, 3));
   type::Value val4 = (tile->GetValue(0, 4));
-
 
   type::Value cmp = type::ValueFactory::GetBooleanValue(
       (val0.CompareEquals(type::ValueFactory::GetIntegerValue(11))));
@@ -173,8 +168,6 @@ TEST_F(TileCompressionTests, BasicTest) {
   cmp = type::ValueFactory::GetBooleanValue(
       (val4.CompareEquals(type::ValueFactory::GetVarcharValue("tao dai again"))));
   EXPECT_TRUE(cmp.IsTrue());
-
-
 }
 
 }  // namespace test

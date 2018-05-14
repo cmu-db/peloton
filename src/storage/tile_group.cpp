@@ -21,7 +21,7 @@
 #include "common/internal_types.h"
 #include "storage/abstract_table.h"
 #include "storage/tile.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "util/stringbox_util.h"
@@ -402,8 +402,6 @@ const std::string TileGroup::GetInfo() const {
     }
   }
 
-  // auto header = GetHeader();
-  // if (header != nullptr) os << (*header);
   return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
                                      GETINFO_SPACER);
 }
@@ -413,9 +411,6 @@ void TileGroup::DictEncode() {
 	for (oid_t i = 0; i < num_tile; i++) {
 		auto curr_tile = tiles[i];
 		auto encoded_tile = new DictEncodedTile(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr, curr_tile->GetAllocatedTupleCount());
-//		std::shared_ptr<Tile> encoded_tile =
-//			std::shared_ptr<DictEncodedTile>(new DictEncodedTile(BackendType::MM, nullptr, *(curr_tile->GetSchema()), nullptr,
-//			curr_tile->GetAllocatedTupleCount()));
 		if (!curr_tile->IsDictEncoded()) {
 			encoded_tile->DictEncode(curr_tile.get());
 			SetTile(i, std::shared_ptr<Tile>(encoded_tile));

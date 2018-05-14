@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// dict_encoded_tile.cpp
+//
+// Identification: src/include/storage/dict_encoded_tile.cpp
+//
+// Copyright (c) 2017-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <cstdio>
 #include <sstream>
@@ -14,7 +25,7 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "storage/tuple_iterator.h"
-#include "storage/dictionary_encoding_tile.h"
+#include "storage/dict_encoded_tile.h"
 
 namespace peloton {
 namespace storage {
@@ -69,7 +80,7 @@ type::Value DictEncodedTile::GetValue(const oid_t tuple_offset, const oid_t colu
 		LOG_DEBUG("DictEncodedTile::GetValue called for tuple_offset: %d, column_id: %d",
 			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
-		auto idx = idx_val.GetAs<uint8_t>();
+		auto idx = idx_val.GetAs<uint32_t>();
 		return type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
 		                                    original_schema.GetType(column_id), false);
 	} else {
@@ -88,7 +99,7 @@ type::Value DictEncodedTile::GetValueFast(const oid_t tuple_offset, const size_t
 		LOG_DEBUG("DictEncodedTile::GetValueFast called for tuple_offset: %d, column_id: %d",
 			tuple_offset, column_id);
 		auto idx_val = Tile::GetValue(tuple_offset, column_id);
-		auto idx = idx_val.GetAs<uint8_t>();
+		auto idx = idx_val.GetAs<uint32_t>();
 		return type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
 		                                    original_schema.GetType(column_id), false);
 	} else {
@@ -173,7 +184,7 @@ Tile* DictEncodedTile::DictDecode() {
       		LOG_DEBUG("decoding column %s", schema.GetColumn(column_idx).column_name.c_str());
       		for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
         		type::Value curr_val = Tile::GetValue(tuple_offset, column_idx);
-        		auto idx = curr_val.GetAs<uint8_t>();
+        		auto idx = curr_val.GetAs<uint32_t>();
         		type::Value actual_val = type::Value::DeserializeFrom(varlen_val_ptrs + idx * sizeof(const char *),
 		                                    original_schema.GetType(column_idx), false);
        			new_data_vector[column_idx].push_back(actual_val);
@@ -185,8 +196,9 @@ Tile* DictEncodedTile::DictDecode() {
     	}
 	}
 
+	// put the decoded data to newly-created tile
 	auto *new_tile = new Tile(backend_type, tile_group_header, original_schema, tile_group, num_tuple_slots);
-  for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
+  	for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
 		for (oid_t tuple_offset = 0; tuple_offset < num_tuple_slots; tuple_offset++) {
 			new_tile->SetValueFast(new_data_vector[column_idx][tuple_offset], tuple_offset, 
 				original_schema.GetOffset(column_idx), original_schema.IsInlined(column_idx),
