@@ -126,10 +126,6 @@ void CompressedIndexConfigContainer::EnumerateConfigurations(
 
 void CompressedIndexConfigContainer::AdjustIndexes(
     const boost::dynamic_bitset<> &new_bitset) {
-  if (dry_run_) {
-    return;
-  }
-
   boost::dynamic_bitset<> &ori_bitset = *cur_index_config_;
 
   const auto drop_bitset = ori_bitset - new_bitset;
@@ -144,8 +140,9 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     UnsetBit(current_bit);
 
     // Current bit is not an empty index (empty set)
-    if (table_offset_reverse_map_.find(current_bit) ==
-        table_offset_reverse_map_.end()) {
+    if (!dry_run_ &&
+        table_offset_reverse_map_.find(current_bit) ==
+            table_offset_reverse_map_.end()) {
       // 2. drop its corresponding index in catalog
       oid_t index_oid = offset_to_indexoid_.at(current_bit);
       // TODO (weichenl): This will call into the storage manager and delete the
@@ -170,8 +167,9 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     SetBit(current_bit);
 
     // Current bit is not an empty index (empty set)
-    if (table_offset_reverse_map_.find(current_bit) ==
-        table_offset_reverse_map_.end()) {
+    if (!dry_run_ &&
+        table_offset_reverse_map_.find(current_bit) ==
+            table_offset_reverse_map_.end()) {
       txn = txn_manager_->BeginTransaction();
 
       // 2. add its corresponding index in catalog
