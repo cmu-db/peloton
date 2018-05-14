@@ -79,10 +79,10 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
   // This threshold depends on #rows in the tables
-  double MIN_COST_THRESH = 0.04;
+  double MIN_COST_THRESH = 1000;
   UNUSED_ATTRIBUTE size_t MAX_NUMINDEXES_WHATIF = 10;
   bool DRY_RUN_MODE = true;
-  int TBL_ROWS = 100;
+  int TBL_ROWS = 1000;
   auto timer = Timer<std::ratio<1>>();
   std::vector<double> batch_costs;
   std::vector<std::string> batch_queries;
@@ -94,7 +94,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
                                                     ignore_table_oids);
 
   auto config = testing_util.GetCyclicWorkload(
-      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
+      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -173,6 +173,56 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
       timer.Stop();
       txn_manager.CommitTransaction(txn);
       search_time_exhaustivewhatif[i - 1] = timer.GetDuration();
+      batch_queries.clear();
+      batch_costs.clear();
+    }
+  }
+  batch_costs.clear();
+  batch_queries.clear();
+
+  // ** Exhaustive What-If Tuning Setup without dropping indexes (Closest to
+  // Ideal) ** //
+
+  brain::IndexConfiguration best_config_nodropping;
+  brain::IndexConfiguration prev_config_nodropping;
+  vector_eig query_costs_exhaustivewhatif_nodropping =
+      vector_eig::Zero(query_strings.size());
+  vector_eig search_time_exhaustivewhatif_nodropping =
+      vector_eig::Zero(query_strings.size());
+
+  brain::Workload w_nodropping(database_name);
+  txn = txn_manager.BeginTransaction();
+  brain::IndexSelection is_nodropping = {w_nodropping, knobs, txn};
+  is_nodropping.GetBestIndexes(best_config_nodropping);
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Index: %s", best_config_nodropping.ToString().c_str());
+  LOG_DEBUG("Run with Exhaustive What-If Search without dropping indexes:");
+  for (size_t i = 1; i <= query_strings.size(); i++) {
+    auto query = query_strings[i - 1];
+
+    // Measure the What-If Index cost
+
+    batch_queries.push_back(query);
+    double cost = testing_util.WhatIfIndexCost(query, best_config_nodropping,
+                                               database_name);
+    query_costs_exhaustivewhatif_nodropping[i - 1] = cost;
+
+    // Perform tuning
+    if (i % CATALOG_SYNC_INTERVAL == 0) {
+      LOG_DEBUG("Exhaustive What-If Tuning...");
+      txn = txn_manager.BeginTransaction();
+      prev_config_nodropping.Set(best_config_nodropping);
+      timer.Reset();
+      timer.Start();
+      brain::Workload workload(batch_queries, database_name, txn);
+      is_nodropping = {workload, knobs, txn};
+      is_nodropping.GetBestIndexes(best_config_nodropping);
+      timer.Stop();
+      best_config_nodropping.Merge(prev_config_nodropping);
+      txn_manager.CommitTransaction(txn);
+
+      search_time_exhaustivewhatif_nodropping[i - 1] = timer.GetDuration();
       batch_queries.clear();
       batch_costs.clear();
     }
@@ -300,16 +350,17 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
         "%zu\t"
         "No Tuning Cost: %f\tLSPI(Exhaustive) Tuning Cost: "
         "%f\tWhatIf(Exhaustive) Tuning Cost: %f\tLSPI(Non-Exhaustive) Tuning "
-        "Cost: %f\t"
+        "Cost: %f\tWhatIf(Exhaustive No-Dropping) Tuning Cost: %f\t"
         "No Tuning Time: %f\tLSPI(Exhaustive) Tuning Time: "
         "%f\tWhatIf(Exhaustive) Tuning Time: %f\tLSPI(Non-Exhaustive) Tuning "
-        "Time: %f\t"
+        "Time: %f\tWhatIf(Exhaustive No-Dropping) Tuning Time: %f\t"
         "%s",
         i, query_costs_notuning[i], query_costs_lspiexhaustive[i],
         query_costs_exhaustivewhatif[i], query_costs_lspinonexhaustive[i],
-        search_time_notuning[i], search_time_lspiexhaustive[i],
-        search_time_exhaustivewhatif[i], search_time_lspinonexhaustive[i],
-        query_strings[i].c_str());
+        query_costs_exhaustivewhatif_nodropping[i], search_time_notuning[i],
+        search_time_lspiexhaustive[i], search_time_exhaustivewhatif[i],
+        search_time_lspinonexhaustive[i],
+        search_time_exhaustivewhatif_nodropping[i], query_strings[i].c_str());
   }
   float tuning_overall_cost = query_costs_lspiexhaustive.array().sum();
   float tuning_overall_cost_nonexhaustive =
