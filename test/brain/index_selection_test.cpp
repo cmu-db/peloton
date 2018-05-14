@@ -116,7 +116,7 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
 
   TestingIndexSelectionUtil testing_util(database_name);
   auto config =
-      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::A);
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::SingleTableTwoColW1);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -355,11 +355,11 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   std::string database_name = DEFAULT_DB_NAME;
 
-  int num_rows = 2000;  // number of rows to be inserted.
+  int num_rows = 1000;  // number of rows to be inserted.
 
   TestingIndexSelectionUtil testing_util(database_name);
   auto config =
-      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::B);
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::SingleTableTwoColW2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -634,7 +634,7 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   TestingIndexSelectionUtil testing_util(database_name);
   auto config =
-      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::C);
+      testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::SingleTableThreeColW);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 

@@ -180,11 +180,14 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
       query_strs.push_back(
           "SELECT * FROM d_student s inner join d_college c on s.name = "
           "c.name inner join d_course co on c.name = co.name");
-      query_strs.push_back(
-          "SELECT * FROM d_student join d_college on d_student.name = "
-          "d_college.name");
-      query_strs.push_back("SELECT * FROM " + table_name_1 + " t1 ," +
-                           table_name_2 + " t2 where t1.name = 'vam'");
+      // The below 2(especially last one is prohibitively expensive)
+      // Unable to understand whether What-If is correctly measuring - since
+      // difference is minimal with or without indexes :/
+//      query_strs.push_back(
+//          "SELECT * FROM d_student join d_college on d_student.name = "
+//          "d_college.name");
+//      query_strs.push_back("SELECT * FROM " + table_name_1 + " t1 ," +
+//                           table_name_2 + " t2 where t1.name = 'vam'");
       break;
     }
     default:

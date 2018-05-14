@@ -16,7 +16,8 @@
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"
 #include "brain/testing_index_selection_util.h"
-#include "brain/what_if_index.h"
+#include "common/timer.h"
+
 
 namespace peloton {
 namespace test {
@@ -73,13 +74,17 @@ TEST_F(LSPITests, RLSETest) {
  */
 
 TEST_F(LSPITests, TuneTestTwoColTable1) {
-
+  // ** Initialization ** //
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 0.04;
+  UNUSED_ATTRIBUTE size_t MAX_NUMINDEXES_WHATIF = 10;
   int TBL_ROWS = 100;
+  auto timer = Timer<std::ratio<1>>();
+  std::vector<double> batch_costs;
+  std::vector<std::string> batch_queries;
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -97,9 +102,13 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
+
+  // ** No Tuning Setup ** //
   brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
                                     MAX_INDEX_SIZE);
   vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
+  vector_eig search_time_no_tuning = vector_eig::Zero(query_strings.size());
+
 
   LOG_DEBUG("Run without Tuning:");
   for (size_t i = 1; i <= query_strings.size(); i++) {
@@ -115,13 +124,56 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     query_costs_no_tuning[i - 1] = cost;
   }
 
-  std::vector<double> batch_costs;
-  std::vector<std::string> batch_queries;
-  double prev_cost = DBL_MAX;
-  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
-  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
+  // ** Exhaustive What-If Tuning Setup(Closest to Ideal) ** //
 
-  LOG_DEBUG("Run with Tuning:");
+//  size_t max_index_cols = MAX_INDEX_SIZE;         // multi-column index limit
+//  size_t enumeration_threshold = MAX_INDEX_SIZE;  // naive enumeration threshold
+//  size_t num_indexes = MAX_NUMINDEXES_WHATIF;            // top num_indexes will be returned.
+//
+//  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+//                                      num_indexes};
+//  brain::IndexConfiguration best_config;
+//  vector_eig query_costs_exhaustivewhatif = vector_eig::Zero(query_strings.size());
+//  vector_eig search_time_exhaustivewhatif = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run without Exhaustive What-If Search:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    // Measure the What-If Index cost
+//
+//    batch_queries.push_back(query);
+//    testing_util
+//    query_costs_lspiexhaustive[i - 1] = cost;
+//    cost_vector_lspiexhaustive[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+//
+//    // Perform tuning
+//    if (i % CATALOG_SYNC_INTERVAL == 0) {
+//      LOG_DEBUG("Exhaustive What-If Tuning...");
+//      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//      auto txn = txn_manager.BeginTransaction();
+//      brain::Workload workload(batch_queries, database_name, txn);
+//      timer.Reset();
+//      timer.Start();
+//      //
+//      timer.Stop();
+//      search_time_exhaustivewhatif[i-1] = timer.GetDuration();
+//      batch_queries.clear();
+//      batch_costs.clear();
+//    }
+//  }
+//  batch_costs.clear();
+//  batch_queries.clear();
+
+
+  // ** LSPI Tuning Setup(Exhaustive: with max add candidate search) ** //
+  double prev_cost = DBL_MAX;
+  vector_eig cost_vector_lspiexhaustive = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
+  vector_eig query_costs_lspiexhaustive = vector_eig::Zero(query_strings.size());
+  vector_eig search_time_lspiexhaustive = vector_eig::Zero(query_strings.size());
+
+
+  LOG_DEBUG("Run with LSPI(Exhaustive) Tuning:");
   for (size_t i = 1; i <= query_strings.size(); i++) {
     auto query = query_strings[i - 1];
 
@@ -133,16 +185,20 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
 
     batch_queries.push_back(query);
     batch_costs.push_back(cost);
-    query_costs_tuning[i - 1] = cost;
-    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+    query_costs_lspiexhaustive[i - 1] = cost;
+    cost_vector_lspiexhaustive[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
 
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
-      LOG_DEBUG("Tuning...");
+      LOG_DEBUG("COREIL Tuning...");
+      timer.Reset();
+      timer.Start();
       index_tuner.Tune(batch_queries, batch_costs);
+      timer.Stop();
+      search_time_lspiexhaustive[i-1] = timer.GetDuration();
       batch_queries.clear();
       batch_costs.clear();
-      double mean_cost = cost_vector.array().mean();
+      double mean_cost = cost_vector_lspiexhaustive.array().mean();
       LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
       EXPECT_LE(mean_cost, prev_cost);
       prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
@@ -152,277 +208,282 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   // For analysis
   LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW1 Workload:");
   for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+    LOG_DEBUG("%zu\t"
+              "No Tuning Cost: %f\tLSPI(Exhaustive) Tuning Cost: %f\t"
+              "No Tuning Time: %f\tLSPI(Exhaustive) Tuning Time: %f\t"
+              "%s", i, query_costs_no_tuning[i], query_costs_lspiexhaustive[i],
+              search_time_no_tuning[i], search_time_lspiexhaustive[i],
+              query_strings[i].c_str());
   }
-  float tuning_overall_cost = query_costs_tuning.array().sum();
+  float tuning_overall_cost = query_costs_lspiexhaustive.array().sum();
   float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+  LOG_DEBUG("No Tuning: %f, LSPI(Exhaustive) Tuning: %f", notuning_overall_cost, tuning_overall_cost);
   EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
 }
 
-TEST_F(LSPITests, TuneTestTwoColTable2) {
-
-  std::string database_name = DEFAULT_DB_NAME;
-  size_t MAX_INDEX_SIZE = 3;
-  int CATALOG_SYNC_INTERVAL = 2;
-  // This threshold depends on #rows in the tables
-  double MIN_COST_THRESH = 0.05;
-  int TBL_ROWS = 100;
-
-  index_selection::TestingIndexSelectionUtil testing_util(database_name);
-
-  std::set<oid_t> ignore_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ignore_table_oids);
-
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
-  auto table_schemas = config.first;
-  auto query_strings = config.second;
-
-  // Create all the required tables for this workloads.
-  for (auto &table_schema : table_schemas) {
-    testing_util.CreateTable(table_schema);
-    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
-  }
-
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
-                                    MAX_INDEX_SIZE);
-  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run without Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    // No tuning performed here
-    query_costs_no_tuning[i - 1] = cost;
-  }
-
-  std::vector<double> batch_costs;
-  std::vector<std::string> batch_queries;
-  double prev_cost = DBL_MAX;
-  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
-  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run with Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    batch_queries.push_back(query);
-    batch_costs.push_back(cost);
-    query_costs_tuning[i - 1] = cost;
-    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
-
-    // Perform tuning
-    if (i % CATALOG_SYNC_INTERVAL == 0) {
-      LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
-      batch_queries.clear();
-      batch_costs.clear();
-      double mean_cost = cost_vector.array().mean();
-      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
-      EXPECT_LE(mean_cost, prev_cost);
-      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
-    }
-  }
-
-  // For analysis
-  LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW2 Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
-  }
-  float tuning_overall_cost = query_costs_tuning.array().sum();
-  float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
-  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
-}
-
-TEST_F(LSPITests, TuneTestThreeColTable) {
-
-  std::string database_name = DEFAULT_DB_NAME;
-  size_t MAX_INDEX_SIZE = 3;
-  int CATALOG_SYNC_INTERVAL = 2;
-  // This threshold depends on #rows in the tables
-  double MIN_COST_THRESH = 0.05;
-  int TBL_ROWS = 100;
-
-  index_selection::TestingIndexSelectionUtil testing_util(database_name);
-
-  std::set<oid_t> ignore_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ignore_table_oids);
-
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableThreeColW}, 2);
-  auto table_schemas = config.first;
-  auto query_strings = config.second;
-
-  // Create all the required tables for this workloads.
-  for (auto &table_schema : table_schemas) {
-    testing_util.CreateTable(table_schema);
-    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
-  }
-
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
-                                    MAX_INDEX_SIZE);
-  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run without Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    // No tuning performed here
-    query_costs_no_tuning[i - 1] = cost;
-  }
-
-  std::vector<double> batch_costs;
-  std::vector<std::string> batch_queries;
-  double prev_cost = DBL_MAX;
-  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
-  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run with Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    batch_queries.push_back(query);
-    batch_costs.push_back(cost);
-    query_costs_tuning[i - 1] = cost;
-    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
-
-    // Perform tuning
-    if (i % CATALOG_SYNC_INTERVAL == 0) {
-      LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
-      batch_queries.clear();
-      batch_costs.clear();
-      double mean_cost = cost_vector.array().mean();
-      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
-      EXPECT_LE(mean_cost, prev_cost);
-      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
-    }
-  }
-
-  // For analysis
-  LOG_DEBUG("Overall Cost Trend for SingleTableThreeColW Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
-  }
-  float tuning_overall_cost = query_costs_tuning.array().sum();
-  float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
-  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
-}
-
-TEST_F(LSPITests, TuneTestMultiColMultiTable) {
-
-  std::string database_name = DEFAULT_DB_NAME;
-  size_t MAX_INDEX_SIZE = 3;
-  int CATALOG_SYNC_INTERVAL = 2;
-  // This threshold depends on #rows in the tables
-  double MIN_COST_THRESH = 100.0;
-  int TBL_ROWS = 100;
-
-  index_selection::TestingIndexSelectionUtil testing_util(database_name);
-
-  std::set<oid_t> ignore_table_oids;
-  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
-                                                    ignore_table_oids);
-
-  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::MultiTableMultiColW}, 2);
-  auto table_schemas = config.first;
-  auto query_strings = config.second;
-
-  // Create all the required tables for this workloads.
-  for (auto &table_schema : table_schemas) {
-    testing_util.CreateTable(table_schema);
-    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
-  }
-
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
-                                    MAX_INDEX_SIZE);
-  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run without Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    // No tuning performed here
-    query_costs_no_tuning[i - 1] = cost;
-  }
-
-  std::vector<double> batch_costs;
-  std::vector<std::string> batch_queries;
-  double prev_cost = DBL_MAX;
-  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
-  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
-
-  LOG_DEBUG("Run with Tuning:");
-  for (size_t i = 1; i <= query_strings.size(); i++) {
-    auto query = query_strings[i - 1];
-
-    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
-        *index_tuner.GetConfigContainer());
-
-    // Measure the What-If Index cost
-    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
-
-    batch_queries.push_back(query);
-    batch_costs.push_back(cost);
-    query_costs_tuning[i - 1] = cost;
-    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
-
-    // Perform tuning
-    if (i % CATALOG_SYNC_INTERVAL == 0) {
-      LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
-      batch_queries.clear();
-      batch_costs.clear();
-      double mean_cost = cost_vector.array().mean();
-      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
-      EXPECT_LE(mean_cost, prev_cost);
-      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
-    }
-  }
-
-  // For analysis
-  LOG_DEBUG("Overall Cost Trend for MultiTableMultiColW Workload:");
-  for(size_t i = 0; i < query_strings.size(); i++) {
-    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
-  }
-  float tuning_overall_cost = query_costs_tuning.array().sum();
-  float notuning_overall_cost = query_costs_no_tuning.array().sum();
-  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
-  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
-}
+//TEST_F(LSPITests, TuneTestTwoColTable2) {
+//
+//  std::string database_name = DEFAULT_DB_NAME;
+//  size_t MAX_INDEX_SIZE = 3;
+//  int CATALOG_SYNC_INTERVAL = 2;
+//  // This threshold depends on #rows in the tables
+//  double MIN_COST_THRESH = 0.05;
+//  int TBL_ROWS = 100;
+//
+//  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+//
+//  std::set<oid_t> ignore_table_oids;
+//  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+//                                                    ignore_table_oids);
+//
+//  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
+//  auto table_schemas = config.first;
+//  auto query_strings = config.second;
+//
+//  // Create all the required tables for this workloads.
+//  for (auto &table_schema : table_schemas) {
+//    testing_util.CreateTable(table_schema);
+//    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
+//  }
+//
+//  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+//                                    MAX_INDEX_SIZE);
+//  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run without Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    // No tuning performed here
+//    query_costs_no_tuning[i - 1] = cost;
+//  }
+//
+//  std::vector<double> batch_costs;
+//  std::vector<std::string> batch_queries;
+//  double prev_cost = DBL_MAX;
+//  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
+//  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run with Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    batch_queries.push_back(query);
+//    batch_costs.push_back(cost);
+//    query_costs_tuning[i - 1] = cost;
+//    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+//
+//    // Perform tuning
+//    if (i % CATALOG_SYNC_INTERVAL == 0) {
+//      LOG_DEBUG("Tuning...");
+//      index_tuner.Tune(batch_queries, batch_costs);
+//      batch_queries.clear();
+//      batch_costs.clear();
+//      double mean_cost = cost_vector.array().mean();
+//      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
+//      EXPECT_LE(mean_cost, prev_cost);
+//      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
+//    }
+//  }
+//
+//  // For analysis
+//  LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW2 Workload:");
+//  for(size_t i = 0; i < query_strings.size(); i++) {
+//    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+//  }
+//  float tuning_overall_cost = query_costs_tuning.array().sum();
+//  float notuning_overall_cost = query_costs_no_tuning.array().sum();
+//  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+//  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
+//}
+//
+//TEST_F(LSPITests, TuneTestThreeColTable) {
+//
+//  std::string database_name = DEFAULT_DB_NAME;
+//  size_t MAX_INDEX_SIZE = 3;
+//  int CATALOG_SYNC_INTERVAL = 2;
+//  // This threshold depends on #rows in the tables
+//  double MIN_COST_THRESH = 0.05;
+//  int TBL_ROWS = 100;
+//
+//  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+//
+//  std::set<oid_t> ignore_table_oids;
+//  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+//                                                    ignore_table_oids);
+//
+//  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::SingleTableThreeColW}, 2);
+//  auto table_schemas = config.first;
+//  auto query_strings = config.second;
+//
+//  // Create all the required tables for this workloads.
+//  for (auto &table_schema : table_schemas) {
+//    testing_util.CreateTable(table_schema);
+//    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
+//  }
+//
+//  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+//                                    MAX_INDEX_SIZE);
+//  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run without Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    // No tuning performed here
+//    query_costs_no_tuning[i - 1] = cost;
+//  }
+//
+//  std::vector<double> batch_costs;
+//  std::vector<std::string> batch_queries;
+//  double prev_cost = DBL_MAX;
+//  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
+//  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run with Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    batch_queries.push_back(query);
+//    batch_costs.push_back(cost);
+//    query_costs_tuning[i - 1] = cost;
+//    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+//
+//    // Perform tuning
+//    if (i % CATALOG_SYNC_INTERVAL == 0) {
+//      LOG_DEBUG("Tuning...");
+//      index_tuner.Tune(batch_queries, batch_costs);
+//      batch_queries.clear();
+//      batch_costs.clear();
+//      double mean_cost = cost_vector.array().mean();
+//      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
+//      EXPECT_LE(mean_cost, prev_cost);
+//      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
+//    }
+//  }
+//
+//  // For analysis
+//  LOG_DEBUG("Overall Cost Trend for SingleTableThreeColW Workload:");
+//  for(size_t i = 0; i < query_strings.size(); i++) {
+//    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+//  }
+//  float tuning_overall_cost = query_costs_tuning.array().sum();
+//  float notuning_overall_cost = query_costs_no_tuning.array().sum();
+//  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+//  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
+//}
+//
+//TEST_F(LSPITests, TuneTestMultiColMultiTable) {
+//
+//  std::string database_name = DEFAULT_DB_NAME;
+//  size_t MAX_INDEX_SIZE = 3;
+//  int CATALOG_SYNC_INTERVAL = 2;
+//  // This threshold depends on #rows in the tables
+//  double MIN_COST_THRESH = 100.0;
+//  int TBL_ROWS = 1000;
+//
+//  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+//
+//  std::set<oid_t> ignore_table_oids;
+//  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+//                                                    ignore_table_oids);
+//
+//  auto config = testing_util.GetCyclicWorkload({index_selection::QueryStringsWorkloadType::MultiTableMultiColW}, 2);
+//  auto table_schemas = config.first;
+//  auto query_strings = config.second;
+//
+//  // Create all the required tables for this workloads.
+//  for (auto &table_schema : table_schemas) {
+//    testing_util.CreateTable(table_schema);
+//    testing_util.InsertIntoTable(table_schema, TBL_ROWS);
+//  }
+//
+//  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+//                                    MAX_INDEX_SIZE);
+//  vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run without Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    // No tuning performed here
+//    query_costs_no_tuning[i - 1] = cost;
+//  }
+//
+//  std::vector<double> batch_costs;
+//  std::vector<std::string> batch_queries;
+//  double prev_cost = DBL_MAX;
+//  vector_eig cost_vector = vector_eig::Zero(CATALOG_SYNC_INTERVAL);
+//  vector_eig query_costs_tuning = vector_eig::Zero(query_strings.size());
+//
+//  LOG_DEBUG("Run with Tuning:");
+//  for (size_t i = 1; i <= query_strings.size(); i++) {
+//    auto query = query_strings[i - 1];
+//
+//    auto index_config = brain::CompressedIndexConfigUtil::ToIndexConfiguration(
+//        *index_tuner.GetConfigContainer());
+//
+//    // Measure the What-If Index cost
+//    auto cost = testing_util.WhatIfIndexCost(query, index_config, database_name);
+//
+//    batch_queries.push_back(query);
+//    batch_costs.push_back(cost);
+//    query_costs_tuning[i - 1] = cost;
+//    cost_vector[(i - 1) % CATALOG_SYNC_INTERVAL] = cost;
+//
+//    // Perform tuning
+//    if (i % CATALOG_SYNC_INTERVAL == 0) {
+//      LOG_DEBUG("Tuning...");
+//      index_tuner.Tune(batch_queries, batch_costs);
+//      batch_queries.clear();
+//      batch_costs.clear();
+//      double mean_cost = cost_vector.array().mean();
+//      LOG_DEBUG("Iter: %zu, Avg Cost: %f", i, mean_cost);
+//      EXPECT_LE(mean_cost, prev_cost);
+//      prev_cost = std::max<double>(mean_cost, MIN_COST_THRESH);
+//    }
+//  }
+//
+//  // For analysis
+//  LOG_DEBUG("Overall Cost Trend for MultiTableMultiColW Workload:");
+//  for(size_t i = 0; i < query_strings.size(); i++) {
+//    LOG_DEBUG("%zu\tWithout Tuning: %f\tWith Tuning: %f\t%s", i, query_costs_no_tuning[i], query_costs_tuning[i], query_strings[i].c_str());
+//  }
+//  float tuning_overall_cost = query_costs_tuning.array().sum();
+//  float notuning_overall_cost = query_costs_no_tuning.array().sum();
+//  LOG_DEBUG("With Tuning: %f, Without Tuning: %f", tuning_overall_cost, notuning_overall_cost);
+//  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
+//}
 
 }  // namespace test
 }  // namespace peloton
