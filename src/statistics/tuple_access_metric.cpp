@@ -51,6 +51,7 @@ void TupleAccessRawData::UpdateAndPersist() {
     else
       WriteToCatalog(tid, false, false, txn);
   }
+  txn_manager.CommitTransaction(txn);
 }
 
 } // namespace stats
