@@ -119,33 +119,35 @@ bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
       memo.GetGroupByID(middle_group_id)->GetTableAliases();
 
   if (parent_join->type == JoinType::INNER) {
-    if (child_join->type == JoinType::INNER || child_join->type == JoinType::RIGHT) {
+    if (child_join->type == JoinType::INNER ||
+        child_join->type == JoinType::RIGHT) {
       return true;
     }
   } else if (parent_join->type == JoinType::LEFT) {
     if (child_join->type == JoinType::INNER) {
       return true;
-    } else if (child_join->type == JoinType::LEFT || child_join->type == JoinType::OUTER) {
+    } else if (child_join->type == JoinType::LEFT ||
+               child_join->type == JoinType::OUTER) {
       return util::StrongPredicates(parent_join->join_predicates,
-                                   middle_group_aliases_set);
+                                    middle_group_aliases_set);
     }
   } else if (parent_join->type == JoinType::RIGHT) {
     if (child_join->type == JoinType::RIGHT) {
       return util::StrongPredicates(child_join->join_predicates,
-                                   middle_group_aliases_set);
+                                    middle_group_aliases_set);
     }
   } else if (parent_join->type == JoinType::OUTER) {
     if (child_join->type == JoinType::RIGHT) {
       return util::StrongPredicates(child_join->join_predicates,
-                                   middle_group_aliases_set);
+                                    middle_group_aliases_set);
     } else if (child_join->type == JoinType::OUTER) {
-      auto parent_join_predicates = 
+      auto parent_join_predicates =
           std::vector<AnnotatedExpression>(parent_join->join_predicates);
       auto child_join_predicates =
           std::vector<AnnotatedExpression>(child_join->join_predicates);
 
       std::vector<AnnotatedExpression> check_predicates;
-      check_predicates.insert(check_predicates.end(), 
+      check_predicates.insert(check_predicates.end(),
                               parent_join_predicates.begin(),
                               parent_join_predicates.end());
       check_predicates.insert(check_predicates.end(),
@@ -909,9 +911,9 @@ void PushFilterThroughJoin::Transform(
   std::vector<AnnotatedExpression> join_predicates;
 
   auto join_type = join_op_expr->Op().As<LogicalJoin>()->type;
-  bool outer_push = (join_type == JoinType::OUTER ||
-		     join_type == JoinType::LEFT ||
-		     join_type == JoinType::RIGHT);
+  bool outer_push =
+      (join_type == JoinType::OUTER || join_type == JoinType::LEFT ||
+       join_type == JoinType::RIGHT);
 
   // Loop over all predicates, check each of them if they can be pushed down to
   // either the left child or the right child to be evaluated
@@ -920,10 +922,12 @@ void PushFilterThroughJoin::Transform(
   // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
-    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set) && !outer_push) {
+    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set) &&
+        !outer_push) {
       left_predicates.emplace_back(predicate);
     } else if (util::IsSubset(right_group_aliases_set,
-                              predicate.table_alias_set) && !outer_push) {
+                              predicate.table_alias_set) &&
+               !outer_push) {
       right_predicates.emplace_back(predicate);
     } else {
       join_predicates.emplace_back(predicate);
