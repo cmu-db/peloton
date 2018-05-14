@@ -15,7 +15,6 @@
 
 #include "concurrency/transaction_manager.h"
 #include "storage/tile_group.h"
-#include "statistics/stats_aggregator.h"
 #include "common/synchronization/spin_latch.h"
 
 namespace peloton {
@@ -48,7 +47,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   static TimestampOrderingTransactionManager &GetInstance(
       const ProtocolType protocol,
-      const IsolationLevelType isolation, 
+      const IsolationLevelType isolation,
       const ConflictAvoidanceType conflict);
 
   /**
@@ -209,7 +208,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
                              const ItemPointer &location);
 
   /**
-   * @brief      Perform a delete operation. Used when the transaction is not 
+   * @brief      Perform a delete operation. Used when the transaction is not
    *             the owner of the tuple.
    *
    * @param      current_txn  The current transaction
@@ -243,7 +242,7 @@ private:
 
   /**
    * @brief      Gets the spin latch field.
-   * 
+   *
    * Timestamp ordering requires a spinlock field for protecting the atomic access
    * to txn_id field and last_reader_cid field.
    *
@@ -258,7 +257,7 @@ private:
 
   /**
    * @brief      Gets the last reader commit identifier.
-   * 
+   *
    * In timestamp ordering, the last_reader_cid records the timestamp of the last
    * transaction that reads the tuple.
    *
@@ -283,8 +282,8 @@ private:
    */
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, 
-      const cid_t &current_cid, 
+      const oid_t &tuple_id,
+      const cid_t &current_cid,
       const bool is_owner);
 
   /**

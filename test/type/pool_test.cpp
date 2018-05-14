@@ -59,8 +59,12 @@ TEST_F(PoolTests, AllocateOnceTest) {
 
   p = pool->Allocate(size);
   EXPECT_TRUE(p != nullptr);
+  EXPECT_EQ(size, pool->GetMemoryAlloc());
+  EXPECT_EQ(size, pool->GetMemoryUsage());
 
   pool->Free(p);
+  EXPECT_EQ(0, pool->GetMemoryAlloc());
+  EXPECT_EQ(0, pool->GetMemoryUsage());
 }
 
 }  // namespace test

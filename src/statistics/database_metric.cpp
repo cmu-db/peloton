@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/transaction_manager_factory.h"
 #include "util/string_util.h"
 #include "statistics/database_metric.h"
 #include "common/macros.h"
@@ -17,25 +18,35 @@
 namespace peloton {
 namespace stats {
 
-DatabaseMetric::DatabaseMetric(MetricType type, oid_t database_id)
-    : AbstractMetric(type), database_id_(database_id) {}
+void DatabaseMetricRawData::UpdateAndPersist() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+                        time_since_epoch).count();
 
-void DatabaseMetric::Aggregate(AbstractMetric& source) {
-  PELOTON_ASSERT(source.GetType() == MetricType::DATABASE);
+  auto database_metrics_catalog =
+      catalog::DatabaseMetricsCatalog::GetInstance();
+  for (auto &entry : counters_) {
+    // one iteration per database
+    oid_t database_oid = entry.first;
+    auto &counts = entry.second;
 
-  DatabaseMetric& db_metric = static_cast<DatabaseMetric&>(source);
-  txn_committed_.Aggregate(db_metric.GetTxnCommitted());
-  txn_aborted_.Aggregate(db_metric.GetTxnAborted());
-}
+    auto old_metric =
+        database_metrics_catalog->GetDatabaseMetricsObject(database_oid, txn);
+    if (old_metric == nullptr) {
+      // no entry exists for this database yet
+      database_metrics_catalog->InsertDatabaseMetrics(
+          database_oid, counts.first, counts.second, time_stamp, nullptr, txn);
+    } else {
+      // update existing entry
+      database_metrics_catalog->UpdateDatabaseMetrics(
+          database_oid, old_metric->GetTxnCommitted() + counts.first,
+          old_metric->GetTxnAborted() + counts.second, time_stamp, txn);
+    }
+  }
 
-const std::string DatabaseMetric::GetInfo() const {
-  std::stringstream ss;
-  ss << peloton::GETINFO_THICK_LINE << std::endl;
-  ss << "// DATABASE_ID " << database_id_ << std::endl;
-  ss << peloton::GETINFO_THICK_LINE << std::endl;
-  ss << "# transactions committed: " << txn_committed_.GetInfo() << std::endl;
-  ss << "# transactions aborted:   " << txn_aborted_.GetInfo();
-  return ss.str();
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace stats

@@ -40,7 +40,7 @@ void QueryLogger::LogQuery(std::string query_string, uint64_t timestamp) {
   Fingerprint fingerprint{query_string};
 
   // Log query + fingerprint
-  auto &query_history_catalog = catalog::QueryHistoryCatalog::GetInstance();
+  auto &query_history_catalog = catalog::QueryHistoryCatalog::GetInstance(txn);
   query_history_catalog.InsertQueryHistory(
       query_string, fingerprint.GetFingerprint(), timestamp, nullptr, txn);
 

@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// query_metrics_catalog.h
+// trigger_catalog.h
 //
 // Identification: src/include/catalog/trigger_catalog.h
 //
@@ -50,6 +50,11 @@ class TriggerCatalog : public AbstractCatalog {
   TriggerCatalog(const std::string &database_name,
                  concurrency::TransactionContext *txn);
   ~TriggerCatalog();
+
+  // Global Singleton
+  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+
+  inline std::string GetName() const override { return TRIGGER_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//
   // write Related API

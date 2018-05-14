@@ -33,6 +33,8 @@ class ZoneMapCatalog : public AbstractCatalog {
 
   static ZoneMapCatalog *GetInstance(concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return ZONE_MAP_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

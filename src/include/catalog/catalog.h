@@ -24,6 +24,7 @@ class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
+class AbstractCatalog;
 class SystemCatalogs;
 }  // namespace catalog
 
@@ -225,6 +226,8 @@ class Catalog {
   const FunctionData GetFunction(
       const std::string &name, const std::vector<type::TypeId> &argument_types);
 
+  inline const std::vector<AbstractCatalog *> &AvailableCatalogs() const { return catalogs_; }
+
  private:
   Catalog();
 
@@ -239,6 +242,7 @@ class Catalog {
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;
+  std::vector<AbstractCatalog *> catalogs_;
   std::mutex catalog_mutex;
   // key: database oid
   // value: SystemCatalog object(including pg_table, pg_index and pg_attribute)

@@ -53,6 +53,8 @@ class ColumnStatsCatalog : public AbstractCatalog {
   static ColumnStatsCatalog *GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return COLUMN_STATS_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

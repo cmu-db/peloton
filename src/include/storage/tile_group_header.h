@@ -177,6 +177,11 @@ class TileGroupHeader : public Printable {
     return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
   }
 
+  // Return the allocated size of this tile group header
+  inline size_t GetHeaderSize() {
+    return header_size;
+  }
+
   // Setters
 
   inline void SetTileGroup(TileGroup *tile_group) {

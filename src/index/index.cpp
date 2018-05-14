@@ -124,9 +124,6 @@ Index::Index(IndexMetadata *metadata)
   // This is redundant
   index_oid = metadata->GetOid();
 
-  // initialize counters
-  lookup_counter = insert_counter = delete_counter = update_counter = 0;
-
   // initialize pool
   pool = new type::EphemeralPool();
 
@@ -326,33 +323,6 @@ const std::string Index::GetInfo() const {
 
   return os.str();
 }
-
-// Increase the number of tuples in this table
-void Index::IncreaseNumberOfTuplesBy(const size_t amount) {
-  number_of_tuples += amount;
-  dirty = true;
-}
-
-// Decrease the number of tuples in this table
-void Index::DecreaseNumberOfTuplesBy(const size_t amount) {
-  number_of_tuples -= amount;
-  dirty = true;
-}
-
-// Set the number of tuples in this table
-void Index::SetNumberOfTuples(const size_t num_tuples) {
-  number_of_tuples = num_tuples;
-  dirty = true;
-}
-
-// Get the number of tuples in this table
-size_t Index::GetNumberOfTuples() const { return number_of_tuples; }
-
-// Return dirty flag
-bool Index::IsDirty() const { return dirty; }
-
-// Reset dirty flag
-void Index::ResetDirty() { dirty = false; }
 
 }  // namespace index
 }  // namespace peloton

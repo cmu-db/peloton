@@ -12,7 +12,6 @@
 
 #include "optimizer/util.h"
 
-#include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
 #include "planner/copy_plan.h"
@@ -147,12 +146,6 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
-  // If we're copying the query metric table, then we need to handle the
-  // deserialization of prepared stmt parameters
-  if (table_name == QUERY_METRICS_CATALOG_NAME) {
-    LOG_DEBUG("Copying the query_metric table.");
-    deserialize_parameters = true;
-  }
 
   std::unique_ptr<planner::AbstractPlan> copy_plan(
       new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));

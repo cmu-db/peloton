@@ -18,8 +18,8 @@
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager.h"
 #include "settings/settings_manager.h"
-#include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
+#include "statistics/thread_level_stats_collector.h"
 
 namespace peloton {
 namespace concurrency {
@@ -66,15 +66,7 @@ TransactionContext *TransactionManager::BeginTransaction(
     txn = new TransactionContext(thread_id, type, read_id);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .StartTimer();
-  }
-
   txn->SetTimestamp(function::DateFunctions::Now());
-
   return txn;
 }
 
@@ -84,21 +76,13 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
+  if (gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   } else {
     delete current_txn;
   }
 
   current_txn = nullptr;
-
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .RecordLatency();
-
-  }
 }
 
 // this function checks whether a concurrent transaction is inserting the same
@@ -106,7 +90,7 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
 // that is to-be-inserted by the current transaction.
 bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
                                     const void *position_ptr) {
-  ItemPointer &position = *((ItemPointer *)position_ptr);
+  ItemPointer &position = *((ItemPointer *) position_ptr);
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
@@ -219,7 +203,7 @@ VisibilityType TransactionManager::IsVisible(
       // the only version that is visible is the newly inserted/updated one.
       return VisibilityType::OK;
     } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) ==
-               RWType::READ_OWN) {
+        RWType::READ_OWN) {
       // the ownership is from a select-for-update read operation
       return VisibilityType::OK;
     } else if (tuple_end_cid == INVALID_CID) {

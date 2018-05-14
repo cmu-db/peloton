@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "common/macros.h"
 #include "common/synchronization/spin_latch.h"
@@ -26,53 +26,64 @@ namespace type {
 
 // A memory pool that can quickly allocate chunks of memory to clients.
 class EphemeralPool : public AbstractPool {
-public:
-
-  EphemeralPool(){
-
-  }
+ public:
+  EphemeralPool() : mem_comsume_{0} {}
 
   // Destroy this pool, and all memory it owns.
-  ~EphemeralPool(){
-
+  ~EphemeralPool() {
     pool_lock_.Lock();
-    for(auto location: locations_){
-      delete[] location;
+    for (auto &entry : locations_) {
+      delete[] entry.first;
     }
     pool_lock_.Unlock();
-
   }
 
   // Allocate a contiguous block of memory of the given size. If the allocation
   // is successful a non-null pointer is returned. If the allocation fails, a
   // null pointer will be returned.
-  void *Allocate(size_t size){
+  void *Allocate(size_t size) override {
     auto location = new char[size];
 
     pool_lock_.Lock();
-    locations_.insert(location);
+    locations_[location] = size;
+    mem_comsume_ += size;
     pool_lock_.Unlock();
 
     return location;
   }
 
   // Returns the provided chunk of memory back into the pool
-  void Free(UNUSED_ATTRIBUTE void *ptr) {
-    char *cptr = (char *) ptr;
+  void Free(UNUSED_ATTRIBUTE void *ptr) override {
+    char *cptr = (char *)ptr;
     pool_lock_.Lock();
+    size_t block_size = locations_[cptr];
+    mem_comsume_ -= block_size;
     locations_.erase(cptr);
     pool_lock_.Unlock();
-    delete [] cptr;
+    delete[] cptr;
   }
 
-public:
+  /**
+   * @see AbstractPool
+   */
+  inline size_t GetMemoryAlloc() override { return mem_comsume_.load(); };
 
+  /**
+   * @see AbstractPool
+   */
+  inline size_t GetMemoryUsage() override { return mem_comsume_.load(); };
+
+ public:
   // Location list
-  std::unordered_set<char*> locations_;
+  std::unordered_map<char *, size_t> locations_;
 
   // Spin lock protecting location list
   common::synchronization::SpinLatch pool_lock_;
 
+  /**
+   * Memory usage as well as allocation
+   */
+  std::atomic<size_t> mem_comsume_;
 };
 
 }  // namespace type

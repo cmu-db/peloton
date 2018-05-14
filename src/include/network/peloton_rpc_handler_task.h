@@ -11,10 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#include "concurrency/transaction_manager_factory.h"
 #include "capnp/ez-rpc.h"
 #include "capnp/message.h"
 #include "common/dedicated_thread_task.h"
 #include "common/logger.h"
+#include "catalog/catalog.h"
 #include "kj/debug.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 
@@ -23,7 +25,6 @@ namespace network {
 class PelotonRpcServerImpl final : public PelotonService::Server {
  protected:
   kj::Promise<void> createIndex(CreateIndexContext) override {
-    // TODO(tianyu) Write actual index code
     LOG_DEBUG("Received rpc to create index");
     return kj::READY_NOW;
   }
@@ -32,7 +33,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
 
 class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
-  explicit PelotonRpcHandlerTask(const char *address) : address_(address) {}
+  explicit PelotonRpcHandlerTask(std::string address) : address_(address) {}
 
   void Terminate() override {
     // TODO(tianyu): Not implemented. See:
@@ -40,13 +41,13 @@ class PelotonRpcHandlerTask : public DedicatedThreadTask {
   }
 
   void RunTask() override {
-    capnp::EzRpcServer server(kj::heap<PelotonRpcServerImpl>(), address_);
-    LOG_DEBUG("Server listening on %s", address_);
+    capnp::EzRpcServer server(kj::heap<PelotonRpcServerImpl>(), address_.c_str());
+    LOG_DEBUG("Server listening on %s", address_.c_str());
     kj::NEVER_DONE.wait(server.getWaitScope());
   }
 
  private:
-  const char *address_;
+  std::string address_;
 };
 }  // namespace network
 }  // namespace peloton

@@ -27,7 +27,7 @@ class TileGroup;
 
 namespace stats {
 class BackendStatsContext;
-class IndexMetric;
+class IndexMetricOld;
 }  // namespace stats
 
 class StatementCache;
@@ -110,7 +110,7 @@ template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
 template class CuckooMap<std::thread::id,
                          std::shared_ptr<stats::BackendStatsContext>>;
 
-template class CuckooMap<uint64_t, std::shared_ptr<stats::IndexMetric>>;
+template class CuckooMap<uint64_t, std::shared_ptr<stats::IndexMetricOld>>;
 
 // Used in SharedPointerKeyTest
 template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
@@ -121,5 +121,8 @@ template class CuckooMap<StatementCache *, StatementCache *>;
 // Used in InternalTypes
 template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
                          ItemPointerComparator>;
+
+// Used in StatsCollector
+template class CuckooMap<oid_t, std::atomic<int64_t> *>;
 
 }  // namespace peloton

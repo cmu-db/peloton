@@ -24,6 +24,7 @@
 #include "optimizer/stats/tuple_samples_storage.h"
 #include "optimizer/stats/value_condition.h"
 #include "sql/testing_sql_util.h"
+#include "storage/database.h"
 #include "type/type.h"
 #include "type/value.h"
 #include "type/value_factory.h"

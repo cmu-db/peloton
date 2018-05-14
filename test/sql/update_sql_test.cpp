@@ -18,6 +18,7 @@
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
 #include "sql/testing_sql_util.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace test {

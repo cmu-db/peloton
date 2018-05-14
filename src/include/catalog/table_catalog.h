@@ -129,6 +129,8 @@ class TableCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
+  inline std::string GetName() const override { return TABLE_CATALOG_NAME; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

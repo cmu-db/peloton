@@ -22,6 +22,7 @@
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "settings/settings_manager.h"
+#include "storage/data_table.h"
 #include "threadpool/mono_queue_pool.h"
 #include "tuning/index_tuner.h"
 #include "tuning/layout_tuner.h"
@@ -56,7 +57,8 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
   // start GC.
-  gc::GCManagerFactory::Configure(settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
+  gc::GCManagerFactory::Configure(
+      settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner

@@ -35,7 +35,6 @@ class DedicatedThreadRegistry {
     // Note that if registry is shutting down, it doesn't matter whether
     // owners are notified as this class should have the same life cycle
     // as the entire peloton process.
-
     for (auto &entry : thread_owners_table_) {
       for (auto &task : entry.second) {
         task->Terminate();

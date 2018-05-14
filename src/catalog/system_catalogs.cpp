@@ -31,8 +31,7 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
                                concurrency::TransactionContext *txn)
     : pg_trigger_(nullptr),
       pg_table_metrics_(nullptr),
-      pg_index_metrics_(nullptr),
-      pg_query_metrics_(nullptr) {
+      pg_index_metrics_(nullptr) {
   oid_t database_oid = database->GetOid();
   pg_attribute_ = new ColumnCatalog(database, pool, txn);
   pg_namespace_ = new SchemaCatalog(database, pool, txn);
@@ -72,7 +71,6 @@ SystemCatalogs::~SystemCatalogs() {
   // if (pg_proc) delete pg_proc;
   if (pg_table_metrics_) delete pg_table_metrics_;
   if (pg_index_metrics_) delete pg_index_metrics_;
-  if (pg_query_metrics_) delete pg_query_metrics_;
 }
 
 /*@brief    using sql create statement to create secondary catalog tables
@@ -97,10 +95,6 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 
   if (!pg_index_metrics_) {
     pg_index_metrics_ = new IndexMetricsCatalog(database_name, txn);
-  }
-
-  if (!pg_query_metrics_) {
-    pg_query_metrics_ = new QueryMetricsCatalog(database_name, txn);
   }
 }
 

@@ -16,7 +16,6 @@
 
 #include "catalog/database_catalog.h"
 #include "catalog/index_metrics_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "catalog/schema_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
@@ -100,13 +99,6 @@ class SystemCatalogs {
     return pg_index_metrics_;
   }
 
-  QueryMetricsCatalog *GetQueryMetricsCatalog() {
-    if (!pg_query_metrics_) {
-      throw CatalogException("Query metrics catalog has not been initialized");
-    }
-    return pg_query_metrics_;
-  }
-
  private:
   ColumnCatalog *pg_attribute_;
   SchemaCatalog *pg_namespace_;
@@ -117,7 +109,6 @@ class SystemCatalogs {
   // ProcCatalog *pg_proc;
   TableMetricsCatalog *pg_table_metrics_;
   IndexMetricsCatalog *pg_index_metrics_;
-  QueryMetricsCatalog *pg_query_metrics_;
 };
 
 }  // namespace catalog

@@ -18,6 +18,7 @@
 #include "catalog/schema.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
+#include "statistics/thread_level_stats_collector.h"
 #include "type/abstract_pool.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
@@ -288,6 +289,10 @@ class TileFactory {
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
                             schema);
+
+    // Record memory allocation
+    stats::ThreadLevelStatsCollector::GetCollectorForThread()
+        .CollectTableMemoryAlloc(database_id, table_id, tile->tile_size);
 
     return tile;
   }

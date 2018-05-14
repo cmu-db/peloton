@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#define SCHEMA_CATALOG_NAME "pg_namespace"
 
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
@@ -61,6 +62,8 @@ class SchemaCatalog : public AbstractCatalog {
   ~SchemaCatalog();
 
   inline oid_t GetNextOid() { return oid_++ | SCHEMA_OID_MASK; }
+
+  inline std::string GetName() const override { return SCHEMA_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//
   // write Related API

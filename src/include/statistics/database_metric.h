@@ -4,9 +4,9 @@
 //
 // database_metric.h
 //
-// Identification: src/statistics/database_metric.h
+// Identification: src/include/statistics/database_metric.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,70 +15,82 @@
 #include <string>
 #include <sstream>
 
+#include "catalog/manager.h"
+#include "catalog/database_metrics_catalog.h"
 #include "common/internal_types.h"
-#include "statistics/counter_metric.h"
 #include "statistics/abstract_metric.h"
+#include "storage/tile_group.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+} // namespace concurrency
+
 namespace stats {
-
-/**
- * Database-specific metrics, including the number of committed/aborted txns.
- */
-class DatabaseMetric : public AbstractMetric {
+class DatabaseMetricRawData : public AbstractRawData {
  public:
-  DatabaseMetric(MetricType type, oid_t database_id);
-
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
-  inline void IncrementTxnCommitted() { txn_committed_.Increment(); }
-
-  inline void IncrementTxnAborted() { txn_aborted_.Increment(); }
-
-  inline CounterMetric &GetTxnCommitted() { return txn_committed_; }
-
-  inline CounterMetric &GetTxnAborted() { return txn_aborted_; }
-
-  inline oid_t GetDatabaseId() { return database_id_; }
-
-  //===--------------------------------------------------------------------===//
-  // HELPER METHODS
-  //===--------------------------------------------------------------------===//
-
-  inline void Reset() {
-    txn_committed_.Reset();
-    txn_aborted_.Reset();
+  inline void IncrementTxnCommited(oid_t database_id) {
+    counters_[database_id].first++;
   }
 
-  inline bool operator==(const DatabaseMetric &other) {
-    return database_id_ == other.database_id_ &&
-           txn_committed_ == other.txn_committed_ &&
-           txn_aborted_ == other.txn_aborted_;
+  inline void IncrementTxnAborted(oid_t database_id) {
+    counters_[database_id].second++;
   }
 
-  inline bool operator!=(const DatabaseMetric &other) {
-    return !(*this == other);
+  void Aggregate(AbstractRawData &other) override {
+    auto &other_db_metric = dynamic_cast<DatabaseMetricRawData &>(other);
+    for (auto &entry : other_db_metric.counters_) {
+      auto &this_counter = counters_[entry.first];
+      auto &other_counter = entry.second;
+      this_counter.first += other_counter.first;
+      this_counter.second += other_counter.second;
+    }
   }
 
-  void Aggregate(AbstractMetric &source);
+  void UpdateAndPersist() override;
 
-  const std::string GetInfo() const;
+  // TODO(Tianyu): Pretty Print
+  const std::string GetInfo() const override { return ""; }
 
  private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
+  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+      oid_t tile_group_id) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) return {INVALID_OID, INVALID_OID};
+    return {tile_group->GetDatabaseId(), tile_group->GetTableId()};
+  }
+  /**
+   * Maps from database id to a pair of counters.
+   *
+   * First counter represents number of transactions committed and the second
+   * one represents the number of transactions aborted.
+   */
+  std::unordered_map<oid_t, std::pair<int64_t, int64_t>> counters_;
+};
 
-  // The ID of this database
-  oid_t database_id_;
+class DatabaseMetric : public AbstractMetric<DatabaseMetricRawData> {
+ public:
+  inline void OnTransactionCommit(const concurrency::TransactionContext *, oid_t tile_group_id) override {
+    oid_t database_id = GetDBTableIdFromTileGroupOid(tile_group_id).first;
+    GetRawData()->IncrementTxnCommited(database_id);
+  }
 
-  // Count of the number of transactions committed
-  CounterMetric txn_committed_{MetricType::COUNTER};
+  inline void OnTransactionAbort(const concurrency::TransactionContext *, oid_t tile_group_id) override {
+    oid_t database_id = GetDBTableIdFromTileGroupOid(tile_group_id).first;
+    GetRawData()->IncrementTxnAborted(database_id);
+  }
 
-  // Count of the number of transactions aborted
-  CounterMetric txn_aborted_{MetricType::COUNTER};
+ private:
+  inline static std::pair<oid_t, oid_t> GetDBTableIdFromTileGroupOid(
+      oid_t tile_group_id) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    if (tile_group == nullptr) return {INVALID_OID, INVALID_OID};
+    return {tile_group->GetDatabaseId(), tile_group->GetTableId()};
+  }
 };
 
 }  // namespace stats

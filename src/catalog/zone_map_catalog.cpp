@@ -42,7 +42,8 @@ ZoneMapCatalog::ZoneMapCatalog(concurrency::TransactionContext *txn)
                       "column_id      INT NOT NULL, "
                       "minimum        VARCHAR, "
                       "maximum        VARCHAR, "
-                      "type           VARCHAR);",
+                      "type           VARCHAR, "
+                      "PRIMARY KEY(database_id, table_id, tile_group_id, column_id));",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
       CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, ZONE_MAP_CATALOG_NAME,

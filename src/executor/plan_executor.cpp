@@ -64,7 +64,7 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
+      [&on_complete, &consumer, plan](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
         for (const auto &tuple : consumer.GetOutputTuples()) {
           for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {

@@ -31,7 +31,7 @@ class CircularBuffer {
   void PushBack(ValueType value);
 
   // Set the container capaciry
-  void SetCapaciry(size_t new_capacity);
+  void SetCapacity(size_t new_capacity);
 
   // Returns item count in the circular_buffer
   size_t GetSize() const;

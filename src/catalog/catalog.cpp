@@ -20,12 +20,12 @@
 #include "catalog/language_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/query_history_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/tuple_access_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
@@ -33,6 +33,7 @@
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "settings/settings_manager.h"
+#include "storage/database.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 #include "type/ephemeral_pool.h"
@@ -191,11 +192,12 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
+  TupleAccessMetricsCatalog::GetInstance(txn);
 
   // TODO: change pg_proc to per database
   ProcCatalog::GetInstance(txn);
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain_data_collection)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
 

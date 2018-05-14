@@ -30,6 +30,8 @@
 
 #include "catalog/abstract_catalog.h"
 
+#define PROC_CATALOG_NAME "pg_proc"
+
 namespace peloton {
 namespace catalog {
 
@@ -81,6 +83,8 @@ class ProcCatalog : public AbstractCatalog {
 
   // Global Singleton
   static ProcCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+
+  inline std::string GetName() const override { return PROC_CATALOG_NAME; }
 
   //===--------------------------------------------------------------------===//
   // write Related API

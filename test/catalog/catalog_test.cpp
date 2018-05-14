@@ -15,13 +15,13 @@
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/query_metrics_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
+#include "storage/database.h"
 #include "type/ephemeral_pool.h"
 #include "sql/testing_sql_util.h"
 
@@ -90,27 +90,6 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   catalog::DatabaseMetricsCatalog::GetInstance()->InsertDatabaseMetrics(
       2, 3, 4, 5, pool.get(), txn);
-
-  // inset meaningless tuple into QUERY_METRICS_CATALOG and check
-  stats::QueryMetric::QueryParamBuf param;
-  param.len = 1;
-  param.buf = (unsigned char *)pool->Allocate(1);
-  *param.buf = 'a';
-  auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
-  catalog::Catalog::GetInstance()
-      ->GetSystemCatalogs(database_object->GetDatabaseOid())
-      ->GetQueryMetricsCatalog()
-      ->InsertQueryMetrics("a query", database_object->GetDatabaseOid(), 1,
-                           param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
-                           txn);
-  auto param1 = catalog::Catalog::GetInstance()
-                    ->GetSystemCatalogs(database_object->GetDatabaseOid())
-                    ->GetQueryMetricsCatalog()
-                    ->GetParamTypes("a query", txn);
-  EXPECT_EQ(1, param1.len);
-  EXPECT_EQ('a', *param1.buf);
-  // check colum object
   EXPECT_EQ("name", catalog::Catalog::GetInstance()
                         ->GetTableObject("emp_db", DEFUALT_SCHEMA_NAME,
                                          "department_table", txn)
@@ -236,7 +215,7 @@ TEST_F(CatalogTests, DroppingTable) {
   auto catalog = catalog::Catalog::GetInstance();
   // NOTE: everytime we create a database, there will be 8 catalog tables inside
   EXPECT_EQ(
-      11,
+      10,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
@@ -249,8 +228,7 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table", DEFUALT_SCHEMA_NAME);
-  EXPECT_EQ(
-      10,
+  EXPECT_EQ(9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -263,7 +241,7 @@ TEST_F(CatalogTests, DroppingTable) {
                CatalogException);
   //
   EXPECT_EQ(
-      10,
+      9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -273,7 +251,7 @@ TEST_F(CatalogTests, DroppingTable) {
                    "emp_db", DEFUALT_SCHEMA_NAME, "void_table", txn),
                CatalogException);
   EXPECT_EQ(
-      10,
+      9,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -282,7 +260,7 @@ TEST_F(CatalogTests, DroppingTable) {
   catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
                                              "emp_table", txn);
   EXPECT_EQ(
-      9,
+      8,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }

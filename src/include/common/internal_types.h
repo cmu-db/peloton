@@ -1026,15 +1026,15 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 // Statistics Types
 //===--------------------------------------------------------------------===//
 
-// Statistics Collection Type
-// Disable or enable
-// TODO: This should probably be a collection level and not a boolean
-// (enable/disable)
-enum class StatsType {
+// Statistics Collection Mode Type
+// (enable/disable/test)
+enum class StatsModeType {
   // Disable statistics collection
-  INVALID = INVALID_TYPE_ID,
+  DISABLE = INVALID_TYPE_ID,
   // Enable statistics collection
   ENABLE = 1,
+  // Enable Test stats only
+  TEST = 2,
 };
 
 enum class MetricType {
@@ -1060,6 +1060,41 @@ enum class MetricType {
   QUERY = 9,
   // Statistics for CPU
   PROCESSOR = 10,
+  // Statictics for memory usage and allocation
+  MEMORY = 11,
+};
+
+enum class CollectionPointType {
+  // invalid collection
+  INVALID = INVALID_TYPE_ID,
+  // tuple read
+  ON_TUPLE_READ,
+  // tuple update
+  ON_TUPLE_UPDATE,
+  // tuple insert
+  ON_TUPLE_INSERT,
+  // tuple delete
+  ON_TUPLE_DELETE,
+  // index read
+  ON_INDEX_READ,
+  // index update
+  ON_INDEX_UPDATE,
+  // index insert
+  ON_INDEX_INSERT,
+  // index delete
+  ON_INDEX_DELETE,
+  // txn commit - for point metric
+  ON_COMMIT,
+  // txn abort - for point metric
+  ON_ABORT,
+  // query start
+  ON_QUERY_START,
+  // query end
+  ON_QUERY_END,
+  // txn start
+  ON_TXN_START,
+  // txn end - for interval metric
+  ON_TXN_END,
 };
 
 // All builtin operators we currently support
@@ -1216,8 +1251,7 @@ typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
     ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
-                                      ItemPointerComparator>
-    WriteSet;
+                                      ItemPointerComparator> WriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 
 #include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
@@ -43,6 +44,15 @@ class AbstractCatalog {
  public:
   virtual ~AbstractCatalog() {}
 
+  bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
+                   concurrency::TransactionContext *txn);
+
+  inline const storage::DataTable *GetDataTable() const {
+    return catalog_table_;
+  }
+
+  virtual std::string GetName() const = 0;
+
  protected:
   /* For pg_database, pg_table, pg_index, pg_column */
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
@@ -56,8 +66,6 @@ class AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Helper Functions
   //===--------------------------------------------------------------------===//
-  bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
-                   concurrency::TransactionContext *txn);
 
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::TransactionContext *txn);

@@ -109,6 +109,8 @@ class DatabaseCatalog : public AbstractCatalog {
       type::AbstractPool *pool = nullptr,
       concurrency::TransactionContext *txn = nullptr);
 
+  inline std::string GetName() const override { return DATABASE_CATALOG_NAME; }
+
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
   //===--------------------------------------------------------------------===//

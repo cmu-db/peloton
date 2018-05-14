@@ -6,10 +6,11 @@
 //
 // Identification: tests/include/statistics/stats_tests_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "statistics/test_metric.h"
 #include "statistics/testing_stats_util.h"
 
 #include "executor/delete_executor.h"
@@ -28,6 +29,7 @@
 #include "planner/plan_util.h"
 #include "storage/tile.h"
 #include "traffic_cop/traffic_cop.h"
+#include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace test {
@@ -76,34 +78,6 @@ storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
       type::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
   tuple.SetValue(3, string_value, testing_pool);
   return tuple;
-}
-
-std::shared_ptr<stats::QueryMetric::QueryParams>
-TestingStatsUtil::GetQueryParams(std::shared_ptr<uchar> &type_buf,
-                                 std::shared_ptr<uchar> &format_buf,
-                                 std::shared_ptr<uchar> &val_buf) {
-  // Type
-  uchar *type_buf_data = new uchar[1];
-  type_buf_data[0] = 'x';
-  type_buf.reset(type_buf_data);
-  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
-
-  // Format
-  uchar *format_buf_data = new uchar[1];
-  format_buf_data[0] = 'y';
-  format_buf.reset(format_buf_data);
-  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
-
-  // Value
-  uchar *val_buf_data = new uchar[1];
-  val_buf_data[0] = 'z';
-  val_buf.reset(val_buf_data);
-  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
-
-  // Construct a query param object
-  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
-      new stats::QueryMetric::QueryParams(format, type, val, 1));
-  return query_params;
 }
 
 void TestingStatsUtil::CreateTable(bool has_primary_key) {
@@ -178,6 +152,18 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
   txn_manager.CommitTransaction(txn);
+}
+
+int TestingStatsUtil::AggregateCounts() {
+  stats::StatsAggregator aggregator(1);
+  auto result = aggregator.AggregateRawData();
+
+  // Only TestRawData should be collected
+  EXPECT_LE(result.size(), 1);
+
+  if (result.empty()) return 0;
+
+  return dynamic_cast<stats::TestMetricRawData &>(*result[0]).count_;
 }
 
 }  // namespace test

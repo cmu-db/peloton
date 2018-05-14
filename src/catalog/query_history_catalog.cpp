@@ -31,7 +31,8 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
                       " ("
                       "query_string   VARCHAR NOT NULL, "
                       "fingerprint    VARCHAR NOT NULL, "
-                      "timestamp      TIMESTAMP NOT NULL);",
+                      "timestamp      BIGINT NOT NULL,"
+                      "PRIMARY KEY(query_string, timestamp));",
                       txn) {}
 
 QueryHistoryCatalog::~QueryHistoryCatalog() = default;
@@ -45,7 +46,7 @@ bool QueryHistoryCatalog::InsertQueryHistory(
 
   auto val0 = type::ValueFactory::GetVarcharValue(query_string);
   auto val1 = type::ValueFactory::GetVarcharValue(fingerprint);
-  auto val2 = type::ValueFactory::GetTimestampValue(timestamp);
+  auto val2 = type::ValueFactory::GetBigIntValue(timestamp);
 
   tuple->SetValue(ColumnId::QUERY_STRING, val0,
                   pool != nullptr ? pool : &pool_);

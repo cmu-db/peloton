@@ -22,7 +22,7 @@ namespace test {
 class QueryLoggerTests : public PelotonTest {
  protected:
   void SetUp() override {
-    settings::SettingsManager::SetBool(settings::SettingId::brain, true);
+    settings::SettingsManager::SetBool(settings::SettingId::brain_data_collection, true);
     PelotonInit::Initialize();
 
     // query to check that logging is done
@@ -33,7 +33,7 @@ class QueryLoggerTests : public PelotonTest {
     brain::QueryLogger::Fingerprint fingerprint{select_query_};
     select_query_fingerprint_ = fingerprint.GetFingerprint();
 
-    wait_time_ = 2;
+    wait_time_ = 5;
   }
 
   void TearDown() override { PelotonInit::Shutdown(); }

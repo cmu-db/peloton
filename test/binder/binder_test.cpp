@@ -23,6 +23,7 @@
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "traffic_cop/traffic_cop.h"
+#include "storage/database.h"
 
 #include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"

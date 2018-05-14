@@ -78,6 +78,8 @@ class IndexCatalog : public AbstractCatalog {
 
   ~IndexCatalog();
 
+  inline std::string GetName() const override { return INDEX_CATALOG_NAME; }
+
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
   /** Write Related API */
