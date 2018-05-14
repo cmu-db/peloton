@@ -80,7 +80,7 @@ TEST_F(LSPITests, BenchmarkTest) {
   int CATALOG_SYNC_INTERVAL = 2;
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 1000.0;
-  size_t MAX_NUMINDEXES_WHATIF = 10;
+  size_t MAX_NUMINDEXES_WHATIF = 100;
   bool DRY_RUN_MODE = true;
   int TBL_ROWS = 1000;
   auto timer = Timer<std::ratio<1>>();
@@ -180,6 +180,56 @@ TEST_F(LSPITests, BenchmarkTest) {
   batch_costs.clear();
   batch_queries.clear();
 
+  // ** Exhaustive What-If Tuning Setup without dropping indexes (Closest to
+  // Ideal) ** //
+
+  brain::IndexConfiguration best_config_nodropping;
+  brain::IndexConfiguration prev_config_nodropping;
+  vector_eig query_costs_exhaustivewhatif_nodropping =
+      vector_eig::Zero(query_strings.size());
+  vector_eig search_time_exhaustivewhatif_nodropping =
+      vector_eig::Zero(query_strings.size());
+
+  brain::Workload w_nodropping(database_name);
+  txn = txn_manager.BeginTransaction();
+  brain::IndexSelection is_nodropping = {w_nodropping, knobs, txn};
+  is_nodropping.GetBestIndexes(best_config_nodropping);
+  txn_manager.CommitTransaction(txn);
+
+  LOG_DEBUG("Index: %s", best_config_nodropping.ToString().c_str());
+  LOG_DEBUG("Run with Exhaustive What-If Search without dropping indexes:");
+  for (size_t i = 1; i <= query_strings.size(); i++) {
+    auto query = query_strings[i - 1];
+
+    // Measure the What-If Index cost
+
+    batch_queries.push_back(query);
+    double cost = testing_util.WhatIfIndexCost(query, best_config_nodropping,
+                                               database_name);
+    query_costs_exhaustivewhatif_nodropping[i - 1] = cost;
+
+    // Perform tuning
+    if (i % CATALOG_SYNC_INTERVAL == 0) {
+      LOG_DEBUG("Exhaustive What-If Tuning...");
+      txn = txn_manager.BeginTransaction();
+      prev_config_nodropping.Set(best_config_nodropping);
+      timer.Reset();
+      timer.Start();
+      brain::Workload workload(batch_queries, database_name, txn);
+      is_nodropping = {workload, knobs, txn};
+      is_nodropping.GetBestIndexes(best_config_nodropping);
+      timer.Stop();
+      best_config_nodropping.Merge(prev_config_nodropping);
+      txn_manager.CommitTransaction(txn);
+
+      search_time_exhaustivewhatif_nodropping[i - 1] = timer.GetDuration();
+      batch_queries.clear();
+      batch_costs.clear();
+    }
+  }
+  batch_costs.clear();
+  batch_queries.clear();
+
   // ** LSPI Tuning Setup(Exhaustive: with max add candidate search) ** //
   brain::LSPIIndexTuner index_tuner_exhaustive(
       database_name, ignore_table_oids, false, MAX_INDEX_SIZE, DRY_RUN_MODE);
@@ -190,6 +240,11 @@ TEST_F(LSPITests, BenchmarkTest) {
       vector_eig::Zero(query_strings.size());
   vector_eig search_time_lspiexhaustive =
       vector_eig::Zero(query_strings.size());
+  vector_eig numconfigadds_lspiexhaustive =
+      vector_eig::Zero(query_strings.size());
+  vector_eig numconfigdrops_lspiexhaustive =
+      vector_eig::Zero(query_strings.size());
+
 
   LOG_DEBUG("Run with LSPI(Exhaustive) Tuning:");
   for (size_t i = 1; i <= query_strings.size(); i++) {
@@ -223,7 +278,8 @@ TEST_F(LSPITests, BenchmarkTest) {
                ->GetCurrentIndexConfig());
       const auto drop_bitset = prev_config - cur_config;
       const auto add_bitset = cur_config - prev_config;
-
+      numconfigadds_lspiexhaustive[i - 1] = add_bitset.count();
+      numconfigdrops_lspiexhaustive[i - 1] = drop_bitset.count();
       LOG_DEBUG("#Dropped Indexes: %lu, #Added Indexes: %lu",
                 drop_bitset.count(), add_bitset.count());
 
@@ -247,6 +303,10 @@ TEST_F(LSPITests, BenchmarkTest) {
   vector_eig query_costs_lspinonexhaustive =
       vector_eig::Zero(query_strings.size());
   vector_eig search_time_lspinonexhaustive =
+      vector_eig::Zero(query_strings.size());
+  vector_eig numconfigadds_lspinonexhaustive =
+      vector_eig::Zero(query_strings.size());
+  vector_eig numconfigdrops_lspinonexhaustive =
       vector_eig::Zero(query_strings.size());
 
   LOG_DEBUG("Run with LSPI(Non-Exhaustive) Tuning:");
@@ -281,7 +341,8 @@ TEST_F(LSPITests, BenchmarkTest) {
                ->GetCurrentIndexConfig());
       const auto drop_bitset = prev_config - cur_config;
       const auto add_bitset = cur_config - prev_config;
-
+      numconfigadds_lspinonexhaustive[i-1] = add_bitset.count();
+      numconfigdrops_lspinonexhaustive[i-1] = drop_bitset.count();
       LOG_DEBUG("#Dropped Indexes: %lu, #Added Indexes: %lu",
                 drop_bitset.count(), add_bitset.count());
       batch_queries.clear();
@@ -294,21 +355,28 @@ TEST_F(LSPITests, BenchmarkTest) {
   }
 
   // For analysis
+  // TODO: This is tooooooooooooo overloaded!!
   LOG_DEBUG("Overall Cost Trend for SingleTableTwoColW1 Workload:");
   for (size_t i = 0; i < query_strings.size(); i++) {
     LOG_DEBUG(
         "%zu\t"
         "No Tuning Cost: %f\tLSPI(Exhaustive) Tuning Cost: "
         "%f\tWhatIf(Exhaustive) Tuning Cost: %f\tLSPI(Non-Exhaustive) Tuning "
-        "Cost: %f\t"
+        "Cost: %f\tWhatIf(Exhaustive No-Dropping) Tuning Cost: %f\t"
         "No Tuning Time: %f\tLSPI(Exhaustive) Tuning Time: "
         "%f\tWhatIf(Exhaustive) Tuning Time: %f\tLSPI(Non-Exhaustive) Tuning "
-        "Time: %f\t"
+        "Time: %f\tWhatIf(Exhaustive No-Dropping) Tuning Time: %f\t"
+        "LSPI(Exhaustive) Adds: %f\tLSPI(Exhaustive) Drops: %f\t"
+        "LSPI(Non-Exhaustive) Adds: %f\tLSPI(Non-Exhaustive) Drops: %f\t"
         "%s",
         i, query_costs_notuning[i], query_costs_lspiexhaustive[i],
         query_costs_exhaustivewhatif[i], query_costs_lspinonexhaustive[i],
-        search_time_notuning[i], search_time_lspiexhaustive[i],
-        search_time_exhaustivewhatif[i], search_time_lspinonexhaustive[i],
+        query_costs_exhaustivewhatif_nodropping[i], search_time_notuning[i],
+        search_time_lspiexhaustive[i], search_time_exhaustivewhatif[i],
+        search_time_lspinonexhaustive[i],
+        search_time_exhaustivewhatif_nodropping[i],
+        numconfigadds_lspiexhaustive[i], numconfigdrops_lspiexhaustive[i],
+        numconfigadds_lspinonexhaustive[i], numconfigdrops_lspinonexhaustive[i],
         query_strings[i].c_str());
   }
   float tuning_overall_cost_lspiexhaustive = query_costs_lspiexhaustive.array().sum();
@@ -316,11 +384,15 @@ TEST_F(LSPITests, BenchmarkTest) {
       query_costs_lspinonexhaustive.array().sum();
   float notuning_overall_cost = query_costs_notuning.array().sum();
   float tuning_overall_cost_exhaustivewhatif = query_costs_exhaustivewhatif.array().sum();
+  float tuning_overall_cost_exhaustivewhatif_nodropping = query_costs_exhaustivewhatif_nodropping.array().sum();
   LOG_DEBUG(
       "No Tuning Cost Total: %f, LSPI(Exhaustive) Tuning Cost Total: %f, "
-      "WhatIf(Exhaustive) Tuning Cost: %f, LSPI(Non-Exhaustive) Tuning Cost Total: %f",
+      "WhatIf(Exhaustive) Tuning Cost: %f, LSPI(Non-Exhaustive) Tuning Cost Total: %f,"
+      "WhatIf(Exhaustive No-Dropping) Tuning Cost: %f",
       notuning_overall_cost, tuning_overall_cost_lspiexhaustive,
-      tuning_overall_cost_exhaustivewhatif, tuning_overall_cost_lspinonexhaustive);
+      tuning_overall_cost_exhaustivewhatif,
+      tuning_overall_cost_lspinonexhaustive,
+      tuning_overall_cost_exhaustivewhatif_nodropping);
   EXPECT_LT(tuning_overall_cost_lspiexhaustive, notuning_overall_cost);
   EXPECT_LT(tuning_overall_cost_lspinonexhaustive, notuning_overall_cost);
 }
