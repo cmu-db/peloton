@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/executor/executors.h"
 #include "concurrency/testing_transaction_util.h"
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
+#include "executor/executors.h"
 #include "executor/executor_context.h"
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
