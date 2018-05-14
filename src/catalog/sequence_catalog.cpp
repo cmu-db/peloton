@@ -39,6 +39,7 @@ int64_t SequenceCatalogObject::GetNextVal() {
   int64_t result = seq_curr_val;
   seq_prev_val = result;
   if (seq_increment > 0) {
+    // Check to see whether the nextval is out of bound
     if ((seq_max >= 0 && seq_curr_val > seq_max - seq_increment) ||
         (seq_max < 0 && seq_curr_val + seq_increment > seq_max)) {
       if (!seq_cycle) {
@@ -50,6 +51,7 @@ int64_t SequenceCatalogObject::GetNextVal() {
     } else
       seq_curr_val += seq_increment;
   } else {
+    // Check to see whether the nextval is out of bound
     if ((seq_min < 0 && seq_curr_val < seq_min - seq_increment) ||
         (seq_min >= 0 && seq_curr_val + seq_increment < seq_min)) {
       if (!seq_cycle) {
@@ -150,7 +152,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
 }
 
 /* @brief   Delete the sequence by name.
- * @param   database_oid  the databse_oid associated with the sequence
+ * @param   database_name  the database name associated with the sequence
  * @param   sequence_name the name of the sequence
  * @param   txn           current transaction
  * @return  ResultType::SUCCESS if the sequence exists, throw exception
@@ -166,10 +168,12 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
   auto database_object =
       Catalog::GetInstance()->GetDatabaseObject(database_name, txn);
 
+  oid_t database_oid = database_object->GetDatabaseOid();
+
   oid_t sequence_oid = Catalog::GetInstance()
-      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetSystemCatalogs(database_oid)
       ->GetSequenceCatalog()
-      ->GetSequenceOid(sequence_name, database_object->GetDatabaseOid(), txn);
+      ->GetSequenceOid(sequence_name, database_oid, txn);
   if (sequence_oid == INVALID_OID) {
     throw SequenceException(
         StringUtil::Format("Sequence %s does not exist!",
@@ -178,7 +182,6 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
 
   LOG_INFO("sequence %d will be deleted!", sequence_oid);
 
-  oid_t database_oid = database_object->GetDatabaseOid();
   DeleteSequenceByName(sequence_name, database_oid, txn);
   EvictSequenceNameCurrValCache(sequence_name);
 
@@ -251,6 +254,12 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   return new_sequence;
 }
 
+/* @brief   update the next value of the sequence in the underlying storage
+ * @param   sequence_oid  the sequence_oid of the sequence
+ * @param   nextval       the nextval of the sequence
+ * @param   txn           current transaction
+ * @return  the result of the transaction
+ */
 bool SequenceCatalog::UpdateNextVal(oid_t sequence_oid, int64_t nextval,
     concurrency::TransactionContext *txn){
   std::vector<oid_t> update_columns({SequenceCatalog::ColumnId::SEQUENCE_VALUE});
@@ -283,7 +292,7 @@ oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name,
   // the result is a vector of executor::LogicalTile
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  // carefull! the result tile could be null!
+  // careful! the result tile could be null!
   if (result_tiles == nullptr || result_tiles->size() == 0) {
     LOG_INFO("no sequence on database %d and %s", database_oid,
              sequence_name.c_str());

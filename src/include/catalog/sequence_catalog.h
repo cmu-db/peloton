@@ -199,7 +199,7 @@ class SequenceCatalog : public AbstractCatalog {
     if (seq_min > seq_max) {
         throw SequenceException(
             StringUtil::Format(
-              "MINVALUE (%ld) must be less than MAXVALUE (%ld)", seq_min, seq_max));
+              "MINVALUE (%ld) must be no greater than MAXVALUE (%ld)", seq_min, seq_max));
     }
 
     if (seq_increment == 0) {

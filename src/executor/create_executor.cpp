@@ -359,7 +359,7 @@ bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
   }
 
   // Notice this action will always return true, since any exception
-  // will be handled in CreateSequence function in SequencCatalog.
+  // will be handled in CreateSequence function in SequenceCatalog.
   return (true);
 }
 

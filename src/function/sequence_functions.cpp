@@ -50,7 +50,6 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
                   ->GetSystemCatalogs(database_oid)
                   ->GetSequenceCatalog()
                   ->GetSequence(database_oid, sequence_name, mini_txn);
-  LOG_DEBUG("Get seq obj");
 
   if (sequence_object != nullptr) {
     uint32_t val = sequence_object->GetNextVal();
@@ -94,7 +93,6 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
   auto sequence_catalog = catalog::Catalog::GetInstance()
                     ->GetSystemCatalogs(database_oid)
                     ->GetSequenceCatalog();
-  LOG_DEBUG("Get seq catalog");
 
   if(sequence_catalog->CheckCachedCurrValExistence(
       txn->temp_session_name_, std::string(sequence_name))) {
