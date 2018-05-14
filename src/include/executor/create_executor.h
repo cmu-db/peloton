@@ -58,8 +58,9 @@ class CreateExecutor : public AbstractExecutor {
 
  private:
   void CheckForeignKeySchema(
-    const std::string &schema_name, const std::string &database_name,
-    const std::string &session_namespace, planner::ForeignKeyInfo &fk, concurrency::TransactionContext *txn);
+      const std::string &schema_name, const std::string &database_name,
+      const std::string &session_namespace, const planner::CreatePlan &node,
+      concurrency::TransactionContext *txn);
   ExecutorContext *context_;
 
   // Abstract Pool to hold strings
