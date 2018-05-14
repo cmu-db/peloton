@@ -249,7 +249,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
     }
   }
 
-  return table_object->GetColumnObjects();
+  return table_object->GetColumnObjects(true);
 }
 
 /*
