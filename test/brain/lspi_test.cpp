@@ -73,16 +73,16 @@ TEST_F(LSPITests, RLSETest) {
  * TODO(saatviks): Add analysis and observations here?
  */
 
-TEST_F(LSPITests, TuneTestTwoColTable1) {
+TEST_F(LSPITests, BenchmarkTest) {
   // ** Initialization ** //
   std::string database_name = DEFAULT_DB_NAME;
   size_t MAX_INDEX_SIZE = 3;
   int CATALOG_SYNC_INTERVAL = 2;
   // This threshold depends on #rows in the tables
-  double MIN_COST_THRESH = 0.04;
-  UNUSED_ATTRIBUTE size_t MAX_NUMINDEXES_WHATIF = 10;
+  double MIN_COST_THRESH = 1000.0;
+  size_t MAX_NUMINDEXES_WHATIF = 10;
   bool DRY_RUN_MODE = true;
-  int TBL_ROWS = 100;
+  int TBL_ROWS = 1000;
   auto timer = Timer<std::ratio<1>>();
   std::vector<double> batch_costs;
   std::vector<std::string> batch_queries;
@@ -94,7 +94,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
                                                     ignore_table_oids);
 
   auto config = testing_util.GetCyclicWorkload(
-      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW1}, 2);
+      {index_selection::QueryStringsWorkloadType::SingleTableTwoColW2}, 2);
   auto table_schemas = config.first;
   auto query_strings = config.second;
 
@@ -164,15 +164,15 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
       LOG_DEBUG("Exhaustive What-If Tuning...");
-      txn = txn_manager.BeginTransaction();
       timer.Reset();
       timer.Start();
+      txn = txn_manager.BeginTransaction();
       brain::Workload workload(batch_queries, database_name, txn);
       is = {workload, knobs, txn};
       is.GetBestIndexes(best_config);
-      timer.Stop();
       txn_manager.CommitTransaction(txn);
-      search_time_exhaustivewhatif[i - 1] = timer.GetDuration();
+      timer.Stop();
+      search_time_exhaustivewhatif[i-1] = timer.GetDuration();
       batch_queries.clear();
       batch_costs.clear();
     }
@@ -270,7 +270,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
       const boost::dynamic_bitset<> prev_config(
           *index_tuner_nonexhaustive.GetConfigContainer()
                ->GetCurrentIndexConfig());
-      LOG_DEBUG("COREIL Tuning...");
+      LOG_DEBUG("LSPI Tuning(Non-Exhaustive)...");
       timer.Reset();
       timer.Start();
       index_tuner_nonexhaustive.Tune(batch_queries, batch_costs);
@@ -311,16 +311,18 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
         search_time_exhaustivewhatif[i], search_time_lspinonexhaustive[i],
         query_strings[i].c_str());
   }
-  float tuning_overall_cost = query_costs_lspiexhaustive.array().sum();
-  float tuning_overall_cost_nonexhaustive =
+  float tuning_overall_cost_lspiexhaustive = query_costs_lspiexhaustive.array().sum();
+  float tuning_overall_cost_lspinonexhaustive =
       query_costs_lspinonexhaustive.array().sum();
   float notuning_overall_cost = query_costs_notuning.array().sum();
+  float tuning_overall_cost_exhaustivewhatif = query_costs_exhaustivewhatif.array().sum();
   LOG_DEBUG(
-      "No Tuning: %f, LSPI(Exhaustive) Tuning: %f, LSPI(Non-Exhaustive) "
-      "Tuning: %f",
-      notuning_overall_cost, tuning_overall_cost,
-      tuning_overall_cost_nonexhaustive);
-  EXPECT_LT(tuning_overall_cost, notuning_overall_cost);
+      "No Tuning Cost Total: %f, LSPI(Exhaustive) Tuning Cost Total: %f, "
+      "WhatIf(Exhaustive) Tuning Cost: %f, LSPI(Non-Exhaustive) Tuning Cost Total: %f",
+      notuning_overall_cost, tuning_overall_cost_lspiexhaustive,
+      tuning_overall_cost_exhaustivewhatif, tuning_overall_cost_lspinonexhaustive);
+  EXPECT_LT(tuning_overall_cost_lspiexhaustive, notuning_overall_cost);
+  EXPECT_LT(tuning_overall_cost_lspinonexhaustive, notuning_overall_cost);
 }
 
 // TEST_F(LSPITests, TuneTestTwoColTable2) {
