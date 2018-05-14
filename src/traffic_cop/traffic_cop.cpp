@@ -168,7 +168,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  // TODO: Handle this correctly.
+  // Log the query only if we have a statement.
   if (settings::SettingsManager::GetBool(settings::SettingId::brain) && statement_) {
       tcop_txn_state_.top().first->AddQueryString(
         statement_->GetQueryString().c_str());

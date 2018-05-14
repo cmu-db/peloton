@@ -23,17 +23,19 @@ namespace brain {
 #define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index"
 
 void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Started Index Suggestion Task");
 
-  optimizer::StatsStorage *stats_storage =
-    optimizer::StatsStorage::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
+  // Analyze stats for all the tables.
+  // TODO: AnalyzeStatsForAllTables crashes sometimes.
+  optimizer::StatsStorage *stats_storage =
+      optimizer::StatsStorage::GetInstance();
   ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
   if (stats_result != ResultType::SUCCESS) {
     LOG_ERROR(
-      "Cannot generate stats for table columns. Not performing index "
+        "Cannot generate stats for table columns. Not performing index "
         "suggestion...");
     txn_manager.AbortTransaction(txn);
     return;
@@ -56,63 +58,75 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
     // TODO: Handle multiple databases
     brain::Workload workload(queries, DEFAULT_DB_NAME, txn);
-    LOG_INFO("Knob Num Indexes: %zu", env->GetIndexSelectionKnobs().num_indexes_);
-    LOG_INFO("Knob Naive: %zu", env->GetIndexSelectionKnobs().naive_enumeration_threshold_);
-    LOG_INFO("Knob Num Iterations: %zu", env->GetIndexSelectionKnobs().num_iterations_);
+    LOG_INFO("Knob: Num Indexes: %zu",
+             env->GetIndexSelectionKnobs().num_indexes_);
+    LOG_INFO("Knob: Naive: %zu",
+             env->GetIndexSelectionKnobs().naive_enumeration_threshold_);
+    LOG_INFO("Knob: Num Iterations: %zu",
+             env->GetIndexSelectionKnobs().num_iterations_);
     brain::IndexSelection is = {workload, env->GetIndexSelectionKnobs(), txn};
     brain::IndexConfiguration best_config;
     is.GetBestIndexes(best_config);
 
     if (best_config.IsEmpty()) {
-      LOG_INFO("Best config is empty");
+      LOG_INFO("Best config is empty. No new indexes this time...");
     }
 
-    // Get the existing indexes and drop them.
-    // TODO: Handle multiple databases
+    // Get the index objects from database.
     auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-      DEFAULT_DB_NAME, txn);
+        DEFAULT_DB_NAME, txn);
     auto pg_index = catalog::Catalog::GetInstance()
-      ->GetSystemCatalogs(database_object->GetDatabaseOid())
-      ->GetIndexCatalog();
-    auto indexes = pg_index->GetIndexObjects(txn);
-    for (auto index : indexes) {
-      auto index_name = index.second->GetIndexName();
-      // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
-      // This is a hack for now. Add a boolean to the index catalog to
-      // find out if an index is a brain suggested index/user created index.
-      if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) !=
-          std::string::npos) {
-        bool found = false;
-        for (auto installed_index: best_config.GetIndexes()) {
-          if ((index.second.get()->GetTableOid() == installed_index.get()->table_oid) &&
-          (index.second.get()->GetKeyAttrs() == installed_index.get()->column_oids)) {
-            found = true;
-            break;
-          }
-        }
-        // Drop only indexes which are not suggested this time.
-        if (!found) {
-          LOG_DEBUG("Dropping Index: %s", index_name.c_str());
-          DropIndexRPC(database_object->GetDatabaseOid(), index.second.get());
-        }
-      }
+                        ->GetSystemCatalogs(database_object->GetDatabaseOid())
+                        ->GetIndexCatalog();
+    auto cur_indexes = pg_index->GetIndexObjects(txn);
+    auto drop_indexes = GetIndexesToDrop(cur_indexes, best_config);
+
+    // Drop useless indexes.
+    for (auto index : drop_indexes) {
+      LOG_DEBUG("Dropping Index: %s", index_name.c_str());
+      DropIndexRPC(database_object->GetDatabaseOid(), index.get());
     }
 
+    // Create new indexes.
     for (auto index : best_config.GetIndexes()) {
-      // Create RPC for index creation on the server side.
       CreateIndexRPC(index.get());
     }
 
-    // Update the last_timestamp to the be the latest query's timestamp in
-    // the current workload, so that we fetch the new queries next time.
-    // TODO[vamshi]: Make this efficient. Currently assuming that the latest
-    // query can be anywhere in the vector. if the latest query is always at the
-    // end, then we can avoid scan over all the queries.
     last_timestamp_ = GetLatestQueryTimestamp(query_history.get());
   } else {
-    LOG_INFO("Tuning - not this time");
+    LOG_INFO("Index Suggestion - not performing this time");
   }
   txn_manager.CommitTransaction(txn);
+}
+
+std::vector<std::shared_ptr<catalog::IndexCatalogObject>>
+IndexSelectionJob::GetIndexesToDrop(
+    std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>> &index_objects,
+    brain::IndexConfiguration best_config) {
+  std::vector<std::shared_ptr<catalog::IndexCatalogObject>> ret_indexes;
+  // Get the existing indexes and drop them.
+  for (auto index : index_objects) {
+    auto index_name = index.second->GetIndexName();
+    // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
+    // This is a hack for now. Add a boolean to the index catalog to
+    // find out if an index is a brain suggested index/user created index.
+    if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) != std::string::npos) {
+      bool found = false;
+      for (auto installed_index : best_config.GetIndexes()) {
+        if ((index.second.get()->GetTableOid() ==
+             installed_index.get()->table_oid) &&
+            (index.second.get()->GetKeyAttrs() ==
+             installed_index.get()->column_oids)) {
+          found = true;
+        }
+      }
+      // Drop only indexes which are not suggested this time.
+      if (!found) {
+        ret_indexes.push_back(index.second);
+      }
+    }
+  }
+  return ret_indexes;
 }
 
 void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
@@ -170,6 +184,5 @@ uint64_t IndexSelectionJob::GetLatestQueryTimestamp(
   }
   return latest_time;
 }
-
 }
 }

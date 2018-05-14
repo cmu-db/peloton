@@ -269,6 +269,9 @@ class Workload {
   };
 
  private:
+  /**
+   * Parsed SQL queries.
+   */
   std::vector<std::shared_ptr<parser::SQLStatement>> sql_queries_;
   std::string database_name;
 };
