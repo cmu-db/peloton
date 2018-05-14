@@ -13,8 +13,8 @@ Some other files are also modified:
 * [runtime_functions_proxy.cpp](https://github.com/suafeng/peloton/blob/master/src/codegen/proxy/runtime_functions_proxy.cpp)
 * [runtime_functions.h](https://github.com/suafeng/peloton/blob/master/src/include/codegen/runtime_functions.h)
 * [runtime_functions.cpp](https://github.com/suafeng/peloton/blob/master/src/codegen/runtime_functions.cpp)
-* [tile_group.h](https://github.com/suafeng/peloton/blob/master/src/include/codegen/tile_group.h)
-* [tile_group.cpp](https://github.com/suafeng/peloton/blob/master/src/codegen/tile_group.cpp)
+* [codegen/tile_group.h](https://github.com/suafeng/peloton/blob/master/src/include/codegen/tile_group.h)
+* [codegen/tile_group.cpp](https://github.com/suafeng/peloton/blob/master/src/codegen/tile_group.cpp)
 
 ## Implementation of dictionary encoding
 
