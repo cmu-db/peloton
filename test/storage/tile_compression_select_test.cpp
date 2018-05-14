@@ -18,14 +18,15 @@ namespace test {
 class CompressionSelectTest : public PelotonTest {};
 TEST_F(CompressionSelectTest, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  
   // create database
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
-  // Create a txn
+  
+  // Insert 
   txn = txn_manager.BeginTransaction();
-
   std::string testTableName = "foo";
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE foo(id integer, name varchar(32));");
@@ -39,7 +40,8 @@ TEST_F(CompressionSelectTest, BasicTest) {
   auto dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
   auto TGiterator = storage::TileGroupIterator(dataTable_object);
   std::shared_ptr<storage::TileGroup> tg;
-
+  
+  // Compress
   while (TGiterator.HasNext()) {
     TGiterator.Next(tg);
     if (!tg->IsDictEncoded()) {
@@ -48,18 +50,14 @@ TEST_F(CompressionSelectTest, BasicTest) {
     }
   }
 
-  std::vector<ResultValue> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  std::ostringstream os;
+  // Select on the compressed data
+  std::string select_sql = "select * from foo;";
+  std::vector<std::string> expected = {"1|taodai", "2|bohan", "3|siyuan"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_sql, expected, false);
   txn_manager.CommitTransaction(txn);
 
-  os << "select * from foo;";
-  std::vector<std::string> expected = {"1|taodai", "2|bohan", "3|siyuan"};
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(os.str(), expected, false);
-
+  // Drop database
   txn = txn_manager.BeginTransaction();
-
   dataTable_object = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, testTableName, txn);
   TGiterator = storage::TileGroupIterator(dataTable_object);
   while (TGiterator.HasNext()) {
@@ -70,7 +68,6 @@ TEST_F(CompressionSelectTest, BasicTest) {
         LOG_DEBUG("curr_tile id: %d, isEncoded: %d", curr_tile->GetTileId(), curr_tile->IsDictEncoded());
     }
   }
-  // drop database
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
