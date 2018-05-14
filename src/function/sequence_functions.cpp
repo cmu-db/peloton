@@ -37,6 +37,7 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
   // get the database oid for this transaction
   oid_t database_oid = catalog::Catalog::GetInstance()
           ->GetDatabaseObject(ctx.GetDatabaseName(), txn)->GetDatabaseOid();
+  LOG_DEBUG("Get database oid: %u", database_oid);
 
   // initialize a new transaction for incrementing sequence value
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -49,6 +50,8 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
                   ->GetSystemCatalogs(database_oid)
                   ->GetSequenceCatalog()
                   ->GetSequence(database_oid, sequence_name, mini_txn);
+  LOG_DEBUG("Get seq obj");
+
   if (sequence_object != nullptr) {
     uint32_t val = sequence_object->GetNextVal();
     int64_t curr_val = sequence_object->GetCurrVal();
@@ -85,10 +88,14 @@ uint32_t SequenceFunctions::Currval(executor::ExecutorContext &ctx,
   // get the database oid for this transaction
   oid_t database_oid = catalog::Catalog::GetInstance()
           ->GetDatabaseObject(ctx.GetDatabaseName(), txn)->GetDatabaseOid();
+  LOG_DEBUG("Get database oid: %u", database_oid);
+
   // get the sequence copy from cache
   auto sequence_catalog = catalog::Catalog::GetInstance()
                     ->GetSystemCatalogs(database_oid)
                     ->GetSequenceCatalog();
+  LOG_DEBUG("Get seq catalog");
+
   if(sequence_catalog->CheckCachedCurrValExistence(
       txn->temp_session_name_, std::string(sequence_name))) {
     return sequence_catalog->GetCachedCurrVal(
