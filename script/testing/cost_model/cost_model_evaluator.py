@@ -146,7 +146,7 @@ def main():
     parser.add_argument("--port", default=15721, help="Optional port override if you aren't using 15721")
     parser.add_argument("--peloton-path", default="peloton",
                         help="Optional path to peloton binary if peloton is not on your path")
-    parser.add_argument('--query-count', default=500,
+    parser.add_argument('--query-count', default=500, type=int,
                         help="Number of times to run the query defined in the data query path")
     # For now, data load path needs to include analyze statements at end. we don't support analyze on all tables
     parser.add_argument("data_load_path")
