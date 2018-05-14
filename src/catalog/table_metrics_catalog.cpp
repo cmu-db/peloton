@@ -59,14 +59,14 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
                           " ("
                           "table_oid      INT NOT NULL PRIMARY KEY, "
                           "reads          INT NOT NULL, "
-                          "updates        INT NOT NULL, "
-                          "inserts        INT NOT NULL, "
-                          "deletes        INT NOT NULL, "
-                          "inline_memory_alloc     INT NOT NULL, "
-                          "inline_memory_usage     INT NOT NULL, "
-                          "varlen_memory_alloc     INT NOT NULL, "
-                          "varlen_memory_usage     INT NOT NULL, "
-                          "time_stamp     INT NOT NULL);",
+                          "updates        BIGINT NOT NULL, "
+                          "inserts        BIGINT NOT NULL, "
+                          "deletes        BIGINT NOT NULL, "
+                          "inline_memory_alloc     BIGINT NOT NULL, "
+                          "inline_memory_usage     BIGINT NOT NULL, "
+                          "varlen_memory_alloc     BIGINT NOT NULL, "
+                          "varlen_memory_usage     BIGINT NOT NULL, "
+                          "time_stamp     BIGINT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
@@ -83,15 +83,15 @@ bool TableMetricsCatalog::InsertTableMetrics(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
-  auto val2 = type::ValueFactory::GetIntegerValue(reads);
-  auto val3 = type::ValueFactory::GetIntegerValue(updates);
-  auto val4 = type::ValueFactory::GetIntegerValue(inserts);
-  auto val5 = type::ValueFactory::GetIntegerValue(deletes);
-  auto val6 = type::ValueFactory::GetIntegerValue(inline_memory_alloc);
-  auto val7 = type::ValueFactory::GetIntegerValue(inline_memory_usage);
-  auto val8 = type::ValueFactory::GetIntegerValue(varlen_memory_alloc);
-  auto val9 = type::ValueFactory::GetIntegerValue(varlen_memory_usage);
-  auto val10 = type::ValueFactory::GetIntegerValue(time_stamp);
+  auto val2 = type::ValueFactory::GetBigIntValue(reads);
+  auto val3 = type::ValueFactory::GetBigIntValue(updates);
+  auto val4 = type::ValueFactory::GetBigIntValue(inserts);
+  auto val5 = type::ValueFactory::GetBigIntValue(deletes);
+  auto val6 = type::ValueFactory::GetBigIntValue(inline_memory_alloc);
+  auto val7 = type::ValueFactory::GetBigIntValue(inline_memory_usage);
+  auto val8 = type::ValueFactory::GetBigIntValue(varlen_memory_alloc);
+  auto val9 = type::ValueFactory::GetBigIntValue(varlen_memory_usage);
+  auto val10 = type::ValueFactory::GetBigIntValue(time_stamp);
 
   tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
   tuple->SetValue(ColumnId::READS, val2, pool);
@@ -128,20 +128,20 @@ bool TableMetricsCatalog::UpdateTableMetrics(
 
   update_values.push_back(
       type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(reads).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(updates).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(inserts).Copy());
-  update_values.push_back(type::ValueFactory::GetIntegerValue(deletes).Copy());
+  update_values.push_back(type::ValueFactory::GetBigIntValue(reads).Copy());
+  update_values.push_back(type::ValueFactory::GetBigIntValue(updates).Copy());
+  update_values.push_back(type::ValueFactory::GetBigIntValue(inserts).Copy());
+  update_values.push_back(type::ValueFactory::GetBigIntValue(deletes).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(inline_memory_alloc).Copy());
+      type::ValueFactory::GetBigIntValue(inline_memory_alloc).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(inline_memory_usage).Copy());
+      type::ValueFactory::GetBigIntValue(inline_memory_usage).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(varlen_memory_alloc).Copy());
+      type::ValueFactory::GetBigIntValue(varlen_memory_alloc).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(varlen_memory_usage).Copy());
+      type::ValueFactory::GetBigIntValue(varlen_memory_usage).Copy());
   update_values.push_back(
-      type::ValueFactory::GetIntegerValue(time_stamp).Copy());
+      type::ValueFactory::GetBigIntValue(time_stamp).Copy());
 
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid));
