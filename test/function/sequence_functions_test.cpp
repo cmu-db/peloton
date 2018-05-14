@@ -33,8 +33,6 @@ namespace peloton {
 namespace test {
 
 class SequenceFunctionsTests : public PelotonTest {
- public:
-  executor::ExecutorContext &GetExecutorContext() { return *test_ctx_; }
 
  protected:
   void CreateDatabaseHelper() {
@@ -89,16 +87,17 @@ TEST_F(SequenceFunctionsTests, BasicTest) {
 TEST_F(SequenceFunctionsTests, FunctionsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(txn, {}, DEFAULT_DB_NAME));
 
   // Expect exception
   try {
-    function::SequenceFunctions::Currval(GetExecutorContext(), "seq");
+    function::SequenceFunctions::Currval(*(context.get()), "seq");
     EXPECT_EQ(0, 1);
   } catch (const SequenceException &expected) {
     ASSERT_STREQ("currval for sequence \"seq\" is undefined for this session", expected.what());
   }
-//  auto result = function::SequenceFunctions::Nextval(GetExecutorContext(), "seq");
-//  EXPECT_EQ(1, result);
+
   txn_manager.CommitTransaction(txn);
 }
 
