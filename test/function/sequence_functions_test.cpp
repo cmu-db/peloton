@@ -102,6 +102,9 @@ TEST_F(SequenceFunctionsTests, FunctionsTest) {
   res = function::SequenceFunctions::Currval(*(context.get()), "seq");
   EXPECT_EQ(1, res);
 
+  res = function::SequenceFunctions::Nextval(*(context.get()), "seq");
+  EXPECT_EQ(2, res);
+
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace test

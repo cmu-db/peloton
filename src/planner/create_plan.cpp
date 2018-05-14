@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/create_plan.h"
-
 #include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 #include "expression/constant_value_expression.h"
@@ -51,6 +50,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
       schema_name = std::string(parse_tree->GetSchemaName());
+      commit_option = parse_tree->commit_option;
       //if schema name is not set. then set it to session namespace if temp
       if(schema_name.empty()) {
         if (parse_tree->is_temp_table) {
@@ -248,6 +248,7 @@ void CreatePlan::ProcessForeignKeyConstraint(
 
   // Extract table names
   fkey_info.sink_table_name = col->fk_sink_table_name;
+  fkey_info.sink_table_schema = col->fk_sink_table_schema;
 
   // Extract delete and update actions
   fkey_info.upd_action = col->foreign_key_update_action;

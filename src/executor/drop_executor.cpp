@@ -254,6 +254,7 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
   std::string index_name = node.GetIndexName();
   std::string schema_name = node.GetSchemaName();
+  std::string session_namespace = node.GetSessionNamespace();
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       node.GetDatabaseName(), txn);
   if (database_object == nullptr) {
@@ -263,10 +264,27 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
-  if (index_object == nullptr) {
-    throw CatalogException("Can't find index " + schema_name + "." +
-                           index_name + " to drop");
+
+  std::shared_ptr<catalog::IndexCatalogObject> index_object;
+  // if no schema name specified.
+  if (schema_name.empty()) {
+    // search under session_namespace
+    index_object = pg_index->GetIndexObject(index_name, session_namespace, txn);
+    if (index_object == nullptr) {
+      // search under public namespace if not under temp session
+      index_object =
+          pg_index->GetIndexObject(index_name, DEFAULT_SCHEMA_NAME, txn);
+      if (index_object == nullptr) {
+        throw CatalogException("Can't find index " + schema_name + "." +
+                               index_name + " to drop");
+      }
+    }
+  } else {
+    index_object = pg_index->GetIndexObject(index_name, schema_name, txn);
+    if (index_object == nullptr) {
+      throw CatalogException("Can't find index " + schema_name + "." +
+                             index_name + " to drop");
+    }
   }
   // invoke directly using oid
   ResultType result = catalog::Catalog::GetInstance()->DropIndex(

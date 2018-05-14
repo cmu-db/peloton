@@ -961,8 +961,11 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   UNUSED_ATTRIBUTE CreateStmt *temp = root;
   parser::CreateStatement *result =
       new CreateStatement(CreateStatement::CreateType::kTable);
+  result->commit_option = root->oncommit;
   RangeVar *relation = root->relation;
   result->table_info_.reset(new parser::TableInfo());
+  // relpersistence == 't' indicates that it's a temporary table. It's the
+  // result produced by postgresparser.
   if (relation->relpersistence == 't') {
     result->is_temp_table = true;
   }
@@ -1020,6 +1023,10 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
         }
         // Update Reference Table
         col->fk_sink_table_name = constraint->pktable->relname;
+        if (constraint->pktable->schemaname) {
+            //added schenma name for fk_sink
+            col->fk_sink_table_schema = constraint->pktable->schemaname;
+        }
         // Action type
         col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
@@ -2029,7 +2036,7 @@ parser::SQLStatementList *PostgresParser::ParseSQLString(const char *text) {
   }
 
   // DEBUG only. Comment this out in release mode
-  // print_pg_parse_tree(result.tree);
+  //print_pg_parse_tree(result.tree);
   parser::SQLStatementList *transform_result;
   try {
     transform_result = ListTransform(result.tree);

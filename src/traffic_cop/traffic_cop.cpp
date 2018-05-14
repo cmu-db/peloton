@@ -105,6 +105,14 @@ ResultType TrafficCop::CommitQueryHelper() {
   // I will block following queries in that transaction until 'COMMIT' or
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
+    //drop all the temp tables if chosen
+    if (txn->GetCommitOption() == ONCOMMIT_DROP) {
+      auto temp_table_objects = txn->GetTempTableObjects();
+      for (auto iter = temp_table_objects.begin(); iter != temp_table_objects.end(); iter++) {
+        auto table_ptr = *iter;
+        catalog::Catalog::GetInstance()->DropTable(table_ptr->GetDatabaseOid(), table_ptr->GetTableOid(), txn);
+      }
+    }
     // txn committed
     return txn_manager.CommitTransaction(txn);
   } else {
@@ -167,7 +175,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     txn = txn_manager.BeginTransaction(thread_id);
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
-  txn->temp_session_name_ = temp_session_name_;
+  txn->temp_session_name_ = session_namespace_;
 
   // skip if already aborted
   if (curr_state.second == ResultType::ABORTED) {
@@ -316,7 +324,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   try {
     // Run binder
     auto bind_node_visitor = binder::BindNodeVisitor(
-        tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
+        tcop_txn_state_.top().first, default_database_name_, session_namespace_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
     auto plan = optimizer_->BuildPelotonPlanTree(
@@ -384,7 +392,7 @@ bool TrafficCop::BindParamsForCachePlan(
   }
   // Run binder
   auto bind_node_visitor = binder::BindNodeVisitor(tcop_txn_state_.top().first,
-                                                   default_database_name_, temp_session_name_);
+                                                   default_database_name_, session_namespace_);
 
   std::vector<type::Value> param_values;
   for (const std::unique_ptr<expression::AbstractExpression> &param :
@@ -422,7 +430,7 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
       auto columns =
           static_cast<storage::DataTable *>(
               catalog::Catalog::GetInstance()->GetTableWithName(
-                  from_table->GetDatabaseName(), from_table->GetSchemaName(), temp_session_name_,
+                  from_table->GetDatabaseName(), from_table->GetSchemaName(), session_namespace_,
                   from_table->GetTableName(), GetCurrentTxnState().first))
               ->GetSchema()
               ->GetColumns();
@@ -587,7 +595,7 @@ ResultType TrafficCop::ExecuteStatement(
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
           auto bind_node_visitor = binder::BindNodeVisitor(
-              tcop_txn_state_.top().first, default_database_name_, temp_session_name_);
+              tcop_txn_state_.top().first, default_database_name_, session_namespace_);
           bind_node_visitor.BindNameToNode(
               statement->GetStmtParseTreeList()->GetStatement(0));
           auto plan = optimizer_->BuildPelotonPlanTree(
@@ -616,10 +624,10 @@ void TrafficCop::DropTempTables() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   //drop all the temp tables under this namespace
-  catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, temp_session_name_, txn);
+  catalog::Catalog::GetInstance()->DropTempTables(default_database_name_, session_namespace_, txn);
   //drop the schema
-  catalog::Catalog::GetInstance()->DropSchema(default_database_name_, temp_session_name_, txn);
-  catalog::Catalog::GetInstance()->RemoveCachedSequenceCurrVal(default_database_name_, temp_session_name_, txn);
+  catalog::Catalog::GetInstance()->DropSchema(default_database_name_, session_namespace_, txn);
+  catalog::Catalog::GetInstance()->RemoveCachedSequenceCurrVal(default_database_name_, session_namespace_, txn);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -627,7 +635,7 @@ void TrafficCop::CreateTempSchema() {
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateSchema(default_database_name_, temp_session_name_, txn);
+  catalog::Catalog::GetInstance()->CreateSchema(default_database_name_, session_namespace_, txn);
   txn_manager.CommitTransaction(txn);
 }
 

@@ -174,7 +174,10 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
 /* @brief   helper to get table catalog object
  * @param   table_name     table name of the requested table catalog object
  * @param   schema_name    schema name of the requested table catalog object
+<<<<<<< HEAD
  * @param   session_namespace the session namespace of the requested table catalog object
+=======
+>>>>>>> 03b45a2ef9dafd0e5a83a80deac32f845246425e
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */

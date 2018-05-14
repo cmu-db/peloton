@@ -44,6 +44,7 @@ struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
   std::string sink_table_name;
+  std::string sink_table_schema;
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
@@ -129,6 +130,7 @@ class CreatePlan : public AbstractPlan {
   int64_t GetSequenceMinValue() const { return seq_min_value; }
   int64_t GetSequenceCacheSize() const { return seq_cache; }
   bool GetSequenceCycle() const { return seq_cycle; }
+  OnCommitAction GetCommitOption() const { return commit_option; }
 
  protected:
   // This is a helper method for extracting foreign key information
@@ -168,6 +170,7 @@ class CreatePlan : public AbstractPlan {
   // UNIQUE INDEX flag
   bool unique;
 
+  OnCommitAction commit_option; //what we do on commit?
   // ColumnDefinition for multi-column constraints (including foreign key)
   std::vector<ForeignKeyInfo> foreign_keys;
   std::string trigger_name;

@@ -20,6 +20,7 @@
 #include "expression/abstract_expression.h"
 #include "parser/select_statement.h"
 #include "parser/sql_statement.h"
+#include "parser/parsenodes.h"
 
 namespace peloton {
 namespace parser {
@@ -198,6 +199,7 @@ struct ColumnDefinition {
   std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
   std::string fk_sink_table_name;
+  std::string fk_sink_table_schema;
   std::vector<std::string> primary_key;
   std::vector<std::string> foreign_key_source;
   std::vector<std::string> foreign_key_sink;
@@ -256,6 +258,7 @@ class CreateStatement : public TableRefStatement {
 
   bool unique = false;
 
+  OnCommitAction commit_option; //what we do on commit?
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
