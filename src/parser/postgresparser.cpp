@@ -1790,20 +1790,20 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
       result->table_info_ =
           std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
       if (relation->relname) {
-        result->table_info_.get()->table_name = strdup(relation->relname);
+        result->table_info_.get()->table_name = std::string{relation->relname};
       }
       if (relation->catalogname) {
         result->table_info_.get()->database_name =
-            strdup(relation->catalogname);
+            std::string(relation->catalogname);
       }
       if (relation->schemaname) {
-        result->table_info_.get()->schema_name = strdup(relation->schemaname);
+        result->table_info_.get()->schema_name = std::string{relation->schemaname};
       }
       if (newRoot->subname) {
-        result->oldName = strdup(newRoot->subname);
+        result->oldName = std::string{newRoot->subname};
       }
       if (newRoot->newname) {
-        result->newName = strdup(newRoot->newname);
+        result->newName = std::string{newRoot->newname};
       }
       LOG_TRACE("finished transform");
       return result;
@@ -1820,14 +1820,14 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
       result->table_info_ =
           std::unique_ptr<parser::TableInfo>(new parser::TableInfo());
       if (relation->relname) {
-        result->table_info_.get()->table_name = strdup(relation->relname);
+        result->table_info_.get()->table_name = std::string{relation->relname};
       }
       if (relation->catalogname) {
         result->table_info_.get()->database_name =
-            strdup(relation->catalogname);
+            std::string{relation->catalogname};
       }
       if (relation->schemaname) {
-        result->table_info_.get()->schema_name = strdup(relation->schemaname);
+        result->table_info_.get()->schema_name = std::string{relation->schemaname};
       }
 
       for (auto cell = newRoot->cmds->head; cell != NULL; cell = cell->next) {
@@ -1841,13 +1841,13 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
             ColumnDefTransform(reinterpret_cast<ColumnDef *>(cmd->def),
                                &tmpStatement);
             for (size_t i = 0; i < tmpStatement.columns.size(); i++) {
-              result->added_columns->emplace_back(
+              result->added_columns.emplace_back(
                   std::move(tmpStatement.columns[i]));
             }
             break;
           }
           case AT_DropColumn: {
-            result->dropped_names->push_back(strdup(cmd->name));
+            result->dropped_names.push_back(std::string{cmd->name});
             break;
           }
           case AT_AlterColumnType: {
@@ -1859,7 +1859,7 @@ parser::AlterTableStatement *PostgresParser::AlterTransform(Node *root) {
             ColumnDefTransform(reinterpret_cast<ColumnDef *>(def),
                                &tmp_statement);
             for (size_t i = 0; i < tmp_statement.columns.size();i++){
-              result->changed_type_columns->emplace_back(std::move(tmp_statement.columns[i]));
+              result->changed_type_columns.emplace_back(std::move(tmp_statement.columns[i]));
             }
             LOG_TRACE("adding end");
             break;

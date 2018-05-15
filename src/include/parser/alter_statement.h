@@ -27,41 +27,12 @@ class AlterTableStatement : public TableRefStatement {
  public:
   enum class AlterTableType { INVALID = 0, ALTER = 1, RENAME = 2 };
 
-  AlterTableStatement(AlterTableType type)
+  explicit AlterTableStatement(AlterTableType type)
       : TableRefStatement(StatementType::ALTER),
-        type(type),
-        oldName(nullptr),
-        newName(nullptr) {
-    if (type == AlterTableType::RENAME) {
-      dropped_names = nullptr;
-      added_columns = nullptr;
-      changed_type_columns = nullptr;
-    } else {
-      dropped_names = new std::vector<char *>;
-      added_columns = new std::vector<std::unique_ptr<ColumnDefinition>>;
-      changed_type_columns = new std::vector<std::unique_ptr<ColumnDefinition>>;
-    }
-  }
+        type(type) {}
 
   virtual ~AlterTableStatement() {
-    if (added_columns != nullptr) {
-      delete added_columns;
-    }
-    if (dropped_names != nullptr) {
-      for (auto name : *dropped_names) {
-        delete name;
-      }
-      delete dropped_names;
-    }
-    if (changed_type_columns != nullptr) {
-      delete changed_type_columns;
-    }
-    if (oldName) {
-      delete oldName;
-    }
-    if (newName) {
-      delete newName;
-    }
+
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
@@ -69,16 +40,16 @@ class AlterTableStatement : public TableRefStatement {
   AlterTableType type;
 
   // Dropped columns
-  std::vector<char *> *dropped_names;
+  std::vector<std::string> dropped_names;
 
   // Added columns
-  std::vector<std::unique_ptr<ColumnDefinition>> *added_columns;
+  std::vector<std::unique_ptr<ColumnDefinition>> added_columns;
 
-  std::vector<std::unique_ptr<ColumnDefinition>> *changed_type_columns;
+  std::vector<std::unique_ptr<ColumnDefinition>> changed_type_columns;
 
   // the name that needs to be changed
-  char *oldName;
-  char *newName;
+  std::string oldName;
+  std::string newName;
 };
 
 }  // End parser namespace
