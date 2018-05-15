@@ -206,8 +206,8 @@ AbstractCatalog::GetResultWithIndexScan(
  */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(
-    std::vector<oid_t> column_offsets, oid_t index_offset,
-    std::vector<type::Value> values, std::vector<ExpressionType> expr_types,
+    const std::vector<oid_t> &column_offsets, const oid_t &index_offset,
+    const std::vector<type::Value> &values, const std::vector<ExpressionType> &expr_types,
     concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 

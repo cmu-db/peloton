@@ -161,12 +161,6 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
   for (auto query : queries) {
     LOG_DEBUG("Query: %s", query.c_str());
 
-    // TODO: Remove this.
-    // Hack to filter out pg_catalog queries.
-    if (query.find("pg_") != std::string::npos) {
-      continue;
-    }
-
     // Create a unique_ptr to free this pointer at the end of this loop
     // iteration.
     auto stmt_list = std::unique_ptr<parser::SQLStatementList>(
@@ -196,11 +190,101 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
       case StatementType::INSERT:
       case StatementType::DELETE:
       case StatementType::UPDATE:
-      case StatementType::SELECT:
-        AddQuery(stmt_shared);
+      case StatementType::SELECT: {
+        // Get all the table names referenced in the query.
+        std::unordered_set<std::string> tables_used;
+        Workload::GetTableNamesReferenced(stmt_shared, tables_used);
+        AddQuery(stmt_shared, tables_used);
+      }
       default:
         // Ignore other queries.
         LOG_TRACE("Ignoring query: %s", stmt->GetInfo().c_str());
+    }
+  }
+}
+
+void Workload::GetTableNamesReferenced(
+    std::shared_ptr<parser::SQLStatement> query,
+    std::unordered_set<std::string> &table_names) {
+  // populated if this query has a cross-product table references.
+  std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
+
+  switch (query->GetType()) {
+    case StatementType::INSERT: {
+      auto sql_statement = dynamic_cast<parser::InsertStatement *>(query.get());
+      table_names.insert(sql_statement->table_ref_->GetTableName());
+      break;
+    }
+
+    case StatementType::DELETE: {
+      auto sql_statement = dynamic_cast<parser::DeleteStatement *>(query.get());
+      table_names.insert(sql_statement->table_ref->GetTableName());
+      break;
+    }
+
+    case StatementType::UPDATE: {
+      auto sql_statement = dynamic_cast<parser::UpdateStatement *>(query.get());
+      table_names.insert(sql_statement->table->GetTableName());
+      break;
+    }
+
+    case StatementType::SELECT: {
+      auto sql_statement = dynamic_cast<parser::SelectStatement *>(query.get());
+      // Select can operate on more than 1 table.
+      switch (sql_statement->from_table->type) {
+        case TableReferenceType::NAME: {
+          // Single table.
+          LOG_DEBUG("Table name is %s",
+                    sql_statement->from_table.get()->GetTableName().c_str());
+          table_names.insert(sql_statement->from_table.get()->GetTableName());
+          break;
+        }
+        case TableReferenceType::JOIN: {
+          // Get all table names in the join.
+          std::deque<parser::TableRef *> queue;
+          queue.push_back(sql_statement->from_table->join->left.get());
+          queue.push_back(sql_statement->from_table->join->right.get());
+          while (queue.size() != 0) {
+            auto front = queue.front();
+            queue.pop_front();
+            if (front == nullptr) {
+              continue;
+            }
+            if (front->type == TableReferenceType::JOIN) {
+              queue.push_back(front->join->left.get());
+              queue.push_back(front->join->right.get());
+            } else if (front->type == TableReferenceType::NAME) {
+              table_names.insert(front->GetTableName());
+            } else {
+              PELOTON_ASSERT(false);
+            }
+          }
+          break;
+        }
+        case TableReferenceType::SELECT: {
+          Workload::GetTableNamesReferenced(std::shared_ptr<parser::SQLStatement>(
+                                  sql_statement->from_table->select),
+                              table_names);
+          break;
+        }
+        case TableReferenceType::CROSS_PRODUCT: {
+          // Cross product table list.
+          table_cp_list = &(sql_statement->from_table->list);
+          for (auto &table : *table_cp_list) {
+            table_names.insert(table->GetTableName());
+          }
+          break;
+        }
+        case TableReferenceType::INVALID: {
+          LOG_ERROR("Invalid table reference");
+          return;
+        }
+      }
+      break;
+    }
+    default: {
+      LOG_ERROR("Cannot handle DDL statements");
+      PELOTON_ASSERT(false);
     }
   }
 }
