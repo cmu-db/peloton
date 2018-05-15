@@ -279,6 +279,7 @@ bool TransactionManager::CheckConcurrentTxn(
       return true;
     }
   }*/
+  input->size();
   return false;
 }
 
