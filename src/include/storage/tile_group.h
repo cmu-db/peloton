@@ -170,7 +170,7 @@ class TileGroup : public Printable {
                                                     AbstractTable *table);
 
   // Get the layout of the TileGroup. Used to locate columns.
-  const storage::Layout &GetLayout() const { return *tile_group_layout_; 
+  const storage::Layout &GetLayout() const { return *tile_group_layout_; }
 
  protected:
   //===--------------------------------------------------------------------===//
