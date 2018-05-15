@@ -14,6 +14,7 @@
 #include "optimizer/operators.h"
 #include "traffic_cop/traffic_cop.h"
 #include "brain/index_selection_util.h"
+#include "catalog/catalog_defaults.h"
 
 namespace peloton {
 namespace brain {
