@@ -273,11 +273,12 @@ VisibilityType TransactionManager::IsVisible(
 // transaction set. Return true if overlaps, false otherwise.
 bool TransactionManager::CheckConcurrentTxn(
     tbb::concurrent_unordered_set<txn_id_t> *input) {
+  /*
   for (auto itr = input->begin(); itr != input->end(); itr++) {
     if (current_transactions_.find(*itr) != current_transactions_.end()) {
       return true;
     }
-  }
+  }*/
   return false;
 }
 
