@@ -79,7 +79,8 @@ class GCManager {
                       concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
  protected:
-  void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
+  void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
+                                    oid_t tuple_id);
 
  protected:
   volatile bool is_running_;

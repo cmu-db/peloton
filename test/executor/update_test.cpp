@@ -90,24 +90,32 @@ storage::DataTable *CreateTable() {
   column_map1[2] = std::make_pair(1, 0);
   column_map1[3] = std::make_pair(1, 1);
 
+  std::shared_ptr<const storage::Layout> layout1 =
+      std::shared_ptr<const storage::Layout>(
+          new const storage::Layout(column_map1));
+
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map2;
   column_map2[0] = std::make_pair(0, 0);
   column_map2[1] = std::make_pair(1, 0);
   column_map2[2] = std::make_pair(1, 1);
   column_map2[3] = std::make_pair(1, 2);
 
+  std::shared_ptr<const storage::Layout> layout2 =
+      std::shared_ptr<const storage::Layout>(
+          new const storage::Layout(column_map1));
+
   // Create tile groups.
   table->AddTileGroup(std::shared_ptr<storage::TileGroup>(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
-          schemas1, column_map1, tuple_count)));
+          schemas1, layout1, tuple_count)));
 
   table->AddTileGroup(std::shared_ptr<storage::TileGroup>(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
-          schemas2, column_map2, tuple_count)));
+          schemas2, layout2, tuple_count)));
 
   TestingExecutorUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
   TestingExecutorUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
@@ -176,7 +184,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       new catalog::Schema({id_column, manager_id_column, name_column}));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME,
                            DEFAULT_DB_NAME, std::move(table_schema),
                            CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
@@ -186,7 +194,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Table created!");
 
   storage::DataTable *table = catalog->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end

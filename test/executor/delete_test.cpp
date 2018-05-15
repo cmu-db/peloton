@@ -116,7 +116,7 @@ TEST_F(DeleteTests, VariousOperations) {
       new catalog::Schema({id_column, name_column}));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFUALT_SCHEMA_NAME,
+  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME,
                            DEFAULT_DB_NAME, std::move(table_schema),
                            CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
@@ -125,7 +125,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Table created!");
 
   storage::DataTable *table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();

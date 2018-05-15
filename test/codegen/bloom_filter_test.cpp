@@ -213,7 +213,7 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   int curr_size = 0;
   std::vector<int> numbers;
   std::unordered_set<int> number_set;
-  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                                            table1_name, txn);
   while (curr_size < table1_target_size) {
     // Find a unique random number
@@ -234,7 +234,7 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   LOG_INFO("Finish populating test1");
 
   // Load the inner table which contains twice tuples as the outer table
-  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                                            table2_name, txn);
   unsigned outer_table_cardinality = numbers.size() * outer_to_inner_ratio;
   for (unsigned i = 0; i < outer_table_cardinality; i++) {
@@ -334,7 +334,7 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
   }
   auto *catalog = catalog::Catalog::GetInstance();
   catalog->CreateTable(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name,
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name,
       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)), txn);
 }
 
