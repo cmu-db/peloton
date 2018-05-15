@@ -66,7 +66,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::vector<int> admissible_indexes;
   query_strs.push_back("SELECT * FROM " + table_name +
                        " WHERE a < 1 or b > 4 GROUP BY a");
-  // 2 indexes will be choosen in GetAdmissibleIndexes - a, b 
+  // 2 indexes will be choosen in GetAdmissibleIndexes - a, b
   admissible_indexes.push_back(2);
   query_strs.push_back("SELECT a, b, c FROM " + table_name +
                        " WHERE a < 1 or b > 4 ORDER BY a");
@@ -91,7 +91,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
     brain::IndexSelection is(w, knobs, txn);
 
     brain::IndexConfiguration ic;
-    is.GetAdmissibleIndexes(queries[i], ic);
+    is.GetAdmissibleIndexes(queries[i].first, ic);
     LOG_DEBUG("Admissible indexes %ld, %s", i, ic.ToString().c_str());
     auto indexes = ic.GetIndexes();
     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
@@ -502,16 +502,16 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
   expected_config = {expected_indexes};
 
-  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> 
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>>
   alternate_expected_indexes = {
       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
       testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-  brain::IndexConfiguration alternate_expected_config = 
+  brain::IndexConfiguration alternate_expected_config =
       {alternate_expected_indexes};
 
   // It can choose either AC or CA based on the distribution of C and A
-  EXPECT_TRUE((expected_config == best_config) || 
+  EXPECT_TRUE((expected_config == best_config) ||
               (alternate_expected_config == best_config));
 
   /** Test 6

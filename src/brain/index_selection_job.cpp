@@ -163,6 +163,7 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
 void IndexSelectionJob::DropIndexRPC(oid_t database_oid,
                                      catalog::IndexCatalogObject *index) {
   // TODO: Remove hardcoded database name and server end point.
+  // TODO: Have to be removed when merged with tli's code.
   capnp::EzRpcClient client("localhost:15445");
   PelotonService::Client peloton_service = client.getMain<PelotonService>();
 

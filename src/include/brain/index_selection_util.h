@@ -135,12 +135,14 @@ class IndexConfiguration {
   /**
    * @brief - Adds an index into the configuration
    */
-  void AddIndexObject(const std::shared_ptr<HypotheticalIndexObject> &index_info);
+  void AddIndexObject(
+      const std::shared_ptr<HypotheticalIndexObject> &index_info);
 
   /**
    * @brief - Removes an index from the configuration
    */
-  void RemoveIndexObject(const std::shared_ptr<HypotheticalIndexObject> &index_info);
+  void RemoveIndexObject(
+      const std::shared_ptr<HypotheticalIndexObject> &index_info);
 
   /**
    * @brief - Returns the number of indexes in the configuration
@@ -236,21 +238,24 @@ class Workload {
   /**
    * @brief - Constructor
    */
-  Workload(std::shared_ptr<parser::SQLStatement> query,
+  Workload(std::pair<std::shared_ptr<parser::SQLStatement>,
+                     std::unordered_set<std::string>> query,
            std::string database_name)
       : sql_queries_({query}), database_name(database_name) {}
 
   /**
    * @brief - Add a query into the workload
    */
-  inline void AddQuery(std::shared_ptr<parser::SQLStatement> query) {
-    sql_queries_.push_back(query);
+  inline void AddQuery(std::shared_ptr<parser::SQLStatement> query,
+                       std::unordered_set<std::string> tables) {
+    sql_queries_.push_back(std::make_pair(query, tables));
   }
 
   /**
    * @brief - Return the queries
    */
-  inline const std::vector<std::shared_ptr<parser::SQLStatement>>
+  inline const std::vector<std::pair<std::shared_ptr<parser::SQLStatement>,
+                                     std::unordered_set<std::string>>>
       &GetQueries() {
     return sql_queries_;
   }
@@ -268,11 +273,23 @@ class Workload {
     return database_name;
   };
 
+  /**
+   * * @brief GetTableNamesReferenced
+   * Given a parsed & bound query, this function returns all the tables
+   * referenced.
+   * @param query - a parsed and bound SQL statement
+   * @param table_names - where the table names will be stored.
+   */
+  static void GetTableNamesReferenced(
+      std::shared_ptr<parser::SQLStatement> query,
+      std::unordered_set<std::string> &table_names);
+
  private:
   /**
-   * Parsed SQL queries.
+   * Parsed SQL queries along with the referenced table names.
    */
-  std::vector<std::shared_ptr<parser::SQLStatement>> sql_queries_;
+  std::vector<std::pair<std::shared_ptr<parser::SQLStatement>,
+                        std::unordered_set<std::string>>> sql_queries_;
   std::string database_name;
 };
 
