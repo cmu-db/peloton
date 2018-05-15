@@ -83,7 +83,7 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
     // Drop useless indexes.
     for (auto index : drop_indexes) {
-      LOG_DEBUG("Dropping Index: %s", index_name.c_str());
+      LOG_DEBUG("Dropping Index: %s", index->GetIndexName().c_str());
       DropIndexRPC(database_object->GetDatabaseOid(), index.get());
     }
 
