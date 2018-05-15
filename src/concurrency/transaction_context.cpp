@@ -226,7 +226,7 @@ void TransactionContext::ExecOnCommitTriggers() {
 
 bool TransactionContext::UnlockAllLocks() {
   if (lock_info_.size() == 0) {
-    LOG_WARN("Unlock shared Lock: no lock found!");
+    LOG_TRACE("Unlock shared Lock: no lock found!");
     return true;
   }
   concurrency::LockManager *lm = concurrency::LockManager::GetInstance();
@@ -239,7 +239,7 @@ bool TransactionContext::UnlockAllLocks() {
           (void *)lm, lock_info_[i].oid);
       if (!lm->UnlockShared(lock_info_[i].oid)) {
         result = false;
-        LOG_WARN(
+        LOG_TRACE(
             "Unlock shared Lock failed: lock mamager address is %p, table oid "
             "is %u",
             (void *)lm, lock_info_[i].oid);
@@ -251,7 +251,7 @@ bool TransactionContext::UnlockAllLocks() {
           (void *)lm, lock_info_[i].oid);
       if (!lm->UnlockExclusive(lock_info_[i].oid)) {
         result = false;
-        LOG_WARN(
+        LOG_TRACE(
             "Unlock shared Lock failed: lock mamager address is %p, table oid "
             "is %u",
             (void *)lm, lock_info_[i].oid);
