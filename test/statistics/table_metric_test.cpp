@@ -50,47 +50,69 @@ TEST_F(TableMetricTests, AccessTest) {
   auto db_table_ids = TestingStatsUtil::GetDbTableID("foo");
 
   aggregator.Aggregate();
-  auto origin_metric = TableMetricTests::GetTableMetricObject(
+  auto initial_table_metric = TableMetricTests::GetTableMetricObject(
       db_table_ids.first, db_table_ids.second);
+
+  size_t inserts = 0;
+  size_t reads = 0;
+  size_t updates = 0;
+  size_t deletes = 0;
+
+  // no metrics logged initially
+  EXPECT_EQ(inserts, initial_table_metric->GetInserts());
+  EXPECT_EQ(updates, initial_table_metric->GetUpdates());
+  EXPECT_EQ(reads, initial_table_metric->GetReads());
+  EXPECT_EQ(deletes, initial_table_metric->GetDeletes());
 
   StatsWorkload workload;
 
-  size_t insert_inc = 3;
-  // FIXME: This is wrong now
-  size_t read_inc = 2;
-  size_t update_inc = 2;
-  size_t delete_inc = 2;
-
+  // no primary key, so all range scans
   workload.AddQuery("INSERT INTO foo VALUES (1, 2);");
   workload.AddQuery("INSERT INTO foo VALUES (2, 2);");
   workload.AddQuery("INSERT INTO foo VALUES (5, 2);");
-  workload.AddQuery("SELECT * FROM foo;");
-  workload.AddQuery("SELECT * FROM foo;");
-  workload.AddQuery("UPDATE foo SET year = 2018 WHERE id = 2");
-  workload.AddQuery("UPDATE foo SET year = 2016 WHERE id = 1");
-  workload.AddQuery("DELETE FROM foo WHERE id = 1");
-  workload.AddQuery("DELETE FROM foo WHERE year = 2018");
+  inserts += 3;
 
+  workload.AddQuery("SELECT * FROM foo;");  // 3 rows in table
+  reads += 3;
+
+  workload.AddQuery("SELECT * FROM foo;");  // 3 rows in table
+  reads += 3;
+
+  workload.AddQuery(
+      "UPDATE foo SET year = 2018 WHERE id = 2");  // 3 rows in table
+  reads += 3;
+  updates += 1;
+
+  workload.AddQuery(
+      "UPDATE foo SET year = 2016 WHERE id = 1");  // 3 rows in table
+  reads += 3;
+  updates += 1;
+
+  workload.AddQuery("DELETE FROM foo WHERE id = 1");  // 3 rows in table
+  reads += 3;
+  deletes += 1;
+
+  workload.AddQuery("DELETE FROM foo WHERE year = 2018");  // 2 rows in table
+  reads += 2;
+  deletes += 1;
+
+  // execute workload
   workload.DoQueries();
 
   aggregator.Aggregate();
-  auto table_metric_object = TableMetricTests::GetTableMetricObject(
+  auto final_table_metric = TableMetricTests::GetTableMetricObject(
       db_table_ids.first, db_table_ids.second);
 
-  EXPECT_EQ(origin_metric->GetInserts() + insert_inc,
-            table_metric_object->GetInserts());
-  EXPECT_EQ(origin_metric->GetUpdates() + update_inc,
-            table_metric_object->GetUpdates());
-  // FIXME this is wrong now
-  EXPECT_EQ(origin_metric->GetReads() + read_inc,
-            table_metric_object->GetReads());
-  EXPECT_EQ(origin_metric->GetDeletes() + delete_inc,
-            table_metric_object->GetDeletes());
+  EXPECT_EQ(inserts, final_table_metric->GetInserts());
+  EXPECT_EQ(updates, final_table_metric->GetUpdates());
+  EXPECT_EQ(reads, final_table_metric->GetReads());
+  EXPECT_EQ(deletes, final_table_metric->GetDeletes());
 
   // Clean up
   EXPECT_EQ(ResultType::SUCCESS,
             TestingSQLUtil::ExecuteSQLQuery("DROP TABLE foo;"));
 };
+
 TEST_F(TableMetricTests, MemoryMetricTest) {
   stats::StatsAggregator aggregator(1);
 

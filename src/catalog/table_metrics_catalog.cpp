@@ -58,7 +58,7 @@ TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
                           "." CATALOG_SCHEMA_NAME "." TABLE_METRICS_CATALOG_NAME
                           " ("
                           "table_oid      INT NOT NULL PRIMARY KEY, "
-                          "reads          INT NOT NULL, "
+                          "reads          BIGINT NOT NULL, "
                           "updates        BIGINT NOT NULL, "
                           "inserts        BIGINT NOT NULL, "
                           "deletes        BIGINT NOT NULL, "

@@ -56,6 +56,8 @@ class TestingStatsUtil {
   static void Initialize();
 
   static std::pair<oid_t, oid_t> GetDbTableID(const std::string &table_name);
+
+  static std::pair<oid_t, oid_t> GetDbIndexID(const std::string &table_name);
 };
 
 class StatsWorkload {

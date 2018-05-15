@@ -136,5 +136,18 @@ std::pair<oid_t, oid_t> TestingStatsUtil::GetDbTableID(
   return {database_id, table_id};
 }
 
+std::pair<oid_t, oid_t> TestingStatsUtil::GetDbIndexID(
+    const std::string &table_name) {
+  auto txn =
+      concurrency::TransactionManagerFactory::GetInstance().BeginTransaction();
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
+  auto database_id = table->GetDatabaseOid();
+  auto metadata = table->GetIndex(0)->GetMetadata();
+  auto index_id = metadata->GetOid();
+  concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+  return {database_id, index_id};
+}
+
 }  // namespace test
 }  // namespace peloton
