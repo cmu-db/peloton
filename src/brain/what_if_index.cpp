@@ -40,9 +40,6 @@ WhatIfIndex::GetCostAndBestPlanTree(
     concurrency::TransactionContext *txn) {
   LOG_DEBUG("***** GetCostAndBestPlanTree **** \n");
 
-  LOG_DEBUG("Tables referenced count: %ld", tables_used.size());
-  PELOTON_ASSERT(tables_used.size() > 0);
-
   // TODO [vamshi]: Improve this loop.
   // Load the indexes into the cache for each table so that the optimizer uses
   // the indexes that we provide.
@@ -83,7 +80,7 @@ WhatIfIndex::GetCostAndBestPlanTree(
   optimizer::Optimizer optimizer;
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query.first, txn);
 
-  LOG_DEBUG("Query: %s", query->GetInfo().c_str());
+  LOG_DEBUG("Query: %s", query.first->GetInfo().c_str());
   LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
   LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
   LOG_DEBUG("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
