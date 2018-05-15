@@ -6,24 +6,7 @@
 //
 // Identification: src/include/catalog/table_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_table
-//
-// Schema: (column position: column_name)
-// 0: table_oid (pkey)
-// 1: table_name,
-// 2: schema_name (the namespace name that this table belongs to)
-// 3: database_oid
-// 4: version_id: for fast ddl(alter table)
-//
-// Indexes: (index offset: indexed columns)
-// 0: table_oid (unique & primary key)
-// 1: table_name & schema_name(unique)
-// 2: database_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -83,7 +66,6 @@ class TableCatalogObject {
   inline const std::string &GetSchemaName() { return schema_name; }
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
-
 
   // NOTE: should be only used by What-if API.
   void SetValidIndexObjects(bool is_valid);

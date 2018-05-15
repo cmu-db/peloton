@@ -28,8 +28,8 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   // Find all the tables that are referenced in the parsed query.
   std::unordered_set<std::string> tables_used;
   Workload::GetTableNamesReferenced(query, tables_used);
-  return GetCostAndBestPlanTree(std::make_pair(query, tables_used),
-                                config, database_name, txn);
+  return GetCostAndBestPlanTree(std::make_pair(query, tables_used), config,
+                                database_name, txn);
 }
 
 std::unique_ptr<optimizer::OptimizerPlanInfo>

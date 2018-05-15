@@ -6,6 +6,18 @@
 //
 // Identification: src/storage/tile_group_header.cpp
 //
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tile_group_header.cpp
+//
+// Identification: src/storage/tile_group_header.cpp
+//
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//

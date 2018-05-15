@@ -224,7 +224,7 @@ void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
 
 // Inserts specified number of tuples into the table with random values.
 void TestingIndexSelectionUtil::InsertIntoTable(TableSchema schema,
-                                                 long num_tuples) {
+                                                long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;

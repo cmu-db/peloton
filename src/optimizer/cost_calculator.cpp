@@ -61,7 +61,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
   auto index_object = op->table_->GetIndexObject(op->index_id);
   const auto &key_attr_list = index_object->GetKeyAttrs();
   // Loop over index to retrieve helpful index columns
-  // Consider all predicates that could be accelerated by the index, 
+  // Consider all predicates that could be accelerated by the index,
   // i.e. till the first column with no equality predicate on it
   // index cols (a, b, c)
   // example1 : predicates(a=1 AND b=2 AND c=3) index helps on both a, b and c
