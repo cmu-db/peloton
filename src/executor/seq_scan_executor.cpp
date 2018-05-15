@@ -208,7 +208,7 @@ bool SeqScanExecutor::DExecute() {
                                                        acquire_owner);
             if (!res) {
               if (visibility == VisibilityType::OK) {
-                LOG_DEBUG("perform read failed in seq scan!");
+                LOG_TRACE("perform read failed in seq scan!");
                 transaction_manager.SetTransactionResult(current_txn,
                                                          ResultType::FAILURE);
                 return res;
