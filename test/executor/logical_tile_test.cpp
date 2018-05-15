@@ -98,10 +98,14 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   std::shared_ptr<storage::TileGroup> tile_group(
       TestingExecutorUtil::CreateTileGroup(tuple_count));
 
+  std::vector<const catalog::Schema *> tile_schemas;
+  for (unsigned int i = 0; i < tile_group->NumTiles(); i++) {
+    tile_schemas.push_back(tile_group->GetTile(i)->GetSchema());
+  }
+
   // Create tuple schema from tile schemas.
-  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
-      catalog::Schema::AppendSchemaList(tile_schemas));
+      catalog::Schema::AppendSchemaPtrList(tile_schemas));
 
   // Create tuples and insert them into tile group.
   const bool allocate = true;
@@ -156,10 +160,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
 
-  PELOTON_ASSERT(tile_schemas.size() == 2);
-  catalog::Schema *schema1 = &tile_schemas[0];
-  catalog::Schema *schema2 = &tile_schemas[1];
-  oid_t column_count = schema2->GetColumnCount();
+  oid_t column_count = tile_schemas[1]->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     logical_tile->AddColumn(base_tile_ref, column_itr, column_itr);
   }
@@ -185,12 +186,12 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   logical_tile->AddPositionList(std::move(position_list3));
   logical_tile->AddPositionList(std::move(position_list4));
 
-  oid_t column_count1 = schema1->GetColumnCount();
+  oid_t column_count1 = tile_schemas[0]->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count1; column_itr++) {
     logical_tile->AddColumn(base_tile_ref1, column_itr, column_itr);
   }
 
-  oid_t column_count2 = schema2->GetColumnCount();
+  oid_t column_count2 = tile_schemas[1]->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count2; column_itr++) {
     logical_tile->AddColumn(base_tile_ref2, column_itr,
                             column_count1 + column_itr);

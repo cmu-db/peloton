@@ -16,9 +16,11 @@
 #include <string>
 #include <algorithm>
 
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/timer.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -29,9 +31,7 @@ LayoutTuner& LayoutTuner::GetInstance() {
   return layout_tuner;
 }
 
-LayoutTuner::LayoutTuner() {
-  // Nothing to do here !
-}
+LayoutTuner::LayoutTuner() {}
 
 LayoutTuner::~LayoutTuner() {}
 
@@ -43,42 +43,6 @@ void LayoutTuner::Start() {
   layout_tuner_thread = std::thread(&tuning::LayoutTuner::Tune, this);
 
   LOG_INFO("Started layout tuner");
-}
-
-/**
- * @brief Print information from column map, used to inspect layout generated
- * from clusterer.
- *
- * @param column_map The column map to be printed.
- */
-std::string LayoutTuner::GetColumnMapInfo(const column_map_type& column_map) {
-  std::stringstream ss;
-  std::map<oid_t, std::vector<oid_t>> tile_column_map;
-
-  // Construct a tile_id => [col_ids] map
-  for (auto itr = column_map.begin(); itr != column_map.end(); itr++) {
-    oid_t col_id = itr->first;
-    oid_t tile_id = itr->second.first;
-
-    if (tile_column_map.find(tile_id) == tile_column_map.end()) {
-      tile_column_map[tile_id] = {};
-    }
-
-    tile_column_map[tile_id].push_back(col_id);
-  }
-
-  // Construct a string from tile_col_map
-  for (auto itr = tile_column_map.begin(); itr != tile_column_map.end();
-       itr++) {
-    oid_t tile_id = itr->first;
-    ss << tile_id << ": ";
-    for (oid_t col_id : itr->second) {
-      ss << col_id << " ";
-    }
-    ss << " :: ";
-  }
-
-  return ss.str();
 }
 
 Sample GetClustererSample(const Sample& sample, oid_t column_count) {
@@ -112,7 +76,7 @@ Sample GetClustererSample(const Sample& sample, oid_t column_count) {
   return clusterer_sample;
 }
 
-void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
+bool LayoutTuner::UpdateDefaultPartition(storage::DataTable *table) {
   oid_t column_count = table->GetSchema()->GetColumnCount();
 
   // Set up clusterer
@@ -123,7 +87,9 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
 
   // Check if we have any samples
   if (samples.empty()) {
-    return;
+    LOG_DEBUG("Table[%u] contains no LayoutSamples. Layout not tuned.",
+              table->GetOid());
+    return false;
   }
 
   for (auto sample : samples) {
@@ -142,12 +108,27 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   table->ClearLayoutSamples();
 
   // Desired number of tiles
-  auto layout = clusterer.GetPartitioning(tile_count);
+  auto column_map = clusterer.GetPartitioning(tile_count);
 
-  LOG_TRACE("%s", GetColumnMapInfo(layout).c_str());
-
+  auto table_oid = table->GetOid();
+  auto database_oid = table->GetDatabaseOid();
   // Update table layout
-  table->SetDefaultLayout(layout);
+  // Since we need the layout to be updated in the catalog,
+  // Start a transaction before updating the default layout.
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  if (catalog->CreateDefaultLayout(database_oid, table_oid, column_map, txn) ==
+      nullptr) {
+    txn_manager.AbortTransaction(txn);
+    LOG_DEBUG("Layout Update to failed.");
+    return false;
+  }
+  txn_manager.CommitTransaction(txn);
+
+  UNUSED_ATTRIBUTE auto layout = table->GetDefaultLayout();
+  LOG_TRACE("Updated Layout: %s", layout.GetInfo().c_str());
+  return true;
 }
 
 void LayoutTuner::Tune() {
@@ -164,7 +145,8 @@ void LayoutTuner::Tune() {
       table->TransformTileGroup(tile_group_offset, theta);
 
       // Update partitioning periodically
-      UpdateDefaultPartition(table);
+      // TODO Lin/Tianyu - Add Failure Handling/Retry logic.
+      UNUSED_ATTRIBUTE bool update_result = UpdateDefaultPartition(table);
 
       // Sleep a bit
       std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));

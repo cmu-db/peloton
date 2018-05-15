@@ -18,6 +18,7 @@
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
@@ -328,6 +329,87 @@ TableCatalog::TableCatalog(
            IndexConstraintType::UNIQUE);
   AddIndex({3}, TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
+}
+
+/** @brief   Insert layout object into the cache.
+ *  @param   layout  Layout object to be inserted
+ *  @return  false if layout already exists in cache
+ */
+bool TableCatalogObject::InsertLayout(
+    std::shared_ptr<const storage::Layout> layout) {
+  // Invalid object
+  if (!layout || (layout->GetOid() == INVALID_OID)) {
+    return false;
+  }
+
+  oid_t layout_id = layout->GetOid();
+  // layout is already present in the cache.
+  if (layout_objects_.find(layout_id) != layout_objects_.end()) {
+    LOG_DEBUG("Layout %u already exists in cache!", layout_id);
+    return false;
+  }
+
+  layout_objects_.insert(std::make_pair(layout_id, layout));
+  return true;
+}
+
+/** @brief   evict all layout objects from cache. */
+void TableCatalogObject::EvictAllLayouts() {
+  layout_objects_.clear();
+  valid_layout_objects_ = false;
+}
+
+/** @brief   Get all layout objects of this table.
+ *           Add it to the cache if necessary.
+ *  @param   cached_only If set to true, don't fetch the layout objects.
+ *  @return  Map from layout_oid to cached layout object.
+ */
+std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
+TableCatalogObject::GetLayouts(bool cached_only) {
+  if (!valid_layout_objects_ && !cached_only) {
+    // get layout catalog objects from pg_layout
+    auto pg_layout = Catalog::GetInstance()
+                         ->GetSystemCatalogs(database_oid)
+                         ->GetLayoutCatalog();
+    pg_layout->GetLayouts(table_oid, txn);
+    valid_column_objects = true;
+  }
+  return layout_objects_;
+}
+
+/** @brief   Get the layout object of the given layout_id.
+ *  @param   layout_id The id of the layout to be fetched.
+ *  @param   cached_only If set to true, don't fetch the layout objects.
+ *  @return  Layout object of corresponding to the layout_id if present.
+ */
+std::shared_ptr<const storage::Layout> TableCatalogObject::GetLayout(
+    oid_t layout_id, bool cached_entry) {
+  // fetch layout objects in case we have not
+  GetLayouts(cached_entry);
+  auto it = layout_objects_.find(layout_id);
+  if (it != layout_objects_.end()) {
+    return it->second;
+  }
+  return nullptr;
+}
+
+/** @brief   Evict layout from the cache.
+ *  @param   layout_id Id of the layout to be deleted.
+ *  @return  true if layout_id is found and evicted; false if not found.
+ */
+bool TableCatalogObject::EvictLayout(oid_t layout_id) {
+  if (!valid_layout_objects_) return false;
+
+  // find layout from the cache
+  auto it = layout_objects_.find(layout_id);
+  if (it == layout_objects_.end()) {
+    return false;  // layout_id not found in cache
+  }
+
+  auto layout = it->second;
+  PELOTON_ASSERT(layout);
+  layout_objects_.erase(it);
+  return true;
 }
 
 TableCatalog::~TableCatalog() {}

@@ -76,7 +76,7 @@ struct TableRef {
     }
 
     if (table_info_->schema_name.empty()) {
-      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
+      table_info_->schema_name = DEFAULT_SCHEMA_NAME;
     }
   }
 

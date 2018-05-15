@@ -15,15 +15,16 @@
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "sql/testing_sql_util.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
-#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
@@ -79,11 +80,11 @@ TEST_F(CatalogTests, CreatingTable) {
       new catalog::Schema({id_column, name_column}));
 
   catalog::Catalog::GetInstance()->CreateTable(
-      "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
-  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFUALT_SCHEMA_NAME,
+      "emp_db", DEFAULT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFAULT_SCHEMA_NAME,
                                                "department_table",
                                                std::move(table_schema_2), txn);
-  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFUALT_SCHEMA_NAME,
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFAULT_SCHEMA_NAME,
                                                "salary_table",
                                                std::move(table_schema_3), txn);
   // insert random tuple into DATABASE_METRICS_CATALOG and check
@@ -112,7 +113,7 @@ TEST_F(CatalogTests, CreatingTable) {
   EXPECT_EQ('a', *param1.buf);
   // check colum object
   EXPECT_EQ("name", catalog::Catalog::GetInstance()
-                        ->GetTableObject("emp_db", DEFUALT_SCHEMA_NAME,
+                        ->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
                                          "department_table", txn)
                         ->GetColumnObject(1)
                         ->GetColumnName());
@@ -124,7 +125,7 @@ TEST_F(CatalogTests, TableObject) {
   auto txn = txn_manager.BeginTransaction();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn);
+      "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   auto index_objects = table_object->GetIndexObjects();
   auto column_objects = table_object->GetColumnObjects();
@@ -158,7 +159,7 @@ TEST_F(CatalogTests, TableObject) {
   bool update_result = pg_table->UpdateVersionId(1, department_table_oid, txn);
   // get version id after update, invalidate old cache
   table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn);
+      "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
   uint32_t version_oid = table_object->GetVersionId();
   EXPECT_NE(department_table_oid, INVALID_OID);
   EXPECT_EQ(update_result, true);
@@ -234,23 +235,27 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables
+  // inside. Additionally, we create 3 tables for the test.
+  oid_t expected_table_count = CATALOG_TABLES_COUNT + 3;
   EXPECT_EQ(
-      11,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
   EXPECT_NE(nullptr, database_object);
-  catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
+  catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
                                              "department_table", txn);
 
   database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
-      database_object->GetTableObject("department_table", DEFUALT_SCHEMA_NAME);
+      database_object->GetTableObject("department_table", DEFAULT_SCHEMA_NAME);
+  // Decrement expected_table_count to account for the dropped table.
+  expected_table_count--;
   EXPECT_EQ(
-      10,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -259,30 +264,31 @@ TEST_F(CatalogTests, DroppingTable) {
   // Try to drop again
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
-                   "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn),
+                   "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn),
                CatalogException);
-  //
   EXPECT_EQ(
-      10,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
-                   "emp_db", DEFUALT_SCHEMA_NAME, "void_table", txn),
+                   "emp_db", DEFAULT_SCHEMA_NAME, "void_table", txn),
                CatalogException);
   EXPECT_EQ(
-      10,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
+  catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
                                              "emp_table", txn);
+  // Account for the dropped table.
+  expected_table_count--;
   EXPECT_EQ(
-      9,
+      expected_table_count,
       (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }
@@ -301,6 +307,110 @@ TEST_F(CatalogTests, DroppingDatabase) {
 TEST_F(CatalogTests, DroppingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
   EXPECT_NE(nullptr, catalog);
+}
+
+TEST_F(CatalogTests, LayoutCatalogTest) {
+  // This test creates a table, changes its layout.
+  // Create another additional layout.
+  // Ensure that default is not changed.
+  // Drops layout and verifies that the default_layout is reset.
+  // It also queries pg_layout to ensure that the entry is removed.
+
+  auto db_name = "temp_db";
+  auto table_name = "temp_table";
+  auto catalog = catalog::Catalog::GetInstance();
+  // Create database.
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(ResultType::SUCCESS, catalog->CreateDatabase(db_name, txn));
+
+  // Create table.
+  auto val0 = catalog::Column(type::TypeId::INTEGER,
+                              type::Type::GetTypeSize(type::TypeId::INTEGER),
+                              "val0", true);
+  auto val1 = catalog::Column(type::TypeId::INTEGER,
+                              type::Type::GetTypeSize(type::TypeId::INTEGER),
+                              "val1", true);
+  auto val2 = catalog::Column(type::TypeId::INTEGER,
+                              type::Type::GetTypeSize(type::TypeId::INTEGER),
+                              "val2", true);
+  auto val3 = catalog::Column(type::TypeId::INTEGER,
+                              type::Type::GetTypeSize(type::TypeId::INTEGER),
+                              "val3", true);
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({val0, val1, val2, val3}));
+  EXPECT_EQ(ResultType::SUCCESS,
+            catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
+                                 std::move(table_schema), txn));
+  txn_manager.CommitTransaction(txn);
+
+  txn = txn_manager.BeginTransaction();
+  auto database_oid =
+      catalog->GetDatabaseObject(db_name, txn)->GetDatabaseOid();
+  auto table_object =
+      catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto table_oid = table_object->GetTableOid();
+  auto table =
+      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Change default layout.
+
+  std::map<oid_t, std::pair<oid_t, oid_t>> default_map;
+  default_map[0] = std::make_pair(0, 0);
+  default_map[1] = std::make_pair(0, 1);
+  default_map[2] = std::make_pair(1, 0);
+  default_map[3] = std::make_pair(1, 1);
+
+  txn = txn_manager.BeginTransaction();
+  auto default_layout =
+      catalog->CreateDefaultLayout(database_oid, table_oid, default_map, txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_NE(nullptr, default_layout);
+
+  // Create additional layout.
+  std::map<oid_t, std::pair<oid_t, oid_t>> non_default_map;
+  non_default_map[0] = std::make_pair(0, 0);
+  non_default_map[1] = std::make_pair(0, 1);
+  non_default_map[2] = std::make_pair(1, 0);
+  non_default_map[3] = std::make_pair(1, 1);
+
+  txn = txn_manager.BeginTransaction();
+  auto other_layout =
+      catalog->CreateLayout(database_oid, table_oid, non_default_map, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Check that the default layout is still the same.
+  EXPECT_NE(*other_layout.get(), table->GetDefaultLayout());
+
+  // Drop the default layout.
+  auto default_layout_oid = default_layout->GetOid();
+  txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(ResultType::SUCCESS, catalog->DropLayout(database_oid, table_oid,
+                                                     default_layout_oid, txn));
+  txn_manager.CommitTransaction(txn);
+
+  // Check that default layout is reset and set to row_store.
+  EXPECT_NE(*default_layout.get(), table->GetDefaultLayout());
+  EXPECT_TRUE(table->GetDefaultLayout().IsRowStore());
+
+  // Query pg_layout to ensure that the entry is dropped
+  txn = txn_manager.BeginTransaction();
+  auto pg_layout = catalog->GetSystemCatalogs(database_oid)->GetLayoutCatalog();
+  EXPECT_EQ(nullptr,
+            pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
+
+  // The additional layout must be present in pg_layout
+  auto other_layout_oid = other_layout->GetOid();
+  EXPECT_EQ(
+      *(other_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));
+  txn_manager.CommitTransaction(txn);
+
+  // Drop database
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName(db_name, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test
