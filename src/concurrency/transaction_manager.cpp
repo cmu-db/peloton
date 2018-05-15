@@ -78,7 +78,15 @@ TransactionContext *TransactionManager::BeginTransaction(
   txn->SetTimestamp(function::DateFunctions::Now());
 
   // Record current transaction in transaction set
-  //current_transactions_.insert(txn->GetTransactionId());
+  // WARN: Currently, tbb's concurrent insert seems to be not working
+  // Have to still use locks to prevent segfault.
+  // This operation locks the txn manager! When concurrency level is
+  // high, this may be costly. Since this implementation is only for
+  // populate index concurrently, maybe we can try to disable it first
+  // to see if we have any workarounds.
+  mtx_.lock();
+  current_transactions_.insert(txn->GetTransactionId());
+  mtx_.unlock();
 
   return txn;
 }
@@ -95,9 +103,9 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // Record deletion of transaction in current transaction set
-  //mtx_.lock();
-  //current_transactions_.unsafe_erase(current_txn->GetTransactionId());
-  //mtx_.unlock();
+  mtx_.lock();
+  current_transactions_.unsafe_erase(current_txn->GetTransactionId());
+  mtx_.unlock();
 
   if (gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
@@ -273,13 +281,11 @@ VisibilityType TransactionManager::IsVisible(
 // transaction set. Return true if overlaps, false otherwise.
 bool TransactionManager::CheckConcurrentTxn(
     tbb::concurrent_unordered_set<txn_id_t> *input) {
-  /*
   for (auto itr = input->begin(); itr != input->end(); itr++) {
     if (current_transactions_.find(*itr) != current_transactions_.end()) {
       return true;
     }
-  }*/
-  input->size();
+  }
   return false;
 }
 
