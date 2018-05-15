@@ -37,31 +37,45 @@
 #include "storage/tile_group_header.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
 
 class TestingStatsUtil {
  public:
-  static void ShowTable(std::string database_name, std::string table_name);
-
-  static storage::Tuple PopulateTuple(const catalog::Schema *schema,
-                                      int first_col_val, int second_col_val,
-                                      int third_col_val, int fourth_col_val);
-
   static void CreateTable(bool has_primary_key = true);
-
 
   static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
                                                   std::string val = "hello");
 
-  static std::shared_ptr<Statement> GetDeleteStmt();
-
-  static std::shared_ptr<Statement> GetUpdateStmt();
-
   static void ParseAndPlan(Statement *statement, std::string sql);
 
   static int AggregateCounts();
+
+  static void Initialize();
+
+  static std::pair<oid_t, oid_t> GetDbTableID(const std::string &table_name);
+};
+
+class StatsWorkload {
+ public:
+  inline void DoQueries() {
+    for (auto &query : queries_) {
+      EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery(query));
+    }
+  }
+
+  inline void AddQuery(std::string query) { queries_.push_back(query); }
+
+  inline StatsWorkload MakeCopy() {
+    StatsWorkload copy;
+    copy.queries_ = this->queries_;
+    return copy;
+  }
+
+ private:
+  std::vector<std::string> queries_;
 };
 
 }  // namespace test

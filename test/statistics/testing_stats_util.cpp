@@ -27,59 +27,14 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
-#include "storage/tile.h"
+#include "storage/storage_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace test {
 
-void TestingStatsUtil::ShowTable(std::string database_name,
-                                 std::string table_name) {
-  std::unique_ptr<Statement> statement;
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-
-  std::vector<type::Value> params;
-  std::vector<ResultValue> result;
-  std::string sql = "SELECT * FROM " + database_name + "." + table_name;
-  statement.reset(new Statement("SELECT", sql));
-  // using transaction to optimize
-  auto txn = txn_manager.BeginTransaction();
-  auto select_stmt = peloton_parser.BuildParseTree(sql);
-  statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
-  LOG_DEBUG("%s",
-            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                            result_format);
-  txn_manager.CommitTransaction(txn);
-}
-
-storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
-                                               int first_col_val,
-                                               int second_col_val,
-                                               int third_col_val,
-                                               int fourth_col_val) {
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  storage::Tuple tuple(schema, true);
-  tuple.SetValue(0, type::ValueFactory::GetIntegerValue(first_col_val),
-                 testing_pool);
-
-  tuple.SetValue(1, type::ValueFactory::GetIntegerValue(second_col_val),
-                 testing_pool);
-
-  tuple.SetValue(2, type::ValueFactory::GetDecimalValue(third_col_val),
-                 testing_pool);
-
-  type::Value string_value =
-      type::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
-  tuple.SetValue(3, string_value, testing_pool);
-  return tuple;
-}
-
+// TODO(Tianyi) remove this thing when we fix COPY and change copy test
 void TestingStatsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
@@ -107,6 +62,7 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   txn_manager.CommitTransaction(txn);
 }
 
+// TODO(Tianyi) remove this thing when we fix COPY and change copy test
 std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
                                                            std::string val) {
   std::shared_ptr<Statement> statement;
@@ -120,26 +76,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
   return statement;
 }
 
-std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
-  std::shared_ptr<Statement> statement;
-  std::string sql = "DELETE FROM emp_db.public.department_table";
-  LOG_INFO("Query: %s", sql.c_str());
-  statement.reset(new Statement("DELETE", sql));
-  ParseAndPlan(statement.get(), sql);
-  return statement;
-}
-
-std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
-  std::shared_ptr<Statement> statement;
-  std::string sql =
-      "UPDATE emp_db.public.department_table SET dept_name = 'CS' WHERE "
-      "dept_id = 1";
-  LOG_INFO("Query: %s", sql.c_str());
-  statement.reset(new Statement("UPDATE", sql));
-  ParseAndPlan(statement.get(), sql);
-  return statement;
-}
-
+// TODO(Tianyi) remove this thing when we fix COPY and change copy test
 void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -164,6 +101,39 @@ int TestingStatsUtil::AggregateCounts() {
   if (result.empty()) return 0;
 
   return dynamic_cast<stats::TestMetricRawData &>(*result[0]).count_;
+}
+
+void TestingStatsUtil::Initialize() {
+  // Setup Metric
+  settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
+                                    static_cast<int>(StatsModeType::ENABLE));
+  // Initialize catalog
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+  settings::SettingsManager::GetInstance().InitializeCatalog();
+  EXPECT_EQ(1, storage::StorageManager::GetInstance()->GetDatabaseCount());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  // begin a transaction
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  storage::Database *database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME, txn);
+  EXPECT_EQ(ResultType::SUCCESS, txn_manager.CommitTransaction(txn));
+  EXPECT_NE(nullptr, database);
+}
+
+std::pair<oid_t, oid_t> TestingStatsUtil::GetDbTableID(
+    const std::string &table_name) {
+  auto txn =
+      concurrency::TransactionManagerFactory::GetInstance().BeginTransaction();
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
+  auto table_id = table->GetOid();
+  auto database_id = table->GetDatabaseOid();
+  concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(txn);
+  return {database_id, table_id};
 }
 
 }  // namespace test
