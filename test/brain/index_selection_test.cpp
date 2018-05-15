@@ -92,7 +92,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
 
     brain::IndexConfiguration ic;
     is.GetAdmissibleIndexes(queries[i].first, ic);
-    LOG_DEBUG("Admissible indexes %ld, %s", i, ic.ToString().c_str());
+    LOG_TRACE("Admissible indexes %ld, %s", i, ic.ToString().c_str());
     auto indexes = ic.GetIndexes();
     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
   }
@@ -142,9 +142,9 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
                                            workload);
 
-  LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
-  LOG_DEBUG("Admissible Indexes: %s", admissible_config.ToString().c_str());
-  LOG_DEBUG("Candidate Indexes: %s", candidate_config.ToString().c_str());
+  LOG_TRACE("Admissible Index Count: %ld", admissible_config.GetIndexCount());
+  LOG_TRACE("Admissible Indexes: %s", admissible_config.ToString().c_str());
+  LOG_TRACE("Candidate Indexes: %s", candidate_config.ToString().c_str());
 
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // TODO: There is no data in the table. Indexes should not help. Should return
@@ -165,9 +165,9 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexSelection is(workload, knobs, txn);
   is.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
 
-  LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
-  LOG_DEBUG("Admissible Indexes: %s", admissible_config.ToString().c_str());
-  LOG_DEBUG("Candidate Indexes: %s", candidate_config.ToString().c_str());
+  LOG_TRACE("Admissible Index Count: %ld", admissible_config.GetIndexCount());
+  LOG_TRACE("Admissible Indexes: %s", admissible_config.ToString().c_str());
+  LOG_TRACE("Candidate Indexes: %s", candidate_config.ToString().c_str());
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // Indexes help reduce the cost of the queries, so they get selected.
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
@@ -396,8 +396,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -419,8 +419,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -443,8 +443,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -466,8 +466,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -491,8 +491,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(3, best_config.GetIndexCount());
 
@@ -527,8 +527,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -552,8 +552,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -611,8 +611,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -634,8 +634,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest2) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
