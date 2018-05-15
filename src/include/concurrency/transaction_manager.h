@@ -269,7 +269,8 @@ class TransactionManager {
    * @return     Current transaction set
    */
   tbb::concurrent_unordered_set<txn_id_t> GetCurrentTxn() {
-    tbb::concurrent_unordered_set<txn_id_t> tmp = current_transactions_;
+    //tbb::concurrent_unordered_set<txn_id_t> tmp = current_transactions_;
+    tbb::concurrent_unordered_set<txn_id_t> tmp;
     return tmp;
   }
 
