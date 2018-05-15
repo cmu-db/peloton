@@ -256,7 +256,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_1 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_DEBUG("Cost of the query with index {'a', 'b', 'c', 'd', 'e'}: %lf",
-           cost_with_index_1);
+            cost_with_index_1);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_1);
 
   config.Clear();
@@ -267,7 +267,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_2 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_DEBUG("Cost of the query with index {'a', 'c', 'd', 'f'}: %lf",
-           cost_with_index_2);
+            cost_with_index_2);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_2);
 
   config.Clear();
@@ -278,7 +278,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_3 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
   LOG_DEBUG("Cost of the query with index {'a', 'b', 'd', 'e'}: %lf",
-           cost_with_index_3);
+            cost_with_index_3);
   EXPECT_DOUBLE_EQ(cost_without_index, cost_with_index_3);
 
   config.Clear();
@@ -289,7 +289,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_4 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_DEBUG("Cost of the query with index {'b', 'c', 'e'}: %lf",
-           cost_with_index_4);
+            cost_with_index_4);
   EXPECT_GT(cost_without_index, cost_with_index_4);
 
   config.Clear();
@@ -300,7 +300,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest2) {
   auto cost_with_index_5 = result->cost;
   EXPECT_EQ(result->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_DEBUG("Cost of the query with index {'b', 'c', 'd', 'e'}: %lf",
-           cost_with_index_5);
+            cost_with_index_5);
   EXPECT_GT(cost_without_index, cost_with_index_5);
 
   config.Clear();
@@ -435,7 +435,8 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_2_2 = result2->cost;
   auto cost_with_index_2_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
-  LOG_DEBUG("Cost of the query with index {'a', 'b'}: %lf", cost_with_index_2_1);
+  LOG_DEBUG("Cost of the query with index {'a', 'b'}: %lf",
+            cost_with_index_2_1);
   EXPECT_GT(cost_without_index, cost_with_index_2_1);
   EXPECT_GT(cost_with_index_1_1, cost_with_index_2_1);
   EXPECT_DOUBLE_EQ(cost_with_index_2_1, cost_with_index_2_2);
@@ -455,7 +456,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_3_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_DEBUG("Cost of the query with index {'a', 'b', 'c'}: %lf",
-           cost_with_index_3_1);
+            cost_with_index_3_1);
   EXPECT_GT(cost_without_index, cost_with_index_3_1);
   EXPECT_GT(cost_with_index_2_1, cost_with_index_3_1);
   EXPECT_DOUBLE_EQ(cost_with_index_3_1, cost_with_index_3_2);
@@ -475,7 +476,7 @@ TEST_F(WhatIfIndexTests, MultiColumnTest3) {
   auto cost_with_index_4_3 = result3->cost;
   EXPECT_EQ(result1->plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   LOG_DEBUG("Cost of the query with index {'a', 'b', 'c', 'd'}: %lf",
-           cost_with_index_4_1);
+            cost_with_index_4_1);
   EXPECT_GT(cost_without_index, cost_with_index_4_1);
   EXPECT_GT(cost_with_index_3_1, cost_with_index_4_1);
   EXPECT_DOUBLE_EQ(cost_with_index_4_1, cost_with_index_4_2);

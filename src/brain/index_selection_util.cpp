@@ -262,9 +262,10 @@ void Workload::GetTableNamesReferenced(
           break;
         }
         case TableReferenceType::SELECT: {
-          Workload::GetTableNamesReferenced(std::shared_ptr<parser::SQLStatement>(
-                                  sql_statement->from_table->select),
-                              table_names);
+          Workload::GetTableNamesReferenced(
+              std::shared_ptr<parser::SQLStatement>(
+                  sql_statement->from_table->select),
+              table_names);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {

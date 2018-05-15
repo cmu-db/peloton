@@ -503,12 +503,12 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   expected_config = {expected_indexes};
 
   std::set<std::shared_ptr<brain::HypotheticalIndexObject>>
-  alternate_expected_indexes = {
-      testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
-      testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
-      testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-  brain::IndexConfiguration alternate_expected_config =
-      {alternate_expected_indexes};
+      alternate_expected_indexes = {
+          testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
+          testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
+          testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
+  brain::IndexConfiguration alternate_expected_config = {
+      alternate_expected_indexes};
 
   // It can choose either AC or CA based on the distribution of C and A
   EXPECT_TRUE((expected_config == best_config) ||

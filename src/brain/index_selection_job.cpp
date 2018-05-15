@@ -109,7 +109,8 @@ IndexSelectionJob::GetIndexesToDrop(
     // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
     // This is a hack for now. Add a boolean to the index catalog to
     // find out if an index is a brain suggested index/user created index.
-    if (index_name.find(brain_suggested_index_prefix_str) != std::string::npos) {
+    if (index_name.find(brain_suggested_index_prefix_str) !=
+        std::string::npos) {
       bool found = false;
       for (auto installed_index : best_config.GetIndexes()) {
         if ((index.second.get()->GetTableOid() ==

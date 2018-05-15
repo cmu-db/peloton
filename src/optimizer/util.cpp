@@ -180,8 +180,7 @@ std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
 ConstructSelectElementMap(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
   std::unordered_map<std::string,
-                     std::shared_ptr<expression::AbstractExpression>>
-      res;
+                     std::shared_ptr<expression::AbstractExpression>> res;
   for (auto &expr : select_list) {
     std::string alias;
     if (!expr->alias.empty()) {

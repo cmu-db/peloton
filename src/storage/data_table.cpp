@@ -6,7 +6,7 @@
 //
 // Identification: src/storage/data_table.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -388,7 +388,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);

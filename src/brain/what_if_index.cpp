@@ -28,8 +28,8 @@ WhatIfIndex::GetCostAndBestPlanTree(std::shared_ptr<parser::SQLStatement> query,
   // Find all the tables that are referenced in the parsed query.
   std::unordered_set<std::string> tables_used;
   Workload::GetTableNamesReferenced(query, tables_used);
-  return GetCostAndBestPlanTree(std::make_pair(query, tables_used),
-                                config, database_name, txn);
+  return GetCostAndBestPlanTree(std::make_pair(query, tables_used), config,
+                                database_name, txn);
 }
 
 std::unique_ptr<optimizer::OptimizerPlanInfo>
@@ -40,13 +40,10 @@ WhatIfIndex::GetCostAndBestPlanTree(
     concurrency::TransactionContext *txn) {
   LOG_DEBUG("***** GetCostAndBestPlanTree **** \n");
 
-  // TODO [vamshi]: Improve this loop.
   // Load the indexes into the cache for each table so that the optimizer uses
   // the indexes that we provide.
   for (auto table_name : query.second) {
     // Load the tables into cache.
-    // TODO [vamshi]: If the table is deleted, then this will throw an
-    // exception. Handle it.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
 
