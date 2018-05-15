@@ -23,6 +23,8 @@ class IndexSelectionJob : public BrainJob {
       : BrainJob(env),
         last_timestamp_(0),
         num_queries_threshold_(num_queries_threshold) {}
+  const std::string brain_suggested_index_prefix_str = "brain_suggested_index";
+
   /**
    * Task function.
    * @param env

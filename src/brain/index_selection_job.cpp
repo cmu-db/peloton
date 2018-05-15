@@ -20,8 +20,6 @@
 namespace peloton {
 namespace brain {
 
-#define BRAIN_SUGGESTED_INDEX_MAGIC_STR "brain_suggested_index"
-
 void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   LOG_INFO("Started Index Suggestion Task");
 
@@ -111,7 +109,7 @@ IndexSelectionJob::GetIndexesToDrop(
     // TODO [vamshi]: REMOVE THIS IN THE FINAL CODE
     // This is a hack for now. Add a boolean to the index catalog to
     // find out if an index is a brain suggested index/user created index.
-    if (index_name.find(BRAIN_SUGGESTED_INDEX_MAGIC_STR) != std::string::npos) {
+    if (index_name.find(brain_suggested_index_prefix_str) != std::string::npos) {
       bool found = false;
       for (auto installed_index : best_config.GetIndexes()) {
         if ((index.second.get()->GetTableOid() ==
@@ -137,7 +135,7 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
 
   // Create the index name: concat - db_id, table_id, col_ids
   std::stringstream sstream;
-  sstream << BRAIN_SUGGESTED_INDEX_MAGIC_STR << "_" << index->db_oid << "_"
+  sstream << brain_suggested_index_prefix_str << "_" << index->db_oid << "_"
           << index->table_oid << "_";
   std::vector<oid_t> col_oid_vector;
   for (auto col : index->column_oids) {
