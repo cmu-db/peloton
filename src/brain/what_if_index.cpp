@@ -43,13 +43,10 @@ WhatIfIndex::GetCostAndBestPlanTree(
   LOG_DEBUG("Tables referenced count: %ld", tables_used.size());
   PELOTON_ASSERT(tables_used.size() > 0);
 
-  // TODO [vamshi]: Improve this loop.
   // Load the indexes into the cache for each table so that the optimizer uses
   // the indexes that we provide.
   for (auto table_name : query.second) {
     // Load the tables into cache.
-    // TODO [vamshi]: If the table is deleted, then this will throw an
-    // exception. Handle it.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
         database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
 
