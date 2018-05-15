@@ -567,70 +567,12 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   txn_manager.CommitTransaction(txn);
 }
 
-// It is difficult to predict the output of this test, should remove it or
-// think of a better way of writing this test
 /**
  * @brief end-to-end test which takes in a workload of queries
  * and spits out the set of indexes that are the best ones for more
  * complex workloads.
  */
-// TEST_F(IndexSelectionTest, IndexSelectionTest2) {
-//   std::string database_name = DEFAULT_DB_NAME;
-//   int num_rows = 1000;  // number of rows to be inserted.
-
-//   TestingIndexSelectionUtil testing_util(database_name);
-//   auto config =
-//     testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
-//   auto table_schemas = config.first;
-//   auto query_strings = config.second;
-
-//   // Create and populate tables.
-//   for (auto table_schema : table_schemas) {
-//     testing_util.CreateTable(table_schema);
-//     testing_util.InsertIntoTable(table_schema, num_rows);
-//   }
-
-//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//   auto txn = txn_manager.BeginTransaction();
-
-//   brain::Workload workload(query_strings, database_name, txn);
-//   EXPECT_EQ(workload.Size(), query_strings.size());
-
-//   brain::IndexConfiguration best_config;
-//   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
-//   brain::IndexConfiguration expected_config;
-
-//   size_t max_index_cols = 3;
-//   size_t enumeration_threshold = 1;
-//   size_t num_indexes = 2;
-//   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
-//                                       num_indexes};
-//   brain::IndexSelection is = {workload, knobs, txn};
-
-//   is.GetBestIndexes(best_config);
-
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
-
-//   EXPECT_EQ(2, best_config.GetIndexCount());
-
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("d_student", {"id", "name"}, &is),
-//       testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa", "name"},
-//           &is)};
-//   expected_config = {expected_indexes};
-
-//   EXPECT_TRUE(expected_config == best_config);
-
-//   txn_manager.CommitTransaction(txn);
-// }
-
-/**
- * @brief end-to-end test which takes in a workload of queries
- * and spits out the set of indexes that are the best ones for more
- * complex workloads.
- */
-TEST_F(IndexSelectionTest, IndexSelectionTest3) {
+TEST_F(IndexSelectionTest, IndexSelectionTest2) {
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
