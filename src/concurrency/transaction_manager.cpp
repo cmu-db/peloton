@@ -78,7 +78,7 @@ TransactionContext *TransactionManager::BeginTransaction(
   txn->SetTimestamp(function::DateFunctions::Now());
 
   // Record current transaction in transaction set
-  current_transactions_.insert(txn->GetTransactionId());
+  //current_transactions_.insert(txn->GetTransactionId());
 
   return txn;
 }
@@ -95,9 +95,9 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // Record deletion of transaction in current transaction set
-  mtx_.lock();
-  current_transactions_.unsafe_erase(current_txn->GetTransactionId());
-  mtx_.unlock();
+  //mtx_.lock();
+  //current_transactions_.unsafe_erase(current_txn->GetTransactionId());
+  //mtx_.unlock();
 
   if (gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
