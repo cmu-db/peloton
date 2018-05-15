@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// alter_table_plan.cpp
+// alter_plan.cpp
 //
-// Identification: src/planner/alter_table_plan.cpp
+// Identification: src/planner/alter_plan.cpp
 //
 // Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //

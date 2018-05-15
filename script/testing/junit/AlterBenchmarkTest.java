@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// AlterTableTest.java
+// AlterBenchmarkTest.java
 //
 // Identification: script/testing/junit/AlterBenchmarkTest.java
 //
