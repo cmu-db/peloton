@@ -819,6 +819,37 @@ void ImplementLimit::Transform(
   transformed.push_back(result_plan);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalExport to Physical Export
+LogicalExportToPhysicalExport::LogicalExportToPhysicalExport() {
+  type_ = RuleType::EXPORT_EXTERNAL_FILE_TO_PHYSICAL;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalExportExternalFile);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+}
+
+bool LogicalExportToPhysicalExport::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  return true;
+}
+
+void LogicalExportToPhysicalExport::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  const auto *logical_export = input->Op().As<LogicalExportExternalFile>();
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(PhysicalExportExternalFile::make(
+          logical_export->format, logical_export->file_name));
+
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PELOTON_ASSERT(children.size() == 1);
+  result_plan->PushChild(children[0]);
+
+  transformed.push_back(result_plan);
+}
+
 //===--------------------------------------------------------------------===//
 // Rewrite rules
 //===--------------------------------------------------------------------===//

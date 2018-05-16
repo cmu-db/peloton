@@ -93,6 +93,8 @@ class InputColumnDeriver : public OperatorVisitor {
 
   void Visit(const PhysicalAggregate *) override;
 
+  void Visit(const PhysicalExportExternalFile *) override;
+
  private:
   /**
    * @brief Provide all tuple value expressions needed in the expression

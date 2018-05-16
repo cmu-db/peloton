@@ -1382,9 +1382,6 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::RESULT: {
       return ("RESULT");
     }
-    case PlanNodeType::COPY: {
-      return ("COPY");
-    }
     case PlanNodeType::MOCK: {
       return ("MOCK");
     }
@@ -1393,6 +1390,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PlanNodeType::ANALYZE: {
       return ("ANALYZE");
+    }
+    case PlanNodeType::EXPORT_EXTERNAL_FILE: {
+      return ("EXPORT_EXTERNAL_FILE");
     }
     default: {
       throw ConversionException(
@@ -1461,12 +1461,12 @@ PlanNodeType StringToPlanNodeType(const std::string &str) {
     return PlanNodeType::HASH;
   } else if (upper_str == "RESULT") {
     return PlanNodeType::RESULT;
-  } else if (upper_str == "COPY") {
-    return PlanNodeType::COPY;
   } else if (upper_str == "MOCK") {
     return PlanNodeType::MOCK;
   } else if (upper_str == "ANALYZE") {
     return PlanNodeType::ANALYZE;
+  } else if (upper_str == "EXPORT_EXTERNAL_FILE") {
+    return PlanNodeType::EXPORT_EXTERNAL_FILE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));

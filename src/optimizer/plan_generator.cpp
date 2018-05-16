@@ -23,6 +23,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/csv_scan_plan.h"
 #include "planner/delete_plan.h"
+#include "planner/export_external_file_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
@@ -383,6 +384,13 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
       move(proj_info)));
   update_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(update_plan);
+}
+
+void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
+  unique_ptr<planner::AbstractPlan> export_plan{
+      new planner::ExportExternalFilePlan(op->file_name)};
+  export_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(export_plan);
 }
 
 /************************* Private Functions *******************************/

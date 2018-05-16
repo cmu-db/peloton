@@ -94,6 +94,8 @@ class PlanGenerator : public OperatorVisitor {
 
   void Visit(const PhysicalAggregate *) override;
 
+  void Visit(const PhysicalExportExternalFile *) override;
+
  private:
   /**
    * @brief Generate all tuple value expressions of a base table

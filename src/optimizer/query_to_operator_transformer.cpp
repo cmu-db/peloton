@@ -386,8 +386,8 @@ void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
     } else {
       op->table->Accept(this);
     }
-    auto export_op =
-        std::make_shared<OperatorExpression>(LogicalExportExternalFile::make());
+    auto export_op = std::make_shared<OperatorExpression>(
+        LogicalExportExternalFile::make(op->format, op->file_path));
     export_op->PushChild(output_expr_);
     output_expr_ = export_op;
   }

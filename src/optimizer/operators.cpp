@@ -445,9 +445,27 @@ Operator LogicalLimit::make(int64_t offset, int64_t limit) {
 //===--------------------------------------------------------------------===//
 // External file output
 //===--------------------------------------------------------------------===//
-Operator LogicalExportExternalFile::make() {
-  auto *export_op = new LogicalExternalFileGet();
+Operator LogicalExportExternalFile::make(ExternalFileFormat format,
+                                         std::string file_name) {
+  auto *export_op = new LogicalExportExternalFile();
+  export_op->format = format;
+  export_op->file_name = std::move(file_name);
   return Operator(export_op);
+}
+
+bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
+  if (node.GetType() != OpType::LogicalExportExternalFile) return false;
+  const auto &export_op =
+      *static_cast<const LogicalExportExternalFile *>(&node);
+  return (format == export_op.format && file_name == export_op.file_name);
+}
+
+hash_t LogicalExportExternalFile::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  return hash;
 }
 
 //===--------------------------------------------------------------------===//
@@ -824,6 +842,32 @@ Operator PhysicalUpdate::make(
 }
 
 //===--------------------------------------------------------------------===//
+// PhysicalExportExternalFile
+//===--------------------------------------------------------------------===//
+Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
+                                          std::string file_name) {
+  auto *export_op = new PhysicalExportExternalFile();
+  export_op->format = format;
+  export_op->file_name = file_name;
+  return Operator(export_op);
+}
+
+bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
+  if (node.GetType() != OpType::ExportExternalFile) return false;
+  const auto &export_op =
+      *static_cast<const PhysicalExportExternalFile *>(&node);
+  return (format == export_op.format && file_name == export_op.file_name);
+}
+
+hash_t PhysicalExportExternalFile::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
 // PhysicalHashGroupBy
 //===--------------------------------------------------------------------===//
 Operator PhysicalHashGroupBy::make(
@@ -1005,6 +1049,9 @@ template <>
 std::string OperatorNode<PhysicalDistinct>::name_ = "PhysicalDistinct";
 template <>
 std::string OperatorNode<PhysicalAggregate>::name_ = "PhysicalAggregate";
+template <>
+std::string OperatorNode<PhysicalExportExternalFile>::name_ =
+    "PhysicalExportExternalFile";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -1102,7 +1149,11 @@ template <>
 OpType OperatorNode<PhysicalSortGroupBy>::type_ = OpType::SortGroupBy;
 template <>
 OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
+template <>
+OpType OperatorNode<PhysicalExportExternalFile>::type_ =
+    OpType::ExportExternalFile;
 //===--------------------------------------------------------------------===//
+
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
   return type_ < OpType::LogicalPhysicalDelimiter;

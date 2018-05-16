@@ -72,7 +72,8 @@ enum class OpType {
   Update,
   Aggregate,
   HashGroupBy,
-  SortGroupBy
+  SortGroupBy,
+  ExportExternalFile,
 };
 
 //===--------------------------------------------------------------------===//

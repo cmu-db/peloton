@@ -339,7 +339,7 @@ executor::AbstractExecutor *BuildExecutorTree(
           new executor::CreateFunctionExecutor(plan, executor_context);
       break;
 
-    case PlanNodeType::COPY:
+    case PlanNodeType::EXPORT_EXTERNAL_FILE:
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
 

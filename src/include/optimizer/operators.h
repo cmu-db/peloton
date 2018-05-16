@@ -325,12 +325,19 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
-// External file get
+// Export to external file
 //===--------------------------------------------------------------------===//
 class LogicalExportExternalFile
     : public OperatorNode<LogicalExportExternalFile> {
  public:
-  static Operator make();
+  static Operator make(ExternalFileFormat format, std::string file_name);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  ExternalFileFormat format;
+  std::string file_name;
 };
 
 //===--------------------------------------------------------------------===//
@@ -602,6 +609,22 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::unique_ptr<parser::UpdateClause>> *updates;
+};
+
+//===--------------------------------------------------------------------===//
+// Physical ExportExternalFile
+//===--------------------------------------------------------------------===//
+class PhysicalExportExternalFile
+    : public OperatorNode<PhysicalExportExternalFile> {
+ public:
+  static Operator make(ExternalFileFormat format, std::string file_name);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  ExternalFileFormat format;
+  std::string file_name;
 };
 
 //===--------------------------------------------------------------------===//

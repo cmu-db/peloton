@@ -157,6 +157,10 @@ void InputColumnDeriver::Visit(const PhysicalDelete *) { Passdown(); }
 
 void InputColumnDeriver::Visit(const PhysicalUpdate *) { Passdown(); }
 
+void InputColumnDeriver::Visit(const PhysicalExportExternalFile *) {
+  Passdown();
+}
+
 void InputColumnDeriver::ScanHelper() {
   // Scan does not have input column, output columns should contain all tuple
   // value expressions needed

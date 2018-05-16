@@ -595,7 +595,7 @@ enum class PlanNodeType {
 
   // Utility
   RESULT = 70,
-  COPY = 71,
+  EXPORT_EXTERNAL_FILE = 71,
   CREATE_FUNC = 72,
 
   // Test
@@ -1355,6 +1355,7 @@ enum class RuleType : uint32_t {
   INNER_JOIN_TO_HASH_JOIN,
   IMPLEMENT_DISTINCT,
   IMPLEMENT_LIMIT,
+  EXPORT_EXTERNAL_FILE_TO_PHYSICAL,
 
   // Don't move this one
   RewriteDelimiter,

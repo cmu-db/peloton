@@ -15,9 +15,6 @@
 #include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
-#include "planner/copy_plan.h"
-#include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
 
 namespace peloton {
 namespace optimizer {

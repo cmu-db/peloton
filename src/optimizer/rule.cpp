@@ -45,6 +45,7 @@ RuleSet::RuleSet() {
   AddImplementationRule(new InnerJoinToInnerHashJoin());
   AddImplementationRule(new ImplementDistinct());
   AddImplementationRule(new ImplementLimit());
+  AddImplementationRule(new LogicalExportToPhysicalExport());
 
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughJoin());

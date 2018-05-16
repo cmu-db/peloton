@@ -138,13 +138,22 @@ inline void CSVScanPlan::GetOutputColumns(std::vector<oid_t> &columns) const {
 }
 
 inline hash_t CSVScanPlan::Hash() const {
-  return HashUtil::HashBytes(file_name_.data(), file_name_.length());
+  hash_t hash = HashUtil::HashBytes(file_name_.data(), file_name_.length());
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&delimiter_));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&quote_));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&escape_));
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(null_.c_str(), null_.length()));
+  return hash;
 }
 
 inline bool CSVScanPlan::operator==(const AbstractPlan &rhs) const {
   if (rhs.GetPlanNodeType() != PlanNodeType::CSVSCAN) return false;
   const auto &other = static_cast<const CSVScanPlan &>(rhs);
-  return StringUtil::Upper(file_name_) == StringUtil::Upper(other.file_name_);
+  return (
+      (StringUtil::Upper(file_name_) == StringUtil::Upper(other.file_name_)) &&
+      delimiter_ == other.delimiter_ && quote_ == other.quote_ &&
+      escape_ == other.escape_);
 }
 
 inline void CSVScanPlan::GetAttributes(
