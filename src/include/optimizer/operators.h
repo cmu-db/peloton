@@ -73,7 +73,8 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
  public:
   static Operator make(oid_t get_id, ExternalFileFormat format,
-                       std::string file_name);
+                       std::string file_name, char delimiter, char quote,
+                       char escape);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -83,6 +84,9 @@ class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
   oid_t get_id;
   ExternalFileFormat format;
   std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
@@ -330,7 +334,8 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 class LogicalExportExternalFile
     : public OperatorNode<LogicalExportExternalFile> {
  public:
-  static Operator make(ExternalFileFormat format, std::string file_name);
+  static Operator make(ExternalFileFormat format, std::string file_name,
+                       char delimiter, char quote, char escape);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -338,6 +343,9 @@ class LogicalExportExternalFile
 
   ExternalFileFormat format;
   std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
@@ -410,7 +418,8 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 class ExternalFileScan : public OperatorNode<ExternalFileScan> {
  public:
   static Operator make(oid_t get_id, ExternalFileFormat format,
-                       std::string file_name);
+                       std::string file_name, char delimiter, char quote,
+                       char escape);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -420,6 +429,9 @@ class ExternalFileScan : public OperatorNode<ExternalFileScan> {
   oid_t get_id;
   ExternalFileFormat format;
   std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
@@ -617,7 +629,8 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 class PhysicalExportExternalFile
     : public OperatorNode<PhysicalExportExternalFile> {
  public:
-  static Operator make(ExternalFileFormat format, std::string file_name);
+  static Operator make(ExternalFileFormat format, std::string file_name,
+                       char delimiter, char quote, char escape);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -625,6 +638,9 @@ class PhysicalExportExternalFile
 
   ExternalFileFormat format;
   std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//

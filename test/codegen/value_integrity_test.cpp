@@ -12,6 +12,8 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include <random>
+
 #include "codegen/function_builder.h"
 #include "codegen/type/tinyint_type.h"
 #include "codegen/type/smallint_type.h"
@@ -198,8 +200,9 @@ void TestInputIntegral(
 
   // Default overflow tests
   std::vector<std::string> overflow_tests = {
-      std::to_string(static_cast<int64_t>(std::numeric_limits<T>::min()) - 1),
-      std::to_string(static_cast<int64_t>(std::numeric_limits<T>::max()) + 1)};
+      std::to_string(std::numeric_limits<T>::min()) + "1",
+      std::to_string(std::numeric_limits<T>::max()) + "1",
+      "123456789123456789123456789"};
   overflow_tests.insert(overflow_tests.end(), extra_overflow_tests.begin(),
                         extra_overflow_tests.end());
 

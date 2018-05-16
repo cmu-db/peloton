@@ -216,13 +216,25 @@ T ParseInteger(const char *ptr, uint32_t len) {
   }
 
   // Convert
-  int64_t num = 0;
+  uint64_t cutoff =
+      static_cast<uint64_t>(negative ? -std::numeric_limits<int64_t>::min()
+                                     : std::numeric_limits<int64_t>::max());
+  uint64_t cutlimit = cutoff % 10;
+  cutoff /= 10;
+
+  uint64_t num = 0;
   while (start < end) {
     if (*start < '0' || *start > '9') {
       break;
     }
 
-    num = (num * 10) + (*start - '0');
+    uint32_t c = static_cast<uint32_t>(*start - '0');
+
+    if (num > cutoff || (num == cutoff && c > cutlimit)) {
+      goto overflow;
+    }
+
+    num = (num * 10) + c;
 
     start++;
   }
@@ -234,8 +246,7 @@ T ParseInteger(const char *ptr, uint32_t len) {
 
   // If we haven't consumed everything at this point, it was an invalid input
   if (start < end) {
-    codegen::RuntimeFunctions::ThrowInvalidInputStringException();
-    __builtin_unreachable();
+    goto invalid;
   }
 
   // Negate number if we need to
@@ -244,14 +255,21 @@ T ParseInteger(const char *ptr, uint32_t len) {
   }
 
   // Range check
-  if (num <= std::numeric_limits<T>::min() ||
-      num >= std::numeric_limits<T>::max()) {
-    codegen::RuntimeFunctions::ThrowOverflowException();
-    __builtin_unreachable();
+  if (static_cast<int64_t>(num) <= std::numeric_limits<T>::min() ||
+      static_cast<int64_t>(num) >= std::numeric_limits<T>::max()) {
+    goto overflow;
   }
 
   // Done
   return static_cast<T>(num);
+
+overflow:
+  codegen::RuntimeFunctions::ThrowOverflowException();
+  __builtin_unreachable();
+
+invalid:
+  codegen::RuntimeFunctions::ThrowInvalidInputStringException();
+  __builtin_unreachable();
 }
 
 }  // namespace

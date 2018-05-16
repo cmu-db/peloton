@@ -68,11 +68,15 @@ bool LogicalGet::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 
 Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
-                                      std::string file_name) {
+                                      std::string file_name, char delimiter,
+                                      char quote, char escape) {
   auto *get = new LogicalExternalFileGet();
   get->get_id = get_id;
   get->format = format;
   get->file_name = std::move(file_name);
+  get->delimiter = delimiter;
+  get->quote = quote;
+  get->escape = escape;
   return Operator(get);
 }
 
@@ -80,7 +84,8 @@ bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::LogicalExternalFileGet) return false;
   const auto &get = *static_cast<const LogicalExternalFileGet *>(&node);
   return (get_id == get.get_id && format == get.format &&
-          file_name == get.file_name);
+          file_name == get.file_name && delimiter == get.delimiter &&
+          quote == get.quote && escape == get.escape);
 }
 
 hash_t LogicalExternalFileGet::Hash() const {
@@ -89,6 +94,9 @@ hash_t LogicalExternalFileGet::Hash() const {
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&delimiter, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&quote, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&escape, 1));
   return hash;
 }
 
@@ -446,10 +454,14 @@ Operator LogicalLimit::make(int64_t offset, int64_t limit) {
 // External file output
 //===--------------------------------------------------------------------===//
 Operator LogicalExportExternalFile::make(ExternalFileFormat format,
-                                         std::string file_name) {
+                                         std::string file_name, char delimiter,
+                                         char quote, char escape) {
   auto *export_op = new LogicalExportExternalFile();
   export_op->format = format;
   export_op->file_name = std::move(file_name);
+  export_op->delimiter = delimiter;
+  export_op->quote = quote;
+  export_op->escape = escape;
   return Operator(export_op);
 }
 
@@ -457,7 +469,9 @@ bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::LogicalExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const LogicalExportExternalFile *>(&node);
-  return (format == export_op.format && file_name == export_op.file_name);
+  return (format == export_op.format && file_name == export_op.file_name &&
+          delimiter == export_op.delimiter && quote == export_op.quote &&
+          escape == export_op.escape);
 }
 
 hash_t LogicalExportExternalFile::Hash() const {
@@ -465,6 +479,9 @@ hash_t LogicalExportExternalFile::Hash() const {
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&delimiter, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&quote, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&escape, 1));
   return hash;
 }
 
@@ -567,11 +584,15 @@ hash_t PhysicalIndexScan::Hash() const {
 // Physical external file scan
 //===--------------------------------------------------------------------===//
 Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
-                                std::string file_name) {
+                                std::string file_name, char delimiter,
+                                char quote, char escape) {
   auto *get = new ExternalFileScan();
   get->get_id = get_id;
   get->format = format;
   get->file_name = file_name;
+  get->delimiter = delimiter;
+  get->quote = quote;
+  get->escape = escape;
   return Operator(get);
 }
 
@@ -579,7 +600,8 @@ bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::QueryDerivedScan) return false;
   const auto &get = *static_cast<const ExternalFileScan *>(&node);
   return (get_id == get.get_id && format == get.format &&
-          file_name == get.file_name);
+          file_name == get.file_name && delimiter == get.delimiter &&
+          quote == get.quote && escape == get.escape);
 }
 
 hash_t ExternalFileScan::Hash() const {
@@ -588,6 +610,9 @@ hash_t ExternalFileScan::Hash() const {
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&delimiter, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&quote, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&escape, 1));
   return hash;
 }
 
@@ -845,10 +870,14 @@ Operator PhysicalUpdate::make(
 // PhysicalExportExternalFile
 //===--------------------------------------------------------------------===//
 Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
-                                          std::string file_name) {
+                                          std::string file_name, char delimiter,
+                                          char quote, char escape) {
   auto *export_op = new PhysicalExportExternalFile();
   export_op->format = format;
   export_op->file_name = file_name;
+  export_op->delimiter = delimiter;
+  export_op->quote = quote;
+  export_op->escape = escape;
   return Operator(export_op);
 }
 
@@ -856,7 +885,9 @@ bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
   if (node.GetType() != OpType::ExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const PhysicalExportExternalFile *>(&node);
-  return (format == export_op.format && file_name == export_op.file_name);
+  return (format == export_op.format && file_name == export_op.file_name &&
+          delimiter == export_op.delimiter && quote == export_op.quote &&
+          escape == export_op.escape);
 }
 
 hash_t PhysicalExportExternalFile::Hash() const {
@@ -864,6 +895,9 @@ hash_t PhysicalExportExternalFile::Hash() const {
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&delimiter, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&quote, 1));
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(&escape, 1));
   return hash;
 }
 

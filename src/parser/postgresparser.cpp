@@ -1508,6 +1508,8 @@ parser::PrepareStatement *PostgresParser::PrepareTransform(PrepareStmt *root) {
 parser::CopyStatement *PostgresParser::CopyTransform(CopyStmt *root) {
   static constexpr char kDelimiterTok[] = "delimiter";
   static constexpr char kFormatTok[] = "format";
+  static constexpr char kQuoteTok[] = "quote";
+  static constexpr char kEscapeTok[] = "escape";
 
   // The main return value
   auto *result = new CopyStatement();
@@ -1538,12 +1540,24 @@ parser::CopyStatement *PostgresParser::CopyTransform(CopyStmt *root) {
       auto *format_val = reinterpret_cast<value *>(def_elem->arg);
       result->format = StringToExternalFileFormat(format_val->val.str);
     }
+
+    // Check quote
+    if (strncmp(def_elem->defname, kQuoteTok, sizeof(kQuoteTok)) == 0) {
+      auto *quote_val = reinterpret_cast<value *>(def_elem->arg);
+      result->quote = *quote_val->val.str;
+    }
+
+    // Check escape
+    if (strncmp(def_elem->defname, kEscapeTok, sizeof(kEscapeTok)) == 0) {
+      auto *escape_val = reinterpret_cast<value *>(def_elem->arg);
+      result->escape = *escape_val->val.str;
+    }
   }
 
   return result;
 }
 
-// Analyze statment is parsed with vacuum statment.
+// Analyze statment is parsed with vacuum statement.
 parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   if (root->options != VACOPT_ANALYZE) {
     throw NotImplementedException("Vacuum not supported.");

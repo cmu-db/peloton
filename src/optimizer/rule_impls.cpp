@@ -455,7 +455,8 @@ void LogicalExternalFileGetToPhysical::Transform(
   const auto *get = input->Op().As<LogicalExternalFileGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      ExternalFileScan::make(get->get_id, get->format, get->file_name));
+      ExternalFileScan::make(get->get_id, get->format, get->file_name,
+                             get->delimiter, get->quote, get->escape));
 
   PELOTON_ASSERT(input->Children().empty());
 
@@ -837,11 +838,12 @@ void LogicalExportToPhysicalExport::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  const auto *logical_export = input->Op().As<LogicalExportExternalFile>();
+  const auto *export_op = input->Op().As<LogicalExportExternalFile>();
 
   auto result_plan =
       std::make_shared<OperatorExpression>(PhysicalExportExternalFile::make(
-          logical_export->format, logical_export->file_name));
+          export_op->format, export_op->file_name, export_op->delimiter,
+          export_op->quote, export_op->escape));
 
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 1);

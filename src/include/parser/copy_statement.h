@@ -62,11 +62,13 @@ class CopyStatement : public SQLStatement {
   std::string file_path;
 
   // The format of the file
-  ExternalFileFormat format;
+  ExternalFileFormat format = ExternalFileFormat::CSV;
 
   bool is_from;
 
-  char delimiter;
+  char delimiter = ',';
+  char quote = '"';
+  char escape = '"';
 };
 
 }  // namespace parser

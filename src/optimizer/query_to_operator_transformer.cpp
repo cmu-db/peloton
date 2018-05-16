@@ -367,7 +367,8 @@ void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
 
     auto get_op =
         std::make_shared<OperatorExpression>(LogicalExternalFileGet::make(
-            GetAndIncreaseGetId(), op->format, op->file_path));
+            GetAndIncreaseGetId(), op->format, op->file_path, op->delimiter,
+            op->quote, op->escape));
 
     auto target_table =
         catalog::Catalog::GetInstance()
@@ -386,8 +387,9 @@ void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
     } else {
       op->table->Accept(this);
     }
-    auto export_op = std::make_shared<OperatorExpression>(
-        LogicalExportExternalFile::make(op->format, op->file_path));
+    auto export_op =
+        std::make_shared<OperatorExpression>(LogicalExportExternalFile::make(
+            op->format, op->file_path, op->delimiter, op->quote, op->escape));
     export_op->PushChild(output_expr_);
     output_expr_ = export_op;
   }

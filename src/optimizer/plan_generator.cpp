@@ -143,7 +143,8 @@ void PlanGenerator::Visit(const ExternalFileScan *op) {
 
       // Create the plan
       output_plan_.reset(
-          new planner::CSVScanPlan(op->file_name, std::move(cols)));
+          new planner::CSVScanPlan(op->file_name, std::move(cols),
+                                   op->delimiter, op->quote, op->escape));
       break;
     }
   }
@@ -388,7 +389,8 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
 
 void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
   unique_ptr<planner::AbstractPlan> export_plan{
-      new planner::ExportExternalFilePlan(op->file_name)};
+      new planner::ExportExternalFilePlan(op->file_name, op->delimiter,
+                                          op->quote, op->escape)};
   export_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(export_plan);
 }

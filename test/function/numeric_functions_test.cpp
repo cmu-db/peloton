@@ -2,18 +2,18 @@
 //
 //                         Peloton
 //
-// decimal_functions_test.cpp
+// numeric_functions_test.cpp
 //
 // Identification: test/expression/decimal_functions_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <set>
+#include <cmath>
+#include <random>
 #include <string>
 #include <vector>
-#include <cmath>
 
 #include "common/harness.h"
 
@@ -21,7 +21,6 @@
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "util/string_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -29,9 +28,9 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class DecimalFunctionsTests : public PelotonTest {};
+class NumericFunctionsTest : public PelotonTest {};
 
-TEST_F(DecimalFunctionsTests, SqrtTest) {
+TEST_F(NumericFunctionsTest, SqrtTest) {
   const double column_val = 9.0;
   const double expected = sqrt(9.0);
   std::vector<type::Value> args = {
@@ -47,7 +46,7 @@ TEST_F(DecimalFunctionsTests, SqrtTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests, FloorTest) {
+TEST_F(NumericFunctionsTest, FloorTest) {
   // Testing Floor with DecimalTypes
   std::vector<double> inputs = {9.5, 3.3, -4.4, 0.0};
   std::vector<type::Value> args;
@@ -89,7 +88,7 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests, RoundTest) {
+TEST_F(NumericFunctionsTest, RoundTest) {
   std::vector<double> column_vals = {9.5, 3.3, -4.4, -5.5, 0.0};
   std::vector<type::Value> args;
   for (double val : column_vals) {
@@ -105,7 +104,7 @@ TEST_F(DecimalFunctionsTests, RoundTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests,AbsTestDouble) {
+TEST_F(NumericFunctionsTest,AbsTestDouble) {
   std::vector<double> doubleTestInputs = {9.5, -2.5, -4.4, 0.0};
   std::vector<type::Value> args;
   for (double in : doubleTestInputs) {
@@ -121,7 +120,7 @@ TEST_F(DecimalFunctionsTests,AbsTestDouble) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests, AbsTestInt) {
+TEST_F(NumericFunctionsTest, AbsTestInt) {
   std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};
@@ -158,7 +157,7 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
   }
 }
 
-TEST_F(DecimalFunctionsTests, CeilTestDouble) {
+TEST_F(NumericFunctionsTest, CeilTestDouble) {
   std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5, -0.2,
                                           0.0, 0.2, 0.5, 0.7, 35.2, 36.0,
                                           37.2222};
@@ -175,7 +174,7 @@ TEST_F(DecimalFunctionsTests, CeilTestDouble) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests, CeilTestInt) {
+TEST_F(NumericFunctionsTest, CeilTestInt) {
   std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};
