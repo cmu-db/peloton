@@ -14,6 +14,7 @@
 
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/pool_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -32,6 +33,7 @@ DEFINE_METHOD(peloton::function, StringFunctions, Substr);
 DEFINE_METHOD(peloton::function, StringFunctions, Repeat);
 DEFINE_METHOD(peloton::function, StringFunctions, CompareStrings);
 DEFINE_METHOD(peloton::function, StringFunctions, WriteString);
+DEFINE_METHOD(peloton::function, StringFunctions, InputString);
 
 }  // namespace codegen
 }  // namespace peloton

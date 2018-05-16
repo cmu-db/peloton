@@ -132,8 +132,16 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
                             llvm::Value *data_len) const {
     auto *input_func = SqlType().GetInputFunction(codegen, ai_->type);
     auto *raw_val = codegen.CallFunc(input_func, {type, data_ptr, data_len});
-    return codegen::Value{ai_->type, raw_val, nullptr,
-                          codegen.ConstBool(false)};
+    if (SqlType().IsVariableLength()) {
+      // StrWithLen
+      llvm::Value *str_ptr = codegen->CreateExtractValue(raw_val, 0);
+      llvm::Value *str_len = codegen->CreateExtractValue(raw_val, 1);
+      return codegen::Value{ai_->type, str_ptr, str_len,
+                            codegen.ConstBool(false)};
+    } else {
+      return codegen::Value{ai_->type, raw_val, nullptr,
+                            codegen.ConstBool(false)};
+    }
   }
 
   Value Access(CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) override {

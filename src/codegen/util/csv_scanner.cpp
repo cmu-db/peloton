@@ -197,6 +197,9 @@ const char *CSVScanner::NextLine() {
 
   uint32_t line_end = buffer_begin_;
 
+  char quote = quote_;
+  char escape = (quote_ == escape_ ? static_cast<char>('\0') : escape_);
+
   while (true) {
     if (line_end >= buffer_end_) {
       // We need to read more data from the CSV file. But first, we need to copy
@@ -219,13 +222,13 @@ const char *CSVScanner::NextLine() {
     // Read character
     char c = buffer_[line_end];
 
-    if (in_quote && c == escape_) {
-      last_was_escape = true;
+    if (in_quote && c == escape) {
+      last_was_escape = !last_was_escape;
     }
-    if (c == quote_ && !last_was_escape) {
-      in_quote = true;
+    if (c == quote && !last_was_escape) {
+      in_quote = !in_quote;
     }
-    if (c != escape_) {
+    if (c != escape) {
       last_was_escape = false;
     }
 

@@ -16,6 +16,12 @@
 
 namespace peloton {
 
+namespace codegen {
+namespace type {
+class Type;
+}  // namespace type
+}  // namespace codegen
+
 namespace executor {
 class ExecutorContext;
 }  // namespace executor
@@ -104,6 +110,16 @@ class StringFunctions {
    */
   static void WriteString(const char *data, uint32_t len, char *buf,
                           peloton::type::AbstractPool &pool);
+
+  /**
+   *
+   * @param type
+   * @param data
+   * @param len
+   * @return
+   */
+  static StrWithLen InputString(const codegen::type::Type &type,
+                                const char *data, uint32_t len);
 };
 
 }  // namespace function

@@ -597,9 +597,8 @@ void Varchar::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 }
 
 llvm::Function *Varchar::GetInputFunction(
-    UNUSED_ATTRIBUTE CodeGen &codegen,
-    UNUSED_ATTRIBUTE const Type &type) const {
-  throw NotImplementedException{"String input not implemented yet"};
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return StringFunctionsProxy::InputString.GetFunction(codegen);
 }
 
 llvm::Function *Varchar::GetOutputFunction(
