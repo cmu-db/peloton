@@ -163,16 +163,23 @@ llvm::Value *CodeGen::Printf(const std::string &format,
                              const std::vector<llvm::Value *> &args) {
   auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
     printf_fn = RegisterBuiltin(
         "printf", llvm::TypeBuilder<decltype(printf), false>::get(GetContext()),
         reinterpret_cast<void *>(printf));
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic pop
+#endif
   }
 
   // Collect all the arguments into a vector
   std::vector<llvm::Value *> printf_args = {ConstString(format, "format")};
   printf_args.insert(printf_args.end(), args.begin(), args.end());
 
-  // Call the function
+  // Call printf()
   return CallFunc(printf_fn, printf_args);
 }
 
@@ -181,11 +188,20 @@ llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
   static constexpr char kMemcmpFnName[] = "memcmp";
   auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
   if (memcmp_fn == nullptr) {
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
     memcmp_fn = RegisterBuiltin(
         kMemcmpFnName,
         llvm::TypeBuilder<decltype(memcmp), false>::get(GetContext()),
         reinterpret_cast<void *>(printf));
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic pop
+#endif
   }
+
+  // Call memcmp()
   return CallFunc(memcmp_fn, {ptr1, ptr2, len});
 }
 

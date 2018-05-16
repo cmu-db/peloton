@@ -82,8 +82,8 @@ int32_t DateFunctions::DateToJulian(int32_t year, int32_t month, int32_t day) {
   return julian;
 }
 
-void DateFunctions::JulianToDate(int32_t julian_date, int32_t &year, int32_t &month,
-                                 int32_t &day) {
+void DateFunctions::JulianToDate(int32_t julian_date, int32_t &year,
+                                 int32_t &month, int32_t &day) {
   // From Postgres j2date()
 
   uint32_t julian = static_cast<uint32_t>(julian_date);
