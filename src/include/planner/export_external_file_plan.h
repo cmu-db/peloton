@@ -12,12 +12,20 @@
 
 #pragma once
 
-#include "concurrency/transaction_context.h"
+#include <memory>
+#include <vector>
+#include <string>
+
 #include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace planner {
 
+/**
+ * This is the plan node when exporting data from the database into an external
+ * file. It is configured with the name of the file to write content into, and
+ * the delimiter, quote, and escape characters to use when writing content.
+ */
 class ExportExternalFilePlan : public AbstractPlan {
  public:
   ExportExternalFilePlan(std::string file_name, char delimiter = ',',
@@ -60,60 +68,6 @@ class ExportExternalFilePlan : public AbstractPlan {
   char quote_;
   char escape_;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-///
-/// Implementation below
-///
-////////////////////////////////////////////////////////////////////////////////
-
-inline ExportExternalFilePlan::ExportExternalFilePlan(std::string file_name,
-                                                      char delimiter,
-                                                      char quote, char escape)
-    : file_name_(file_name),
-      delimiter_(delimiter),
-      quote_(quote),
-      escape_(escape) {}
-
-inline PlanNodeType ExportExternalFilePlan::GetPlanNodeType() const {
-  return PlanNodeType::EXPORT_EXTERNAL_FILE;
-}
-
-inline hash_t ExportExternalFilePlan::Hash() const {
-  hash_t hash = HashUtil::HashBytes(file_name_.data(), file_name_.length());
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&delimiter_));
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&quote_));
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&escape_));
-  return hash;
-}
-
-inline bool ExportExternalFilePlan::operator==(const AbstractPlan &rhs) const {
-  if (rhs.GetPlanNodeType() != PlanNodeType::EXPORT_EXTERNAL_FILE) return false;
-  const auto &other = static_cast<const ExportExternalFilePlan &>(rhs);
-  return (
-      (StringUtil::Upper(file_name_) == StringUtil::Upper(other.file_name_)) &&
-      delimiter_ == other.delimiter_ && quote_ == other.quote_ &&
-      escape_ == other.escape_);
-}
-
-inline std::unique_ptr<AbstractPlan> ExportExternalFilePlan::Copy() const {
-  return std::unique_ptr<AbstractPlan>{
-      new ExportExternalFilePlan(file_name_, delimiter_, quote_, escape_)};
-}
-
-inline void ExportExternalFilePlan::PerformBinding(
-    BindingContext &binding_context) {
-  PELOTON_ASSERT(GetChildrenSize() == 1);
-  auto &child = *GetChild(0);
-
-  std::vector<oid_t> child_output_cols;
-  child.GetOutputColumns(child_output_cols);
-
-  output_attributes_.clear();
-  for (const auto &col_id : child_output_cols) {
-    output_attributes_.push_back(binding_context.Find(col_id));
-  }
-}
 
 }  // namespace planner
 }  // namespace peloton
