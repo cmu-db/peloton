@@ -43,7 +43,7 @@ void Column::SetInlined() {
 }
 
 // Serialize this column
-void Column::SerializeTo(SerializeOutput &out) {
+void Column::SerializeTo(SerializeOutput &out) const {
   // Column basic information
   out.WriteTextString(column_name);
   out.WriteInt((int)column_type);

@@ -52,7 +52,7 @@ class MultiConstraint : public Printable {
   std::vector<oid_t> GetCols() const { return column_ids; }
 
   // Serialize this multi-column constraint
-  void SerializeTo(SerializeOutput &out);
+  void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize this multi-column constraint
   static MultiConstraint DeserializeFrom(SerializeInput &in);

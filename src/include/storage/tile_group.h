@@ -161,13 +161,13 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
-  // Serialize this tile group
-  void SerializeTo(SerializeOutput &out);
+  // Serialize this tile group for checkpoints
+  void SerializeTo(SerializeOutput &out) const;
 
-  // Deserialize this tile group
-  static std::shared_ptr<TileGroup> DeserializeFrom(SerializeInput &in,
-                                                    const oid_t database_oid,
-                                                    AbstractTable *table);
+  // Deserialize tile group for checkpoint recovery
+  static TileGroup* DeserializeFrom(SerializeInput &in,
+                                    const oid_t database_oid,
+                                    AbstractTable *table);
 
   // Get the layout of the TileGroup. Used to locate columns.
   const storage::Layout &GetLayout() const { return *tile_group_layout_; }

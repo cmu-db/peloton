@@ -16,6 +16,7 @@
 
 #include "common/internal_types.h"
 #include "common/printable.h"
+#include "type/serializeio.h"
 
 //@{
 /** @brief  Pre-defined OIDs for ROW and COLUMN store.  */
@@ -114,9 +115,15 @@ class Layout : public Printable {
   /** @brief  Serialzies the column_map to be added to pg_layout. */
   std::string SerializeColumnMap() const;
 
+  /** @brief  Serializes this layout for checkpointing */
+  void SerializeTo(SerializeOutput &out) const;
+
   /** @brief  Deserializes the string that has been read from pg_layout. */
   static column_map_type DeserializeColumnMap(oid_t num_columns,
                                               std::string column_map_str);
+
+  /** @brief  Deserializes layout from checkpoint file  */
+  static std::shared_ptr<const Layout> DeserializeFrom(SerializeInput &in);
 
   /** @brief  Returns a string containing the column_map of this layout. */
   std::string GetColumnMapInfo() const;

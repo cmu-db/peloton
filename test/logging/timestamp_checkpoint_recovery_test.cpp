@@ -49,13 +49,13 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   auto storage = storage::StorageManager::GetInstance();
 
   // check an uncommitted table does not exist
-  EXPECT_FALSE(catalog->ExistTableByName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+  EXPECT_FALSE(catalog->ExistTableByName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                                          "out_of_checkpoint_test", txn));
 
   // check all tables in the default database
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
   for (auto table_catalog :
-       default_db_catalog->GetTableObjects((std::string)DEFUALT_SCHEMA_NAME)) {
+       default_db_catalog->GetTableObjects((std::string)DEFAULT_SCHEMA_NAME)) {
   	auto table_name = table_catalog->GetTableName();
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());

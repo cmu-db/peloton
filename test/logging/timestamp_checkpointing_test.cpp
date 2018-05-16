@@ -12,6 +12,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/layout_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "common/init.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -19,6 +21,7 @@
 #include "logging/logging_util.h"
 #include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
+#include "storage/tile_group_factory.h"
 #include "sql/testing_sql_util.h"
 #include "type/ephemeral_pool.h"
 
@@ -47,10 +50,13 @@ bool RecoverTileGroupFromFile(
   oid_t tile_group_count = input_buffer.ReadLong();
   oid_t column_count = schema->GetColumnCount();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
-    // recover tile group structure
-    std::shared_ptr<storage::TileGroup> tile_group =
-        storage::TileGroup::DeserializeFrom(input_buffer,
-                                            table->GetDatabaseOid(), table);
+    // recover tile group
+    std::shared_ptr<storage::TileGroup> tile_group(
+    		storage::TileGroup::DeserializeFrom(input_buffer,
+    				table->GetDatabaseOid(), table));
+
+    LOG_TRACE("Deserialized tile group %u in %s \n%s", tile_group->GetTileGroupId(),
+    		table->GetName().c_str(), tile_group->GetLayout().GetInfo().c_str());
 
     // recover tuples located in the tile group
     oid_t visible_tuple_count = input_buffer.ReadLong();
@@ -198,7 +204,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   // check user table file
 	auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
   for (auto table_catalog : default_db_catalog->GetTableObjects(
-  		(std::string)DEFUALT_SCHEMA_NAME)) {
+  		(std::string)DEFAULT_SCHEMA_NAME)) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
     FileHandle table_file;
@@ -206,8 +212,8 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
     		default_db_catalog->GetDatabaseName() + "_" +
 				table_catalog->GetSchemaName() + "_" + table_catalog->GetTableName();
 
-    LOG_INFO("Check the user table %s.%s", table_catalog->GetSchemaName().c_str(),
-    		table_catalog->GetTableName().c_str());
+    LOG_INFO("Check the user table %s.%s\n%s", table_catalog->GetSchemaName().c_str(),
+    		table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
 
   	// open table file
     // table 'out_of_checkpoint_test' is not targeted for the checkpoint
@@ -231,15 +237,8 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   	auto schema = table->GetSchema();
     auto column_count = schema->GetColumnCount();
   	for (auto tile_group : tile_groups) {
-    	// check tile schemas
-    	int column_count_in_schemas = 0;
-    	for(auto tile_schema : tile_group->GetTileSchemas()) {
-    		column_count_in_schemas += tile_schema.GetColumnCount();
-    	}
-    	EXPECT_EQ(column_count, column_count_in_schemas);
-
-    	// check the map for columns and tiles
-    	EXPECT_EQ(column_count, tile_group->GetColumnMap().size());
+    	// check the layout of columns in the tile group
+    	EXPECT_EQ(column_count, tile_group->GetLayout().GetColumnCount());
 
   		// check the records
   		oid_t max_tuple_count = tile_group->GetNextTupleSlot();

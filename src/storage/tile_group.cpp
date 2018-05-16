@@ -15,6 +15,7 @@
 #include <numeric>
 
 #include "catalog/manager.h"
+#include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/internal_types.h"
 #include "common/logger.h"
@@ -343,28 +344,15 @@ void TileGroup::Sync() {
 }
 
 // Serialize this tile group
-void TileGroup::SerializeTo(SerializeOutput &out) {
-  out.WriteInt(num_tuple_slots);
-  out.WriteLong(tile_schemas.size());
-  for (auto tile_schema : tile_schemas) {
-    tile_schema.SerializeTo(out);
-  }
-
-  out.WriteLong(column_map.size());
-  for (auto column_info : column_map) {
-    oid_t column_offset = column_info.first;
-    oid_t tile_offset = column_info.second.first;
-    oid_t tile_column_offset = column_info.second.second;
-    out.WriteInt(column_offset);
-    out.WriteInt(tile_offset);
-    out.WriteInt(tile_column_offset);
-  }
+void TileGroup::SerializeTo(SerializeOutput &out) const {
+  out.WriteInt(num_tuple_slots_);
+  tile_group_layout_->SerializeTo(out);
 }
 
 // Deserialize this tile group
-std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
-                                                      const oid_t database_oid,
-                                                      AbstractTable *table) {
+TileGroup* TileGroup::DeserializeFrom(SerializeInput &in,
+                                     const oid_t database_oid,
+                                     AbstractTable *table) {
 	// The tile_group_id can't be recovered.
 	// Because if active_tile_group_count_ in DataTable class is changed after
 	// restart (e.g. in case of change of connection_thread_count setting),
@@ -372,27 +360,14 @@ std::shared_ptr<TileGroup> TileGroup::DeserializeFrom(SerializeInput &in,
 	// which set for the default tile group.
   oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
   oid_t allocated_tuple_count = in.ReadInt();
-  size_t tile_schema_count = in.ReadLong();
-  std::vector<catalog::Schema> schemas;
-  for (oid_t schema_idx = 0; schema_idx < tile_schema_count; schema_idx++) {
-    auto tile_schema = catalog::Schema::DeserializeFrom(in);
-    schemas.push_back(*tile_schema);
-  }
 
-  column_map_type column_map;
-  size_t column_map_count = in.ReadLong();
-  for (oid_t column_idx = 0; column_idx < column_map_count; column_idx++) {
-    oid_t column_offset = in.ReadInt();
-    oid_t tile_offset = in.ReadInt();
-    oid_t tile_column_offset = in.ReadInt();
-    column_map[column_offset] = std::make_pair(tile_offset, tile_column_offset);
-  }
+  // recover layout
+  auto layout = storage::Layout::DeserializeFrom(in);
+  auto schemas = layout->GetLayoutSchemas(table->GetSchema());
 
-  std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-      database_oid, table->GetOid(), tile_group_id, table, schemas, column_map,
-      allocated_tuple_count));
-
-  return tile_group;
+  return TileGroupFactory::GetTileGroup(
+      database_oid, table->GetOid(), tile_group_id, table, schemas, layout,
+      allocated_tuple_count);
 }
 
 //===--------------------------------------------------------------------===//

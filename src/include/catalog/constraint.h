@@ -59,7 +59,7 @@ class Constraint : public Printable {
   std::string GetName() const { return constraint_name; }
 
   // Serialize this constraint
-  void SerializeTo(SerializeOutput &out);
+  void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize this constraint
   static Constraint DeserializeFrom(SerializeInput &in,

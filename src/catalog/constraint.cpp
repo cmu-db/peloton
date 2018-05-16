@@ -18,7 +18,7 @@ namespace peloton {
 namespace catalog {
 
 // Serialize this constraint
-void Constraint::SerializeTo(SerializeOutput &out) {
+void Constraint::SerializeTo(SerializeOutput &out) const {
   out.WriteTextString(constraint_name);
   out.WriteInt((int)constraint_type);
   out.WriteInt(fk_list_offset);

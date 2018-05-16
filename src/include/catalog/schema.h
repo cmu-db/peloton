@@ -83,7 +83,7 @@ class Schema : public Printable {
       const std::vector<std::vector<oid_t>> &subsets);
 
   // Serialize this schema
-  void SerializeTo(SerializeOutput &out);
+  void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize this schema
   static std::shared_ptr<Schema> DeserializeFrom(SerializeInput &in);
@@ -230,7 +230,7 @@ class Schema : public Printable {
     multi_constraints.push_back(mc);
   }
 
-  inline std::vector<MultiConstraint> GetMultiConstraints() {
+  inline std::vector<MultiConstraint> GetMultiConstraints() const {
     return multi_constraints;
   }
 

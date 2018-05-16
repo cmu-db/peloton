@@ -271,12 +271,12 @@ Schema *Schema::AppendSchemaPtrList(
 }
 
 // Serialize this schema
-void Schema::SerializeTo(SerializeOutput &out) {
+void Schema::SerializeTo(SerializeOutput &out) const {
   // Write each column information (column name, length, offset, type and
   // constraints)
   out.WriteLong(column_count);
-  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    columns[column_itr].SerializeTo(out);
+  for (auto column : columns) {
+    column.SerializeTo(out);
   }
 
   // Write schema information (multi-column constraints)

@@ -36,7 +36,7 @@ const std::string MultiConstraint::GetInfo() const {
 }
 
 // Serialize this multi-column constraint
-void MultiConstraint::SerializeTo(SerializeOutput &out) {
+void MultiConstraint::SerializeTo(SerializeOutput &out) const {
   // multi-column constraint basic information
   out.WriteTextString(constraint_name);
   out.WriteInt((int)constraint_type);

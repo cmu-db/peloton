@@ -109,7 +109,7 @@ class Column : public Printable {
   }
 
   // Serialize this column
-  void SerializeTo(SerializeOutput &out);
+  void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize this column
   static Column DeserializeFrom(SerializeInput &in);
