@@ -183,24 +183,6 @@ type::Value NumericFunctions::_Round(const std::vector<type::Value> &args) {
 namespace {
 
 /**
- * Skip all leading and trailing whitespace from the string bounded by the
- * provided pointers. This function will modify the input pointers to point to
- * the first non-whitespace space character at the start and end of the input
- * string.
- *
- * @param[in,out] left Pointer to the left-most character in the input string
- * @param[in,out] right Pointer to the right-most character in the input string
- */
-void TrimLeftRight(const char *&left, const char *&right) {
-  while (*left == ' ') {
-    left++;
-  }
-  while (right > left && *(right - 1) == ' ') {
-    right--;
-  }
-}
-
-/**
  * Convert the provided input string into an integral number. This function
  * handles leading whitespace and leading negative (-) or positive (+) signs.
  * Additionally, it performs a bounds check to ensure the number falls into the
@@ -216,16 +198,13 @@ T ParseInteger(const char *ptr, uint32_t len) {
   static_assert(std::is_integral<T>::value,
                 "Must provide integer-type when calling ParseInteger");
 
-  if (len == 0) {
-    codegen::RuntimeFunctions::ThrowInvalidInputStringException();
-    __builtin_unreachable();
-  }
-
   const char *start = ptr;
   const char *end = start + len;
 
-  // Trim leading and trailing whitespace
-  TrimLeftRight(start, end);
+  // Trim leading whitespace
+  while (start < end && *start == ' ') {
+    start++;
+  }
 
   // Check negative or positive sign
   bool negative = false;
@@ -238,10 +217,9 @@ T ParseInteger(const char *ptr, uint32_t len) {
 
   // Convert
   int64_t num = 0;
-  while (start != end) {
+  while (start < end) {
     if (*start < '0' || *start > '9') {
-      codegen::RuntimeFunctions::ThrowInvalidInputStringException();
-      __builtin_unreachable();
+      break;
     }
 
     num = (num * 10) + (*start - '0');
@@ -249,7 +227,16 @@ T ParseInteger(const char *ptr, uint32_t len) {
     start++;
   }
 
-  PELOTON_ASSERT(start == end);
+  // Trim trailing whitespace
+  while (start < end && *start == ' ') {
+    start++;
+  }
+
+  // If we haven't consumed everything at this point, it was an invalid input
+  if (start < end) {
+    codegen::RuntimeFunctions::ThrowInvalidInputStringException();
+    __builtin_unreachable();
+  }
 
   // Negate number if we need to
   if (negative) {
@@ -279,10 +266,13 @@ bool NumericFunctions::InputBoolean(
     __builtin_unreachable();
   }
 
-  const char *start = ptr, *end = ptr + len;
+  const char *start = ptr;
+  const char *end = ptr + len;
 
-  // Trim leading and trailing whitespace
-  TrimLeftRight(start, end);
+  // Trim leading whitespace
+  while (start < end && *start == ' ') {
+    start++;
+  }
 
   //
   uint64_t trimmed_len = end - start;
@@ -393,13 +383,16 @@ double NumericFunctions::InputDecimal(
     __builtin_unreachable();
   }
 
+  const char *start = ptr;
+  const char *end = ptr + len;
+
   // We don't trim because std::strtod() does the trimming for us
 
   // TODO(pmenon): Optimize me later
-  char *end = nullptr;
-  double ret = std::strtod(ptr, &end);
+  char *consumed_ptr = nullptr;
+  double ret = std::strtod(ptr, &consumed_ptr);
 
-  if (unlikely_branch(end == ptr)) {
+  if (unlikely_branch(consumed_ptr == start)) {
     if (errno == ERANGE) {
       codegen::RuntimeFunctions::ThrowOverflowException();
       __builtin_unreachable();
@@ -407,6 +400,17 @@ double NumericFunctions::InputDecimal(
       codegen::RuntimeFunctions::ThrowInvalidInputStringException();
       __builtin_unreachable();
     }
+  }
+
+  // Eat the rest
+  while (consumed_ptr < end && *consumed_ptr == ' ') {
+    consumed_ptr++;
+  }
+
+  // If we haven't consumed everything at this point, it was an invalid input
+  if (consumed_ptr < end) {
+    codegen::RuntimeFunctions::ThrowInvalidInputStringException();
+    __builtin_unreachable();
   }
 
   // Done
