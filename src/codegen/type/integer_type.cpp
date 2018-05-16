@@ -6,13 +6,14 @@
 //
 // Identification: src/codegen/type/integer_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/integer_type.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/proxy/numeric_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/decimal_type.h"
@@ -595,7 +596,7 @@ void Integer::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 
 llvm::Function *Integer::GetInputFunction(
     CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-  return ValuesRuntimeProxy::InputInteger.GetFunction(codegen);
+  return NumericFunctionsProxy::InputInteger.GetFunction(codegen);
 }
 
 llvm::Function *Integer::GetOutputFunction(

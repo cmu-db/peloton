@@ -13,6 +13,7 @@
 #include "codegen/type/varbinary_type.h"
 
 #include "codegen/value.h"
+#include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
@@ -52,7 +53,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
     // Setup the function arguments and invoke the call
     std::vector<llvm::Value *> args = {left.GetValue(), left.GetLength(),
                                        right.GetValue(), right.GetLength()};
-    return codegen.Call(ValuesRuntimeProxy::CompareStrings, args);
+    return codegen.Call(StringFunctionsProxy::CompareStrings, args);
   }
 
   Value CompareLtImpl(CodeGen &codegen, const Value &left,

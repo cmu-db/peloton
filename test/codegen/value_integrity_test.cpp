@@ -17,7 +17,7 @@
 #include "codegen/type/smallint_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/bigint_type.h"
-#include "codegen/values_runtime.h"
+#include "function/numeric_functions.h"
 
 namespace peloton {
 namespace test {
@@ -224,17 +224,18 @@ void TestInputIntegral(
 
 TEST_F(ValueIntegrityTest, InputIntegralTypesTest) {
   codegen::type::Type tinyint{type::TypeId::TINYINT, false};
-  TestInputIntegral<int8_t>(tinyint, codegen::ValuesRuntime::InputTinyInt,
+  TestInputIntegral<int8_t>(tinyint, function::NumericFunctions::InputTinyInt,
                             {{"-126", -126}, {"126", 126}});
 
   codegen::type::Type smallint{type::TypeId::SMALLINT, false};
-  TestInputIntegral<int16_t>(smallint, codegen::ValuesRuntime::InputSmallInt);
+  TestInputIntegral<int16_t>(smallint,
+                             function::NumericFunctions::InputSmallInt);
 
   codegen::type::Type integer{type::TypeId::INTEGER, false};
-  TestInputIntegral<int32_t>(integer, codegen::ValuesRuntime::InputInteger);
+  TestInputIntegral<int32_t>(integer, function::NumericFunctions::InputInteger);
 
   codegen::type::Type bigint{type::TypeId::BIGINT, false};
-  TestInputIntegral<int64_t>(bigint, codegen::ValuesRuntime::InputBigInt);
+  TestInputIntegral<int64_t>(bigint, function::NumericFunctions::InputBigInt);
 }
 
 }  // namespace test

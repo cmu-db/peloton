@@ -6,7 +6,7 @@
 //
 // Identification: src/include/common/container_tuple.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #include <sstream>
 #include <vector>
 
+#include "catalog/schema.h"
 #include "common/abstract_tuple.h"
 #include "common/exception.h"
 #include "common/macros.h"

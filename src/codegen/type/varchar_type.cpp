@@ -52,7 +52,7 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
     // Setup the function arguments and invoke the call
     std::vector<llvm::Value *> args = {left.GetValue(), left.GetLength(),
                                        right.GetValue(), right.GetLength()};
-    return codegen.Call(ValuesRuntimeProxy::CompareStrings, args);
+    return codegen.Call(StringFunctionsProxy::CompareStrings, args);
   }
 
   Value CompareLtImpl(CodeGen &codegen, const Value &left,

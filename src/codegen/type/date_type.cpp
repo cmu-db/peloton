@@ -14,6 +14,7 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
@@ -189,9 +190,8 @@ void Date::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
 }
 
 llvm::Function *Date::GetInputFunction(
-    UNUSED_ATTRIBUTE CodeGen &codegen,
-    UNUSED_ATTRIBUTE const Type &type) const {
-  throw NotImplementedException{"Date inputs not supported yet"};
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return DateFunctionsProxy::InputDate.GetFunction(codegen);
 }
 
 llvm::Function *Date::GetOutputFunction(

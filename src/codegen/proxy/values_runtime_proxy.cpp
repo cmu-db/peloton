@@ -30,16 +30,5 @@ DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputDecimal);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputVarchar);
 DEFINE_METHOD(peloton::codegen, ValuesRuntime, OutputVarbinary);
 
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputBoolean);
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputTinyInt);
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputSmallInt);
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputInteger);
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputBigInt);
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, InputDecimal);
-
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, CompareStrings);
-
-DEFINE_METHOD(peloton::codegen, ValuesRuntime, WriteVarlen);
-
 }  // namespace codegen
 }  // namespace peloton

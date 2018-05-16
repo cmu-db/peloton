@@ -29,17 +29,6 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(OutputDecimal);
   DECLARE_METHOD(OutputVarchar);
   DECLARE_METHOD(OutputVarbinary);
-
-  DECLARE_METHOD(InputBoolean);
-  DECLARE_METHOD(InputTinyInt);
-  DECLARE_METHOD(InputSmallInt);
-  DECLARE_METHOD(InputInteger);
-  DECLARE_METHOD(InputBigInt);
-  DECLARE_METHOD(InputDecimal);
-
-  DECLARE_METHOD(CompareStrings);
-
-  DECLARE_METHOD(WriteVarlen);
 };
 
 }  // namespace codegen

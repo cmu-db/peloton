@@ -17,7 +17,7 @@
 
 #include "common/harness.h"
 
-#include "function/decimal_functions.h"
+#include "function/numeric_functions.h"
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -37,13 +37,13 @@ TEST_F(DecimalFunctionsTests, SqrtTest) {
   std::vector<type::Value> args = {
       type::ValueFactory::GetDecimalValue(column_val)};
 
-  auto result = function::DecimalFunctions::Sqrt(args);
+  auto result = function::NumericFunctions::Sqrt(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.GetAs<double>());
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  result = function::DecimalFunctions::Sqrt(args);
+  result = function::NumericFunctions::Sqrt(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -53,7 +53,7 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   std::vector<type::Value> args;
   for (double in : inputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
-    auto result = function::DecimalFunctions::_Floor(args);
+    auto result = function::NumericFunctions::_Floor(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(floor(in), result.GetAs<double>());
   }
@@ -61,31 +61,31 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   // Testing Floor with Integer Types(Should be a no-op)
   int64_t numInt64 = 1;
   args = {type::ValueFactory::GetIntegerValue(numInt64)};
-  auto result = function::DecimalFunctions::_Floor(args);
+  auto result = function::NumericFunctions::_Floor(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(numInt64, result.GetAs<double>());
 
   int32_t numInt32 = 1;
   args = {type::ValueFactory::GetIntegerValue(numInt32)};
-  result = function::DecimalFunctions::_Floor(args);
+  result = function::NumericFunctions::_Floor(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(numInt32, result.GetAs<double>());
 
   int16_t numInt16 = 1;
   args = {type::ValueFactory::GetIntegerValue(numInt32)};
-  result = function::DecimalFunctions::_Floor(args);
+  result = function::NumericFunctions::_Floor(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(numInt16, result.GetAs<double>());
 
   int16_t numInt8 = 1;
   args = {type::ValueFactory::GetIntegerValue(numInt8)};
-  result = function::DecimalFunctions::_Floor(args);
+  result = function::NumericFunctions::_Floor(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(numInt8, result.GetAs<double>());
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  result = function::DecimalFunctions::_Floor(args);
+  result = function::NumericFunctions::_Floor(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -94,14 +94,14 @@ TEST_F(DecimalFunctionsTests, RoundTest) {
   std::vector<type::Value> args;
   for (double val : column_vals) {
     args = {type::ValueFactory::GetDecimalValue(val)};
-    auto result = function::DecimalFunctions::_Round(args);
+    auto result = function::NumericFunctions::_Round(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(round(val), result.GetAs<double>());
   }
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  auto result = function::DecimalFunctions::_Round(args);
+  auto result = function::NumericFunctions::_Round(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -110,14 +110,14 @@ TEST_F(DecimalFunctionsTests,AbsTestDouble) {
   std::vector<type::Value> args;
   for (double in : doubleTestInputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
-    auto result = function::DecimalFunctions::_Abs(args);
+    auto result = function::NumericFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(fabs(in), result.GetAs<double>());
   }
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  auto result = function::DecimalFunctions::_Abs(args);
+  auto result = function::NumericFunctions::_Abs(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -131,28 +131,28 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
   // Testing Abs with Integer Types
   for (int64_t in: bigIntTestInputs) {
     args = {type::ValueFactory::GetBigIntValue(in)};
-    auto result = function::DecimalFunctions::_Abs(args);
+    auto result = function::NumericFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(std::abs(in), result.GetAs<int64_t>());
   }
 
   for (int32_t in: intTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
-    auto result = function::DecimalFunctions::_Abs(args);
+    auto result = function::NumericFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int32_t>());
   }
 
   for (int16_t in: smallIntTestInputs) {
     args = {type::ValueFactory::GetSmallIntValue(in)};
-    auto result = function::DecimalFunctions::_Abs(args);
+    auto result = function::NumericFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int16_t>());
   }
 
   for (int8_t in: tinyIntTestInputs) {
     args = {type::ValueFactory::GetTinyIntValue(in)};
-    auto result = function::DecimalFunctions::_Abs(args);
+    auto result = function::NumericFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int8_t>());
   }
@@ -165,13 +165,13 @@ TEST_F(DecimalFunctionsTests, CeilTestDouble) {
   std::vector<type::Value> args;
   for (double in: doubleTestInputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
-    auto result = function::DecimalFunctions::_Ceil(args);
+    auto result = function::NumericFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  auto result = function::DecimalFunctions::_Ceil(args);
+  auto result = function::NumericFunctions::_Ceil(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -185,28 +185,28 @@ TEST_F(DecimalFunctionsTests, CeilTestInt) {
   // Testing Ceil with Integer Types
   for (int64_t in: bigIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
-    auto result = function::DecimalFunctions::_Ceil(args);
+    auto result = function::NumericFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
   for (int in: intTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
-    auto result = function::DecimalFunctions::_Ceil(args);
+    auto result = function::NumericFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
   for (int in: smallIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
-    auto result = function::DecimalFunctions::_Ceil(args);
+    auto result = function::NumericFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
   for (int in: tinyIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
-    auto result = function::DecimalFunctions::_Ceil(args);
+    auto result = function::NumericFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }

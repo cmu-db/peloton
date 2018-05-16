@@ -28,12 +28,6 @@ class Type;
 
 class ValuesRuntime {
  public:
-  //////////////////////////////////////////////////////////////////////////////
-  ///
-  /// Output functions
-  ///
-  //////////////////////////////////////////////////////////////////////////////
-
   // Write out the given boolean value into the array at the provided index
   static void OutputBoolean(char *values, uint32_t idx, bool val, bool is_null);
 
@@ -65,53 +59,6 @@ class ValuesRuntime {
   // Write out the given varbinary value into the array at the provided index
   static void OutputVarbinary(char *values, uint32_t idx, const char *str,
                               uint32_t len);
-
-  //////////////////////////////////////////////////////////////////////////////
-  ///
-  /// Input functions
-  ////
-  //////////////////////////////////////////////////////////////////////////////
-
-  static bool InputBoolean(const type::Type &type, const char *ptr,
-                           uint32_t len);
-
-  static int8_t InputTinyInt(const type::Type &type, const char *ptr,
-                             uint32_t len);
-
-  static int16_t InputSmallInt(const type::Type &type, const char *ptr,
-                               uint32_t len);
-
-  static int32_t InputInteger(const type::Type &type, const char *ptr,
-                              uint32_t len);
-
-  static int64_t InputBigInt(const type::Type &type, const char *ptr,
-                             uint32_t len);
-
-  static double InputDecimal(const type::Type &type, const char *ptr,
-                             uint32_t len);
-
-  /**
-   * Compare two strings, returning an integer value indicating their sort order
-   *
-   * @param str1 A pointer to the first string
-   * @param len1 The length of the first string
-   * @param str2 A pointer to the second string
-   * @param len2 The length of the second string
-   * @return
-   */
-  static int32_t CompareStrings(const char *str1, uint32_t len1,
-                                const char *str2, uint32_t len2);
-
-  /**
-   * Write the provided variable length object into the target buffer.
-   *
-   * @param data The bytes we wish to serialize
-   * @param len The length of the byte array
-   * @param buf The target position we wish to write to
-   * @param pool A memory pool to source memory from
-   */
-  static void WriteVarlen(const char *data, uint32_t len, char *buf,
-                          peloton::type::AbstractPool &pool);
 };
 
 }  // namespace codegen
