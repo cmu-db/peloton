@@ -228,7 +228,7 @@ UtilPlanStatus Optimizer::HandleUtilStatement(
           // TODO(boweic): not releasing this unique_ptr here would cause a
           // double delete which I still don't know why is happening.
           // I believe no one should take the ownership of the pointer here
-          new planner::ExplainPlan(explain_parse_tree->real_sql_stmt.release(),
+          new planner::ExplainPlan(std::move(explain_parse_tree->real_sql_stmt),
                                    explain_parse_tree->default_database_name));
       break;
     }

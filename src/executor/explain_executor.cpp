@@ -54,6 +54,8 @@ bool ExplainExecutor::DExecute() {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       new parser::SQLStatementList(sql_stmt));
   auto plan = optimizer->BuildPelotonPlanTree(stmt_list, current_txn);
+  // Release the ptr to prevent double delete
+  stmt_list->PassOutStatement(0).release();
   const catalog::Schema schema({catalog::Column(
       type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
       "Query Plan")});
