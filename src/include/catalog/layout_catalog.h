@@ -1,0 +1,75 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// layout_catalog.h
+//
+// Identification: src/include/catalog/layout_catalog.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include "catalog/abstract_catalog.h"
+
+namespace peloton {
+
+namespace storage {
+class Layout;
+}  // namespace storage
+
+namespace catalog {
+
+class LayoutCatalog : public AbstractCatalog {
+ public:
+
+  LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                concurrency::TransactionContext *txn);
+
+  ~LayoutCatalog();
+
+  //===--------------------------------------------------------------------===//
+  // write Related API
+  //===--------------------------------------------------------------------===//
+  bool InsertLayout(oid_t table_oid,
+                    std::shared_ptr<const storage::Layout> layout,
+                    type::AbstractPool *pool,
+                    concurrency::TransactionContext *txn);
+
+  bool DeleteLayout(oid_t table_oid, oid_t layout_oid,
+                    concurrency::TransactionContext *txn);
+
+  bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+
+  //===--------------------------------------------------------------------===//
+  // Read Related API
+  //===--------------------------------------------------------------------===//
+  const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
+  GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+
+  std::shared_ptr<const storage::Layout> GetLayoutWithOid(
+      oid_t table_oid, oid_t layout_oid, concurrency::TransactionContext *txn);
+
+ private:
+  std::unique_ptr<catalog::Schema> InitializeSchema();
+
+  enum ColumnId {
+    TABLE_OID = 0,
+    LAYOUT_OID = 1,
+    NUM_COLUMNS = 2,
+    COLUMN_MAP = 3,
+    // Add new columns here in creation order
+  };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3};
+
+  enum IndexId {
+    PRIMARY_KEY = 0,
+    SKEY_TABLE_OID = 1,
+    // Add new indexes here in creation order
+  };
+};
+
+}  // namespace catalog
+}  // namespace peloton

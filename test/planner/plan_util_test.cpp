@@ -54,10 +54,10 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+  catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
                        std::move(table_schema), txn);
   auto source_table = catalog->GetTableWithName(
-      TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table", txn);
+      TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table", txn);
   EXPECT_NE(source_table, nullptr);
   txn_manager.CommitTransaction(txn);
 
@@ -67,7 +67,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   source_col_ids.push_back(col_id);
 
   // create index on 'id'
-  catalog->CreateIndex(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
                        source_col_ids, "test_id_idx", false, IndexType::BWTREE,
                        txn);
 
@@ -75,7 +75,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   col_id = source_table->GetSchema()->GetColumnID(fname_column.column_name);
   source_col_ids.push_back(col_id);
 
-  catalog->CreateIndex(TEST_DB_NAME, DEFUALT_SCHEMA_NAME, "test_table",
+  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "test_table",
                        source_col_ids, "test_fname_idx", false,
                        IndexType::BWTREE, txn);
   txn_manager.CommitTransaction(txn);
@@ -91,7 +91,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   // 1) id
   // 2) id and first_name
   auto table_object =
-      db_object->GetTableObject("test_table", DEFUALT_SCHEMA_NAME);
+      db_object->GetTableObject("test_table", DEFAULT_SCHEMA_NAME);
   EXPECT_NE(table_object, nullptr);
   oid_t id_idx_oid = table_object->GetIndexObject("test_id_idx")->GetIndexOid();
   oid_t fname_idx_oid =
@@ -198,14 +198,14 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
       new catalog::Schema({id_column, fname_column, lname_column}));
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_COLUMNS, DEFUALT_SCHEMA_NAME, "test_table",
+  catalog->CreateTable(TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table",
                        std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
   auto source_table = catalog->GetTableWithName(
-      TEST_DB_COLUMNS, DEFUALT_SCHEMA_NAME, "test_table", txn);
+      TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table", txn);
   txn_manager.CommitTransaction(txn);
 
   oid_t table_id = source_table->GetOid();
@@ -228,14 +228,14 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   std::unique_ptr<catalog::Schema> job_table_schema(
       new catalog::Schema({age_column, job_column, pid_column}));
-  catalog->CreateTable(TEST_DB_COLUMNS, DEFUALT_SCHEMA_NAME, "test_table_job",
+  catalog->CreateTable(TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table_job",
                        std::move(job_table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
   auto source_table_job = catalog->GetTableWithName(
-      TEST_DB_COLUMNS, DEFUALT_SCHEMA_NAME, "test_table_job", txn);
+      TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table_job", txn);
   oid_t table_job_id = source_table_job->GetOid();
   oid_t age_col_oid =
       source_table_job->GetSchema()->GetColumnID(age_column.column_name);

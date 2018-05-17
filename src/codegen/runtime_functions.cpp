@@ -19,8 +19,9 @@
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
+#include "storage/layout.h"
 #include "storage/tile.h"
+#include "storage/tile_group.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
 
@@ -102,23 +103,37 @@ void RuntimeFunctions::FillPredicateArray(
 //===----------------------------------------------------------------------===//
 void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
                                           ColumnLayoutInfo *infos,
-                                          uint32_t num_cols) {
-  for (uint32_t col_idx = 0; col_idx < num_cols; col_idx++) {
-    // Map the current column to a tile and a column offset in the tile
-    oid_t tile_offset, tile_column_offset;
-    tile_group->LocateTileAndColumn(col_idx, tile_offset, tile_column_offset);
+                                          UNUSED_ATTRIBUTE uint32_t num_cols) {
+  const auto &layout = tile_group->GetLayout();
+  UNUSED_ATTRIBUTE oid_t last_col_idx = INVALID_OID;
 
-    // Now grab the column information
-    auto *tile = tile_group->GetTile(tile_offset);
-    auto *tile_schema = tile->GetSchema();
-    infos[col_idx].column =
-        tile->GetTupleLocation(0) + tile_schema->GetOffset(tile_column_offset);
-    infos[col_idx].stride = tile_schema->GetLength();
-    infos[col_idx].is_columnar = tile_schema->GetColumnCount() == 1;
-    LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
-              infos[col_idx].column, infos[col_idx].stride,
-              infos[col_idx].is_columnar ? "true" : "false");
+  auto tile_map = layout.GetTileMap();
+  // Find the mapping for each tile in the layout.
+  for (auto tile_entry : tile_map) {
+    // Get the tile schema.
+    auto tile_idx = tile_entry.first;
+    auto *tile = tile_group->GetTile(tile_idx);
+    auto tile_schema = tile->GetSchema();
+    // Map the current column to a tile and a column offset in the tile.
+    for (auto column_entry : tile_entry.second) {
+      // Now grab the column information
+      oid_t col_idx = column_entry.first;
+      oid_t tile_col_offset = column_entry.second;
+      // Ensure that the col_idx is within the num_cols range
+      PELOTON_ASSERT(col_idx < num_cols);
+      infos[col_idx].column =
+          tile->GetTupleLocation(0) + tile_schema->GetOffset(tile_col_offset);
+      infos[col_idx].stride = tile_schema->GetLength();
+      infos[col_idx].is_columnar = tile_schema->GetColumnCount() == 1;
+      last_col_idx = col_idx;
+      LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
+                infos[col_idx].column, infos[col_idx].stride,
+                infos[col_idx].is_columnar ? "true" : "false");
+    }
   }
+  // Ensure that ColumnLayoutInfo for each column has been populated.
+  PELOTON_ASSERT((last_col_idx != INVALID_OID) &&
+                 (last_col_idx == (num_cols - 1)));
 }
 
 void RuntimeFunctions::ThrowDivideByZeroException() {

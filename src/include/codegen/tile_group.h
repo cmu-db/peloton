@@ -137,7 +137,7 @@ class TileGroup {
 
     inline const TileGroup &GetTileGroup() const { return tile_group_; }
 
-    inline const ColumnLayout &GetLayout(uint32_t col_idx) const {
+    const ColumnLayout &GetLayout(uint32_t col_idx) const {
       return layout_[col_idx];
     }
 

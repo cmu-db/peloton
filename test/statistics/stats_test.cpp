@@ -136,16 +136,16 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog->CreateDatabase("emp_db", txn);
-  catalog::Catalog::GetInstance()->CreateTable(
-      "emp_db", DEFUALT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFAULT_SCHEMA_NAME,
+                                               "department_table",
+                                               std::move(table_schema), txn);
 
   // Create multiple stat worker threads
   int num_threads = 8;
   storage::Database *database =
       catalog->GetDatabaseWithName("emp_db", txn);
   storage::DataTable *table = catalog->GetTableWithName(
-      "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn);
+      "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
   LaunchParallelTest(num_threads, TransactionTest, database, table);
   // Wait for aggregation to finish

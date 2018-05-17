@@ -18,11 +18,12 @@
 #include <mutex>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "planner/project_info.h"
+#include "storage/layout.h"
 #include "type/abstract_pool.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -53,8 +54,6 @@ class AbstractTable;
 class TileGroupIterator;
 class RollbackSegment;
 
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
-
 /**
  * Represents a group of tiles logically horizontally contiguous.
  *
@@ -76,7 +75,7 @@ class TileGroup : public Printable {
   // Tile group constructor
   TileGroup(BackendType backend_type, TileGroupHeader *tile_group_header,
             AbstractTable *table, const std::vector<catalog::Schema> &schemas,
-            const column_map_type &column_map, int tuple_count);
+            std::shared_ptr<const Layout> layout, int tuple_count);
 
   ~TileGroup();
 
@@ -119,9 +118,9 @@ class TileGroup : public Printable {
   // this function is called only when building tile groups for aggregation
   // operations.
   // FIXME: GC has recycled some of the tuples, so this count is not accurate
-  oid_t GetActiveTupleCount() const;
+  uint32_t GetActiveTupleCount() const;
 
-  oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
+  uint32_t GetAllocatedTupleCount() const { return num_tuple_slots_; }
 
   TileGroupHeader *GetHeader() const { return tile_group_header; }
 
@@ -131,7 +130,7 @@ class TileGroup : public Printable {
 
   // Get the tile at given offset in the tile group
   inline Tile *GetTile(const oid_t tile_offset) const {
-    PELOTON_ASSERT(tile_offset < tile_count);
+    PELOTON_ASSERT(tile_offset < tile_count_);
     Tile *tile = tiles[tile_offset].get();
     return tile;
   }
@@ -143,10 +142,6 @@ class TileGroup : public Printable {
 
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
-  const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
-    return column_map;
-  }
-
   oid_t GetTileGroupId() const;
 
   oid_t GetDatabaseId() const { return database_id; }
@@ -157,33 +152,17 @@ class TileGroup : public Printable {
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
-  std::vector<catalog::Schema> &GetTileSchemas() { return tile_schemas; }
-
-  size_t GetTileCount() const { return tile_count; }
-
-  // Sets the tile id and column id w.r.t that tile corresponding to
-  // the specified tile group column id.
-  inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                                  oid_t &tile_column_offset) const {
-    PELOTON_ASSERT(column_map.count(column_offset) != 0);
-    // get the entry in the column map
-    auto entry = column_map.at(column_offset);
-    tile_offset = entry.first;
-    tile_column_offset = entry.second;
-  }
-
-  oid_t GetTileIdFromColumnId(oid_t column_id);
-
-  oid_t GetTileColumnId(oid_t column_id);
+  size_t GetTileCount() const { return tile_count_; }
 
   type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
 
-  double GetSchemaDifference(const storage::column_map_type &new_column_map);
-
   // Sync the contents
   void Sync();
+
+  // Get the layout of the TileGroup. Used to locate columns.
+  const storage::Layout &GetLayout() const { return *tile_group_layout_; }
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -198,9 +177,6 @@ class TileGroup : public Printable {
   // Backend type
   BackendType backend_type;
 
-  // mapping to tile schemas
-  std::vector<catalog::Schema> tile_schemas;
-
   // set of tiles
   std::vector<std::shared_ptr<Tile>> tiles;
 
@@ -211,16 +187,15 @@ class TileGroup : public Printable {
   AbstractTable *table;  // this design is fantastic!!!
 
   // number of tuple slots allocated
-  oid_t num_tuple_slots;
+  uint32_t num_tuple_slots_;
 
   // number of tiles
-  oid_t tile_count;
+  uint32_t tile_count_;
 
   std::mutex tile_group_mutex;
 
-  // column to tile mapping :
-  // <column offset> to <tile offset, tile column offset>
-  column_map_type column_map;
+  // Refernce to the layout of the TileGroup
+  std::shared_ptr<const Layout> tile_group_layout_;
 };
 
 }  // namespace storage

@@ -44,10 +44,11 @@ void Updater::Init(storage::DataTable *table,
 char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
   auto tile_group = table_->GetTileGroupById(tile_group_id);
 
-  // Get the tile offset assuming that it is still in a tuple format
-  oid_t tile_offset, tile_column_offset;
-  tile_group->LocateTileAndColumn(0, tile_offset, tile_column_offset);
-  tile_ = tile_group->GetTileReference(tile_offset);
+  // Get the tile offset assuming that it is still a row store
+  // Hence the Tile offset is 0.
+  UNUSED_ATTRIBUTE const auto &layout = tile_group->GetLayout();
+  PELOTON_ASSERT(layout.IsRowStore());
+  tile_ = tile_group->GetTileReference(0);
   return tile_->GetTupleLocation(tuple_offset);
 }
 

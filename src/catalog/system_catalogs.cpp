@@ -13,6 +13,7 @@
 #include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/table_catalog.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -38,6 +39,7 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
   pg_namespace_ = new SchemaCatalog(database, pool, txn);
   pg_table_ = new TableCatalog(database, pool, txn);
   pg_index_ = new IndexCatalog(database, pool, txn);
+  pg_layout_ = new LayoutCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert column information into pg_attribute
@@ -45,7 +47,8 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
       {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
       {database_oid, TABLE_CATALOG_OID},
       {database_oid, SCHEMA_CATALOG_OID},
-      {database_oid, INDEX_CATALOG_OID}};
+      {database_oid, INDEX_CATALOG_OID},
+      {database_oid, LAYOUT_CATALOG_OID}};
 
   for (int i = 0; i < (int)shared_tables.size(); i++) {
     oid_t column_id = 0;
@@ -65,6 +68,7 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
 
 SystemCatalogs::~SystemCatalogs() {
   delete pg_index_;
+  delete pg_layout_;
   delete pg_table_;
   delete pg_attribute_;
   delete pg_namespace_;
