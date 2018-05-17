@@ -13,8 +13,6 @@
 #include "brain/what_if_index.h"
 #include "optimizer/operators.h"
 #include "traffic_cop/traffic_cop.h"
-#include "brain/index_selection_util.h"
-#include "catalog/catalog_defaults.h"
 
 namespace peloton {
 namespace brain {
@@ -39,14 +37,16 @@ WhatIfIndex::GetCostAndBestPlanTree(
               std::unordered_set<std::string>> query,
     IndexConfiguration &config, std::string database_name,
     concurrency::TransactionContext *txn) {
-  LOG_DEBUG("***** GetCostAndBestPlanTree **** \n");
 
+  LOG_TRACE("***** GetCostAndBestPlanTree **** \n");
   // Load the indexes into the cache for each table so that the optimizer uses
   // the indexes that we provide.
   for (auto table_name : query.second) {
     // Load the tables into cache.
+
+    // TODO: Hard coding the schema name for build to pass.
     auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-        database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
+        database_name, "public", table_name, txn);
 
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
@@ -78,10 +78,10 @@ WhatIfIndex::GetCostAndBestPlanTree(
   optimizer::Optimizer optimizer;
   auto opt_info_obj = optimizer.GetOptimizedPlanInfo(query.first, txn);
 
-  LOG_DEBUG("Query: %s", query.first->GetInfo().c_str());
-  LOG_DEBUG("Hypothetical config: %s", config.ToString().c_str());
-  LOG_DEBUG("Got cost %lf", opt_info_obj->cost);
-  LOG_DEBUG("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
+  LOG_TRACE("Query: %s", query.first->GetInfo().c_str());
+  LOG_TRACE("Hypothetical config: %s", config.ToString().c_str());
+  LOG_TRACE("Got cost %lf", opt_info_obj->cost);
+  LOG_TRACE("Plan type: %s", opt_info_obj->plan->GetInfo().c_str());
   return opt_info_obj;
 }
 
