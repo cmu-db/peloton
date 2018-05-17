@@ -63,12 +63,12 @@ WhatIfIndex::GetCostAndBestPlanTree(
       if (index->table_oid == table_object->GetTableOid()) {
         auto index_catalog_obj = CreateIndexCatalogObject(index.get());
         table_object->InsertIndexObject(index_catalog_obj);
-        LOG_DEBUG("Created a new hypothetical index %d on table: %d",
+        LOG_TRACE("Created a new hypothetical index %d on table: %d",
                   index_catalog_obj->GetIndexOid(),
                   index_catalog_obj->GetTableOid());
         for (auto col : index_catalog_obj->GetKeyAttrs()) {
           (void)col;  // for debug mode.
-          LOG_DEBUG("Cols: %d", col);
+          LOG_TRACE("Cols: %d", col);
         }
       }
     }
