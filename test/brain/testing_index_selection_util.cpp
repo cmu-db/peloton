@@ -279,7 +279,7 @@ TestingIndexSelectionUtil::CreateHypotheticalIndex(
 
   // Get the existing table so that we can find its oid and the cols oids.
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name_, DEFUALT_SCHEMA_NAME, table_name, txn);
+      database_name_, "public", table_name, txn);
   auto col_obj_pairs = table_object->GetColumnObjects();
 
   std::vector<oid_t> col_ids;
