@@ -290,7 +290,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   std::string checkpoint_filename_prefix_ = "checkpoint";
   std::string metadata_filename_prefix_ = "checkpoint_metadata";
 
-  eid_t recovered_epoch_id = INVALID_EID;
+  eid_t recovered_epoch_id_ = INVALID_EID;
 };
 
 }  // namespace logging

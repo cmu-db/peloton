@@ -233,6 +233,8 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
     std::vector<std::shared_ptr<storage::TileGroup>> tile_groups;
   	RecoverTileGroupFromFile(tile_groups, table, table_file, pool.get());
 
+    logging::LoggingUtil::CloseFile(table_file);
+
   	// check the tile group
   	auto schema = table->GetSchema();
     auto column_count = schema->GetColumnCount();
@@ -354,8 +356,6 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
         }
       }
   	}
-
-    logging::LoggingUtil::CloseFile(table_file);
   }
 
   txn_manager.CommitTransaction(txn);

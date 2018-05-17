@@ -86,7 +86,7 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     }
 
     // set recovered epoch id
-    recovered_epoch_id = epoch_id;
+    recovered_epoch_id_ = epoch_id;
     LOG_INFO("Complete checkpoint recovery for epoch %" PRIu64, epoch_id);
 
     recovery_timer.Stop();
@@ -98,8 +98,8 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
 
 eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
   // already recovered
-  if (recovered_epoch_id != INVALID_EID) {
-    return recovered_epoch_id;
+  if (recovered_epoch_id_ != INVALID_EID) {
+    return recovered_epoch_id_;
   }
   // for checkpoint recovery
   else {
