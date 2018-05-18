@@ -45,7 +45,6 @@ namespace catalog {
 
 class ColumnStatsCatalog : public AbstractCatalog {
  public:
-
   ColumnStatsCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
@@ -54,8 +53,8 @@ class ColumnStatsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumnStats(oid_t table_id, oid_t column_id,
-                         int num_rows, double cardinality, double frac_null,
+  bool InsertColumnStats(oid_t table_id, oid_t column_id, int num_rows,
+                         double cardinality, double frac_null,
                          std::string most_common_vals,
                          std::string most_common_freqs,
                          std::string histogram_bounds, std::string column_name,
@@ -68,15 +67,13 @@ class ColumnStatsCatalog : public AbstractCatalog {
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   std::unique_ptr<std::vector<type::Value>> GetColumnStats(
-      oid_t table_id, oid_t column_id,
-      concurrency::TransactionContext *txn);
+      oid_t table_id, oid_t column_id, concurrency::TransactionContext *txn);
 
   size_t GetTableStats(
-          oid_t table_id, concurrency::TransactionContext *txn,
-          std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
-          column_stats_map);
+      oid_t table_id, concurrency::TransactionContext *txn,
+      std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
+          &column_stats_map);
   // TODO: add more if needed
-
 
   /** @brief   private function for initialize schema of pg_index
    *  @return  unqiue pointer to schema

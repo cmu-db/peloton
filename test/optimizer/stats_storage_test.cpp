@@ -93,7 +93,6 @@ void VerifyAndPrintColumnStats(storage::DataTable *data_table,
 }
 
 TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
-
   const std::string db_name = "test_db";
   TestingExecutorUtil::InitializeDatabase(db_name);
   auto data_table = InitializeTestTable();
@@ -240,8 +239,8 @@ TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
   StatsStorage *stats_storage = StatsStorage::GetInstance();
 
   // Must pass in the transaction.
-  ResultType result = stats_storage
-          ->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid);
+  ResultType result =
+      stats_storage->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid);
   EXPECT_EQ(result, ResultType::FAILURE);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -253,7 +252,6 @@ TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table, 4);
   TestingExecutorUtil::DeleteDatabase(db_name);
-
 }
 
 TEST_F(StatsStorageTests, GetTableStatsTest) {
@@ -265,13 +263,14 @@ TEST_F(StatsStorageTests, GetTableStatsTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ResultType result = stats_storage
-          ->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid, txn);
+  ResultType result =
+      stats_storage->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid, txn);
+  EXPECT_EQ(ResultType::SUCCESS, result);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
-      db_oid, data_table->GetOid(), txn);
+  std::shared_ptr<TableStats> table_stats =
+      stats_storage->GetTableStats(db_oid, data_table->GetOid(), txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(table_stats->num_rows, tuple_count);
   TestingExecutorUtil::DeleteDatabase(db_name);

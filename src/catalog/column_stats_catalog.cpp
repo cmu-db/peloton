@@ -23,74 +23,71 @@ namespace peloton {
 namespace catalog {
 
 ColumnStatsCatalog::ColumnStatsCatalog(
-        storage::Database *pg_catalog,
-        UNUSED_ATTRIBUTE type::AbstractPool *pool,
-        UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
-        : AbstractCatalog(COLUMN_STATS_CATALOG_OID, COLUMN_STATS_CATALOG_NAME,
-                          InitializeSchema().release(), pg_catalog) {
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
+    : AbstractCatalog(COLUMN_STATS_CATALOG_OID, COLUMN_STATS_CATALOG_NAME,
+                      InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_column_stats
   AddIndex({ColumnId::TABLE_ID, ColumnId::COLUMN_ID},
            COLUMN_STATS_CATALOG_SKEY0_OID, COLUMN_STATS_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
   AddIndex({ColumnId::TABLE_ID}, COLUMN_STATS_CATALOG_SKEY1_OID,
            COLUMN_STATS_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
-
 }
 
 ColumnStatsCatalog::~ColumnStatsCatalog() {}
 
 std::unique_ptr<catalog::Schema> ColumnStatsCatalog::InitializeSchema() {
-
   const std::string not_null_constraint_name = "notnull";
-  const auto not_null_constraint = catalog::Constraint(
-         ConstraintType::NOTNULL, not_null_constraint_name);
+  const auto not_null_constraint =
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name);
 
   auto table_id_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "table_id", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "table_id", true);
   table_id_column.AddConstraint(not_null_constraint);
   auto column_id_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "column_id", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "column_id", true);
   column_id_column.AddConstraint(not_null_constraint);
   auto num_rows_column = catalog::Column(
-          type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-          "num_rows", true);
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "num_rows", true);
   num_rows_column.AddConstraint(not_null_constraint);
   auto cardinality_column = catalog::Column(
-          type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
-          "cardinality", true);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+      "cardinality", true);
   cardinality_column.AddConstraint(not_null_constraint);
   auto frac_null_column = catalog::Column(
-          type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
-          "frac_null", true);
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+      "frac_null", true);
   frac_null_column.AddConstraint(not_null_constraint);
   auto most_common_vals_column = catalog::Column(
-          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-          "most_common_vals", false);
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "most_common_vals", false);
   auto most_common_freqs_column = catalog::Column(
-          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-          "most_common_freqs", false);
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "most_common_freqs", false);
   auto histogram_bounds_column = catalog::Column(
-          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-          "histogram_bounds", false);
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "histogram_bounds", false);
   auto column_name_column = catalog::Column(
-          type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-          "column_name", false);
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "column_name", false);
   auto has_index_column = catalog::Column(
-          type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
-          "has_index", true);
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
+      "has_index", true);
 
   std::unique_ptr<catalog::Schema> column_stats_schema(new catalog::Schema(
-          {table_id_column, column_id_column, num_rows_column, cardinality_column,
-           frac_null_column, most_common_vals_column, most_common_freqs_column,
-           histogram_bounds_column, column_name_column, has_index_column}));
+      {table_id_column, column_id_column, num_rows_column, cardinality_column,
+       frac_null_column, most_common_vals_column, most_common_freqs_column,
+       histogram_bounds_column, column_name_column, has_index_column}));
   return column_stats_schema;
 }
 
 bool ColumnStatsCatalog::InsertColumnStats(
-    oid_t table_id, oid_t column_id, int num_rows,
-    double cardinality, double frac_null, std::string most_common_vals,
+    oid_t table_id, oid_t column_id, int num_rows, double cardinality,
+    double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, bool has_index, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
@@ -142,8 +139,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
 }
 
 bool ColumnStatsCatalog::DeleteColumnStats(
-        oid_t table_id, oid_t column_id,
-        concurrency::TransactionContext *txn) {
+    oid_t table_id, oid_t column_id, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -154,8 +150,7 @@ bool ColumnStatsCatalog::DeleteColumnStats(
 }
 
 std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
-    oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+    oid_t table_id, oid_t column_id, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
       {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
