@@ -800,8 +800,8 @@ bool TimestampCheckpointManager::RecoverStorageObject(
                 table_catalog->GetTableName().c_str());
 
       // recover column information
-      std::vector<catalog::Column> columns;
       size_t column_count = metadata_buffer.ReadLong();
+      std::vector<catalog::Column> columns(column_count);
       for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
         oid_t column_oid = metadata_buffer.ReadInt();
         size_t column_length = metadata_buffer.ReadLong();
@@ -829,19 +829,8 @@ bool TimestampCheckpointManager::RecoverStorageObject(
           }
         }
 
-        // Set a column in the vector in order of the column_id in
-        // ColumnCatalogObject
-        // ToDo: just insert by push_back function
-        auto column_itr = columns.begin();
-        for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
-          if (column_itr == columns.end() ||
-              column_itr->GetOffset() > column.GetOffset()) {
-            break;
-          } else {
-            column_itr++;
-          }
-        }
-        columns.insert(column_itr, column);
+        // Set a column into the vector in order of the column_id
+        columns[column_oid] = column;
 
       }  // column loop end
 
