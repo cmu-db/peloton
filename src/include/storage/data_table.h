@@ -18,11 +18,12 @@
 #include <queue>
 #include <set>
 
+#include "common/container/lock_free_array.h"
 #include "common/item_pointer.h"
 #include "common/platform.h"
-#include "common/container/lock_free_array.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
+#include "storage/layout.h"
 #include "trigger/trigger.h"
 
 //===--------------------------------------------------------------------===//
@@ -39,6 +40,7 @@ class Sample;
 
 namespace catalog {
 class ForeignKey;
+class Catalog;
 }  // namespace catalog
 
 namespace index {
@@ -76,6 +78,7 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
+  friend class catalog::Catalog;
   friend class logging::LogManager;
 
   DataTable() = delete;
@@ -148,7 +151,7 @@ class DataTable : public AbstractTable {
   size_t GetTileGroupCount() const;
 
   // Get a tile group with given layout
-  TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
+  TileGroup *GetTileGroupWithLayout(std::shared_ptr<const Layout> layout);
 
   //===--------------------------------------------------------------------===//
   // TRIGGER
@@ -189,7 +192,6 @@ class DataTable : public AbstractTable {
   const std::vector<std::set<oid_t>> &GetIndexColumns() const {
     return indexes_columns_;
   }
-
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
@@ -247,9 +249,17 @@ class DataTable : public AbstractTable {
 
   void ClearLayoutSamples();
 
-  void SetDefaultLayout(const column_map_type &layout);
+  void SetDefaultLayout(std::shared_ptr<const Layout> new_layout) {
+    PELOTON_ASSERT(new_layout->GetColumnCount() == schema->GetColumnCount());
+    default_layout_ = new_layout;
+  }
 
-  column_map_type GetDefaultLayout() const;
+  void ResetDefaultLayout(LayoutType type = LayoutType::ROW) {
+    PELOTON_ASSERT((type == LayoutType::ROW) || (type == LayoutType::COLUMN));
+    default_layout_ = std::shared_ptr<const Layout>(
+        new const Layout(schema->GetColumnCount(), type));
+  }
+  const Layout &GetDefaultLayout() const;
 
   //===--------------------------------------------------------------------===//
   // INDEX TUNER
@@ -276,8 +286,6 @@ class DataTable : public AbstractTable {
   bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
 
   bool HasForeignKeys() const { return (foreign_keys_.empty() == false); }
-
-  std::map<oid_t, oid_t> GetColumnMapStats();
 
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
@@ -353,11 +361,26 @@ class DataTable : public AbstractTable {
   bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
                                   concurrency::TransactionContext *transaction);
 
+  //===--------------------------------------------------------------------===//
+  // LAYOUT HELPERS
+  //===--------------------------------------------------------------------===//
+
+  // Set the current_layout_oid_ to the given value if the current value
+  // is less than new_layout_oid. Return true on success.
+  // To be used for recovery.
+  bool SetCurrentLayoutOid(oid_t new_layout_oid);
+
+  // Performs an atomic increment on the current_layout_oid_
+  // and returns the incremented value.
+  oid_t GetNextLayoutOid() { return ++current_layout_oid_; }
+
  private:
+  //===--------------------------------------------------------------------===//
+  // STATIC MEMBERS
+  //===--------------------------------------------------------------------===//
   static size_t default_active_tilegroup_count_;
   static size_t default_active_indirection_array_count_;
 
- private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -414,15 +437,16 @@ class DataTable : public AbstractTable {
   // dirty flag. for detecting whether the tile group has been used.
   bool dirty_ = false;
 
+  // Last used layout_oid. Used while creating new layouts
+  // Initialized to COLUMN_STORE_OID since its the highest predefined value.
+  std::atomic<oid_t> current_layout_oid_;
+
   //===--------------------------------------------------------------------===//
   // TUNING MEMBERS
   //===--------------------------------------------------------------------===//
 
   // adapt table
   bool adapt_table_ = true;
-
-  // default partition map for table
-  column_map_type default_partition_;
 
   // samples for layout tuning
   std::vector<tuning::Sample> layout_samples_;

@@ -85,7 +85,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
       std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
@@ -100,7 +100,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   // Create delete plan
   std::unique_ptr<planner::DeletePlan> delete_plan(
@@ -149,7 +149,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
       std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
@@ -159,7 +159,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   auto table_name = std::string("department_table");
   auto database_name = DEFAULT_DB_NAME;
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, DEFUALT_SCHEMA_NAME, table_name, txn);
+      database_name, DEFAULT_SCHEMA_NAME, table_name, txn);
   auto schema = target_table->GetSchema();
 
   TargetList tlist;
@@ -246,7 +246,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   auto ret = catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
       std::move(table_schema), txn);
   if (ret != ResultType::SUCCESS) LOG_TRACE("create table failed");
   txn_manager.CommitTransaction(txn);
@@ -276,7 +276,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
       std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(target_table, &insert_statement->columns,
@@ -320,7 +320,7 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table",
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
       std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
@@ -354,7 +354,7 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
       std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(target_table, &insert_statement->columns,

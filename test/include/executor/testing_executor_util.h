@@ -75,6 +75,14 @@ class TestingExecutorUtil {
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true, oid_t table_oid = INVALID_OID);
 
+  /**
+   * @brief Creates a basic table and adds its entry to the catalog
+   *
+   * @return A pointer to the DataTable created.
+   */
+  static storage::DataTable *CreateTableUpdateCatalog(
+      int tuples_per_tilegroup_count, std::string &db_name);
+
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
 

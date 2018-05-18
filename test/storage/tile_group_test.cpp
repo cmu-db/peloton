@@ -84,11 +84,14 @@ TEST_F(TileGroupTests, BasicTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
+  std::shared_ptr<const storage::Layout> layout =
+      std::make_shared<const storage::Layout>(column_map);
+
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-          column_map, 4));
+          layout, 4));
   catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
@@ -212,11 +215,14 @@ TEST_F(TileGroupTests, StressTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
+  std::shared_ptr<const storage::Layout> layout =
+      std::make_shared<const storage::Layout>(column_map);
+
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-          column_map, 10000));
+          layout, 10000));
   catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
@@ -232,11 +238,14 @@ TEST_F(TileGroupTests, StressTest) {
 //  std::vector<catalog::Schema> schemas;
 //
 //  // SCHEMA
-//  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+//  catalog::Column column1(type::TypeId::INTEGER,
+//  type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "A", true);
-//  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+//  catalog::Column column2(type::TypeId::INTEGER,
+//  type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                          "B", true);
-//  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
+//  catalog::Column column3(type::TypeId::TINYINT,
+//  type::Type::GetTypeSize(type::TypeId::TINYINT),
 //                          "C", true);
 //  catalog::Column column4(type::TypeId::VARCHAR, 50, "D", false);
 //
@@ -272,11 +281,14 @@ TEST_F(TileGroupTests, StressTest) {
 //  column_map[2] = std::make_pair(1, 0);
 //  column_map[3] = std::make_pair(1, 1);
 //
+//    std::shared_ptr<const storage::Layout> layout =
+//      std::make_shared<const storage::Layout>(column_map);
+//
 //  std::shared_ptr<storage::TileGroup> tile_group =
 //  storage::TileGroupFactory::GetTileGroup(
 //      INVALID_OID, INVALID_OID,
 //      TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-//      column_map, 3);
+//      layout, 3);
 //  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
 //  tile_group);
 //
@@ -371,19 +383,15 @@ TEST_F(TileGroupTests, TileCopyTest) {
   column_names.push_back(tile_column_names);
 
   const int tuple_count = 4;
-  storage::column_map_type column_map;
 
-  // default column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(0, col_itr);
-  }
+  std::shared_ptr<const storage::Layout> layout =
+      std::make_shared<const storage::Layout>(schema->GetColumnCount());
 
   std::shared_ptr<storage::TileGroup> tile_group(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-          column_map, tuple_count));
+          layout, tuple_count));
   catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 

@@ -237,10 +237,10 @@ TEST_F(ConstraintsTests, UNIQUETest) {
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
   catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME,
-                                               DEFUALT_SCHEMA_NAME, table_name,
+                                               DEFAULT_SCHEMA_NAME, table_name,
                                                std::move(table_schema), txn);
   storage::DataTable *table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);
 
   // table->AddUNIQUEIndex();

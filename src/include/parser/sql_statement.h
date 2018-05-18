@@ -73,7 +73,7 @@ class TableRefStatement : public SQLStatement {
       table_info_->database_name = default_database_name;
     // if schema name is not specified, then it's default value is "public"
     if (table_info_->schema_name.empty())
-      table_info_->schema_name = DEFUALT_SCHEMA_NAME;
+      table_info_->schema_name = DEFAULT_SCHEMA_NAME;
   }
 
   virtual inline std::string GetTableName() const {

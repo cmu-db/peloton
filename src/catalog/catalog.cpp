@@ -18,6 +18,7 @@
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/query_history_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -161,7 +162,7 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetSchemaCatalog()->InsertSchema(
       CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
   system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFUALT_SCHEMA_OID, DEFUALT_SCHEMA_NAME, pool_.get(), txn);
+      DEFAULT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
@@ -179,6 +180,9 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
+      database_oid, pool_.get(), txn);
+  system_catalogs->GetTableCatalog()->InsertTable(
+      LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
 }
 
@@ -295,7 +299,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::TransactionContext *txn,
-                                bool is_catalog, oid_t tuples_per_tilegroup) {
+                                bool is_catalog, uint32_t tuples_per_tilegroup,
+                                peloton::LayoutType layout_type) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -348,7 +353,8 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   auto table = storage::TableFactory::GetDataTable(
       database_object->GetDatabaseOid(), table_oid, schema.release(),
-      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog);
+      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog,
+      layout_type);
   database->AddTable(table, is_catalog);
   // put data table object into rw_object_set
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
@@ -555,6 +561,44 @@ ResultType Catalog::CreateIndex(
   return ResultType::SUCCESS;
 }
 
+std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
+    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
+    concurrency::TransactionContext *txn) {
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  auto table = database->GetTableWithOid(table_oid);
+
+  oid_t layout_oid = table->GetNextLayoutOid();
+  // Ensure that the new layout
+  PELOTON_ASSERT(layout_oid < INVALID_OID);
+  auto new_layout = std::shared_ptr<const storage::Layout>(
+      new const storage::Layout(column_map, layout_oid));
+
+  // Add the layout the pg_layout table
+  auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
+  bool result =
+      pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn);
+  if (!result) {
+    LOG_ERROR("Failed to create a new layout for table %u", table_oid);
+    return nullptr;
+  }
+  return new_layout;
+}
+
+std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
+    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
+    concurrency::TransactionContext *txn) {
+  auto new_layout = CreateLayout(database_oid, table_oid, column_map, txn);
+  // If the layout creation was successful, set it as the default
+  if (new_layout != nullptr) {
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto database = storage_manager->GetDatabaseWithOid(database_oid);
+    auto table = database->GetTableWithOid(table_oid);
+    table->SetDefaultLayout(new_layout);
+  }
+  return new_layout;
+}
+
 //===----------------------------------------------------------------------===//
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
@@ -700,7 +744,6 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   auto table_object = database_object->GetTableObject(table_oid);
   auto index_objects = table_object->GetIndexObjects();
   LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
-
   // delete trigger and records in pg_trigger
   auto pg_trigger =
       catalog_map_[database_object->GetDatabaseOid()]->GetTriggerCatalog();
@@ -719,11 +762,15 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
       catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
   pg_attribute->DeleteColumns(table_oid, txn);
 
+  // delete record in pg_layout
+  auto pg_layout =
+      catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
+  pg_layout->DeleteLayouts(table_oid, txn);
+
   // delete record in pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
   pg_table->DeleteTable(table_oid, txn);
-
   database->GetTableWithOid(table_oid);
   txn->RecordDrop(database_oid, table_oid, INVALID_OID);
 
@@ -760,6 +807,30 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   // register index object in rw_object_set
   table->GetIndexWithOid(index_oid);
   txn->RecordDrop(database_oid, index_object->GetTableOid(), index_oid);
+
+  return ResultType::SUCCESS;
+}
+
+ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
+                               oid_t layout_oid,
+                               concurrency::TransactionContext *txn) {
+  // Check if the default_layout of the table is the same.
+  // If true reset it to a row store.
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto database = storage_manager->GetDatabaseWithOid(database_oid);
+  auto table = database->GetTableWithOid(table_oid);
+  auto default_layout = table->GetDefaultLayout();
+
+  if (default_layout.GetOid() == layout_oid) {
+    table->ResetDefaultLayout();
+  }
+
+  auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
+  if (!pg_layout->DeleteLayout(table_oid, layout_oid, txn)) {
+    auto layout = table->GetDefaultLayout();
+    LOG_DEBUG("Layout delete failed. Default layout id: %u", layout.GetOid());
+    return ResultType::FAILURE;
+  }
 
   return ResultType::SUCCESS;
 }
