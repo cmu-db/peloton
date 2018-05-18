@@ -113,7 +113,6 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
-
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;
@@ -126,8 +125,6 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
-
-
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;
@@ -145,7 +142,6 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
-
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     PELOTON_ASSERT(false);
@@ -156,7 +152,6 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
 }
 
 bool TransactionContext::RecordDelete(const ItemPointer &location) {
-
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;

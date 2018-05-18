@@ -20,12 +20,12 @@
 #include <memory>
 #include "common/internal_types.h"
 
-#include "common/macros.h"
-#include "common/internal_types.h"
 #include "common/container/cuckoo_map.h"
+#include "common/internal_types.h"
+#include "common/macros.h"
 #include "tbb/concurrent_unordered_map.h"
 
-#define  DEFAULT_LOCATOR_SIZE 1024
+#define DEFAULT_LOCATOR_SIZE 1024
 
 namespace peloton {
 

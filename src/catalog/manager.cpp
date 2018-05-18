@@ -25,8 +25,7 @@ std::shared_ptr<storage::TileGroup> Manager::empty_tile_group_;
 
 std::shared_ptr<storage::IndirectionArray> Manager::empty_indirection_array_;
 
-Manager::Manager()
-        :  tile_group_locator_(DEFAULT_LOCATOR_SIZE) {}
+Manager::Manager() : tile_group_locator_(DEFAULT_LOCATOR_SIZE) {}
 
 Manager &Manager::GetInstance() {
   static Manager manager;

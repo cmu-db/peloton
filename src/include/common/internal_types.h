@@ -24,9 +24,9 @@
 #include <unordered_set>
 #include <vector>
 
+#include "tbb/concurrent_unordered_map.h"
 #include "tbb/concurrent_unordered_set.h"
 #include "tbb/concurrent_vector.h"
-#include "tbb/concurrent_unordered_map.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
@@ -1213,9 +1213,9 @@ RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 // ItemPointer -> type
-typedef tbb::concurrent_unordered_map<
-        ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
-        ReadWriteSet;
+typedef tbb::concurrent_unordered_map<ItemPointer, RWType, ItemPointerHasher,
+                                      ItemPointerComparator>
+    ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
                                       ItemPointerComparator>
