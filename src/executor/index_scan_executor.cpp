@@ -28,6 +28,7 @@
 #include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
+#include "storage/storage_manager.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -205,7 +206,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
-  auto &manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   std::vector<ItemPointer> visible_tuple_locations;
 
 #ifdef LOG_TRACE_ENABLED
@@ -215,7 +216,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
-    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
     size_t chain_length = 0;
 
@@ -289,7 +290,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // from scratch.
           tuple_location =
               *(tile_group_header->GetIndirection(tuple_location.offset));
-          tile_group = manager.GetTileGroup(tuple_location.block);
+          auto storage_manager = storage::StorageManager::GetInstance();
+          tile_group = storage_manager->GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
           continue;
@@ -314,7 +316,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
 
         // search for next version.
-        tile_group = manager.GetTileGroup(tuple_location.block);
+        auto storage_manager = storage::StorageManager::GetInstance();
+        tile_group = storage_manager->GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
         continue;
       }
@@ -348,8 +351,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     } else {
       // Since the tile_group_oids differ, fill in the current tile group
       // into the result vector
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+      auto storage_manager = storage::StorageManager::GetInstance();
+      auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       // Add relevant columns to logical tile
       logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -368,7 +371,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // Add the remaining tuples to the result vector
   if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
-    auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+    auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -440,7 +443,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   auto current_txn = executor_context_->GetTransaction();
 
   std::vector<ItemPointer> visible_tuple_locations;
-  auto &manager = catalog::Manager::GetInstance();
 
   // Quickie Hack
   // Sometimes we can get the tuples we need in the same block if they
@@ -455,11 +457,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   int num_tuples_examined = 0;
   int num_blocks_reused = 0;
 #endif
-
+  auto storage_manager = storage::StorageManager::GetInstance();
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
     if (tuple_location.block != last_block) {
-      tile_group = manager.GetTileGroup(tuple_location.block);
+      tile_group = storage_manager->GetTileGroup(tuple_location.block);
       tile_group_header = tile_group.get()->GetHeader();
     }
 #ifdef LOG_TRACE_ENABLED
@@ -558,7 +560,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // from scratch.
           tuple_location =
               *(tile_group_header->GetIndirection(tuple_location.offset));
-          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group = storage_manager->GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
           continue;
@@ -587,7 +589,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
 
         // search for next version.
-        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group = storage_manager->GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
@@ -614,8 +616,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     } else {
       // Since the tile_group_oids differ, fill in the current tile group
       // into the result vector
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+      auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       // Add relevant columns to logical tile
       logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -634,7 +635,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   // Add the remaining tuples (if any) to the result vector
   if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
-    auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+    auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -684,9 +685,8 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
 
   LOG_TRACE("Examining key conditions for the returned tuple.");
 
-  auto &manager = catalog::Manager::GetInstance();
-
-  auto tile_group = manager.GetTileGroup(tuple_location.block);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
   ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                            tuple_location.offset);
 

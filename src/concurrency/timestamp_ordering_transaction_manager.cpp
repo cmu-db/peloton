@@ -12,6 +12,7 @@
 
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 #include <cinttypes>
+#include <include/storage/storage_manager.h>
 
 #include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"
@@ -193,8 +194,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
     // Check if it's select for update before we check the ownership
     // and modify the last reader cid
@@ -205,7 +206,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       tile_group_id = location.block;
       tuple_id = location.offset;
 
-      tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+      tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
         // Acquire ownership if we haven't
@@ -260,8 +261,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
     // Check if it's select for update before we check the ownership.
     if (acquire_ownership == true) {
@@ -342,8 +343,8 @@ bool TimestampOrderingTransactionManager::PerformRead(
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
     // Check if it's select for update before we check the ownership
     // and modify the last reader cid.
@@ -443,8 +444,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   // check MVCC info
@@ -487,12 +488,11 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   LOG_TRACE("Performing Update new tuple %u %u", new_location.block,
             new_location.offset);
 
-  auto &manager = catalog::Manager::GetInstance();
-
+  auto storage_manager = storage::StorageManager::GetInstance();
   auto tile_group_header =
-      manager.GetTileGroup(old_location.block)->GetHeader();
+      storage_manager->GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header =
-      manager.GetTileGroup(new_location.block)->GetHeader();
+      storage_manager->GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
@@ -568,9 +568,9 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   oid_t tile_group_id = location.block;
   UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
 
-  auto &manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   UNUSED_ATTRIBUTE auto tile_group_header =
-      manager.GetTileGroup(tile_group_id)->GetHeader();
+      storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
                  current_txn->GetTransactionId());
@@ -606,12 +606,12 @@ void TimestampOrderingTransactionManager::PerformDelete(
   LOG_TRACE("Performing Delete new tuple %u %u", new_location.block,
             new_location.offset);
 
-  auto &manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   auto tile_group_header =
-      manager.GetTileGroup(old_location.block)->GetHeader();
+      storage_manager->GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header =
-      manager.GetTileGroup(new_location.block)->GetHeader();
+      storage_manager->GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -690,8 +690,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  auto storage_manager = storage::StorageManager::GetInstance();
+  auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
                  current_txn->GetTransactionId());
@@ -734,7 +734,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //// handle other isolation levels
   //////////////////////////////////////////////////////////
 
-  auto &manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
 
   log_manager.StartLogging();
@@ -764,7 +764,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
-      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      database_id = storage_manager->GetTileGroup(tile_group_id)->GetDatabaseId();
       if (database_id != CATALOG_DATABASE_OID) {
         break;
       }
@@ -784,7 +784,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
 
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
     if (tuple_entry.second == RWType::READ_OWN) {
       // A read operation has acquired ownership but hasn't done any further
@@ -802,7 +803,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       auto cid = tile_group_header->GetEndCommitId(tuple_slot);
       PELOTON_ASSERT(cid > end_commit_id);
       auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
+          storage_manager->GetTileGroup(new_version.block)->GetHeader();
       new_tile_group_header->SetBeginCommitId(new_version.offset,
                                               end_commit_id);
       new_tile_group_header->SetEndCommitId(new_version.offset, cid);
@@ -832,7 +833,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       auto cid = tile_group_header->GetEndCommitId(tuple_slot);
       PELOTON_ASSERT(cid > end_commit_id);
       auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
+          storage_manager->GetTileGroup(new_version.block)->GetHeader();
       new_tile_group_header->SetBeginCommitId(new_version.offset,
                                               end_commit_id);
       new_tile_group_header->SetEndCommitId(new_version.offset, cid);
@@ -918,7 +919,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
                  IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
-  auto &manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
 
   auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
@@ -943,7 +944,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
-      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      database_id = storage_manager->GetTileGroup(tile_group_id)->GetDatabaseId();
       if (database_id != CATALOG_DATABASE_OID) {
         break;
       }
@@ -957,7 +958,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
     if (tuple_entry.second == RWType::READ_OWN) {
       // A read operation has acquired ownership but hasn't done any further
@@ -968,7 +969,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       ItemPointer new_version =
           tile_group_header->GetPrevItemPointer(tuple_slot);
       auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
+          storage_manager->GetTileGroup(new_version.block)->GetHeader();
       // these two fields can be set at any time.
       new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
       new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
@@ -1017,7 +1018,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       ItemPointer new_version =
           tile_group_header->GetPrevItemPointer(tuple_slot);
       auto new_tile_group_header =
-          manager.GetTileGroup(new_version.block)->GetHeader();
+          storage_manager->GetTileGroup(new_version.block)->GetHeader();
 
       new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
       new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);

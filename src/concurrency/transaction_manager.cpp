@@ -20,6 +20,7 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -109,7 +110,7 @@ bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
   ItemPointer &position = *((ItemPointer *)position_ptr);
 
   auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
+      storage::StorageManager::GetInstance()->GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);

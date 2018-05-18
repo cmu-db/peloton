@@ -113,5 +113,32 @@ bool StorageManager::RemoveDatabaseFromStorageManager(oid_t database_oid) {
   return false;
 }
 
+
+//===--------------------------------------------------------------------===//
+// OBJECT MAP
+//===--------------------------------------------------------------------===//
+
+void StorageManager::AddTileGroup(const oid_t oid,
+                           std::shared_ptr<storage::TileGroup> location) {
+  // add/update the catalog reference to the tile group
+  tile_group_locator_[oid] = location;
+}
+
+void StorageManager::DropTileGroup(const oid_t oid) {
+  // drop the catalog reference to the tile group
+  tile_group_locator_[oid] = empty_tile_group_;
+}
+
+std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t oid) {
+  auto iter = tile_group_locator_.find(oid);
+  if (iter == tile_group_locator_.end()) {
+    return empty_tile_group_;
+  }
+  return iter->second;
+}
+
+// used for logging test
+void StorageManager::ClearTileGroup() { tile_group_locator_.clear(); }
+
 }  // namespace storage
 }  // namespace peloton
