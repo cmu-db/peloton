@@ -49,7 +49,7 @@ TEST_F(BwTreeIndexTests, MultiThreadedInsertTest) {
   TestingIndexUtil::MultiThreadedInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
+// TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
 //  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::BWTREE);
 //}
 

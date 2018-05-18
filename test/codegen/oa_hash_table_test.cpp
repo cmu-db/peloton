@@ -130,8 +130,8 @@ TEST_F(OAHashTableTests, CanIterateTest) {
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = hashtable.begin(), end = hashtable.end();
-       iter != end; ++iter) {
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
     const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
     if (*iter_key == key_dup) {
       dup_count++;
@@ -146,67 +146,66 @@ TEST_F(OAHashTableTests, CanIterateTest) {
 }
 
 TEST_F(OAHashTableTests, CanCodegenProbeOrInsertTest) {
+  TEST_F(OAHashTableTests, MicroBenchmarkTest) {
+    uint32_t num_runs = 10;
 
-TEST_F(OAHashTableTests, MicroBenchmarkTest) {
-  uint32_t num_runs = 10;
+    std::vector<Key> keys;
+    Value v = {6, 5, 4, 3};
 
-  std::vector<Key> keys;
-  Value v = {6, 5, 4, 3};
-
-  // Create all keys
-  uint32_t num_keys = 100000;
-  for (uint32_t i = 0; i < num_keys; i++) {
-    keys.push_back({1, static_cast<uint32_t>(rand())});
-  }
-
-  double avg_oaht = 0.0;
-  double avg_map = 0.0;
-
-  // First, bench ours ...
-  {
-    for (uint32_t b = 0; b < num_runs; b++) {
-      Timer<std::ratio<1, 1000>> timer;
-      timer.Start();
-
-      // Start
-      for (uint32_t i = 0; i < num_keys; i++) {
-        Insert(keys[i], v);
-      }
-      // End
-
-      timer.Stop();
-      avg_oaht += timer.GetDuration();
-
-      // Reset
-      Reset();
+    // Create all keys
+    uint32_t num_keys = 100000;
+    for (uint32_t i = 0; i < num_keys; i++) {
+      keys.push_back({1, static_cast<uint32_t>(rand())});
     }
-  }
 
-  // Next, unordered_map ...
-  {
-    struct Hasher {
-      size_t operator()(const Key &k) const { return Hash(k); }
-    };
+    double avg_oaht = 0.0;
+    double avg_map = 0.0;
 
-    for (uint32_t b = 0; b < num_runs; b++) {
-      std::unordered_map<Key, Value, Hasher> ht{
-          codegen::util::OAHashTable::kDefaultInitialSize};
+    // First, bench ours ...
+    {
+      for (uint32_t b = 0; b < num_runs; b++) {
+        Timer<std::ratio<1, 1000>> timer;
+        timer.Start();
 
-      Timer<std::ratio<1, 1000>> timer;
-      timer.Start();
+        // Start
+        for (uint32_t i = 0; i < num_keys; i++) {
+          Insert(keys[i], v);
+        }
+        // End
 
-      for (uint32_t i = 0; i < num_keys; i++) {
-        ht.insert(std::make_pair(keys[i], v));
+        timer.Stop();
+        avg_oaht += timer.GetDuration();
+
+        // Reset
+        Reset();
       }
-
-      timer.Stop();
-      avg_map += timer.GetDuration();
     }
-  }
 
-  LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf",
-          avg_oaht / (double)num_runs, avg_map / (double)num_runs);
-}
+    // Next, unordered_map ...
+    {
+      struct Hasher {
+        size_t operator()(const Key &k) const { return Hash(k); }
+      };
+
+      for (uint32_t b = 0; b < num_runs; b++) {
+        std::unordered_map<Key, Value, Hasher> ht{
+            codegen::util::OAHashTable::kDefaultInitialSize};
+
+        Timer<std::ratio<1, 1000>> timer;
+        timer.Start();
+
+        for (uint32_t i = 0; i < num_keys; i++) {
+          ht.insert(std::make_pair(keys[i], v));
+        }
+
+        timer.Stop();
+        avg_map += timer.GetDuration();
+      }
+    }
+
+    LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf",
+             avg_oaht / (double)num_runs, avg_map / (double)num_runs);
+  }
 
 }  // namespace test
 }  // namespace peloton

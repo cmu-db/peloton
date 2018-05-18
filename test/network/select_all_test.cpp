@@ -31,21 +31,26 @@ class SelectAllTests : public PelotonTests {};
 
 /**
  * Select All Test
- * In this test, peloton will return the result that exceeds the 8192 bytes limits.
+ * In this test, peloton will return the result that exceeds the 8192 bytes
+ * limits.
  * The response will be put into multiple packets and be sent back to clients.
  */
 void *SelectAllTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
-    pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
+    pqxx::connection C(
+        StringUtil::Format("host=127.0.0.1 port=%d user=default_database "
+                           "sslmode=disable application_name=psql",
+                           port));
     pqxx::work txn1(C);
     peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
+        peloton::network::ConnectionHandleFactory::GetInstance()
+            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
+            .get();
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(conn->GetProtocolHandler().get());
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
     // create table and insert some data
@@ -96,5 +101,5 @@ TEST_F(SelectAllTests, SelectAllTest) {
   LOG_INFO("Peloton has shut down");
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

@@ -33,7 +33,8 @@ TEST_F(NetworkAddressTests, ParseTest) {
   // Invalid address
   ip = "The terrier has diarrhea";
   address = StringUtil::Format("%s:%d", ip.c_str(), port);
-  ASSERT_THROW(new network::service::NetworkAddress(address), peloton::Exception);
+  ASSERT_THROW(new network::service::NetworkAddress(address),
+               peloton::Exception);
 }
 }
 }

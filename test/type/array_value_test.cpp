@@ -67,7 +67,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  type::Value array_bool = type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
+  type::Value array_bool =
+      type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_bool.GetElementAt(i);
     EXPECT_EQ(bool(ele.GetAs<int8_t>()), vec_bool[i]);
@@ -77,7 +78,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  type::Value array_tinyint = type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
+  type::Value array_tinyint =
+      type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_tinyint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int8_t>(), vec_tinyint[i]);
@@ -87,7 +89,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  type::Value array_smallint = type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
+  type::Value array_smallint =
+      type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_smallint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int16_t>(), vec_smallint[i]);
@@ -97,7 +100,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
+  type::Value array_integer =
+      type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_integer.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int32_t>(), vec_integer[i]);
@@ -107,7 +111,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  type::Value array_bigint = type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
+  type::Value array_bigint =
+      type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_bigint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int64_t>(), vec_bigint[i]);
@@ -117,7 +122,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM_DECIMAL());
   }
-  type::Value array_decimal = type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
+  type::Value array_decimal =
+      type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_decimal.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<double>(), vec_decimal[i]);
@@ -127,7 +133,8 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  type::Value array_varchar = type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
+  type::Value array_varchar =
+      type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_varchar.GetElementAt(i);
     EXPECT_EQ((ele).GetData(), vec_varchar[i]);
@@ -142,7 +149,8 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  type::Value array_bool = type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
+  type::Value array_bool =
+      type::Value(type::TypeId::ARRAY, vec_bool, type::TypeId::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_bool.InList(type::ValueFactory::GetBooleanValue(vec_bool[i]));
@@ -153,10 +161,11 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  type::Value array_tinyint = type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
+  type::Value array_tinyint =
+      type::Value(type::TypeId::ARRAY, vec_tinyint, type::TypeId::TINYINT);
   for (size_t i = 0; i < n; i++) {
-    type::Value in_list =
-        array_tinyint.InList(type::ValueFactory::GetTinyIntValue(vec_tinyint[i]));
+    type::Value in_list = array_tinyint.InList(
+        type::ValueFactory::GetTinyIntValue(vec_tinyint[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -164,7 +173,8 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int8_t>::iterator it =
         find(vec_tinyint.begin(), vec_tinyint.end(), val);
     if (it == vec_tinyint.end()) {
-      type::Value in_list = array_tinyint.InList(type::ValueFactory::GetTinyIntValue(val));
+      type::Value in_list =
+          array_tinyint.InList(type::ValueFactory::GetTinyIntValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
@@ -173,10 +183,11 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  type::Value array_smallint = type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
+  type::Value array_smallint =
+      type::Value(type::TypeId::ARRAY, vec_smallint, type::TypeId::SMALLINT);
   for (size_t i = 0; i < n; i++) {
-    type::Value in_list =
-        array_smallint.InList(type::ValueFactory::GetSmallIntValue(vec_smallint[i]));
+    type::Value in_list = array_smallint.InList(
+        type::ValueFactory::GetSmallIntValue(vec_smallint[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -194,10 +205,11 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
+  type::Value array_integer =
+      type::Value(type::TypeId::ARRAY, vec_integer, type::TypeId::INTEGER);
   for (size_t i = 0; i < n; i++) {
-    type::Value in_list =
-        array_integer.InList(type::ValueFactory::GetIntegerValue(vec_integer[i]));
+    type::Value in_list = array_integer.InList(
+        type::ValueFactory::GetIntegerValue(vec_integer[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -205,7 +217,8 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int32_t>::iterator it =
         find(vec_integer.begin(), vec_integer.end(), val);
     if (it == vec_integer.end()) {
-      type::Value in_list = array_integer.InList(type::ValueFactory::GetIntegerValue(val));
+      type::Value in_list =
+          array_integer.InList(type::ValueFactory::GetIntegerValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
@@ -214,7 +227,8 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  type::Value array_bigint = type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
+  type::Value array_bigint =
+      type::Value(type::TypeId::ARRAY, vec_bigint, type::TypeId::BIGINT);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_bigint.InList(type::ValueFactory::GetBigIntValue(vec_bigint[i]));
@@ -225,7 +239,8 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int64_t>::iterator it =
         find(vec_bigint.begin(), vec_bigint.end(), val);
     if (it == vec_bigint.end()) {
-      type::Value in_list = array_bigint.InList(type::ValueFactory::GetBigIntValue(val));
+      type::Value in_list =
+          array_bigint.InList(type::ValueFactory::GetBigIntValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
@@ -234,10 +249,11 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM64());
   }
-  type::Value array_decimal = type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
+  type::Value array_decimal =
+      type::Value(type::TypeId::ARRAY, vec_decimal, type::TypeId::DECIMAL);
   for (size_t i = 0; i < n; i++) {
-    type::Value in_list =
-        array_decimal.InList(type::ValueFactory::GetDecimalValue(vec_decimal[i]));
+    type::Value in_list = array_decimal.InList(
+        type::ValueFactory::GetDecimalValue(vec_decimal[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -245,7 +261,8 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<double>::iterator it =
         find(vec_decimal.begin(), vec_decimal.end(), val);
     if (it == vec_decimal.end()) {
-      type::Value in_list = array_decimal.InList(type::ValueFactory::GetDecimalValue(val));
+      type::Value in_list =
+          array_decimal.InList(type::ValueFactory::GetDecimalValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
@@ -254,10 +271,11 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  type::Value array_varchar = type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
+  type::Value array_varchar =
+      type::Value(type::TypeId::ARRAY, vec_varchar, type::TypeId::VARCHAR);
   for (size_t i = 0; i < n; i++) {
-    type::Value in_list =
-        array_varchar.InList(type::ValueFactory::GetVarcharValue(vec_varchar[i]));
+    type::Value in_list = array_varchar.InList(
+        type::ValueFactory::GetVarcharValue(vec_varchar[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -265,7 +283,8 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<std::string>::iterator it =
         find(vec_varchar.begin(), vec_varchar.end(), val);
     if (it == vec_varchar.end()) {
-      type::Value in_list = array_varchar.InList(type::ValueFactory::GetVarcharValue(val));
+      type::Value in_list =
+          array_varchar.InList(type::ValueFactory::GetVarcharValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
@@ -340,7 +359,8 @@ TEST_F(ArrayValueTests, CompareTest) {
   type::Value v = type::ValueFactory::GetVarcharValue("");
 
   // Test null varchar
-  EXPECT_TRUE(v.CompareEquals(type::ValueFactory::GetVarcharValue(nullptr, 0)) == CmpBool::NULL_);
+  EXPECT_TRUE(v.CompareEquals(type::ValueFactory::GetVarcharValue(
+                  nullptr, 0)) == CmpBool::NULL_);
 }
 }
 }

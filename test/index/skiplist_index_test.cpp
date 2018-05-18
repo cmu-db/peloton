@@ -27,42 +27,42 @@ class SkipListIndexTests : public PelotonTests {};
 
 TEST_F(SkipListIndexTests, BasicTest) {
   // TestingIndexUtil::BasicTest(IndexType::SKIPLIST);
-  EXPECT_EQ(2, 1+1);
+  EXPECT_EQ(2, 1 + 1);
 }
 
-//TEST_F(SkipListIndexTests, MultiMapInsertTest) {
+// TEST_F(SkipListIndexTests, MultiMapInsertTest) {
 //  TestingIndexUtil::MultiMapInsertTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, UniqueKeyInsertTest) {
+// TEST_F(SkipListIndexTests, UniqueKeyInsertTest) {
 //  TestingIndexUtil::UniqueKeyInsertTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, UniqueKeyDeleteTest) {
+// TEST_F(SkipListIndexTests, UniqueKeyDeleteTest) {
 //  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, NonUniqueKeyDeleteTest) {
+// TEST_F(SkipListIndexTests, NonUniqueKeyDeleteTest) {
 //  TestingIndexUtil::NonUniqueKeyDeleteTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, MultiThreadedInsertTest) {
+// TEST_F(SkipListIndexTests, MultiThreadedInsertTest) {
 //  TestingIndexUtil::MultiThreadedInsertTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, UniqueKeyMultiThreadedTest) {
+// TEST_F(SkipListIndexTests, UniqueKeyMultiThreadedTest) {
 //  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedTest) {
+// TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedTest) {
 //  TestingIndexUtil::NonUniqueKeyMultiThreadedTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest) {
+// TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest) {
 //  TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(IndexType::SKIPLIST);
 //}
 //
-//TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
+// TEST_F(SkipListIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
 //  TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(IndexType::SKIPLIST);
 //}
 

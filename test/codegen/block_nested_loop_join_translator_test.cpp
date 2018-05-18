@@ -64,12 +64,10 @@ void BlockNestedLoopJoinTranslatorTest::PerformTest(
     const std::vector<oid_t> &right_join_cols,
     std::vector<codegen::WrappedTuple> &results) {
   // Output all columns
-  DirectMapList direct_map_list = {{0, std::make_pair(0, 0)},
-                                   {1, std::make_pair(0, 1)},
-                                   {2, std::make_pair(0, 2)},
-                                   {3, std::make_pair(1, 0)},
-                                   {4, std::make_pair(1, 1)},
-                                   {5, std::make_pair(1, 2)}};
+  DirectMapList direct_map_list = {
+      {0, std::make_pair(0, 0)}, {1, std::make_pair(0, 1)},
+      {2, std::make_pair(0, 2)}, {3, std::make_pair(1, 0)},
+      {4, std::make_pair(1, 1)}, {5, std::make_pair(1, 2)}};
   std::unique_ptr<planner::ProjectInfo> projection{
       new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
 

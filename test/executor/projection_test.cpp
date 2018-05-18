@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -66,7 +65,7 @@ TEST_F(ProjectionTests, BasicTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size, false, false,
-                                   false, txn);
+                                     false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -123,7 +122,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size, false, false,
-                                   false, txn);
+                                     false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -187,7 +186,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size, false, false,
-                                   false, txn);
+                                     false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -218,8 +217,8 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   // target list
   auto const_val = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(20));
-  auto tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 0);
+  auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(ExpressionType::OPERATOR_PLUS,
                                                   type::TypeId::INTEGER,

@@ -104,8 +104,7 @@ void IndexIntsKeyTestHelper(IndexType index_type,
 #endif
 
   for (int i = 0; i < NUM_TUPLES; i++) {
-    std::shared_ptr<storage::Tuple> key(
-        new storage::Tuple(key_schema, true));
+    std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
     std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
 
     for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
@@ -224,8 +223,7 @@ TEST_F(IndexIntsKeyTests, IndexIntsKeyTest) {
     for (type::TypeId type1 : types) {
       for (type::TypeId type2 : types) {
         for (type::TypeId type3 : types) {
-          std::vector<type::TypeId> col_types = {type0, type1, type2,
-                                                       type3};
+          std::vector<type::TypeId> col_types = {type0, type1, type2, type3};
           IndexIntsKeyTestHelper(index_type, col_types);
         }
       }

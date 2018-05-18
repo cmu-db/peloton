@@ -101,6 +101,5 @@ TEST_F(StatementCacheTests, DisableTableTest) {
   }
 }
 
-
 }  // namespace test
 }  // namespace peloton

@@ -73,7 +73,8 @@ TEST_F(RpcClientTests, BasicTest) {
 
     // copy the hashcode into the buf, following the header
     PELOTON_ASSERT(OPCODELEN == sizeof(opcode));
-    PELOTON_MEMCPY(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
+    PELOTON_MEMCPY(buf + sizeof(msg_len) + sizeof(type), &opcode,
+    sizeof(opcode));
 
     // call protobuf to serialize the request message into sending buf
     request.SerializeToArray(

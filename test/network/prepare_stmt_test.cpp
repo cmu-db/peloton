@@ -42,12 +42,14 @@ void *PrepareStatementTest(int port) {
     pqxx::work txn1(C);
 
     peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
+        peloton::network::ConnectionHandleFactory::GetInstance()
+            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
+            .get();
 
-    //Check type of protocol handler
-    network::PostgresProtocolHandler* handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
+    // Check type of protocol handler
+    network::PostgresProtocolHandler *handler =
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->GetProtocolHandler().get());
 
     EXPECT_NE(handler, nullptr);
 
@@ -80,7 +82,6 @@ void *PrepareStatementTest(int port) {
 }
 
 TEST_F(PrepareStmtTests, PrepareStatementTest) {
-
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer server;

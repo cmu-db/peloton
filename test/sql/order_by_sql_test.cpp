@@ -85,11 +85,12 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
       std::chrono::system_clock::now();
 
   auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     end_time - start_time).count();
+                     end_time - start_time)
+                     .count();
 
   LOG_INFO(
       "OrderBy Query (table size:%d) with Limit 10 Execution Time is: %lu ms",
-      table_size, (unsigned long) latency);
+      table_size, (unsigned long)latency);
 
   // test OrderBy without Limit
   start_time = std::chrono::system_clock::now();
@@ -100,11 +101,12 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   end_time = std::chrono::system_clock::now();
 
-  latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                end_time - start_time).count();
+  latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
+                                                                  start_time)
+                .count();
 
   LOG_INFO("OrderBy Query (table size:%d) Execution Time is: %lu ms",
-           table_size, (unsigned long) latency);
+           table_size, (unsigned long)latency);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

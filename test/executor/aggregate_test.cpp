@@ -45,13 +45,13 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true, txn);
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -124,8 +124,7 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   ASSERT_TRUE(result_tile->GetTupleCount() > 0);
 
   type::Value val = (result_tile->GetValue(0, 2));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
@@ -143,13 +142,13 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true, txn);
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -225,8 +224,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
@@ -244,13 +242,13 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
 
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true, txn);
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -331,8 +329,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
@@ -350,13 +347,13 @@ TEST_F(AggregateTests, MinMaxTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -452,8 +449,7 @@ TEST_F(AggregateTests, MinMaxTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(91)));
@@ -471,13 +467,13 @@ TEST_F(AggregateTests, HashDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true,
-                                   txn);  // let it be random
+                                     true, true,
+                                     txn);  // let it be random
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -560,12 +556,12 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true, txn);
+                                     true, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -648,13 +644,13 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true, txn);
+                                     true, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -737,10 +733,8 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  CmpBool cmp1 =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+  CmpBool cmp1 = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue || cmp1 == CmpBool::CmpTrue);
 
   val = (result_tile->GetValue(0, 1));
@@ -757,13 +751,13 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and wrap it in logical tiles
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true, txn);
+                                     true, true, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -852,8 +846,7 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  CmpBool cmp =
-      (val.CompareEquals(type::ValueFactory::GetIntegerValue(50)));
+  CmpBool cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(50)));
   EXPECT_TRUE(cmp == CmpBool::CmpTrue);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));

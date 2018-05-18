@@ -38,8 +38,10 @@ TEST_F(ValueTests, HashTest) {
 
     // Special case for VARCHAR
     if (col_type == type::TypeId::VARCHAR) {
-      max_val = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
-      min_val = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
+      max_val =
+          type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
+      min_val =
+          type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
     }
     LOG_TRACE("%s => MAX:%s <-> MIN:%s", TypeIdToString(col_type).c_str(),
               max_val.ToString().c_str(), min_val.ToString().c_str());
@@ -67,8 +69,10 @@ TEST_F(ValueTests, MinMaxTest) {
 
     // Special case for VARCHAR
     if (col_type == type::TypeId::VARCHAR) {
-      max_val = type::ValueFactory::GetVarcharValue(std::string("AAA"), nullptr);
-      min_val = type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
+      max_val =
+          type::ValueFactory::GetVarcharValue(std::string("AAA"), nullptr);
+      min_val =
+          type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
       EXPECT_EQ(CmpBool::CmpFalse, min_val.CompareLessThan(max_val));
       EXPECT_EQ(CmpBool::CmpFalse, max_val.CompareGreaterThan(min_val));
     }
@@ -86,7 +90,7 @@ TEST_F(ValueTests, MinMaxTest) {
     EXPECT_EQ(CmpBool::CmpTrue, max_val.Max(min_val).CompareEquals(max_val));
     EXPECT_EQ(CmpBool::CmpTrue, min_val.Max(max_val).CompareEquals(max_val));
     EXPECT_EQ(CmpBool::CmpTrue, max_val.Max(min_val).CompareEquals(max_val));
-  } // FOR
+  }  // FOR
 }
 
 TEST_F(ValueTests, VarcharCopyTest) {

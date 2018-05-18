@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <random>
 #include <chrono>
@@ -73,19 +72,25 @@ TEST_F(ClustererTests, BasicTest) {
   std::ostringstream os;
   os << "COLUMN\tTILE\n";
   for (UNUSED_ATTRIBUTE auto entry : partitioning1) {
-    os << entry.first << "\t" << entry.second.first << " : " << entry.second.second << "\n";
+    os << entry.first << "\t" << entry.second.first << " : "
+       << entry.second.second << "\n";
   }
-  LOG_INFO("\n%s", peloton::StringUtil::Prefix(peloton::StringTableUtil::Table(os.str(), true),
-                                               GETINFO_SPACER).c_str());
+  LOG_INFO("\n%s",
+           peloton::StringUtil::Prefix(
+               peloton::StringTableUtil::Table(os.str(), true), GETINFO_SPACER)
+               .c_str());
 
   os.str("");
   auto partitioning2 = clusterer.GetPartitioning(4);
   os << "COLUMN\tTILE\n";
   for (UNUSED_ATTRIBUTE auto entry : partitioning2) {
-    os << entry.first << "\t" << entry.second.first << " : " << entry.second.second << "\n";
+    os << entry.first << "\t" << entry.second.first << " : "
+       << entry.second.second << "\n";
   }
-  LOG_INFO("\n%s", peloton::StringUtil::Prefix(peloton::StringTableUtil::Table(os.str(), true),
-                                             GETINFO_SPACER).c_str());
+  LOG_INFO("\n%s",
+           peloton::StringUtil::Prefix(
+               peloton::StringTableUtil::Table(os.str(), true), GETINFO_SPACER)
+               .c_str());
 }
 
 }  // namespace test

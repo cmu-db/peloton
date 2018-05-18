@@ -23,7 +23,6 @@ namespace test {
 class LogBufferTests : public PelotonTests {};
 
 TEST_F(LogBufferTests, LogBufferTest) {
-  
   logging::LogBuffer log_buffer(1, 1);
 
   int eid = log_buffer.GetEpochId();
@@ -48,7 +47,7 @@ TEST_F(LogBufferTests, LogBufferTest) {
 
   int num = 99;
 
-  rt = log_buffer.WriteData((char*)(&num), sizeof(num));
+  rt = log_buffer.WriteData((char *)(&num), sizeof(num));
 
   EXPECT_TRUE(rt);
 
@@ -71,8 +70,6 @@ TEST_F(LogBufferTests, LogBufferTest) {
   size = log_buffer.GetSize();
 
   EXPECT_EQ(size, 0);
-  
 }
-
 }
 }

@@ -71,9 +71,9 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
-    auto column =
-        catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-                        "FIELD" + std::to_string(col_itr), is_inlined);
+    auto column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "FIELD" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
   }
@@ -90,7 +90,8 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   bool is_catalog = false;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count, own_schema, adapt_table, is_catalog, layout_type));
+      tuples_per_tilegroup_count, own_schema, adapt_table, is_catalog,
+      layout_type));
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -133,7 +134,8 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
     storage::Tuple tuple(table_schema, allocate);
 
     for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
-      auto value = type::ValueFactory::GetIntegerValue(populate_value + col_itr);
+      auto value =
+          type::ValueFactory::GetIntegerValue(populate_value + col_itr);
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
@@ -175,9 +177,9 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t col_itr = 0;
   for (auto column_id : column_ids) {
-    auto column =
-        catalog::Column(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-                        "FIELD" + std::to_string(column_id), is_inlined);
+    auto column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "FIELD" + std::to_string(column_id), is_inlined);
     output_columns.push_back(column);
 
     old_to_new_cols[col_itr] = col_itr;

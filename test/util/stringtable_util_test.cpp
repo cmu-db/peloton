@@ -38,9 +38,9 @@ void CheckTable(std::string &table, bool header, int num_lines) {
 TEST_F(StringTableUtilTests, BoxTest) {
   std::string message =
       "Meeting\tRoom\tPeople\n"
-          "Peloton\t9001\tA\n"
-          "Bike\t8001\tB, C, D\n"
-          "Transformer\t7001\tE, F, G\n";
+      "Peloton\t9001\tA\n"
+      "Bike\t8001\tB, C, D\n"
+      "Transformer\t7001\tE, F, G\n";
   std::string result = StringTableUtil::Table(message, true);
   EXPECT_TRUE(result.size() > 0);
   LOG_INFO("\n%s", result.c_str());
@@ -48,8 +48,8 @@ TEST_F(StringTableUtilTests, BoxTest) {
 
   message =
       "Halloween\tOctorber\n"
-          "Thanksgiving\tNovember\n"
-          "Christmas\tDecember\n";
+      "Thanksgiving\tNovember\n"
+      "Christmas\tDecember\n";
   result = StringTableUtil::Table(message, false);
   LOG_INFO("\n%s", result.c_str());
   CheckTable(result, false, 3);

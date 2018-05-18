@@ -31,7 +31,6 @@
 #include "common/internal_types.h"
 #include "type/value_factory.h"
 
-
 namespace peloton {
 namespace test {
 
@@ -45,9 +44,10 @@ TEST_F(LogicalTileTests, TempTableTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  catalog::Schema *schema = new catalog::Schema(
-      {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-       TestingExecutorUtil::GetColumnInfo(2)});
+  catalog::Schema *schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2)});
 
   // Create our TempTable
   storage::TempTable table(INVALID_OID, schema, true);

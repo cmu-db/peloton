@@ -26,7 +26,7 @@ namespace test {
 
 class TypeUtilTests : public PelotonTests {};
 
-catalog::Schema* TypeUtilTestsGenerateSchema() {
+catalog::Schema *TypeUtilTestsGenerateSchema() {
   // Construct Tuple Schema
   std::vector<type::TypeId> col_types = {
       type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
@@ -49,11 +49,11 @@ catalog::Schema* TypeUtilTestsGenerateSchema() {
     catalog::Column column(col_types[i], length, os.str(), inlined);
     column_list.push_back(column);
   }
-  catalog::Schema* schema = new catalog::Schema(column_list);
+  catalog::Schema *schema = new catalog::Schema(column_list);
   return (schema);
 }
 
-std::shared_ptr<storage::Tuple> TypeUtilTestsHelper(catalog::Schema* schema,
+std::shared_ptr<storage::Tuple> TypeUtilTestsHelper(catalog::Schema *schema,
                                                     int tuple_id) {
   // Populate tuple
   auto pool = TestingHarness::GetInstance().GetTestingPool();
@@ -128,16 +128,15 @@ TEST_F(TypeUtilTests, CompareEqualsRawTest) {
 
   const int num_cols = (int)schema->GetColumnCount();
   for (int tuple_idx = 1; tuple_idx < 3; tuple_idx++) {
-    CmpBool expected = (tuple_idx == 2 ?
-                                CmpBool::CmpTrue :
-                                CmpBool::CmpFalse);
+    CmpBool expected = (tuple_idx == 2 ? CmpBool::CmpTrue : CmpBool::CmpFalse);
 
     for (int i = 0; i < num_cols; i++) {
-      const char* val0 = tuples[0]->GetDataPtr(i);
-      const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
+      const char *val0 = tuples[0]->GetDataPtr(i);
+      const char *val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
-      CmpBool result = type::TypeUtil::CompareEqualsRaw(type, val0, val1, inlined);
+      CmpBool result =
+          type::TypeUtil::CompareEqualsRaw(type, val0, val1, inlined);
 
       LOG_TRACE(
           "'%s'=='%s' => Expected:%s / Result:%s",
@@ -162,8 +161,8 @@ TEST_F(TypeUtilTests, CompareLessThanRawTest) {
   const int num_cols = (int)schema->GetColumnCount();
   for (int tuple_idx = 1; tuple_idx < 3; tuple_idx++) {
     for (int i = 0; i < num_cols; i++) {
-      const char* val0 = tuples[0]->GetDataPtr(i);
-      const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
+      const char *val0 = tuples[0]->GetDataPtr(i);
+      const char *val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
       CmpBool result =
@@ -189,8 +188,8 @@ TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
   const int num_cols = (int)schema->GetColumnCount();
   for (int tuple_idx = 1; tuple_idx < 3; tuple_idx++) {
     for (int i = 0; i < num_cols; i++) {
-      const char* val0 = tuples[0]->GetDataPtr(i);
-      const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
+      const char *val0 = tuples[0]->GetDataPtr(i);
+      const char *val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
       CmpBool result =
@@ -226,17 +225,17 @@ TEST_F(TypeUtilTests, CompareStringsTest) {
             // str2 = StringUtil::Upper(str2);
           }
 
-          CmpBool result = type::GetCmpBool(
-              type::TypeUtil::CompareStrings(str1.c_str(), i,
-                                             str2.c_str(), j) < 0);
+          CmpBool result =
+              type::GetCmpBool(type::TypeUtil::CompareStrings(
+                                   str1.c_str(), i, str2.c_str(), j) < 0);
           if (result != CmpBool::CmpTrue) {
             LOG_ERROR("INVALID '%s' < '%s'", str1.c_str(), str2.c_str());
           }
           EXPECT_EQ(CmpBool::CmpTrue, result);
-        } // FOR (upper2)
-      } // FOR (str2)
-    } // FOR (upper1)
-  } // FOR (str1)
+        }  // FOR (upper2)
+      }    // FOR (str2)
+    }      // FOR (upper1)
+  }        // FOR (str1)
 }
 
 }  // namespace test

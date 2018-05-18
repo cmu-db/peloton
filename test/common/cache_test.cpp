@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "common/cache.h"
@@ -90,7 +89,6 @@ TEST_F(CacheTests, InsertTest) {
   statement_cache_.insert(entry);
   EXPECT_EQ(statement_cache_.size(), 1);
 }
-
 
 /**
  * Test insert operation with default threshold

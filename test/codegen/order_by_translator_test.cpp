@@ -134,8 +134,7 @@ TEST_F(OrderByTranslatorTests, MultiIntColAscTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;
@@ -180,8 +179,7 @@ TEST_F(OrderByTranslatorTests, MultiIntColMixedTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;

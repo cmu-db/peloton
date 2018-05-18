@@ -132,10 +132,9 @@ class OptimizerSQLTests : public PelotonTests {
 
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Testing select star expression
-  TestUtil(
-      "SELECT * from test",
-      {"333", "22", "1", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
-      false);
+  TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
+                                  "444", "4", "0", "555"},
+           false);
 
   // Something wrong with column property.
   string query = "SELECT b from test order by c";
@@ -230,10 +229,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       true);
 
   // Testing order by * expression
-  TestUtil(
-      "SELECT * from test order by a",
-      {"1", "22", "333", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
-      true);
+  TestUtil("SELECT * from test order by a", {"1", "22", "333", "2", "11", "0",
+                                             "3", "33", "444", "4", "0", "555"},
+           true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
@@ -613,14 +611,7 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       "SELECT A.b, B.b FROM test1 as A, test1 as B "
       "WHERE A.a = B.a",
       {
-          "22",
-          "22",
-          "22",
-          "22",
-          "11",
-          "11",
-          "0",
-          "0",
+          "22", "22", "22", "22", "11", "11", "0", "0",
       },
       false);
 

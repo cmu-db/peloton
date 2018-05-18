@@ -37,8 +37,8 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                   true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Create the new column map
@@ -72,17 +72,16 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
   data_table->TransformTileGroup(0, theta);
 }
 
-
 TEST_F(DataTableTests, GlobalTableTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  std::unique_ptr<storage::DataTable> data_table_test_table (
+  std::unique_ptr<storage::DataTable> data_table_test_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
   TestingExecutorUtil::PopulateTable(data_table_test_table.get(), tuple_count,
-                                   false, false, true, txn);
+                                     false, false, true, txn);
 
   txn_manager.CommitTransaction(txn);
 }

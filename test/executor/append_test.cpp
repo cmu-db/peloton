@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "executor/testing_executor_util.h"
@@ -85,7 +84,7 @@ TEST_F(AppendTests, AppendTwoTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 10, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> ltile0(

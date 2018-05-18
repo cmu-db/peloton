@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 #include "network/service/rpc_server.h"
 #include "network/service/peloton_service.h"

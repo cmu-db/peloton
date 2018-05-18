@@ -131,11 +131,12 @@ TEST_F(TupleTests, VarcharTest) {
   LOG_TRACE("%s", tuple->GetInfo().c_str());
 
   // test if VARCHAR length is enforced
-  auto val3 = type::ValueFactory::GetVarcharValue((std::string) "this is a very long string", pool);
+  auto val3 = type::ValueFactory::GetVarcharValue(
+      (std::string) "this is a very long string", pool);
   try {
     tuple->SetValue(3, val3, pool);
+  } catch (peloton::ValueOutOfRangeException e) {
   }
-  catch (peloton::ValueOutOfRangeException e) {}
   value3 = (tuple->GetValue(3));
   cmp = type::ValueFactory::GetBooleanValue((value3.CompareNotEquals(val3)));
   EXPECT_TRUE(cmp.IsTrue());

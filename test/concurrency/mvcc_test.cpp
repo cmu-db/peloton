@@ -33,7 +33,8 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
 
   for (auto protocol : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
+        protocol, IsolationLevelType::SERIALIZABLE,
+        ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     storage::DataTable *table = TestingTransactionUtil::CreateTable();
@@ -95,7 +96,8 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
 
   for (auto protocol : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
+        protocol, IsolationLevelType::SERIALIZABLE,
+        ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     storage::DataTable *table = TestingTransactionUtil::CreateTable();
@@ -127,7 +129,8 @@ TEST_F(MVCCTests, VersionChainTest) {
   for (auto protocol : PROTOCOL_TYPES) {
     LOG_INFO("Validating %d", static_cast<int>(protocol));
     concurrency::TransactionManagerFactory::Configure(
-        protocol, IsolationLevelType::SERIALIZABLE, ConflictAvoidanceType::ABORT);
+        protocol, IsolationLevelType::SERIALIZABLE,
+        ConflictAvoidanceType::ABORT);
 
     const int num_txn = 2;  // 5
     const int scale = 1;    // 20

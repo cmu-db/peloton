@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/container/cuckoo_map.h"
 
 #include "common/harness.h"
@@ -95,7 +94,7 @@ TEST_F(CuckooMapTests, IteratorTest) {
   typedef std::shared_ptr<oid_t> value_type;
 
   CuckooMap<key_type, value_type> map;
-  
+
   {
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element) {

@@ -35,7 +35,6 @@ namespace test {
 class LayoutTunerTests : public PelotonTests {};
 
 TEST_F(LayoutTunerTests, BasicTest) {
-
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   std::string db_name = "test_db";
@@ -79,8 +78,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
     if (rng_val < 0.9) {
       columns_accessed = {0, 1, 2};
       sample_weight = 100;
-    }
-    else {
+    } else {
       columns_accessed = {3};
       sample_weight = 10;
     }
@@ -96,7 +94,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
     // Layout tuner thread will process the layout samples periodically,
     // derive the new table layout, and
     // transform the layout of existing tile groups in the table
-    if(sample_itr % 100 == 0 ){
+    if (sample_itr % 100 == 0) {
       std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
   }

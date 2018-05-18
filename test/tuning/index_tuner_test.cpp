@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <random>
 #include <chrono>
@@ -37,7 +36,6 @@ namespace test {
 class IndexTunerTests : public PelotonTests {};
 
 TEST_F(IndexTunerTests, BasicTest) {
-
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   // Create a table and populate it
@@ -45,8 +43,8 @@ TEST_F(IndexTunerTests, BasicTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                   true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Check column count
@@ -87,9 +85,8 @@ TEST_F(IndexTunerTests, BasicTest) {
 
     // Create a table access sample
     // Indicates the columns present in predicate, query weight, and selectivity
-    tuning::Sample sample(columns_accessed,
-                         sample_weight,
-                         tuning::SampleType::ACCESS);
+    tuning::Sample sample(columns_accessed, sample_weight,
+                          tuning::SampleType::ACCESS);
 
     // Collect index sample in table
     data_table->RecordIndexSample(sample);
@@ -97,7 +94,7 @@ TEST_F(IndexTunerTests, BasicTest) {
     // Periodically sleep a bit
     // Index tuner thread will process the index samples periodically,
     // and materialize the appropriate ad-hoc indexes
-    if(sample_itr % 100 == 0 ){
+    if (sample_itr % 100 == 0) {
       std::this_thread::sleep_for(std::chrono::microseconds(10000));
     }
   }
@@ -141,7 +138,6 @@ TEST_F(IndexTunerTests, BasicTest) {
 
     EXPECT_TRUE(candidate_index_found);
   }
-
 }
 
 }  // namespace test

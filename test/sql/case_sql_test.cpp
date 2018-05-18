@@ -39,7 +39,6 @@ void CreateAndLoadTable() {
 }
 
 TEST_F(CaseSQLTests, SimpleTest) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -56,8 +55,8 @@ TEST_F(CaseSQLTests, SimpleTest) {
   LOG_DEBUG("Running SELECT a, case when a=1 then 2 else 0 end from test");
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "SELECT a, case when a=1 then 2 else 0 end from test",
-      result, tuple_descriptor, rows_changed, error_message);
+      "SELECT a, case when a=1 then 2 else 0 end from test", result,
+      tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_changed);
@@ -74,11 +73,9 @@ TEST_F(CaseSQLTests, SimpleTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 TEST_F(CaseSQLTests, SimpleWithArgTest) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -90,8 +87,9 @@ TEST_F(CaseSQLTests, SimpleWithArgTest) {
   std::string error_message;
   int rows_changed;
 
-  LOG_DEBUG("Running SELECT a, case a when 1 then 2 when 2 then 3 "
-                "else 100 end from test");
+  LOG_DEBUG(
+      "Running SELECT a, case a when 1 then 2 when 2 then 3 "
+      "else 100 end from test");
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case a when 1 then 2 when 2 then 3 else 100 end from test",
       result, tuple_descriptor, rows_changed, error_message);
@@ -111,11 +109,9 @@ TEST_F(CaseSQLTests, SimpleWithArgTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 TEST_F(CaseSQLTests, SimpleWithArgStringResultTest) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -127,11 +123,13 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResultTest) {
   std::string error_message;
   int rows_changed;
 
-  LOG_DEBUG("Running SELECT a, case a when 1 then '2' when 2 then '3' "
-                "else '100' end from test");
+  LOG_DEBUG(
+      "Running SELECT a, case a when 1 then '2' when 2 then '3' "
+      "else '100' end from test");
   TestingSQLUtil::ExecuteSQLQuery(
       "SELECT a, case a when 1 then '2' when 2 then '3' else '100' end "
-          "from test", result, tuple_descriptor, rows_changed, error_message);
+      "from test",
+      result, tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_changed);
@@ -148,11 +146,9 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResultTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 TEST_F(CaseSQLTests, SimpleMultipleWhenTest) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -186,11 +182,9 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElseTest) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -206,8 +200,8 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElseTest) {
 
   LOG_DEBUG("Running SELECT a, case when a=1 then 2 end from test");
   TestingSQLUtil::ExecuteSQLQuery(
-      "SELECT a, case when a=1 then 2 when a=2 then 3 end from test",
-      result, tuple_descriptor, rows_changed, error_message);
+      "SELECT a, case when a=1 then 2 when a=2 then 3 end from test", result,
+      tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   EXPECT_EQ(0, rows_changed);
@@ -224,7 +218,6 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElseTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 }  // namespace test

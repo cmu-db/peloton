@@ -129,28 +129,28 @@ TEST_F(DecimalFunctionsTests, AbsIntTest) {
 
   std::vector<type::Value> args;
   // Testing Abs with Integer Types
-  for (int64_t in: bigIntTestInputs) {
+  for (int64_t in : bigIntTestInputs) {
     args = {type::ValueFactory::GetBigIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(std::abs(in), result.GetAs<int64_t>());
   }
 
-  for (int32_t in: intTestInputs) {
+  for (int32_t in : intTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int32_t>());
   }
 
-  for (int16_t in: smallIntTestInputs) {
+  for (int16_t in : smallIntTestInputs) {
     args = {type::ValueFactory::GetSmallIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int16_t>());
   }
 
-  for (int8_t in: tinyIntTestInputs) {
+  for (int8_t in : tinyIntTestInputs) {
     args = {type::ValueFactory::GetTinyIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
@@ -159,11 +159,11 @@ TEST_F(DecimalFunctionsTests, AbsIntTest) {
 }
 
 TEST_F(DecimalFunctionsTests, CeilDoubleTest) {
-  std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5, -0.2,
-                                          0.0, 0.2, 0.5, 0.7, 35.2, 36.0,
-                                          37.2222};
+  std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5,
+                                          -0.2,  0.0,     0.2,  0.5,
+                                          0.7,   35.2,    36.0, 37.2222};
   std::vector<type::Value> args;
-  for (double in: doubleTestInputs) {
+  for (double in : doubleTestInputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
@@ -183,28 +183,28 @@ TEST_F(DecimalFunctionsTests, CeilIntTest) {
 
   std::vector<type::Value> args;
   // Testing Ceil with Integer Types
-  for (int64_t in: bigIntTestInputs) {
+  for (int64_t in : bigIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
-  for (int in: intTestInputs) {
+  for (int in : intTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
-  for (int in: smallIntTestInputs) {
+  for (int in : smallIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(ceil(in), result.GetAs<double>());
   }
 
-  for (int in: tinyIntTestInputs) {
+  for (int in : tinyIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());

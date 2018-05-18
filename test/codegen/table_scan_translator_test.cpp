@@ -195,8 +195,8 @@ TEST_F(TableScanTranslatorTests, AllColumnsScanWithNullsTest) {
   auto &tuple = buffer.GetOutputTuples()[0];
   for (uint32_t i = 0; i < all_col_ids.size(); i++) {
     auto col_val = tuple.GetValue(i);
-    EXPECT_TRUE(col_val.IsNull())
-        << "Result value: " << col_val.ToString() << ", expected NULL";
+    EXPECT_TRUE(col_val.IsNull()) << "Result value: " << col_val.ToString()
+                                  << ", expected NULL";
   }
 }
 

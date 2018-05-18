@@ -31,14 +31,12 @@ TEST_F(FunctionBuilderTests, ConstructSingleFunctionTest) {
   codegen::CodeContext code_context;
   codegen::CodeGen cg{code_context};
   codegen::FunctionBuilder func{code_context, "test", cg.Int32Type(), {}};
-  {
-    func.ReturnAndFinish(cg.Const32(magic_num));
-  }
+  { func.ReturnAndFinish(cg.Const32(magic_num)); }
 
   ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(void);
-  func_t fn = (func_t) code_context.GetRawFunctionPointer(func.GetFunction());
+  func_t fn = (func_t)code_context.GetRawFunctionPointer(func.GetFunction());
   ASSERT_EQ(fn(), magic_num);
 }
 
@@ -83,7 +81,7 @@ TEST_F(FunctionBuilderTests, ConstructNestedFunctionTest) {
   ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(uint32_t);
-  func_t fn = (func_t) code_context.GetRawFunctionPointer(main.GetFunction());
+  func_t fn = (func_t)code_context.GetRawFunctionPointer(main.GetFunction());
   ASSERT_EQ(fn(1), 44);
 }
 

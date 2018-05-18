@@ -90,8 +90,7 @@ TEST_F(GroupByTranslatorTests, SingleColumnGroupingTest) {
   // Each group should have a count of one (since the grouping column is unique)
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
-    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) ==
-                CmpBool::CmpTrue);
+    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) == CmpBool::CmpTrue);
   }
 }
 
@@ -239,9 +238,8 @@ TEST_F(GroupByTranslatorTests, AggregationWithOutputPredicateTest) {
       new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
-  ExpressionPtr x_gt_50{
-      new expression::ComparisonExpression(ExpressionType::COMPARE_GREATERTHAN,
-                                           x_exp, const_50)};
+  ExpressionPtr x_gt_50{new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHAN, x_exp, const_50)};
 
   // 6) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -380,8 +378,7 @@ TEST_F(GroupByTranslatorTests, SingleCountStarTest) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(10)) == CmpBool::CmpTrue);
 }
 
 TEST_F(GroupByTranslatorTests, MinAndMaxTest) {
@@ -445,14 +442,12 @@ TEST_F(GroupByTranslatorTests, MinAndMaxTest) {
   // maximum row ID is equal to # inserted - 1. Therefore:
   // MAX(a) = (# inserted - 1) * 10 = (10 - 1) * 10 = 9 * 10 = 90
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(90)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(90)) == CmpBool::CmpTrue);
 
   // The values of 'b' are equal to the (zero-indexed) row ID * 10 + 1. The
   // minimum row ID is 0. Therefore: MIN(b) = 0 * 10 + 1 = 1
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(1)) == CmpBool::CmpTrue);
 }
 
 }  // namespace test

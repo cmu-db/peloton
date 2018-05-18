@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
@@ -24,12 +23,10 @@ namespace test {
 
 class DecentralizedEpochManagerTests : public PelotonTests {};
 
-
 TEST_F(DecentralizedEpochManagerTests, Test) {
   concurrency::EpochManagerFactory::Configure(EpochType::DECENTRALIZED_EPOCH);
   EXPECT_TRUE(true);
 }
-
 
 TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
@@ -59,7 +56,7 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
-  
+
   epoch_manager.ExitEpoch(0, epoch_id);
 
   epoch_manager.SetCurrentEpochId(4);
@@ -72,9 +69,7 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   epoch_manager.DeregisterThread(0);
 }
 
-
 TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset();
 
@@ -86,7 +81,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 
   epoch_manager.RegisterThread(1);
 
-  epoch_manager.RegisterThread(2); // this is an idle thread.
+  epoch_manager.RegisterThread(2);  // this is an idle thread.
 
   epoch_manager.SetCurrentEpochId(2);
 
@@ -111,7 +106,7 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
-  
+
   epoch_manager.ExitEpoch(0, epoch_id1);
 
   epoch_manager.SetCurrentEpochId(5);
@@ -127,7 +122,6 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
 
   EXPECT_EQ(4, tail_epoch_id);
 
-
   // deregister two threads.
   epoch_manager.DeregisterThread(0);
 
@@ -136,7 +130,5 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   epoch_manager.DeregisterThread(2);
 }
 
-
 }  // namespace test
 }  // namespace peloton
-

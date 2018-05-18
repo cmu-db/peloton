@@ -127,14 +127,14 @@ TEST_F(BinderCorrectnessTests, SelectStatementTest) {
 
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableA_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "a", txn)
-                         ->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableA_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "a", txn)
+          ->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "b", txn)
+          ->GetOid();
   txn_manager.CommitTransaction(txn);
 
   // Check select_list
@@ -260,10 +260,10 @@ TEST_F(BinderCorrectnessTests, DeleteStatementTest) {
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "b", txn)
+          ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(

@@ -103,8 +103,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
       l_column_ids, r_column_ids;
   // Table1.a = Table2.b -> nullptr
   std::unique_ptr<expression::AbstractExpression> ret_expr1(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr3));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr3));
   EXPECT_EQ(nullptr, ret_expr1.get());
   EXPECT_EQ(1, l_column_ids.size());
 
@@ -115,8 +115,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   std::unique_ptr<expression::AbstractExpression> ret_expr2(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr13.get()));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr13.get()));
 
   EXPECT_EQ(ExpressionType::COMPARE_LESSTHAN, ret_expr2->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,
@@ -126,9 +126,11 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
 
   EXPECT_EQ(1, l_column_ids.size());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
-                   l_column_ids[0].get())->GetColumnId());
+                   l_column_ids[0].get())
+                   ->GetColumnId());
   EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
-                   r_column_ids[0].get())->GetColumnId());
+                   r_column_ids[0].get())
+                   ->GetColumnId());
 
   // Table1.a = Table2.b
   auto expr14 = expression::ExpressionUtil::TupleValueFactory(
@@ -149,18 +151,22 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   std::unique_ptr<expression::AbstractExpression> ret_expr3(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr18.get()));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr18.get()));
 
   EXPECT_EQ(2, l_column_ids.size());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
-                   l_column_ids[0].get())->GetColumnId());
+                   l_column_ids[0].get())
+                   ->GetColumnId());
   EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
-                   r_column_ids[0].get())->GetColumnId());
+                   r_column_ids[0].get())
+                   ->GetColumnId());
   EXPECT_EQ(0, reinterpret_cast<const expression::TupleValueExpression *>(
-                   l_column_ids[1].get())->GetColumnId());
+                   l_column_ids[1].get())
+                   ->GetColumnId());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
-                   r_column_ids[1].get())->GetColumnId());
+                   r_column_ids[1].get())
+                   ->GetColumnId());
 
   EXPECT_EQ(ExpressionType::COMPARE_EQUAL, ret_expr3->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,

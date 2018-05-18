@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -33,7 +32,7 @@
 
 namespace peloton {
 
-namespace type{
+namespace type {
 class AbstractPool;
 }
 
@@ -104,17 +103,13 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 // All tests inherit from this class
 class PelotonTests : public ::testing::Tests {
  protected:
-
   virtual void SetUp() {
-
     // turn off gc under test mode
     gc::GCManagerFactory::GetInstance().StopGC();
     gc::GCManagerFactory::Configure(0);
-
   }
 
   virtual void TearDown() {
-
     // shutdown protocol buf library
     google::protobuf::ShutdownProtobufLibrary();
 

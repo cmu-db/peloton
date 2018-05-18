@@ -146,9 +146,9 @@ TEST_F(ZoneMapScanTests, ScanwithConjunctionPredicateTest) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(20)));
+                                  type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(CmpBool::CmpTrue, results[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(21)));
+                                  type::ValueFactory::GetIntegerValue(21)));
 }
 }
 }

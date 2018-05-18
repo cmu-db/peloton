@@ -106,8 +106,8 @@ static index::Index *BuildIndex() {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "index_util_test", 88888,  // Index oid
-      INVALID_OID, INVALID_OID, IndexType::BWTREE,
-      IndexConstraintType::DEFAULT, tuple_schema.get(), key_schema, key_attrs,
+      INVALID_OID, INVALID_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      tuple_schema.get(), key_schema, key_attrs,
       true);  // unique_keys
 
   // Build index
@@ -180,7 +180,8 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test empty
 
-  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
+  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {},
+                                  value_index_list);
   EXPECT_FALSE(ret);
   value_index_list.clear();
 
@@ -406,12 +407,9 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
 
   // Bind real value
-  type::Value val1 = (
-      type::ValueFactory::GetIntegerValue(100).Copy());
-  type::Value val2 = (
-      type::ValueFactory::GetIntegerValue(200).Copy());
-  type::Value val3 = (
-      type::ValueFactory::GetIntegerValue(300).Copy());
+  type::Value val1 = (type::ValueFactory::GetIntegerValue(100).Copy());
+  type::Value val2 = (type::ValueFactory::GetIntegerValue(200).Copy());
+  type::Value val3 = (type::ValueFactory::GetIntegerValue(300).Copy());
   isp.LateBindValues(index_p.get(), {val1, val2, val3});
 
   // This is important - Since binding does not change the number of
