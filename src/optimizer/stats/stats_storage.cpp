@@ -261,30 +261,38 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 // Needs to be handled differently. Used only in tests.
 ResultType StatsStorage::AnalyzeStatsForAllTables(
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
-//  if (txn == nullptr) {
-//    LOG_TRACE("Do not have transaction to analyze all tables' stats.");
-//    return ResultType::FAILURE;
-//  }
-//
-//  auto storage_manager = storage::StorageManager::GetInstance();
-//
-//  oid_t database_count = storage_manager->GetDatabaseCount();
-//  LOG_TRACE("Database count: %u", database_count);
-//  for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
-//    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
-//    if (database->GetOid() == CATALOG_DATABASE_OID) {
-//      continue;
-//    }
-//    oid_t table_count = database->GetTableCount();
-//    for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
-//      auto table = database->GetTable(table_offset);
-//      LOG_TRACE("Analyzing table: %s", table->GetName().c_str());
-//      std::unique_ptr<TableStatsCollector> table_stats_collector(
-//          new TableStatsCollector(table));
-//      table_stats_collector->CollectColumnStats();
-//      InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
-//    }
-//  }
+  if (txn == nullptr) {
+    LOG_TRACE("Do not have transaction to analyze all tables' stats.");
+    return ResultType::FAILURE;
+  }
+
+  auto storage_manager = storage::StorageManager::GetInstance();
+
+  oid_t database_count = storage_manager->GetDatabaseCount();
+  LOG_TRACE("Database count: %u", database_count);
+  for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
+    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
+    auto database_oid = database->GetOid();
+    if (database_oid == CATALOG_DATABASE_OID) {
+      continue;
+    }
+    auto pg_database = catalog::Catalog::GetInstance()
+            ->GetDatabaseObject(database_oid, txn);
+    auto table_objects = pg_database->GetTableObjects();
+    for (auto &table_object_entry : table_objects) {
+      auto table_oid = table_object_entry.first;
+      auto table_object = table_object_entry.second;
+      if (table_object->GetSchemaName() == CATALOG_SCHEMA_NAME) {
+        continue;
+      }
+      LOG_TRACE("Analyzing table: %s", table_object->GetTableName().c_str());
+      auto table = database->GetTableWithOid(table_oid);
+      std::unique_ptr<TableStatsCollector> table_stats_collector(
+              new TableStatsCollector(table));
+      table_stats_collector->CollectColumnStats();
+      InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
+    }
+  }
   return ResultType::SUCCESS;
 }
 
