@@ -63,14 +63,12 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
     if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
       continue;
     }
-    char complete_path[256];
-    strcpy(complete_path, dir_name);
-    strcat(complete_path, "/");
-    strcat(complete_path, file->d_name);
-    auto ret_val = remove(complete_path);
+    std::ostringstream complete_path;
+    complete_path << dir_name << "/" << file->d_name;
+    auto ret_val = remove(complete_path.str().c_str());
     if (ret_val != 0) {
-      LOG_ERROR("Failed to delete file: %s, error: %s", complete_path,
-                strerror(errno));
+      LOG_ERROR("Failed to delete file: %s, error: %s",
+      		complete_path.str().c_str(), strerror(errno));
     }
   }
   closedir(dir);

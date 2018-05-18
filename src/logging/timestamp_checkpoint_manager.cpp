@@ -830,6 +830,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
         }
 
         // Set a column into the vector in order of the column_id
+        PELOTON_ASSERT(column_oid < column_count);
         columns[column_oid] = column;
 
       }  // column loop end
