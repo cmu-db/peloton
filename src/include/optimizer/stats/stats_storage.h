@@ -67,7 +67,8 @@ class StatsStorage {
 
   /* Functions for triggerring stats collection */
 
-  ResultType AnalyzeStatsForAllTables(
+  ResultType AnalyzeStatsForAllTablesWithDatabaseOid(
+      oid_t database_oid,
       concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalyzeStatsForTable(

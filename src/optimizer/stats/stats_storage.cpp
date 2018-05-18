@@ -257,9 +257,8 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
  * AnalyzeStatsForAllTables - This function iterates all databases and
  * datatables to collect their stats and store them in the column_stats_catalog.
  */
-// Deprecating this function because the notion is no longer true.
-// Needs to be handled differently. Used only in tests.
-ResultType StatsStorage::AnalyzeStatsForAllTables(
+ResultType StatsStorage::AnalyzeStatsForAllTablesWithDatabaseOid(
+    oid_t database_oid,
     UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze all tables' stats.");
@@ -267,31 +266,23 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
   }
 
   auto storage_manager = storage::StorageManager::GetInstance();
-
-  oid_t database_count = storage_manager->GetDatabaseCount();
-  LOG_TRACE("Database count: %u", database_count);
-  for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
-    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
-    auto database_oid = database->GetOid();
-    if (database_oid == CATALOG_DATABASE_OID) {
+  auto database = storage_manager->GetDatabaseWithOid(database);
+  PELOTON_ASSERT(database != nullptr);
+  auto pg_database = catalog::Catalog::GetInstance()
+          ->GetDatabaseObject(database_oid, txn);
+  auto table_objects = pg_database->GetTableObjects();
+  for (auto &table_object_entry : table_objects) {
+    auto table_oid = table_object_entry.first;
+    auto table_object = table_object_entry.second;
+    if (table_object->GetSchemaName() == CATALOG_SCHEMA_NAME) {
       continue;
     }
-    auto pg_database = catalog::Catalog::GetInstance()
-            ->GetDatabaseObject(database_oid, txn);
-    auto table_objects = pg_database->GetTableObjects();
-    for (auto &table_object_entry : table_objects) {
-      auto table_oid = table_object_entry.first;
-      auto table_object = table_object_entry.second;
-      if (table_object->GetSchemaName() == CATALOG_SCHEMA_NAME) {
-        continue;
-      }
-      LOG_TRACE("Analyzing table: %s", table_object->GetTableName().c_str());
-      auto table = database->GetTableWithOid(table_oid);
-      std::unique_ptr<TableStatsCollector> table_stats_collector(
-              new TableStatsCollector(table));
-      table_stats_collector->CollectColumnStats();
-      InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
-    }
+    LOG_TRACE("Analyzing table: %s", table_object->GetTableName().c_str());
+    auto table = database->GetTableWithOid(table_oid);
+    std::unique_ptr<TableStatsCollector> table_stats_collector(
+            new TableStatsCollector(table));
+    table_stats_collector->CollectColumnStats();
+    InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
   }
   return ResultType::SUCCESS;
 }
