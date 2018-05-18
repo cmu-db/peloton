@@ -52,7 +52,7 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_NE(nullptr, database);
   EXPECT_NE(nullptr, db_metric_table);
 }
-//
+
 TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -80,18 +80,18 @@ TEST_F(CatalogTests, CreateThenDropTable) {
    new catalog::Schema({id_column, name_column}));
 
  catalog::Catalog::GetInstance()->CreateTable(
-   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
+   "emp_db", DEFAULT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
 
  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-   "emp_db", DEFUALT_SCHEMA_NAME, "emp_table", txn);
+   "emp_db", DEFAULT_SCHEMA_NAME, "emp_table", txn);
 
  EXPECT_NE(table_object, nullptr);
  EXPECT_EQ(table_object->GetTableName(), "emp_table");
 
- catalog::Catalog::GetInstance()->DropTable("emp_db", DEFUALT_SCHEMA_NAME,
+ catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
                                             "emp_table", txn);
  EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
-           "emp_db", DEFUALT_SCHEMA_NAME, "department_table", txn),
+           "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn),
                       CatalogException);
  txn_manager.CommitTransaction(txn);
 }
