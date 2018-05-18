@@ -101,11 +101,10 @@ RWType TransactionContext::GetRWType(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
-  RWType rw_type;
 
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
-    rw_type = rw_set_it->second;
+    UNUSED_ATTRIBUTE RWType rw_type = rw_set_it->second;
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     return;
   }
