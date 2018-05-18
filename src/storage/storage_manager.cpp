@@ -14,9 +14,12 @@
 
 #include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace storage {
+
+std::shared_ptr<storage::TileGroup> StorageManager::empty_tile_group_;
 
 StorageManager::StorageManager() = default;
 

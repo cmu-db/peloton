@@ -16,6 +16,7 @@
 
 #include "common/internal_types.h"
 #include "tbb/concurrent_unordered_map.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 
