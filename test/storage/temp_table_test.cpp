@@ -29,7 +29,7 @@ namespace test {
 // TempTable Tests
 //===--------------------------------------------------------------------===//
 
-class TempTableTests : public PelotonTest {};
+class TempTableTests : public PelotonTests {};
 
 TEST_F(TempTableTests, InsertTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;

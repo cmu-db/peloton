@@ -25,7 +25,7 @@ namespace test {
 // Tuple Tests
 //===--------------------------------------------------------------------===//
 
-class TupleTests : public PelotonTest {};
+class TupleTests : public PelotonTests {};
 
 TEST_F(TupleTests, BasicTest) {
   std::vector<catalog::Column> columns;

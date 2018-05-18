@@ -46,7 +46,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OptimizerRuleTests : public PelotonTest {};
+class OptimizerRuleTests : public PelotonTests {};
 
 TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   // Build op plan node to match rule
@@ -166,7 +166,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   delete root_context;
 }
 
-TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
+TEST_F(OptimizerRuleTests, SimpleAssociativeRule2Test) {
   // Start Join Structure: (left JOIN middle) JOIN right
   // End Join Structure: left JOIN (middle JOIN right)
   // Query: SELECT * from test1, test2, test3 WHERE test1.a = test3.a AND

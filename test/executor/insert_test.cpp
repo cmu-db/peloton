@@ -31,9 +31,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class InsertTests : public PelotonTest {};
+class InsertTests : public PelotonTests {};
 
-TEST_F(InsertTests, InsertRecord) {
+TEST_F(InsertTests, InsertRecordTest) {
   catalog::Catalog::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

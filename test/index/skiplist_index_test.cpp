@@ -23,7 +23,7 @@ namespace test {
 // SkipList Index Tests
 //===--------------------------------------------------------------------===//
 
-class SkipListIndexTests : public PelotonTest {};
+class SkipListIndexTests : public PelotonTests {};
 
 TEST_F(SkipListIndexTests, BasicTest) {
   // TestingIndexUtil::BasicTest(IndexType::SKIPLIST);

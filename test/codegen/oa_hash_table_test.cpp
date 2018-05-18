@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class OAHashTableTest : public PelotonTest {
+class OAHashTableTests : public PelotonTests {
  public:
   // The key and value object we store in the hash table
   struct Key {
@@ -78,7 +78,7 @@ class OAHashTableTest : public PelotonTest {
   int8_t raw_hash_table[sizeof(codegen::util::OAHashTable)];
 };
 
-TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
+TEST_F(OAHashTableTests, CanInsertKeyValuePairsTest) {
   Value v = {3, 4, 5, 6};
 
   uint32_t to_insert = 50000;
@@ -100,7 +100,7 @@ TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
   EXPECT_EQ(to_insert, GetHashTable().NumOccupiedBuckets());
 }
 
-TEST_F(OAHashTableTest, CanIterate) {
+TEST_F(OAHashTableTests, CanIterateTest) {
   Value v = {3, 4, 5, 6};
 
   uint32_t to_insert = 50000;
@@ -145,9 +145,9 @@ TEST_F(OAHashTableTest, CanIterate) {
   EXPECT_EQ(3, dup_count);
 }
 
-TEST_F(OAHashTableTest, CanCodegenProbeOrInsert) {}
+TEST_F(OAHashTableTests, CanCodegenProbeOrInsertTest) {
 
-TEST_F(OAHashTableTest, MicroBenchmark) {
+TEST_F(OAHashTableTests, MicroBenchmarkTest) {
   uint32_t num_runs = 10;
 
   std::vector<Key> keys;

@@ -26,7 +26,7 @@ namespace test {
 using namespace index;
 using namespace storage;
 
-class IndexUtilTests : public PelotonTest {};
+class IndexUtilTests : public PelotonTests {};
 
 /*
  * BuildIndex() - Builds an index with 4 columns

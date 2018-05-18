@@ -42,7 +42,7 @@ using namespace optimizer;
 
 // const int N_ROW = 100;
 
-class CostTests : public PelotonTest {};
+class CostTests : public PelotonTests {};
 
 // tablename: test
 // database name: DEFAULT_DB_NAME

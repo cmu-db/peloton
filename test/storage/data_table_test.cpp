@@ -27,7 +27,7 @@ namespace test {
 // Data Table Tests
 //===--------------------------------------------------------------------===//
 
-class DataTableTests : public PelotonTest {};
+class DataTableTests : public PelotonTests {};
 
 TEST_F(DataTableTests, TransformTileGroupTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;

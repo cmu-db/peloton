@@ -35,7 +35,7 @@ namespace test {
 
 namespace {
 
-class AppendTests : public PelotonTest {};
+class AppendTests : public PelotonTests {};
 
 void RunTest(executor::AppendExecutor &executor, size_t expected_num_tuples) {
   EXPECT_TRUE(executor.Init());

@@ -18,9 +18,9 @@
 namespace peloton {
 namespace test {
 
-class FunctionBuilderTest : public PelotonTest {};
+class FunctionBuilderTests : public PelotonTests {};
 
-TEST_F(FunctionBuilderTest, ConstructSingleFunction) {
+TEST_F(FunctionBuilderTests, ConstructSingleFunctionTest) {
   // Generate a function like so:
   // define @test() {
   //   ret i32 44;
@@ -42,7 +42,7 @@ TEST_F(FunctionBuilderTest, ConstructSingleFunction) {
   ASSERT_EQ(fn(), magic_num);
 }
 
-TEST_F(FunctionBuilderTest, ConstructNestedFunction) {
+TEST_F(FunctionBuilderTests, ConstructNestedFunctionTest) {
   // In this test, we want to construct the following scenario:
   // define void @test(i32 %a) {
   //   %tmp = mul i32 %a, i32 44

@@ -52,7 +52,7 @@ bool ClusterCorrectness(std::set<brain::Cluster *> clusters,
   return check;
 }
 
-class QueryClustererTests : public PelotonTest {};
+class QueryClustererTests : public PelotonTests {};
 
 TEST_F(QueryClustererTests, ClusterTest) {
   int num_features = 5;

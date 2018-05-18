@@ -21,7 +21,7 @@
 namespace peloton {
 namespace test {
 
-class BlockNestedLoopJoinTranslatorTest : public PelotonCodeGenTest {
+class BlockNestedLoopJoinTranslatorTests : public PelotonCodeGenTests {
  public:
   BlockNestedLoopJoinTranslatorTest() : PelotonCodeGenTest() {
     // Load the test table
@@ -109,7 +109,7 @@ type::Value BlockNestedLoopJoinTranslatorTest::GetCol(const AbstractTuple &t,
   return t.GetValue(static_cast<oid_t>(p));
 }
 
-TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
+TEST_F(BlockNestedLoopJoinTranslatorTests, SingleColumnEqualityJoinTest) {
   {
     LOG_INFO(
         "Testing: "
@@ -172,7 +172,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
   }
 }
 
-TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
+TEST_F(BlockNestedLoopJoinTranslatorTests, NonEqualityJoinTest) {
   // The left and right input tables have the same schema and data distribution.
   // The test table has four columns: A, B, D, E. The values in column B, D, E
   // are 1, 2, and 3 more than the values in the A column, respectively. Values

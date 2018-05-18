@@ -27,7 +27,7 @@ namespace test {
 
 using namespace optimizer;
 
-class ColumnStatsCollectorTests : public PelotonTest {};
+class ColumnStatsCollectorTests : public PelotonTests {};
 
 // Basic test with tiny dataset.
 TEST_F(ColumnStatsCollectorTests, BasicTest) {

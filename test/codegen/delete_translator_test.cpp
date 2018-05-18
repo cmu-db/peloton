@@ -23,7 +23,7 @@
 namespace peloton {
 namespace test {
 
-class DeleteTranslatorTest : public PelotonCodeGenTest {
+class DeleteTranslatorTests : public PelotonCodeGenTests {
  public:
   DeleteTranslatorTest() : PelotonCodeGenTest() {}
 
@@ -47,7 +47,7 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
-TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
+TEST_F(DeleteTranslatorTests, DeleteAllTuplesTest) {
   //
   // DELETE FROM table;
   //
@@ -72,7 +72,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   EXPECT_EQ(0, GetCurrentTableSize(TestTableId1()));
 }
 
-TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
+TEST_F(DeleteTranslatorTests, DeleteWithSimplePredicateTest) {
   //
   // DELETE FROM table where a >= 40;
   //
@@ -104,7 +104,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   EXPECT_EQ(4, GetCurrentTableSize(TestTableId2()));
 }
 
-TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
+TEST_F(DeleteTranslatorTests, DeleteWithCompositePredicateTest) {
   //
   // DELETE FROM table where a >= 20 and b = 21;
   //
@@ -144,7 +144,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId3()));
 }
 
-TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
+TEST_F(DeleteTranslatorTests, DeleteWithModuloPredicateTest) {
   //
   // DELETE FROM table where a = b % 1;
   //

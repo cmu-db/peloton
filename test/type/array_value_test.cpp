@@ -28,7 +28,7 @@
 namespace peloton {
 namespace test {
 
-class ArrayValueTests : public PelotonTest {};
+class ArrayValueTests : public PelotonTests {};
 
 #define RANDOM(a) (rand() % a)  // Generate a random number in [0, a)
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())

@@ -38,7 +38,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class AggregateTests : public PelotonTest {};
+class AggregateTests : public PelotonTests {};
 
 TEST_F(AggregateTests, SortedDistinctTest) {
   // SELECT d, a, b, c FROM table GROUP BY a, b, c, d;

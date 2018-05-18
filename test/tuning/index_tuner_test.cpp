@@ -34,7 +34,7 @@ namespace test {
 // Index Tuner Tests
 //===--------------------------------------------------------------------===//
 
-class IndexTunerTests : public PelotonTest {};
+class IndexTunerTests : public PelotonTests {};
 
 TEST_F(IndexTunerTests, BasicTest) {
 

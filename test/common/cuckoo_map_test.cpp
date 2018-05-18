@@ -22,7 +22,7 @@ namespace test {
 // Cuckoo Map Test
 //===--------------------------------------------------------------------===//
 
-class CuckooMapTests : public PelotonTest {};
+class CuckooMapTests : public PelotonTests {};
 
 // Test basic functionality
 TEST_F(CuckooMapTests, BasicTest) {

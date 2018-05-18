@@ -39,7 +39,7 @@ namespace test {
 // Logical Tile Tests
 //===--------------------------------------------------------------------===//
 
-class LogicalTileTests : public PelotonTest {};
+class LogicalTileTests : public PelotonTests {};
 
 TEST_F(LogicalTileTests, TempTableTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;

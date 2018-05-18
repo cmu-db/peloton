@@ -25,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class RpcClientTests : public PelotonTest {};
+class RpcClientTests : public PelotonTests {};
 
 TEST_F(RpcClientTests, BasicTest) {
   // FIXME: If we comment out the entire test case, then there'll be some static

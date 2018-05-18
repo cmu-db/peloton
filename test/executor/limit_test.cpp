@@ -37,7 +37,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class LimitTests : public PelotonTest {};
+class LimitTests : public PelotonTests {};
 
 namespace {
 

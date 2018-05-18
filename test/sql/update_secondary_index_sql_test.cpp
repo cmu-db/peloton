@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class UpdateSecondaryIndexSQLTests : public PelotonTest {};
+class UpdateSecondaryIndexSQLTests : public PelotonTests {};
 
 TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

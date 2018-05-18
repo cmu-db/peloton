@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class NumericValueTests : public PelotonTest {};
+class NumericValueTests : public PelotonTests {};
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 #define SEED 233

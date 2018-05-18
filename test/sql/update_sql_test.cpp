@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class UpdateSQLTests : public PelotonTest {};
+class UpdateSQLTests : public PelotonTests {};
 
 TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   LOG_DEBUG("Bootstrapping...");
@@ -355,7 +355,7 @@ TEST_F(UpdateSQLTests, HalloweenProblemTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
+TEST_F(UpdateSQLTests, HalloweenProblemWithPKTest) {
   // This SQL Test verifies that executor does not cause the Halloween Problem
   // This test checks for tables with Primary Keys
   // It checks for updates on both Non-Primary Key column & Primary Key column

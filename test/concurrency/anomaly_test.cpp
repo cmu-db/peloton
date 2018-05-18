@@ -22,7 +22,7 @@ namespace test {
 // These test cases are based on the paper: 
 // -- "A Critique of ANSI SQL Isolation Levels"
 
-class AnomalyTests : public PelotonTest {};
+class AnomalyTests : public PelotonTests {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
     ProtocolType::TIMESTAMP_ORDERING

@@ -19,7 +19,7 @@
 namespace peloton {
 namespace test {
 
-class QueryLoggerTests : public PelotonTest {
+class QueryLoggerTests : public PelotonTests {
  protected:
   void SetUp() override {
     settings::SettingsManager::SetBool(settings::SettingId::brain, true);

@@ -28,7 +28,7 @@ namespace test {
 // FileUtil Test
 //===--------------------------------------------------------------------===//
 
-class FileUtilTests : public PelotonTest {
+class FileUtilTests : public PelotonTests {
  public:
   void TearDown() override {
     for (auto path : tempFiles) {

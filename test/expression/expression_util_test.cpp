@@ -30,7 +30,7 @@ namespace peloton {
 
 namespace test {
 
-class ExpressionUtilTests : public PelotonTest {};
+class ExpressionUtilTests : public PelotonTests {};
 
 std::string CONSTANT_VALUE_STRING1 = "ABC";
 std::string CONSTANT_VALUE_STRING2 = "XYZ";

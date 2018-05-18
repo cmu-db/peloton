@@ -20,7 +20,7 @@ namespace test {
 // Log Buffer Tests
 //===--------------------------------------------------------------------===//
 
-class LogBufferTests : public PelotonTest {};
+class LogBufferTests : public PelotonTests {};
 
 TEST_F(LogBufferTests, LogBufferTest) {
   

@@ -22,7 +22,7 @@ namespace test {
 // TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
-class DecentralizedEpochManagerTests : public PelotonTest {};
+class DecentralizedEpochManagerTests : public PelotonTests {};
 
 
 TEST_F(DecentralizedEpochManagerTests, Test) {

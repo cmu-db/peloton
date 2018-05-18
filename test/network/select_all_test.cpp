@@ -27,7 +27,7 @@ namespace test {
 // Select All Tests
 //===--------------------------------------------------------------------===//
 
-class SelectAllTests : public PelotonTest {};
+class SelectAllTests : public PelotonTests {};
 
 /**
  * Select All Test

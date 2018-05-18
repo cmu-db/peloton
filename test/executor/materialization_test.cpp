@@ -44,7 +44,7 @@ namespace test {
 // Materialization Tests
 //===--------------------------------------------------------------------===//
 
-class MaterializationTests : public PelotonTest {};
+class MaterializationTests : public PelotonTests {};
 
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.

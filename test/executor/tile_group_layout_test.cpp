@@ -58,7 +58,7 @@ namespace test {
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
 
-class TileGroupLayoutTests : public PelotonTest {};
+class TileGroupLayoutTests : public PelotonTests {};
 
 void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   const int tuples_per_tilegroup_count = 10;
@@ -209,11 +209,11 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(TileGroupLayoutTests, RowLayout) {
+TEST_F(TileGroupLayoutTests, RowLayoutTest) {
   ExecuteTileGroupTest(LayoutType::ROW);
 }
 
-TEST_F(TileGroupLayoutTests, ColumnLayout) {
+TEST_F(TileGroupLayoutTests, ColumnLayoutTest) {
   ExecuteTileGroupTest(LayoutType::COLUMN);
 }
 

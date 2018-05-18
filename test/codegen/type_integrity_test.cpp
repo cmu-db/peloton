@@ -30,9 +30,9 @@
 namespace peloton {
 namespace test {
 
-class TypeIntegrityTest : public PelotonCodeGenTest {};
+class TypeIntegrityTests : public PelotonCodeGenTests {};
 
-TEST_F(TypeIntegrityTest, ImplicitCastTest) {
+TEST_F(TypeIntegrityTests, ImplicitCastTest) {
   struct ImplicitCastTestCase {
     codegen::type::Type source_type;
     std::vector<codegen::type::Type> target_types;
@@ -104,7 +104,7 @@ TEST_F(TypeIntegrityTest, ImplicitCastTest) {
 // This test performs checks that comparisons between every possible pair of
 // (the most important) input types are possible through potentially implicitly
 // casting the inputs.
-TEST_F(TypeIntegrityTest, ComparisonWithImplicitCastTest) {
+TEST_F(TypeIntegrityTests, ComparisonWithImplicitCastTest) {
   const std::vector<codegen::type::Type> types_to_test = {
       codegen::type::Boolean::Instance(),
       codegen::type::TinyInt::Instance(),
@@ -146,7 +146,7 @@ TEST_F(TypeIntegrityTest, ComparisonWithImplicitCastTest) {
 }
 
 // TODO: This test only does math ops. We need a generic way to test binary ops.
-TEST_F(TypeIntegrityTest, MathOpWithImplicitCastTest) {
+TEST_F(TypeIntegrityTests, MathOpWithImplicitCastTest) {
   const auto binary_ops = {OperatorId::Add, OperatorId::Sub, OperatorId::Mul,
                            OperatorId::Div, OperatorId::Mod};
 

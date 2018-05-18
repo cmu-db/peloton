@@ -25,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class AnalyzeSQLTests : public PelotonTest {};
+class AnalyzeSQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first

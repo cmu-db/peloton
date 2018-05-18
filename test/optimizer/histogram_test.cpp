@@ -24,7 +24,7 @@ namespace test {
 
 using namespace optimizer;
 
-class HistogramTests : public PelotonTest {};
+class HistogramTests : public PelotonTests {};
 
 // 100k values with uniform distribution from 1 to 100.
 TEST_F(HistogramTests, UniformDistTest) {

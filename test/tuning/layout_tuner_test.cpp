@@ -32,7 +32,7 @@ namespace test {
 // Layout Tuner Tests
 //===--------------------------------------------------------------------===//
 
-class LayoutTunerTests : public PelotonTest {};
+class LayoutTunerTests : public PelotonTests {};
 
 TEST_F(LayoutTunerTests, BasicTest) {
 

@@ -29,7 +29,7 @@
 namespace peloton {
 namespace test {
 
-class QueryCacheTest : public PelotonCodeGenTest {
+class QueryCacheTests : public PelotonCodeGenTests {
  public:
   QueryCacheTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
@@ -207,7 +207,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
-TEST_F(QueryCacheTest, SimpleCache) {
+TEST_F(QueryCacheTests, SimpleCacheTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   // SELECT b FROM table where a >= 40;
@@ -253,7 +253,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
-TEST_F(QueryCacheTest, CacheSeqScanPlan) {
+TEST_F(QueryCacheTests, CacheSeqScanPlanTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
@@ -305,7 +305,7 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
-TEST_F(QueryCacheTest, CacheHashJoinPlan) {
+TEST_F(QueryCacheTests, CacheHashJoinPlanTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   auto hj_plan1 = GetHashJoinPlan();
@@ -366,7 +366,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
-TEST_F(QueryCacheTest, CacheOrderByPlan) {
+TEST_F(QueryCacheTests, CacheOrderByPlanTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   // plan 1, 2: SELECT * FROM test_table ORDER BY b DESC a ASC;
@@ -447,7 +447,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
-TEST_F(QueryCacheTest, CacheAggregatePlan) {
+TEST_F(QueryCacheTests, CacheAggregatePlanTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   auto agg_plan1 = GetAggregatePlan();
@@ -499,7 +499,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_FALSE(found);
 }
 
-TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
+TEST_F(QueryCacheTests, CacheNestedLoopJoinPlanTest) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
   auto nlj_plan_1 = GetBlockNestedLoopJoinPlan();
@@ -545,7 +545,7 @@ TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
   EXPECT_FALSE(found);
 }
 
-TEST_F(QueryCacheTest, PerformanceBenchmark) {
+TEST_F(QueryCacheTests, PerformanceBenchmarkTest) {
   codegen::QueryCache::Instance().Clear();
   Timer<std::ratio<1, 1000>> timer1, timer2;
 

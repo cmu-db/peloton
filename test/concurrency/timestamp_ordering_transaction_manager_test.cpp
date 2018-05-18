@@ -22,7 +22,7 @@ namespace test {
 // TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
-class TimestampOrderingTransactionManagerTests : public PelotonTest {};
+class TimestampOrderingTransactionManagerTests : public PelotonTests {};
 
 TEST_F(TimestampOrderingTransactionManagerTests, Test) {
   concurrency::TransactionManagerFactory::Configure(ProtocolType::TIMESTAMP_ORDERING);

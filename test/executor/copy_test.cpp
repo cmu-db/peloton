@@ -36,9 +36,9 @@ namespace test {
 // Copy Tests
 //===--------------------------------------------------------------------===//
 
-class CopyTests : public PelotonTest {};
+class CopyTests : public PelotonTests {};
 
-TEST_F(CopyTests, Copying) {
+TEST_F(CopyTests, CopyingTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

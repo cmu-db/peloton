@@ -31,7 +31,7 @@
 namespace peloton {
 namespace test {
 
-class UpdateTranslatorTest : public PelotonCodeGenTest {
+class UpdateTranslatorTests : public PelotonCodeGenTests {
  public:
   UpdateTranslatorTest() : PelotonCodeGenTest() {}
 
@@ -44,7 +44,7 @@ class UpdateTranslatorTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 10;
 };
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithAConstantTest) {
   LoadTestTable(TestTableId1(), NumRowsInTestTable());
 
   // SET a = 1;
@@ -132,7 +132,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
                 type::ValueFactory::GetVarcharValue("93")));
 }
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithAConstantAndPredicateTest) {
   LoadTestTable(TestTableId2(), NumRowsInTestTable());
 
   // SET a = 1;
@@ -217,7 +217,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
                 type::ValueFactory::GetVarcharValue("43")));
 }
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithAnOperatorExpressionTest) {
   LoadTestTable(TestTableId2(), NumRowsInTestTable());
 
   // SET a = 1;
@@ -309,7 +309,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
                 type::ValueFactory::GetVarcharValue("43")));
 }
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithAnOperatorExpressionComplexTest) {
   LoadTestTable(TestTableId2(), NumRowsInTestTable());
 
   // SET a = 1;
@@ -411,7 +411,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
                 type::ValueFactory::GetVarcharValue("43")));
 }
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithAConstantPrimaryTest) {
   LoadTestTable(TestTableId5(), NumRowsInTestTable());
 
   // SET a = 1;
@@ -496,7 +496,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
                 type::ValueFactory::GetVarcharValue("13")));
 }
 
-TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
+TEST_F(UpdateTranslatorTests, UpdateColumnsWithCastTest) {
   LoadTestTable(TestTableId1(), NumRowsInTestTable());
 
   // SET a = 1;

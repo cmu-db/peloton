@@ -27,7 +27,7 @@ namespace test {
 // Manager Tests
 //===--------------------------------------------------------------------===//
 
-class ManagerTests : public PelotonTest {};
+class ManagerTests : public PelotonTests {};
 
 void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
 

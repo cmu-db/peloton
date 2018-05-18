@@ -25,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class CaseTranslatorTest : public PelotonCodeGenTest {
+class CaseTranslatorTests : public PelotonCodeGenTests {
  public:
   CaseTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
@@ -40,7 +40,7 @@ class CaseTranslatorTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
-TEST_F(CaseTranslatorTest, SimpleCase) {
+TEST_F(CaseTranslatorTests, SimpleCaseTest) {
   //
   // SELECT a, case when a=10 then 1 when else 0 FROM table;
   //
@@ -108,7 +108,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   }
 }
 
-TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
+TEST_F(CaseTranslatorTests, SimpleCaseMoreWhenTest) {
   //
   // SELECT a, case when a=10 then 1 when a=20 then 2 else 0 FROM table;
   //

@@ -30,7 +30,7 @@ namespace test {
 // Tile Group Tests
 //===--------------------------------------------------------------------===//
 
-class TileGroupTests : public PelotonTest {};
+class TileGroupTests : public PelotonTests {};
 
 TEST_F(TileGroupTests, BasicTest) {
   std::vector<catalog::Column> columns;

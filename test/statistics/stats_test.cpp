@@ -40,7 +40,7 @@
 namespace peloton {
 namespace test {
 
-class StatsTests : public PelotonTest {};
+class StatsTests : public PelotonTests {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {

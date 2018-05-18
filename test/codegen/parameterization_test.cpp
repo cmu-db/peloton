@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class ParameterizationTest : public PelotonCodeGenTest {
+class ParameterizationTests : public PelotonCodeGenTests {
  public:
   ParameterizationTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
@@ -42,7 +42,7 @@ class ParameterizationTest : public PelotonCodeGenTest {
 // Tests whether parameterization works for varchar type in Constant Value Expr
 // (1) Query with a varchar constant
 // (2) Query with a different varchar on the previously cached compiled query
-TEST_F(ParameterizationTest, ConstParameterVarchar) {
+TEST_F(ParameterizationTests, ConstParameterVarcharTest) {
   // SELECT d FROM table where d != "";
   auto *d_col_exp =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0, 3);
@@ -94,7 +94,7 @@ TEST_F(ParameterizationTest, ConstParameterVarchar) {
 // (3) Query with a const parameter with the same value
 // The last query attemts to see whether query with a const paraemeter is
 // distinct from (2)
-TEST_F(ParameterizationTest, ParamParameterVarchar) {
+TEST_F(ParameterizationTests, ParamParameterVarcharTest) {
   // SELECT d FROM table where d != ?, with ? = "";
   auto *d_col_exp =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0, 3);
@@ -170,7 +170,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 // Tests whether parameterization works for conjuction with Const Value Exprs
 // (1) Query with const integer parameters
 // (2) Query with differnt consts on the previously cached compiled query
-TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
+TEST_F(ParameterizationTests, ConstParameterWithConjunctionTest) {
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   auto *a_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
@@ -283,7 +283,7 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
 // (1) Query with param parameters
 // (2) Query with different param values on the previously cached compiled query
 // (2) Query with the same plan, but with a param value changed to a contant
-TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
+TEST_F(ParameterizationTests, ParamParameterWithConjunctionTest) {
   // SELECT a, b, c FROM table where a >= 20 and d != "";
   auto *a_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
@@ -443,7 +443,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 // (1) Check to use a Parameter Value Expression
 // (2) Set a different value on the cached query
 // (3) Query a similar one, but with a different operator expression
-TEST_F(ParameterizationTest, ParamParameterWithOperators) {
+TEST_F(ParameterizationTests, ParamParameterWithOperatorsTest) {
   // (1) Check to use a Parameter Value Expression
   // SELECT a, b FROM table where b = a + ?;
   // b = a + ?
@@ -537,7 +537,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
   EXPECT_FALSE(cached);
 }
 
-TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
+TEST_F(ParameterizationTests, ParamParameterWithOperatersLeftHandTest) {
   // SELECT a, b, c FROM table where a * 1 = a * b;
   auto *a_lhs_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);

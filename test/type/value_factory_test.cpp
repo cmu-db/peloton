@@ -28,7 +28,7 @@
 namespace peloton {
 namespace test {
 
-class ValueFactoryTests : public PelotonTest {};
+class ValueFactoryTests : public PelotonTests {};
 
 const std::vector<type::TypeId> valuefactory_test_types = {
     type::TypeId::BOOLEAN,    type::TypeId::TINYINT,

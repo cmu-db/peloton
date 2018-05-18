@@ -34,7 +34,7 @@ namespace test {
 // BrainUtil Tests
 //===--------------------------------------------------------------------===//
 
-class BrainUtilTests : public PelotonTest {
+class BrainUtilTests : public PelotonTests {
  public:
   void TearDown() override {
     for (auto path : tempFiles) {

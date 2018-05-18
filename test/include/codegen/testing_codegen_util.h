@@ -45,7 +45,7 @@ using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
 // the codegen components use. Their ID's are available through the oid_t
 // enumeration.
 //===----------------------------------------------------------------------===//
-class PelotonCodeGenTest : public PelotonTest {
+class PelotonCodeGenTests : public PelotonTests {
  public:
   std::string test_db_name = "peloton_codegen";
   std::vector<std::string> test_table_names = {"table1", "table2", "table3",

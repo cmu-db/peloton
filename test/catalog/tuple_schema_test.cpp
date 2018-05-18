@@ -22,7 +22,7 @@ namespace test {
 // Tuple Schema Tests
 //===--------------------------------------------------------------------===//
 
-class TupleSchemaTests : public PelotonTest {};
+class TupleSchemaTests : public PelotonTests {};
 
 TEST_F(TupleSchemaTests, ColumnInfoTest) {
   std::vector<catalog::Column> columns;

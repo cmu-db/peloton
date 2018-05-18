@@ -21,7 +21,7 @@ namespace test {
 // Boolean Value Test
 //===--------------------------------------------------------------------===//
 
-class BooleanValueTests : public PelotonTest {};
+class BooleanValueTests : public PelotonTests {};
 
 TEST_F(BooleanValueTests, BasicTest) {
   auto valTrue = type::ValueFactory::GetBooleanValue(true);

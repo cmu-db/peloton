@@ -102,7 +102,7 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 //===--------------------------------------------------------------------===//
 
 // All tests inherit from this class
-class PelotonTest : public ::testing::Test {
+class PelotonTests : public ::testing::Tests {
  protected:
 
   virtual void SetUp() {

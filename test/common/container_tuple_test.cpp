@@ -23,9 +23,9 @@
 namespace peloton {
 namespace test {
 
-class ContainerTupleTests : public PelotonTest {};
+class ContainerTupleTests : public PelotonTests {};
 
-TEST_F(ContainerTupleTests, VectorValue) {
+TEST_F(ContainerTupleTests, VectorValueTest) {
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(11));
   values.push_back(type::ValueFactory::GetIntegerValue(22));
@@ -41,7 +41,7 @@ TEST_F(ContainerTupleTests, VectorValue) {
   }
 }
 
-TEST_F(ContainerTupleTests, GetInfo) {
+TEST_F(ContainerTupleTests, GetInfoTest) {
   catalog::Column a_col{type::TypeId::INTEGER,
                         type::Type::GetTypeSize(type::TypeId::INTEGER), "a"};
   catalog::Column b_col{type::TypeId::BIGINT,

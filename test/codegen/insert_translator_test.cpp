@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class InsertTranslatorTest : public PelotonCodeGenTest {
+class InsertTranslatorTests : public PelotonCodeGenTests {
  public:
   InsertTranslatorTest() : PelotonCodeGenTest() {}
   oid_t TestTableId1() { return test_table_oids[0]; }
@@ -30,7 +30,7 @@ class InsertTranslatorTest : public PelotonCodeGenTest {
 };
 
 // Insert one tuple
-TEST_F(InsertTranslatorTest, InsertOneTuple) {
+TEST_F(InsertTranslatorTests, InsertOneTupleTest) {
   // Check the pre-condition
   auto table = &GetTestTable(TestTableId1());
   auto num_tuples = table->GetTupleCount();
@@ -100,7 +100,7 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
 }
 
 // Insert all tuples from table2 into table1.
-TEST_F(InsertTranslatorTest, InsertScanTranslator) {
+TEST_F(InsertTranslatorTests, InsertScanTranslatorTest) {
   auto table1 = &GetTestTable(TestTableId1());
   auto table2 = &GetTestTable(TestTableId2());
 
@@ -167,7 +167,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslator) {
 }
 
 // Insert all tuples from table2 into table1 with null values.
-TEST_F(InsertTranslatorTest, InsertScanTranslatorWithNull) {
+TEST_F(InsertTranslatorTests, InsertScanTranslatorWithNullTest) {
   auto table1 = &GetTestTable(TestTableId1());
   auto table2 = &GetTestTable(TestTableId2());
 
@@ -233,7 +233,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslatorWithNull) {
 }
 
 // Insert a tuple from table2 with column order changed, into table1.
-TEST_F(InsertTranslatorTest, InsertScanColumnTranslator) {
+TEST_F(InsertTranslatorTests, InsertScanColumnTranslatorTest) {
   auto table1 = &GetTestTable(TestTableId1());
   auto table2 = &GetTestTable(TestTableId2());
 

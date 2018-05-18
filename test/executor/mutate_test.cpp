@@ -57,7 +57,7 @@ namespace test {
 // Mutator Tests
 //===--------------------------------------------------------------------===//
 
-class MutateTests : public PelotonTest {};
+class MutateTests : public PelotonTests {};
 
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
@@ -182,7 +182,7 @@ void DeleteTuple(storage::DataTable *table,
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(MutateTests, StressTests) {
+TEST_F(MutateTests, StressTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 

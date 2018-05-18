@@ -25,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class GroupByTranslatorTest : public PelotonCodeGenTest {
+class GroupByTranslatorTests : public PelotonCodeGenTests {
  public:
   GroupByTranslatorTest() : PelotonCodeGenTest() {
     uint32_t num_rows = 10;
@@ -35,7 +35,7 @@ class GroupByTranslatorTest : public PelotonCodeGenTest {
   oid_t TestTableId() const { return test_table_oids[0]; }
 };
 
-TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
+TEST_F(GroupByTranslatorTests, SingleColumnGroupingTest) {
   //
   // SELECT a, count(*) FROM table GROUP BY a;
   //
@@ -95,7 +95,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   }
 }
 
-TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
+TEST_F(GroupByTranslatorTests, MultiColumnGroupingTest) {
   //
   // SELECT a, b, count(*) FROM table GROUP BY a, b;
   //
@@ -156,7 +156,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   }
 }
 
-TEST_F(GroupByTranslatorTest, AverageAggregation) {
+TEST_F(GroupByTranslatorTests, AverageAggregationTest) {
   //
   // SELECT a, avg(b) FROM table GROUP BY a;
   //
@@ -208,7 +208,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   EXPECT_EQ(10, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
+TEST_F(GroupByTranslatorTests, AggregationWithOutputPredicateTest) {
   //
   // SELECT a, avg(b) as x FROM table GROUP BY a WHERE x > 50;
   //
@@ -269,7 +269,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
   EXPECT_EQ(5, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
+TEST_F(GroupByTranslatorTests, AggregationWithInputPredciateTest) {
   //
   // SELECT a, avg(b) as x FROM table GROUP BY a WHERE a > 50;
   //
@@ -329,7 +329,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   EXPECT_EQ(4, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, SingleCountStar) {
+TEST_F(GroupByTranslatorTests, SingleCountStarTest) {
   //
   // SELECT count(*) FROM table;
   //
@@ -384,7 +384,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
               CmpBool::CmpTrue);
 }
 
-TEST_F(GroupByTranslatorTest, MinAndMax) {
+TEST_F(GroupByTranslatorTests, MinAndMaxTest) {
   //
   // SELECT MAX(a), MIN(b) FROM table;
   //

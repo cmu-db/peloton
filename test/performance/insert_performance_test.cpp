@@ -50,7 +50,7 @@ namespace test {
 // Insert Tests
 //===--------------------------------------------------------------------===//
 
-class InsertPerformanceTests : public PelotonTest {};
+class InsertPerformanceTests : public PelotonTests {};
 
 std::atomic<int> loader_tuple_id;
 

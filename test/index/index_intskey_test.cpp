@@ -27,7 +27,7 @@ namespace test {
 // Index IntsKey Tests
 //===--------------------------------------------------------------------===//
 
-class IndexIntsKeyTests : public PelotonTest {};
+class IndexIntsKeyTests : public PelotonTests {};
 
 catalog::Schema *key_schema = nullptr;
 std::unique_ptr<catalog::Schema> tuple_schema(nullptr);

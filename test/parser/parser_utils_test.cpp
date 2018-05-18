@@ -25,7 +25,7 @@ namespace test {
 // Parser Tests
 //===--------------------------------------------------------------------===//
 
-class ParserUtilTests : public PelotonTest {};
+class ParserUtilTests : public PelotonTests {};
 
 TEST_F(ParserUtilTests, BasicTest) {
   std::vector<std::string> queries;

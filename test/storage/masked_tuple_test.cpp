@@ -30,7 +30,7 @@ const int NUM_COLUMNS = 5;
 // MaskedTuple Tests
 //===--------------------------------------------------------------------===//
 
-class MaskedTupleTests : public PelotonTest {};
+class MaskedTupleTests : public PelotonTests {};
 
 void MaskedTupleTestHelper(storage::MaskedTuple *masked_tuple,
                            std::vector<int> values, std::vector<oid_t> mask) {

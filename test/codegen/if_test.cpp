@@ -23,9 +23,9 @@
 namespace peloton {
 namespace test {
 
-class IfTest : public PelotonTest {};
+class IfTests : public PelotonTests {};
 
-TEST_F(IfTest, TestIfOnly) {
+TEST_F(IfTests, IfOnlyTest) {
   const std::string func_name = "TestIfOnly";
 
   // Generate a function like so:
@@ -74,7 +74,7 @@ TEST_F(IfTest, TestIfOnly) {
   EXPECT_EQ(f(2000), 0);
 }
 
-TEST_F(IfTest, TestIfInsideLoop) {
+TEST_F(IfTests, IfInsideLoopTest) {
   const std::string func_name = "TestIfInsideLoop";
   codegen::CodeContext code_context;
   codegen::CodeGen cg{code_context};
@@ -136,7 +136,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
   ASSERT_EQ(5, f(10));
 }
 
-TEST_F(IfTest, BreakTest) {
+TEST_F(IfTests, BreakTest) {
   const std::string func_name = "TestBreakLoop";
   codegen::CodeContext code_context;
   codegen::CodeGen cg{code_context};
@@ -185,7 +185,7 @@ TEST_F(IfTest, BreakTest) {
   ASSERT_EQ(5, f(7));
 }
 
-TEST_F(IfTest, ComplexNestedIf) {
+TEST_F(IfTests, ComplexNestedIfTest) {
   const std::string func_name = "TestIfOnly";
 
   // Generate a function like so:

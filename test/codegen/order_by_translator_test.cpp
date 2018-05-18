@@ -20,14 +20,14 @@
 namespace peloton {
 namespace test {
 
-class OrderByTranslatorTest : public PelotonCodeGenTest {
+class OrderByTranslatorTests : public PelotonCodeGenTests {
  public:
   OrderByTranslatorTest() : PelotonCodeGenTest() {}
 
   oid_t TestTableId() { return test_table_oids[0]; }
 };
 
-TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
+TEST_F(OrderByTranslatorTests, SingleIntColAscTest) {
   //
   // SELECT * FROM test_table ORDER BY a;
   //
@@ -64,7 +64,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
+TEST_F(OrderByTranslatorTests, SingleIntColDescTest) {
   //
   // SELECT * FROM test_table ORDER BY a DESC;
   //
@@ -101,7 +101,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
+TEST_F(OrderByTranslatorTests, MultiIntColAscTest) {
   //
   // SELECT * FROM test_table ORDER BY b, a ASC;
   //
@@ -147,7 +147,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
+TEST_F(OrderByTranslatorTests, MultiIntColMixedTest) {
   //
   // SELECT * FROM test_table ORDER BY b DESC a ASC;
   //

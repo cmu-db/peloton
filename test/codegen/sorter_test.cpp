@@ -34,7 +34,7 @@ static int CompareTuplesForAscending(const char *a, const char *b) {
   return at->col_b - bt->col_b;
 }
 
-class SorterTest : public PelotonTest {
+class SorterTests : public PelotonTests {
  public:
   SorterTest() {
     // Init
@@ -93,12 +93,12 @@ class SorterTest : public PelotonTest {
   codegen::util::Sorter sorter;
 };
 
-TEST_F(SorterTest, CanSortTuples) {
+TEST_F(SorterTests, CanSortTuplesTest) {
   // Test sorting 10
   TestSort(10);
 }
 
-TEST_F(SorterTest, BenchmarkSorter) {
+TEST_F(SorterTests, BenchmarkSorterTest) {
   // Test sorting 5 million input tuples
   TestSort(5000000);
 }

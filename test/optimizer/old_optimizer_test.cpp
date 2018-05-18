@@ -36,7 +36,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OldOptimizerTests : public PelotonTest {};
+class OldOptimizerTests : public PelotonTests {};
 
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.

@@ -19,7 +19,7 @@
 namespace peloton {
 namespace test {
 
-class NetworkAddressTests : public PelotonTest {};
+class NetworkAddressTests : public PelotonTests {};
 
 TEST_F(NetworkAddressTests, ParseTest) {
   // Valid address

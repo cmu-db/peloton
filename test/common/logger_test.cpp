@@ -21,7 +21,7 @@ namespace test {
 // Logger Tests
 //===--------------------------------------------------------------------===//
 
-class LoggerTests : public PelotonTest {};
+class LoggerTests : public PelotonTests {};
 
 TEST_F(LoggerTests, BasicTest) {
   LOG_TRACE("trace message");

@@ -10,7 +10,7 @@
 namespace peloton {
 namespace test {
 
-class ForeignKeySQLTests : public PelotonTest {};
+class ForeignKeySQLTests : public PelotonTests {};
 
 TEST_F(ForeignKeySQLTests, NoActionTest) {
 

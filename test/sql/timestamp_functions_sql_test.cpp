@@ -20,9 +20,9 @@
 namespace peloton {
 namespace test {
 
-class TimestampFunctionsSQLTest : public PelotonTest {};
+class TimestampFunctionsSQLTests : public PelotonTests {};
 
-TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
+TEST_F(TimestampFunctionsSQLTests, DateTruncTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -76,7 +76,7 @@ TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
+TEST_F(TimestampFunctionsSQLTests, DatePartTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

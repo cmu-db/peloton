@@ -26,7 +26,7 @@ namespace test {
 // Type Tests
 //===--------------------------------------------------------------------===//
 
-class TypeTests : public PelotonTest {};
+class TypeTests : public PelotonTests {};
 
 const std::vector<type::TypeId> typeTestTypes = {
     type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,

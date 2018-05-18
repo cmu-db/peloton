@@ -20,7 +20,7 @@ namespace test {
 // Multi-Granularity Access Tests
 //===--------------------------------------------------------------------===//
 
-class MultiGranularityAccessTests : public PelotonTest {};
+class MultiGranularityAccessTests : public PelotonTests {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
  ProtocolType::TIMESTAMP_ORDERING

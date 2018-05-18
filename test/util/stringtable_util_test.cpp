@@ -22,7 +22,7 @@ namespace test {
 // StringTableUtil Test
 //===--------------------------------------------------------------------===//
 
-class StringTableUtilTests : public PelotonTest {};
+class StringTableUtilTests : public PelotonTests {};
 
 void CheckTable(std::string &table, bool header, int num_lines) {
   // Make sure that it has the same number of lines as the input

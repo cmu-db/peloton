@@ -24,7 +24,7 @@ namespace test {
 
 using namespace optimizer;
 
-class TableStatsTests : public PelotonTest {};
+class TableStatsTests : public PelotonTests {};
 
 std::shared_ptr<ColumnStats> CreateTestColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, std::string column_name,
@@ -36,7 +36,7 @@ std::shared_ptr<ColumnStats> CreateTestColumnStats(
 
 // Test the constructors of TableStats
 // Test the Get function of TableStats
-TEST_F(TableStatsTests, BaiscTests) {
+TEST_F(TableStatsTests, BaiscTest) {
   TableStats table_stats0;
   EXPECT_EQ(table_stats0.num_rows, 0);
 
@@ -70,7 +70,7 @@ TEST_F(TableStatsTests, BaiscTests) {
 
 // Test all update functions of TableStats, including UpdateNumRows,
 // AddColumnStats, RemoveColumnStats and ClearColumnStats.
-TEST_F(TableStatsTests, UpdateTests) {
+TEST_F(TableStatsTests, UpdateTest) {
   auto col_stats0 = CreateTestColumnStats(0, 0, 0, "col0", true, 10);
   auto col_stats1 = CreateTestColumnStats(1, 1, 1, "col1", false, 20);
   auto col_stats2 = CreateTestColumnStats(2, 2, 2, "col2", true, 30);

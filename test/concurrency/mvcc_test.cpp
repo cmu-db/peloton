@@ -23,7 +23,7 @@ namespace test {
 // TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
-class MVCCTests : public PelotonTest {};
+class MVCCTests : public PelotonTests {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
     ProtocolType::TIMESTAMP_ORDERING};

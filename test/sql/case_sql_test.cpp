@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class CaseSQLTests : public PelotonTest {};
+class CaseSQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first
@@ -38,7 +38,7 @@ void CreateAndLoadTable() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
 }
 
-TEST_F(CaseSQLTests, Simple) {
+TEST_F(CaseSQLTests, SimpleTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -77,7 +77,7 @@ TEST_F(CaseSQLTests, Simple) {
 
 }
 
-TEST_F(CaseSQLTests, SimpleWithArg) {
+TEST_F(CaseSQLTests, SimpleWithArgTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -114,7 +114,7 @@ TEST_F(CaseSQLTests, SimpleWithArg) {
 
 }
 
-TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
+TEST_F(CaseSQLTests, SimpleWithArgStringResultTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -151,7 +151,7 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
 
 }
 
-TEST_F(CaseSQLTests, SimpleMultipleWhen) {
+TEST_F(CaseSQLTests, SimpleMultipleWhenTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -189,7 +189,7 @@ TEST_F(CaseSQLTests, SimpleMultipleWhen) {
 
 }
 
-TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElse) {
+TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElseTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

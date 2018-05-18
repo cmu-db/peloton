@@ -28,7 +28,7 @@ namespace test {
 // Database Tests
 //===--------------------------------------------------------------------===//
 
-class DatabaseTests : public PelotonTest {};
+class DatabaseTests : public PelotonTests {};
 
 TEST_F(DatabaseTests, AddDropTest) {
   // ADD!

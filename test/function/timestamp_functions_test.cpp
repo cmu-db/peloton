@@ -30,7 +30,7 @@ namespace peloton {
 
 namespace test {
 
-class TimestampFunctionsTests : public PelotonTest {};
+class TimestampFunctionsTests : public PelotonTests {};
 
 /**
  * Helper method for TimestampFunctions::DateTrunc

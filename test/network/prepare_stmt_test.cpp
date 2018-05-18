@@ -26,7 +26,7 @@ namespace test {
 // Prepare Stmt Tests
 //===--------------------------------------------------------------------===//
 
-class PrepareStmtTests : public PelotonTest {};
+class PrepareStmtTests : public PelotonTests {};
 
 /**
  * named prepare statement without parameters

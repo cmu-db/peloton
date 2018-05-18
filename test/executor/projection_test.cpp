@@ -36,7 +36,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class ProjectionTests : public PelotonTest {};
+class ProjectionTests : public PelotonTests {};
 
 void RunTest(executor::ProjectionExecutor &executor,
              size_t expected_num_tiles) {

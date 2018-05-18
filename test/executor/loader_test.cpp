@@ -49,7 +49,7 @@ namespace test {
 // Loader Tests
 //===--------------------------------------------------------------------===//
 
-class LoaderTests : public PelotonTest {};
+class LoaderTests : public PelotonTests {};
 
 std::atomic<int> loader_tuple_id;
 

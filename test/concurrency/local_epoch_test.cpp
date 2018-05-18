@@ -21,7 +21,7 @@ namespace test {
 // TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
-class LocalEpochTests : public PelotonTest {};
+class LocalEpochTests : public PelotonTests {};
 
 
 TEST_F(LocalEpochTests, EpochCompareTest) {

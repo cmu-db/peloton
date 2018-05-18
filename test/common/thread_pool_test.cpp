@@ -20,7 +20,7 @@ namespace test {
 // Thread Pool Test
 //===--------------------------------------------------------------------===//
 
-class ThreadPoolTests : public PelotonTest {};
+class ThreadPoolTests : public PelotonTests {};
 
 TEST_F(ThreadPoolTests, BasicTest) {
   ThreadPool thread_pool;

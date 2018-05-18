@@ -38,9 +38,9 @@ namespace test {
 // Planner Test
 //===--------------------------------------------------------------------===//
 
-class PlannerTest : public PelotonTest {};
+class PlannerTests : public PelotonTests {};
 
-TEST_F(PlannerTest, CreateDatabasePlanTest) {
+TEST_F(PlannerTests, CreateDatabasePlanTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto parse_tree_list =
       peloton_parser.BuildParseTree("CREATE DATABASE pelotondb;");
@@ -54,7 +54,7 @@ TEST_F(PlannerTest, CreateDatabasePlanTest) {
   EXPECT_EQ(CreateType::DB, create_DB_plan->GetCreateType());
 }
 
-TEST_F(PlannerTest, DropDatabasePlanTest) {
+TEST_F(PlannerTests, DropDatabasePlanTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto parse_tree_list =
       peloton_parser.BuildParseTree("DROP DATABASE pelotondb;");
@@ -68,7 +68,7 @@ TEST_F(PlannerTest, DropDatabasePlanTest) {
   EXPECT_EQ(DropType::DB, drop_DB_plan->GetDropType());
 }
 
-TEST_F(PlannerTest, DeletePlanTestParameter) {
+TEST_F(PlannerTests, DeletePlanParameterTest) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -132,7 +132,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(PlannerTest, UpdatePlanTestParameter) {
+TEST_F(PlannerTests, UpdatePlanParameterTest) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -229,7 +229,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(PlannerTest, InsertPlanTestParameter) {
+TEST_F(PlannerTests, InsertPlanParameterTest) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -303,7 +303,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
+TEST_F(PlannerTests, InsertPlanParameterColumnsTest) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

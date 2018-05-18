@@ -24,7 +24,7 @@ namespace test {
 // Internal Types Test
 //===--------------------------------------------------------------------===//
 
-class InternalTypesTests : public PelotonTest {};
+class InternalTypesTests : public PelotonTests {};
 
 TEST_F(InternalTypesTests, DatePartTypeTest) {
   std::vector<DatePartType> list = {

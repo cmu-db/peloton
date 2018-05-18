@@ -20,7 +20,7 @@
 namespace peloton {
 namespace test {
 
-class TypeSQLTests : public PelotonTest {
+class TypeSQLTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     PelotonTest::SetUp();

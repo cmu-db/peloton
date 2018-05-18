@@ -33,9 +33,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class CatalogTests : public PelotonTest {};
+class CatalogTests : public PelotonTests {};
 
-TEST_F(CatalogTests, BootstrappingCatalog) {
+TEST_F(CatalogTests, BootstrappingCatalogTest) {
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
   EXPECT_EQ(1, storage::StorageManager::GetInstance()->GetDatabaseCount());
@@ -52,7 +52,7 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_NE(nullptr, db_metric_table);
 }
 //
-TEST_F(CatalogTests, CreatingDatabase) {
+TEST_F(CatalogTests, CreatingDatabaseTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase("emp_db", txn);
@@ -62,7 +62,7 @@ TEST_F(CatalogTests, CreatingDatabase) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, CreatingTable) {
+TEST_F(CatalogTests, CreatingTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
@@ -120,7 +120,7 @@ TEST_F(CatalogTests, CreatingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, TableObject) {
+TEST_F(CatalogTests, TableObjectTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -168,7 +168,7 @@ TEST_F(CatalogTests, TableObject) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, TestingNamespace) {
+TEST_F(CatalogTests, ingNamespaceTest) {
   EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery("begin;"));
   // create namespaces emp_ns0 and emp_ns1
   EXPECT_EQ(ResultType::SUCCESS, TestingSQLUtil::ExecuteSQLQuery(
@@ -231,7 +231,7 @@ TEST_F(CatalogTests, TestingNamespace) {
   EXPECT_EQ(ResultType::ABORTED, TestingSQLUtil::ExecuteSQLQuery("commit;"));
 }
 
-TEST_F(CatalogTests, DroppingTable) {
+TEST_F(CatalogTests, DroppingTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
@@ -293,7 +293,7 @@ TEST_F(CatalogTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, DroppingDatabase) {
+TEST_F(CatalogTests, DroppingDatabaseTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName("emp_db", txn);
@@ -304,7 +304,7 @@ TEST_F(CatalogTests, DroppingDatabase) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, DroppingCatalog) {
+TEST_F(CatalogTests, DroppingCatalogTest) {
   auto catalog = catalog::Catalog::GetInstance();
   EXPECT_NE(nullptr, catalog);
 }

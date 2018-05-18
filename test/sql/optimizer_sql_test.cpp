@@ -30,7 +30,7 @@ using std::vector;
 namespace peloton {
 namespace test {
 
-class OptimizerSQLTests : public PelotonTest {
+class OptimizerSQLTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first

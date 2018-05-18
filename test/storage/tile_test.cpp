@@ -24,7 +24,7 @@ namespace test {
 // Tile Tests
 //===--------------------------------------------------------------------===//
 
-class TileTests : public PelotonTest {};
+class TileTests : public PelotonTests {};
 
 TEST_F(TileTests, BasicTest) {
   // Columns

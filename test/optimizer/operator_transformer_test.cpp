@@ -30,7 +30,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OperatorTransformerTests : public PelotonTest {
+class OperatorTransformerTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first

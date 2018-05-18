@@ -25,7 +25,7 @@ namespace test {
 
 using namespace optimizer;
 
-class TopKElementsTests : public PelotonTest {};
+class TopKElementsTests : public PelotonTests {};
 
 TEST_F(TopKElementsTests, SimpleArrivalOnlyTest) {
   CountMinSketch sketch(10, 20, 0);

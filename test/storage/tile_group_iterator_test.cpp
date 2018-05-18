@@ -29,7 +29,7 @@ namespace test {
 // TileGroupIterator Tests
 //===--------------------------------------------------------------------===//
 
-class TileGroupIteratorTests : public PelotonTest {};
+class TileGroupIteratorTests : public PelotonTests {};
 
 TEST_F(TileGroupIteratorTests, BasicTest) {
   const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;

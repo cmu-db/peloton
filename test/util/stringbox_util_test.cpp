@@ -22,7 +22,7 @@ namespace test {
 // StringBoxUtil Test
 //===--------------------------------------------------------------------===//
 
-class StringBoxUtilTests : public PelotonTest {};
+class StringBoxUtilTests : public PelotonTests {};
 
 void CheckBox(std::string &box, std::string key, int num_lines) {
   // Make sure that our search key is in the box

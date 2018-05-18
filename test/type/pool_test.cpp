@@ -20,7 +20,7 @@
 namespace peloton {
 namespace test {
 
-class PoolTests : public PelotonTest {};
+class PoolTests : public PelotonTests {};
 
 #define N 10
 #define M 1000

@@ -35,9 +35,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class DropTests : public PelotonTest {};
+class DropTests : public PelotonTests {};
 
-TEST_F(DropTests, DroppingDatabase) {
+TEST_F(DropTests, DroppingDatabaseTest) {
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
 
@@ -73,7 +73,7 @@ TEST_F(DropTests, DroppingDatabase) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(DropTests, DroppingTable) {
+TEST_F(DropTests, DroppingTableTest) {
   auto catalog = catalog::Catalog::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
@@ -129,7 +129,7 @@ TEST_F(DropTests, DroppingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(DropTests, DroppingTrigger) {
+TEST_F(DropTests, DroppingTriggerTest) {
   auto catalog = catalog::Catalog::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
@@ -230,7 +230,7 @@ TEST_F(DropTests, DroppingTrigger) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(DropTests, DroppingIndexByName) {
+TEST_F(DropTests, DroppingIndexByNameTest) {
   auto catalog = catalog::Catalog::GetInstance();
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!

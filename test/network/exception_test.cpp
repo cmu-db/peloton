@@ -31,7 +31,7 @@ namespace test {
 // Exception Test
 //===--------------------------------------------------------------------===//
 
-class ExceptionTests : public PelotonTest {};
+class ExceptionTests : public PelotonTests {};
 
 void *ExecutorExceptionTest(int port) {
   try {

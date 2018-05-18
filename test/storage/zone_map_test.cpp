@@ -34,7 +34,7 @@
 namespace peloton {
 namespace test {
 
-class ZoneMapTests : public PelotonTest {};
+class ZoneMapTests : public PelotonTests {};
 
 namespace {
 /*

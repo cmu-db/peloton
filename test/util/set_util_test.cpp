@@ -24,7 +24,7 @@ namespace test {
 // SetUtil Test
 //===--------------------------------------------------------------------===//
 
-class SetUtilTests : public PelotonTest {};
+class SetUtilTests : public PelotonTests {};
 
 TEST_F(SetUtilTests, DisjointTest) {
   // Check sorted sets

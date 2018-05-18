@@ -21,7 +21,7 @@ namespace test {
 // Storage Manager Test
 //===--------------------------------------------------------------------===//
 
-class StorageManagerTests : public PelotonTest {};
+class StorageManagerTests : public PelotonTests {};
 
 /**
  * Test basic functionality

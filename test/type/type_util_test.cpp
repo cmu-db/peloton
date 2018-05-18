@@ -24,7 +24,7 @@ namespace test {
 // TypeUtil Tests
 //===--------------------------------------------------------------------===//
 
-class TypeUtilTests : public PelotonTest {};
+class TypeUtilTests : public PelotonTests {};
 
 catalog::Schema* TypeUtilTestsGenerateSchema() {
   // Construct Tuple Schema

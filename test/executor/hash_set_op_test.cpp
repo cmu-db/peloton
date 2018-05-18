@@ -32,7 +32,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class HashSetOptTests : public PelotonTest {};
+class HashSetOptTests : public PelotonTests {};
 
 namespace {
 

@@ -29,7 +29,7 @@ namespace test {
 // Simple Query Tests
 //===--------------------------------------------------------------------===//
 
-class SimpleQueryTests : public PelotonTest {};
+class SimpleQueryTests : public PelotonTests {};
 
 /**
  * Simple select query test

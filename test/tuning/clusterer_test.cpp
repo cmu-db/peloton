@@ -29,7 +29,7 @@ namespace test {
 // Clusterer Tests
 //===--------------------------------------------------------------------===//
 
-class ClustererTests : public PelotonTest {};
+class ClustererTests : public PelotonTests {};
 
 TEST_F(ClustererTests, BasicTest) {
   oid_t column_count = 7;

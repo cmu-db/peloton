@@ -25,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class ZoneMapScanTest : public PelotonCodeGenTest {
+class ZoneMapScanTests : public PelotonCodeGenTests {
   std::string all_cols_table_name = "skipping_table";
 
  public:
@@ -67,7 +67,7 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 100;
 };
 
-TEST_F(ZoneMapScanTest, ScanNoPredicates) {
+TEST_F(ZoneMapScanTests, ScanNoPredicatesTest) {
   // SELECT a, b, c FROM table;
   // 1) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
@@ -81,7 +81,7 @@ TEST_F(ZoneMapScanTest, ScanNoPredicates) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
-TEST_F(ZoneMapScanTest, SimplePredicate) {
+TEST_F(ZoneMapScanTests, SimplePredicateTest) {
   // SELECT a, b, c FROM table where a >= 20;
   // 1) Setup the predicate
   ExpressionPtr a_gt_20 =
@@ -101,7 +101,7 @@ TEST_F(ZoneMapScanTest, SimplePredicate) {
   EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
 }
 
-TEST_F(ZoneMapScanTest, PredicateOnNonOutputColumn) {
+TEST_F(ZoneMapScanTests, PredicateOnNonOutputColumnTest) {
   // SELECT b FROM table where a >= 40;
   // 1) Setup the predicate
   ExpressionPtr a_gt_40 =
@@ -121,7 +121,7 @@ TEST_F(ZoneMapScanTest, PredicateOnNonOutputColumn) {
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
-TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
+TEST_F(ZoneMapScanTests, ScanwithConjunctionPredicateTest) {
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   // 1) Construct the components of the predicate
   // a >= 20

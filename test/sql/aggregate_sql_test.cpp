@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class AggregateSQLTests : public PelotonTest {};
+class AggregateSQLTests : public PelotonTests {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
   PELOTON_ASSERT(&TestingSQLUtil::counter_);

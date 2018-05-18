@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class TriggerTests : public PelotonTest {
+class TriggerTests : public PelotonTests {
  protected:
   std::string table_name = "accounts";
   std::string col_1 = "dept_id";
@@ -222,7 +222,7 @@ TEST_F(TriggerTests, BasicTest) {
 }
 
 // Test trigger type: before & after, each row, insert
-TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
+TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggersTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
@@ -307,7 +307,7 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
 }
 
 // Test trigger type: after, statement, insert
-TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
+TEST_F(TriggerTests, AfterStatmentInsertTriggersTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();
@@ -388,7 +388,7 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
 
 // Test other types of trigger in a relatively simple way. Because the workflow
 // is similar, and it is costly to manage redundant test cases.
-TEST_F(TriggerTests, OtherTypesTriggers) {
+TEST_F(TriggerTests, OtherTypesTriggersTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto parser = parser::PostgresParser::GetInstance();

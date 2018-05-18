@@ -30,7 +30,7 @@ namespace test {
 
 using namespace optimizer;
 
-class TupleSamplerTests : public PelotonTest {};
+class TupleSamplerTests : public PelotonTests {};
 
 TEST_F(TupleSamplerTests, SampleCountTest) {
   const int tuple_count = 100;

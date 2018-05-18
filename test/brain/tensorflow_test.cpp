@@ -26,7 +26,7 @@ namespace test {
 // Tensorflow Tests
 //===--------------------------------------------------------------------===//
 
-class TensorflowTests : public PelotonTest {};
+class TensorflowTests : public PelotonTests {};
 
 TEST_F(TensorflowTests, BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly

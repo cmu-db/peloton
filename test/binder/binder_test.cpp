@@ -37,7 +37,7 @@ using std::vector;
 namespace peloton {
 namespace test {
 
-class BinderCorrectnessTest : public PelotonTest {
+class BinderCorrectnessTests : public PelotonTests {
   virtual void SetUp() override {
     PelotonTest::SetUp();
     catalog::Catalog::GetInstance();
@@ -101,7 +101,7 @@ void SetupTables(std::string database_name) {
   }
 }
 
-TEST_F(BinderCorrectnessTest, SelectStatementTest) {
+TEST_F(BinderCorrectnessTests, SelectStatementTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -250,7 +250,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 // instead of TupleValueExpression to represent column. We can only add this
 // test after UpdateStatement is changed
 
-TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
+TEST_F(BinderCorrectnessTests, DeleteStatementTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -292,7 +292,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(BinderCorrectnessTest, BindDepthTest) {
+TEST_F(BinderCorrectnessTests, BindDepthTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -382,7 +382,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
+TEST_F(BinderCorrectnessTests, FunctionExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 

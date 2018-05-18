@@ -21,7 +21,7 @@ namespace test {
 
 using namespace optimizer;
 
-class CountMinSketchTests : public PelotonTest {};
+class CountMinSketchTests : public PelotonTests {};
 
 // Basic CM-Sketch testing with double datatype.
 TEST_F(CountMinSketchTests, SimpleCountMinSketchIntegerTest) {

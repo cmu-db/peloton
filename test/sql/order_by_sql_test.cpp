@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class OrderBySQLTests : public PelotonTest {};
+class OrderBySQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first
@@ -356,7 +356,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStar) {
+TEST_F(OrderBySQLTests, OrderByStarTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -389,7 +389,7 @@ TEST_F(OrderBySQLTests, OrderByStar) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarDesc) {
+TEST_F(OrderBySQLTests, OrderByStarDescTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -422,7 +422,7 @@ TEST_F(OrderBySQLTests, OrderByStarDesc) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
+TEST_F(OrderBySQLTests, OrderByStarWithLimitTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -454,7 +454,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
+TEST_F(OrderBySQLTests, OrderByStarWithLimitDescTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -626,7 +626,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByWithNullCheck) {
+TEST_F(OrderBySQLTests, OrderByWithNullCheckTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

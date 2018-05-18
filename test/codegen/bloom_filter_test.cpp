@@ -36,7 +36,7 @@
 namespace peloton {
 namespace test {
 
-class BloomFilterCodegenTest : public PelotonTest {
+class BloomFilterCodegenTests : public PelotonTests {
  public:
   BloomFilterCodegenTest() {
     // Create test db
@@ -70,7 +70,7 @@ class BloomFilterCodegenTest : public PelotonTest {
   const std::string table2_name = "test2";
 };
 
-TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
+TEST_F(BloomFilterCodegenTests, FalsePositiveRateTest) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen(code_context);
 
@@ -190,7 +190,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
 // Testing whether bloom filter can improve the performance of hash join
 // when the hash table is bigger than L3 cache and selectivity is low
-TEST_F(BloomFilterCodegenTest, PerformanceTest) {
+TEST_F(BloomFilterCodegenTests, PerformanceTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *catalog = catalog::Catalog::GetInstance();
   auto *txn = txn_manager.BeginTransaction();

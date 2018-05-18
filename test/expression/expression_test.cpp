@@ -32,7 +32,7 @@ namespace peloton {
 
 namespace test {
 
-class ExpressionTests : public PelotonTest {};
+class ExpressionTests : public PelotonTests {};
 
 TEST_F(ExpressionTests, EqualityTest) {
   // First tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
@@ -159,7 +159,7 @@ TEST_F(ExpressionTests, DistinctFromTest) {
   EXPECT_TRUE(expr.Evaluate(tuple.get(), tuple.get(), nullptr).IsFalse());
 }
 
-TEST_F(ExpressionTests, ExtractDateTests) {
+TEST_F(ExpressionTests, ExtractDateTest) {
   // PAVLO: 2017-01-18
   // This will test whether we can invoke the EXTRACT function
   // correctly. This is different than DateFunctionsTests
@@ -217,7 +217,7 @@ TEST_F(ExpressionTests, ExtractDateTests) {
   //  }
 }
 
-TEST_F(ExpressionTests, SimpleCase) {
+TEST_F(ExpressionTests, SimpleCaseTest) {
 
   // CASE WHEN i=1 THEN 2 ELSE 3 END
 
@@ -333,7 +333,7 @@ TEST_F(ExpressionTests, SimpleCaseCopyTest) {
   EXPECT_EQ(CmpBool::CmpTrue, expected.CompareEquals(result));
 }
 
-TEST_F(ExpressionTests, SimpleCaseWithDefault) {
+TEST_F(ExpressionTests, SimpleCaseWithDefaultTest) {
 
   // CASE i WHEN 1 THEN 2 ELSE 3 END
 

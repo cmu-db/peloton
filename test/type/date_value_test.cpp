@@ -21,7 +21,7 @@ namespace test {
 // Date Value Test
 //===--------------------------------------------------------------------===//
 
-class DateValueTests : public PelotonTest {};
+class DateValueTests : public PelotonTests {};
 
 TEST_F(DateValueTests, ComparisonTest) {
   std::vector<ExpressionType> compares = {
