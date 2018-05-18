@@ -22,6 +22,8 @@ StorageManager::StorageManager() = default;
 
 StorageManager::~StorageManager() = default;
 
+std::shared_ptr<storage::TileGroup> StorageManager::empty_tile_group_;
+
 // Get instance of the global catalog storage manager
 StorageManager *StorageManager::GetInstance() {
   static StorageManager global_catalog_storage_manager;
@@ -112,6 +114,33 @@ bool StorageManager::RemoveDatabaseFromStorageManager(oid_t database_oid) {
   }
   return false;
 }
+
+
+//===--------------------------------------------------------------------===//
+// OBJECT MAP
+//===--------------------------------------------------------------------===//
+
+void StorageManager::AddTileGroup(const oid_t oid,
+                           std::shared_ptr<storage::TileGroup> location) {
+  // add/update the catalog reference to the tile group
+  tile_group_locator_.Upsert(oid, location);
+}
+
+void StorageManager::DropTileGroup(const oid_t oid) {
+  // drop the catalog reference to the tile group
+  tile_group_locator_.Erase(oid);
+}
+
+std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t oid) {
+  std::shared_ptr<storage::TileGroup> location;
+  if (tile_group_locator_.Find(oid, location)) {
+    return location;
+  }
+  return empty_tile_group_;
+}
+
+// used for logging test
+void StorageManager::ClearTileGroup() { tile_group_locator_.Clear(); }
 
 }  // namespace storage
 }  // namespace peloton
