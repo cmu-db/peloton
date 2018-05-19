@@ -7585,7 +7585,7 @@ class BwTree : public BwTreeBase {
       // would always fail, until we have cleaned all epoch nodes
       current_epoch_p = nullptr;
 
-      LOG_DEBUG("Clearing the epoch in ~EpochManager()...");
+      LOG_TRACE("Clearing the epoch in ~EpochManager()...");
 
       // If all threads has exited then all thread counts are
       // 0, and therefore this should proceed way to the end
