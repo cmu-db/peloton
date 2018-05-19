@@ -21,6 +21,7 @@ class CreateFunctionStatement;
 class InsertStatement;
 class DeleteStatement;
 class DropStatement;
+class AlterTableStatement;
 class ExplainStatement;
 class PrepareStatement;
 class ExecuteStatement;
@@ -80,7 +81,8 @@ class SqlNodeVisitor {
   virtual void Visit(parser::TransactionStatement *) {}
   virtual void Visit(parser::UpdateStatement *) {}
   virtual void Visit(parser::CopyStatement *) {}
-  virtual void Visit(parser::AnalyzeStatement *){};
+  virtual void Visit(parser::AnalyzeStatement *) {}
+  virtual void Visit(parser::AlterTableStatement *) {}
   virtual void Visit(parser::ExplainStatement *){};
 
   virtual void Visit(expression::ComparisonExpression *expr);

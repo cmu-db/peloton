@@ -63,6 +63,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(parser::UpdateStatement *op) override;
   void Visit(parser::CopyStatement *op) override;
   void Visit(parser::AnalyzeStatement *op) override;
+  void Visit(parser::AlterTableStatement *op) override;
   void Visit(expression::ComparisonExpression *expr) override;
   void Visit(expression::OperatorExpression *expr) override;
 

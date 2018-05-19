@@ -53,8 +53,8 @@ class TableCatalogObject {
   friend class LayoutCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile,
-                     concurrency::TransactionContext *txn, int tupleId = 0);
+  TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
+                     int tupleId = 0);
 
  public:
   // Get indexes

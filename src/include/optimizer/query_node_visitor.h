@@ -29,6 +29,7 @@ class CopyStatement;
 class AnalyzeStatement;
 class VariableSetStatement;
 class JoinDefinition;
+class AlterTableStatement;
 struct TableRef;
 
 class GroupByDescription;

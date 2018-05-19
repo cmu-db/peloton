@@ -494,8 +494,7 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid,
-                               concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());

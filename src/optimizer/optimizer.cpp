@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,6 +41,7 @@
 #include "planner/populate_index_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/alter_plan.h"
 
 #include "storage/data_table.h"
 
@@ -145,6 +146,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
   switch (stmt_type) {
+    case StatementType::ALTER: {
+      LOG_TRACE("Adding Alter Plan");
+      unique_ptr<planner::AbstractPlan> alter_plan(
+          new planner::AlterPlan((parser::AlterTableStatement *)tree));
+      ddl_plan = move(alter_plan);
+      break;
+    }
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(

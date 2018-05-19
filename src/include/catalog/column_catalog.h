@@ -89,6 +89,10 @@ class ColumnCatalog : public AbstractCatalog {
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool RenameColumn(oid_t database_oid, oid_t table_oid,
+                    const std::string &column_name,
+                    const std::string &new_name,
+                    concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
