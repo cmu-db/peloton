@@ -426,7 +426,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
 }
 
 storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
-    int tuples_per_tilegroup_count, std::string &db_name) {
+    int tuples_per_tilegroup_count, const std::string &db_name) {
   auto table_schema = std::unique_ptr<catalog::Schema>(
       new catalog::Schema({GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2),
                            GetColumnInfo(3)}));

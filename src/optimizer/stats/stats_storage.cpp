@@ -257,7 +257,7 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
  * datatables to collect their stats and store them in the column_stats_catalog.
  */
 ResultType StatsStorage::AnalyzeStatsForAllTablesWithDatabaseOid(
-    oid_t database_oid, UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
+    oid_t database_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze all tables' stats.");
     return ResultType::FAILURE;

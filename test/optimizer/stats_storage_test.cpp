@@ -51,15 +51,15 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
 
 storage::DataTable *CreateTestDBAndTable() {
   const std::string test_db_name = "test_db";
-  auto database = TestingExecutorUtil::InitializeDatabase(test_db_name);
+  TestingExecutorUtil::InitializeDatabase(test_db_name);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   storage::DataTable *data_table =
-      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false);
+      TestingExecutorUtil::CreateTableUpdateCatalog(tuple_per_tilegroup,
+                                                    test_db_name);
   TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
                                      true, txn);
-  database->AddTable(data_table);
   txn_manager.CommitTransaction(txn);
   return data_table;
 }
