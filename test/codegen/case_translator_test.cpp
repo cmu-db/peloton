@@ -27,7 +27,7 @@ namespace test {
 
 class CaseTranslatorTests : public PelotonCodeGenTests {
  public:
-  CaseTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  CaseTranslatorTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }

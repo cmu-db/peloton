@@ -27,7 +27,7 @@ namespace test {
 
 class HashJoinTranslatorTests : public PelotonCodeGenTests {
  public:
-  HashJoinTranslatorTest() : PelotonCodeGenTest() {
+  HashJoinTranslatorTests() : PelotonCodeGenTests() {
     // Load the test table
     uint32_t num_rows = 10;
     LoadTestTable(LeftTableId(), 2 * num_rows);

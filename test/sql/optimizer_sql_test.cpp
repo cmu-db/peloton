@@ -34,7 +34,7 @@ class OptimizerSQLTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
 
     // Create test database
     CreateAndLoadTable();
@@ -49,7 +49,7 @@ class OptimizerSQLTests : public PelotonTests {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 
   /*** Helper functions **/

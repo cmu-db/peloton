@@ -24,7 +24,7 @@ class DecimalSQLBaseTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     CreateDB();
   }
   /*** Helper functions **/
@@ -54,7 +54,7 @@ class DecimalSQLBaseTests : public PelotonTests {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 

@@ -33,7 +33,7 @@ namespace test {
 
 class UpdateTranslatorTests : public PelotonCodeGenTests {
  public:
-  UpdateTranslatorTest() : PelotonCodeGenTest() {}
+  UpdateTranslatorTests() : PelotonCodeGenTests() {}
 
   oid_t TestTableId1() { return test_table_oids[0]; }
   oid_t TestTableId2() { return test_table_oids[1]; }

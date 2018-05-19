@@ -24,7 +24,7 @@ namespace test {
 
 class InsertTranslatorTests : public PelotonCodeGenTests {
  public:
-  InsertTranslatorTest() : PelotonCodeGenTest() {}
+  InsertTranslatorTests() : PelotonCodeGenTests() {}
   oid_t TestTableId1() { return test_table_oids[0]; }
   oid_t TestTableId2() { return test_table_oids[1]; }
 };

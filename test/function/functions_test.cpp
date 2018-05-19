@@ -30,7 +30,7 @@ class FunctionsTests : public PelotonTests {
   }
 
   virtual void SetUp() {
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     // Bootstrap catalog
     auto catalog = catalog::Catalog::GetInstance();
     catalog->Bootstrap();

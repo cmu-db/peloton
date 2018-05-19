@@ -22,7 +22,7 @@ namespace test {
 
 class OrderByTranslatorTests : public PelotonCodeGenTests {
  public:
-  OrderByTranslatorTest() : PelotonCodeGenTest() {}
+  OrderByTranslatorTests() : PelotonCodeGenTests() {}
 
   oid_t TestTableId() { return test_table_oids[0]; }
 };

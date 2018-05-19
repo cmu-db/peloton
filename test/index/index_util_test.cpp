@@ -122,7 +122,7 @@ static index::Index *BuildIndex() {
 }
 
 /*
- * FindValueIndexTest() - Tests whether the index util correctly recognizes
+ * FindValueIndexTests() - Tests whether the index util correctly recognizes
  *                        point query
  *
  * The index configuration is as follows:
@@ -232,7 +232,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 }
 
 /*
- * ConstructBoundaryKeyTest() - Tests ConstructBoundaryKey() function for
+ * ConstructBoundaryKeyTests() - Tests ConstructBoundaryKey() function for
  *                              conjunctions
  */
 TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
@@ -356,7 +356,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 }
 
 /*
- * BindKeyTest() - Tests binding values onto keys that are not bound
+ * BindKeyTests() - Tests binding values onto keys that are not bound
  */
 TEST_F(IndexUtilTests, BindKeyTest) {
   std::unique_ptr<index::Index> index_p(BuildIndex());

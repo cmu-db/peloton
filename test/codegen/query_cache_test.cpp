@@ -31,7 +31,7 @@ namespace test {
 
 class QueryCacheTests : public PelotonCodeGenTests {
  public:
-  QueryCacheTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  QueryCacheTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
     LoadTestTable(RightTableId(), 4 * num_rows_to_insert);
@@ -44,7 +44,7 @@ class QueryCacheTests : public PelotonCodeGenTests {
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
     auto *a_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-    auto *const_40_exp = PelotonCodeGenTest::ConstIntExpr(40).release();
+    auto *const_40_exp = PelotonCodeGenTests::ConstIntExpr(40).release();
     auto *a_gt_40 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
     return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
@@ -55,13 +55,13 @@ class QueryCacheTests : public PelotonCodeGenTests {
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanWithPredicate() {
     auto *a_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
-    auto *const_20_exp = PelotonCodeGenTest::ConstIntExpr(20).release();
+    auto *const_20_exp = PelotonCodeGenTests::ConstIntExpr(20).release();
     auto *a_gt_20 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
     auto *b_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
-    auto *const_21_exp = PelotonCodeGenTest::ConstIntExpr(21).release();
+    auto *const_21_exp = PelotonCodeGenTests::ConstIntExpr(21).release();
     auto *b_eq_21 = new expression::ComparisonExpression(
         ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
 

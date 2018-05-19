@@ -27,7 +27,7 @@ namespace test {
 
 class GroupByTranslatorTests : public PelotonCodeGenTests {
  public:
-  GroupByTranslatorTest() : PelotonCodeGenTest() {
+  GroupByTranslatorTests() : PelotonCodeGenTests() {
     uint32_t num_rows = 10;
     LoadTestTable(TestTableId(), num_rows);
   }

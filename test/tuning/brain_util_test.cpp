@@ -42,7 +42,7 @@ class BrainUtilTests : public PelotonTests {
         std::remove(path.c_str());
       }
     }  // FOR
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
   std::vector<std::string> tempFiles;
 };

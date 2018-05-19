@@ -26,7 +26,7 @@ namespace test {
 
 class ParameterizationTests : public PelotonCodeGenTests {
  public:
-  ParameterizationTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  ParameterizationTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }

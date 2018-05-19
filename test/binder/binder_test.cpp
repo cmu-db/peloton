@@ -39,7 +39,7 @@ namespace test {
 
 class BinderCorrectnessTests : public PelotonTests {
   virtual void SetUp() override {
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     catalog::Catalog::GetInstance();
     // NOTE: Catalog::GetInstance()->Bootstrap(), you can only call it once!
     TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
@@ -47,7 +47,7 @@ class BinderCorrectnessTests : public PelotonTests {
 
   virtual void TearDown() override {
     TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 

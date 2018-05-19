@@ -23,7 +23,7 @@ namespace test {
 
 class BlockNestedLoopJoinTranslatorTests : public PelotonCodeGenTests {
  public:
-  BlockNestedLoopJoinTranslatorTest() : PelotonCodeGenTest() {
+  BlockNestedLoopJoinTranslatorTests() : PelotonCodeGenTests() {
     // Load the test table
     uint32_t num_rows = 10;
     LoadTestTable(LeftTableId(), 2 * num_rows);
@@ -59,7 +59,7 @@ class BlockNestedLoopJoinTranslatorTests : public PelotonCodeGenTests {
   type::Value GetCol(const AbstractTuple &t, JoinOutputColPos p);
 };
 
-void BlockNestedLoopJoinTranslatorTest::PerformTest(
+void BlockNestedLoopJoinTranslatorTests::PerformTest(
     ExpressionPtr &&predicate, const std::vector<oid_t> &left_join_cols,
     const std::vector<oid_t> &right_join_cols,
     std::vector<codegen::WrappedTuple> &results) {
@@ -102,8 +102,8 @@ void BlockNestedLoopJoinTranslatorTest::PerformTest(
   results = buffer.GetOutputTuples();
 }
 
-type::Value BlockNestedLoopJoinTranslatorTest::GetCol(const AbstractTuple &t,
-                                                      JoinOutputColPos p) {
+type::Value BlockNestedLoopJoinTranslatorTests::GetCol(const AbstractTuple &t,
+                                                       JoinOutputColPos p) {
   return t.GetValue(static_cast<oid_t>(p));
 }
 

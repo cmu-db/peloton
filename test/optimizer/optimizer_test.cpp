@@ -64,7 +64,7 @@ class OptimizerTests : public PelotonTests {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 

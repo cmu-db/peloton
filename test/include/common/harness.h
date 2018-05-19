@@ -101,7 +101,7 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 //===--------------------------------------------------------------------===//
 
 // All tests inherit from this class
-class PelotonTests : public ::testing::Tests {
+class PelotonTests : public ::testing::Test {
  protected:
   virtual void SetUp() {
     // turn off gc under test mode

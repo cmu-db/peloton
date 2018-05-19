@@ -29,8 +29,8 @@ class ZoneMapScanTests : public PelotonCodeGenTests {
   std::string all_cols_table_name = "skipping_table";
 
  public:
-  ZoneMapScanTest()
-      : PelotonCodeGenTest(TEST_TUPLES_PER_TILEGROUP), num_rows_to_insert(20) {
+  ZoneMapScanTests()
+      : PelotonCodeGenTests(TEST_TUPLES_PER_TILEGROUP), num_rows_to_insert(20) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 

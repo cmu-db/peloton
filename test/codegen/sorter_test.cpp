@@ -36,12 +36,12 @@ static int CompareTuplesForAscending(const char *a, const char *b) {
 
 class SorterTests : public PelotonTests {
  public:
-  SorterTest() {
+  SorterTests() {
     // Init
     sorter.Init(CompareTuplesForAscending, sizeof(TestTuple));
   }
 
-  ~SorterTest() {
+  ~SorterTests() {
     // Clean up
     sorter.Destroy();
   }

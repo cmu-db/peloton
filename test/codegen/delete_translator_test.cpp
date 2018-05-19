@@ -25,7 +25,7 @@ namespace test {
 
 class DeleteTranslatorTests : public PelotonCodeGenTests {
  public:
-  DeleteTranslatorTest() : PelotonCodeGenTest() {}
+  DeleteTranslatorTests() : PelotonCodeGenTests() {}
 
   size_t GetCurrentTableSize(oid_t table_id) {
     planner::SeqScanPlan scan{&GetTestTable(table_id), nullptr, {0, 1}};

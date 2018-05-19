@@ -45,7 +45,7 @@ TEST_F(TupleSchemaTests, ColumnInfoTest) {
 }
 
 /*
- * TupleSchemaFilteringTest() - Tests FilterSchema() which uses a set
+ * TupleSchemaFilteringTests() - Tests FilterSchema() which uses a set
  */
 TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   std::vector<catalog::Column> columns;
@@ -115,7 +115,7 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
 }
 
 /*
- * TupleSchemaCopyTest() - Tests CopySchema() which uses a list of indices
+ * TupleSchemaCopyTests() - Tests CopySchema() which uses a list of indices
  */
 TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
   std::vector<catalog::Column> columns;

@@ -29,7 +29,7 @@ class TableScanTranslatorTests : public PelotonCodeGenTests {
   std::string all_cols_table_name = "crazy_table";
 
  public:
-  TableScanTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  TableScanTranslatorTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 

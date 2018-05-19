@@ -534,7 +534,7 @@ void FuzzyReadTest(const ProtocolType protocol,
   // }
 }
 
-void PhantomTest() {
+void PhantomTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
@@ -577,7 +577,7 @@ void PhantomTest() {
 }
 
 // Can't pass this test!
-void WriteSkewTest() {
+void WriteSkewTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
@@ -619,7 +619,7 @@ void WriteSkewTest() {
   }
 }
 
-void ReadSkewTest() {
+void ReadSkewTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   storage::DataTable *table = TestingTransactionUtil::CreateTable();
   {
@@ -696,7 +696,7 @@ TEST_F(AnomalyTests, SerializableTest) {
                       conflict_avoidance_type);
         FuzzyReadTest(protocol_type, isolation_level_type,
                       conflict_avoidance_type);
-        // // WriteSkewTest();
+        // // WriteSkewTests();
         // ReadSkewTest(isolation_level_type, conflict_avoidance_type);
         // PhantomTest(isolation_level_type, conflict_avoidance_type);
         // SIAnomalyTest1(isolation_level_type, conflict_avoidance_type);

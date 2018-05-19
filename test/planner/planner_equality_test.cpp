@@ -25,7 +25,7 @@ class PlannerEqualityTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
 
     // Create test database
     CreateAndLoadTable();
@@ -39,7 +39,7 @@ class PlannerEqualityTests : public PelotonTests {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 
   void CreateAndLoadTable() {
