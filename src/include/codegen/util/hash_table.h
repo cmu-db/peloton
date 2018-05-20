@@ -25,13 +25,34 @@ class AbstractPool;
 namespace codegen {
 namespace util {
 
+/**
+ * This is a bucket-chained hash table that separates value storage from the
+ * primary hash table directory (a la VectorWise). The hash table supports two
+ * modes: normal and lazy.
+ *
+ * In normal mode, inserts and probes can be interleaved. Calls to Insert()
+ * allocate storage space and acquire a slot in the hash table directory,
+ * resizing by doubling if appropriate.
+ *
+ * In lazy mode, the hash table becomes a two-phase write-once-read-many (WORM)
+ * structure. In the first phase, only inserts are allowed. After all inserts
+ * are complete, the table "frozen" after which the table becomes read-only.
+ *
+ * In lazy mode, InsertLazy(), BuildLazy(), ReserveLazy(), and
+ * MergeLazyUnfinished() should be used. InsertLazy() only acquires storage
+ * space, BuildLazy() is called to freeze the hash table. ReserveLazy() is
+ * called during parallel build to collect sizing information from all
+ * thread-local hash tables to. Finally, calls to MergeLazyUnfinished() are
+ * made concurrently from multiple threads to merge lazily-built thread-local
+ * hash tables.
+ */
 class HashTable {
  public:
-  /// Constructor
+  /** Constructor */
   HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
             uint32_t value_size);
 
-  /// Destructor
+  /** Destructor */
   ~HashTable();
 
   /**

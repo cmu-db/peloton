@@ -106,11 +106,6 @@ void HashTable::EntryBuffer::TransferMemoryBlocks(
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-/**
- * This hash-table uses an open-addressing probing scheme
- *
- */
-
 HashTable::HashTable(::peloton::type::AbstractPool &memory, uint32_t key_size,
                      uint32_t value_size)
     : memory_(memory),
@@ -157,8 +152,11 @@ char *HashTable::InsertLazy(uint64_t hash) {
 
   // Insert the entry into the linked list in the first directory slot
   if (directory_[0] == nullptr) {
-    // This is the first entry
-    directory_[0] = directory_[1] = entry;
+    // This is the first entry. The first slot in the directory is the head of
+    // the linked list of entries. All other's link their tail to the second
+    // element in the directory.
+    directory_[0] = entry;
+    directory_[1] = entry;
   } else {
     PELOTON_ASSERT(directory_[1] != nullptr);
     directory_[1]->next = entry;
@@ -251,7 +249,6 @@ void HashTable::ReserveLazy(
 void HashTable::MergeLazyUnfinished(HashTable &other) {
   // Begin with the head of the linked list of entries, stored in the first
   // directory entry
-  PELOTON_ASSERT(other.directory_[0] != nullptr);
   auto *head = other.directory_[0];
 
   while (head != nullptr) {
@@ -274,6 +271,7 @@ void HashTable::MergeLazyUnfinished(HashTable &other) {
   ::peloton::atomic_add(&num_elems_, other.NumElements());
 
   // Transfer all allocated memory blocks in the other table into this one
+  PELOTON_ASSERT(&memory_ == &other.memory_);
   other.num_elems_ = other.capacity_ = 0;
   other.entry_buffer_.TransferMemoryBlocks(entry_buffer_);
 }

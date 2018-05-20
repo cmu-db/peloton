@@ -147,10 +147,10 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
 
 void RuntimeFunctions::ExecuteTableScan(
     void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
-    uint32_t db_oid, uint32_t table_oid, void *f) {
+    uint32_t db_oid, uint32_t table_oid, void *func) {
   //    void (*scanner)(void *, void *, uint64_t, uint64_t)) {
   using ScanFunc = void (*)(void *, void *, uint64_t, uint64_t);
-  auto *scanner = reinterpret_cast<ScanFunc>(f);
+  auto *scanner = reinterpret_cast<ScanFunc>(func);
 
   // The worker pool
   auto &worker_pool = threadpool::MonoQueuePool::GetExecutionInstance();
@@ -179,11 +179,11 @@ void RuntimeFunctions::ExecuteTableScan(
         last_task ? num_tilegroups : tilegroup_start + num_tilegroups_per_task;
     auto work = [&query_state, &thread_states, &scanner, &latch, task_id,
                  tilegroup_start, tilegroup_stop]() {
-      LOG_INFO("Task-%u scanning tile groups [%u-%u)", task_id, tilegroup_start,
-               tilegroup_stop);
+      LOG_DEBUG("Task-%u scanning tile groups [%u-%u)", task_id,
+                tilegroup_start, tilegroup_stop);
 
       // Time this
-      Timer<std::ratio<1, 1000>> timer;
+      Timer<std::milli> timer;
       timer.Start();
 
       // Pull out this task's thread state
@@ -197,8 +197,8 @@ void RuntimeFunctions::ExecuteTableScan(
 
       // Log stuff
       timer.Stop();
-      LOG_INFO("Task-%u done scanning (%.2lf ms) ...", task_id,
-               timer.GetDuration());
+      LOG_DEBUG("Task-%u done scanning (%.2lf ms) ...", task_id,
+                timer.GetDuration());
     };
     worker_pool.SubmitTask(work);
   }
@@ -222,10 +222,10 @@ void RuntimeFunctions::ExecutePerState(
   for (uint32_t tid = 0; tid < num_tasks; tid++) {
     worker_pool.SubmitTask(
         [&query_state, &work_func, &thread_states, &latch, tid]() {
-          LOG_INFO("Processing thread state %u ...", tid);
+          LOG_DEBUG("Processing thread state %u ...", tid);
 
           // Time this
-          Timer<std::ratio<1, 1000>> timer;
+          Timer<std::milli> timer;
           timer.Start();
 
           // Pull out the thread state
@@ -238,8 +238,8 @@ void RuntimeFunctions::ExecutePerState(
           latch.CountDown();
 
           timer.Stop();
-          LOG_INFO("Finished processing thread state %u (%.2lf ms) ...", tid,
-                   timer.GetDuration());
+          LOG_DEBUG("Finished processing thread state %u (%.2lf ms) ...", tid,
+                    timer.GetDuration());
         });
   }
 

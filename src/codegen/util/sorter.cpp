@@ -101,105 +101,156 @@ void Sorter::Sort() {
             timer.GetDuration());
 }
 
+namespace {
+
+// Structure we use to track a package of merging work.
+struct MergeWork {
+  using InputRange = std::pair<char **, char **>;
+
+  std::vector<InputRange> input_ranges;
+  char **destination = nullptr;
+
+  MergeWork(std::vector<InputRange> &&inputs, char **dest)
+      : input_ranges(std::move(inputs)), destination(dest) {}
+};
+
+}  // namespace
+
+// This function works as follows. We begin by issuing a sort on each
+// thread-local sorter instance stored in ThreadStates, in parallel. While doing
+// so, we also compute the total number of tuples across all N sorter instances
+// to perfectly size our output vector. We partition each thread-local sorter
+// into B buckets, hence also partitioning our output into B buckets. Each
+// thread-local sorter finds B-1 splitter keys that evenly split its contents
+// into B buckets. To avoid skew, we take the median of each of the B-1 set of
+// N splitter keys. For each splitter key, we find all input ranges and output
+// positions and construct a merge package. Merge packages are independent
+// pieces of work that are issued in parallel across a set of worker threads.
 void Sorter::SortParallel(
     const executor::ExecutorContext::ThreadStates &thread_states,
     uint32_t sorter_offset) {
-  // Pull out the sorter instances
-  uint64_t num_total_tuples = 0;
+  // Collect all sorter instances
+  uint64_t num_tuples = 0;
   std::vector<Sorter *> sorters;
-  for (uint32_t sort_idx = 0; sort_idx < thread_states.NumThreads();
-       sort_idx++) {
-    auto *state = thread_states.AccessThreadState(sort_idx);
-    auto *sorter = reinterpret_cast<Sorter *>(state + sorter_offset);
-    num_total_tuples += sorter->NumTuples();
-    sorters.push_back(sorter);
+  thread_states.ForEach<Sorter>(sorter_offset,
+                                [&num_tuples, &sorters](Sorter *sorter) {
+                                  sorters.push_back(sorter);
+                                  num_tuples += sorter->NumTuples();
+                                });
+
+  // The worker pool we use to execute parallel work
+  auto &work_pool = threadpool::MonoQueuePool::GetExecutionInstance();
+
+  // The main comparison function to compare two tuples
+  auto comp = [this](char *l, char *r) { return cmp_func_(l, r) < 0; };
+
+  // Where the merging work units are collected
+  std::vector<MergeWork> merge_work;
+
+  // Let B be the number of buckets we wish to decompose our input into, let N
+  // be the number of sorter instances we have; then, splitters is a [B-1 x N]
+  // matrix. splitters[i][j] indicates the i-th splitter key found in the j-th
+  // sorter instance. Thus, each row of the matrix contains a list of candidate
+  // splitters found in each sorter, and each column indicates the set of
+  // splitter keys in a single sorter.
+  auto num_buckets = static_cast<uint32_t>(sorters.size());
+  std::vector<std::vector<char *>> splitters(num_buckets - 1);
+  for (auto &splitter : splitters) {
+    splitter.resize(sorters.size());
   }
 
-  // This is a 2D matrix that stores, for each sorter, a list of separators. A
-  // separator separates a sorted run into equal, evenly spaces peices.
-  // separators[i][j] lists the j-th separator key in the i-th separator.
-  // We use these separator from each sorter to evenly split the inputs across
-  // all worker threads by taking a median-of-medians.
-  std::vector<std::vector<char *>> separators(sorters.size());
-  for (uint32_t i = 0; i < separators.size(); i++) {
-    separators[i].resize(sorters.size());
-  }
-
-  // Time it all
   Timer<std::milli> timer;
   timer.Start();
 
-  common::synchronization::CountDownLatch sort_latch{sorters.size()};
+  ////////////////////////////////////////////////////////////////////
+  /// Step 1 - Sort each local run in parallel
+  ////////////////////////////////////////////////////////////////////
+  {
+    common::synchronization::CountDownLatch latch{sorters.size()};
+    for (uint32_t sort_idx = 0; sort_idx < sorters.size(); sort_idx++) {
+      work_pool.SubmitTask([&sorters, &splitters, &latch, sort_idx]() {
+        // First sort
+        auto *sorter = sorters[sort_idx];
+        sorter->Sort();
 
-  // Sort each run in parallel
-  auto &work_pool = threadpool::MonoQueuePool::GetExecutionInstance();
-  for (uint32_t sort_idx = 0; sort_idx < sorters.size(); sort_idx++) {
-    work_pool.SubmitTask([&sorters, &separators, &sort_latch, sort_idx]() {
-      // First sort
-      auto *sorter = sorters[sort_idx];
-      sorter->Sort();
+        // Now compute local separators that "evenly" divide the input
+        auto part_size = sorter->NumTuples() / (splitters.size() + 1);
+        for (uint32_t i = 0; i < splitters.size(); i++) {
+          splitters[i][sort_idx] = sorter->tuples_[(i + 1) * part_size];
+        }
 
-      // Now compute local separators that "evenly" divide the input
-      auto part_size = sorter->NumTuples() / sorters.size();
-      for (uint32_t idx = 0; idx < separators.size() - 1; idx++) {
-        separators[idx][sort_idx] = sorter->tuples_[(idx + 1) * part_size];
-      }
+        // Count down latch
+        latch.CountDown();
+      });
+    }
 
-      // Count down latch
-      sort_latch.CountDown();
-    });
+    // Allocate room for new tuples
+    tuples_.resize(num_tuples);
+
+    // Wait sort jobs to be done
+    latch.Await(0);
   }
-  // Allocate room for new tuples
-  tuples_.resize(num_total_tuples);
-
-  // Wait sort jobs to be done
-  sort_latch.Await(0);
 
   timer.Stop();
   LOG_DEBUG("Total sort time: %.2lf ms", timer.GetDuration());
   timer.Reset();
   timer.Start();
 
-  // Where the merging work units are collected
-  struct MergeWork {
-    std::vector<std::pair<char **, char **>> input_ranges;
-    char **destination = nullptr;
-    MergeWork(std::vector<std::pair<char **, char **>> &&inputs, char **dest)
-        : input_ranges(std::move(inputs)), destination(dest) {}
-  };
-  std::vector<MergeWork> merge_work;
+  ////////////////////////////////////////////////////////////////////
+  /// Step 2 - Compute disjoint merge ranges from splitters
+  ////////////////////////////////////////////////////////////////////
+  {
+    // This tracks the current position in the global output where the next
+    // merge package will begin writing results into. At first, it points to the
+    // start of the array. As we generate merge packages, we calculate the next
+    // position by computing the sizes of the merge packages. We've already
+    // perfectly sized the output so this memory is allocated and ready to be
+    // written to.
+    char **write_pos = tuples_.data();
 
-  // Compute global separators from locally-computed separators
-  auto cmp = [this](char *l, char *r) { return cmp_func_(l, r) < 0; };
-  char **write_pos = tuples_.data();
-  std::vector<char **> last_pos(sorters.size());
-  for (uint32_t idx = 0; idx < separators.size(); idx++) {
-    // Sort the local separators and choose the median
-    char *separator = nullptr;
-    if (idx < separators.size() - 1) {
-      std::sort(separators[idx].begin(), separators[idx].end(), cmp);
-      separator = separators[idx][sorters.size() / 2];
-    }
+    // This vector tracks, for each sorter, the position of the start of the
+    // input range. As we move through the splitters, we bump this pointer so
+    // that we don't need to perform two binary searches to find the lower and
+    // upper range around the splitter key.
+    std::vector<char **> next_start(sorters.size());
 
-    std::vector<std::pair<char **, char **>> input_ranges;
-    uint64_t part_size = 0;
-    for (uint32_t sort_idx = 0; sort_idx < sorters.size(); sort_idx++) {
-      Sorter *sorter = sorters[sort_idx];
-      char **start = (idx == 0 ? sorter->tuples_.data() : last_pos[sort_idx]);
-      char **end = sorter->tuples_.data() + sorter->tuples_.size();
-      if (idx < separators.size() - 1) {
-        end = std::upper_bound(start, end, separator, cmp);
+    for (uint32_t idx = 0; idx < splitters.size(); idx++) {
+      // Sort the local separators and choose the median
+      std::sort(splitters[idx].begin(), splitters[idx].end(), comp);
+
+      // Find the median-of-medians splitter key
+      char *splitter = splitters[idx][sorters.size() / 2];
+
+      // The vector where we collect all input ranges that feed the merge work
+      std::vector<MergeWork::InputRange> input_ranges;
+
+      uint64_t part_size = 0;
+      for (uint32_t sorter_idx = 0; sorter_idx < sorters.size(); sorter_idx++) {
+        // Get the [start,end) range in the current sorter such that
+        // start <= splitter < end
+        Sorter *sorter = sorters[sorter_idx];
+        char **start =
+            (idx == 0 ? sorter->tuples_.data() : next_start[sorter_idx]);
+        char **end = sorter->tuples_.data() + sorter->tuples_.size();
+        if (idx < splitters.size() - 1) {
+          end = std::upper_bound(start, end, splitter, comp);
+        }
+
+        // If the the range [start, end) is non-empty, push it in as work
+        if (start != end) {
+          input_ranges.emplace_back(start, end);
+        }
+
+        part_size += (end - start);
+        next_start[sorter_idx] = end;
       }
-      if (start != end) {
-        input_ranges.emplace_back(start, end);
-      }
-      part_size += (end - start);
-      last_pos[sort_idx] = end;
+
+      // Add work
+      merge_work.emplace_back(std::move(input_ranges), write_pos);
+
+      // Bump new write position
+      write_pos += part_size;
     }
-    // Add work
-    merge_work.emplace_back(std::move(input_ranges), write_pos);
-    // Bump new write position
-    write_pos += part_size;
   }
 
   timer.Stop();
@@ -207,41 +258,46 @@ void Sorter::SortParallel(
   timer.Reset();
   timer.Start();
 
-  common::synchronization::CountDownLatch merge_latch{merge_work.size()};
-
-  // Divide up the merging work across all threads
-  auto heap_cmp = [this](const std::pair<char **, char **> &l,
-                         const std::pair<char **, char **> &r) {
-    return !(cmp_func_(*l.first, *r.first) < 0);
-  };
-  for (auto &work : merge_work) {
-    work_pool.SubmitTask([&work, &merge_latch, &heap_cmp, &cmp] {
-      // Heap
-      std::priority_queue<std::pair<char **, char **>,
-                          std::vector<std::pair<char **, char **>>,
-                          decltype(heap_cmp)> heap(heap_cmp, work.input_ranges);
-      char **dest = work.destination;
-      while (!heap.empty()) {
-        auto top = heap.top();
-        heap.pop();
-        *dest++ = *top.first;
-        if (top.first + 1 != top.second) {
-          heap.emplace(top.first + 1, top.second);
+  //////////////////////////////////////////////////////////////////
+  /// Step 3 - Distribute work packages to workers in parallel
+  //////////////////////////////////////////////////////////////////
+  {
+    common::synchronization::CountDownLatch latch{merge_work.size()};
+    auto heap_cmp =
+        [this](const MergeWork::InputRange &l, const MergeWork::InputRange &r) {
+          return !(cmp_func_(*l.first, *r.first) < 0);
+        };
+    for (auto &work : merge_work) {
+      work_pool.SubmitTask([&work, &latch, &heap_cmp, &comp] {
+        std::priority_queue<MergeWork::InputRange,
+                            std::vector<MergeWork::InputRange>,
+                            decltype(heap_cmp)> heap(heap_cmp,
+                                                     work.input_ranges);
+        char **dest = work.destination;
+        while (!heap.empty()) {
+          auto top = heap.top();
+          heap.pop();
+          *dest++ = *top.first;
+          if (top.first + 1 != top.second) {
+            heap.emplace(top.first + 1, top.second);
+          }
         }
-      }
 
-      merge_latch.CountDown();
-    });
+        latch.CountDown();
+      });
+    }
+
+    // Wait
+    latch.Await(0);
   }
-  // Wait
-  merge_latch.Await(0);
 
-  // Cleanup thread-local sorters by moving their allocated blocks to us
-  for (auto *sorter : sorters) {
-    blocks_.insert(blocks_.end(), sorter->blocks_.begin(),
-                   sorter->blocks_.end());
-    sorter->tuples_.clear();
-    sorter->blocks_.clear();
+  //////////////////////////////////////////////////////////////////
+  /// Step 4 - Transfer ownership of thread-local memory
+  //////////////////////////////////////////////////////////////////
+  {
+    for (auto *sorter : sorters) {
+      sorter->TransferMemoryBlocks(*this);
+    }
   }
 
   tuples_start_ = tuples_.data();
@@ -271,6 +327,16 @@ void Sorter::MakeRoomForNewTuple() {
   buffer_end_ = buffer_pos_ + next_alloc_size_;
 
   next_alloc_size_ *= 2;
+}
+
+void Sorter::TransferMemoryBlocks(Sorter &target) {
+  // Move all blocks we've allocated into the target's block list
+  auto &target_blocks = target.blocks_;
+  target_blocks.insert(target_blocks.end(), blocks_.begin(), blocks_.end());
+
+  // Clear out
+  tuples_.clear();
+  blocks_.clear();
 }
 
 }  // namespace util

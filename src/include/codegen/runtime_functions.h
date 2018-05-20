@@ -66,23 +66,54 @@ class RuntimeFunctions {
     bool is_columnar;
   };
 
-  // Get the column configuration for every column in the tile group
+  /**
+   * Get the column configuration for every column in the tile group.
+   *
+   * @param tile_group The tile group we wish to analyze
+   * @param[out] infos A list of column information structures that should be
+   * populated with column information.
+   * @param num_cols The number of columns in the list. This should match the
+   * number of column in the table.
+   */
   static void GetTileGroupLayout(const storage::TileGroup *tile_group,
                                  ColumnLayoutInfo *infos, uint32_t num_cols);
 
-  // Execute a parallel scan on the given table in the given database, calling
-  // the provided scan function.
+  /**
+   * Execute a parallel scan over the given table in the given database.
+   *
+   * @param query_state An opaque (but usually a JITed struct) state used during
+   * query execution.
+   * @param thread_states The set of all thread states.
+   * @param db_oid The ID of the database the table we're scanning exists in,
+   * @param table_oid The ID of the table we're scanning.
+   * @param func The callback function that is provided a range of tile groups
+   * to scan.
+   */
   static void ExecuteTableScan(
       void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
-      uint32_t db_oid, uint32_t table_oid, void *f);
+      uint32_t db_oid, uint32_t table_oid, void *func);
   //      void (*scanner)(void *, void *, uint64_t, uint64_t));
 
+  /**
+   * Invoke a function for each available thread state in parallel.
+   *
+   * @param query_state An opaque (but usually a JITed struct) state used during
+   * query execution.
+   * @param thread_states The set of all thread states.
+   * @param work_func Callback function called for each thread state.
+   */
   static void ExecutePerState(
       void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
       void (*work_func)(void *, void *));
 
+  /**
+   * Throw a divide-by-zero exception. This function doesn't return.
+   */
   static void ThrowDivideByZeroException();
 
+  /**
+   * Throw a mathematical overflow exception. This function does not return.
+   */
   static void ThrowOverflowException();
 };
 

@@ -137,9 +137,6 @@ class OAHashTable : public HashTable {
                                bool create_key_if_missing,
                                bool return_probe_result) const;
 
-  llvm::Value *LoadHashTableField(CodeGen &codegen, llvm::Value *hash_table,
-                                  uint32_t field_id) const;
-
   llvm::Value *LoadHashEntryField(CodeGen &codegen, llvm::Value *entry_ptr,
                                   uint32_t offset, uint32_t field_id) const;
 

@@ -51,7 +51,7 @@ void Query::Execute(executor::ExecutorContext &executor_context,
   func_args->consumer_arg = consumer.GetConsumerState();
 
   // Timer
-  Timer<std::ratio<1, 1000>> timer;
+  Timer<std::milli> timer;
   timer.Start();
 
   // Call init

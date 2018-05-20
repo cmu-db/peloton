@@ -103,7 +103,7 @@ class Sorter {
 
   /**
    * Perform a parallel sort of all sorter instances stored in the thread states
-   * object.
+   * object. Each thread-local sorter instance is unsorted.
    *
    * @param thread_states The states object where all the sorter instances are
    * stored.
@@ -134,6 +134,14 @@ class Sorter {
    * memory pool.
    */
   void MakeRoomForNewTuple();
+
+  /**
+   * Transfer ownership of all allocated memory to the provided sorter instance.
+   *
+   * @param target The sorter instance that is accepting custody of the memory
+   * we've allocated.
+   */
+  void TransferMemoryBlocks(Sorter &target);
 
  private:
   // The memory pool where this sorter sources memory from

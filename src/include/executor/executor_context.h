@@ -77,6 +77,11 @@ class ExecutorContext {
     /// Return the number of threads registered in this state
     uint32_t NumThreads() const { return num_threads_; }
 
+    /// Iterate over each thread's state, operating on the element at the given
+    /// offset only.
+    template <typename T>
+    void ForEach(uint32_t element_offset, std::function<void(T *)> func) const;
+
    private:
     type::EphemeralPool &pool_;
     uint32_t num_threads_;
@@ -101,6 +106,17 @@ class ExecutorContext {
   // Container for all states of all thread participating in this execution
   ThreadStates thread_states_;
 };
+
+template <typename T>
+inline void ExecutorContext::ThreadStates::ForEach(
+    uint32_t element_offset, std::function<void(T *)> func) const {
+  PELOTON_ASSERT(element_offset < state_size_);
+  for (uint32_t tid = 0; tid < NumThreads(); tid++) {
+    auto *elem_state =
+        reinterpret_cast<T *>(AccessThreadState(tid) + element_offset);
+    func(elem_state);
+  }
+}
 
 }  // namespace executor
 }  // namespace peloton
