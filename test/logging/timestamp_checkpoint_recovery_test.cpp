@@ -71,8 +71,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto column =
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
 
-        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
-        		column_name.c_str(), column.GetInfo().c_str());
+        LOG_INFO("Check the column %d %s", column_catalog->GetColumnId(),
+        		column_name.c_str());
 
         if (column_name == "id") {
           EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
@@ -312,9 +312,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         auto constraint_column_name = constraint_column_catalog->GetColumnName();
         auto constraint_column =
             table->GetSchema()->GetColumn(constraint_column_catalog->GetColumnId());
-        LOG_INFO("Check constraints of the column %d %s\n%s",
-                 constraint_column_catalog->GetColumnId(), constraint_column_name.c_str(),
-                 constraint_column.GetInfo().c_str());
+        LOG_INFO("Check constraints of the column %d %s",
+                 constraint_column_catalog->GetColumnId(), constraint_column_name.c_str());
 
         // set primary key of attributes 'pid1' and 'pid2'
         if (constraint_column_name == "pid1" ||
