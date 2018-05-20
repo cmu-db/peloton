@@ -26,8 +26,8 @@
 
 // Fix for PRId64 (See https://stackoverflow.com/a/18719205)
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
-#define __STDC_FORMAT_MACROS 1 // Not sure where to put this
-#endif 
+#define __STDC_FORMAT_MACROS 1  // Not sure where to put this
+#endif
 #include <inttypes.h>
 
 namespace peloton {
@@ -178,10 +178,8 @@ inline void outputLogHeader_(const char *file, int line, const char *func,
       type = "UNKWN";
   }
   // PAVLO: DO NOT CHANGE THIS
-  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ",
-            time_str,
-            file, line, func,
-            type);
+  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line,
+            func, type);
 }
 
 }  // namespace peloton

@@ -58,6 +58,9 @@ class Database : public Printable {
 
   void DropTableWithOid(const oid_t table_oid);
 
+  storage::DataTable *ReplaceTableWithOid(const oid_t table_oid,
+                                          storage::DataTable *new_table);
+
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//

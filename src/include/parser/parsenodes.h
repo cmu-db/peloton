@@ -73,7 +73,8 @@ typedef struct Expr { NodeTag type; } Expr;
 * of the lefthand expression (if any), and operName is the String name of
 * the combining operator.  Also, subselect is a raw parsetree.  During parse
 * analysis, the parser transforms testexpr into a complete boolean expression
-    * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing the
+    * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing
+*the
     * output columns of the subselect.  And subselect is transformed to a Query.
 * This is the representation seen in saved rules and in the rewriter.
 *
@@ -89,8 +90,7 @@ typedef struct Expr { NodeTag type; } Expr;
 * The CTE_SUBLINK case never occurs in actual SubLink nodes, but it is used
     * in SubPlans generated for WITH subqueries.
 */
-typedef enum SubLinkType
-{
+typedef enum SubLinkType {
   EXISTS_SUBLINK,
   ALL_SUBLINK,
   ANY_SUBLINK,
@@ -98,19 +98,17 @@ typedef enum SubLinkType
   EXPR_SUBLINK,
   MULTIEXPR_SUBLINK,
   ARRAY_SUBLINK,
-  CTE_SUBLINK					/* for SubPlans only */
+  CTE_SUBLINK /* for SubPlans only */
 } SubLinkType;
 
-
-typedef struct SubLink
-{
-  Expr		xpr;
-  SubLinkType subLinkType;	/* see above */
-  int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
-  Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
-  List	   *operName;		/* originally specified operator name */
-  Node	   *subselect;		/* subselect as Query* or raw parsetree */
-  int			location;		/* token location, or -1 if unknown */
+typedef struct SubLink {
+  Expr xpr;
+  SubLinkType subLinkType; /* see above */
+  int subLinkId;           /* ID (1..n); 0 if not MULTIEXPR */
+  Node *testexpr;          /* outer-query test for ALL/ANY/ROWCOMPARE */
+  List *operName;          /* originally specified operator name */
+  Node *subselect;         /* subselect as Query* or raw parsetree */
+  int location;            /* token location, or -1 if unknown */
 } SubLink;
 
 typedef struct BoolExpr {
@@ -663,8 +661,8 @@ typedef struct DropStmt {
 
 typedef struct DropDatabaseStmt {
   NodeTag type;
-  char *dbname;          /* name of database to drop */
-  bool missing_ok;       /* skip error if object is missing? */
+  char *dbname;    /* name of database to drop */
+  bool missing_ok; /* skip error if object is missing? */
 } DropDatabaseStmt;
 
 typedef struct TruncateStmt {
@@ -673,6 +671,141 @@ typedef struct TruncateStmt {
   bool restart_seqs;     /* restart owned sequences? */
   DropBehavior behavior; /* RESTRICT or CASCADE behavior */
 } TruncateStmt;
+
+/* ----------------------
+ *	Alter Table
+ * ----------------------
+ */
+typedef struct AlterTableStmt {
+  NodeTag type;
+  RangeVar *relation; /* table to work on */
+  List *cmds;         /* list of subcommands */
+  ObjectType relkind; /* type of object */
+  bool missing_ok;    /* skip error if table missing */
+} AlterTableStmt;
+
+typedef enum AlterTableType {
+  AT_AddColumn,                 /* add column */
+  AT_AddColumnRecurse,          /* internal to commands/tablecmds.c */
+  AT_AddColumnToView,           /* implicitly via CREATE OR REPLACE VIEW */
+  AT_ColumnDefault,             /* alter column default */
+  AT_DropNotNull,               /* alter column drop not null */
+  AT_SetNotNull,                /* alter column set not null */
+  AT_SetStatistics,             /* alter column set statistics */
+  AT_SetOptions,                /* alter column set ( options ) */
+  AT_ResetOptions,              /* alter column reset ( options ) */
+  AT_SetStorage,                /* alter column set storage */
+  AT_DropColumn,                /* drop column */
+  AT_DropColumnRecurse,         /* internal to commands/tablecmds.c */
+  AT_AddIndex,                  /* add index */
+  AT_ReAddIndex,                /* internal to commands/tablecmds.c */
+  AT_AddConstraint,             /* add constraint */
+  AT_AddConstraintRecurse,      /* internal to commands/tablecmds.c */
+  AT_ReAddConstraint,           /* internal to commands/tablecmds.c */
+  AT_AlterConstraint,           /* alter constraint */
+  AT_ValidateConstraint,        /* validate constraint */
+  AT_ValidateConstraintRecurse, /* internal to commands/tablecmds.c */
+  AT_ProcessedConstraint,       /* pre-processed add constraint (local in
+                     * parser/parse_utilcmd.c) */
+  AT_AddIndexConstraint,        /* add constraint using existing index */
+  AT_DropConstraint,            /* drop constraint */
+  AT_DropConstraintRecurse,     /* internal to commands/tablecmds.c */
+  AT_ReAddComment,              /* internal to commands/tablecmds.c */
+  AT_AlterColumnType,           /* alter column type */
+  AT_AlterColumnGenericOptions, /* alter column OPTIONS (...) */
+  AT_ChangeOwner,               /* change owner */
+  AT_ClusterOn,                 /* CLUSTER ON */
+  AT_DropCluster,               /* SET WITHOUT CLUSTER */
+  AT_SetLogged,                 /* SET LOGGED */
+  AT_SetUnLogged,               /* SET UNLOGGED */
+  AT_AddOids,                   /* SET WITH OIDS */
+  AT_AddOidsRecurse,            /* internal to commands/tablecmds.c */
+  AT_DropOids,                  /* SET WITHOUT OIDS */
+  AT_SetTableSpace,             /* SET TABLESPACE */
+  AT_SetRelOptions,             /* SET (...) -- AM specific parameters */
+  AT_ResetRelOptions,           /* RESET (...) -- AM specific parameters */
+  AT_ReplaceRelOptions,         /* replace reloption list in its entirety */
+  AT_EnableTrig,                /* ENABLE TRIGGER name */
+  AT_EnableAlwaysTrig,          /* ENABLE ALWAYS TRIGGER name */
+  AT_EnableReplicaTrig,         /* ENABLE REPLICA TRIGGER name */
+  AT_DisableTrig,               /* DISABLE TRIGGER name */
+  AT_EnableTrigAll,             /* ENABLE TRIGGER ALL */
+  AT_DisableTrigAll,            /* DISABLE TRIGGER ALL */
+  AT_EnableTrigUser,            /* ENABLE TRIGGER USER */
+  AT_DisableTrigUser,           /* DISABLE TRIGGER USER */
+  AT_EnableRule,                /* ENABLE RULE name */
+  AT_EnableAlwaysRule,          /* ENABLE ALWAYS RULE name */
+  AT_EnableReplicaRule,         /* ENABLE REPLICA RULE name */
+  AT_DisableRule,               /* DISABLE RULE name */
+  AT_AddInherit,                /* INHERIT parent */
+  AT_DropInherit,               /* NO INHERIT parent */
+  AT_AddOf,                     /* OF <type_name> */
+  AT_DropOf,                    /* NOT OF */
+  AT_ReplicaIdentity,           /* REPLICA IDENTITY */
+  AT_EnableRowSecurity,         /* ENABLE ROW SECURITY */
+  AT_DisableRowSecurity,        /* DISABLE ROW SECURITY */
+  AT_ForceRowSecurity,          /* FORCE ROW SECURITY */
+  AT_NoForceRowSecurity,        /* NO FORCE ROW SECURITY */
+  AT_GenericOptions             /* OPTIONS (...) */
+} AlterTableType;
+
+typedef struct AlterTableCmd /* one subcommand of an ALTER TABLE */
+    {
+  NodeTag type;
+  AlterTableType subtype; /* Type of table alteration to apply */
+  char *name;             /* column, constraint, or trigger to act on,
+                           * or tablespace */
+  Node *newowner;         /* RoleSpec */
+  Node *def;              /* definition of new column, index,
+                           * constraint, or parent table */
+  DropBehavior behavior;  /* RESTRICT or CASCADE for DROP cases */
+  bool missing_ok;        /* skip error if missing? */
+} AlterTableCmd;
+
+/* ----------------------
+ *		Alter Object Rename Statement
+ * ----------------------
+ */
+typedef struct RenameStmt {
+  NodeTag type;
+  ObjectType renameType;   /* OBJECT_TABLE, OBJECT_COLUMN, etc */
+  ObjectType relationType; /* if column name, associated relation type */
+  RangeVar *relation;      /* in case it's a table */
+  List *object;            /* in case it's some other object */
+  List *objarg;            /* argument types, if applicable */
+  char *subname;           /* name of contained object (column, rule,
+                    * trigger, etc) */
+  char *newname;           /* the new name */
+  DropBehavior behavior;   /* RESTRICT or CASCADE behavior */
+  bool missing_ok;         /* skip error if missing? */
+} RenameStmt;
+
+/* ----------------------
+ *		ALTER object SET SCHEMA Statement
+ * ----------------------
+ */
+typedef struct AlterObjectSchemaStmt {
+  NodeTag type;
+  ObjectType objectType; /* OBJECT_TABLE, OBJECT_TYPE, etc */
+  RangeVar *relation;    /* in case it's a table */
+  List *object;          /* in case it's some other object */
+  List *objarg;          /* argument types, if applicable */
+  char *newschema;       /* the new schema */
+  bool missing_ok;       /* skip error if missing? */
+} AlterObjectSchemaStmt;
+
+/* ----------------------
+ *		Alter Object Owner Statement
+ * ----------------------
+ */
+typedef struct AlterOwnerStmt {
+  NodeTag type;
+  ObjectType objectType; /* OBJECT_TABLE, OBJECT_TYPE, etc */
+  RangeVar *relation;    /* in case it's a table */
+  List *object;          /* in case it's some other object */
+  List *objarg;          /* argument types, if applicable */
+  Node *newowner;        /* the new owner */
+} AlterOwnerStmt;
 
 typedef struct ExecuteStmt {
   NodeTag type;
@@ -721,47 +854,42 @@ typedef struct CreateDatabaseStmt {
   List *options; /* List of DefElem nodes */
 } CreateDatabaseStmt;
 
-typedef struct CreateSchemaStmt
-{
-  NodeTag   type;
-  char     *schemaname;   /* the name of the schema to create */
-  Node     *authrole;   /* the owner of the created schema */
-  List     *schemaElts;   /* schema components (list of parsenodes) */
-  bool    if_not_exists;  /* just do nothing if schema already exists? */
+typedef struct CreateSchemaStmt {
+  NodeTag type;
+  char *schemaname;   /* the name of the schema to create */
+  Node *authrole;     /* the owner of the created schema */
+  List *schemaElts;   /* schema components (list of parsenodes) */
+  bool if_not_exists; /* just do nothing if schema already exists? */
 } CreateSchemaStmt;
 
-typedef enum RoleSpecType
-{
-  ROLESPEC_CSTRING,     /* role name is stored as a C string */
-  ROLESPEC_CURRENT_USER,    /* role spec is CURRENT_USER */
-  ROLESPEC_SESSION_USER,    /* role spec is SESSION_USER */
-  ROLESPEC_PUBLIC       /* role name is "public" */
+typedef enum RoleSpecType {
+  ROLESPEC_CSTRING,      /* role name is stored as a C string */
+  ROLESPEC_CURRENT_USER, /* role spec is CURRENT_USER */
+  ROLESPEC_SESSION_USER, /* role spec is SESSION_USER */
+  ROLESPEC_PUBLIC        /* role name is "public" */
 } RoleSpecType;
 
-typedef struct RoleSpec
-{
-  NodeTag   type;
-  RoleSpecType roletype;    /* Type of this rolespec */
-  char     *rolename;   /* filled only for ROLESPEC_CSTRING */
-  int     location;   /* token location, or -1 if unknown */
+typedef struct RoleSpec {
+  NodeTag type;
+  RoleSpecType roletype; /* Type of this rolespec */
+  char *rolename;        /* filled only for ROLESPEC_CSTRING */
+  int location;          /* token location, or -1 if unknown */
 } RoleSpec;
 
-typedef enum ViewCheckOption
-{
+typedef enum ViewCheckOption {
   NO_CHECK_OPTION,
   LOCAL_CHECK_OPTION,
   CASCADED_CHECK_OPTION
 } ViewCheckOption;
 
-typedef struct ViewStmt
-{
-  NodeTag   type;
-  RangeVar   *view;     /* the view to be created */
-  List     *aliases;    /* target column names */
-  Node     *query;      /* the SELECT query */
-  bool    replace;    /* replace an existing view? */
-  List     *options;    /* options from WITH clause */
-  ViewCheckOption withCheckOption;  /* WITH CHECK OPTION */
+typedef struct ViewStmt {
+  NodeTag type;
+  RangeVar *view;                  /* the view to be created */
+  List *aliases;                   /* target column names */
+  Node *query;                     /* the SELECT query */
+  bool replace;                    /* replace an existing view? */
+  List *options;                   /* options from WITH clause */
+  ViewCheckOption withCheckOption; /* WITH CHECK OPTION */
 } ViewStmt;
 
 typedef struct ParamRef {
@@ -787,29 +915,26 @@ typedef struct VacuumStmt {
   List *va_cols;      /* list of column names, or NIL for all */
 } VacuumStmt;
 
-typedef enum
-{
-  VAR_SET_VALUE,              /* SET var = value */
-  VAR_SET_DEFAULT,            /* SET var TO DEFAULT */
-  VAR_SET_CURRENT,            /* SET var FROM CURRENT */
-  VAR_SET_MULTI,              /* special case for SET TRANSACTION ... */
-  VAR_RESET,                  /* RESET var */
-  VAR_RESET_ALL               /* RESET ALL */
+typedef enum {
+  VAR_SET_VALUE,   /* SET var = value */
+  VAR_SET_DEFAULT, /* SET var TO DEFAULT */
+  VAR_SET_CURRENT, /* SET var FROM CURRENT */
+  VAR_SET_MULTI,   /* special case for SET TRANSACTION ... */
+  VAR_RESET,       /* RESET var */
+  VAR_RESET_ALL    /* RESET ALL */
 } VariableSetKind;
 
-typedef struct VariableSetStmt
-{
-  NodeTag     type;
+typedef struct VariableSetStmt {
+  NodeTag type;
   VariableSetKind kind;
-  char       *name;           /* variable to be set */
-  List       *args;           /* List of A_Const nodes */
-  bool        is_local;       /* SET LOCAL? */
+  char *name;    /* variable to be set */
+  List *args;    /* List of A_Const nodes */
+  bool is_local; /* SET LOCAL? */
 } VariableSetStmt;
 
-typedef struct VariableShowStmt
-{
-  NodeTag     type;
-  char       *name;
+typedef struct VariableShowStmt {
+  NodeTag type;
+  char *name;
 } VariableShowStmt;
 
 /// **********  For UDFs *********** ///

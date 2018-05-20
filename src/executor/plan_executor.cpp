@@ -64,7 +64,7 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
+      [&on_complete, &consumer, plan](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
         for (const auto &tuple : consumer.GetOutputTuples()) {
           for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
@@ -336,7 +336,10 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor =
           new executor::PopulateIndexExecutor(plan, executor_context);
       break;
-
+    case PlanNodeType::ALTER:
+      child_executor =
+          new executor::AlterExecutor(plan, executor_context);
+      break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
                 PlanNodeTypeToString(plan_node_type).c_str());

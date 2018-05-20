@@ -225,6 +225,30 @@ class Catalog {
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
 
+  //===--------------------------------------------------------------------===//
+  // ALTER TABLE
+  //===--------------------------------------------------------------------===//
+  ResultType AlterTable(oid_t database_oid, oid_t table_oid, const std::string &schema_name,
+                        std::unique_ptr<catalog::Schema> &new_schema,
+                        concurrency::TransactionContext *txn);
+
+  ResultType AddColumn(const std::string &database_name,
+                       const std::string &table_name,
+                       const std::vector<std::string> &columns,
+                       concurrency::TransactionContext *txn);
+
+  ResultType DropColumn(const std::string &database_name,
+                        const std::string &table_name,
+                        const std::vector<std::string> &columns,
+                        concurrency::TransactionContext *txn);
+
+  ResultType RenameColumn(const std::string &database_name,
+                          const std::string &table_name,
+                          const std::string &old_name,
+                          const std::string &new_name,
+                          const std::string &schema_name,
+                          concurrency::TransactionContext *txn);
+
   /*
    * Using database oid to get system catalog object
    */

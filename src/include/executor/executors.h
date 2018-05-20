@@ -16,6 +16,7 @@
 
 #include "executor/aggregate_executor.h"
 #include "executor/aggregator.h"
+#include "executor/alter_executor.h"
 #include "executor/analyze_executor.h"
 #include "executor/append_executor.h"
 #include "executor/copy_executor.h"
