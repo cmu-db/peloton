@@ -51,6 +51,10 @@ class CuckooMap {
   // Inserts a item
   bool Insert(const KeyType &key, ValueType value);
 
+  // Inserts the item if not present, updates value otherwise
+  // Upsert operations always succeed
+  void Upsert(const KeyType &key, ValueType value);
+
   // Extracts item with high priority
   bool Update(const KeyType &key, ValueType value);
 

@@ -20,10 +20,13 @@
 #include <memory>
 #include "common/internal_types.h"
 
-#include "common/macros.h"
+#include "common/container/cuckoo_map.h"
 #include "common/internal_types.h"
-#include "common/container/lock_free_array.h"
+#include "common/macros.h"
 #include "tbb/concurrent_unordered_map.h"
+
+#define DEFAULT_LOCATOR_SIZE 1024
+
 namespace peloton {
 
 namespace storage {
@@ -39,7 +42,7 @@ namespace catalog {
 
 class Manager {
  public:
-  Manager() {}
+  Manager();
 
   // Singleton
   static Manager &GetInstance();
@@ -94,8 +97,7 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  tbb::concurrent_unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
-      tile_group_locator_;
+  CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> tile_group_locator_;
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 
   //===--------------------------------------------------------------------===//
