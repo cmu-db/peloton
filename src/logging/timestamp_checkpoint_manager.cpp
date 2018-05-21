@@ -801,7 +801,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
 
       // recover column information
       size_t column_count = metadata_buffer.ReadLong();
-      std::vector<catalog::Column> columns(column_count);
+      std::vector<catalog::Column> columns;
       for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
         oid_t column_oid = metadata_buffer.ReadInt();
         size_t column_length = metadata_buffer.ReadLong();
@@ -829,9 +829,21 @@ bool TimestampCheckpointManager::RecoverStorageObject(
           }
         }
 
-        // Set a column into the vector in order of the column_id
-        PELOTON_ASSERT(column_oid < column_count);
-        columns[column_oid] = column;
+        // Set a column into the vector in order of the column_oid.
+        // Cannot use push_back of vector because column_catalog doesn't acquire
+        // the column info from pg_attribute in the order.
+        // If use []operator of vector to insert it, AddressSanitizer regards it
+        // as stack-buffer-overflow in travis-ci (only release build).
+        auto column_itr = columns.begin();
+        for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
+        	if (column_itr == columns.end() ||
+        			column_itr->GetOffset() > column.GetOffset()) {
+        			break;
+        	} else {
+        		column_itr++;
+        	}
+        }
+        columns.insert(column_itr, column);;
 
       }  // column loop end
 
