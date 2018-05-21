@@ -189,6 +189,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       auto fk_count = table->GetForeignKeyCount();
       EXPECT_EQ(2, fk_count);
       for (oid_t fk_id = 0; fk_id < fk_count; fk_id++) {
+      	std::shared_ptr<catalog::TableCatalogObject> sink_table_catalog;
+      	std::vector<oid_t> source_columns, sink_columns;
         auto foreign_key = table->GetForeignKey(fk_id);
         LOG_INFO("Check foreign key constraint: %s",
                  foreign_key->GetConstraintName().c_str());
@@ -196,17 +198,17 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // value3 => checkpoint_table_test.pid
         if (foreign_key->GetConstraintName() ==
             "FK_checkpoint_constraint_test->checkpoint_table_test") {
-          auto sink_table_catalog = default_db_catalog->GetTableObject(
+          sink_table_catalog = default_db_catalog->GetTableObject(
               "checkpoint_table_test", "public", txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
           EXPECT_EQ(sink_table_catalog->GetTableOid(),
                     foreign_key->GetSinkTableOid());
-          auto source_columns = foreign_key->GetSourceColumnIds();
+          source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(1, source_columns.size());
           EXPECT_EQ("value3",
                     table_catalog->GetColumnObject(source_columns.at(0))
                         ->GetColumnName());
-          auto sink_columns = foreign_key->GetSinkColumnIds();
+          sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(1, sink_columns.size());
           EXPECT_EQ("id",
                     sink_table_catalog->GetColumnObject(sink_columns.at(0))
@@ -216,12 +218,12 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // checkpoint_index_test.upid2)
         else if (foreign_key->GetConstraintName() ==
                  "FK_checkpoint_constraint_test->checkpoint_index_test") {
-          auto sink_table_catalog = default_db_catalog->GetTableObject(
+          sink_table_catalog = default_db_catalog->GetTableObject(
               "checkpoint_index_test", "public", txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
           EXPECT_EQ(sink_table_catalog->GetTableOid(),
                     foreign_key->GetSinkTableOid());
-          auto source_columns = foreign_key->GetSourceColumnIds();
+          source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(2, source_columns.size());
           EXPECT_EQ("value4",
                     table_catalog->GetColumnObject(source_columns.at(0))
@@ -229,7 +231,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_EQ("value5",
                     table_catalog->GetColumnObject(source_columns.at(1))
                         ->GetColumnName());
-          auto sink_columns = foreign_key->GetSinkColumnIds();
+          sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(2, sink_columns.size());
           EXPECT_EQ("upid1",
                     sink_table_catalog->GetColumnObject(sink_columns.at(0))
@@ -246,7 +248,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
       // index for constraints
       for (auto constraint_index_pair : table_catalog->GetIndexObjects()) {
-        auto constraint_index_catalog = constraint_index_pair.second;
+      	std::vector<oid_t> key_attrs;
+      	auto constraint_index_catalog = constraint_index_pair.second;
         auto constraint_index_name = constraint_index_catalog->GetIndexName();
 
         LOG_INFO("check index for constraints: %s", constraint_index_name.c_str());
@@ -257,7 +260,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_EQ(IndexConstraintType::PRIMARY_KEY,
                     constraint_index_catalog->GetIndexConstraint());
           EXPECT_TRUE(constraint_index_catalog->HasUniqueKeys());
-          auto key_attrs = constraint_index_catalog->GetKeyAttrs();
+          key_attrs = constraint_index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
           EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_attrs.at(0))
                                 ->GetColumnName());
@@ -270,7 +273,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_EQ(IndexConstraintType::UNIQUE,
                     constraint_index_catalog->GetIndexConstraint());
           EXPECT_TRUE(constraint_index_catalog->HasUniqueKeys());
-          auto key_attrs = constraint_index_catalog->GetKeyAttrs();
+          key_attrs = constraint_index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
           EXPECT_EQ("value1", table_catalog->GetColumnObject(key_attrs.at(0))
                                   ->GetColumnName());
@@ -282,7 +285,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_EQ(IndexConstraintType::DEFAULT,
                     constraint_index_catalog->GetIndexConstraint());
           EXPECT_FALSE(constraint_index_catalog->HasUniqueKeys());
-          auto key_attrs = constraint_index_catalog->GetKeyAttrs();
+          key_attrs = constraint_index_catalog->GetKeyAttrs();
           EXPECT_EQ(1, key_attrs.size());
           EXPECT_EQ("value3", table_catalog->GetColumnObject(key_attrs.at(0))
                                   ->GetColumnName());
@@ -294,7 +297,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_EQ(IndexConstraintType::DEFAULT,
                     constraint_index_catalog->GetIndexConstraint());
           EXPECT_FALSE(constraint_index_catalog->HasUniqueKeys());
-          auto key_attrs = constraint_index_catalog->GetKeyAttrs();
+          key_attrs = constraint_index_catalog->GetKeyAttrs();
           EXPECT_EQ(2, key_attrs.size());
           EXPECT_EQ("value4", table_catalog->GetColumnObject(key_attrs.at(0))
                                   ->GetColumnName());
@@ -321,14 +324,14 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_TRUE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
-          for (auto constraint : constraint_column.GetConstraints()) {
-            if (constraint.GetName() == "con_primary") {
-              EXPECT_EQ(ConstraintType::PRIMARY, constraint.GetType());
-              EXPECT_EQ(INVALID_OID, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
+          for (auto constraint1 : constraint_column.GetConstraints()) {
+            if (constraint1.GetName() == "con_primary") {
+              EXPECT_EQ(ConstraintType::PRIMARY, constraint1.GetType());
+              EXPECT_EQ(INVALID_OID, constraint1.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint1.GetUniqueIndexOffset());
             } else {
               LOG_ERROR("Unexpected constraint is found: %s",
-                        constraint.GetName().c_str());
+                        constraint1.GetName().c_str());
             }
           }
         }
@@ -337,19 +340,19 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_FALSE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(2, constraint_column.GetConstraints().size());
-          for (auto constraint : constraint_column.GetConstraints()) {
-            if (constraint.GetName() == "con_default") {
-              EXPECT_EQ(ConstraintType::DEFAULT, constraint.GetType());
-              EXPECT_EQ(INVALID_OID, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
-              EXPECT_EQ(0, constraint.getDefaultValue()->GetAs<int>());
-            } else if (constraint.GetName() == "con_unique") {
-              EXPECT_EQ(ConstraintType::UNIQUE, constraint.GetType());
-              EXPECT_EQ(INVALID_OID, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
+          for (auto constraint2 : constraint_column.GetConstraints()) {
+            if (constraint2.GetName() == "con_default") {
+              EXPECT_EQ(ConstraintType::DEFAULT, constraint2.GetType());
+              EXPECT_EQ(INVALID_OID, constraint2.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint2.GetUniqueIndexOffset());
+              EXPECT_EQ(0, constraint2.getDefaultValue()->GetAs<int>());
+            } else if (constraint2.GetName() == "con_unique") {
+              EXPECT_EQ(ConstraintType::UNIQUE, constraint2.GetType());
+              EXPECT_EQ(INVALID_OID, constraint2.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint2.GetUniqueIndexOffset());
             } else {
               LOG_ERROR("Unexpected constraint is found: %s",
-                        constraint.GetName().c_str());
+                        constraint2.GetName().c_str());
             }
           }
         }
@@ -358,21 +361,21 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_TRUE(constraint_column_catalog->IsNotNull());
           EXPECT_FALSE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(2, constraint_column.GetConstraints().size());
-          for (auto constraint : constraint_column.GetConstraints()) {
-            if (constraint.GetName() == "con_not_null") {
-              EXPECT_EQ(ConstraintType::NOTNULL, constraint.GetType());
-              EXPECT_EQ(INVALID_OID, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
-            } else if (constraint.GetName() == "con_check") {
-              EXPECT_EQ(ConstraintType::CHECK, constraint.GetType());
-              EXPECT_EQ(INVALID_OID, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
+          for (auto constraint3 : constraint_column.GetConstraints()) {
+            if (constraint3.GetName() == "con_not_null") {
+              EXPECT_EQ(ConstraintType::NOTNULL, constraint3.GetType());
+              EXPECT_EQ(INVALID_OID, constraint3.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint3.GetUniqueIndexOffset());
+            } else if (constraint3.GetName() == "con_check") {
+              EXPECT_EQ(ConstraintType::CHECK, constraint3.GetType());
+              EXPECT_EQ(INVALID_OID, constraint3.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint3.GetUniqueIndexOffset());
               EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN,
-                        constraint.GetCheckExpression().first);
-              EXPECT_EQ(2, constraint.GetCheckExpression().second.GetAs<int>());
+                        constraint3.GetCheckExpression().first);
+              EXPECT_EQ(2, constraint3.GetCheckExpression().second.GetAs<int>());
             } else {
               LOG_ERROR("Unexpected constraint is found: %s",
-                        constraint.GetName().c_str());
+                        constraint3.GetName().c_str());
             }
           }
         }
@@ -382,15 +385,15 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_FALSE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
-          for (auto constraint : constraint_column.GetConstraints()) {
-            if (constraint.GetName() ==
+          for (auto constraint4 : constraint_column.GetConstraints()) {
+            if (constraint4.GetName() ==
                 "FK_checkpoint_constraint_test->checkpoint_table_test") {
-              EXPECT_EQ(ConstraintType::FOREIGN, constraint.GetType());
-              EXPECT_EQ(0, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
+              EXPECT_EQ(ConstraintType::FOREIGN, constraint4.GetType());
+              EXPECT_EQ(0, constraint4.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint4.GetUniqueIndexOffset());
             } else {
               LOG_ERROR("Unexpected constraint is found: %s",
-                        constraint.GetName().c_str());
+                        constraint4.GetName().c_str());
             }
           }
         }
@@ -401,15 +404,15 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_FALSE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
-          for (auto constraint : constraint_column.GetConstraints()) {
-            if (constraint.GetName() ==
+          for (auto constraint5 : constraint_column.GetConstraints()) {
+            if (constraint5.GetName() ==
                 "FK_checkpoint_constraint_test->checkpoint_index_test") {
-              EXPECT_EQ(ConstraintType::FOREIGN, constraint.GetType());
-              EXPECT_EQ(1, constraint.GetForeignKeyListOffset());
-              EXPECT_EQ(INVALID_OID, constraint.GetUniqueIndexOffset());
+              EXPECT_EQ(ConstraintType::FOREIGN, constraint5.GetType());
+              EXPECT_EQ(1, constraint5.GetForeignKeyListOffset());
+              EXPECT_EQ(INVALID_OID, constraint5.GetUniqueIndexOffset());
             } else {
               LOG_ERROR("Unexpected constraint is found: %s",
-                        constraint.GetName().c_str());
+                        constraint5.GetName().c_str());
             }
           }
         } else {
