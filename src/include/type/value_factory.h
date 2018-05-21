@@ -71,8 +71,8 @@ class ValueFactory {
   }
 
   static inline Value GetBooleanValue(CmpBool value) {
-    return Value(TypeId::BOOLEAN,
-                 value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL : (int8_t)value);
+    return Value(TypeId::BOOLEAN, value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL
+                                                          : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
@@ -112,6 +112,28 @@ class ValueFactory {
       UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(TypeId::VARBINARY, (const char *)rawBuf, rawLength,
                  manage_data);
+  }
+
+  template <class T>
+  static inline Value GetArrayValue(const std::vector<T> *vals,
+                                    std::shared_ptr<type::Type> elem_type) {
+    TypeId elem_type_id = elem_type->GetTypeId();
+    switch (elem_type_id) {
+      case TypeId::INTEGER: {
+        std::shared_ptr<Type> elem_type(new Type(TypeId::INTEGER));
+        return Value(TypeId::ARRAY, vals, elem_type, false);
+      }
+      case TypeId::DECIMAL: {
+        std::shared_ptr<Type> elem_type(new Type(TypeId::DECIMAL));
+        return Value(TypeId::ARRAY, vals, elem_type, false);
+      }
+      default: {
+        std::string msg =
+            StringUtil::Format("Array Type '%s' does not support GetArrayValue",
+                               TypeIdToString(elem_type_id).c_str());
+        throw Exception(ExceptionType::UNKNOWN_TYPE, msg);
+      }
+    }
   }
 
   static inline Value GetNullValueByType(TypeId type_id) {

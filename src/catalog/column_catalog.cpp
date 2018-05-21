@@ -63,7 +63,7 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
                  column.GetOffset(), column.GetType(), column.IsInlined(),
-                 column.GetConstraints(), pool, txn);
+                 column.GetConstraints(), column.GetElemType(), pool, txn);
     column_id++;
   }
 }
@@ -140,6 +140,7 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  oid_t column_id, oid_t column_offset,
                                  type::TypeId column_type, bool is_inlined,
                                  const std::vector<Constraint> &constraints,
+                                 UNUSED_ATTRIBUTE std::shared_ptr<type::Type> column_elem_type,
                                  type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first

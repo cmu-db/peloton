@@ -531,8 +531,8 @@ const std::string LogicalTile::GetInfo() const {
  */
 void LogicalTile::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    std::unordered_map<storage::Tile *, std::vector<oid_t>>
-        &cols_in_physical_tile) {
+    std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+        cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -554,8 +554,7 @@ void LogicalTile::GenerateTileToColMap(
 void LogicalTile::MaterializeByTiles(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
-    storage::Tile *dest_tile,
-    const peloton::LayoutType peloton_layout_mode) {
+    storage::Tile *dest_tile, const peloton::LayoutType peloton_layout_mode) {
   bool row_wise_materialization = true;
 
   if (peloton_layout_mode == LayoutType::COLUMN)
@@ -618,8 +617,7 @@ void LogicalTile::MaterializeRowAtAtATime(
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       old_column_offsets.push_back(old_column_offset);
-      const type::TypeId old_column_type =
-          old_schema->GetType(old_column_id);
+      const type::TypeId old_column_type = old_schema->GetType(old_column_id);
       old_column_types.push_back(old_column_type);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
       old_is_inlineds.push_back(old_is_inlined);
@@ -706,8 +704,7 @@ void LogicalTile::MaterializeColumnAtATime(
       // Get old column information
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
-      const type::TypeId old_column_type =
-          old_schema->GetType(old_column_id);
+      const type::TypeId old_column_type = old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
 
       // Old to new column mapping

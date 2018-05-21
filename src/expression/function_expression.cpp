@@ -53,7 +53,7 @@ type::Value FunctionExpression::Evaluate(
   type::Value ret = func_.impl(child_values);
 
   // TODO: Checking this every time is not necessary, but it prevents crashing
-  if (ret.GetElementType() != return_value_type_) {
+  if (ret.GetElementType()->GetTypeId() != return_value_type_) {
     throw Exception(ExceptionType::EXPRESSION,
                     "function " + func_name_ + " returned an unexpected type.");
   }
@@ -87,8 +87,8 @@ const std::string FunctionExpression::GetInfo(int num_indent) const {
   os << StringUtil::Indent(num_indent) << "Expression ::\n"
      << StringUtil::Indent(num_indent + 1) << "expression type = Function,\n"
      << StringUtil::Indent(num_indent + 1) << "function name: " << func_name_
-     << "\n"
-     << StringUtil::Indent(num_indent + 1) << "function args: " << std::endl;
+     << "\n" << StringUtil::Indent(num_indent + 1)
+     << "function args: " << std::endl;
 
   for (const auto &child : children_) {
     os << child->GetInfo(num_indent + 2);
@@ -106,11 +106,11 @@ const std::string FunctionExpression::GetInfo() const {
 
 void FunctionExpression::CheckChildrenTypes() const {
   if (func_arg_types_.size() != children_.size()) {
-    throw Exception(
-        ExceptionType::EXPRESSION,
-        "Unexpected number of arguments to function: " + func_name_ +
-            ". Expected: " + std::to_string(func_arg_types_.size()) +
-            " Actual: " + std::to_string(children_.size()));
+    throw Exception(ExceptionType::EXPRESSION,
+                    "Unexpected number of arguments to function: " +
+                        func_name_ + ". Expected: " +
+                        std::to_string(func_arg_types_.size()) + " Actual: " +
+                        std::to_string(children_.size()));
   }
   // check that the types are correct
   for (size_t i = 0; i < func_arg_types_.size(); i++) {

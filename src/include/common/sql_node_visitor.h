@@ -51,6 +51,7 @@ class FunctionExpression;
 class OperatorUnaryMinusExpression;
 class CaseExpression;
 class SubqueryExpression;
+class ArrayExpression;
 }  // namespace expression
 
 //===--------------------------------------------------------------------===//
@@ -95,6 +96,7 @@ class SqlNodeVisitor {
   virtual void Visit(expression::StarExpression *expr);
   virtual void Visit(expression::TupleValueExpression *expr);
   virtual void Visit(expression::SubqueryExpression *expr);
+  virtual void Visit(expression::ArrayExpression *expr);
 };
 
 }  // namespace peloton

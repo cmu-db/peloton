@@ -74,6 +74,10 @@ class TupleValueExpression : public AbstractExpression {
     return_value_type_ = type_id;
   }
 
+  inline void SetElemValueType(std::shared_ptr<type::Type> elem_type) {
+    return_elem_value_type_ = elem_type;
+  }
+
   inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;

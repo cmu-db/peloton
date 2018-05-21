@@ -367,7 +367,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
-                               pool_.get(), txn);
+                               column.GetElemType(), pool_.get(), txn);
 
     // Create index on unique single column
     if (column.IsUnique()) {

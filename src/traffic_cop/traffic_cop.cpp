@@ -412,8 +412,9 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
       if (expr->GetExpressionType() == ExpressionType::STAR)
         GetTableColumns(from_table->select->from_table.get(), target_columns);
       else
-        target_columns.push_back(catalog::Column(expr->GetValueType(), 0,
-                                                 expr->GetExpressionName()));
+        target_columns.push_back(
+            catalog::Column(expr->GetValueType(), 0, expr->GetExpressionName(),
+                            false, INVALID_OID, expr->GetElemValueType()));
     }
   } else if (from_table->list.empty()) {
     if (from_table->join == NULL) {
@@ -465,8 +466,8 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto column : all_columns) {
-        tuple_descriptor.push_back(
-            GetColumnFieldForValueType(column.GetName(), column.GetType()));
+        tuple_descriptor.push_back(GetColumnFieldForValueType(
+            column.GetName(), column.GetType(), column.GetElemType()));
       }
     } else {
       std::string col_name;
@@ -477,8 +478,8 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
       } else {
         col_name = expr->alias;
       }
-      tuple_descriptor.push_back(
-          GetColumnFieldForValueType(col_name, expr->GetValueType()));
+      tuple_descriptor.push_back(GetColumnFieldForValueType(
+          col_name, expr->GetValueType(), expr->GetElemValueType()));
     }
   }
 
@@ -487,7 +488,8 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
 // TODO: move it to postgres_protocal_handler.cpp
 FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
-                                                 type::TypeId column_type) {
+                                                 type::TypeId column_type,
+                                                 std::shared_ptr<type::Type> column_elem_type) {
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
@@ -522,6 +524,28 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
       field_type = PostgresValueType::TEXT;
       field_size = 255;
       break;
+    }
+    case type::TypeId::ARRAY: {
+      switch (column_elem_type->GetTypeId()) {
+        case type::TypeId::INTEGER: {
+          field_type = PostgresValueType::INT4_ARRAY;
+          field_size = 255;
+          break;
+        }
+        case type::TypeId::DECIMAL: {
+          field_type = PostgresValueType::FLOADT4_ARRAY;
+          field_size = 255;
+          break;
+        }
+        default:
+          // Type not Identified
+          LOG_ERROR("Unrecognized ARRAY field type '%s' for field '%s'",
+                    TypeIdToString(column_elem_type->GetTypeId()).c_str(),
+                    column_name.c_str());
+          field_type = PostgresValueType::TEXT;
+          field_size = 255;
+          break;
+      }
     }
     case type::TypeId::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;

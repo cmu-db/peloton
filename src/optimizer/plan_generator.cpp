@@ -433,7 +433,7 @@ void PlanGenerator::BuildProjectionPlan() {
     }
     columns.push_back(catalog::Column(
         col->GetValueType(), type::Type::GetTypeSize(col->GetValueType()),
-        col->GetExpressionName()));
+        col->GetExpressionName(), false, INVALID_OID, col->GetElemValueType()));
   }
 
   unique_ptr<planner::ProjectInfo> proj_info(
@@ -488,7 +488,7 @@ void PlanGenerator::BuildAggregatePlan(
     }
     output_schema_columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-        expr->expr_name_));
+        expr->expr_name_, false, INVALID_OID, expr->GetElemValueType()));
   }
   // Generate group by ids
   vector<oid_t> col_ids;
@@ -548,7 +548,8 @@ void PlanGenerator::GenerateProjectionForJoin(
     }
     columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-        expr->GetExpressionName()));
+        expr->GetExpressionName(), false, INVALID_OID,
+        expr->GetElemValueType()));
     output_offset++;
   }
 

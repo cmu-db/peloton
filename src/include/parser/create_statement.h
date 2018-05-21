@@ -18,6 +18,7 @@
 #include "expression/abstract_expression.h"
 #include "parser/select_statement.h"
 #include "parser/sql_statement.h"
+#include "type/type_id.h"
 
 namespace peloton {
 namespace parser {
@@ -50,7 +51,8 @@ struct ColumnDefinition {
     TEXT,
 
     VARCHAR,
-    VARBINARY
+    VARBINARY,
+    ARRAY
   };
 
   ColumnDefinition(DataType type) : type(type) {
@@ -58,7 +60,9 @@ struct ColumnDefinition {
     if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  ColumnDefinition(char *name, DataType type) : name(name), type(type) {
+  ColumnDefinition(char *name, DataType type,
+                   DataType elem_type = DataType::INVALID)
+      : name(name), type(type), elem_type(elem_type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
     if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
@@ -170,6 +174,9 @@ struct ColumnDefinition {
       case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
 
+      case DataType::ARRAY:
+        return type::TypeId::ARRAY;
+
       case DataType::DATE:
         return type::TypeId::DATE;
 
@@ -182,12 +189,62 @@ struct ColumnDefinition {
     }
   }
 
+  static std::shared_ptr<type::Type> GetElemValueType(DataType elem_type) {
+    switch (elem_type) {
+      case DataType::INT:
+      case DataType::INTEGER:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::INTEGER));
+      case DataType::TINYINT:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::TINYINT));
+      case DataType::SMALLINT:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::SMALLINT));
+      case DataType::BIGINT:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::BIGINT));
+
+      case DataType::DECIMAL:
+      case DataType::DOUBLE:
+      case DataType::FLOAT:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::DECIMAL));
+
+      case DataType::BOOLEAN:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::BOOLEAN));
+
+      // case ADDRESS:
+      //  return type::Type::ADDRESS;
+
+      case DataType::TIMESTAMP:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::TIMESTAMP));
+
+      case DataType::CHAR:
+      case DataType::TEXT:
+      case DataType::VARCHAR:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::VARCHAR));
+
+      case DataType::VARBINARY:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::VARBINARY));
+
+      case DataType::ARRAY:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::ARRAY));
+
+      case DataType::DATE:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::DATE));
+
+      case DataType::INVALID:
+      case DataType::PRIMARY:
+      case DataType::FOREIGN:
+      case DataType::MULTIUNIQUE:
+      default:
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::INVALID));
+    }
+  }
+
   std::string name;
 
   // The name of the table and its database
   std::unique_ptr<TableInfo> table_info_ = nullptr;
 
   DataType type;
+  DataType elem_type;
   size_t varlen = 0;
   bool not_null = false;
   bool primary = false;

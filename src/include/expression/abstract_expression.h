@@ -20,6 +20,8 @@
 #include "codegen/query_parameters_map.h"
 #include "common/internal_types.h"
 #include "storage/zone_map_manager.h"
+#include "../type/type_id.h"
+#include "../type/type.h"
 
 namespace peloton {
 
@@ -65,7 +67,6 @@ namespace expression {
 
 class AbstractExpression : public Printable {
  public:
-
   /**
    * @brief Apply the operator to the inputs and produce ouput
    *
@@ -136,6 +137,8 @@ class AbstractExpression : public Printable {
   ExpressionType GetExpressionType() const { return exp_type_; }
 
   type::TypeId GetValueType() const { return return_value_type_; }
+
+  std::shared_ptr<type::Type> GetElemValueType() const { return return_elem_value_type_; }
 
   codegen::type::Type ResultType() const;
 
@@ -276,11 +279,17 @@ class AbstractExpression : public Printable {
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type)
-      : exp_type_(exp_type), return_value_type_(return_value_type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
-                     AbstractExpression *left, AbstractExpression *right)
-      : exp_type_(exp_type), return_value_type_(return_value_type) {
+                     std::shared_ptr<type::Type> return_elem_value_type = nullptr)
+      : exp_type_(exp_type),
+        return_value_type_(return_value_type),
+        return_elem_value_type_(return_elem_value_type) {}
+  AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
+                     AbstractExpression *left, AbstractExpression *right,
+                     std::shared_ptr<type::Type> return_elem_value_type = nullptr)
+      : exp_type_(exp_type),
+        return_value_type_(return_value_type),
+        return_elem_value_type_(return_elem_value_type) {
     // Order of these is important!
     if (left != nullptr)
       children_.push_back(std::unique_ptr<AbstractExpression>(left));
@@ -295,7 +304,8 @@ class AbstractExpression : public Printable {
         exp_type_(other.exp_type_),
         return_value_type_(other.return_value_type_),
         has_parameter_(other.has_parameter_),
-        depth_(other.depth_) {
+        depth_(other.depth_),
+        return_elem_value_type_(other.return_elem_value_type_) {
     for (auto &child : other.children_) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
@@ -318,6 +328,7 @@ class AbstractExpression : public Printable {
    * @brief The flag indicating if there's sub-query in the current expression
    */
   bool has_subquery_ = false;
+  std::shared_ptr<type::Type> return_elem_value_type_ = nullptr;
 };
 
 // Equality Comparator class for Abstract Expression

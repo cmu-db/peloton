@@ -12,6 +12,7 @@
 
 #include "parser/postgresparser.h"
 
+#include "expression/array_expression.h"
 #include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
@@ -488,9 +489,8 @@ expression::AbstractExpression *PostgresParser::TypeCastTransform(
   }
 
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   type::VarlenType temp(StringToTypeId("INVALID"));
   result = new expression::ConstantValueExpression(
       temp.CastAs(source_value, ColumnDefinition::StrToValueType(name)));
@@ -556,8 +556,8 @@ expression::AbstractExpression *PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-std::vector<std::unique_ptr<expression::AbstractExpression>>
-    *PostgresParser::TargetTransform(List *root) {
+std::vector<std::unique_ptr<expression::AbstractExpression>> *
+PostgresParser::TargetTransform(List *root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
@@ -816,6 +816,80 @@ expression::AbstractExpression *PostgresParser::NullTestTransform(
   return result;
 }
 
+// This function takes in a Postgres ArrayExpr primnode and transfers
+// it into Peloton AbstractExpression.
+expression::AbstractExpression *PostgresParser::ArrayExprTransform(
+    A_ArrayExpr *root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  auto expr_array = std::vector<expression::AbstractExpression *>();
+  expression::AbstractExpression *expr, *result;
+  type::TypeId element_type_id = type::TypeId::INVALID;
+
+  auto int32_vec = new std::vector<int32_t>();
+  auto double_vec = new std::vector<double>();
+
+  for (auto elem = root->elements->head; elem != nullptr; elem = elem->next) {
+    Node *node = reinterpret_cast<Node *>(elem->data.ptr_value);
+    switch (node->type) {
+      case T_A_Const: {
+        expr = ConstTransform(reinterpret_cast<A_Const *>(node));
+        if (element_type_id == type::TypeId::INVALID) {
+          element_type_id = expr->GetValueType();
+        }
+        expr_array.push_back(expr);
+        switch (element_type_id) {
+          case type::TypeId::INTEGER: {
+            int32_vec->push_back(
+                (reinterpret_cast<expression::ConstantValueExpression *>(expr))
+                    ->GetValue()
+                    .GetInteger());
+            break;
+          }
+          case type::TypeId::DECIMAL: {
+            double_vec->push_back(
+                (reinterpret_cast<expression::ConstantValueExpression *>(expr))
+                    ->GetValue()
+                    .GetDecimal());
+            break;
+          }
+          default:
+            throw NotImplementedException(StringUtil::Format(
+                "Array element value type %d not supported yet...",
+                element_type_id));
+        }
+        break;
+      }
+      default:
+        throw NotImplementedException(StringUtil::Format(
+            "Array element of type %d not supported yet...", node->type));
+    }
+  }
+
+  switch (element_type_id) {
+    case type::TypeId::INTEGER: {
+      std::shared_ptr<type::Type> elem_type = std::make_shared<type::Type>(type::TypeId::INTEGER);
+      result = new expression::ArrayExpression(
+          expr_array,
+          type::ValueFactory::GetArrayValue<int32_t>(int32_vec, elem_type));
+      break;
+    }
+    case type::TypeId::DECIMAL: {
+      std::shared_ptr<type::Type> elem_type = std::make_shared<type::Type>(type::TypeId::DECIMAL);
+      result = new expression::ArrayExpression(
+          expr_array,
+          type::ValueFactory::GetArrayValue<double>(double_vec, elem_type));
+      break;
+    }
+    default:
+      throw NotImplementedException(StringUtil::Format(
+          "Array element value type %d not supported yet...", element_type_id));
+  }
+  return result;
+}
+
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into Peloton AbstractExpression.
 expression::AbstractExpression *PostgresParser::WhereTransform(Node *root) {
@@ -863,16 +937,37 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 void PostgresParser::ColumnDefTransform(ColumnDef *root,
                                         parser::CreateStatement *stmt) {
   TypeName *type_name = root->typeName;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::ColumnDefinition *result = nullptr;
 
   parser::ColumnDefinition::DataType data_type =
       parser::ColumnDefinition::StrToDataType(name);
 
+  if (type_name->arrayBounds) {
+    // TODO: Mark corresponding fields in ColumnDefinition class to denote
+    // an array column
+    switch (data_type) {
+      case ColumnDefinition::DataType::INT:
+        result = new ColumnDefinition(root->colname,
+                                      ColumnDefinition::DataType::ARRAY,
+                                      ColumnDefinition::DataType::INTEGER);
+        break;
+      case ColumnDefinition::DataType::DECIMAL:
+        result = new ColumnDefinition(root->colname,
+                                      ColumnDefinition::DataType::ARRAY,
+                                      ColumnDefinition::DataType::DECIMAL);
+        break;
+      default: {
+        throw NotImplementedException(StringUtil::Format(
+            "Column Array DataType %d not supported yet...\n", data_type));
+      }
+    }
+  } else {
+    result = new ColumnDefinition(root->colname, data_type);
+  }
+
   // Transform Varchar len
-  result = new ColumnDefinition(root->colname, data_type);
   if (type_name->typmods) {
     Node *node =
         reinterpret_cast<Node *>(type_name->typmods->head->data.ptr_value);
@@ -1056,9 +1151,8 @@ parser::FuncParameter *PostgresParser::FunctionParameterTransform(
     FunctionParameter *root) {
   parser::FuncParameter::DataType data_type;
   TypeName *type_name = root->argType;
-  char *name =
-      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
-           ->val.str);
+  char *name = (reinterpret_cast<value *>(
+                    type_name->names->tail->data.ptr_value)->val.str);
   parser::FuncParameter *result = nullptr;
 
   // Transform parameter type
@@ -1559,8 +1653,8 @@ std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
 // parsenode and transfers it into Peloton AbstractExpression.
 // This is a vector pointer of vector pointers because one InsertStmt can insert
 // multiple tuples.
-std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-    *PostgresParser::ValueListsTransform(List *root) {
+std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+PostgresParser::ValueListsTransform(List *root) {
   auto result = new std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
@@ -1592,6 +1686,11 @@ std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
             delete result;
             throw e;
           }
+          break;
+        }
+        case T_A_ArrayExpr: {
+          cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+              ArrayExprTransform((A_ArrayExpr *)expr)));
           break;
         }
         case T_SetToDefault: {
@@ -1887,8 +1986,8 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>>
-    *PostgresParser::UpdateTargetTransform(List *root) {
+std::vector<std::unique_ptr<parser::UpdateClause>> *
+PostgresParser::UpdateTargetTransform(List *root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();

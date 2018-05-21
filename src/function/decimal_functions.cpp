@@ -31,42 +31,32 @@ type::Value DecimalFunctions::_Abs(const std::vector<type::Value> &args) {
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
-  switch (args[0].GetElementType()) {
-    case type::TypeId::DECIMAL:
-      {
-        double result;
-        result = Abs(args[0].GetAs<double>());
-        return type::ValueFactory::GetDecimalValue(result);
-      }
-      break;
-    case type::TypeId::INTEGER:
-      {
-        int32_t result;
-        result = abs(args[0].GetAs<int32_t>());
-        return type::ValueFactory::GetIntegerValue(result);
-        break;
-      }
-    case type::TypeId::BIGINT:
-      {
-        int64_t result;
-        result = std::abs(args[0].GetAs<int64_t>());
-        return type::ValueFactory::GetBigIntValue(result);
-      }
-      break;
-    case type::TypeId::SMALLINT:
-      {
-        int16_t result;
-        result = abs(args[0].GetAs<int16_t>());
-        return type::ValueFactory::GetSmallIntValue(result);
-      }
-      break;
-    case type::TypeId::TINYINT:
-      {
-        int8_t result;
-        result = abs(args[0].GetAs<int8_t>());
-        return type::ValueFactory::GetTinyIntValue(result);
-      }
-      break;
+  switch (args[0].GetElementType()->GetTypeId()) {
+    case type::TypeId::DECIMAL: {
+      double result;
+      result = Abs(args[0].GetAs<double>());
+      return type::ValueFactory::GetDecimalValue(result);
+    } break;
+    case type::TypeId::INTEGER: {
+      int32_t result;
+      result = abs(args[0].GetAs<int32_t>());
+      return type::ValueFactory::GetIntegerValue(result);
+    } break;
+    case type::TypeId::BIGINT: {
+      int64_t result;
+      result = std::abs(args[0].GetAs<int64_t>());
+      return type::ValueFactory::GetBigIntValue(result);
+    } break;
+    case type::TypeId::SMALLINT: {
+      int16_t result;
+      result = abs(args[0].GetAs<int16_t>());
+      return type::ValueFactory::GetSmallIntValue(result);
+    } break;
+    case type::TypeId::TINYINT: {
+      int8_t result;
+      result = abs(args[0].GetAs<int8_t>());
+      return type::ValueFactory::GetTinyIntValue(result);
+    } break;
     default:
       return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
@@ -81,7 +71,7 @@ type::Value DecimalFunctions::_Ceil(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   double result;
-  switch (args[0].GetElementType()) {
+  switch (args[0].GetElementType()->GetTypeId()) {
     case type::TypeId::DECIMAL:
       result = Ceil(args[0].GetAs<double>());
       break;
@@ -112,7 +102,7 @@ type::Value DecimalFunctions::_Floor(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   double res;
-  switch(args[0].GetElementType()) {
+  switch (args[0].GetElementType()->GetTypeId()) {
     case type::TypeId::DECIMAL:
       res = Floor(args[0].GetAs<double>());
       break;
@@ -146,7 +136,6 @@ type::Value DecimalFunctions::_Round(const std::vector<type::Value> &args) {
 }
 
 double DecimalFunctions::Round(double arg) { return round(arg); }
-
 
 }  // namespace function
 }  // namespace peloton

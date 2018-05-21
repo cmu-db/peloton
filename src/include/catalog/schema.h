@@ -36,7 +36,8 @@ class Schema : public Printable {
   void CreateTupleSchema(const std::vector<type::TypeId> &column_types,
                          const std::vector<oid_t> &column_lengths,
                          const std::vector<std::string> &column_names,
-                         const std::vector<bool> &is_inlined);
+                         const std::vector<bool> &is_inlined,
+                         const std::vector<std::shared_ptr<type::Type>> &column_elem_types);
 
   // Construct schema from vector of Column
   Schema(const std::vector<Column> &columns);
@@ -194,7 +195,7 @@ class Schema : public Printable {
   }
 
   // Get the default value for the column
-  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+  inline type::Value *GetDefaultValue(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
         return constraint.getDefaultValue();

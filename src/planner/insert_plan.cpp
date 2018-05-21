@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "expression/constant_value_expression.h"
+#include "expression/array_expression.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
@@ -177,6 +178,17 @@ bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
     auto *const_expr =
         dynamic_cast<expression::ConstantValueExpression *>(expr);
     type::Value value = const_expr->GetValue().CastAs(type);
+
+    schema_to_insert_[schema_idx].set_value = true;
+    schema_to_insert_[schema_idx].value = value;
+    // save it, in case this is not a PS
+    values_.push_back(value);
+
+    return false;
+  } else if (expr->GetExpressionType() == ExpressionType::ARRAY) {
+    auto *array_exp =
+        dynamic_cast<expression::ArrayExpression *>(expr);
+    type::Value value = array_exp->GetValue();
 
     schema_to_insert_[schema_idx].set_value = true;
     schema_to_insert_[schema_idx].value = value;
