@@ -50,25 +50,14 @@ namespace concurrency {
 
 TransactionContext::TransactionContext(const size_t thread_id,
                                        const IsolationLevelType isolation,
-                                       const cid_t &read_id)
-    : rw_set_(INTITIAL_RW_SET_SIZE) {
+                                       const cid_t &read_id) {
   Init(thread_id, isolation, read_id);
 }
 
 TransactionContext::TransactionContext(const size_t thread_id,
                                        const IsolationLevelType isolation,
                                        const cid_t &read_id,
-                                       const cid_t &commit_id)
-    : rw_set_(INTITIAL_RW_SET_SIZE) {
-  Init(thread_id, isolation, read_id, commit_id);
-}
-
-TransactionContext::TransactionContext(const size_t thread_id,
-                                       const IsolationLevelType isolation,
-                                       const cid_t &read_id,
-                                       const cid_t &commit_id,
-                                       const size_t rw_set_size)
-    : rw_set_(rw_set_size) {
+                                       const cid_t &commit_id) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
@@ -95,7 +84,6 @@ void TransactionContext::Init(const size_t thread_id,
 
   insert_count_ = 0;
 
-  rw_set_.Clear();
   gc_set_.reset(new GCSet());
   gc_object_set_.reset(new GCObjectSet());
 
@@ -103,99 +91,88 @@ void TransactionContext::Init(const size_t thread_id,
 }
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
-  RWType rw_type;
+  RWType rw_type = RWType::INVALID;
 
-  if (!rw_set_.Find(location, rw_type)) {
-    rw_type = RWType::INVALID;
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    return rw_set_it->second;
   }
   return rw_type;
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
-  RWType rw_type;
 
-  if (rw_set_.Find(location, rw_type)) {
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    UNUSED_ATTRIBUTE RWType rw_type = rw_set_it->second;
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     return;
-  } else {
-    rw_set_.Insert(location, RWType::READ);
   }
+  rw_set_[location] = RWType::READ;
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
-  RWType rw_type;
-
-  if (rw_set_.Find(location, rw_type)) {
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    RWType rw_type = rw_set_it->second;
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
-    if (rw_type == RWType::READ) {
-      rw_set_.Update(location, RWType::READ_OWN);
+    if (rw_type != RWType::READ) {
+      return;
     }
-  } else {
-    rw_set_.Insert(location, RWType::READ_OWN);
   }
+  rw_set_[location] = RWType::READ_OWN;
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
-  RWType rw_type;
-
-  if (rw_set_.Find(location, rw_type)) {
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    RWType rw_type = rw_set_it->second;
     if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
       is_written_ = true;
-      rw_set_.Update(location, RWType::UPDATE);
+    } else if (rw_type == RWType::UPDATE || rw_type == RWType::INSERT) {
       return;
-    }
-    if (rw_type == RWType::UPDATE) {
-      return;
-    }
-    if (rw_type == RWType::INSERT) {
-      return;
-    }
-    if (rw_type == RWType::DELETE) {
+    } else {
+      // DELETE or INS_DELETE
       PELOTON_ASSERT(false);
       return;
     }
-    PELOTON_ASSERT(false);
-  } else {
-    rw_set_.Insert(location, RWType::UPDATE);
   }
+  rw_set_[location] = RWType::UPDATE;
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
-  if (IsInRWSet(location)) {
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
     PELOTON_ASSERT(false);
-  } else {
-    rw_set_.Insert(location, RWType::INSERT);
-    ++insert_count_;
+    return;
   }
+  rw_set_[location] = RWType::INSERT;
+  ++insert_count_;
 }
 
 bool TransactionContext::RecordDelete(const ItemPointer &location) {
-  RWType rw_type;
+  const auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    RWType rw_type = rw_set_it->second;
 
-  if (rw_set_.Find(location, rw_type)) {
     if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
-      rw_set_.Update(location, RWType::DELETE);
-      // record write
+      rw_set_[location] = RWType::DELETE;
       is_written_ = true;
       return false;
-    }
-    if (rw_type == RWType::UPDATE) {
-      rw_set_.Update(location, RWType::DELETE);
+    } else if (rw_type == RWType::UPDATE) {
+      rw_set_[location] = RWType::DELETE;
       return false;
-    }
-    if (rw_type == RWType::INSERT) {
-      rw_set_.Update(location, RWType::INS_DEL);
+    } else if (rw_type == RWType::INSERT) {
+      rw_set_[location] = RWType::INS_DEL;
       --insert_count_;
       return true;
-    }
-    if (rw_type == RWType::DELETE) {
+    } else {
+      // DELETE and INS_DEL
       PELOTON_ASSERT(false);
       return false;
     }
-    PELOTON_ASSERT(false);
-  } else {
-    rw_set_.Insert(location, RWType::DELETE);
   }
+  rw_set_[location] = RWType::DELETE;
   return false;
 }
 

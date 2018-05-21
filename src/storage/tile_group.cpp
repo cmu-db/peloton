@@ -16,10 +16,11 @@
 
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "common/internal_types.h"
 #include "storage/abstract_table.h"
+#include "storage/layout.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
@@ -31,25 +32,23 @@ namespace storage {
 TileGroup::TileGroup(BackendType backend_type,
                      TileGroupHeader *tile_group_header, AbstractTable *table,
                      const std::vector<catalog::Schema> &schemas,
-                     const column_map_type &column_map, int tuple_count)
+                     std::shared_ptr<const Layout> layout, int tuple_count)
     : database_id(INVALID_OID),
       table_id(INVALID_OID),
       tile_group_id(INVALID_OID),
       backend_type(backend_type),
-      tile_schemas(schemas),
       tile_group_header(tile_group_header),
       table(table),
-      num_tuple_slots(tuple_count),
-      column_map(column_map) {
-  tile_count = tile_schemas.size();
-
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+      num_tuple_slots_(tuple_count),
+      tile_group_layout_(layout) {
+  tile_count_ = schemas.size();
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
-        tile_group_header, tile_schemas[tile_itr], this, tuple_count));
+        tile_group_header, schemas[tile_itr], this, tuple_count));
 
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
@@ -103,22 +102,21 @@ oid_t TileGroup::GetActiveTupleCount() const {
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
@@ -138,7 +136,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
@@ -185,22 +183,21 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   }
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
@@ -285,22 +282,21 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   if (status == false) return INVALID_OID;
 
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+            tuple_slot_id, num_tuple_slots_);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
@@ -319,22 +315,11 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
-oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
-  oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
-  return tile_offset;
-}
-
-oid_t TileGroup::GetTileColumnId(oid_t column_id) {
-  oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
-  return tile_column_id;
-}
-
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_->LocateTileAndColumn(column_id, tile_offset,
+                                          tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
@@ -342,35 +327,16 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
                          oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_->LocateTileAndColumn(column_id, tile_offset,
+                                          tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
 
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
-  PELOTON_ASSERT(tile_offset < tile_count);
+  PELOTON_ASSERT(tile_offset < tile_count_);
   return tiles[tile_offset];
-}
-
-double TileGroup::GetSchemaDifference(
-    const storage::column_map_type &new_column_map) {
-  double theta = 0;
-  size_t capacity = column_map.size();
-  double diff = 0;
-
-  for (oid_t col_itr = 0; col_itr < capacity; col_itr++) {
-    auto &old_col = column_map.at(col_itr);
-    auto &new_col = new_column_map.at(col_itr);
-
-    // The tile don't match
-    if (old_col.first != new_col.first) diff++;
-  }
-
-  // compute diff
-  theta = diff / capacity;
-
-  return theta;
 }
 
 void TileGroup::Sync() {
@@ -391,9 +357,10 @@ const std::string TileGroup::GetInfo() const {
      << peloton::GETINFO_DOUBLE_STAR << std::endl;
   os << "Database[" << database_id << "] // ";
   os << "Table[" << table_id << "] " << std::endl;
+  os << "Layout[" << *tile_group_layout_ << std::endl;
   os << (*tile_group_header) << std::endl;
 
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
+  for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
     if (tile != nullptr) {
       os << std::endl << (*tile);

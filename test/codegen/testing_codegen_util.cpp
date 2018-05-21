@@ -32,7 +32,8 @@ namespace test {
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
+PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup,
+                                       peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -41,9 +42,10 @@ PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
   catalog->CreateDatabase(test_db_name, txn);
   test_db = catalog->GetDatabaseWithName(test_db_name, txn);
   // Create test table
-  CreateTestTables(txn, tuples_per_tilegroup);
+  CreateTestTables(txn, tuples_per_tilegroup, layout_type);
 
   txn_manager.CommitTransaction(txn);
+  layout_table = nullptr;
 }
 
 PelotonCodeGenTest::~PelotonCodeGenTest() {
@@ -103,27 +105,28 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 
 // Create all the test tables, but don't load any data
 void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
-                                          oid_t tuples_per_tilegroup) {
+                                          oid_t tuples_per_tilegroup,
+                                          peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
-                         tuples_per_tilegroup);
+                         tuples_per_tilegroup, layout_type);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
-                         tuples_per_tilegroup);
+                         tuples_per_tilegroup, layout_type);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }
@@ -169,6 +172,80 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
     PELOTON_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+  }
+
+  txn_manager.CommitTransaction(txn);
+}
+
+void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
+    peloton::LayoutType layout_type, uint32_t tuples_per_tilegroup,
+    uint32_t tile_group_count, uint32_t column_count, bool is_inlined) {
+  uint32_t tuple_count = tuples_per_tilegroup * tile_group_count;
+  /////////////////////////////////////////////////////////
+  // Define the schema.
+  /////////////////////////////////////////////////////////
+
+  std::vector<catalog::Column> columns;
+
+  for (oid_t col_itr = 0; col_itr <= column_count; col_itr++) {
+    auto column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "FIELD" + std::to_string(col_itr), is_inlined);
+
+    columns.push_back(column);
+  }
+
+  std::unique_ptr<catalog::Schema> table_schema =
+      std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+  std::string table_name("LAYOUT_TABLE");
+
+  /////////////////////////////////////////////////////////
+  // Create table.
+  /////////////////////////////////////////////////////////
+
+  bool is_catalog = false;
+  auto *catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  const bool allocate = true;
+  auto txn = txn_manager.BeginTransaction();
+
+  // Insert table in catalog
+  catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
+                       std::move(table_schema), txn, is_catalog,
+                       tuples_per_tilegroup, layout_type);
+  // Get table reference
+  layout_table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
+                                           table_name, txn);
+  txn_manager.EndTransaction(txn);
+
+  /////////////////////////////////////////////////////////
+  // Load in the data
+  /////////////////////////////////////////////////////////
+
+  // Insert tuples into tile_group.
+
+  txn = txn_manager.BeginTransaction();
+  auto table_schema_ptr = layout_table->GetSchema();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
+    int populate_value = row_id;
+
+    storage::Tuple tuple(table_schema_ptr, allocate);
+
+    for (oid_t col_id = 0; col_id <= column_count; col_id++) {
+      auto value = type::ValueFactory::GetIntegerValue(populate_value + col_id);
+      tuple.SetValue(col_id, value, testing_pool);
+    }
+
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+        layout_table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
+    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+
     txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 

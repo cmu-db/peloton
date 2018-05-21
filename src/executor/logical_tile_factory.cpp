@@ -89,11 +89,11 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
       CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
 
   // Construct schema.
-  std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
-  PELOTON_ASSERT(schemas.size() == tile_group->NumTiles());
-  for (unsigned int i = 0; i < schemas.size(); i++) {
+  unsigned int num_tiles = tile_group->NumTiles();
+  for (unsigned int i = 0; i < num_tiles; i++) {
     auto base_tile_ref = tile_group->GetTileReference(i);
-    for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
+    auto schema = base_tile_ref->GetSchema();
+    for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
       new_tile->AddColumn(base_tile_ref, col_id, position_list_idx);
     }
   }

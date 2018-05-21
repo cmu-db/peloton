@@ -15,7 +15,9 @@
 
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
+#include "catalog/layout_catalog.h"
 #include "catalog/system_catalogs.h"
+#include "catalog/table_catalog.h"
 #include "common/container_tuple.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -65,14 +67,9 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
+      current_layout_oid_(ATOMIC_VAR_INIT(COLUMN_STORE_OID)),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
-  // Init default partition
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    default_partition_[col_itr] = std::make_pair(0, col_itr);
-  }
-
   if (is_catalog == true) {
     active_tilegroup_count_ = 1;
     active_indirection_array_count_ = 1;
@@ -873,10 +870,10 @@ void DataTable::ResetDirty() { dirty_ = false; }
 //===--------------------------------------------------------------------===//
 
 TileGroup *DataTable::GetTileGroupWithLayout(
-    const column_map_type &partitioning) {
+    std::shared_ptr<const Layout> layout) {
   oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
-  return (AbstractTable::GetTileGroupWithLayout(
-      database_oid, tile_group_id, partitioning, tuples_per_tilegroup_));
+  return (AbstractTable::GetTileGroupWithLayout(database_oid, tile_group_id,
+                                                layout, tuples_per_tilegroup_));
 }
 
 oid_t DataTable::AddDefaultIndirectionArray(
@@ -901,14 +898,11 @@ oid_t DataTable::AddDefaultTileGroup() {
 }
 
 oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
-  column_map_type column_map;
   oid_t tile_group_id = INVALID_OID;
 
-  // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout();
-
   // Create a tile group with that partitioning
-  std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
+  std::shared_ptr<TileGroup> tile_group(
+      GetTileGroupWithLayout(default_layout_));
   PELOTON_ASSERT(tile_group.get());
 
   tile_group_id = tile_group->GetTileGroupId();
@@ -939,16 +933,20 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
   std::vector<catalog::Schema> schemas;
   schemas.push_back(*schema);
+  std::shared_ptr<const Layout> layout = nullptr;
 
-  column_map_type column_map;
-  // default column map
-  auto col_count = schema->GetColumnCount();
-  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    column_map[col_itr] = std::make_pair(0, col_itr);
+  // The TileGroup for recovery is always added in ROW layout,
+  // This was a part of the previous design. If you are planning
+  // to change this, make sure the layout is added to the catalog
+  if (default_layout_->IsRowStore()) {
+    layout = default_layout_;
+  } else {
+    layout = std::shared_ptr<const Layout>(
+        new const Layout(schema->GetColumnCount()));
   }
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, schemas, column_map,
+      database_oid, table_oid, tile_group_id, this, schemas, layout,
       tuples_per_tilegroup_));
 
   auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
@@ -1196,25 +1194,28 @@ catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
-    storage::TileGroup *tile_group, const column_map_type &column_map) {
+    storage::TileGroup *tile_group, const Layout &layout) {
   std::vector<catalog::Schema> new_schema;
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
+  auto tile_group_layout = tile_group->GetLayout();
 
   // First, get info from the original tile group's schema
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
-  auto orig_schemas = tile_group->GetTileSchemas();
-  for (auto column_map_entry : column_map) {
-    new_tile_offset = column_map_entry.second.first;
-    new_tile_column_offset = column_map_entry.second.second;
-    oid_t column_offset = column_map_entry.first;
 
-    tile_group->LocateTileAndColumn(column_offset, orig_tile_offset,
-                                    orig_tile_column_offset);
+  uint32_t column_count = layout.GetColumnCount();
+  for (oid_t col_id = 0; col_id < column_count; col_id++) {
+    // Get TileGroup layout's tile and offset for col_id.
+    tile_group_layout.LocateTileAndColumn(col_id, orig_tile_offset,
+                                          orig_tile_column_offset);
+    // Get new layout's tile and offset for col_id.
+    layout.LocateTileAndColumn(col_id, new_tile_offset, new_tile_column_offset);
 
-    // Get the column info from original schema
-    auto orig_schema = orig_schemas[orig_tile_offset];
-    auto column_info = orig_schema.GetColumn(orig_tile_column_offset);
+    // Get the column info from original tile
+    auto tile = tile_group->GetTile(orig_tile_offset);
+    PELOTON_ASSERT(tile != nullptr);
+    auto orig_schema = tile->GetSchema();
+    auto column_info = orig_schema->GetColumn(orig_tile_column_offset);
     schemas[new_tile_offset][new_tile_column_offset] = column_info;
   }
 
@@ -1234,24 +1235,29 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 // Set the transformed tile group column-at-a-time
 void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
                              storage::TileGroup *new_tile_group) {
-  // Check the schema of the two tile groups
-  auto new_column_map = new_tile_group->GetColumnMap();
-  auto orig_column_map = orig_tile_group->GetColumnMap();
-  PELOTON_ASSERT(new_column_map.size() == orig_column_map.size());
+  auto new_layout = new_tile_group->GetLayout();
+  auto orig_layout = orig_tile_group->GetLayout();
+
+  // Check that both tile groups have the same schema
+  // Currently done by checking that the number of columns are equal
+  // TODO Pooja: Handle schema equality for multiple schema versions.
+  UNUSED_ATTRIBUTE auto new_column_count = new_layout.GetColumnCount();
+  UNUSED_ATTRIBUTE auto orig_column_count = orig_layout.GetColumnCount();
+  PELOTON_ASSERT(new_column_count == orig_column_count);
 
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
 
-  auto column_count = new_column_map.size();
+  auto column_count = new_column_count;
   auto tuple_count = orig_tile_group->GetAllocatedTupleCount();
   // Go over each column copying onto the new tile group
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // Locate the original base tile and tile column offset
-    orig_tile_group->LocateTileAndColumn(column_itr, orig_tile_offset,
-                                         orig_tile_column_offset);
+    orig_layout.LocateTileAndColumn(column_itr, orig_tile_offset,
+                                    orig_tile_column_offset);
 
-    new_tile_group->LocateTileAndColumn(column_itr, new_tile_offset,
-                                        new_tile_column_offset);
+    new_layout.LocateTileAndColumn(column_itr, new_tile_offset,
+                                   new_tile_column_offset);
 
     auto orig_tile = orig_tile_group->GetTile(orig_tile_offset);
     auto new_tile = new_tile_group->GetTile(new_tile_offset);
@@ -1284,7 +1290,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetSchemaDifference(default_partition_);
+  auto diff = tile_group->GetLayout().GetLayoutDifference(*default_layout_);
 
   // Check threshold for transformation
   if (diff < theta) {
@@ -1295,15 +1301,14 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Get the schema for the new transformed tile group
   auto new_schema =
-      TransformTileGroupSchema(tile_group.get(), default_partition_);
+      TransformTileGroupSchema(tile_group.get(), *default_layout_);
 
   // Allocate space for the transformed tile group
   std::shared_ptr<storage::TileGroup> new_tile_group(
       TileGroupFactory::GetTileGroup(
           tile_group->GetDatabaseId(), tile_group->GetTableId(),
           tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-          new_schema, default_partition_,
-          tile_group->GetAllocatedTupleCount()));
+          new_schema, default_layout_, tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
   SetTransformedTileGroup(tile_group.get(), new_tile_group.get());
@@ -1361,29 +1366,7 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
-  std::map<oid_t, oid_t> column_map_stats;
-
-  // Cluster per-tile column count
-  for (auto entry : default_partition_) {
-    auto tile_id = entry.second.first;
-    auto column_map_itr = column_map_stats.find(tile_id);
-    if (column_map_itr == column_map_stats.end())
-      column_map_stats[tile_id] = 1;
-    else
-      column_map_stats[tile_id]++;
-  }
-
-  return column_map_stats;
-}
-
-void DataTable::SetDefaultLayout(const column_map_type &layout) {
-  default_partition_ = layout;
-}
-
-column_map_type DataTable::GetDefaultLayout() const {
-  return default_partition_;
-}
+const Layout &DataTable::GetDefaultLayout() const { return *default_layout_; }
 
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {
   trigger_list_->AddTrigger(new_trigger);
@@ -1430,6 +1413,17 @@ bool DataTable::operator==(const DataTable &rhs) const {
   if (GetDatabaseOid() != rhs.GetDatabaseOid()) return false;
   if (GetOid() != rhs.GetOid()) return false;
   return true;
+}
+
+bool DataTable::SetCurrentLayoutOid(oid_t new_layout_oid) {
+  oid_t old_oid = current_layout_oid_;
+  while (old_oid <= new_layout_oid) {
+    if (current_layout_oid_.compare_exchange_strong(old_oid, new_layout_oid)) {
+      return true;
+    }
+    old_oid = current_layout_oid_;
+  }
+  return false;
 }
 
 }  // namespace storage

@@ -16,6 +16,7 @@
 #include "catalog/schema.h"
 #include "common/macros.h"
 #include "storage/data_table.h"
+#include "storage/layout.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "type/value.h"
@@ -396,11 +397,12 @@ void LogicalTile::AddColumns(
     const std::shared_ptr<storage::TileGroup> &tile_group,
     const std::vector<oid_t> &column_ids) {
   const int position_list_idx = 0;
+  auto tile_group_layout = tile_group->GetLayout();
   for (oid_t origin_column_id : column_ids) {
     oid_t base_tile_offset, tile_column_id;
 
-    tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
-                                    tile_column_id);
+    tile_group_layout.LocateTileAndColumn(origin_column_id, base_tile_offset,
+                                          tile_column_id);
 
     AddColumn(tile_group->GetTileReference(base_tile_offset), tile_column_id,
               position_list_idx);
