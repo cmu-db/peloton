@@ -832,8 +832,6 @@ bool TimestampCheckpointManager::RecoverStorageObject(
         // Set a column into the vector in order of the column_oid.
         // Cannot use push_back of vector because column_catalog doesn't acquire
         // the column info from pg_attribute in the order.
-        // If use []operator of vector to insert it, AddressSanitizer regards it
-        // as stack-buffer-overflow in travis-ci (only release build).
         auto column_itr = columns.begin();
         for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
         	if (column_itr == columns.end() ||
