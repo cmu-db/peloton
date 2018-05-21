@@ -54,11 +54,6 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
   }
 }
 
-// Compacts tile group by moving all of its tuples to other tile groups
-// Once empty, it will eventually get freed by the GCM
-// It returns true if txn succeeds, otherwise returns false.
-// Future Work: Take in project_info as a parameter
-// Then it can be used for online schema changes
 bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     storage::DataTable *table, std::shared_ptr<storage::TileGroup> tile_group) {
 
