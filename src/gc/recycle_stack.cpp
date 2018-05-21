@@ -16,9 +16,6 @@ namespace peloton {
 
 namespace gc {
 
-RecycleStack::RecycleStack() {}
-
-// unlinks and deletes all nodes in the stack
 RecycleStack::~RecycleStack() {
   // acquire head lock
   while (head_.lock.test_and_set(std::memory_order_acq_rel));
@@ -42,7 +39,6 @@ RecycleStack::~RecycleStack() {
   head_.lock.clear(std::memory_order_acq_rel);
 }
 
-// Used by GC Manager to add to recycle stack (can be slower)
 void RecycleStack::Push(const ItemPointer &location) {
 
   // acquire head lock
@@ -54,9 +50,6 @@ void RecycleStack::Push(const ItemPointer &location) {
   head_.lock.clear(std::memory_order_acq_rel);
 }
 
-// Used by GetRecycledTupleSlot to get an empty slot (must be fast)
-// try to acquire the lock and pop an itempointer off the stack
-// TODO: Consider trying MAX_POP_ATTEMPTS
 ItemPointer RecycleStack::TryPop() {
   ItemPointer location = INVALID_ITEMPOINTER;
 
