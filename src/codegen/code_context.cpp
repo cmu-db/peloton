@@ -16,8 +16,8 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
@@ -93,8 +93,8 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
  private:
   // The code context
   const std::unordered_map<std::string,
-                           std::pair<llvm::Function *, CodeContext::FuncPtr>> &
-      builtins_;
+                           std::pair<llvm::Function *, CodeContext::FuncPtr>>
+      &builtins_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,11 +200,11 @@ CodeContext::CodeContext()
   module_ = m.get();
   engine_.reset(
       llvm::EngineBuilder(std::move(m))
-                    .setEngineKind(llvm::EngineKind::JIT)
-          .setMCJITMemoryManager(llvm::make_unique<PelotonMemoryManager>(builtins_))
-                    .setMCPU(llvm::sys::getHostCPUName())
-                    .setErrorStr(&err_str_)
-                    .create());
+          .setEngineKind(llvm::EngineKind::JIT)
+          .setMCJITMemoryManager(llvm::make_unique<PelotonMM>(builtins_))
+          .setMCPU(llvm::sys::getHostCPUName())
+          .setErrorStr(&err_str_)
+          .create());
   PELOTON_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
