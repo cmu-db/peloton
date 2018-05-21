@@ -38,7 +38,7 @@ class PostgresConfig(BaseXMLConfig):
 class PelotonConfig(BaseXMLConfig):
     host = 'localhost'
     port = '15721'
-    dbtype = 'postgres'
+    dbtype = 'peloton'
     driver = 'org.postgresql.Driver'
     jdbc_prefix = 'jdbc:postgresql'
 
