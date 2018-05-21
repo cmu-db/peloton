@@ -12,14 +12,10 @@
 
 #include "optimizer/cost_calculator.h"
 
-#include <cmath>
-
 #include "catalog/table_catalog.h"
 #include "optimizer/memo.h"
-#include "optimizer/operators.h"
 #include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/table_stats.h"
 
 namespace peloton {
 namespace optimizer {
@@ -30,6 +26,7 @@ double CostCalculator::CalculateCost(GroupExpression *gexpr, Memo *memo,
   memo_ = memo;
   txn_ = txn;
   gexpr_->Op().Accept(this);
+
   return output_cost_;
 }
 
@@ -88,7 +85,9 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
   auto right_child_rows =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-  // TODO(boweic): Build (left) table should have different cost to probe table
+
+  auto right_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
+  LOG_INFO("%f", right_group->GetCostLB());
   output_cost_ = (left_child_rows + right_child_rows) * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}
@@ -142,5 +141,6 @@ double CostCalculator::GroupByCost() {
   // O(tuple)
   return child_num_rows * DEFAULT_TUPLE_COST;
 }
+
 }  // namespace optimizer
 }  // namespace peloton

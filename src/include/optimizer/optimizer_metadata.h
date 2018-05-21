@@ -13,6 +13,8 @@
 #pragma once
 
 #include "common/timer.h"
+#include "optimizer/cost_calculator.h"
+#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/memo.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/rule.h"
@@ -27,20 +29,32 @@ namespace optimizer {
 class OptimizerTaskPool;
 class RuleSet;
 
+using SettingsManager = settings::SettingsManager;
+using SettingId = settings::SettingId;
+
 class OptimizerMetadata {
  public:
   OptimizerMetadata()
-      : timeout_limit(settings::SettingsManager::GetInt(
+      : cost_calculator(CostCalculatorFactory::CreateCostCalculator(
+            SettingsManager::GetString(SettingId::cost_calculator))),
+        timeout_limit(
+            SettingsManager::GetInt(SettingId::task_execution_timeout)),
+        timer(Timer<std::milli>()) {}
+
+  OptimizerMetadata(std::unique_ptr<AbstractCostCalculator> cost_calculator)
+      : cost_calculator(std::move(cost_calculator)),
+        timeout_limit(settings::SettingsManager::GetInt(
             settings::SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
 
   Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
+  std::unique_ptr<AbstractCostCalculator> cost_calculator;
   catalog::CatalogCache *catalog_cache;
   unsigned int timeout_limit;
   Timer<std::milli> timer;
-  concurrency::TransactionContext* txn;
+  concurrency::TransactionContext *txn;
 
   void SetTaskPool(OptimizerTaskPool *task_pool) {
     this->task_pool = task_pool;

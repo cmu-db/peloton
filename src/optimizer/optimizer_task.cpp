@@ -16,7 +16,6 @@
 #include "optimizer/optimizer_metadata.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
-#include "optimizer/cost_calculator.h"
 #include "optimizer/stats_calculator.h"
 #include "optimizer/child_stats_deriver.h"
 
@@ -218,7 +217,8 @@ void DeriveStats::execute() {
   bool derive_children = false;
   // If we haven't got enough stats to compute the current stats, derive them
   // from the child first
-  PELOTON_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
+  PELOTON_ASSERT(children_required_stats.size() ==
+                 gexpr_->GetChildrenGroupsSize());
   for (size_t idx = 0; idx < children_required_stats.size(); ++idx) {
     auto &child_required_stats = children_required_stats[idx];
     auto child_group_id = gexpr_->GetChildGroupId(idx);
@@ -291,8 +291,7 @@ void OptimizeInputs::execute() {
       // Compute the cost of the root operator
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
-      CostCalculator cost_calculator;
-      cur_total_cost_ += cost_calculator.CalculateCost(
+      cur_total_cost_ += context_->metadata->cost_calculator->CalculateCost(
           group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
 
@@ -305,21 +304,24 @@ void OptimizeInputs::execute() {
       // Check whether the child group is already optimized for the prop
       auto child_best_expr = child_group->GetBestExpression(i_prop);
       if (child_best_expr != nullptr) {  // Directly get back the best expr if
-                                         // the child group is optimized
+        // the child group is optimized
         cur_total_cost_ += child_best_expr->GetCost(i_prop);
         // Pruning
         if (cur_total_cost_ > context_->cost_upper_bound) break;
       } else if (pre_child_idx_ !=
                  cur_child_idx_) {  // First time to optimize child group
-        pre_child_idx_ = cur_child_idx_;
+        auto new_upper_bound = context_->cost_upper_bound - cur_total_cost_;
+        // Reset child idx and total cost
+        pre_child_idx_ = -1;
+        cur_child_idx_ = 0;
+        cur_total_cost_ = 0;
         PushTask(new OptimizeInputs(this));
         PushTask(new OptimizeGroup(
             child_group, std::make_shared<OptimizeContext>(
-                             context_->metadata, i_prop,
-                             context_->cost_upper_bound - cur_total_cost_)));
+                             context_->metadata, i_prop, new_upper_bound)));
         return;
       } else {  // If we return from OptimizeGroup, then there is no expr for
-                // the context
+        // the context
         break;
       }
     }
@@ -366,8 +368,7 @@ void OptimizeInputs::execute() {
           // Cost the enforced expression
           auto extended_prop_set =
               std::make_shared<PropertySet>(extended_output_properties);
-          CostCalculator cost_calculator;
-          cur_total_cost_ += cost_calculator.CalculateCost(
+          cur_total_cost_ += context_->metadata->cost_calculator->CalculateCost(
               memo_enforced_expr, &context_->metadata->memo,
               context_->metadata->txn);
 

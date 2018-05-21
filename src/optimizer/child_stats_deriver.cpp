@@ -67,7 +67,7 @@ void ChildStatsDeriver::PassDownColumn(expression::AbstractExpression *col) {
     auto child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(idx));
     if (child_group->GetTableAliases().count(tv_expr->GetTableName()) &&
         // If we have not derived the column stats yet
-        child_group->HasColumnStats(tv_expr->GetColFullName())) {
+        !child_group->HasColumnStats(tv_expr->GetColFullName())) {
       output_[idx].insert(col);
       break;
     }

@@ -222,8 +222,7 @@ class OptimizeInputs : public OptimizerTask {
  */
 class DeriveStats : public OptimizerTask {
  public:
-  DeriveStats(GroupExpression *gexpr,
-              ExprSet required_cols,
+  DeriveStats(GroupExpression *gexpr, ExprSet required_cols,
               std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),
