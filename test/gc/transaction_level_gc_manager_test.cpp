@@ -915,6 +915,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
+  gc_manager.SetTileGroupFreeing(true);
 
   auto storage_manager = storage::StorageManager::GetInstance();
   // create database

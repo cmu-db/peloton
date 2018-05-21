@@ -71,6 +71,8 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
       oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
 
   is_running_ = false;
+  compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+  tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
 }
 
 TransactionLevelGCManager&
@@ -369,7 +371,7 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto num_recycled = tile_group_header->IncrementRecycled() + 1;
   auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
   bool immutable = tile_group_header->GetImmutability();
-  size_t max_recycled = (size_t) (tuples_per_tile_group * compaction_threshold_);
+  size_t max_recycled = (size_t) (tuples_per_tile_group * GetCompactionThreshold());
 
   // check if tile group should be compacted
   if (!immutable && num_recycled >= max_recycled &&
@@ -393,7 +395,7 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   }
 
   // if this is the last remaining tuple recycled, free tile group
-  if (num_recycled == tuples_per_tile_group) {
+  if (num_recycled == tuples_per_tile_group && GetTileGroupFreeing()) {
     // Spin here until the other GC threads stop operating on this TileGroup
     while (tile_group_header->GetGCReaders() > 1);
     LOG_TRACE("Dropping tile_group %u", tile_group_id);

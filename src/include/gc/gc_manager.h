@@ -46,9 +46,9 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(false)  {
-    compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
-  }
+  GCManager() : is_running_(false),
+    compaction_threshold_(settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold)),
+    tile_group_freeing_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing)) {}
 
   virtual ~GCManager() {}
 
@@ -57,7 +57,11 @@ class GCManager {
     return gc_manager;
   }
 
-  virtual void Reset() { is_running_ = false; }
+  virtual void Reset() {
+    is_running_ = false;
+    compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+    tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
+  }
 
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
@@ -86,17 +90,23 @@ class GCManager {
 
   virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
 
-  void SetCompactionThreshold(double threshold) {
-    compaction_threshold_ = threshold;
-  }
+  void SetCompactionThreshold(double threshold) { compaction_threshold_ = threshold; }
+
+  double GetCompactionThreshold() const { return compaction_threshold_; }
+
+  void SetTileGroupFreeing(bool free) { tile_group_freeing_ = free; }
+
+  bool GetTileGroupFreeing() const {return tile_group_freeing_; }
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
                                     oid_t tuple_id);
 
  protected:
+
   volatile bool is_running_;
   volatile double compaction_threshold_;
+  volatile bool tile_group_freeing_;
 };
 
 }  // namespace gc
