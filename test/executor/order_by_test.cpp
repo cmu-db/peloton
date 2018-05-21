@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -38,7 +37,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class OrderByTests : public PelotonTest {};
+class OrderByTests : public PelotonTests {};
 
 namespace {
 
@@ -98,7 +97,7 @@ TEST_F(OrderByTests, IntAscTest) {
       TestingExecutorUtil::CreateTable(tile_size));
   bool random = true;
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false, txn);
+                                     random, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -144,7 +143,7 @@ TEST_F(OrderByTests, IntDescTest) {
       TestingExecutorUtil::CreateTable(tile_size));
   bool random = true;
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false, txn);
+                                     random, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -190,7 +189,7 @@ TEST_F(OrderByTests, StringDescTest) {
       TestingExecutorUtil::CreateTable(tile_size));
   bool random = true;
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false, txn);
+                                     random, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -236,7 +235,7 @@ TEST_F(OrderByTests, IntAscStringDescTest) {
       TestingExecutorUtil::CreateTable(tile_size));
   bool random = true;
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false, txn);
+                                     random, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -285,7 +284,7 @@ TEST_F(OrderByTests, StringDescIntAscTest) {
       TestingExecutorUtil::CreateTable(tile_size));
   bool random = true;
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false, txn);
+                                     random, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(

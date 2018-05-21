@@ -73,7 +73,8 @@
 //     // First column is unique in this case
 //     tuple->SetValue(0,
 //                     type::ValueFactory::GetIntegerValue(
-//                         TestingExecutorUtil::PopulatedValue(populate_value, 0)),
+//                         TestingExecutorUtil::PopulatedValue(populate_value,
+//                         0)),
 //                     testing_pool);
 
 //     // In case of random, make sure this column has duplicated values
@@ -115,7 +116,8 @@
 //   cid_t default_delimiter = INVALID_CID;
 
 //   // XXX: for now hardcode for one logger (suffix 0)
-//   std::string dir_name = logging::WriteAheadFrontendLogger::wal_directory_path;
+//   std::string dir_name =
+//   logging::WriteAheadFrontendLogger::wal_directory_path;
 
 //   storage::Database *db = new storage::Database(DEFAULT_DB_ID);
 //   catalog->AddDatabase(db);
@@ -132,7 +134,8 @@
 
 //   logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
 
-//   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
+//   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(),
+//   0700);
 //   EXPECT_TRUE(status);
 //   logging::LogManager::GetInstance().SetLogDirectoryName("./");
 
@@ -141,7 +144,8 @@
 //                             std::to_string(i) + std::string(".log");
 //     FILE *fp = fopen(file_name.c_str(), "wb");
 
-//     // now set the first 8 bytes to 0 - this is for the max_log id in this file
+//     // now set the first 8 bytes to 0 - this is for the max_log id in this
+//     file
 //     fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1, fp);
 
 //     // now set the next 8 bytes to 0 - this is for the max delimiter in this
@@ -181,15 +185,18 @@
 // //     // is present at the end of this list
 // //     if (i == num_files - 1) {
 // //       CopySerializeOutput output_buffer_delete;
-// //       records[num_files * tile_group_size + 1].Serialize(output_buffer_delete);
+// //       records[num_files * tile_group_size +
+// 1].Serialize(output_buffer_delete);
 
 // //       fwrite(records[num_files * tile_group_size + 1].GetMessage(),
 // //              sizeof(char),
-// //              records[num_files * tile_group_size + 1].GetMessageLength(), fp);
+// //              records[num_files * tile_group_size + 1].GetMessageLength(),
+// fp);
 // //     }
 
 // //     // Now write commit
-// //     logging::TransactionRecord record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+// //     logging::TransactionRecord
+// record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
 // //                                              i + 2);
 
 // //     CopySerializeOutput output_buffer_commit;
@@ -200,7 +207,8 @@
 
 // //     // Now write delimiter
 // //     CopySerializeOutput output_buffer_delim;
-// //     logging::TransactionRecord record_delim(LOGRECORD_TYPE_ITERATION_DELIMITER,
+// //     logging::TransactionRecord
+// record_delim(LOGRECORD_TYPE_ITERATION_DELIMITER,
 // //                                             i + 2);
 
 // //     record_delim.Serialize(output_buffer_delim);
@@ -309,16 +317,20 @@
 //   EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
 //   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
 
-//   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+//   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   0));
 //   CmpBool cmp0 = (val0.CompareEquals(rval0));
 //   EXPECT_TRUE(cmp0 == CmpBool::CmpTrue);
-//   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+//   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   1));
 //   CmpBool cmp1 = (val1.CompareEquals(rval1));
 //   EXPECT_TRUE(cmp1 == CmpBool::CmpTrue);
-//   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+//   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   2));
 //   CmpBool cmp2 = (val2.CompareEquals(rval2));
 //   EXPECT_TRUE(cmp2 == CmpBool::CmpTrue);
-//   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+//   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   3));
 //   CmpBool cmp3 = (val3.CompareEquals(rval3));
 //   EXPECT_TRUE(cmp3 == CmpBool::CmpTrue);
 
@@ -363,16 +375,20 @@
 //   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
 //   EXPECT_EQ(tg_header->GetEndCommitId(4), test_commit_id);
 
-//   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+//   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   0));
 //   CmpBool cmp0 = (val0.CompareEquals(rval0));
 //   EXPECT_TRUE(cmp0 == CmpBool::CmpTrue);
-//   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+//   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   1));
 //   CmpBool cmp1 = (val1.CompareEquals(rval1));
 //   EXPECT_TRUE(cmp1 == CmpBool::CmpTrue);
-//   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+//   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   2));
 //   CmpBool cmp2 = (val2.CompareEquals(rval2));
 //   EXPECT_TRUE(cmp2 == CmpBool::CmpTrue);
-//   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+//   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5,
+//   3));
 //   CmpBool cmp3 = (val3.CompareEquals(rval3));
 //   EXPECT_TRUE(cmp3 == CmpBool::CmpTrue);
 
@@ -429,7 +445,8 @@
 //   cid_t test_commit_id = 10;
 
 //   auto curr_rec = new logging::TupleRecord(
-//       LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id + 1, recovery_table->GetOid(),
+//       LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id + 1,
+//       recovery_table->GetOid(),
 //       INVALID_ITEMPOINTER, ItemPointer(100, 5), nullptr, DEFAULT_DB_ID);
 //   fel.DeleteTuple(curr_rec);
 //   delete curr_rec;

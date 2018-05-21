@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class OrderBySQLTests : public PelotonTest {};
+class OrderBySQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first
@@ -85,11 +85,12 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
       std::chrono::system_clock::now();
 
   auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     end_time - start_time).count();
+                     end_time - start_time)
+                     .count();
 
   LOG_INFO(
       "OrderBy Query (table size:%d) with Limit 10 Execution Time is: %lu ms",
-      table_size, (unsigned long) latency);
+      table_size, (unsigned long)latency);
 
   // test OrderBy without Limit
   start_time = std::chrono::system_clock::now();
@@ -100,11 +101,12 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   end_time = std::chrono::system_clock::now();
 
-  latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                end_time - start_time).count();
+  latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
+                                                                  start_time)
+                .count();
 
   LOG_INFO("OrderBy Query (table size:%d) Execution Time is: %lu ms",
-           table_size, (unsigned long) latency);
+           table_size, (unsigned long)latency);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -356,7 +358,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStar) {
+TEST_F(OrderBySQLTests, OrderByStarTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -389,7 +391,7 @@ TEST_F(OrderBySQLTests, OrderByStar) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarDesc) {
+TEST_F(OrderBySQLTests, OrderByStarDescTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -422,7 +424,7 @@ TEST_F(OrderBySQLTests, OrderByStarDesc) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
+TEST_F(OrderBySQLTests, OrderByStarWithLimitTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -454,7 +456,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
+TEST_F(OrderBySQLTests, OrderByStarWithLimitDescTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -626,7 +628,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(OrderBySQLTests, OrderByWithNullCheck) {
+TEST_F(OrderBySQLTests, OrderByWithNullCheckTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

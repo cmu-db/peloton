@@ -20,15 +20,13 @@ namespace test {
 // Logging Tests
 //===--------------------------------------------------------------------===//
 
-class NewLoggingTests : public PelotonTest {};
+class NewLoggingTests : public PelotonTests {};
 
 TEST_F(NewLoggingTests, MyTest) {
   auto &log_manager = logging::LogManagerFactory::GetInstance();
   log_manager.Reset();
-  
-  EXPECT_TRUE(true);
-  
-}
 
+  EXPECT_TRUE(true);
+}
 }
 }

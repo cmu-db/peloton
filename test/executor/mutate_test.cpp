@@ -57,7 +57,7 @@ namespace test {
 // Mutator Tests
 //===--------------------------------------------------------------------===//
 
-class MutateTests : public PelotonTest {};
+class MutateTests : public PelotonTests {};
 
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
@@ -87,8 +87,8 @@ void UpdateTuple(storage::DataTable *table,
       new executor::ExecutorContext(txn));
 
   // Update
-  //std::vector<oid_t> update_column_ids = {2};
-  //std::vector<type::Value *> values;
+  // std::vector<oid_t> update_column_ids = {2};
+  // std::vector<type::Value *> values;
   auto update_val = type::ValueFactory::GetDecimalValue(23.5);
 
   TargetList target_list;
@@ -182,7 +182,7 @@ void DeleteTuple(storage::DataTable *table,
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(MutateTests, StressTests) {
+TEST_F(MutateTests, StressTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -241,10 +241,10 @@ TEST_F(MutateTests, StressTests) {
 
   columns.push_back(TestingExecutorUtil::GetColumnInfo(0));
   std::unique_ptr<catalog::Schema> key_schema(new catalog::Schema(columns));
-  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema.get(),
-                                                          true));
-  std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema.get(),
-                                                          true));
+  std::unique_ptr<storage::Tuple> key1(
+      new storage::Tuple(key_schema.get(), true));
+  std::unique_ptr<storage::Tuple> key2(
+      new storage::Tuple(key_schema.get(), true));
 
   key1->SetValue(0, type::ValueFactory::GetIntegerValue(10), nullptr);
   key2->SetValue(0, type::ValueFactory::GetIntegerValue(100), nullptr);
@@ -255,10 +255,10 @@ TEST_F(MutateTests, StressTests) {
   columns.push_back(TestingExecutorUtil::GetColumnInfo(1));
   key_schema.reset(new catalog::Schema(columns));
 
-  std::unique_ptr<storage::Tuple> key3(new storage::Tuple(key_schema.get(),
-                                                          true));
-  std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema.get(),
-                                                          true));
+  std::unique_ptr<storage::Tuple> key3(
+      new storage::Tuple(key_schema.get(), true));
+  std::unique_ptr<storage::Tuple> key4(
+      new storage::Tuple(key_schema.get(), true));
 
   key3->SetValue(0, type::ValueFactory::GetIntegerValue(10), nullptr);
   key3->SetValue(1, type::ValueFactory::GetIntegerValue(11), nullptr);

@@ -29,10 +29,10 @@ namespace test {
 
 using namespace optimizer;
 
-class HyperLogLogTests : public PelotonTest {};
+class HyperLogLogTests : public PelotonTests {};
 
 // 100k values with 10k distinct.
-TEST_F(HyperLogLogTests, SmallDatasetTest1) {
+TEST_F(HyperLogLogTests, SmallDataset1Test) {
   HyperLogLog hll{};
   int threshold = 100000;
   int ratio = 10;
@@ -52,7 +52,7 @@ TEST_F(HyperLogLogTests, SmallDatasetTest1) {
 
 // 100k values with 1k distinct.
 // This case HLL does not perform very well.
-TEST_F(HyperLogLogTests, SmallDatasetTest2) {
+TEST_F(HyperLogLogTests, SmallDataset2Test) {
   HyperLogLog hll{};
   int threshold = 100000;
   int ratio = 100;
@@ -67,7 +67,7 @@ TEST_F(HyperLogLogTests, SmallDatasetTest2) {
 }
 
 // 100k values with 100 distinct.
-TEST_F(HyperLogLogTests, SmallDatasetTest3) {
+TEST_F(HyperLogLogTests, SmallDataset3Test) {
   HyperLogLog hll{};
   int threshold = 100000;
   int ratio = 1000;
@@ -83,7 +83,7 @@ TEST_F(HyperLogLogTests, SmallDatasetTest3) {
 }
 
 // 100k values with 100k distinct.
-TEST_F(HyperLogLogTests, SmallDatasetTest4) {
+TEST_F(HyperLogLogTests, SmallDataset4Test) {
   HyperLogLog hll{};
   int threshold = 100000;
   int ratio = 1;

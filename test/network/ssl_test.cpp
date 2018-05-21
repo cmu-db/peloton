@@ -30,7 +30,7 @@ namespace test {
 // SSL TESTS
 //===--------------------------------------------------------------------===//
 
-class SSLTests : public PelotonTest {};
+class SSLTests : public PelotonTests {};
 
 // The following keys and certificates are generated using
 // https://www.postgresql.org/docs/9.5/static/libpq-ssl.html

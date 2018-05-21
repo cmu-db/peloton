@@ -26,7 +26,7 @@ namespace test {
 using namespace index;
 using namespace storage;
 
-class IndexUtilTests : public PelotonTest {};
+class IndexUtilTests : public PelotonTests {};
 
 /*
  * BuildIndex() - Builds an index with 4 columns
@@ -106,8 +106,8 @@ static index::Index *BuildIndex() {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "index_util_test", 88888,  // Index oid
-      INVALID_OID, INVALID_OID, IndexType::BWTREE,
-      IndexConstraintType::DEFAULT, tuple_schema.get(), key_schema, key_attrs,
+      INVALID_OID, INVALID_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      tuple_schema.get(), key_schema, key_attrs,
       true);  // unique_keys
 
   // Build index
@@ -122,7 +122,7 @@ static index::Index *BuildIndex() {
 }
 
 /*
- * FindValueIndexTest() - Tests whether the index util correctly recognizes
+ * FindValueIndexTests() - Tests whether the index util correctly recognizes
  *                        point query
  *
  * The index configuration is as follows:
@@ -180,7 +180,8 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   // Test empty
 
-  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
+  ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {},
+                                  value_index_list);
   EXPECT_FALSE(ret);
   value_index_list.clear();
 
@@ -231,7 +232,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 }
 
 /*
- * ConstructBoundaryKeyTest() - Tests ConstructBoundaryKey() function for
+ * ConstructBoundaryKeyTests() - Tests ConstructBoundaryKey() function for
  *                              conjunctions
  */
 TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
@@ -355,7 +356,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 }
 
 /*
- * BindKeyTest() - Tests binding values onto keys that are not bound
+ * BindKeyTests() - Tests binding values onto keys that are not bound
  */
 TEST_F(IndexUtilTests, BindKeyTest) {
   std::unique_ptr<index::Index> index_p(BuildIndex());
@@ -406,12 +407,9 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
 
   // Bind real value
-  type::Value val1 = (
-      type::ValueFactory::GetIntegerValue(100).Copy());
-  type::Value val2 = (
-      type::ValueFactory::GetIntegerValue(200).Copy());
-  type::Value val3 = (
-      type::ValueFactory::GetIntegerValue(300).Copy());
+  type::Value val1 = (type::ValueFactory::GetIntegerValue(100).Copy());
+  type::Value val2 = (type::ValueFactory::GetIntegerValue(200).Copy());
+  type::Value val3 = (type::ValueFactory::GetIntegerValue(300).Copy());
   isp.LateBindValues(index_p.get(), {val1, val2, val3});
 
   // This is important - Since binding does not change the number of

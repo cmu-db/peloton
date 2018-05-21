@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class OAHashTableTest : public PelotonTest {
+class OAHashTableTests : public PelotonTests {
  public:
   // The key and value object we store in the hash table
   struct Key {
@@ -42,12 +42,12 @@ class OAHashTableTest : public PelotonTest {
     bool operator!=(const Value &rhs) const { return !(rhs == *this); }
   };
 
-  OAHashTableTest() {
+  OAHashTableTests() {
     PELOTON_MEMSET(raw_hash_table, 1, sizeof(raw_hash_table));
     GetHashTable().Init(sizeof(Key), sizeof(Value));
   }
 
-  ~OAHashTableTest() {
+  ~OAHashTableTests() {
     // Clean up
     GetHashTable().Destroy();
   }
@@ -78,7 +78,7 @@ class OAHashTableTest : public PelotonTest {
   int8_t raw_hash_table[sizeof(codegen::util::OAHashTable)];
 };
 
-TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
+TEST_F(OAHashTableTests, CanInsertKeyValuePairsTest) {
   Value v = {3, 4, 5, 6};
 
   uint32_t to_insert = 50000;
@@ -100,7 +100,7 @@ TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
   EXPECT_EQ(to_insert, GetHashTable().NumOccupiedBuckets());
 }
 
-TEST_F(OAHashTableTest, CanIterate) {
+TEST_F(OAHashTableTests, CanIterateTest) {
   Value v = {3, 4, 5, 6};
 
   uint32_t to_insert = 50000;
@@ -130,8 +130,8 @@ TEST_F(OAHashTableTest, CanIterate) {
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = hashtable.begin(), end = hashtable.end();
-       iter != end; ++iter) {
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
     const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
     if (*iter_key == key_dup) {
       dup_count++;
@@ -145,9 +145,9 @@ TEST_F(OAHashTableTest, CanIterate) {
   EXPECT_EQ(3, dup_count);
 }
 
-TEST_F(OAHashTableTest, CanCodegenProbeOrInsert) {}
+TEST_F(OAHashTableTests, CanCodegenProbeOrInsertTest) {}
 
-TEST_F(OAHashTableTest, MicroBenchmark) {
+TEST_F(OAHashTableTests, MicroBenchmarkTest) {
   uint32_t num_runs = 10;
 
   std::vector<Key> keys;
@@ -205,7 +205,7 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
   }
 
   LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf",
-          avg_oaht / (double)num_runs, avg_map / (double)num_runs);
+           avg_oaht / (double)num_runs, avg_map / (double)num_runs);
 }
 
 }  // namespace test

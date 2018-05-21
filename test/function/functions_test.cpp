@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class FunctionsTests : public PelotonTest {
+class FunctionsTests : public PelotonTests {
  public:
   static type::Value TestFunc(
       UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
@@ -30,7 +30,7 @@ class FunctionsTests : public PelotonTest {
   }
 
   virtual void SetUp() {
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     // Bootstrap catalog
     auto catalog = catalog::Catalog::GetInstance();
     catalog->Bootstrap();

@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class DropSQLTests : public PelotonTest {};
+class DropSQLTests : public PelotonTests {};
 
 TEST_F(DropSQLTests, DropTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

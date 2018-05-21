@@ -32,7 +32,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class HashSetOptTests : public PelotonTest {};
+class HashSetOptTests : public PelotonTests {};
 
 namespace {
 
@@ -91,12 +91,12 @@ TEST_F(HashSetOptTests, ExceptTest) {
   std::unique_ptr<storage::DataTable> data_table1(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
 
   std::unique_ptr<storage::DataTable> data_table2(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
 
   txn_manager.CommitTransaction(txn);
 
@@ -163,19 +163,19 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   std::unique_ptr<storage::DataTable> data_table1(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table3(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table4(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
 
   txn_manager.CommitTransaction(txn);
 
@@ -249,11 +249,11 @@ TEST_F(HashSetOptTests, IntersectTest) {
   std::unique_ptr<storage::DataTable> data_table1(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
 
   txn_manager.CommitTransaction(txn);
 
@@ -320,19 +320,19 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   std::unique_ptr<storage::DataTable> data_table1(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table2(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table3(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
   std::unique_ptr<storage::DataTable> data_table4(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
-                                   false, false, txn);
+                                     false, false, txn);
 
   txn_manager.CommitTransaction(txn);
 

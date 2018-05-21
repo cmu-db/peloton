@@ -21,11 +21,11 @@
 namespace peloton {
 namespace test {
 
-class PlannerEqualityTest : public PelotonTest {
+class PlannerEqualityTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
 
     // Create test database
     CreateAndLoadTable();
@@ -39,7 +39,7 @@ class PlannerEqualityTest : public PelotonTest {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 
   void CreateAndLoadTable() {
@@ -89,7 +89,7 @@ class PlannerEqualityTest : public PelotonTest {
   int rows_changed;
 };
 
-TEST_F(PlannerEqualityTest, Select) {
+TEST_F(PlannerEqualityTests, SelectTest) {
   // set up optimizer for every test
   optimizer.reset(new optimizer::Optimizer());
 
@@ -173,7 +173,7 @@ TEST_F(PlannerEqualityTest, Select) {
   }
 }
 
-TEST_F(PlannerEqualityTest, Insert) {
+TEST_F(PlannerEqualityTests, InsertTest) {
   // set up optimizer for every test
   optimizer.reset(new optimizer::Optimizer());
 
@@ -219,7 +219,7 @@ TEST_F(PlannerEqualityTest, Insert) {
   }
 }
 
-TEST_F(PlannerEqualityTest, Delete) {
+TEST_F(PlannerEqualityTests, DeleteTest) {
   optimizer.reset(new optimizer::Optimizer());
   std::vector<TestItem> items{
       {"DELETE from test where a=1", "DELETE from test where a=1", true, true},
@@ -252,7 +252,7 @@ TEST_F(PlannerEqualityTest, Delete) {
   }
 }
 
-TEST_F(PlannerEqualityTest, Update) {
+TEST_F(PlannerEqualityTests, UpdateTest) {
   // set up optimizer for every test
   optimizer.reset(new optimizer::Optimizer());
 

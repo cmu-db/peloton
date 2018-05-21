@@ -20,11 +20,11 @@
 namespace peloton {
 namespace test {
 
-class DecimalSQLTestsBase : public PelotonTest {
+class DecimalSQLBaseTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     CreateDB();
   }
   /*** Helper functions **/
@@ -54,13 +54,13 @@ class DecimalSQLTestsBase : public PelotonTest {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 
-class DecimalFunctionsSQLTest : public PelotonTest {};
+class DecimalFunctionsSQLTests : public PelotonTests {};
 
-TEST_F(DecimalFunctionsSQLTest, FloorTest) {
+TEST_F(DecimalFunctionsSQLTests, FloorTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -111,7 +111,7 @@ TEST_F(DecimalFunctionsSQLTest, FloorTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(DecimalSQLTestsBase, TinyIntAbsTest) {
+TEST_F(DecimalSQLBaseTests, TinyIntAbsTest) {
   CreateTableWithCol("tinyint");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -148,7 +148,7 @@ TEST_F(DecimalSQLTestsBase, TinyIntAbsTest) {
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result, true);
 }
 
-TEST_F(DecimalSQLTestsBase, SmallIntAbsTest) {
+TEST_F(DecimalSQLBaseTests, SmallIntAbsTest) {
   CreateTableWithCol("smallint");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -185,7 +185,7 @@ TEST_F(DecimalSQLTestsBase, SmallIntAbsTest) {
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result, true);
 }
 
-TEST_F(DecimalSQLTestsBase, IntAbsTest) {
+TEST_F(DecimalSQLBaseTests, IntAbsTest) {
   CreateTableWithCol("int");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -222,7 +222,7 @@ TEST_F(DecimalSQLTestsBase, IntAbsTest) {
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result, true);
 }
 
-TEST_F(DecimalSQLTestsBase, BigIntAbsTest) {
+TEST_F(DecimalSQLBaseTests, BigIntAbsTest) {
   CreateTableWithCol("bigint");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -259,7 +259,7 @@ TEST_F(DecimalSQLTestsBase, BigIntAbsTest) {
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result, true);
 }
 
-TEST_F(DecimalSQLTestsBase, DecimalAbsTest) {
+TEST_F(DecimalSQLBaseTests, DecimalAbsTest) {
   CreateTableWithCol("decimal");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -294,7 +294,7 @@ TEST_F(DecimalSQLTestsBase, DecimalAbsTest) {
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result, true);
 }
 
-TEST_F(DecimalFunctionsSQLTest, CeilTest) {
+TEST_F(DecimalFunctionsSQLTests, CeilTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

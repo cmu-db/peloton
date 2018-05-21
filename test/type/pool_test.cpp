@@ -20,27 +20,26 @@
 namespace peloton {
 namespace test {
 
-class PoolTests : public PelotonTest {};
+class PoolTests : public PelotonTests {};
 
 #define N 10
 #define M 1000
 #define R 1
-#define RANDOM(a) (rand() % a) // Generate a random number in [0, a)
+#define RANDOM(a) (rand() % a)  // Generate a random number in [0, a)
 
 // disable unused const variable warning for clang
 #ifdef __APPLE__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-const-variable"
 #endif
-const size_t str_len = 1000; // test string length
+const size_t str_len = 1000;  // test string length
 #ifdef __APPLE__
 #pragma clang diagnostic pop
 #endif
 
 // Round up to block size
 size_t get_align(size_t size) {
-  if (size <= 16)
-    return 16;
+  if (size <= 16) return 16;
   size_t n = size - 1;
   size_t bits = 0;
   while (n > 0) {

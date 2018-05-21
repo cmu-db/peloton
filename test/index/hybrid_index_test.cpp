@@ -52,7 +52,7 @@ namespace peloton {
 namespace test {
 namespace hybrid_index_test {
 
-class HybridIndexTests : public PelotonTest {};
+class HybridIndexTests : public PelotonTests {};
 
 static double projectivity = 1.0;
 static size_t column_count = 4;

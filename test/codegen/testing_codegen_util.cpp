@@ -32,8 +32,8 @@ namespace test {
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup,
-                                       peloton::LayoutType layout_type) {
+PelotonCodeGenTests::PelotonCodeGenTests(oid_t tuples_per_tilegroup,
+                                         peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -48,7 +48,7 @@ PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup,
   layout_table = nullptr;
 }
 
-PelotonCodeGenTest::~PelotonCodeGenTest() {
+PelotonCodeGenTests::~PelotonCodeGenTests() {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -58,7 +58,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   codegen::QueryCache::Instance().Clear();
 }
 
-catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
+catalog::Column PelotonCodeGenTests::GetTestColumn(uint32_t col_id) const {
   PELOTON_ASSERT(col_id < 4);
   static const uint64_t int_size =
       type::Type::GetTypeSize(type::TypeId::INTEGER);
@@ -81,7 +81,7 @@ catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
 }
 
 // Create the test schema for all the tables
-std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
+std::unique_ptr<catalog::Schema> PelotonCodeGenTests::CreateTestSchema(
     bool add_primary) const {
   // Create the columns
   std::vector<catalog::Column> cols = {GetTestColumn(0), GetTestColumn(1),
@@ -104,19 +104,18 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 }
 
 // Create all the test tables, but don't load any data
-void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
-                                          oid_t tuples_per_tilegroup,
-                                          peloton::LayoutType layout_type) {
+void PelotonCodeGenTests::CreateTestTables(concurrency::TransactionContext *txn,
+                                           oid_t tuples_per_tilegroup,
+                                           peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
     catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup, layout_type);
-    test_table_oids.push_back(catalog
-                                  ->GetTableObject(test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i], txn)
+    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
+                                                      DEFAULT_SCHEMA_NAME,
+                                                      test_table_names[i], txn)
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
@@ -124,16 +123,15 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
     catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
                          tuples_per_tilegroup, layout_type);
-    test_table_oids.push_back(catalog
-                                  ->GetTableObject(test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i], txn)
+    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
+                                                      DEFAULT_SCHEMA_NAME,
+                                                      test_table_names[i], txn)
                                   ->GetTableOid());
   }
 }
 
-void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
-                                       bool insert_nulls) {
+void PelotonCodeGenTests::LoadTestTable(oid_t table_id, uint32_t num_rows,
+                                        bool insert_nulls) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
@@ -178,7 +176,7 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   txn_manager.CommitTransaction(txn);
 }
 
-void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
+void PelotonCodeGenTests::CreateAndLoadTableWithLayout(
     peloton::LayoutType layout_type, uint32_t tuples_per_tilegroup,
     uint32_t tile_group_count, uint32_t column_count, bool is_inlined) {
   uint32_t tuple_count = tuples_per_tilegroup * tile_group_count;
@@ -252,7 +250,7 @@ void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
   txn_manager.CommitTransaction(txn);
 }
 
-void PelotonCodeGenTest::ExecuteSync(
+void PelotonCodeGenTests::ExecuteSync(
     codegen::Query &query,
     std::unique_ptr<executor::ExecutorContext> executor_context,
     codegen::QueryResultConsumer &consumer) {
@@ -270,7 +268,7 @@ void PelotonCodeGenTest::ExecuteSync(
   cond.wait(lock, [&] { return finished; });
 }
 
-codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
+codegen::QueryCompiler::CompileStats PelotonCodeGenTests::CompileAndExecute(
     planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
   codegen::QueryParameters parameters(plan, {});
 
@@ -295,7 +293,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   return stats;
 }
 
-codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
+codegen::QueryCompiler::CompileStats
+PelotonCodeGenTests::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
     codegen::QueryResultConsumer &consumer, bool &cached,
     std::vector<type::Value> params) {
@@ -328,72 +327,72 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   return stats;
 }
 
-ExpressionPtr PelotonCodeGenTest::ConstIntExpr(int64_t val) {
+ExpressionPtr PelotonCodeGenTests::ConstIntExpr(int64_t val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(val));
   return ExpressionPtr{expr};
 }
 
-ExpressionPtr PelotonCodeGenTest::ConstDecimalExpr(double val) {
+ExpressionPtr PelotonCodeGenTests::ConstDecimalExpr(double val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(val));
   return ExpressionPtr{expr};
 }
 
-ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type,
-                                             uint32_t col_id) {
+ExpressionPtr PelotonCodeGenTests::ColRefExpr(type::TypeId type,
+                                              uint32_t col_id) {
   auto *expr = new expression::TupleValueExpression(type, 0, col_id);
   return ExpressionPtr{expr};
 }
 
-ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type, bool left,
-                                             uint32_t col_id) {
+ExpressionPtr PelotonCodeGenTests::ColRefExpr(type::TypeId type, bool left,
+                                              uint32_t col_id) {
   return ExpressionPtr{
       new expression::TupleValueExpression(type, !left, col_id)};
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpExpr(ExpressionType cmp_type,
-                                          ExpressionPtr &&left,
-                                          ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpExpr(ExpressionType cmp_type,
+                                           ExpressionPtr &&left,
+                                           ExpressionPtr &&right) {
   auto *expr = new expression::ComparisonExpression(cmp_type, left.release(),
                                                     right.release());
   return ExpressionPtr{expr};
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpLtExpr(ExpressionPtr &&left,
-                                            ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpLtExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_LESSTHAN, std::move(left),
                  std::move(right));
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpLteExpr(ExpressionPtr &&left,
-                                             ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpLteExpr(ExpressionPtr &&left,
+                                              ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_LESSTHANOREQUALTO, std::move(left),
                  std::move(right));
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpGtExpr(ExpressionPtr &&left,
-                                            ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpGtExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHAN, std::move(left),
                  std::move(right));
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpGteExpr(ExpressionPtr &&left,
-                                             ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpGteExpr(ExpressionPtr &&left,
+                                              ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHANOREQUALTO, std::move(left),
                  std::move(right));
 }
 
-ExpressionPtr PelotonCodeGenTest::CmpEqExpr(ExpressionPtr &&left,
-                                            ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::CmpEqExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_EQUAL, std::move(left),
                  std::move(right));
 }
 
-ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
-                                         type::TypeId type,
-                                         ExpressionPtr &&left,
-                                         ExpressionPtr &&right) {
+ExpressionPtr PelotonCodeGenTests::OpExpr(ExpressionType op_type,
+                                          type::TypeId type,
+                                          ExpressionPtr &&left,
+                                          ExpressionPtr &&right) {
   switch (op_type) {
     case ExpressionType::OPERATOR_PLUS:
     case ExpressionType::OPERATOR_MINUS:

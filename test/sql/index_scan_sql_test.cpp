@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class IndexScanSQLTests : public PelotonTest {};
+class IndexScanSQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first

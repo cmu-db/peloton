@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "catalog/manager.h"
@@ -27,10 +26,9 @@ namespace test {
 // Manager Tests
 //===--------------------------------------------------------------------===//
 
-class ManagerTests : public PelotonTest {};
+class ManagerTests : public PelotonTests {};
 
 void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
-
   // TILES
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
@@ -42,8 +40,9 @@ void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
   std::vector<catalog::Column> columns;
 
   // SCHEMA
-  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-                          "A", true);
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
+                          true);
   columns.push_back(column1);
 
   std::unique_ptr<catalog::Schema> schema1(new catalog::Schema(columns));

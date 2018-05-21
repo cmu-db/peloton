@@ -19,7 +19,7 @@
 namespace peloton {
 namespace test {
 // Tests for both statement cache
-class StatementCacheTests : public PelotonTest {};
+class StatementCacheTests : public PelotonTests {};
 
 TEST_F(StatementCacheTests, InvalidateOneTest) {
   // Register the statement cache to the statement cache manager

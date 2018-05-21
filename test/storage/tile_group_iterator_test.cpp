@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "common/harness.h"
@@ -29,7 +28,7 @@ namespace test {
 // TileGroupIterator Tests
 //===--------------------------------------------------------------------===//
 
-class TileGroupIteratorTests : public PelotonTest {};
+class TileGroupIteratorTests : public PelotonTests {};
 
 TEST_F(TileGroupIteratorTests, BasicTest) {
   const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;
@@ -42,8 +41,8 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                   true, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+                                     false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   storage::TileGroupIterator tile_group_itr(data_table.get());

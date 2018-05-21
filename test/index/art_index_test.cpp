@@ -67,7 +67,7 @@ class ArtIndexForTest : public index::ArtIndex {
 };
 
 // The base test class
-class ArtIndexTests : public PelotonTest {
+class ArtIndexTests : public PelotonTests {
  public:
   ArtIndexTests() : index_(CreateTestIndex()) { GenerateTestInput(1); }
 

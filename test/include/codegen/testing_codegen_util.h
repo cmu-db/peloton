@@ -45,17 +45,17 @@ using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
 // the codegen components use. Their ID's are available through the oid_t
 // enumeration.
 //===----------------------------------------------------------------------===//
-class PelotonCodeGenTest : public PelotonTest {
+class PelotonCodeGenTests : public PelotonTests {
  public:
   std::string test_db_name = "peloton_codegen";
   std::vector<std::string> test_table_names = {"table1", "table2", "table3",
                                                "table4", "table5"};
   std::vector<oid_t> test_table_oids;
 
-  PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
-                     peloton::LayoutType layout_type = LayoutType::ROW);
+  PelotonCodeGenTests(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
+                      peloton::LayoutType layout_type = LayoutType::ROW);
 
-  virtual ~PelotonCodeGenTest();
+  virtual ~PelotonCodeGenTests();
 
   // Get the test database
   storage::Database &GetDatabase() const { return *test_db; }

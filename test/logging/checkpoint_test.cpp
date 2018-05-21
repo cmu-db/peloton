@@ -64,7 +64,8 @@
 
 // // TEST_F(CheckpointTests, CheckpointIntegrationTest) {
 // //   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
-// //   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+// //   auto &txn_manager =
+// concurrency::TransactionManagerFactory::GetInstance();
 // //   auto txn = txn_manager.BeginTransaction();
 
 // //   // Create a table and wrap it in logical tile
@@ -74,9 +75,11 @@
 // //   oid_t default_table_oid = 13;
 // //   // table has 3 tile groups
 // //   storage::DataTable *target_table =
-// //       TestingExecutorUtil::CreateTable(tile_group_size, true, default_table_oid);
+// //       TestingExecutorUtil::CreateTable(tile_group_size, true,
+// default_table_oid);
 // //   TestingExecutorUtil::PopulateTable(target_table,
-// //                                    tile_group_size * table_tile_group_count,
+// //                                    tile_group_size *
+// table_tile_group_count,
 // //                                    false, false, false, txn);
 // //   txn_manager.CommitTransaction(txn);
 
@@ -97,7 +100,8 @@
 
 // //   checkpointer->DoCheckpoint();
 
-// //   auto most_recent_checkpoint_cid = checkpointer->GetMostRecentCheckpointCid();
+// //   auto most_recent_checkpoint_cid =
+// checkpointer->GetMostRecentCheckpointCid();
 // //   EXPECT_TRUE(most_recent_checkpoint_cid != INVALID_CID);
 
 // //   // destroy and restart
@@ -119,7 +123,8 @@
 // // TEST_F(CheckpointTests, CheckpointScanTest) {
 // //   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
 
-// //   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+// //   auto &txn_manager =
+// concurrency::TransactionManagerFactory::GetInstance();
 // //   auto txn = txn_manager.BeginTransaction();
 
 // //   // Create a table and wrap it in logical tile
@@ -130,7 +135,8 @@
 // //   std::unique_ptr<storage::DataTable> target_table(
 // //       TestingExecutorUtil::CreateTable(tile_group_size));
 // //       TestingExecutorUtil::PopulateTable(target_table.get(),
-// //                                    tile_group_size * table_tile_group_count,
+// //                                    tile_group_size *
+// table_tile_group_count,
 // //                                    false, false, false, txn);
 // //   txn_manager.CommitTransaction(txn);
 
@@ -191,7 +197,8 @@
 //     auto tuple = record.GetTuple();
 //     auto target_location = record.GetInsertLocation();
 //     // recovery checkpoint from these records
-//     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(), target_location,
+//     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(),
+//     target_location,
 //                                    DEFAULT_RECOVERY_CID);
 //   }
 

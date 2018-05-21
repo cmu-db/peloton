@@ -191,9 +191,9 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
-                                        bool mutate, bool random, bool group_by,
-                                        concurrency::TransactionContext *current_txn) {
+void TestingExecutorUtil::PopulateTable(
+    storage::DataTable *table, int num_rows, bool mutate, bool random,
+    bool group_by, concurrency::TransactionContext *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 

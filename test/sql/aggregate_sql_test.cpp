@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class AggregateSQLTests : public PelotonTest {};
+class AggregateSQLTests : public PelotonTests {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
   PELOTON_ASSERT(&TestingSQLUtil::counter_);
@@ -40,7 +40,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-//  optimizer::Optimizer optimizer;
+  //  optimizer::Optimizer optimizer;
 
   // All of these aggregates should return null
   std::vector<std::string> nullAggregates = {"MIN", "MAX", "AVG", "SUM"};
@@ -102,7 +102,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-//  optimizer::Optimizer optimizer;
+  //  optimizer::Optimizer optimizer;
 
   // test small int
   TestingSQLUtil::ExecuteSQLQuery("SELECT min(b) from test", result,

@@ -140,7 +140,7 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+  std::unique_ptr<index::Index, void (*)(index::Index *)> index(
       TestingIndexUtil::BuildIndex(index_type, true), DestroyIndex);
 
   const catalog::Schema *key_schema = index->GetKeySchema();
@@ -150,12 +150,12 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   LaunchParallelTest(1, TestingIndexUtil::InsertHelper, index.get(), pool,
                      scale_factor);
   LOG_DEBUG("INDEX VALUE CONTENTS BEFORE DELETE:\n%s",
-           index::IndexUtil::Debug(index.get()).c_str());
+            index::IndexUtil::Debug(index.get()).c_str());
 
   LaunchParallelTest(1, TestingIndexUtil::DeleteHelper, index.get(), pool,
                      scale_factor);
   LOG_DEBUG("INDEX VALUE CONTENTS AFTER DELETE:\n%s",
-           index::IndexUtil::Debug(index.get()).c_str());
+            index::IndexUtil::Debug(index.get()).c_str());
 
   // Checks
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -170,7 +170,7 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
 
   LOG_DEBUG("INDEX CONTENTS:\n%s",
-           index::IndexUtil::Debug(index.get()).c_str());
+            index::IndexUtil::Debug(index.get()).c_str());
 
   LOG_DEBUG("ScanKey(key0=%s)", key0->GetInfo().c_str());
   index->ScanKey(key0.get(), location_ptrs);

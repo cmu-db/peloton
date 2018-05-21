@@ -21,9 +21,9 @@
 namespace peloton {
 namespace test {
 
-class BlockNestedLoopJoinTranslatorTest : public PelotonCodeGenTest {
+class BlockNestedLoopJoinTranslatorTests : public PelotonCodeGenTests {
  public:
-  BlockNestedLoopJoinTranslatorTest() : PelotonCodeGenTest() {
+  BlockNestedLoopJoinTranslatorTests() : PelotonCodeGenTests() {
     // Load the test table
     uint32_t num_rows = 10;
     LoadTestTable(LeftTableId(), 2 * num_rows);
@@ -59,17 +59,15 @@ class BlockNestedLoopJoinTranslatorTest : public PelotonCodeGenTest {
   type::Value GetCol(const AbstractTuple &t, JoinOutputColPos p);
 };
 
-void BlockNestedLoopJoinTranslatorTest::PerformTest(
+void BlockNestedLoopJoinTranslatorTests::PerformTest(
     ExpressionPtr &&predicate, const std::vector<oid_t> &left_join_cols,
     const std::vector<oid_t> &right_join_cols,
     std::vector<codegen::WrappedTuple> &results) {
   // Output all columns
-  DirectMapList direct_map_list = {{0, std::make_pair(0, 0)},
-                                   {1, std::make_pair(0, 1)},
-                                   {2, std::make_pair(0, 2)},
-                                   {3, std::make_pair(1, 0)},
-                                   {4, std::make_pair(1, 1)},
-                                   {5, std::make_pair(1, 2)}};
+  DirectMapList direct_map_list = {
+      {0, std::make_pair(0, 0)}, {1, std::make_pair(0, 1)},
+      {2, std::make_pair(0, 2)}, {3, std::make_pair(1, 0)},
+      {4, std::make_pair(1, 1)}, {5, std::make_pair(1, 2)}};
   std::unique_ptr<planner::ProjectInfo> projection{
       new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
 
@@ -104,12 +102,12 @@ void BlockNestedLoopJoinTranslatorTest::PerformTest(
   results = buffer.GetOutputTuples();
 }
 
-type::Value BlockNestedLoopJoinTranslatorTest::GetCol(const AbstractTuple &t,
-                                                      JoinOutputColPos p) {
+type::Value BlockNestedLoopJoinTranslatorTests::GetCol(const AbstractTuple &t,
+                                                       JoinOutputColPos p) {
   return t.GetValue(static_cast<oid_t>(p));
 }
 
-TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
+TEST_F(BlockNestedLoopJoinTranslatorTests, SingleColumnEqualityJoinTest) {
   {
     LOG_INFO(
         "Testing: "
@@ -172,7 +170,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
   }
 }
 
-TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
+TEST_F(BlockNestedLoopJoinTranslatorTests, NonEqualityJoinTest) {
   // The left and right input tables have the same schema and data distribution.
   // The test table has four columns: A, B, D, E. The values in column B, D, E
   // are 1, 2, and 3 more than the values in the A column, respectively. Values

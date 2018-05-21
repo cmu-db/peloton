@@ -21,7 +21,7 @@
 namespace peloton {
 namespace test {
 
-class ProjectionSQLTests : public PelotonTest {
+class ProjectionSQLTests : public PelotonTests {
  public:
   ProjectionSQLTests() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

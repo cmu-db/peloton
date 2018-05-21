@@ -30,7 +30,7 @@ namespace test {
 
 using namespace optimizer;
 
-class TupleSamplesStorageTests : public PelotonTest {};
+class TupleSamplesStorageTests : public PelotonTests {};
 
 void PrintColumnSamples(std::vector<type::Value> &column_samples) {
   for (size_t i = 0; i < column_samples.size(); i++) {

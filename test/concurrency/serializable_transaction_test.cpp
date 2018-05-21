@@ -20,7 +20,7 @@ namespace test {
 // Serializable TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
-class SerializableTransactionTests : public PelotonTest {};
+class SerializableTransactionTests : public PelotonTests {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
     ProtocolType::TIMESTAMP_ORDERING

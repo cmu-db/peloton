@@ -20,10 +20,10 @@
 namespace peloton {
 namespace test {
 
-class TypeSQLTests : public PelotonTest {
+class TypeSQLTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -37,7 +37,7 @@ class TypeSQLTests : public PelotonTest {
     catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
 
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 

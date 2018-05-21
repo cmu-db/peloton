@@ -30,7 +30,7 @@ const int NUM_COLUMNS = 5;
 // MaskedTuple Tests
 //===--------------------------------------------------------------------===//
 
-class MaskedTupleTests : public PelotonTest {};
+class MaskedTupleTests : public PelotonTests {};
 
 void MaskedTupleTestHelper(storage::MaskedTuple *masked_tuple,
                            std::vector<int> values, std::vector<oid_t> mask) {
@@ -67,8 +67,8 @@ TEST_F(MaskedTupleTests, BasicTest) {
   tuple_schema.reset(new catalog::Schema(column_list));
 
   // CREATE REAL TUPLE
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(tuple_schema.get(),
-                                                           true));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(tuple_schema.get(), true));
   std::vector<int> values;
   for (int i = 0; i < NUM_COLUMNS; i++) {
     int val = (10 * i) + i;

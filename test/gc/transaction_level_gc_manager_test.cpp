@@ -30,7 +30,7 @@ namespace test {
 // TransactionContext-Level GC Manager Tests
 //===--------------------------------------------------------------------===//
 
-class TransactionLevelGCManagerTests : public PelotonTest {};
+class TransactionLevelGCManagerTests : public PelotonTests {};
 
 ResultType UpdateTuple(storage::DataTable *table, const int key) {
   srand(15721);

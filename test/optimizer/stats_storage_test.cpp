@@ -33,7 +33,7 @@ namespace test {
 
 using namespace optimizer;
 
-class StatsStorageTests : public PelotonTest {};
+class StatsStorageTests : public PelotonTests {};
 
 const int tuple_count = 100;
 const int tuple_per_tilegroup = 100;

@@ -30,7 +30,7 @@ namespace test {
 // PostgresParser Tests
 //===--------------------------------------------------------------------===//
 
-class PostgresParserTests : public PelotonTest {};
+class PostgresParserTests : public PelotonTests {};
 
 TEST_F(PostgresParserTests, BasicTest) {
   std::vector<std::string> queries;
@@ -525,7 +525,7 @@ TEST_F(PostgresParserTests, DeleteTest) {
   }
 }
 
-TEST_F(PostgresParserTests, DeleteTestWithPredicate) {
+TEST_F(PostgresParserTests, DeleteWithPredicateTest) {
   std::vector<std::string> queries;
 
   // Delete with a predicate

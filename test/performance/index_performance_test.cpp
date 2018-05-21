@@ -30,7 +30,7 @@ namespace test {
 // Index Performance Tests
 //===--------------------------------------------------------------------===//
 
-class IndexPerformanceTests : public PelotonTest {};
+class IndexPerformanceTests : public PelotonTests {};
 
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;

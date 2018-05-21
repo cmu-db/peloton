@@ -37,7 +37,8 @@
 //       records.push_back(record);
 //     }
 //   }
-//   LOG_TRACE("Built a vector of %lu tuple WAL insert records", records.size());
+//   LOG_TRACE("Built a vector of %lu tuple WAL insert records",
+//   records.size());
 //   return records;
 // }
 
@@ -77,14 +78,16 @@
 //     auto &tuple = tuples[tile_group_size * table_tile_group_count +
 //                          out_of_range_tuples + i];
 //     PELOTON_ASSERT(tuple->GetSchema());
-//     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
+//     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4,
+//     INVALID_OID,
 //                                 INVALID_ITEMPOINTER, location, nullptr,
 //                                 DEFAULT_DB_ID);
 //     record.SetTuple(tuple.get());
 //     records.push_back(record);
 //   }
 
-//   LOG_TRACE("Built a vector of %lu tuple WAL insert records", records.size());
+//   LOG_TRACE("Built a vector of %lu tuple WAL insert records",
+//   records.size());
 //   return records;
 // }
 
@@ -107,12 +110,14 @@
 //     int populate_value = rowid;
 //     if (mutate) populate_value *= 3;
 
-//     std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, allocate));
+//     std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema,
+//     allocate));
 
 //     // First column is unique in this case
 //     tuple->SetValue(0,
 //                     type::ValueFactory::GetIntegerValue(
-//                         TestingExecutorUtil::PopulatedValue(populate_value, 0)),
+//                         TestingExecutorUtil::PopulatedValue(populate_value,
+//                         0)),
 //                     testing_pool);
 
 //     // In case of random, make sure this column has duplicated values
@@ -226,7 +231,8 @@
 //     }
 //     case LOGGING_OP_INSERT: {
 //       LOG_TRACE("Execute Insert txn %d", (int)cid);
-//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
+//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false,
+//       false)[0];
 //       std::unique_ptr<logging::LogRecord> tuple_record(
 //           backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, cid, 1,
 //                                          DEFAULT_DB_ID, INVALID_ITEMPOINTER,
@@ -237,7 +243,8 @@
 //     }
 //     case LOGGING_OP_UPDATE: {
 //       LOG_TRACE("Execute Update txn %d", (int)cid);
-//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
+//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false,
+//       false)[0];
 //       std::unique_ptr<logging::LogRecord> tuple_record(
 //           backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, cid, 1,
 //                                          DEFAULT_DB_ID, INVALID_ITEMPOINTER,
@@ -248,7 +255,8 @@
 //     }
 //     case LOGGING_OP_DELETE: {
 //       LOG_TRACE("Execute Delete txn %d", (int)cid);
-//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
+//       auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false,
+//       false)[0];
 //       std::unique_ptr<logging::LogRecord> tuple_record(
 //           backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, cid, 1,
 //                                          DEFAULT_DB_ID, INVALID_ITEMPOINTER,
@@ -264,7 +272,8 @@
 //     }
 //     case LOGGING_OP_COMMIT: {
 //       LOG_TRACE("Execute Commit txn %d", (int)cid);
-//       std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
+//       std::unique_ptr<logging::LogRecord> record(new
+//       logging::TransactionRecord(
 //           LOGRECORD_TYPE_TRANSACTION_COMMIT, cid));
 //       PELOTON_ASSERT(backend_logger);
 //       backend_logger->Log(record.get());
@@ -272,7 +281,8 @@
 //     }
 //     case LOGGING_OP_ABORT: {
 //       LOG_TRACE("Execute Abort txn %d", (int)cid);
-//       std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
+//       std::unique_ptr<logging::LogRecord> record(new
+//       logging::TransactionRecord(
 //           LOGRECORD_TYPE_TRANSACTION_ABORT, cid));
 //       PELOTON_ASSERT(backend_logger);
 //       backend_logger->Log(record.get());
@@ -334,7 +344,8 @@
 //   }
 //   for (unsigned int i = 0;
 //        i < num_frontend_logger * num_backend_logger_per_frontend; i++) {
-//     backend_threads.emplace_back(&backend_schedules[i], log_manager, i, table,
+//     backend_threads.emplace_back(&backend_schedules[i], log_manager, i,
+//     table,
 //                                  i % num_backend_logger_per_frontend);
 //   }
 

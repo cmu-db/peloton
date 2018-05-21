@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -49,7 +48,7 @@ namespace test {
 // Loader Tests
 //===--------------------------------------------------------------------===//
 
-class LoaderTests : public PelotonTest {};
+class LoaderTests : public PelotonTests {};
 
 std::atomic<int> loader_tuple_id;
 
@@ -67,8 +66,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    type::Value value = (
-        tuple->GetValue(col_id));
+    type::Value value = (tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
     planner::DerivedAttribute attribute{expression};
     target_list.emplace_back(col_id, attribute);
@@ -131,7 +129,8 @@ TEST_F(LoaderTests, LoadingTest) {
 
   auto expected_tile_group_count = 0;
 
-  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
+  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader *
+                          TEST_TUPLES_PER_TILEGROUP;
   int max_cached_tuple_count =
       TEST_TUPLES_PER_TILEGROUP * storage::DataTable::GetActiveTileGroupCount();
   int max_unfill_cached_tuple_count =
@@ -147,9 +146,13 @@ TEST_F(LoaderTests, LoadingTest) {
           max_unfill_cached_tuple_count;
     }
   } else {
-    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * storage::DataTable::GetActiveTileGroupCount();
-    
-    if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
+    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count *
+                                  storage::DataTable::GetActiveTileGroupCount();
+
+    if (total_tuple_count -
+            filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP -
+            max_unfill_cached_tuple_count <=
+        0) {
       expected_tile_group_count = filled_tile_group_count +
                                   storage::DataTable::GetActiveTileGroupCount();
     } else {

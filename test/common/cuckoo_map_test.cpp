@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/container/cuckoo_map.h"
 
 #include "common/harness.h"
@@ -22,7 +21,7 @@ namespace test {
 // Cuckoo Map Test
 //===--------------------------------------------------------------------===//
 
-class CuckooMapTests : public PelotonTest {};
+class CuckooMapTests : public PelotonTests {};
 
 // Test basic functionality
 TEST_F(CuckooMapTests, BasicTest) {
@@ -95,7 +94,7 @@ TEST_F(CuckooMapTests, IteratorTest) {
   typedef std::shared_ptr<oid_t> value_type;
 
   CuckooMap<key_type, value_type> map;
-  
+
   {
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element) {

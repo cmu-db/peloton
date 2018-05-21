@@ -20,7 +20,7 @@ namespace test {
 // Thread Pool Test
 //===--------------------------------------------------------------------===//
 
-class ThreadPoolTests : public PelotonTest {};
+class ThreadPoolTests : public PelotonTests {};
 
 TEST_F(ThreadPoolTests, BasicTest) {
   ThreadPool thread_pool;
@@ -34,31 +34,26 @@ TEST_F(ThreadPoolTests, BasicTest) {
   int var4 = 4;
   int var5 = 5;
   thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var + *var;
-                           counter->fetch_add(1);
-                         },
-                         &var1, &counter);
+    *var = *var + *var;
+    counter->fetch_add(1);
+  }, &var1, &counter);
   thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var - *var;
-                           counter->fetch_add(1);
-                         },
-                         &var2, &counter);
+    *var = *var - *var;
+    counter->fetch_add(1);
+  }, &var2, &counter);
   thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var * *var;
-                           counter->fetch_add(1);
-                         },
-                         &var3, &counter);
+    *var = *var * *var;
+    counter->fetch_add(1);
+  }, &var3, &counter);
   thread_pool.SubmitTask([](int *var, std::atomic<int> *counter) {
-                           *var = *var / *var;
-                           counter->fetch_add(1);
-                         },
-                         &var4, &counter);
+    *var = *var / *var;
+    counter->fetch_add(1);
+  }, &var4, &counter);
 
   thread_pool.SubmitDedicatedTask([](int *var, std::atomic<int> *counter) {
-                                    *var = *var / *var;
-                                    counter->fetch_add(1);
-                                  },
-                                  &var5, &counter);
+    *var = *var / *var;
+    counter->fetch_add(1);
+  }, &var5, &counter);
 
   // Wait for all the test to finish
   while (counter.load() != 5) {

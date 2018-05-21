@@ -28,7 +28,7 @@ namespace test {
 // FileUtil Test
 //===--------------------------------------------------------------------===//
 
-class FileUtilTests : public PelotonTest {
+class FileUtilTests : public PelotonTests {
  public:
   void TearDown() override {
     for (auto path : tempFiles) {
@@ -37,7 +37,7 @@ class FileUtilTests : public PelotonTest {
         std::remove(path.c_str());
       }
     }  // FOR
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 
   std::vector<std::string> tempFiles;

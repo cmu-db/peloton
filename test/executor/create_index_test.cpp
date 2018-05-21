@@ -43,9 +43,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class CreateIndexTests : public PelotonTest {};
+class CreateIndexTests : public PelotonTests {};
 
-TEST_F(CreateIndexTests, CreatingIndex) {
+TEST_F(CreateIndexTests, CreatingIndexTest) {
   LOG_INFO("Bootstrapping...");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

@@ -52,7 +52,7 @@ using ::testing::InSequence;
 namespace peloton {
 namespace test {
 
-class JoinTests : public PelotonTest {};
+class JoinTests : public PelotonTests {};
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;

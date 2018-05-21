@@ -25,9 +25,9 @@
 namespace peloton {
 namespace test {
 
-class HashJoinTranslatorTest : public PelotonCodeGenTest {
+class HashJoinTranslatorTests : public PelotonCodeGenTests {
  public:
-  HashJoinTranslatorTest() : PelotonCodeGenTest() {
+  HashJoinTranslatorTests() : PelotonCodeGenTests() {
     // Load the test table
     uint32_t num_rows = 10;
     LoadTestTable(LeftTableId(), 2 * num_rows);
@@ -47,7 +47,7 @@ class HashJoinTranslatorTest : public PelotonCodeGenTest {
   }
 };
 
-TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
+TEST_F(HashJoinTranslatorTests, SingleHashJoinColumnTest) {
   //
   // SELECT
   //   left_table.a, right_table.a, left_table.b, right_table.c,

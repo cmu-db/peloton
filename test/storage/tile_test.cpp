@@ -24,18 +24,21 @@ namespace test {
 // Tile Tests
 //===--------------------------------------------------------------------===//
 
-class TileTests : public PelotonTest {};
+class TileTests : public PelotonTests {};
 
 TEST_F(TileTests, BasicTest) {
   // Columns
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-                          "A", true);
-  catalog::Column column2(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
-                          "B", true);
-  catalog::Column column3(type::TypeId::TINYINT, type::Type::GetTypeSize(type::TypeId::TINYINT),
-                          "C", true);
+  catalog::Column column1(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "A",
+                          true);
+  catalog::Column column2(type::TypeId::INTEGER,
+                          type::Type::GetTypeSize(type::TypeId::INTEGER), "B",
+                          true);
+  catalog::Column column3(type::TypeId::TINYINT,
+                          type::Type::GetTypeSize(type::TypeId::TINYINT), "C",
+                          true);
   catalog::Column column4(type::TypeId::VARCHAR, 25, "D", false);
   catalog::Column column5(type::TypeId::VARCHAR, 25, "E", false);
 
@@ -67,32 +70,36 @@ TEST_F(TileTests, BasicTest) {
       BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       header.get(), *schema, nullptr, tuple_count));
 
-  std::unique_ptr<storage::Tuple> tuple1(new storage::Tuple(schema.get(),
-                                                            true));
-  std::unique_ptr<storage::Tuple> tuple2(new storage::Tuple(schema.get(),
-                                                            true));
-  std::unique_ptr<storage::Tuple> tuple3(new storage::Tuple(schema.get(),
-                                                            true));
+  std::unique_ptr<storage::Tuple> tuple1(
+      new storage::Tuple(schema.get(), true));
+  std::unique_ptr<storage::Tuple> tuple2(
+      new storage::Tuple(schema.get(), true));
+  std::unique_ptr<storage::Tuple> tuple3(
+      new storage::Tuple(schema.get(), true));
   auto pool = tile->GetPool();
 
   tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
   tuple1->SetValue(1, type::ValueFactory::GetIntegerValue(1), pool);
   tuple1->SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValue(3, type::ValueFactory::GetVarcharValue("vivek sengupta"), pool);
-  tuple1->SetValue(4, type::ValueFactory::GetVarcharValue("vivek sengupta again"),
+  tuple1->SetValue(3, type::ValueFactory::GetVarcharValue("vivek sengupta"),
                    pool);
+  tuple1->SetValue(
+      4, type::ValueFactory::GetVarcharValue("vivek sengupta again"), pool);
 
   tuple2->SetValue(0, type::ValueFactory::GetIntegerValue(2), pool);
   tuple2->SetValue(1, type::ValueFactory::GetIntegerValue(2), pool);
   tuple2->SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
   tuple2->SetValue(3, type::ValueFactory::GetVarcharValue("ming fang"), pool);
-  tuple2->SetValue(4, type::ValueFactory::GetVarcharValue("ming fang again"), pool);
+  tuple2->SetValue(4, type::ValueFactory::GetVarcharValue("ming fang again"),
+                   pool);
 
   tuple3->SetValue(0, type::ValueFactory::GetIntegerValue(3), pool);
   tuple3->SetValue(1, type::ValueFactory::GetIntegerValue(3), pool);
   tuple3->SetValue(2, type::ValueFactory::GetTinyIntValue(3), pool);
-  tuple3->SetValue(3, type::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
-  tuple3->SetValue(4, type::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
+  tuple3->SetValue(3, type::ValueFactory::GetVarcharValue("jinwoong kim"),
+                   pool);
+  tuple3->SetValue(4, type::ValueFactory::GetVarcharValue("jinwoong kim again"),
+                   pool);
 
   tile->InsertTuple(0, tuple1.get());
   tile->InsertTuple(1, tuple2.get());

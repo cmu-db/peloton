@@ -42,23 +42,26 @@ using namespace optimizer;
 
 // const int N_ROW = 100;
 
-class CostTests : public PelotonTest {};
+class CostTests : public PelotonTests {};
 
 // tablename: test
 // database name: DEFAULT_DB_NAME
 // void CreateAndLoadTable(const std::string& table_name = {"test"}) {
 //   TestingSQLUtil::ExecuteSQLQuery(
-//       "CREATE TABLE " + table_name + " (id INT PRIMARY KEY, name VARCHAR, salary DECIMAL);");
+//       "CREATE TABLE " + table_name + " (id INT PRIMARY KEY, name VARCHAR,
+//       salary DECIMAL);");
 //   for (int i = 1; i <= N_ROW; i++) {
 //     std::stringstream ss;
-//     ss << "INSERT INTO " << table_name << " VALUES (" << i << ", 'name', 1.1);";
+//     ss << "INSERT INTO " << table_name << " VALUES (" << i << ", 'name',
+//     1.1);";
 //     TestingSQLUtil::ExecuteSQLQuery(ss.str());
 //   }
 // }
 //
 // std::shared_ptr<PropertyColumns> GetPropertyColumns() {
 //   std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
-//   auto star_expr = std::shared_ptr<expression::AbstractExpression>(new expression::StarExpression());
+//   auto star_expr = std::shared_ptr<expression::AbstractExpression>(new
+//   expression::StarExpression());
 //   cols.push_back(star_expr);
 //   return std::make_shared<PropertyColumns>(cols);
 // }
@@ -109,10 +112,12 @@ class CostTests : public PelotonTest {};
 //
 //   // condition1: id < 1000
 //   type::Value value1 = type::ValueFactory::GetIntegerValue(1000);
-//   ValueCondition condition1{0, "id", ExpressionType::COMPARE_LESSTHAN, value1};
+//   ValueCondition condition1{0, "id", ExpressionType::COMPARE_LESSTHAN,
+//   value1};
 //   std::shared_ptr<TableStats> output_stats(new TableStats{});
 //   double cost1 =
-//       Cost::SingleConditionSeqScanCost(table_stats, condition1, output_stats);
+//       Cost::SingleConditionSeqScanCost(table_stats, condition1,
+//       output_stats);
 //   LOG_INFO("cost for condition 1 is %f", cost1);
 //   EXPECT_GE(cost1, 0);
 //   // EXPECT_EQ(output_stats->num_rows, 1000);
@@ -121,7 +126,8 @@ class CostTests : public PelotonTest {};
 //   ValueCondition condition2{0, "id", ExpressionType::COMPARE_EQUAL, value1};
 //   output_stats->ClearColumnStats();
 //   double cost2 =
-//       Cost::SingleConditionSeqScanCost(table_stats, condition2, output_stats);
+//       Cost::SingleConditionSeqScanCost(table_stats, condition2,
+//       output_stats);
 //   LOG_INFO("cost for condition 2 is: %f", cost2);
 //   EXPECT_GE(cost2, 0);
 //   // EXPECT_EQ(output_stats->num_rows, 1);
@@ -131,7 +137,8 @@ class CostTests : public PelotonTest {};
 //
 //   // Free the database
 //   txn = txn_manager.BeginTransaction();
-//   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+//   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME,
+//   txn);
 //   txn_manager.CommitTransaction(txn);
 // }
 //
@@ -172,7 +179,8 @@ class CostTests : public PelotonTest {};
 //
 //   auto expr1 = new expression::TupleValueExpression("id", "test1");
 //   auto expr2 = new expression::TupleValueExpression("id", "test2");
-//   auto predicate = std::shared_ptr<expression::AbstractExpression>(expression::ExpressionUtil::ComparisonFactory(
+//   auto predicate =
+//   std::shared_ptr<expression::AbstractExpression>(expression::ExpressionUtil::ComparisonFactory(
 //     ExpressionType::COMPARE_EQUAL, expr1, expr2));
 //
 //
@@ -183,7 +191,8 @@ class CostTests : public PelotonTest {};
 //     right_table_stats,
 //     column_prop.get());
 //
-//   double cost = Cost::NLJoinCost(left_table_stats, right_table_stats, output_stats, predicate, JoinType::INNER, true);
+//   double cost = Cost::NLJoinCost(left_table_stats, right_table_stats,
+//   output_stats, predicate, JoinType::INNER, true);
 //   LOG_INFO("Estimated output size %lu", output_stats->num_rows);
 //   EXPECT_EQ(cost, 100);
 //   EXPECT_EQ(output_stats->GetSampler()->GetSampledTuples().size(), 100);

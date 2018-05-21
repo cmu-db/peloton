@@ -36,9 +36,9 @@
 namespace peloton {
 namespace test {
 
-class BloomFilterCodegenTest : public PelotonTest {
+class BloomFilterCodegenTests : public PelotonTests {
  public:
-  BloomFilterCodegenTest() {
+  BloomFilterCodegenTests() {
     // Create test db
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -46,7 +46,7 @@ class BloomFilterCodegenTest : public PelotonTest {
     txn_manager.CommitTransaction(txn);
   }
 
-  ~BloomFilterCodegenTest() {
+  ~BloomFilterCodegenTests() {
     // Drop test db
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -70,7 +70,7 @@ class BloomFilterCodegenTest : public PelotonTest {
   const std::string table2_name = "test2";
 };
 
-TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
+TEST_F(BloomFilterCodegenTests, FalsePositiveRateTest) {
   codegen::CodeContext code_context;
   codegen::CodeGen codegen(code_context);
 
@@ -167,7 +167,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
   ASSERT_TRUE(code_context.Compile());
 
-  typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
+  typedef void (*ftype)(codegen::util::BloomFilter *bloom_filter, int *, int,
                         int *);
   ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
@@ -190,7 +190,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
 // Testing whether bloom filter can improve the performance of hash join
 // when the hash table is bigger than L3 cache and selectivity is low
-TEST_F(BloomFilterCodegenTest, PerformanceTest) {
+TEST_F(BloomFilterCodegenTests, PerformanceTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *catalog = catalog::Catalog::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -276,11 +276,9 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-double BloomFilterCodegenTest::ExecuteJoin(std::string query,
-                                           concurrency::TransactionContext *txn,
-                                           int num_iter,
-                                           unsigned inner_table_cardinality,
-                                           bool enable_bloom_filter) {
+double BloomFilterCodegenTests::ExecuteJoin(
+    std::string query, concurrency::TransactionContext *txn, int num_iter,
+    unsigned inner_table_cardinality, bool enable_bloom_filter) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
   double total_runtime = 0;
@@ -310,8 +308,8 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
         *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
 
     // Run
-    PelotonCodeGenTest::ExecuteSync(*compiled_query,
-                                    std::move(executor_context), consumer);
+    PelotonCodeGenTests::ExecuteSync(*compiled_query,
+                                     std::move(executor_context), consumer);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
     total_runtime += stats.plan_ms;
@@ -321,8 +319,9 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
 
 // Create a table where all the columns are BIGINT and each tuple has desired
 // tuple size
-void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
-                                         concurrency::TransactionContext *txn) {
+void BloomFilterCodegenTests::CreateTable(
+    std::string table_name, int tuple_size,
+    concurrency::TransactionContext *txn) {
   int curr_size = 0;
   size_t bigint_size = type::Type::GetTypeSize(type::TypeId::BIGINT);
   std::vector<catalog::Column> cols;
@@ -339,9 +338,9 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
 }
 
 // Insert a tuple to specific table
-void BloomFilterCodegenTest::InsertTuple(const std::vector<int> &vals,
-                                         storage::DataTable *table,
-                                         concurrency::TransactionContext *txn) {
+void BloomFilterCodegenTests::InsertTuple(
+    const std::vector<int> &vals, storage::DataTable *table,
+    concurrency::TransactionContext *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   storage::Tuple tuple{table->GetSchema(), true};
   for (unsigned i = 0; i < vals.size(); i++) {

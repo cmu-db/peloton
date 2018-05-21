@@ -18,7 +18,7 @@
 namespace peloton {
 namespace test {
 // Tests for both statement cache
-class StatementCacheTests : public PelotonTest {};
+class StatementCacheTests : public PelotonTests {};
 
 // Test statementCache add and get statement
 TEST_F(StatementCacheTests, AddGetTest) {
@@ -100,7 +100,6 @@ TEST_F(StatementCacheTests, DisableTableTest) {
     }
   }
 }
-
 
 }  // namespace test
 }  // namespace peloton

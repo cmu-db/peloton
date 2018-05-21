@@ -20,14 +20,14 @@
 namespace peloton {
 namespace test {
 
-class OrderByTranslatorTest : public PelotonCodeGenTest {
+class OrderByTranslatorTests : public PelotonCodeGenTests {
  public:
-  OrderByTranslatorTest() : PelotonCodeGenTest() {}
+  OrderByTranslatorTests() : PelotonCodeGenTests() {}
 
   oid_t TestTableId() { return test_table_oids[0]; }
 };
 
-TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
+TEST_F(OrderByTranslatorTests, SingleIntColAscTest) {
   //
   // SELECT * FROM test_table ORDER BY a;
   //
@@ -64,7 +64,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
+TEST_F(OrderByTranslatorTests, SingleIntColDescTest) {
   //
   // SELECT * FROM test_table ORDER BY a DESC;
   //
@@ -101,7 +101,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
+TEST_F(OrderByTranslatorTests, MultiIntColAscTest) {
   //
   // SELECT * FROM test_table ORDER BY b, a ASC;
   //
@@ -134,8 +134,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;
@@ -147,7 +146,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
+TEST_F(OrderByTranslatorTests, MultiIntColMixedTest) {
   //
   // SELECT * FROM test_table ORDER BY b DESC a ASC;
   //
@@ -180,8 +179,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;

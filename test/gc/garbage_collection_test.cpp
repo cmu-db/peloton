@@ -31,7 +31,7 @@ namespace test {
 // Garbage Collection Tests
 //===--------------------------------------------------------------------===//
 
-class GarbageCollectionTests : public PelotonTest {};
+class GarbageCollectionTests : public PelotonTests {};
 
 void UpdateTuple(storage::DataTable *table, const int update_num,
                  const int total_num) {

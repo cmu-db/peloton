@@ -19,44 +19,38 @@ namespace test {
 //===--------------------------------------------------------------------===//
 // Anomaly Tests
 //===--------------------------------------------------------------------===//
-// These test cases are based on the paper: 
+// These test cases are based on the paper:
 // -- "A Critique of ANSI SQL Isolation Levels"
 
-class AnomalyTests : public PelotonTest {};
+class AnomalyTests : public PelotonTests {};
 
 static std::vector<ProtocolType> PROTOCOL_TYPES = {
-    ProtocolType::TIMESTAMP_ORDERING
-};
+    ProtocolType::TIMESTAMP_ORDERING};
 
 static std::vector<IsolationLevelType> ISOLATION_LEVEL_TYPES = {
-  IsolationLevelType::SERIALIZABLE, 
-  IsolationLevelType::SNAPSHOT, 
-  IsolationLevelType::REPEATABLE_READS, 
-  IsolationLevelType::READ_COMMITTED
-};
+    IsolationLevelType::SERIALIZABLE, IsolationLevelType::SNAPSHOT,
+    IsolationLevelType::REPEATABLE_READS, IsolationLevelType::READ_COMMITTED};
 
 static std::vector<ConflictAvoidanceType> CONFLICT_AVOIDANCE_TYPES = {
-  // ConflictAvoidanceType::WAIT,
-  ConflictAvoidanceType::ABORT
-};
-
+    // ConflictAvoidanceType::WAIT,
+    ConflictAvoidanceType::ABORT};
 
 // Dirty write:
-// TransactionContext T1 modifies a data item. Another transaction T2 then further
+// TransactionContext T1 modifies a data item. Another transaction T2 then
+// further
 // modifies that data item before T1 performs a COMMIT or ROLLBACK.
-// If T1 or T2 then performs a ROLLBACK, it is unclear what the correct 
+// If T1 or T2 then performs a ROLLBACK, it is unclear what the correct
 // data value should be.
 
 // for all isolation levels, dirty write must never happen.
-void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE, 
-                    const IsolationLevelType isolation, 
+void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
+                    const IsolationLevelType isolation,
                     const ConflictAvoidanceType conflict) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -81,18 +75,18 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
       if (isolation == IsolationLevelType::SNAPSHOT) {
         EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
-        EXPECT_EQ(2, scheduler.schedules[2].results[0]);        
+        EXPECT_EQ(2, scheduler.schedules[2].results[0]);
       }
     }
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       if (isolation == IsolationLevelType::SNAPSHOT) {
         EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
-        EXPECT_EQ(1, scheduler.schedules[2].results[0]);        
+        EXPECT_EQ(1, scheduler.schedules[2].results[0]);
       }
     }
 
@@ -101,8 +95,7 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -125,20 +118,20 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
       EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
 
       if (isolation == IsolationLevelType::SNAPSHOT) {
-        EXPECT_EQ(0, scheduler.schedules[2].results[0]); 
+        EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
-        EXPECT_EQ(1, scheduler.schedules[2].results[0]); 
+        EXPECT_EQ(1, scheduler.schedules[2].results[0]);
       }
     }
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       if (isolation == IsolationLevelType::SNAPSHOT) {
         EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
-        EXPECT_EQ(1, scheduler.schedules[2].results[0]);        
+        EXPECT_EQ(1, scheduler.schedules[2].results[0]);
       }
     }
 
@@ -147,8 +140,7 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -175,8 +167,8 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       EXPECT_EQ(0, scheduler.schedules[2].results[0]);
     }
 
@@ -185,8 +177,7 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -213,19 +204,17 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       EXPECT_EQ(0, scheduler.schedules[2].results[0]);
     }
 
     schedules.clear();
   }
 
-
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -252,19 +241,17 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       EXPECT_EQ(0, scheduler.schedules[2].results[0]);
     }
 
     schedules.clear();
   }
 
-
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 updates (0, ?) to (0, 2)
@@ -291,8 +278,8 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::ABORTED);
-      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);      
-      
+      EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
+
       EXPECT_EQ(0, scheduler.schedules[2].results[0]);
     }
 
@@ -300,24 +287,22 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
   }
 }
 
-
 // Dirty read:
 // TransactionContext T1 modifies a data item. Another transaction T2 then reads
 // that data item before T1 performs a COMMIT or ROLLBACK.
 // If T1 then performs a ROLLBACK, T2 has read a data item that was never
 // committed and so never really existed.
 
-// for all isolation levels except READ_UNCOMMITTED, 
+// for all isolation levels except READ_UNCOMMITTED,
 // dirty read must never happen.
-void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE, 
-                   const IsolationLevelType isolation, 
+void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
+                   const IsolationLevelType isolation,
                    const ConflictAvoidanceType conflict) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-        TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 reads (0, ?)
@@ -345,14 +330,13 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
     if (conflict == ConflictAvoidanceType::ABORT) {
       EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
 
-      
       if (isolation == IsolationLevelType::SNAPSHOT) {
         EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
         EXPECT_EQ(0, scheduler.schedules[1].results[0]);
         EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
         EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
-        EXPECT_EQ(1, scheduler.schedules[2].results[0]);        
+        EXPECT_EQ(1, scheduler.schedules[2].results[0]);
       }
     }
 
@@ -361,8 +345,7 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-        TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 updates (0, ?) to (0, 1)
     // T1 reads (0, ?)
@@ -385,7 +368,6 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
       EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
 
       EXPECT_EQ(0, scheduler.schedules[2].results[0]);
-
     }
 
     if (conflict == ConflictAvoidanceType::ABORT) {
@@ -393,19 +375,17 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
       if (isolation == IsolationLevelType::SNAPSHOT) {
         EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
-        EXPECT_EQ(0, scheduler.schedules[1].results[0]); 
-        EXPECT_EQ(0, scheduler.schedules[2].results[0]); 
+        EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+        EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       } else {
         EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
-        EXPECT_EQ(0, scheduler.schedules[2].results[0]); 
+        EXPECT_EQ(0, scheduler.schedules[2].results[0]);
       }
     }
 
     schedules.clear();
   }
-
 }
-
 
 // Fuzzy read:
 // TransactionContext T1 reads a data item. Another transaction T2 then modifies
@@ -413,17 +393,16 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 // the data item, it receives a modified value or discovers that the data
 // item has been deleted.
 
-// for all isolation levels except READ_UNCOMMITTED and READ_COMMITTED, 
+// for all isolation levels except READ_UNCOMMITTED and READ_COMMITTED,
 // dirty read must never happen.
-void FuzzyReadTest(const ProtocolType protocol, 
-                   const IsolationLevelType isolation UNUSED_ATTRIBUTE, 
+void FuzzyReadTest(const ProtocolType protocol,
+                   const IsolationLevelType isolation UNUSED_ATTRIBUTE,
                    const ConflictAvoidanceType conflict) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-        TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T0 obtains a smaller timestamp.
@@ -445,12 +424,10 @@ void FuzzyReadTest(const ProtocolType protocol,
     scheduler.Run();
     auto &schedules = scheduler.schedules;
 
-
     if (protocol == ProtocolType::TIMESTAMP_ORDERING) {
       if (conflict == ConflictAvoidanceType::ABORT) {
-        if (isolation != IsolationLevelType::READ_COMMITTED && 
+        if (isolation != IsolationLevelType::READ_COMMITTED &&
             isolation != IsolationLevelType::SNAPSHOT) {
-        
           EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
           EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
 
@@ -465,11 +442,9 @@ void FuzzyReadTest(const ProtocolType protocol,
     schedules.clear();
   }
 
-
   {
     concurrency::EpochManagerFactory::GetInstance().Reset();
-    storage::DataTable *table = 
-        TestingTransactionUtil::CreateTable();
+    storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
     TransactionScheduler scheduler(3, table, &txn_manager);
     // T1 obtains a smaller timestamp.
@@ -495,9 +470,8 @@ void FuzzyReadTest(const ProtocolType protocol,
 
     if (protocol == ProtocolType::TIMESTAMP_ORDERING) {
       if (conflict == ConflictAvoidanceType::ABORT) {
-        if (isolation == IsolationLevelType::SERIALIZABLE || 
+        if (isolation == IsolationLevelType::SERIALIZABLE ||
             isolation == IsolationLevelType::REPEATABLE_READS) {
-
           EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
           EXPECT_TRUE(schedules[1].txn_result == ResultType::ABORTED);
 
@@ -506,9 +480,7 @@ void FuzzyReadTest(const ProtocolType protocol,
           EXPECT_EQ(0, scheduler.schedules[1].results[0]);
 
           EXPECT_EQ(0, scheduler.schedules[2].results[0]);
-        }
-        else if (isolation == IsolationLevelType::SNAPSHOT) {
-
+        } else if (isolation == IsolationLevelType::SNAPSHOT) {
           EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
           EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
 
@@ -518,10 +490,8 @@ void FuzzyReadTest(const ProtocolType protocol,
           EXPECT_EQ(0, scheduler.schedules[1].results[0]);
 
           // TODO: double check!
-          EXPECT_EQ(0, scheduler.schedules[2].results[0]);          
-        }
-        else if (isolation == IsolationLevelType::READ_COMMITTED) {
-
+          EXPECT_EQ(0, scheduler.schedules[2].results[0]);
+        } else if (isolation == IsolationLevelType::READ_COMMITTED) {
           EXPECT_TRUE(schedules[0].txn_result == ResultType::SUCCESS);
           EXPECT_TRUE(schedules[1].txn_result == ResultType::SUCCESS);
 
@@ -529,7 +499,7 @@ void FuzzyReadTest(const ProtocolType protocol,
           EXPECT_EQ(1, scheduler.schedules[0].results[1]);
           EXPECT_EQ(0, scheduler.schedules[1].results[0]);
 
-          EXPECT_EQ(1, scheduler.schedules[2].results[0]);          
+          EXPECT_EQ(1, scheduler.schedules[2].results[0]);
         }
       }
     }
@@ -538,7 +508,7 @@ void FuzzyReadTest(const ProtocolType protocol,
   }
 
   // {
-  //   storage::DataTable *table = 
+  //   storage::DataTable *table =
   //       TestingTransactionUtil::CreateTable();
 
   //   TransactionScheduler scheduler(2, table, &txn_manager);
@@ -564,10 +534,9 @@ void FuzzyReadTest(const ProtocolType protocol,
   // }
 }
 
-void PhantomTest() {
+void PhantomTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
     TransactionScheduler scheduler(2, table, &txn_manager);
@@ -608,10 +577,9 @@ void PhantomTest() {
 }
 
 // Can't pass this test!
-void WriteSkewTest() {
+void WriteSkewTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
 
   {
     // Prepare
@@ -619,8 +587,7 @@ void WriteSkewTest() {
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
     // the database has tuple (0, 0), (1, 1)
@@ -642,8 +609,7 @@ void WriteSkewTest() {
 
     scheduler.Run();
 
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[2].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
     // Can't all success
     if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
         ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
@@ -653,10 +619,9 @@ void WriteSkewTest() {
   }
 }
 
-void ReadSkewTest() {
+void ReadSkewTests() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
   {
     TransactionScheduler scheduler(2, table, &txn_manager);
     scheduler.Txn(0).Read(0);
@@ -681,8 +646,7 @@ void ReadSkewTest() {
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  storage::DataTable *table = 
-      TestingTransactionUtil::CreateTable();
+  storage::DataTable *table = TestingTransactionUtil::CreateTable();
   int current_batch_key = 10000;
   {
     TransactionScheduler scheduler(1, table, &txn_manager);
@@ -691,8 +655,7 @@ void SIAnomalyTest1() {
     scheduler.Txn(0).Update(100, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
     TransactionScheduler scheduler(4, table, &txn_manager);
@@ -722,19 +685,21 @@ void SIAnomalyTest1() {
 
 TEST_F(AnomalyTests, SerializableTest) {
   for (auto protocol_type : PROTOCOL_TYPES) {
-    for (auto isolation_level_type: ISOLATION_LEVEL_TYPES) {
+    for (auto isolation_level_type : ISOLATION_LEVEL_TYPES) {
       for (auto conflict_avoidance_type : CONFLICT_AVOIDANCE_TYPES) {
         concurrency::TransactionManagerFactory::Configure(
             protocol_type, isolation_level_type, conflict_avoidance_type);
 
-        DirtyWriteTest(protocol_type, isolation_level_type, conflict_avoidance_type);
-        DirtyReadTest(protocol_type, isolation_level_type, conflict_avoidance_type);
-        FuzzyReadTest(protocol_type, isolation_level_type, conflict_avoidance_type);
-        // // WriteSkewTest();
+        DirtyWriteTest(protocol_type, isolation_level_type,
+                       conflict_avoidance_type);
+        DirtyReadTest(protocol_type, isolation_level_type,
+                      conflict_avoidance_type);
+        FuzzyReadTest(protocol_type, isolation_level_type,
+                      conflict_avoidance_type);
+        // // WriteSkewTests();
         // ReadSkewTest(isolation_level_type, conflict_avoidance_type);
         // PhantomTest(isolation_level_type, conflict_avoidance_type);
         // SIAnomalyTest1(isolation_level_type, conflict_avoidance_type);
-
       }
     }
   }
@@ -747,16 +712,15 @@ TEST_F(AnomalyTests, StressTest) {
   srand(15721);
   for (auto protocol_type : PROTOCOL_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol_type, 
-        IsolationLevelType::SERIALIZABLE, 
+        protocol_type, IsolationLevelType::SERIALIZABLE,
         ConflictAvoidanceType::ABORT);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    
-    EXPECT_EQ(IsolationLevelType::SERIALIZABLE, txn_manager.GetIsolationLevel());
 
-    storage::DataTable *table = 
-        TestingTransactionUtil::CreateTable(num_key);
+    EXPECT_EQ(IsolationLevelType::SERIALIZABLE,
+              txn_manager.GetIsolationLevel());
+
+    storage::DataTable *table = TestingTransactionUtil::CreateTable(num_key);
 
     TransactionScheduler scheduler(num_txn, table, &txn_manager);
     scheduler.SetConcurrent(true);
@@ -787,8 +751,7 @@ TEST_F(AnomalyTests, StressTest) {
     scheduler2.Txn(0).Commit();
     scheduler2.Run();
 
-    EXPECT_EQ(ResultType::SUCCESS,
-              scheduler2.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS, scheduler2.schedules[0].txn_result);
     // The sum should be zero
     int sum = 0;
     for (auto result : scheduler2.schedules[0].results) {

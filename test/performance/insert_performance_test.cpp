@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -50,7 +49,7 @@ namespace test {
 // Insert Tests
 //===--------------------------------------------------------------------===//
 
-class InsertPerformanceTests : public PelotonTest {};
+class InsertPerformanceTests : public PelotonTests {};
 
 std::atomic<int> loader_tuple_id;
 
@@ -118,7 +117,8 @@ TEST_F(InsertPerformanceTests, LoadingTest) {
 
   auto expected_tile_group_count = 0;
 
-  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
+  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader *
+                          TEST_TUPLES_PER_TILEGROUP;
   int max_cached_tuple_count =
       TEST_TUPLES_PER_TILEGROUP * storage::DataTable::GetActiveTileGroupCount();
   int max_unfill_cached_tuple_count =
@@ -137,7 +137,10 @@ TEST_F(InsertPerformanceTests, LoadingTest) {
     int filled_tile_group_count = total_tuple_count / max_cached_tuple_count *
                                   storage::DataTable::GetActiveTileGroupCount();
 
-    if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
+    if (total_tuple_count -
+            filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP -
+            max_unfill_cached_tuple_count <=
+        0) {
       expected_tile_group_count = filled_tile_group_count +
                                   storage::DataTable::GetActiveTileGroupCount();
     } else {

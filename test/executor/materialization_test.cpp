@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -44,7 +43,7 @@ namespace test {
 // Materialization Tests
 //===--------------------------------------------------------------------===//
 
-class MaterializationTests : public PelotonTest {};
+class MaterializationTests : public PelotonTests {};
 
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
@@ -65,7 +64,8 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(nullptr, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      TestingExecutorUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      TestingExecutorUtil::ExecuteTile(&executor,
+                                       source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -79,8 +79,8 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
   for (int i = 0; i < tuple_count; i++) {
     type::Value val0 = (result_base_tile->GetValue(i, 0));
     type::Value val1 = (result_base_tile->GetValue(i, 1));
-    CmpBool cmp = (val0.CompareEquals(
-      type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
+    CmpBool cmp = (val0.CompareEquals(type::ValueFactory::GetIntegerValue(
+        TestingExecutorUtil::PopulatedValue(i, 0))));
     EXPECT_TRUE(cmp == CmpBool::CmpTrue);
     cmp = val1.CompareEquals(type::ValueFactory::GetIntegerValue(
         TestingExecutorUtil::PopulatedValue(i, 1)));
@@ -136,7 +136,8 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      TestingExecutorUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      TestingExecutorUtil::ExecuteTile(&executor,
+                                       source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -152,8 +153,8 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
     type::Value val1(result_base_tile->GetValue(i, 1));
     type::Value val2(result_base_tile->GetValue(i, 2));
     // Output column 2.
-    CmpBool cmp(val2.CompareEquals(
-      type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
+    CmpBool cmp(val2.CompareEquals(type::ValueFactory::GetIntegerValue(
+        TestingExecutorUtil::PopulatedValue(i, 0))));
     EXPECT_TRUE(cmp == CmpBool::CmpTrue);
 
     // Output column 1.

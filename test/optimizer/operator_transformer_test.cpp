@@ -30,11 +30,11 @@ namespace test {
 
 using namespace optimizer;
 
-class OperatorTransformerTests : public PelotonTest {
+class OperatorTransformerTests : public PelotonTests {
  protected:
   virtual void SetUp() override {
     // Call parent virtual function first
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
 
     // Create test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -98,7 +98,7 @@ class OperatorTransformerTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 // TODO(boweic): Since operator transformer has a huge change during the

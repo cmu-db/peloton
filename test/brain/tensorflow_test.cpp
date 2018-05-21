@@ -26,7 +26,7 @@ namespace test {
 // Tensorflow Tests
 //===--------------------------------------------------------------------===//
 
-class TensorflowTests : public PelotonTest {};
+class TensorflowTests : public PelotonTests {};
 
 TEST_F(TensorflowTests, BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly
@@ -46,8 +46,8 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
   int NUM_WAVES = 3;
   matrix_eig data = matrix_eig::Zero(NUM_SAMPLES, NUM_WAVES);
   for (int i = 0; i < NUM_WAVES; i++) {
-    data.col(i).setLinSpaced(NUM_SAMPLES, NUM_SAMPLES * i,
-                             NUM_SAMPLES * (i + 1) - 1);
+    data.col(i)
+        .setLinSpaced(NUM_SAMPLES, NUM_SAMPLES * i, NUM_SAMPLES * (i + 1) - 1);
     data.col(i) = data.col(i).array().sin();
   }
 

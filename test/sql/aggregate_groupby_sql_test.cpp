@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class AggregateGroupBySQLTests : public PelotonTest {
+class AggregateGroupBySQLTests : public PelotonTests {
  protected:
   void CreateAndLoadTable() {
     // Create a table first

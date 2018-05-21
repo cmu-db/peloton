@@ -60,7 +60,7 @@ namespace test {
 // Update Tests
 //===--------------------------------------------------------------------===//
 
-class UpdateTests : public PelotonTest {};
+class UpdateTests : public PelotonTests {};
 
 namespace {
 
@@ -124,7 +124,7 @@ storage::DataTable *CreateTable() {
   return table.release();
 }
 
-TEST_F(UpdateTests, MultiColumnUpdates) {
+TEST_F(UpdateTests, MultiColumnUpdatesTest) {
   // Create table.
   std::unique_ptr<storage::DataTable> table(CreateTable());
   //  storage::DataTable* table = CreateTable();
@@ -154,7 +154,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //  ResultTypeToString(status.m_result).c_str());
 }
 
-TEST_F(UpdateTests, UpdatingOld) {
+TEST_F(UpdateTests, UpdatingOldTest) {
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

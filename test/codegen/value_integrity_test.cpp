@@ -21,7 +21,7 @@
 namespace peloton {
 namespace test {
 
-class ValueIntegrityTest : public PelotonCodeGenTest {};
+class ValueIntegrityTests : public PelotonCodeGenTests {};
 
 // This test sets up a function taking a single argument. The body of the
 // function divides a constant value with the value of the argument. After
@@ -138,7 +138,7 @@ void OverflowTest(const codegen::type::Type &data_type, ExpressionType op) {
   EXPECT_THROW(f(2), std::overflow_error);
 }
 
-TEST_F(ValueIntegrityTest, IntegerOverflow) {
+TEST_F(ValueIntegrityTests, IntegerOverflowTest) {
   auto overflowable_ops = {ExpressionType::OPERATOR_MINUS,
                            ExpressionType::OPERATOR_PLUS,
                            ExpressionType::OPERATOR_MULTIPLY};
@@ -150,7 +150,7 @@ TEST_F(ValueIntegrityTest, IntegerOverflow) {
   }
 }
 
-TEST_F(ValueIntegrityTest, IntegerDivideByZero) {
+TEST_F(ValueIntegrityTests, IntegerDivideByZeroTest) {
   auto div0_ops = {ExpressionType::OPERATOR_DIVIDE,
                    ExpressionType::OPERATOR_MOD};
   for (auto op : div0_ops) {

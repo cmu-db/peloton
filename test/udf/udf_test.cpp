@@ -20,9 +20,9 @@
 namespace peloton {
 namespace test {
 
-class UDFTest : public PelotonTest {};
+class UDFTests : public PelotonTests {};
 
-TEST_F(UDFTest, SimpleExpressionTest) {
+TEST_F(UDFTests, SimpleExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -76,7 +76,7 @@ TEST_F(UDFTest, SimpleExpressionTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(UDFTest, ComplexExpressionTest) {
+TEST_F(UDFTests, ComplexExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -132,7 +132,7 @@ TEST_F(UDFTest, ComplexExpressionTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(UDFTest, IfElseExpressionTest) {
+TEST_F(UDFTests, IfElseExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -190,7 +190,7 @@ TEST_F(UDFTest, IfElseExpressionTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(UDFTest, RecursiveFunctionTest) {
+TEST_F(UDFTests, RecursiveFunctionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

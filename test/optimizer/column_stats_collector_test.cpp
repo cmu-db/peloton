@@ -27,7 +27,7 @@ namespace test {
 
 using namespace optimizer;
 
-class ColumnStatsCollectorTests : public PelotonTest {};
+class ColumnStatsCollectorTests : public PelotonTests {};
 
 // Basic test with tiny dataset.
 TEST_F(ColumnStatsCollectorTests, BasicTest) {
@@ -65,7 +65,8 @@ TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
 // Test dataset with extreme distribution.
 // More specifically distribution with large amount of data at tail
 // with single continuous value to the left of tail.
-// This test is commented out because it's a performance test and takes long time.
+// This test is commented out because it's a performance test and takes long
+// time.
 // TEST_F(ColumnStatsCollectorTests, SkewedDistTest) {
 //   ColumnStatsCollector colstats{TEST_OID, TEST_OID, TEST_OID,
 //                                 type::TypeId::BIGINT, ""};
@@ -96,7 +97,8 @@ TEST_F(ColumnStatsCollectorTests, DistinctValueTest) {
 //   EXPECT_LE(cardinality, (big_int + 10) * (1 + error) + buffer);
 //   EXPECT_GE(colstats.GetHistogramBound().size(), 0);
 //   // test null
-//   type::Value null = type::ValueFactory::GetNullValueByType(type::TypeId::BIGINT);
+//   type::Value null =
+//   type::ValueFactory::GetNullValueByType(type::TypeId::BIGINT);
 //   colstats.AddValue(null);
 //   EXPECT_GE(colstats.GetFracNull(), 0);
 // }

@@ -19,7 +19,7 @@
 namespace peloton {
 namespace test {
 
-class SettingsManagerTests : public PelotonTest {};
+class SettingsManagerTests : public PelotonTests {};
 
 TEST_F(SettingsManagerTests, InitializationTest) {
   auto catalog = catalog::Catalog::GetInstance();

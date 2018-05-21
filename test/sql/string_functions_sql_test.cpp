@@ -22,14 +22,14 @@
 
 namespace peloton {
 namespace test {
-class StringFunctionTest : public PelotonTest {};
+class StringFunctionTests : public PelotonTests {};
 /*
 The following test inserts 32 tuples in the datatable.
 Each tuple inserted is of the form (i, i * 'a' ), where i belongs to [0,32)
 We then perform a sequential scan on the table and retrieve the id and length
 of the second column.
 */
-TEST_F(StringFunctionTest, LengthTest) {
+TEST_F(StringFunctionTests, LengthTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

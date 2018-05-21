@@ -38,7 +38,7 @@ namespace test {
 // Constraints Tests
 //===--------------------------------------------------------------------===//
 
-class ConstraintsTests : public PelotonTest {};
+class ConstraintsTests : public PelotonTests {};
 
 #ifdef CONSTRAINT_NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {
@@ -112,7 +112,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 #endif
 
 #ifdef CONSTRAINT_DEFAULT_TEST
-TEST_F(ConstraintsTests, DEFAULTTEST) {
+TEST_F(ConstraintsTests, DEFAULTTESTTest) {
   // Set all of the columns to be NOT NULL
   std::vector<std::vector<catalog::Constraint>> constraints;
   for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {

@@ -40,7 +40,7 @@
 namespace peloton {
 namespace test {
 
-class StatsTests : public PelotonTest {};
+class StatsTests : public PelotonTests {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
@@ -142,8 +142,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 
   // Create multiple stat worker threads
   int num_threads = 8;
-  storage::Database *database =
-      catalog->GetDatabaseWithName("emp_db", txn);
+  storage::Database *database = catalog->GetDatabaseWithName("emp_db", txn);
   storage::DataTable *table = catalog->GetTableWithName(
       "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);

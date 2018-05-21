@@ -30,7 +30,7 @@ namespace test {
 #define TEST_DB_NAME "test_db"
 #define TEST_DB_COLUMNS "test_db_columns"
 
-class PlanUtilTests : public PelotonTest {};
+class PlanUtilTests : public PelotonTests {};
 
 TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   auto catalog = catalog::Catalog::GetInstance();

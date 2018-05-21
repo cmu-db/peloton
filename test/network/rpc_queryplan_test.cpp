@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 #include "network/service/rpc_server.h"
 #include "network/service/peloton_service.h"
@@ -19,7 +18,7 @@
 namespace peloton {
 namespace test {
 
-class RpcQueryPlanTests : public PelotonTest {};
+class RpcQueryPlanTests : public PelotonTests {};
 
 TEST_F(RpcQueryPlanTests, BasicTest) {
   peloton::planner::SeqScanPlan mapped_plan_ptr;

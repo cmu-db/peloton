@@ -33,7 +33,7 @@ namespace test {
 
 using namespace optimizer;
 
-class SelectivityTests : public PelotonTest {};
+class SelectivityTests : public PelotonTests {};
 
 const std::string TEST_TABLE_NAME = "test";
 

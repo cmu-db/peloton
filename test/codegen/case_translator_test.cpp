@@ -25,9 +25,9 @@
 namespace peloton {
 namespace test {
 
-class CaseTranslatorTest : public PelotonCodeGenTest {
+class CaseTranslatorTests : public PelotonCodeGenTests {
  public:
-  CaseTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  CaseTranslatorTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
   }
@@ -40,7 +40,7 @@ class CaseTranslatorTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
-TEST_F(CaseTranslatorTest, SimpleCase) {
+TEST_F(CaseTranslatorTests, SimpleCaseTest) {
   //
   // SELECT a, case when a=10 then 1 when else 0 FROM table;
   //
@@ -89,26 +89,21 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(0)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(0)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(10)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(1)) == CmpBool::CmpTrue);
 
   for (uint32_t i = 2; i < NumRowsInTestTable(); i++) {
     EXPECT_TRUE(results[i].GetValue(1).CompareEquals(
-                    type::ValueFactory::GetBigIntValue(0)) ==
-                CmpBool::CmpTrue);
+                    type::ValueFactory::GetBigIntValue(0)) == CmpBool::CmpTrue);
   }
 }
 
-TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
+TEST_F(CaseTranslatorTests, SimpleCaseMoreWhenTest) {
   //
   // SELECT a, case when a=10 then 1 when a=20 then 2 else 0 FROM table;
   //
@@ -159,23 +154,17 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(0)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(0)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(10)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(1)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[2].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(20)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(20)) == CmpBool::CmpTrue);
   EXPECT_TRUE(results[2].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(2)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(2)) == CmpBool::CmpTrue);
 }
 
 }  // namespace test

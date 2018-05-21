@@ -22,7 +22,7 @@
 namespace peloton {
 namespace test {
 
-class UpdateSQLTests : public PelotonTest {};
+class UpdateSQLTests : public PelotonTests {};
 
 TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   LOG_DEBUG("Bootstrapping...");
@@ -222,8 +222,7 @@ TEST_F(UpdateSQLTests, UpdateSQLCastTest) {
   LOG_DEBUG("Inserting a tuple...");
   LOG_DEBUG("Query: INSERT INTO employees VALUES (0, 1, 0.5)");
 
-  TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO employees VALUES (0, 1, 0.5);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO employees VALUES (0, 1, 0.5);");
 
   LOG_DEBUG("Tuple inserted!");
 
@@ -237,8 +236,8 @@ TEST_F(UpdateSQLTests, UpdateSQLCastTest) {
   int rows_affected;
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "UPDATE employees SET salary = 2.0 WHERE e_id = 0",
-      result, tuple_descriptor, rows_affected, error_message);
+      "UPDATE employees SET salary = 2.0 WHERE e_id = 0", result,
+      tuple_descriptor, rows_affected, error_message);
 
   LOG_DEBUG("Tuple Updated!");
 
@@ -257,8 +256,8 @@ TEST_F(UpdateSQLTests, UpdateSQLCastTest) {
   LOG_DEBUG("Query: UPDATE employees SET salary = 3 WHERE e_id = 0");
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "UPDATE employees SET salary = 3 WHERE e_id = 0",
-      result, tuple_descriptor, rows_affected, error_message);
+      "UPDATE employees SET salary = 3 WHERE e_id = 0", result,
+      tuple_descriptor, rows_affected, error_message);
 
   LOG_DEBUG("Tuple Updated Again!");
 
@@ -355,7 +354,7 @@ TEST_F(UpdateSQLTests, HalloweenProblemTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
+TEST_F(UpdateSQLTests, HalloweenProblemWithPKTest) {
   // This SQL Test verifies that executor does not cause the Halloween Problem
   // This test checks for tables with Primary Keys
   // It checks for updates on both Non-Primary Key column & Primary Key column
@@ -380,7 +379,8 @@ TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
 
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
 
   LOG_DEBUG("Table created!");
 
@@ -446,9 +446,6 @@ TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
 
   EXPECT_EQ(TestingSQLUtil::GetResultValueAsString(result, 0), "500");
   LOG_DEBUG("Successfully updated tuple.");
-
-
-
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -519,7 +516,6 @@ TEST_F(UpdateSQLTests, MultiTileGroupUpdateSQLTest) {
   // of the tuple. This was fixed by the statement level WriteSet.
   EXPECT_EQ(1, rows_affected);
   LOG_DEBUG("Tuple Update successful, again!");
-
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

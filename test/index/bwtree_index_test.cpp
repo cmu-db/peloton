@@ -23,7 +23,7 @@ namespace test {
 // BwTree Index Tests
 //===--------------------------------------------------------------------===//
 
-class BwTreeIndexTests : public PelotonTest {};
+class BwTreeIndexTests : public PelotonTests {};
 
 TEST_F(BwTreeIndexTests, BasicTest) {
   TestingIndexUtil::BasicTest(IndexType::BWTREE);
@@ -49,7 +49,7 @@ TEST_F(BwTreeIndexTests, MultiThreadedInsertTest) {
   TestingIndexUtil::MultiThreadedInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
+// TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
 //  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::BWTREE);
 //}
 
@@ -61,7 +61,7 @@ TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStressTest) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(IndexType::BWTREE);
 }
 
-TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
+TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStress2Test) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(IndexType::BWTREE);
 }
 

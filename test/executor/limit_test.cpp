@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -37,7 +36,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class LimitTests : public PelotonTest {};
+class LimitTests : public PelotonTests {};
 
 namespace {
 
@@ -53,7 +52,7 @@ void RunTest(executor::LimitExecutor &executor, size_t expected_num_tiles,
   EXPECT_EQ(expected_num_tiles, result_tiles.size());
 
   if (result_tiles.size() > 0) {
-     EXPECT_EQ(expected_first_oid, *(result_tiles[0]->begin()));
+    EXPECT_EQ(expected_first_oid, *(result_tiles[0]->begin()));
   }
 
   size_t actual_num_tuples_returned = 0;
@@ -88,7 +87,7 @@ TEST_F(LimitTests, NonLeafLimitOffsetTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -129,7 +128,7 @@ TEST_F(LimitTests, NonLeafSkipAllTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -170,7 +169,7 @@ TEST_F(LimitTests, NonLeafReturnAllTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -212,7 +211,7 @@ TEST_F(LimitTests, NonLeafHugeLimitTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable(tile_size));
   TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false, txn);
+                                     false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(

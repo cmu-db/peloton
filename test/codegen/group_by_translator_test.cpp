@@ -25,9 +25,9 @@
 namespace peloton {
 namespace test {
 
-class GroupByTranslatorTest : public PelotonCodeGenTest {
+class GroupByTranslatorTests : public PelotonCodeGenTests {
  public:
-  GroupByTranslatorTest() : PelotonCodeGenTest() {
+  GroupByTranslatorTests() : PelotonCodeGenTests() {
     uint32_t num_rows = 10;
     LoadTestTable(TestTableId(), num_rows);
   }
@@ -35,7 +35,7 @@ class GroupByTranslatorTest : public PelotonCodeGenTest {
   oid_t TestTableId() const { return test_table_oids[0]; }
 };
 
-TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
+TEST_F(GroupByTranslatorTests, SingleColumnGroupingTest) {
   //
   // SELECT a, count(*) FROM table GROUP BY a;
   //
@@ -90,12 +90,11 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // Each group should have a count of one (since the grouping column is unique)
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
-    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) ==
-                CmpBool::CmpTrue);
+    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) == CmpBool::CmpTrue);
   }
 }
 
-TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
+TEST_F(GroupByTranslatorTests, MultiColumnGroupingTest) {
   //
   // SELECT a, b, count(*) FROM table GROUP BY a, b;
   //
@@ -156,7 +155,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   }
 }
 
-TEST_F(GroupByTranslatorTest, AverageAggregation) {
+TEST_F(GroupByTranslatorTests, AverageAggregationTest) {
   //
   // SELECT a, avg(b) FROM table GROUP BY a;
   //
@@ -208,7 +207,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   EXPECT_EQ(10, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
+TEST_F(GroupByTranslatorTests, AggregationWithOutputPredicateTest) {
   //
   // SELECT a, avg(b) as x FROM table GROUP BY a WHERE x > 50;
   //
@@ -239,9 +238,8 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
       new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
-  ExpressionPtr x_gt_50{
-      new expression::ComparisonExpression(ExpressionType::COMPARE_GREATERTHAN,
-                                           x_exp, const_50)};
+  ExpressionPtr x_gt_50{new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHAN, x_exp, const_50)};
 
   // 6) Finally, the aggregation node
   std::unique_ptr<planner::AbstractPlan> agg_plan{new planner::AggregatePlan(
@@ -269,7 +267,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
   EXPECT_EQ(5, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
+TEST_F(GroupByTranslatorTests, AggregationWithInputPredciateTest) {
   //
   // SELECT a, avg(b) as x FROM table GROUP BY a WHERE a > 50;
   //
@@ -329,7 +327,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   EXPECT_EQ(4, results.size());
 }
 
-TEST_F(GroupByTranslatorTest, SingleCountStar) {
+TEST_F(GroupByTranslatorTests, SingleCountStarTest) {
   //
   // SELECT count(*) FROM table;
   //
@@ -380,11 +378,10 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(10)) == CmpBool::CmpTrue);
 }
 
-TEST_F(GroupByTranslatorTest, MinAndMax) {
+TEST_F(GroupByTranslatorTests, MinAndMaxTest) {
   //
   // SELECT MAX(a), MIN(b) FROM table;
   //
@@ -445,14 +442,12 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   // maximum row ID is equal to # inserted - 1. Therefore:
   // MAX(a) = (# inserted - 1) * 10 = (10 - 1) * 10 = 9 * 10 = 90
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(90)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(90)) == CmpBool::CmpTrue);
 
   // The values of 'b' are equal to the (zero-indexed) row ID * 10 + 1. The
   // minimum row ID is 0. Therefore: MIN(b) = 0 * 10 + 1 = 1
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) ==
-              CmpBool::CmpTrue);
+                  type::ValueFactory::GetBigIntValue(1)) == CmpBool::CmpTrue);
 }
 
 }  // namespace test

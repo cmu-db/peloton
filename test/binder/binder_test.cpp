@@ -37,9 +37,9 @@ using std::vector;
 namespace peloton {
 namespace test {
 
-class BinderCorrectnessTest : public PelotonTest {
+class BinderCorrectnessTests : public PelotonTests {
   virtual void SetUp() override {
-    PelotonTest::SetUp();
+    PelotonTests::SetUp();
     catalog::Catalog::GetInstance();
     // NOTE: Catalog::GetInstance()->Bootstrap(), you can only call it once!
     TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
@@ -47,7 +47,7 @@ class BinderCorrectnessTest : public PelotonTest {
 
   virtual void TearDown() override {
     TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 
@@ -101,7 +101,7 @@ void SetupTables(std::string database_name) {
   }
 }
 
-TEST_F(BinderCorrectnessTest, SelectStatementTest) {
+TEST_F(BinderCorrectnessTests, SelectStatementTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -127,14 +127,14 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableA_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "a", txn)
-                         ->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableA_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "a", txn)
+          ->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "b", txn)
+          ->GetOid();
   txn_manager.CommitTransaction(txn);
 
   // Check select_list
@@ -250,7 +250,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 // instead of TupleValueExpression to represent column. We can only add this
 // test after UpdateStatement is changed
 
-TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
+TEST_F(BinderCorrectnessTests, DeleteStatementTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -260,10 +260,10 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
       catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
-  oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
-                         ->GetOid();
+  oid_t tableB_oid =
+      catalog_ptr->GetTableWithName(default_database_name, DEFAULT_SCHEMA_NAME,
+                                    "b", txn)
+          ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
   unique_ptr<binder::BindNodeVisitor> binder(
@@ -292,7 +292,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(BinderCorrectnessTest, BindDepthTest) {
+TEST_F(BinderCorrectnessTests, BindDepthTest) {
   std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
@@ -382,7 +382,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
+TEST_F(BinderCorrectnessTests, FunctionExpressionTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 

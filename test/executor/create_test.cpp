@@ -39,9 +39,9 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class CreateTests : public PelotonTest {};
+class CreateTests : public PelotonTests {};
 
-TEST_F(CreateTests, CreatingDB) {
+TEST_F(CreateTests, CreatingDBTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -78,7 +78,7 @@ TEST_F(CreateTests, CreatingDB) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CreateTests, CreatingTable) {
+TEST_F(CreateTests, CreatingTableTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -117,7 +117,7 @@ TEST_F(CreateTests, CreatingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CreateTests, CreatingUDFs) {
+TEST_F(CreateTests, CreatingUDFsTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -222,7 +222,7 @@ TEST_F(CreateTests, CreatingUDFs) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CreateTests, CreatingTrigger) {
+TEST_F(CreateTests, CreatingTriggerTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -352,7 +352,7 @@ TEST_F(CreateTests, CreatingTrigger) {
 // This test is added because there was a bug for triggers without "when". After
 // fixing that,
 // we add this test to avoid problem like that happen in the future.
-TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
+TEST_F(CreateTests, CreatingTriggerWithoutWhenTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -437,7 +437,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CreateTests, CreatingTriggerInCatalog) {
+TEST_F(CreateTests, CreatingTriggerInCatalogTest) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

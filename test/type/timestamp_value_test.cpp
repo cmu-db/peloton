@@ -21,7 +21,7 @@ namespace test {
 // Timestamp Value Test
 //===--------------------------------------------------------------------===//
 
-class TimestampValueTests : public PelotonTest {};
+class TimestampValueTests : public PelotonTests {};
 
 TEST_F(TimestampValueTests, ComparisonTest) {
   std::vector<ExpressionType> compares = {
@@ -111,7 +111,8 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 }
 
 TEST_F(TimestampValueTests, NullToStringTest) {
-  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
+  auto valNull =
+      type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
 
   EXPECT_EQ(valNull.ToString(), "timestamp_null");
 }
@@ -162,7 +163,8 @@ TEST_F(TimestampValueTests, CastTest) {
   type::Value result;
 
   auto strNull = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
+  auto valNull =
+      type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
 
   result = valNull.CastAs(type::TypeId::TIMESTAMP);
   EXPECT_TRUE(result.IsNull());

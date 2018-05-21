@@ -26,7 +26,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class StringFunctionsTests : public PelotonTest {
+class StringFunctionsTests : public PelotonTests {
  public:
   StringFunctionsTests() : test_ctx_(nullptr) {}
 

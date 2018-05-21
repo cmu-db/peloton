@@ -46,7 +46,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OptimizerTests : public PelotonTest {
+class OptimizerTests : public PelotonTests {
  protected:
   GroupExpression *GetSingleGroupExpression(Memo &memo, GroupExpression *expr,
                                             int child_group_idx) {
@@ -64,7 +64,7 @@ class OptimizerTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
 };
 

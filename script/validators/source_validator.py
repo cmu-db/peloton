@@ -66,6 +66,8 @@ SKIP_FILES_LIST = [
     "src/codegen/util/cc_hash_table.cpp"
 ]
 
+TEST_CASE_PATT = re.compile(r'TEST_F\(([a-zA-Z]+), ([a-zA-Z]+)\)')
+
 ## ==============================================
 ##           UTILITY FUNCTION DEFINITIONS
 ## ==============================================
@@ -202,6 +204,39 @@ def check_includes(file_path):
     return file_status
 
 
+def check_tests(file_path):
+    """Checks test source files for correct class and method naming."""
+    # check class naming
+    class_status = True  # For reporting class names.
+    test_status = True  # For reporting test cases.
+    line_num = 0
+    with open(file_path, "r") as file:
+        for line in file:
+            line_num += 1
+            if line.startswith('class '):
+                class_name = line.split(' ')[1]
+                if not class_name.endswith('Tests'):
+                    if class_status:
+                        LOG.info("Invalid class name in %s", file_path)
+                        class_status = False
+                    LOG.info("Line %s: %s", line_num, line.strip())
+
+            else:
+                # Check test case names.
+                case_found = TEST_CASE_PATT.match(line)
+                if case_found and not case_found.groups()[1].endswith('Test'):
+                    if test_status:
+                        LOG.info("Invalid test name in %s", file_path)
+                        test_status = False
+                    LOG.info("Line %s: %s", line_num, line.strip())
+
+        if not class_status:
+            LOG.info("Test class names should end with 'Tests' suffix.")
+        if not test_status:
+            LOG.info("Test case names should end with 'Test' suffix.")
+
+    return class_status and test_status
+
 VALIDATORS = [
     check_common_patterns,
     check_includes,
@@ -223,6 +258,11 @@ def validate_file(file_path):
     for validator in VALIDATORS:
         if not validator(file_path):
             file_status = False
+
+    relative_path = os.path.relpath(file_path, start=PELOTON_DIR)
+    if relative_path.startswith('/test/') and relative_path.endswith('.cpp'):
+        if not relative_path.endswith('_util.cpp'):
+            file_status = check_tests(file_path)
 
     return file_status
 

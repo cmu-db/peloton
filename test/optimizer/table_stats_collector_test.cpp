@@ -32,9 +32,9 @@ namespace test {
 
 using namespace optimizer;
 
-class TableStatsCollectorTests : public PelotonTest {};
+class TableStatsCollectorTests : public PelotonTests {};
 
-TEST_F(TableStatsCollectorTests, BasicTests) {
+TEST_F(TableStatsCollectorTests, BasicTest) {
   std::unique_ptr<storage::DataTable> data_table(
       TestingExecutorUtil::CreateTable());
   TableStatsCollector table_stats_collector{data_table.get()};

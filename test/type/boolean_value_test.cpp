@@ -21,7 +21,7 @@ namespace test {
 // Boolean Value Test
 //===--------------------------------------------------------------------===//
 
-class BooleanValueTests : public PelotonTest {};
+class BooleanValueTests : public PelotonTests {};
 
 TEST_F(BooleanValueTests, BasicTest) {
   auto valTrue = type::ValueFactory::GetBooleanValue(true);
@@ -111,8 +111,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(),
-                  static_cast<int>(expected),
+                  val1.ToString().c_str(), static_cast<int>(expected),
                   static_cast<int>(result));
 
         if (expected_null) expected = false;

@@ -23,7 +23,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OperatorTests : public PelotonTest {};
+class OperatorTests : public PelotonTests {};
 
 // TODO: Test complex expressions
 TEST_F(OperatorTests, OperatorHashAndEqualTest) {

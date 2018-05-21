@@ -24,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class InsertSQLTests : public PelotonTest {};
+class InsertSQLTests : public PelotonTests {};
 
 void CreateAndLoadTable() {
   // Create a table first
@@ -110,7 +110,7 @@ void CreateAndLoadTable8() {
       "CREATE TABLE test8(num1 int, num2 int, num3 int not null);");
 }
 
-TEST_F(InsertSQLTests, InsertOneValue) {
+TEST_F(InsertSQLTests, InsertOneValueTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -153,7 +153,7 @@ TEST_F(InsertSQLTests, InsertOneValue) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertMultipleValues) {
+TEST_F(InsertSQLTests, InsertMultipleValuesTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -205,7 +205,7 @@ TEST_F(InsertSQLTests, InsertMultipleValues) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertSpecifyColumns) {
+TEST_F(InsertSQLTests, InsertSpecifyColumnsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -249,7 +249,7 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
+TEST_F(InsertSQLTests, InsertTooLargeVarcharTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -292,7 +292,7 @@ TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
+TEST_F(InsertSQLTests, InsertIntoSelectSimpleTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -367,7 +367,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
+TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllTypeTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -455,7 +455,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
+TEST_F(InsertSQLTests, InsertIntoSelectColumnTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -530,7 +530,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, UniqueColumn) {
+TEST_F(InsertSQLTests, UniqueColumnTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -575,7 +575,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, BadTypes) {
+TEST_F(InsertSQLTests, BadTypesTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -614,7 +614,7 @@ TEST_F(InsertSQLTests, BadTypes) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, NonExistentTable) {
+TEST_F(InsertSQLTests, NonExistentTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -635,7 +635,7 @@ TEST_F(InsertSQLTests, NonExistentTable) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, BadInserts) {
+TEST_F(InsertSQLTests, BadInsertsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);

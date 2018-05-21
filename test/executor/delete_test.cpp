@@ -42,7 +42,7 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-class DeleteTests : public PelotonTest {};
+class DeleteTests : public PelotonTests {};
 
 void ShowTable(std::string database_name, std::string table_name) {
   // auto table =
@@ -91,7 +91,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   traffic_cop.CommitQueryHelper();
 }
 
-TEST_F(DeleteTests, VariousOperations) {
+TEST_F(DeleteTests, VariousOperationsTest) {
   LOG_INFO("Bootstrapping...");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

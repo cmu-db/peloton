@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "common/cache.h"
@@ -27,7 +26,7 @@ namespace test {
 // Cache Test
 //===--------------------------------------------------------------------===//
 
-class CacheTests : public PelotonTest {};
+class CacheTests : public PelotonTests {};
 
 #define CACHE_SIZE 5
 
@@ -43,7 +42,7 @@ static void fill(
  * Test basic functionality
  *
  */
-TEST_F(CacheTests, Basic) {
+TEST_F(CacheTests, BasicTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   EXPECT_EQ(0, cache.size());
@@ -54,7 +53,7 @@ TEST_F(CacheTests, Basic) {
  *  Test find operation
  *
  */
-TEST_F(CacheTests, Find) {
+TEST_F(CacheTests, FindTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   // EXPECT_EQ(cache.end(), cache.find(1));
@@ -64,7 +63,7 @@ TEST_F(CacheTests, Find) {
  * Test insert operation
  *
  */
-TEST_F(CacheTests, Insert) {
+TEST_F(CacheTests, InsertTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
@@ -91,12 +90,11 @@ TEST_F(CacheTests, Insert) {
   EXPECT_EQ(statement_cache_.size(), 1);
 }
 
-
 /**
  * Test insert operation with default threshold
  *
  */
-TEST_F(CacheTests, InsertThreshold) {
+TEST_F(CacheTests, InsertThresholdTest) {
   // Default insert threshold is 3, i.e. it will not be inserted
   // until 3 attempts are detected.
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE);
@@ -122,7 +120,7 @@ TEST_F(CacheTests, InsertThreshold) {
 /**
  * Test iterator function
  */
-TEST_F(CacheTests, Iterator) {
+TEST_F(CacheTests, IteratorTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
@@ -149,7 +147,7 @@ TEST_F(CacheTests, Iterator) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-TEST_F(CacheTests, EvictionByInsert) {
+TEST_F(CacheTests, EvictionByInsertTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
@@ -181,7 +179,7 @@ TEST_F(CacheTests, EvictionByInsert) {
  * The cache should keep the most recent half
  */
 /* TODO: Fix this test
-TEST_F(CacheTest, EvictionWithAccessing) {
+TEST_F(CacheTests, EvictionWithAccessingTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
@@ -255,7 +253,7 @@ TEST_F(CacheTest, EvictionWithAccessing) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-TEST_F(CacheTests, Updating) {
+TEST_F(CacheTests, UpdatingTest) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;

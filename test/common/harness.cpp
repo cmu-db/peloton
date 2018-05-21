@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "type/ephemeral_pool.h"
@@ -23,7 +22,7 @@ namespace test {
 /**
  * @brief Return the singleton testing harness instance
  */
-TestingHarness& TestingHarness::GetInstance() {
+TestingHarness &TestingHarness::GetInstance() {
   static TestingHarness testing_harness;
   return testing_harness;
 }
@@ -44,7 +43,7 @@ uint64_t TestingHarness::GetThreadId() {
 }
 
 txn_id_t TestingHarness::GetNextTransactionId() {
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
   txn_manager.CommitTransaction(txn);
@@ -52,7 +51,7 @@ txn_id_t TestingHarness::GetNextTransactionId() {
   return txn_id;
 }
 
-type::AbstractPool* TestingHarness::GetTestingPool() {
+type::AbstractPool *TestingHarness::GetTestingPool() {
   // return pool
   return pool_.get();
 }

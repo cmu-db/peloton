@@ -44,7 +44,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class SeqScanTests : public PelotonTest {};
+class SeqScanTests : public PelotonTests {};
 
 namespace {
 

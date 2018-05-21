@@ -25,11 +25,11 @@
 namespace peloton {
 namespace test {
 
-class TableScanTranslatorTest : public PelotonCodeGenTest {
+class TableScanTranslatorTests : public PelotonCodeGenTests {
   std::string all_cols_table_name = "crazy_table";
 
  public:
-  TableScanTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
+  TableScanTranslatorTests() : PelotonCodeGenTests(), num_rows_to_insert(64) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 
@@ -143,7 +143,7 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
   storage::DataTable *all_cols_table = nullptr;
 };
 
-TEST_F(TableScanTranslatorTest, AllColumnsScan) {
+TEST_F(TableScanTranslatorTests, AllColumnsScanTest) {
   //
   // SELECT a, b, c FROM table;
   //
@@ -166,7 +166,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
-TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
+TEST_F(TableScanTranslatorTests, AllColumnsScanWithNullsTest) {
   //
   // SELECT * FROM crazy_table;
   //
@@ -195,12 +195,12 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   auto &tuple = buffer.GetOutputTuples()[0];
   for (uint32_t i = 0; i < all_col_ids.size(); i++) {
     auto col_val = tuple.GetValue(i);
-    EXPECT_TRUE(col_val.IsNull())
-        << "Result value: " << col_val.ToString() << ", expected NULL";
+    EXPECT_TRUE(col_val.IsNull()) << "Result value: " << col_val.ToString()
+                                  << ", expected NULL";
   }
 }
 
-TEST_F(TableScanTranslatorTest, SimplePredicate) {
+TEST_F(TableScanTranslatorTests, SimplePredicateTest) {
   //
   // SELECT a, b, c FROM table where a >= 20;
   //
@@ -228,7 +228,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
+TEST_F(TableScanTranslatorTests, SimplePredicateWithNullTest) {
   // Insert 10 null rows
   const bool insert_nulls = true;
   LoadTestTable(TestTableId(), 10, insert_nulls);
@@ -272,7 +272,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
                                   type::ValueFactory::GetIntegerValue(11)));
 }
 
-TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
+TEST_F(TableScanTranslatorTests, PredicateOnNonOutputColumnTest) {
   //
   // SELECT b FROM table where a >= 40;
   //
@@ -300,7 +300,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithConjunctionPredicateTest) {
   //
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   //
@@ -341,7 +341,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
                                   type::ValueFactory::GetIntegerValue(21)));
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithAddPredicateTest) {
   //
   // SELECT a, b FROM table where b = a + 1;
   //
@@ -381,7 +381,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithAddColumnsPredicateTest) {
   //
   // SELECT a, b FROM table where b = a + b;
   //
@@ -422,7 +422,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   EXPECT_EQ(1, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithSubtractPredicateTest) {
   //
   // SELECT a, b FROM table where a = b - 1;
   //
@@ -462,7 +462,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithSubtractColumnsPredicateTest) {
   //
   // SELECT a, b FROM table where b = b - a;
   //
@@ -503,7 +503,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   EXPECT_EQ(1, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithDividePredicateTest) {
   //
   //   SELECT a, b, c FROM table where a = a / 2;
   //
@@ -544,7 +544,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   EXPECT_EQ(1, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithMultiplyPredicateTest) {
   //
   // SELECT a, b, c FROM table where a = a  *b;
   //
@@ -585,7 +585,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   EXPECT_EQ(1, results.size());
 }
 
-TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
+TEST_F(TableScanTranslatorTests, ScanWithModuloPredicateTest) {
   //
   // SELECT a, b, c FROM table where a = b % 1;
   //
@@ -629,7 +629,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
                                   type::ValueFactory::GetIntegerValue(1)));
 }
 
-TEST_F(TableScanTranslatorTest, ScanRowLayout) {
+TEST_F(TableScanTranslatorTests, ScanRowLayoutTest) {
   //
   // Creates a table with LayoutType::ROW and
   // invokes the TableScanTranslator
@@ -643,7 +643,7 @@ TEST_F(TableScanTranslatorTest, ScanRowLayout) {
   ScanLayoutTable(tuples_per_tilegroup, tilegroup_count, column_count);
 }
 
-TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
+TEST_F(TableScanTranslatorTests, ScanColumnLayoutTest) {
   //
   // Creates a table with LayoutType::COLUMN and
   // invokes the TableScanTranslator
@@ -657,7 +657,7 @@ TEST_F(TableScanTranslatorTest, ScanColumnLayout) {
   ScanLayoutTable(tuples_per_tilegroup, tilegroup_count, column_count);
 }
 
-TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
+TEST_F(TableScanTranslatorTests, MultiLayoutScanTest) {
   //
   // Creates a table with LayoutType::ROW
   // Sets the default_layout_ as LayoutType::COLUMN

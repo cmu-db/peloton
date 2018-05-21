@@ -20,14 +20,13 @@ namespace test {
 // Checkpointing Tests
 //===--------------------------------------------------------------------===//
 
-class NewCheckpointingTests : public PelotonTest {};
+class NewCheckpointingTests : public PelotonTests {};
 
 TEST_F(NewCheckpointingTests, MyTest) {
   auto &checkpoint_manager = logging::CheckpointManagerFactory::GetInstance();
   checkpoint_manager.Reset();
-  
+
   EXPECT_TRUE(true);
 }
-
 }
 }

@@ -25,7 +25,7 @@ namespace test {
 // StringUtil Test
 //===--------------------------------------------------------------------===//
 
-class StringUtilTests : public PelotonTest {};
+class StringUtilTests : public PelotonTests {};
 
 TEST_F(StringUtilTests, ContainsTest) {
   std::string str = "Word up, two for fives over here baby";

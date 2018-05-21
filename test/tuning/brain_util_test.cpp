@@ -34,7 +34,7 @@ namespace test {
 // BrainUtil Tests
 //===--------------------------------------------------------------------===//
 
-class BrainUtilTests : public PelotonTest {
+class BrainUtilTests : public PelotonTests {
  public:
   void TearDown() override {
     for (auto path : tempFiles) {
@@ -42,7 +42,7 @@ class BrainUtilTests : public PelotonTest {
         std::remove(path.c_str());
       }
     }  // FOR
-    PelotonTest::TearDown();
+    PelotonTests::TearDown();
   }
   std::vector<std::string> tempFiles;
 };

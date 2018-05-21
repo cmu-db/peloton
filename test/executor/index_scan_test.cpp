@@ -41,7 +41,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class IndexScanTests : public PelotonTest {};
+class IndexScanTests : public PelotonTests {};
 
 // Index scan of table with index predicate.
 TEST_F(IndexScanTests, IndexPredicateTest) {

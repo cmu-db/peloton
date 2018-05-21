@@ -21,7 +21,7 @@ namespace test {
 // Date Value Test
 //===--------------------------------------------------------------------===//
 
-class DateValueTests : public PelotonTest {};
+class DateValueTests : public PelotonTests {};
 
 TEST_F(DateValueTests, ComparisonTest) {
   std::vector<ExpressionType> compares = {
@@ -47,8 +47,8 @@ TEST_F(DateValueTests, ComparisonTest) {
         val0 = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
         expected_null = true;
       } else {
-        val0 = type::ValueFactory::GetDateValue(
-            static_cast<int32_t>(values[i]));
+        val0 =
+            type::ValueFactory::GetDateValue(static_cast<int32_t>(values[i]));
       }
 
       // VALUE #1
@@ -56,8 +56,8 @@ TEST_F(DateValueTests, ComparisonTest) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
         expected_null = true;
       } else {
-        val1 = type::ValueFactory::GetDateValue(
-            static_cast<int32_t>(values[j]));
+        val1 =
+            type::ValueFactory::GetDateValue(static_cast<int32_t>(values[j]));
       }
       bool temp = expected_null;
 
@@ -97,8 +97,7 @@ TEST_F(DateValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(),
-                  static_cast<int>(expected),
+                  val1.ToString().c_str(), static_cast<int>(expected),
                   static_cast<int>(result));
 
         if (expected_null) {
@@ -129,15 +128,14 @@ TEST_F(DateValueTests, HashTest) {
     if (values[i] == type::PELOTON_DATE_NULL) {
       val0 = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
     } else {
-      val0 = type::ValueFactory::GetDateValue(
-          static_cast<int32_t>(values[i]));
+      val0 = type::ValueFactory::GetDateValue(static_cast<int32_t>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
       if (values[j] == type::PELOTON_DATE_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
       } else {
-        val1 = type::ValueFactory::GetDateValue(
-            static_cast<int32_t>(values[j]));
+        val1 =
+            type::ValueFactory::GetDateValue(static_cast<int32_t>(values[j]));
       }
 
       result = type::ValueFactory::GetBooleanValue(val0.CompareEquals(val1));
