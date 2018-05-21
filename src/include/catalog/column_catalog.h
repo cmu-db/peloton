@@ -47,7 +47,7 @@ class ColumnCatalogObject {
   inline uint32_t GetColumnId() { return column_id; }
   inline uint32_t GetColumnOffset() { return column_offset; }
   inline type::TypeId GetColumnType() { return column_type; }
-  inline type::Type *GetColumnElemType() { return column_elem_type; }
+  inline std::shared_ptr<type::Type> GetColumnElemType() { return column_elem_type; }
   inline bool IsInlined() { return is_inlined; }
   inline bool IsPrimary() { return is_primary; }
   inline bool IsNotNull() { return is_not_null; }
@@ -62,7 +62,7 @@ class ColumnCatalogObject {
   bool is_inlined;
   bool is_primary;
   bool is_not_null;
-  type::Type *column_elem_type;
+  std::shared_ptr<type::Type> column_elem_type;
 };
 
 class ColumnCatalog : public AbstractCatalog {
@@ -86,7 +86,7 @@ class ColumnCatalog : public AbstractCatalog {
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::Type *column_elem_type,
+                    std::shared_ptr<type::Type> column_elem_type,
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,

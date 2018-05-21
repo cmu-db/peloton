@@ -26,7 +26,7 @@ void Schema::CreateTupleSchema(
     const std::vector<oid_t> &column_lengths,
     const std::vector<std::string> &column_names,
     const std::vector<bool> &is_inlined,
-    const std::vector<type::Type *> &column_elem_types) {
+    const std::vector<std::shared_ptr<type::Type>> &column_elem_types) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
@@ -62,7 +62,7 @@ Schema::Schema(const std::vector<Column> &columns)
   std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
   std::vector<bool> is_inlined;
-  std::vector<type::Type *> column_elem_types;
+  std::vector<std::shared_ptr<type::Type>> column_elem_types;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].GetType());

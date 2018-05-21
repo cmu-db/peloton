@@ -18,6 +18,7 @@
 #include "expression/abstract_expression.h"
 #include "parser/select_statement.h"
 #include "parser/sql_statement.h"
+#include "type/type_id.h"
 
 namespace peloton {
 namespace parser {
@@ -188,52 +189,52 @@ struct ColumnDefinition {
     }
   }
 
-  static type::Type *GetElemValueType(DataType elem_type) {
+  static std::shared_ptr<type::Type> GetElemValueType(DataType elem_type) {
     switch (elem_type) {
       case DataType::INT:
       case DataType::INTEGER:
-        return new type::Type(type::TypeId::INTEGER);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::INTEGER));
       case DataType::TINYINT:
-        return new type::Type(type::TypeId::TINYINT);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::TINYINT));
       case DataType::SMALLINT:
-        return new type::Type(type::TypeId::SMALLINT);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::SMALLINT));
       case DataType::BIGINT:
-        return new type::Type(type::TypeId::BIGINT);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::BIGINT));
 
       case DataType::DECIMAL:
       case DataType::DOUBLE:
       case DataType::FLOAT:
-        return new type::Type(type::TypeId::DECIMAL);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::DECIMAL));
 
       case DataType::BOOLEAN:
-        return new type::Type(type::TypeId::BOOLEAN);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::BOOLEAN));
 
       // case ADDRESS:
       //  return type::Type::ADDRESS;
 
       case DataType::TIMESTAMP:
-        return new type::Type(type::TypeId::TIMESTAMP);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::TIMESTAMP));
 
       case DataType::CHAR:
       case DataType::TEXT:
       case DataType::VARCHAR:
-        return new type::Type(type::TypeId::VARCHAR);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::VARCHAR));
 
       case DataType::VARBINARY:
-        return new type::Type(type::TypeId::VARBINARY);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::VARBINARY));
 
       case DataType::ARRAY:
-        return new type::Type(type::TypeId::ARRAY);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::ARRAY));
 
       case DataType::DATE:
-        return new type::Type(type::TypeId::DATE);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::DATE));
 
       case DataType::INVALID:
       case DataType::PRIMARY:
       case DataType::FOREIGN:
       case DataType::MULTIUNIQUE:
       default:
-        return new type::Type(type::TypeId::INVALID);
+        return std::shared_ptr<type::Type>(new type::Type(type::TypeId::INVALID));
     }
   }
 

@@ -103,9 +103,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Type elem_type_integer(type::TypeId::INTEGER);
+  std::shared_ptr<type::Type> elem_type_integer(new type::Type(type::TypeId::INTEGER));
   type::Value array_integer =
-      type::Value(type::TypeId::ARRAY, &vec_integer, &elem_type_integer, true);
+      type::Value(type::TypeId::ARRAY, &vec_integer, elem_type_integer, true);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_integer.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int32_t>(), vec_integer[i]);
@@ -128,9 +128,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM_DECIMAL());
   }
-  type::Type elem_type_decimal(type::TypeId::DECIMAL);
+  std::shared_ptr<type::Type> elem_type_decimal(new type::Type(type::TypeId::DECIMAL));
   type::Value array_decimal =
-      type::Value(type::TypeId::ARRAY, &vec_decimal, &elem_type_decimal, true);
+      type::Value(type::TypeId::ARRAY, &vec_decimal, elem_type_decimal, true);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_decimal.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<double>(), vec_decimal[i]);
@@ -217,9 +217,9 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Type elem_type_integer(type::TypeId::INTEGER);
+  std::shared_ptr<type::Type> elem_type_integer(new type::Type(type::TypeId::INTEGER));
   type::Value array_integer =
-      type::Value(type::TypeId::ARRAY, &vec_integer, &elem_type_integer, true);
+      type::Value(type::TypeId::ARRAY, &vec_integer, elem_type_integer, true);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list = array_integer.InList(
         type::ValueFactory::GetIntegerValue(vec_integer[i]));
@@ -264,9 +264,9 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM64());
   }
-  type::Type elem_type_decimal(type::TypeId::DECIMAL);
+  std::shared_ptr<type::Type> elem_type_decimal(new type::Type(type::TypeId::DECIMAL));
   type::Value array_decimal =
-      type::Value(type::TypeId::ARRAY, &vec_decimal, &elem_type_decimal, true);
+      type::Value(type::TypeId::ARRAY, &vec_decimal, elem_type_decimal, true);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list = array_decimal.InList(
         type::ValueFactory::GetDecimalValue(vec_decimal[i]));

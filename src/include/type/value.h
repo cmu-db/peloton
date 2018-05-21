@@ -50,7 +50,7 @@ class Value : public Printable {
 
   // ARRAY values
   template <class T>
-  Value(TypeId type, const std::vector<T> *vals, Type *element_type,
+  Value(TypeId type, const std::vector<T> *vals, std::shared_ptr<Type> element_type,
         bool manage_data);
 
   // BOOLEAN and TINYINT
@@ -92,7 +92,7 @@ class Value : public Printable {
 
   // Get the type of this value
   inline TypeId GetTypeId() const { return type_id_; }
-  inline Type *GetElemType() const { return size_.elem_type; }
+  inline std::shared_ptr<Type> GetElemType() const { return elem_type; }
   const std::string GetInfo() const override;
 
   // Comparison functions
@@ -348,9 +348,9 @@ class Value : public Printable {
 
   union {
     uint32_t len;
-    Type *elem_type;
   } size_;
 
+  std::shared_ptr<Type> elem_type;
   bool manage_data_;
   // TODO: Pack allocated flag with the type id
   // The data type
@@ -360,7 +360,7 @@ class Value : public Printable {
 // ARRAY here to ease creation of templates
 // TODO: Fix the representation for a null array
 template <class T>
-Value::Value(TypeId type, const std::vector<T> *vals, Type *element_type,
+Value::Value(TypeId type, const std::vector<T> *vals, std::shared_ptr<Type> element_type,
              bool manage_data)
     : Value(TypeId::ARRAY) {
   manage_data_ = manage_data;
@@ -372,7 +372,7 @@ Value::Value(TypeId type, const std::vector<T> *vals, Type *element_type,
       } else {
         value_.array = const_cast<char *>(reinterpret_cast<const char *>(vals));
       }
-      size_.elem_type = element_type;
+      elem_type = element_type;
       break;
     default: {
       std::string msg =

@@ -116,15 +116,15 @@ class ValueFactory {
 
   template <class T>
   static inline Value GetArrayValue(const std::vector<T> *vals,
-                                    Type *elem_type) {
+                                    std::shared_ptr<type::Type> elem_type) {
     TypeId elem_type_id = elem_type->GetTypeId();
     switch (elem_type_id) {
       case TypeId::INTEGER: {
-        Type *elem_type = new Type(TypeId::INTEGER);
+        std::shared_ptr<Type> elem_type(new Type(TypeId::INTEGER));
         return Value(TypeId::ARRAY, vals, elem_type, false);
       }
       case TypeId::DECIMAL: {
-        Type *elem_type = new Type(TypeId::DECIMAL);
+        std::shared_ptr<Type> elem_type(new Type(TypeId::DECIMAL));
         return Value(TypeId::ARRAY, vals, elem_type, false);
       }
       default: {

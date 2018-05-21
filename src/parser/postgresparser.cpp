@@ -870,17 +870,17 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
 
   switch (element_type_id) {
     case type::TypeId::INTEGER: {
-      type::Type elem_type(type::TypeId::INTEGER);
+      std::shared_ptr<type::Type> elem_type = std::make_shared<type::Type>(type::TypeId::INTEGER);
       result = new expression::ArrayExpression(
           expr_array,
-          type::ValueFactory::GetArrayValue<int32_t>(int32_vec, &elem_type));
+          type::ValueFactory::GetArrayValue<int32_t>(int32_vec, elem_type));
       break;
     }
     case type::TypeId::DECIMAL: {
-      type::Type elem_type(type::TypeId::DECIMAL);
+      std::shared_ptr<type::Type> elem_type = std::make_shared<type::Type>(type::TypeId::DECIMAL);
       result = new expression::ArrayExpression(
           expr_array,
-          type::ValueFactory::GetArrayValue<double>(double_vec, &elem_type));
+          type::ValueFactory::GetArrayValue<double>(double_vec, elem_type));
       break;
     }
     default:

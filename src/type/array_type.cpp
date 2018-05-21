@@ -565,7 +565,7 @@ Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
                   "Cannot cast array values.");
 }
 
-Type *ArrayType::GetElemType(const Value &val) const {
+std::shared_ptr<Type> ArrayType::GetElemType(const Value &val) const {
   return val.GetElemType();
 }
 
@@ -580,7 +580,7 @@ void ArrayType::SerializeTo(const Value &val UNUSED_ATTRIBUTE,
 void ArrayType::SerializeTo(const Value &val, char *storage,
                             bool inlined UNUSED_ATTRIBUTE,
                             AbstractPool *pool) const {
-  Type *elem_type = val.GetElemType();
+  std::shared_ptr<Type> elem_type = val.GetElemType();
   TypeId elem_type_id = elem_type->GetTypeId();
   uint32_t len, size;
   char *data = nullptr;
@@ -632,7 +632,7 @@ Value ArrayType::DeserializeFrom(const char *storage,
   uint32_t len = *reinterpret_cast<const uint32_t *>(ptr + sizeof(TypeId));
   switch (elem_type_id) {
     case TypeId::INTEGER: {
-      Type *elem_type = new Type(elem_type_id);
+      std::shared_ptr<type::Type> elem_type(new type::Type(elem_type_id));
       if (len == 0) {
         auto int32_vec = new std::vector<int32_t>();
         return Value(TypeId::ARRAY, int32_vec, elem_type, false);
@@ -646,7 +646,7 @@ Value ArrayType::DeserializeFrom(const char *storage,
       break;
     }
     case TypeId::DECIMAL: {
-      Type *elem_type = new Type(elem_type_id);
+      std::shared_ptr<Type> elem_type(new type::Type(elem_type_id));
       if (len == 0) {
         auto double_vec = new std::vector<double>();
         return Value(TypeId::ARRAY, double_vec, elem_type, false);
@@ -666,6 +666,8 @@ Value ArrayType::DeserializeFrom(const char *storage,
       throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
+  auto dummy_vec = new std::vector<int32_t>;
+  return Value(TypeId::INVALID, dummy_vec, nullptr, false);
 }
 
 Value ArrayType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,

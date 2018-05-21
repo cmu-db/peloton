@@ -489,7 +489,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 // TODO: move it to postgres_protocal_handler.cpp
 FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                                                  type::TypeId column_type,
-                                                 type::Type *column_elem_type) {
+                                                 std::shared_ptr<type::Type> column_elem_type) {
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
