@@ -593,7 +593,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
 	auto catalog = catalog::Catalog::GetInstance();
 	auto db_catalog = catalog->GetDatabaseObject(db_oid, txn);
 	auto table_catalog = db_catalog->GetTableObject(table_oid);
-  auto table_name = table_catalog->GetTableName();
+  auto &table_name = table_catalog->GetTableName();
   auto system_catalogs = catalog->GetSystemCatalogs(db_oid);
 
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -910,7 +910,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
                 .c_str(),
             index_catalog->HasUniqueKeys());
 
-        auto key_attrs = index_catalog->GetKeyAttrs();
+        auto &key_attrs = index_catalog->GetKeyAttrs();
         auto key_schema =
             catalog::Schema::CopySchema(table->GetSchema(), key_attrs);
         key_schema->SetIndexedColumns(key_attrs);
