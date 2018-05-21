@@ -31,16 +31,10 @@ ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
 
 TransactionContext *TransactionManager::BeginTransaction(
-    const size_t thread_id, const IsolationLevelType type) {
+    const size_t thread_id, const IsolationLevelType type, bool read_only) {
   TransactionContext *txn = nullptr;
 
-  if (type == IsolationLevelType::READ_ONLY) {
-    // transaction processing with decentralized epoch manager
-    cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
-        thread_id, TimestampType::SNAPSHOT_READ);
-    txn = new TransactionContext(thread_id, type, read_id);
-
-  } else if (type == IsolationLevelType::SNAPSHOT) {
+  if (type == IsolationLevelType::SNAPSHOT) {
     // transaction processing with decentralized epoch manager
     // the DBMS must acquire
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
@@ -64,6 +58,10 @@ TransactionContext *TransactionManager::BeginTransaction(
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::READ);
     txn = new TransactionContext(thread_id, type, read_id);
+  }
+
+  if (read_only) {
+    txn->SetReadOnly();
   }
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(

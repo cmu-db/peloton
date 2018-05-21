@@ -219,11 +219,12 @@ class TransactionManager {
   }
 
   TransactionContext *BeginTransaction(const IsolationLevelType type) {
-    return BeginTransaction(0, type);
+    return BeginTransaction(0, type, false);
   }
 
   TransactionContext *BeginTransaction(const size_t thread_id = 0,
-                                const IsolationLevelType type = isolation_level_);
+                                const IsolationLevelType type = isolation_level_,
+                                bool read_only = false);
 
   /**
    * @brief      Ends a transaction.

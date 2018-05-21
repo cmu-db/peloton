@@ -422,7 +422,6 @@ enum class IsolationLevelType {
   SNAPSHOT = 2,          // snapshot isolation
   REPEATABLE_READS = 3,  // repeatable reads
   READ_COMMITTED = 4,    // read committed
-  READ_ONLY = 5          // read only
 };
 std::string IsolationLevelTypeToString(IsolationLevelType type);
 IsolationLevelType StringToIsolationLevelType(const std::string &str);

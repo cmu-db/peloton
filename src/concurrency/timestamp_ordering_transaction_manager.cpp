@@ -178,7 +178,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
+  if (current_txn->IsReadOnly()) {
     // do not update read set for read-only transactions.
     return true;
   }  // end READ ONLY
@@ -437,8 +437,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 void TimestampOrderingTransactionManager::PerformInsert(
     TransactionContext *const current_txn, const ItemPointer &location,
     ItemPointer *index_entry_ptr) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -477,8 +476,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   ItemPointer old_location = location;
 
@@ -562,8 +560,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn UNUSED_ATTRIBUTE,
     const ItemPointer &location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
@@ -596,8 +593,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   ItemPointer old_location = location;
 
@@ -684,8 +680,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -725,7 +720,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
+  if (current_txn->IsReadOnly()) {
     EndTransaction(current_txn);
     return ResultType::SUCCESS;
   }
@@ -914,8 +909,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn) {
   // a pre-declared read-only transaction will never abort.
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
