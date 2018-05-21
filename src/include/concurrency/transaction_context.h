@@ -24,8 +24,6 @@
 #include "common/printable.h"
 #include "common/internal_types.h"
 
-#define INTITIAL_RW_SET_SIZE 64
-
 namespace peloton {
 
 namespace trigger {
@@ -51,10 +49,6 @@ class TransactionContext : public Printable {
 
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id, const cid_t &commit_id);
- 
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id, 
-              const size_t read_write_set_size);
 
   /**
    * @brief      Destroys the object.
@@ -201,7 +195,7 @@ class TransactionContext : public Printable {
    * @return     True if in rw set, False otherwise.
    */
   bool IsInRWSet(const ItemPointer &location) {
-    return rw_set_.Contains(location);
+    return (rw_set_.find(location) != rw_set_.end());
   }
 
   /**
