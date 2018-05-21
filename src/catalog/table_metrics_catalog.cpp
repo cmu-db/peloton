@@ -13,6 +13,7 @@
 #include "catalog/table_metrics_catalog.h"
 
 #include "executor/logical_tile.h"
+#include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -40,8 +41,10 @@ bool TableMetricsCatalog::InsertTableMetrics(
     oid_t table_oid, int64_t reads, int64_t updates, int64_t deletes,
     int64_t inserts, int64_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  (void) pool;
+  // Create the tuple first
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val2 = type::ValueFactory::GetIntegerValue(reads);
@@ -50,25 +53,55 @@ bool TableMetricsCatalog::InsertTableMetrics(
   auto val5 = type::ValueFactory::GetIntegerValue(inserts);
   auto val6 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::TABLE_OID, val1, pool);
-  tuple->SetValue(ColumnId::READS, val2, pool);
-  tuple->SetValue(ColumnId::UPDATES, val3, pool);
-  tuple->SetValue(ColumnId::DELETES, val4, pool);
-  tuple->SetValue(ColumnId::INSERTS, val5, pool);
-  tuple->SetValue(ColumnId::TIME_STAMP, val6, pool);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+      val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+      val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+      val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+      val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+      val5);
+  auto constant_expr_6 = new expression::ConstantValueExpression(
+      val6);
+
+  tuples.emplace_back();
+  auto &values = tuples[0];
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
+  values.emplace_back(constant_expr_3);
+  values.emplace_back(constant_expr_4);
+  values.emplace_back(constant_expr_5);
+  values.emplace_back(constant_expr_6);
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool TableMetricsCatalog::DeleteTableMetrics(
     oid_t table_oid, concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_OID);
+
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(),
+                        ColumnId::TABLE_OID);
+
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
+
+  expression::AbstractExpression *predicate = oid_equality_expr;
+
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 }  // namespace catalog

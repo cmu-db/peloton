@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -28,12 +27,9 @@ namespace catalog {
 // Stores info about foreign key constraints, like the sink table id etc.
 class ForeignKey {
  public:
-  ForeignKey(oid_t source_table_id,
-             oid_t sink_table_id,
-             std::vector<oid_t> sink_col_ids,
-             std::vector<oid_t> source_col_ids,
-             FKConstrActionType update_action,
-             FKConstrActionType delete_action,
+  ForeignKey(oid_t source_table_id, oid_t sink_table_id,
+             std::vector<oid_t> sink_col_ids, std::vector<oid_t> source_col_ids,
+             FKConstrActionType update_action, FKConstrActionType delete_action,
              std::string constraint_name)
 
       : source_table_id(source_table_id),

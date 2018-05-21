@@ -32,7 +32,6 @@
 
 namespace peloton {
 namespace catalog {
-
 class TableCatalogObject;
 class IndexCatalogObject;
 
@@ -42,7 +41,7 @@ class DatabaseCatalogObject {
   friend class CatalogCache;
 
  public:
-  DatabaseCatalogObject(executor::LogicalTile *tile,
+  DatabaseCatalogObject(codegen::WrappedTuple &wrapped_tuple,
                         concurrency::TransactionContext *txn);
 
   void EvictAllTableObjects();

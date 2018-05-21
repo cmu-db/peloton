@@ -40,7 +40,7 @@ namespace catalog {
 
 class ColumnCatalogObject {
  public:
-  ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+  ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple);
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetColumnName() { return column_name; }

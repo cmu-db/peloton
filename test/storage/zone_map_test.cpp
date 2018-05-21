@@ -221,10 +221,9 @@ TEST_F(ZoneMapTests, ZoneMapIntegerEqualityPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 1, data_table.get(), i);
+        pred, 1, data_table.get(), i);
     if (i == 0) {
       EXPECT_EQ(result, true);
     } else {
@@ -249,10 +248,9 @@ TEST_F(ZoneMapTests, ZoneMapIntegerLessThanPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 1, data_table.get(), i);
+      pred, 1, data_table.get(), i);
     if (i <= 1) {
       EXPECT_EQ(result, true);
     } else {
@@ -277,10 +275,9 @@ TEST_F(ZoneMapTests, ZoneMapIntegerGreaterThanPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 1, data_table.get(), i);
+      pred, 1, data_table.get(), i);
     if (i <= 2) {
       EXPECT_EQ(result, false);
     } else {
@@ -313,10 +310,9 @@ TEST_F(ZoneMapTests, ZoneMapIntegerConjunctionPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 2, data_table.get(), i);
+      conj_pred, 2, data_table.get(), i);
     if (i == 0 || i == 3) {
       EXPECT_EQ(result, false);
     } else {
@@ -351,10 +347,9 @@ TEST_F(ZoneMapTests, ZoneMapDecimalConjunctionPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 2, data_table.get(), i);
+      conj_pred, 2, data_table.get(), i);
     if (i < 3) {
       EXPECT_EQ(result, false);
     } else {
@@ -399,10 +394,9 @@ TEST_F(ZoneMapTests, ZoneMapMultiColumnConjunctionPredicateTest) {
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
   oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
-  auto temp = (std::vector<storage::PredicateInfo> *)parsed_predicates;
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
     bool result = zone_map_manager->ShouldScanTileGroup(
-        temp->data(), 4, data_table.get(), i);
+      conj_pred, 4, data_table.get(), i);
     if (i == 2) {
       EXPECT_EQ(result, true);
     } else {

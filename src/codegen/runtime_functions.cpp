@@ -24,6 +24,8 @@
 #include "storage/tile_group.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
+#include "storage/zone_map_manager.h"
+
 
 namespace peloton {
 namespace codegen {

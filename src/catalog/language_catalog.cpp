@@ -16,13 +16,15 @@
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
 
-LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
-    : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
-      lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
+LanguageCatalogObject::LanguageCatalogObject(codegen::WrappedTuple &tuple)
+    : lang_oid_(tuple.GetValue(0).GetAs<oid_t>()),
+      lang_name_(tuple.GetValue(1).GetAs<const char *>()) {}
 
 LanguageCatalog &LanguageCatalog::GetInstance(
     concurrency::TransactionContext *txn) {
@@ -46,49 +48,73 @@ LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
 
 // insert a new language by name
 bool LanguageCatalog::InsertLanguage(const std::string &lanname,
-                                     type::AbstractPool *pool,
+                                     UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                      concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.emplace_back();
+  auto &values = tuples[0];
 
   oid_t language_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(language_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(lanname);
 
-  tuple->SetValue(ColumnId::OID, val0, pool);
-  tuple->SetValue(ColumnId::LANNAME, val1, pool);
+  values.emplace_back(new expression::ConstantValueExpression(
+      val0));
+  values.emplace_back(new expression::ConstantValueExpression(
+      val1));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 // delete a language by name
 bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
                                      concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  auto *lan_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::LANNAME);
+  lan_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::LANNAME);
+      
+      expression::AbstractExpression *lan_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  expression::AbstractExpression *lan_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, lan_name_expr,
+          lan_name_const_expr);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithCompiledSeqScan(column_ids, lan_name_equality_expr, txn);
 }
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
     oid_t lang_oid, concurrency::TransactionContext *txn) const {
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(lang_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PELOTON_ASSERT(result_tiles->size() <= 1);
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(), ColumnId::OID);
+
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(lang_oid).Copy());
+  expression::AbstractExpression *oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
+
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
+  if (!result_tuples.empty()) {
+    ret.reset(new LanguageCatalogObject(result_tuples[0]));
   }
 
   return ret;
@@ -96,19 +122,29 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
     const std::string &lang_name, concurrency::TransactionContext *txn) const {
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(lang_name).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PELOTON_ASSERT(result_tiles->size() <= 1);
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::LANNAME);
+  name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                          catalog_table_->GetOid(), ColumnId::LANNAME);
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(lang_name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<LanguageCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
+  if (!result_tuples.empty()) {
+    ret.reset(new LanguageCatalogObject(result_tuples[0]));
   }
 
   return ret;

@@ -53,8 +53,8 @@ class TableCatalogObject {
   friend class LayoutCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile,
-                     concurrency::TransactionContext *txn, int tupleId = 0);
+  TableCatalogObject(codegen::WrappedTuple &wrapped_tuple,
+                     concurrency::TransactionContext *txn);
 
  public:
   // Get indexes
@@ -152,6 +152,7 @@ class TableCatalog : public AbstractCatalog {
                concurrency::TransactionContext *txn);
 
   ~TableCatalog();
+
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 

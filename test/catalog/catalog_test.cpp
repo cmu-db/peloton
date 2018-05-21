@@ -25,6 +25,7 @@
 #include "sql/testing_sql_util.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
+#include "common/timer.h"
 
 namespace peloton {
 namespace test {
@@ -51,7 +52,7 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_NE(nullptr, database);
   EXPECT_NE(nullptr, db_metric_table);
 }
-//
+
 TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -60,6 +61,39 @@ TEST_F(CatalogTests, CreatingDatabase) {
                           ->GetDatabaseWithName("emp_db", txn)
                           ->GetDBName());
   txn_manager.CommitTransaction(txn);
+}
+
+/**
+ * Create and drop the same table in the same transaction
+ */
+TEST_F(CatalogTests, CreateThenDropTable) {
+ auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+ auto txn = txn_manager.BeginTransaction();
+ auto id_column = catalog::Column(
+   type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+   "id", true);
+ id_column.AddConstraint(
+   catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
+ auto name_column = catalog::Column(type::TypeId::VARCHAR, 32, "name", true);
+
+ std::unique_ptr<catalog::Schema> table_schema(
+   new catalog::Schema({id_column, name_column}));
+
+ catalog::Catalog::GetInstance()->CreateTable(
+   "emp_db", DEFAULT_SCHEMA_NAME, "emp_table", std::move(table_schema), txn);
+
+ auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+   "emp_db", DEFAULT_SCHEMA_NAME, "emp_table", txn);
+
+ EXPECT_NE(table_object, nullptr);
+ EXPECT_EQ(table_object->GetTableName(), "emp_table");
+
+ catalog::Catalog::GetInstance()->DropTable("emp_db", DEFAULT_SCHEMA_NAME,
+                                            "emp_table", txn);
+ EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
+           "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn),
+                      CatalogException);
+ txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(CatalogTests, CreatingTable) {
@@ -128,6 +162,7 @@ TEST_F(CatalogTests, TableObject) {
       "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   auto index_objects = table_object->GetIndexObjects();
+
   auto column_objects = table_object->GetColumnObjects();
 
   EXPECT_EQ(1, index_objects.size());

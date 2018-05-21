@@ -15,34 +15,37 @@
 #include "catalog/catalog.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
+#include "codegen/buffering_consumer.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace catalog {
 
-ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
-                                         int tupleId)
-    : table_oid(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
+
+ColumnCatalogObject::ColumnCatalogObject(codegen::WrappedTuple wrapped_tuple)
+    : table_oid(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::TABLE_OID)
                     .GetAs<oid_t>()),
-      column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
+      column_name(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
-      column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<uint32_t>()),
+      column_id(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_ID)
+                    .GetAs<oid_t>()),
       column_offset(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<uint32_t>()),
+          wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_OFFSET)
+              .GetAs<oid_t>()),
       column_type(StringToTypeId(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
+          wrapped_tuple.GetValue(ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
-      is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
+      is_inlined(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_INLINED)
                      .GetAs<bool>()),
-      is_primary(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY)
+      is_primary(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_PRIMARY)
                      .GetAs<bool>()),
-      is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
+      is_not_null(wrapped_tuple.GetValue(ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
+
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool,
@@ -140,11 +143,10 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  oid_t column_id, oid_t column_offset,
                                  type::TypeId column_type, bool is_inlined,
                                  const std::vector<Constraint> &constraints,
-                                 type::AbstractPool *pool,
+                                 UNUSED_ATTRIBUTE type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(column_name, nullptr);
@@ -165,28 +167,74 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
   auto val6 = type::ValueFactory::GetBooleanValue(is_primary);
   auto val7 = type::ValueFactory::GetBooleanValue(is_not_null);
 
-  tuple->SetValue(ColumnId::TABLE_OID, val0, pool);
-  tuple->SetValue(ColumnId::COLUMN_NAME, val1, pool);
-  tuple->SetValue(ColumnId::COLUMN_ID, val2, pool);
-  tuple->SetValue(ColumnId::COLUMN_OFFSET, val3, pool);
-  tuple->SetValue(ColumnId::COLUMN_TYPE, val4, pool);
-  tuple->SetValue(ColumnId::IS_INLINED, val5, pool);
-  tuple->SetValue(ColumnId::IS_PRIMARY, val6, pool);
-  tuple->SetValue(ColumnId::IS_NOT_NULL, val7, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+    val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+    val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+    val5);
+  auto constant_expr_6 = new expression::ConstantValueExpression(
+    val6);
+  auto constant_expr_7 = new expression::ConstantValueExpression(
+    val7);
 
+  tuples.emplace_back();
+//  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+
+  values.emplace_back(constant_expr_0);
+  values.emplace_back(constant_expr_1);
+  values.emplace_back(constant_expr_2);
+  values.emplace_back(constant_expr_3);
+  values.emplace_back(constant_expr_4);
+  values.emplace_back(constant_expr_5);
+  values.emplace_back(constant_expr_6);
+  values.emplace_back(constant_expr_7);
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool ColumnCatalog::DeleteColumn(oid_t table_oid,
                                  const std::string &column_name,
                                  concurrency::TransactionContext *txn) {
-  oid_t index_offset =
-      IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *table_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+  expression::AbstractExpression *table_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+  auto *col_name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           ColumnId::COLUMN_NAME);
+  col_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                               catalog_table_->GetOid(),
+                               ColumnId::COLUMN_NAME);
+  expression::AbstractExpression *col_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
+  expression::AbstractExpression *col_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_name_expr,
+          col_name_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, table_oid_equality_expr,
+          col_name_equality_expr);
 
   // delete column from cache
   auto pg_table = Catalog::GetInstance()
@@ -195,7 +243,7 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 /* @brief   delete all column records from the same table
@@ -206,18 +254,30 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
  */
 bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                                   concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *table_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                         ColumnId::TABLE_OID);
+  table_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+  expression::AbstractExpression *table_oid_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *table_oid_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, table_oid_expr, table_oid_const_expr);
+
+  bool result =  DeleteWithCompiledSeqScan(column_ids, table_oid_equality_expr, txn);
 
   // delete columns from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid)
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictAllColumnObjects();
-
-  return DeleteWithIndexScan(index_offset, values, txn);
+    table_object->EvictAllColumnObjects();
+  return result;
 }
 
 const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
@@ -234,19 +294,27 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
 
   // cache miss, get from pg_attribute
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto tb_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                         ColumnId::TABLE_OID);
 
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto column_object =
-          std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertColumnObject(column_object);
-    }
+  tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
+
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *col_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
+
+  expression::AbstractExpression *predicate = col_oid_equality_expr;
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  for (auto &tuple : result_tuples) {
+    auto column_object = std::make_shared<ColumnCatalogObject>(tuple);
+    table_object->InsertColumnObject(column_object);
   }
 
   return table_object->GetColumnObjects();

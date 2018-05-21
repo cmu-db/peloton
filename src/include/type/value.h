@@ -87,7 +87,7 @@ class Value : public Printable {
     std::swap(first.type_id_, second.type_id_);
   }
 
-  Value &operator=(Value other);
+  Value &operator=( Value other);
 
   // Get the type of this value
   inline TypeId GetTypeId() const { return type_id_; }

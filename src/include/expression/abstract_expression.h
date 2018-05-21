@@ -82,6 +82,12 @@ class AbstractExpression : public Printable {
   virtual type::Value Evaluate(const AbstractTuple *tuple1,
                                const AbstractTuple *tuple2,
                                executor::ExecutorContext *context) const = 0;
+  /*
+   * Upon deletion, specifically clears the parsed_predicates
+   */
+//  ~AbstractExpression(){
+//    parsed_predicates.clear();
+//  }
 
   /**
    * Return true if this expression or any descendent has a value that should be

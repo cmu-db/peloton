@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/catalog.h"
 #include "executor/logical_tile.h"
@@ -55,9 +57,9 @@ bool SettingsCatalog::InsertSetting(
     const std::string &max_value, const std::string &default_value,
     bool is_mutable, bool is_persistent, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
+  (void) pool;
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetVarcharValue(name, pool);
   auto val1 = type::ValueFactory::GetVarcharValue(value, pool);
@@ -70,67 +72,120 @@ bool SettingsCatalog::InsertSetting(
   auto val7 = type::ValueFactory::GetBooleanValue(is_mutable);
   auto val8 = type::ValueFactory::GetBooleanValue(is_persistent);
 
-  tuple->SetValue(static_cast<int>(ColumnId::NAME), val0, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::VALUE), val1, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::VALUE_TYPE), val2, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::DESCRIPTION), val3, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::MIN_VALUE), val4, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::MAX_VALUE), val5, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::DEFAULT_VALUE), val6, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::IS_MUTABLE), val7, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::IS_PERSISTENT), val8, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+    val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+    val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+    val5);
+  auto constant_expr_6 = new expression::ConstantValueExpression(
+    val6);
+  auto constant_expr_7 = new expression::ConstantValueExpression(
+    val7);
+  auto constant_expr_8 = new expression::ConstantValueExpression(
+    val8);
+
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_4));
+  values.push_back(ExpressionPtr(constant_expr_5));
+  values.push_back(ExpressionPtr(constant_expr_6));
+  values.push_back(ExpressionPtr(constant_expr_7));
+  values.push_back(ExpressionPtr(constant_expr_8));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool SettingsCatalog::DeleteSetting(const std::string &name,
                                     concurrency::TransactionContext *txn) {
-  oid_t index_offset = 0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+ std::vector<oid_t> column_ids(all_column_ids);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+ auto *name_expr =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        static_cast<int>(ColumnId::NAME));
+ name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), static_cast<int>(ColumnId::NAME));
+
+ expression::AbstractExpression *name_const_expr =
+   expression::ExpressionUtil::ConstantValueFactory(
+     type::ValueFactory::GetVarcharValue(name).Copy());
+ expression::AbstractExpression *name_equality_expr =
+   expression::ExpressionUtil::ComparisonFactory(
+     ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+
+ return DeleteWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 }
 
 std::string SettingsCatalog::GetSettingValue(
     const std::string &name, concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *name_expr =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                           static_cast<int>(ColumnId::NAME));
+
+  name_expr->SetBoundOid(
+      catalog_table_->GetDatabaseOid(),
+      catalog_table_->GetOid(),
+      static_cast<int>(ColumnId::NAME));
+
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
   std::string config_value = "";
-  PELOTON_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
+  PELOTON_ASSERT(result_tuples.size() <= 1);
+  if (!result_tuples.empty()) {
+    config_value = (result_tuples[0]).GetValue(static_cast<int>(ColumnId::VALUE)).ToString();
   }
+
   return config_value;
 }
 
 std::string SettingsCatalog::GetDefaultValue(
     const std::string &name, concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *name_expr =
+      new expression::TupleValueExpression(
+          type::TypeId::VARCHAR, 0,
+          static_cast<int>(ColumnId::NAME));
+
+  name_expr->SetBoundOid(
+      catalog_table_->GetDatabaseOid(),
+      catalog_table_->GetOid(),
+      static_cast<int>(ColumnId::NAME));
+
+  expression::AbstractExpression *name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
+  expression::AbstractExpression *name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, name_expr, name_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, name_equality_expr, txn);
 
   std::string config_value = "";
-  PELOTON_ASSERT(result_tiles->size() <= 1);
-  if (result_tiles->size() != 0) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      config_value = (*result_tiles)[0]->GetValue(0, 0).ToString();
-    }
+  PELOTON_ASSERT(result_tuples.size() <= 1);
+  if (!result_tuples.empty()) {
+    config_value = result_tuples[0].GetValue(static_cast<int>(ColumnId::DEFAULT_VALUE)).ToString();
   }
   return config_value;
 }
