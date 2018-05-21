@@ -103,7 +103,7 @@ void TransactionLevelGCManager::StartGC()  {
   }
 };
 
-void TransactionLevelGCManager::RegisterTable(oid_t table_id) {
+void TransactionLevelGCManager::RegisterTable(const oid_t& table_id) {
   // if table already registered, ignore it
   if (recycle_stacks_->Contains(table_id)) {
     return;
@@ -524,8 +524,8 @@ void TransactionLevelGCManager::RemoveVersionsFromIndexes(
 }
 
 // unlink garbage tuples and update indexes appropriately (according to gc type)
-void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer location,
-                                                         GCVersionType type) {
+void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &location,
+                                                         const GCVersionType &type) {
   // get indirection from the indirection array.
   auto tile_group =
       storage::StorageManager::GetInstance()->GetTileGroup(location.block);
