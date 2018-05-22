@@ -80,6 +80,8 @@ class IndexCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   /** Write Related API */
   bool InsertIndex(oid_t index_oid, const std::string &index_name,
                    oid_t table_oid, const std::string &schema_name,

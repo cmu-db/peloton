@@ -82,6 +82,10 @@ class ProcCatalog : public AbstractCatalog {
   // Global Singleton
   static ProcCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
+  oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
+
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
@@ -115,8 +119,6 @@ class ProcCatalog : public AbstractCatalog {
 
  private:
   ProcCatalog(concurrency::TransactionContext *txn);
-
-  oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
 
   enum IndexId {
     PRIMARY_KEY = 0,

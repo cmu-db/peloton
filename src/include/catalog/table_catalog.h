@@ -155,6 +155,8 @@ class TableCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

@@ -184,6 +184,9 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
+
+  // Reset oid of each system catalog
+  system_catalogs->ResetOidForUserSpace();
 }
 
 void Catalog::Bootstrap() {
@@ -207,6 +210,11 @@ void Catalog::Bootstrap() {
 
   InitializeLanguages();
   InitializeFunctions();
+
+  // Reset oid of each catalog
+  DatabaseCatalog::GetInstance()->UpdateOid(OID_FOR_USER_OFFSET);
+  LanguageCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
+  ProcCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
 }
 
 //===----------------------------------------------------------------------===//

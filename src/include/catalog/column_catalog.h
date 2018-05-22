@@ -77,6 +77,8 @@ class ColumnCatalog : public AbstractCatalog {
   // No use
   inline oid_t GetNextOid() { return INVALID_OID; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

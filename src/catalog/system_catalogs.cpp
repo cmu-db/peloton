@@ -108,5 +108,18 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
   }
 }
 
+/*@brief    Reset oid of each catalog to avoid collisions between catalog
+ *          values added by system and users when checkpoint recovery.
+ */
+void SystemCatalogs::ResetOidForUserSpace() {
+	pg_attribute_->UpdateOid(OID_FOR_USER_OFFSET);
+	pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
+	pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
+	pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
+	// pg_layout_->UpdateOid(OID_FOR_USER_OFFSET);
+	pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
+	// pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
+}
+
 }  // namespace catalog
 }  // namespace peloton
