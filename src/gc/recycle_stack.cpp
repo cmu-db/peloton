@@ -20,7 +20,7 @@ RecycleStack::~RecycleStack() {
   // acquire head lock
   while (head_.lock.test_and_set(std::memory_order_acq_rel));
 
-  Node *curr = head_.next;
+  auto curr = head_.next;
 
   // iterate through entire stack, remove all nodes
   while (curr != nullptr) {
@@ -44,7 +44,7 @@ void RecycleStack::Push(const ItemPointer &location) {
   // acquire head lock
   while (head_.lock.test_and_set(std::memory_order_acq_rel));
 
-  Node* node =  new Node{location, head_.next, ATOMIC_FLAG_INIT};
+  auto node =  new Node{location, head_.next, ATOMIC_FLAG_INIT};
   head_.next = node;
 
   head_.lock.clear(std::memory_order_acq_rel);
@@ -55,7 +55,7 @@ ItemPointer RecycleStack::TryPop() {
 
   // try to acquire head lock
   if (!head_.lock.test_and_set(std::memory_order_acq_rel)) {
-    Node* node = head_.next;
+    auto node = head_.next;
     if (node != nullptr) {
       // try to acquire first node in list
       if (!node->lock.test_and_set(std::memory_order_acq_rel)) {
@@ -79,8 +79,8 @@ size_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
   // acquire head lock
   while (head_.lock.test_and_set(std::memory_order_acq_rel));
 
-  Node *prev = &head_;
-  Node *curr = prev->next;
+  auto prev = &head_;
+  auto curr = prev->next;
 
   // iterate through entire stack, remove any nodes with matching tile_group_id
   while (curr != nullptr) {

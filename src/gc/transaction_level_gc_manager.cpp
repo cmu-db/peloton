@@ -34,12 +34,12 @@
 namespace peloton {
 namespace gc {
 
-TransactionLevelGCManager::TransactionLevelGCManager(const int thread_count)
+TransactionLevelGCManager::TransactionLevelGCManager(const uint32_t &thread_count)
     : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
 
   unlink_queues_.reserve(thread_count);
 
-  for (int i = 0; i < gc_thread_count_; ++i) {
+  for (uint32_t i = 0; i < gc_thread_count_; ++i) {
     unlink_queues_.emplace_back(std::make_shared<
         LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
   }
@@ -60,7 +60,7 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
   unlink_queues_.clear();
   unlink_queues_.reserve(gc_thread_count_);
 
-  for (int i = 0; i < gc_thread_count_; ++i) {
+  for (uint32_t i = 0; i < gc_thread_count_; ++i) {
     unlink_queues_.emplace_back(std::make_shared<
       LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
   }
@@ -76,7 +76,7 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
 }
 
 TransactionLevelGCManager&
-TransactionLevelGCManager::GetInstance(const int thread_count) {
+TransactionLevelGCManager::GetInstance(const uint32_t &thread_count) {
   static TransactionLevelGCManager gc_manager(thread_count);
   return gc_manager;
 }
@@ -89,7 +89,7 @@ void TransactionLevelGCManager::StartGC(
   is_running_ = true;
   gc_threads.resize(gc_thread_count_);
 
-  for (int i = 0; i < gc_thread_count_; ++i) {
+  for (uint32_t i = 0; i < gc_thread_count_; ++i) {
     gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
   }
 }
@@ -98,7 +98,7 @@ void TransactionLevelGCManager::StartGC()  {
   LOG_TRACE("Starting GC");
   is_running_ = true;
 
-  for (int i = 0; i < gc_thread_count_; ++i) {
+  for (uint32_t i = 0; i < gc_thread_count_; ++i) {
     thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
   }
 };
@@ -145,8 +145,8 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   return true;
 }
 
-void TransactionLevelGCManager::Running(const int &thread_id) {
-  PELOTON_ASSERT(is_running_ == true);
+void TransactionLevelGCManager::Running(const uint32_t &thread_id) {
+  PELOTON_ASSERT(is_running_);
   uint32_t backoff_shifts = 0;
   while (true) {
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
@@ -164,7 +164,7 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     int unlinked_count = Unlink(thread_id, expired_eid);
     int reclaimed_count = Reclaim(thread_id, expired_eid);
 
-    if (is_running_ == false) {
+    if (!is_running_) {
       return;
     }
 
@@ -198,9 +198,9 @@ void TransactionLevelGCManager::RecycleTransaction(
   unlink_queues_[HashToThread(txn->GetThreadId())]->Enqueue(txn);
 }
 
-int TransactionLevelGCManager::Unlink(const int &thread_id,
+uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
                                       const eid_t &expired_eid) {
-  int tuple_counter = 0;
+  uint32_t tuple_counter = 0;
 
   // check if any garbage can be unlinked from indexes.
   // every time we garbage collect at most MAX_PROCESSED_COUNT tuples.
@@ -210,31 +210,31 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
   local_unlink_queues_[thread_id].remove_if(
       [&garbages, &tuple_counter, expired_eid,
        this](concurrency::TransactionContext *txn_ctx) -> bool {
-        bool res = txn_ctx->GetEpochId() <= expired_eid;
-        if (res == true) {
+        bool result = txn_ctx->GetEpochId() <= expired_eid;
+        if (result) {
           // unlink versions from version chain and indexes
           RemoveVersionsFromIndexes(txn_ctx);
           // Add to the garbage map
           garbages.push_back(txn_ctx);
           tuple_counter++;
         }
-        return res;
+        return result;
       });
 
   for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
     concurrency::TransactionContext *txn_ctx;
     // if there's no more tuples in the queue, then break.
-    if (unlink_queues_[thread_id]->Dequeue(txn_ctx) == false) {
+    if (!unlink_queues_[thread_id]->Dequeue(txn_ctx)) {
       break;
     }
 
     // Log the query into query_history_catalog
     if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-      if(query_strings.size() != 0) {
+      if(!query_strings.empty()) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
-        for(auto query_string: query_strings) {
+        for(const auto &query_string: query_strings) {
           pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
           });
@@ -281,9 +281,9 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 }
 
 // executed by a single thread. so no synchronization is required.
-int TransactionLevelGCManager::Reclaim(const int &thread_id,
+uint32_t TransactionLevelGCManager::Reclaim(const uint32_t &thread_id,
                                        const eid_t &expired_eid) {
-  int gc_counter = 0;
+  uint32_t gc_counter = 0;
 
   // we delete garbage in the free list
   auto garbage_ctx_entry = reclaim_maps_[thread_id].begin();
@@ -357,7 +357,7 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   // TODO: revisit dropping immutable tile groups
 
   // If the tuple being reset no longer exists, just skip it
-  if (ResetTuple(location) == false) {
+  if (!ResetTuple(location)) {
     return;
   }
 
@@ -371,11 +371,11 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto num_recycled = tile_group_header->IncrementRecycled() + 1;
   auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
   bool immutable = tile_group_header->GetImmutability();
-  size_t max_recycled = (size_t) (tuples_per_tile_group * GetCompactionThreshold());
+  auto max_recycled = (size_t) (tuples_per_tile_group * GetCompactionThreshold());
 
   // check if tile group should be compacted
   if (!immutable && num_recycled >= max_recycled &&
-      table->IsActiveTileGroup(tile_group_id) == false) {
+      !table->IsActiveTileGroup(tile_group_id)) {
 
     LOG_TRACE("Setting tile_group %u to immutable", tile_group_id);
     tile_group_header->SetImmutabilityWithoutNotifyingGC();
@@ -475,7 +475,7 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
   return location;
 }
 
-void TransactionLevelGCManager::ClearGarbage(int thread_id) {
+void TransactionLevelGCManager::ClearGarbage(const uint32_t &thread_id) {
   // order matters
 
   while (!immutable_queue_->IsEmpty()) {
@@ -491,7 +491,7 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
     Unlink(thread_id, MAX_CID);
   }
 
-  while (reclaim_maps_[thread_id].size() != 0) {
+  while (!reclaim_maps_[thread_id].empty()) {
     Reclaim(thread_id, MAX_CID);
   }
 }
@@ -500,7 +500,7 @@ void TransactionLevelGCManager::StopGC() {
   LOG_TRACE("Stopping GC");
   this->is_running_ = false;
   // clear the garbage in each GC thread
-  for (int thread_id = 0; thread_id < gc_thread_count_; ++thread_id) {
+  for (uint32_t thread_id = 0; thread_id < gc_thread_count_; ++thread_id) {
     ClearGarbage(thread_id);
   }
 }
@@ -546,8 +546,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
 
   ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(), location.offset);
 
-  storage::DataTable *table =
-      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+  auto table = dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   if (table == nullptr) {
     // guard against table being GC'd by another GC thread
     return;
@@ -572,7 +571,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(), newer_location.offset);
     // remove the older version from all the indexes
     // where it no longer matches the newer version
-    for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+    for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
       auto index = table->GetIndex(idx);
       if (index == nullptr) continue;
       auto index_schema = index->GetKeySchema();
@@ -612,7 +611,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(), older_location.offset);
     // remove the newer version from all the indexes
     // where it no longer matches the older version
-    for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+    for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
       auto index = table->GetIndex(idx);
       if (index == nullptr) continue;
       auto index_schema = index->GetKeySchema();
@@ -641,7 +640,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
               type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
-    for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+    for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
       auto index = table->GetIndex(idx);
       if (index == nullptr) continue;
       auto index_schema = index->GetKeySchema();
@@ -673,8 +672,8 @@ TransactionLevelGCManager::GetTableRecycleStack(const oid_t &table_id) const {
   }
 }
 
-int TransactionLevelGCManager::ProcessImmutableQueue() {
-  int num_processed = 0;
+uint32_t TransactionLevelGCManager::ProcessImmutableQueue() {
+  uint32_t num_processed = 0;
   oid_t tile_group_id;
 
   for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
@@ -708,8 +707,8 @@ void TransactionLevelGCManager::AddToCompactionQueue(const oid_t &tile_group_id)
   compaction_queue_->Enqueue(tile_group_id);
 }
 
-int TransactionLevelGCManager::ProcessCompactionQueue() {
-  int num_processed = 0;
+uint32_t TransactionLevelGCManager::ProcessCompactionQueue() {
+  uint32_t num_processed = 0;
   oid_t tile_group_id;
 
   for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {

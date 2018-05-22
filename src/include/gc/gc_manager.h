@@ -90,11 +90,11 @@ class GCManager {
 
   virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
 
-  void SetCompactionThreshold(double threshold) { compaction_threshold_ = threshold; }
+  void SetCompactionThreshold(const double &threshold) { compaction_threshold_ = threshold; }
 
   double GetCompactionThreshold() const { return compaction_threshold_; }
 
-  void SetTileGroupFreeing(bool free) { tile_group_freeing_ = free; }
+  void SetTileGroupFreeing(const bool &free) { tile_group_freeing_ = free; }
 
   bool GetTileGroupFreeing() const {return tile_group_freeing_; }
 

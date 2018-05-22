@@ -59,7 +59,7 @@ class TransactionLevelGCManager : public GCManager {
    * @param[in] thread_count Number of Garbage Collector threads
    * @return Singleton instance of the TransactionLevelGCManager
    */
-  static TransactionLevelGCManager &GetInstance(const int thread_count = 1);
+  static TransactionLevelGCManager &GetInstance(const uint32_t &thread_count = 1);
 
   virtual void StartGC(
       std::vector<std::unique_ptr<std::thread>> &gc_threads) override;
@@ -127,7 +127,7 @@ class TransactionLevelGCManager : public GCManager {
    * @param[id] expired_eid Expired epoch from the EpochManager
    * @return Number of processed tuples
    */
-  int Unlink(const int &thread_id, const eid_t &expired_eid);
+  uint32_t Unlink(const uint32_t &thread_id, const eid_t &expired_eid);
 
   /**
    * @brief Process reclaim queue for provided thread
@@ -135,7 +135,7 @@ class TransactionLevelGCManager : public GCManager {
    * @param[id] expired_eid Expired epoch from the EpochManager
    * @return Number of processed objects
    */
-  int Reclaim(const int &thread_id, const eid_t &expired_eid);
+  uint32_t Reclaim(const uint32_t &thread_id, const eid_t &expired_eid);
 
   /**
    * @brief Adds the provided TileGroup oid to a queue to be marked
@@ -159,7 +159,7 @@ class TransactionLevelGCManager : public GCManager {
    *
    * @param[in] thread_id
    */
-  void ClearGarbage(int thread_id);
+  void ClearGarbage(const uint32_t &thread_id);
 
   // iterates through immutable tile group queue and purges all tile groups
   // from the recycles queues
@@ -168,17 +168,17 @@ class TransactionLevelGCManager : public GCManager {
    * its ItemPointers from its table's RecycleStack
    * @return Number of TileGroups processed
    */
-  int ProcessImmutableQueue();
+  uint32_t ProcessImmutableQueue();
 
   /**
    * @brief Empties the compaction queue and for each TileGroup enqueues
    * it in the MonoQueuePool for compaction
    * @return Number of TileGroups processed
    */
-  int ProcessCompactionQueue();
+  uint32_t ProcessCompactionQueue();
   
  private:
-  TransactionLevelGCManager(const int thread_count);
+  TransactionLevelGCManager(const uint32_t &thread_count);
 
   virtual ~TransactionLevelGCManager() {}
 
@@ -198,7 +198,7 @@ class TransactionLevelGCManager : public GCManager {
    * exponential backoff if queues are empty
    * @param[id] thread_id Zero-indexed thread id for queue access
    */
-  void Running(const int &thread_id);
+  void Running(const uint32_t &thread_id);
 
   /**
    * @brief Recycles all of the tuple slots in transaction context's GCSet
@@ -238,7 +238,7 @@ class TransactionLevelGCManager : public GCManager {
  //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-  int gc_thread_count_;
+  uint32_t gc_thread_count_;
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
