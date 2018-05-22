@@ -105,13 +105,13 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
     // check the index recovery
     else if (table_name == "checkpoint_index_test") {
-    	/*
       for (auto &index_pair : table_catalog->GetIndexObjects()) {
         auto &index_catalog = index_pair.second;
         auto &index_name = index_catalog->GetIndexName();
 
         LOG_INFO("Check the index %s", index_name.c_str());
 
+      	/*
         // unique primary key for attribute "pid" (primary key)
         if (index_name == "checkpoint_index_test_pkey") {
           EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
@@ -174,8 +174,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
           LOG_ERROR("Unexpected index is found: %s", index_name.c_str());
           EXPECT_TRUE(false);
         }
-      }
       */
+      }
     }
     // end: check the index recovery
 
