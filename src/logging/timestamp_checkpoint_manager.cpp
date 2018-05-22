@@ -196,14 +196,14 @@ void TimestampCheckpointManager::CreateCheckpoint(
   auto storage_manager = storage::StorageManager::GetInstance();
 
   // do checkpointing to take tables into each file
-  for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
-    auto db_oid = db_catalog_pair.first;
-    auto db_catalog = db_catalog_pair.second;
+  for (auto &db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
+    auto &db_oid = db_catalog_pair.first;
+    auto &db_catalog = db_catalog_pair.second;
     auto database = storage_manager->GetDatabaseWithOid(db_oid);
 
-    for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
-      auto table_oid = table_catalog_pair.first;
-      auto table_catalog = table_catalog_pair.second;
+    for (auto &table_catalog_pair : db_catalog->GetTableObjects()) {
+      auto &table_oid = table_catalog_pair.first;
+      auto &table_catalog = table_catalog_pair.second;
 
       // make sure the table exists in this epoch
       // and system catalogs in catalog database are out of checkpoint
@@ -413,9 +413,9 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
   auto storage_manager = storage::StorageManager::GetInstance();
   auto db_catalogs = catalog->GetDatabaseObjects(txn);
   metadata_buffer.WriteLong(db_catalogs.size() - 1);
-  for (auto db_catalog_pair : db_catalogs) {
-    auto db_oid = db_catalog_pair.first;
-    auto db_catalog = db_catalog_pair.second;
+  for (auto &db_catalog_pair : db_catalogs) {
+    auto &db_oid = db_catalog_pair.first;
+    auto &db_catalog = db_catalog_pair.second;
 
     // except for catalog database
     if (db_oid == CATALOG_DATABASE_OID) continue;
@@ -429,8 +429,8 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
     // eliminate catalog tables from table catalog objects in the database
     std::vector<std::shared_ptr<catalog::TableCatalogObject>> table_catalogs;
     auto all_table_catalogs = db_catalog->GetTableObjects();
-    for (auto table_catalog_pair : all_table_catalogs) {
-      auto table_catalog = table_catalog_pair.second;
+    for (auto &table_catalog_pair : all_table_catalogs) {
+      auto &table_catalog = table_catalog_pair.second;
       if (table_catalog->GetSchemaName() != CATALOG_SCHEMA_NAME) {
         table_catalogs.push_back(table_catalog);
       }
@@ -438,7 +438,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
 
     // insert each table information in the database into metadata file
     metadata_buffer.WriteLong(table_catalogs.size());
-    for (auto table_catalog : table_catalogs) {
+    for (auto &table_catalog : table_catalogs) {
       auto table_oid = table_catalog->GetTableOid();
       auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
       auto schema = table->GetSchema();
@@ -456,9 +456,8 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
       // Write schema information
       auto column_catalogs = table_catalog->GetColumnObjects();
       metadata_buffer.WriteLong(column_catalogs.size());
-      for (auto column_catalog_pair : column_catalogs) {
-        auto column_oid = column_catalog_pair.first;
-        auto column_catalog = column_catalog_pair.second;
+      for (auto &column_catalog_pair : column_catalogs) {
+        auto &column_oid = column_catalog_pair.first;
         auto column = schema->GetColumn(column_oid);
 
         // write column information
@@ -528,7 +527,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
   // first, recover all catalogs within catalog database
   auto catalog_db_catalog = catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
   PELOTON_ASSERT(catalog_db_catalog != nullptr);
-  for (auto table_catalog :
+  for (auto &table_catalog :
   		catalog_db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
     if (LoadCatalogTableCheckpoint(epoch_id, catalog_db_catalog->GetDatabaseOid(),
     		table_catalog->GetTableOid(), txn) == false) {
@@ -538,9 +537,9 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
   }
 
   // recover all catalog table within each database
-  for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
-    auto db_oid = db_catalog_pair.first;
-    auto db_catalog = db_catalog_pair.second;
+  for (auto &db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
+    auto &db_oid = db_catalog_pair.first;
+    auto &db_catalog = db_catalog_pair.second;
 
     // catalog database has already been recovered
     if (db_oid == CATALOG_DATABASE_OID) continue;
@@ -571,7 +570,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
     	LOG_DEBUG("And use its system catalog objects");
     }
 
-    for (auto table_catalog :
+    for (auto &table_catalog :
          db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
       if (LoadCatalogTableCheckpoint(epoch_id, db_oid,
       		table_catalog->GetTableOid(), txn) == false) {
@@ -706,18 +705,18 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) 
   txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
-  for (auto db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
-    auto db_oid = db_catalog_pair.first;
+  for (auto &db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
+    auto &db_oid = db_catalog_pair.first;
     auto database = storage_manager->GetDatabaseWithOid(db_oid);
-    auto db_catalog = db_catalog_pair.second;
+    auto &db_catalog = db_catalog_pair.second;
 
     // the catalog database has already been recovered.
     if (db_oid == CATALOG_DATABASE_OID) continue;
 
-    for (auto table_catalog_pair : db_catalog->GetTableObjects()) {
-      auto table_oid = table_catalog_pair.first;
+    for (auto &table_catalog_pair : db_catalog->GetTableObjects()) {
+      auto &table_oid = table_catalog_pair.first;
       auto table = database->GetTableWithOid(table_oid);
-      auto table_catalog = table_catalog_pair.second;
+      auto &table_catalog = table_catalog_pair.second;
 
       // catalog tables in each database have already benn recovered
       if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) continue;
@@ -897,7 +896,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
 
       // recover index storage objects
       auto index_catalogs = table_catalog->GetIndexObjects();
-      for (auto index_catalog_pair : index_catalogs) {
+      for (auto &index_catalog_pair : index_catalogs) {
         auto index_oid = index_catalog_pair.first;
         auto index_catalog = index_catalog_pair.second;
 
