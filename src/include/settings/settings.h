@@ -131,9 +131,20 @@ SETTING_int(min_parallel_table_scan_size,
 // Garbage Collection and TileGroup Compaction
 //===----------------------------------------------------------------------===//
 
-SETTING_double(compaction_threshold,"Fraction of recycled slots in a TileGroup before compaction is triggered (default: 1.0)", 1.0, 0.5, 1.0, false, false)
-SETTING_bool(tile_group_freeing, "Enable TileGroup freeing by the garbage collector (default: false)", false, true, false)
-
+SETTING_double(tile_group_recycling_threshold,
+               "Fraction of recycled slots in a TileGroup before recycling is stopped and TileGroup is enqueued for compaction (if enabled) (default: 0.9)",
+               0.9,
+               0.5,
+               1.0,
+               false, false)
+SETTING_bool(tile_group_freeing,
+             "Enable TileGroup freeing by the garbage collector (default: false)",
+             false,
+             true, false)
+SETTING_bool(tile_group_compaction,
+             "Enable TileGroup compaction by the garbage collector (default: false)",
+             false,
+             true, false)
 
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG

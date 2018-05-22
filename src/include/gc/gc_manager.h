@@ -47,8 +47,9 @@ class GCManager {
   GCManager &operator=(GCManager &&) = delete;
 
   GCManager() : is_running_(false),
-    compaction_threshold_(settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold)),
-    tile_group_freeing_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing)) {}
+    tile_group_recycling_threshold_(settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold)),
+    tile_group_freeing_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing)),
+    tile_group_compaction_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction)) {}
 
   virtual ~GCManager() {}
 
@@ -59,12 +60,13 @@ class GCManager {
 
   virtual void Reset() {
     is_running_ = false;
-    compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+    tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold);
     tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
+    tile_group_compaction_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction);
   }
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  bool GetStatus() { return is_running_; }
 
   virtual void StartGC(
       std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
@@ -90,13 +92,17 @@ class GCManager {
 
   virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
 
-  void SetCompactionThreshold(const double &threshold) { compaction_threshold_ = threshold; }
+  virtual void SetTileGroupRecyclingThreshold(const double &threshold UNUSED_ATTRIBUTE) {}
 
-  double GetCompactionThreshold() const { return compaction_threshold_; }
+  virtual double GetTileGroupRecyclingThreshold() const { return tile_group_recycling_threshold_; }
 
-  void SetTileGroupFreeing(const bool &free) { tile_group_freeing_ = free; }
+  virtual void SetTileGroupFreeing(const bool &free UNUSED_ATTRIBUTE) {}
 
-  bool GetTileGroupFreeing() const {return tile_group_freeing_; }
+  virtual bool GetTileGroupFreeing() const { return tile_group_freeing_; }
+
+  virtual void SetTileGroupCompaction(const bool &compact UNUSED_ATTRIBUTE) {}
+
+  virtual bool GetTileGroupCompaction() const { return tile_group_compaction_; }
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
@@ -105,8 +111,9 @@ class GCManager {
  protected:
 
   volatile bool is_running_;
-  volatile double compaction_threshold_;
+  volatile double tile_group_recycling_threshold_;
   volatile bool tile_group_freeing_;
+  volatile bool tile_group_compaction_;
 };
 
 }  // namespace gc

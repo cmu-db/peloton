@@ -149,7 +149,50 @@ class TransactionLevelGCManager : public GCManager {
    * for compaction the next time a GC thread wakes up
    * @param[in] tile_group_id Global oid of the TileGroup
    */
-  void AddToCompactionQueue(const oid_t &tile_group_id);
+  virtual void AddToCompactionQueue(const oid_t &tile_group_id);
+
+  /**
+   * @brief Override the GC recycling threshold from settings.h
+   * @param[in] threshold The ratio of recycled tuples in a TileGroup before stopping recycling
+   */
+  virtual void SetTileGroupRecyclingThreshold(const double &threshold) override { tile_group_recycling_threshold_ = threshold; }
+
+  /**
+   * @brief The current GC recycling threshold
+   * @return The ratio of recycled tuples in a TileGroup before stopping recycling
+   */
+  virtual double GetTileGroupRecyclingThreshold() const override { return tile_group_recycling_threshold_; }
+
+  /**
+   * @brief Override the GC TileGroup freeing setting from settings.h
+   * @param[in] free True to set GC to free TileGroups, false otherwise
+   */
+  virtual void SetTileGroupFreeing(const bool &free) override { tile_group_freeing_ = free; }
+
+  /**
+   * @brief The current GC TileGroup freeing setting
+   * @return True if the GC is set to free TileGroups
+   */
+  virtual bool GetTileGroupFreeing() const override {return tile_group_freeing_; }
+
+  /**
+   * @brief Override the GC TileGroup compaction setting from settings.h
+   * @param[in] compact True to set GC to compact TileGroups, false otherwise
+   * @warning Setting to true expects TileGroupFreeing to be set to true first
+   */
+  virtual void SetTileGroupCompaction(const bool &compact) override
+  {
+    tile_group_compaction_ = compact;
+    if (tile_group_compaction_) {
+      PELOTON_ASSERT(tile_group_freeing_);
+    }
+  }
+
+  /**
+   * @brief The current GC TileGroup compaction setting
+   * @return True if the GC is set to compact TileGroups
+   */
+  virtual bool GetTileGroupCompaction() const override {return tile_group_compaction_; }
 
   /**
    * @brief Unlink and reclaim the objects currently in queues

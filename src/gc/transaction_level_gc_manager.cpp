@@ -71,8 +71,9 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
       oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
 
   is_running_ = false;
-  compaction_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::compaction_threshold);
+  tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold);
   tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
+  tile_group_compaction_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction);
 }
 
 TransactionLevelGCManager&
@@ -371,22 +372,26 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto num_recycled = tile_group_header->IncrementRecycled() + 1;
   auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
   bool immutable = tile_group_header->GetImmutability();
-  auto max_recycled = (size_t) (tuples_per_tile_group * GetCompactionThreshold());
+  auto max_recycled = static_cast<size_t>(tuples_per_tile_group * GetTileGroupRecyclingThreshold());
 
-  // check if tile group should be compacted
+  // check if tile group should no longer be recycled from, and potentially compacted
   if (!immutable && num_recycled >= max_recycled &&
-      !table->IsActiveTileGroup(tile_group_id)) {
+      !table->IsActiveTileGroup(tile_group_id) &&
+      GetTileGroupFreeing()) {
 
     LOG_TRACE("Setting tile_group %u to immutable", tile_group_id);
     tile_group_header->SetImmutabilityWithoutNotifyingGC();
     LOG_TRACE("Purging tile_group %u recycled slots", tile_group_id);
     recycle_stack->RemoveAllWithTileGroup(tile_group_id);
 
+    immutable = true;
+
     // create task to compact this tile group
     // add to the worker queue
-    LOG_TRACE("Adding tile_group %u to compaction queue", tile_group_id);
-    AddToCompactionQueue(tile_group_id);
-    immutable = true;
+    if (GetTileGroupCompaction()) {
+      LOG_TRACE("Adding tile_group %u to compaction queue", tile_group_id);
+      AddToCompactionQueue(tile_group_id);
+    }
   }
 
   if (!immutable) {
@@ -403,6 +408,8 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   }
 
   tile_group_header->DecrementGCReaders();
+
+  LOG_TRACE("Recycled tuple slot count for tile_group %u is %zu", tile_group_id, tile_group_header->GetNumRecycled());
 }
 
 void TransactionLevelGCManager::RemoveObjectLevelGarbage(
@@ -451,16 +458,18 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
   auto recycle_stack = GetTableRecycleStack(table_id);
   if (recycle_stack == nullptr) {
     // Table does not have a recycle stack, likely a catalog table
+    LOG_TRACE("No recycle queue for table %u", table_id);
     return INVALID_ITEMPOINTER;
   }
 
   // Try to get a slot that can be recycled
   ItemPointer location = recycle_stack->TryPop();
   if (location.IsNull()) {
+    LOG_TRACE("Failed to reuse tuple slot for table %u", table_id);
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Reuse tuple(%u, %u) in table %u", tile_group_id,
+  LOG_TRACE("Reuse tuple(%u, %u) for table %u", tile_group_id,
             location.offset, table_id);
 
   auto tile_group_id = location.block;

@@ -35,7 +35,7 @@ namespace test {
 class TileGroupCompactorTests : public PelotonTest {};
 
 oid_t test_index_oid = 1234;
-double compaction_threshold = 0.8;
+double recycling_threshold = 0.8;
 
 // Test that GCManager triggers compaction for sparse tile groups
 // And test it doesn't trigger compaction for dense tile groups
@@ -54,8 +54,9 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  gc_manager.SetCompactionThreshold(compaction_threshold);
+  gc_manager.SetTileGroupRecyclingThreshold(recycling_threshold);
   gc_manager.SetTileGroupFreeing(true);
+  gc_manager.SetTileGroupCompaction(true);
 
   // create database
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -141,8 +142,9 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  gc_manager.SetCompactionThreshold(compaction_threshold);
+  gc_manager.SetTileGroupRecyclingThreshold(recycling_threshold);
   gc_manager.SetTileGroupFreeing(true);
+  gc_manager.SetTileGroupCompaction(true);
 
   // create database
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -223,8 +225,9 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  gc_manager.SetCompactionThreshold(compaction_threshold);
+  gc_manager.SetTileGroupRecyclingThreshold(recycling_threshold);
   gc_manager.SetTileGroupFreeing(true);
+  gc_manager.SetTileGroupCompaction(true);
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
@@ -332,8 +335,9 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  gc_manager.SetCompactionThreshold(compaction_threshold);
+  gc_manager.SetTileGroupRecyclingThreshold(recycling_threshold);
   gc_manager.SetTileGroupFreeing(true);
+  gc_manager.SetTileGroupCompaction(true);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
   oid_t db_id = database->GetOid();
@@ -413,8 +417,9 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
-  gc_manager.SetCompactionThreshold(compaction_threshold);
+  gc_manager.SetTileGroupRecyclingThreshold(recycling_threshold);
   gc_manager.SetTileGroupFreeing(true);
+  gc_manager.SetTileGroupCompaction(true);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
   oid_t db_id = database->GetOid();
