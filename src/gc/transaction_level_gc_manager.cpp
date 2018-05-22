@@ -678,7 +678,7 @@ uint32_t TransactionLevelGCManager::ProcessImmutableQueue() {
 
   for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
     // if there are no more tile_groups in the queue, then break.
-    if (immutable_queue_->Dequeue(tile_group_id) == false) {
+    if (!immutable_queue_->Dequeue(tile_group_id)) {
       break;
     }
 
@@ -713,7 +713,7 @@ uint32_t TransactionLevelGCManager::ProcessCompactionQueue() {
 
   for (size_t i = 0; i < MAX_PROCESSED_COUNT; ++i) {
     // if there are no more tile_groups in the queue, then break.
-    if (compaction_queue_->Dequeue(tile_group_id) == false) {
+    if (!compaction_queue_->Dequeue(tile_group_id)) {
       break;
     }
 
