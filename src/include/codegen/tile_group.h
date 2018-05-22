@@ -35,7 +35,10 @@ class ScanCallback;
 class TileGroup {
  public:
   // Constructor
-  TileGroup(const catalog::Schema &schema);
+  explicit TileGroup(const catalog::Schema &schema);
+
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(TileGroup);
 
   // Generate code that performs a sequential scan over the provided tile group
   void GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
@@ -117,7 +120,7 @@ class TileGroup {
       // Load the column at the given index
       codegen::Value LoadColumn(CodeGen &codegen, uint32_t col_idx) const;
 
-      inline llvm::Value *GetTID() const { return tid_; }
+      llvm::Value *GetTID() const { return tid_; }
 
      private:
       // The tile group this row belongs to
@@ -135,7 +138,7 @@ class TileGroup {
     // ACCESSORS
     //===------------------------------------------------------------------===//
 
-    inline const TileGroup &GetTileGroup() const { return tile_group_; }
+    const TileGroup &GetTileGroup() const { return tile_group_; }
 
     const ColumnLayout &GetLayout(uint32_t col_idx) const {
       return layout_[col_idx];

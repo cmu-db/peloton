@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/inserter_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +21,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Inserter, "codegen::Inserter", MEMBER(opaque));
+DEFINE_TYPE(Inserter, "codegen::Inserter", opaque);
 
 DEFINE_METHOD(peloton::codegen, Inserter, Init);
 DEFINE_METHOD(peloton::codegen, Inserter, AllocateTupleStorage);

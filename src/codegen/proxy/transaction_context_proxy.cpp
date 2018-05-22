@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/transaction_context_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(TransactionContext, "peloton::concurrency::TransactionContext", MEMBER(opaque));
+DEFINE_TYPE(TransactionContext, "concurrency::TransactionContext", opaque);
 
 }  // namespace codegen
 }  // namespace peloton

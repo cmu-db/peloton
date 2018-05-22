@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/operator_to_plan_transformer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -75,14 +75,38 @@ void PlanGenerator::Visit(const DummyScan *) {
 }
 
 void PlanGenerator::Visit(const PhysicalSeqScan *op) {
+  // Generate output column IDs for plan
   vector<oid_t> column_ids = GenerateColumnsForScan();
+
+  // Generate the predicate in the scan
   auto predicate = GeneratePredicateForScan(
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
-  output_plan_.reset(new planner::SeqScanPlan(
-      storage::StorageManager::GetInstance()->GetTableWithOid(
-          op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
-      predicate.release(), column_ids));
+
+  // Pull out the raw table from storage
+  auto *data_table = storage::StorageManager::GetInstance()->GetTableWithOid(
+      op->table_->GetDatabaseOid(), op->table_->GetTableOid());
+
+  // Check if we should do a parallel scan
+  bool parallel_exec_enabled = settings::SettingsManager::GetBool(
+      settings::SettingId::parallel_execution);
+
+  bool parallel_scan = parallel_exec_enabled;
+  if (parallel_exec_enabled) {
+    // Parallel scans are enabled. Check if the table meets the minimum number
+    // of tuples to support parallel execution.
+    auto num_tilegroups = data_table->GetTileGroupCount();
+    auto num_tuples = data_table->GetTupleCount();
+    auto min_parallel_table_scan_size =
+        static_cast<uint32_t>(settings::SettingsManager::GetInt(
+            settings::SettingId::min_parallel_table_scan_size));
+    parallel_scan =
+        (num_tilegroups > 1 && num_tuples > min_parallel_table_scan_size);
+  }
+
+  output_plan_.reset(new planner::SeqScanPlan(data_table, predicate.release(),
+                                              column_ids, op->is_for_update,
+                                              parallel_scan));
 }
 
 void PlanGenerator::Visit(const PhysicalIndexScan *op) {
@@ -453,8 +477,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
 void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>>
-        *groupby_cols,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+        groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;

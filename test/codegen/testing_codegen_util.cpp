@@ -252,26 +252,8 @@ void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
   txn_manager.CommitTransaction(txn);
 }
 
-void PelotonCodeGenTest::ExecuteSync(
-    codegen::Query &query,
-    std::unique_ptr<executor::ExecutorContext> executor_context,
-    codegen::QueryResultConsumer &consumer) {
-  std::mutex mu;
-  std::condition_variable cond;
-  bool finished = false;
-  query.Execute(std::move(executor_context), consumer,
-                [&](executor::ExecutionResult) {
-                  std::unique_lock<decltype(mu)> lock(mu);
-                  finished = true;
-                  cond.notify_one();
-                });
-
-  std::unique_lock<decltype(mu)> lock(mu);
-  cond.wait(lock, [&] { return finished; });
-}
-
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
+    planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer) {
   codegen::QueryParameters parameters(plan, {});
 
   // Start a transaction.
@@ -280,14 +262,14 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
   // Compile the query.
   codegen::QueryCompiler::CompileStats stats;
-  auto compiled_query = codegen::QueryCompiler().Compile(
+  auto query = codegen::QueryCompiler().Compile(
       plan, parameters.GetQueryParametersMap(), consumer, &stats);
 
-  // Execute the query.
-  ExecuteSync(*compiled_query,
-              std::unique_ptr<executor::ExecutorContext>(
-                  new executor::ExecutorContext(txn, std::move(parameters))),
-              consumer);
+  // Executor context
+  executor::ExecutorContext exec_ctx{txn, std::move(parameters)};
+
+  // Execute the query
+  query->Execute(exec_ctx, consumer);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
@@ -297,15 +279,14 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
-    codegen::QueryResultConsumer &consumer, bool &cached,
+    codegen::ExecutionConsumer &consumer, bool &cached,
     std::vector<type::Value> params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn,
-                                    codegen::QueryParameters(*plan, params)));
+  executor::ExecutorContext exec_ctx{txn,
+                                     codegen::QueryParameters(*plan, params)};
 
   // Compile
   codegen::QueryCompiler::CompileStats stats;
@@ -314,13 +295,13 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+        *plan, exec_ctx.GetParams().GetQueryParametersMap(), consumer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
   // Execute the query.
-  ExecuteSync(*query, std::move(executor_context), consumer);
+  query->Execute(exec_ctx, consumer);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
@@ -413,6 +394,10 @@ ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
 //===----------------------------------------------------------------------===//
 // PRINTER
 //===----------------------------------------------------------------------===//
+
+void Printer::Prepare(codegen::CompilationContext &ctx) {
+  ExecutionConsumer::Prepare(ctx);
+}
 
 void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
                             codegen::RowBatch::Row &row) const {

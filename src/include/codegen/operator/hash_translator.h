@@ -37,7 +37,7 @@ class HashTranslator : public OperatorTranslator {
                  CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper functions this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -49,19 +49,13 @@ class HashTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work for this translator
-  void TearDownState() override;
-
-  // Get a stringified name for this hash-table based aggregation
-  std::string GetName() const override;
+  void TearDownQueryState() override;
 
  private:
   void CollectHashKeys(RowBatch::Row &row,
                        std::vector<codegen::Value> &key) const;
 
-  // Estimate the size of the constructed hash table
-  uint64_t EstimateHashTableSize() const;
-
-  const planner::HashPlan &GetHashPlan() const { return hash_plan_; }
+  const planner::HashPlan &GetHashPlan() const;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -96,11 +90,8 @@ class HashTranslator : public OperatorTranslator {
     RowBatch::Row &row_;
   };
 
-  // The hash plan
-  const planner::HashPlan &hash_plan_;
-
   // The ID of the hash-table in the runtime state
-  RuntimeState::StateID hash_table_id_;
+  QueryState::Id hash_table_id_;
 
   // The hash table
   OAHashTable hash_table_;

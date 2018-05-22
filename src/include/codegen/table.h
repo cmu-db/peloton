@@ -34,22 +34,26 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Table {
  public:
-  // Constructor
-  Table(storage::DataTable &table);
+  /// Constructor
+  explicit Table(storage::DataTable &table);
 
-  // Generate code to perform a scan over the given table. The table pointer
-  // is provided as the second argument. The scan consumer (third argument)
-  // should be notified when ready to generate the scan loop body.
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(Table);
+
+  /// Generate code to perform a scan over the given table. The table pointer
+  /// is provided as the second argument. The scan consumer (third argument)
+  /// should be notified when ready to generate the scan loop body.
   void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                    uint32_t batch_size, ScanCallback &consumer,
-                    llvm::Value *predicate_array, size_t num_predicates) const;
+                    llvm::Value *tilegroup_start, llvm::Value *tilegroup_end,
+                    uint32_t batch_size, llvm::Value *predicate_array,
+                    size_t num_predicates, ScanCallback &consumer) const;
 
-  // Given a table instance, return the number of tile groups in the table.
+  /// Given a table instance, return the number of tile groups in the table.
   llvm::Value *GetTileGroupCount(CodeGen &codegen,
                                  llvm::Value *table_ptr) const;
 
-  // Retrieve an instance of the provided table's tile group given the tile
-  // group's index.
+  /// Retrieve an instance of the provided table's tile group given the tile
+  /// group's index.
   llvm::Value *GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                             llvm::Value *tile_group_id) const;
 

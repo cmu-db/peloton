@@ -30,5 +30,9 @@ ExpressionTranslator::ExpressionTranslator(
   }
 }
 
+llvm::Value *ExpressionTranslator::GetExecutorContextPtr() const {
+  return context_.GetExecutionConsumer().GetExecutorContextPtr(context_);
+}
+
 }  // namespace codegen
 }  // namespace peloton

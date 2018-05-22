@@ -50,7 +50,7 @@ class InsertTranslator : public OperatorTranslator {
                    CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper function for this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -62,16 +62,16 @@ class InsertTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work
-  void TearDownState() override;
-
-  // Get the name of this trnslator
-  std::string GetName() const override { return "Insert"; }
+  void TearDownQueryState() override;
 
  private:
-  const planner::InsertPlan &insert_plan_;
+  const planner::InsertPlan &GetInsertPlan() const;
 
-  RuntimeState::StateID inserter_state_id_;
+ private:
+  // The ID used to retrieve the Insert instance
+  QueryState::Id inserter_state_id_;
 
+  // Storage access
   codegen::TableStorage table_storage_;
 };
 

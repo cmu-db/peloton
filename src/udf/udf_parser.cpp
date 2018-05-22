@@ -1,4 +1,20 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// udf_parser.cpp
+//
+// Identification: src/backend/udf/udf_parser.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "udf/udf_parser.h"
+
+#include "llvm/ADT/STLExtras.h"
+
+#include "codegen/codegen.h"
 
 namespace peloton {
 namespace udf {

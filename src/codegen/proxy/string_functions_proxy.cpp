@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/string_functions_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@ namespace peloton {
 namespace codegen {
 
 // StrWithLen struct
-DEFINE_TYPE(StrWithLen, "peloton::StrWithLen", MEMBER(str), MEMBER(length));
+DEFINE_TYPE(StrWithLen, "peloton::StrWithLen", str, length);
 
 // String Function
 DEFINE_METHOD(peloton::function, StringFunctions, Ascii);

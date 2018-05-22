@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/operator/order_by_translator.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,12 +25,22 @@ class OrderByPlan;
 
 namespace codegen {
 
+/**
+ * Translator for sorting/order-by operators.
+ */
 class OrderByTranslator : public OperatorTranslator {
  public:
   OrderByTranslator(const planner::OrderByPlan &plan,
                     CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
+  void TearDownQueryState() override;
+
+  // We parallel, son
+  void RegisterPipelineState(PipelineContext &pipeline_ctx) override;
+  void InitializePipelineState(PipelineContext &pipeline_ctx) override;
+  void FinishPipeline(PipelineContext &pipeline_ctx) override;
+  void TearDownPipelineState(PipelineContext &pipeline_ctx) override;
 
   void DefineAuxiliaryFunctions() override;
 
@@ -38,64 +48,23 @@ class OrderByTranslator : public OperatorTranslator {
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
-  void TearDownState() override;
-
-  std::string GetName() const override;
+ private:
+  // Helper class declarations (defined in implementation)
+  class ProduceResults;
+  class SorterAttributeAccess;
 
  private:
-  // Accessor
-  const planner::OrderByPlan &GetPlan() const { return plan_; }
-
-  //===--------------------------------------------------------------------===//
-  // The call back used when iterating over the results in the sorter instance
-  //===--------------------------------------------------------------------===//
-  class ProduceResults : public Sorter::VectorizedIterateCallback {
-   public:
-    ProduceResults(const OrderByTranslator &translator,
-                   Vector &selection_vector);
-    // The callback function providing the current tuple in the sorter instance
-    void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
-                        llvm::Value *end_index,
-                        Sorter::SorterAccess &access) const override;
-
-   private:
-    // The translator
-    const OrderByTranslator &translator_;
-    // The selection vector when producing rows
-    Vector &selection_vector_;
-  };
-
-  //===--------------------------------------------------------------------===//
-  // An attribute accessor from a row in the sorter
-  //===--------------------------------------------------------------------===//
-  class SorterAttributeAccess : public RowBatch::AttributeAccess {
-   public:
-    SorterAttributeAccess(Sorter::SorterAccess &sorter_access,
-                          uint32_t col_index);
-    // Access the configured attributes in the provided row
-    Value Access(CodeGen &codegen, RowBatch::Row &row) override;
-
-   private:
-    // A random access interface to the underlying sorter
-    Sorter::SorterAccess &sorter_access_;
-    // The column index of the column/attribute we want to access
-    uint32_t col_index_;
-  };
-
- private:
-  // The plan
-  const planner::OrderByPlan &plan_;
-
   // The child pipeline
   Pipeline child_pipeline_;
 
   // The ID of our sorter instance in the runtime state
-  RuntimeState::StateID sorter_id_;
+  QueryState::Id sorter_id_;
+  PipelineContext::Id thread_sorter_id_;
 
   // The sorter translator instance
   Sorter sorter_;
 
-  // The comparison function
+  // The (generated) comparison function
   llvm::Function *compare_func_;
 
   struct SortKeyInfo {

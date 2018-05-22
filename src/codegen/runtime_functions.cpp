@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/runtime_functions.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,19 +14,28 @@
 
 #include <nmmintrin.h>
 
+#include "murmur3/MurmurHash3.h"
+
 #include "common/exception.h"
 #include "common/logger.h"
+#include "common/timer.h"
+#include "common/synchronization/count_down_latch.h"
 #include "expression/abstract_expression.h"
-#include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/layout.h"
+#include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
-#include "storage/zone_map_manager.h"
-#include "type/value_factory.h"
+#include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
 namespace codegen {
+
+uint64_t RuntimeFunctions::HashMurmur3(const char *buf, uint64_t length,
+                                       uint64_t seed) {
+  return MurmurHash3_x86_32(buf, static_cast<uint32_t>(length),
+                            static_cast<uint32_t>(seed));
+}
 
 #define CRC32(op, crc, type, buf, len)                   \
   do {                                                   \
@@ -134,6 +143,108 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
   // Ensure that ColumnLayoutInfo for each column has been populated.
   PELOTON_ASSERT((last_col_idx != INVALID_OID) &&
                  (last_col_idx == (num_cols - 1)));
+}
+
+void RuntimeFunctions::ExecuteTableScan(
+    void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
+    uint32_t db_oid, uint32_t table_oid, void *func) {
+  //    void (*scanner)(void *, void *, uint64_t, uint64_t)) {
+  using ScanFunc = void (*)(void *, void *, uint64_t, uint64_t);
+  auto *scanner = reinterpret_cast<ScanFunc>(func);
+
+  // The worker pool
+  auto &worker_pool = threadpool::MonoQueuePool::GetExecutionInstance();
+
+  // Pull out the data table
+  auto *sm = storage::StorageManager::GetInstance();
+  auto *table = sm->GetTableWithOid(db_oid, table_oid);
+  auto num_tilegroups = static_cast<uint32_t>(table->GetTileGroupCount());
+
+  // Determine the number of tasks to generate. In this case, we use:
+  // num_tasks := num_tile_groups / num_workers
+  uint32_t num_tasks = std::min(worker_pool.NumWorkers(), num_tilegroups);
+  uint32_t num_tilegroups_per_task = num_tilegroups / num_tasks;
+
+  // Allocate states for each task
+  thread_states.Allocate(num_tasks);
+
+  // Create count down latch
+  common::synchronization::CountDownLatch latch{num_tasks};
+
+  // Now, submit the tasks
+  for (uint32_t task_id = 0; task_id < num_tasks; task_id++) {
+    bool last_task = (task_id == num_tasks - 1);
+    auto tilegroup_start = task_id * num_tilegroups_per_task;
+    auto tilegroup_stop =
+        last_task ? num_tilegroups : tilegroup_start + num_tilegroups_per_task;
+    auto work = [&query_state, &thread_states, &scanner, &latch, task_id,
+                 tilegroup_start, tilegroup_stop]() {
+      LOG_DEBUG("Task-%u scanning tile groups [%u-%u)", task_id,
+                tilegroup_start, tilegroup_stop);
+
+      // Time this
+      Timer<std::milli> timer;
+      timer.Start();
+
+      // Pull out this task's thread state
+      auto thread_state = thread_states.AccessThreadState(task_id);
+
+      // Invoke scan function
+      scanner(query_state, thread_state, tilegroup_start, tilegroup_stop);
+
+      // Count down latch
+      latch.CountDown();
+
+      // Log stuff
+      timer.Stop();
+      LOG_DEBUG("Task-%u done scanning (%.2lf ms) ...", task_id,
+                timer.GetDuration());
+    };
+    worker_pool.SubmitTask(work);
+  }
+
+  // Wait for everything to finish
+  // TODO(pmenon): Loop await, checking for query error or cancellation
+  latch.Await(0);
+}
+
+void RuntimeFunctions::ExecutePerState(
+    void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
+    void (*work_func)(void *, void *)) {
+  // The worker pool
+  auto &worker_pool = threadpool::MonoQueuePool::GetExecutionInstance();
+
+  // Create count down latch
+  uint32_t num_tasks = thread_states.NumThreads();
+  common::synchronization::CountDownLatch latch{num_tasks};
+
+  // Loop over states
+  for (uint32_t tid = 0; tid < num_tasks; tid++) {
+    worker_pool.SubmitTask(
+        [&query_state, &work_func, &thread_states, &latch, tid]() {
+          LOG_DEBUG("Processing thread state %u ...", tid);
+
+          // Time this
+          Timer<std::milli> timer;
+          timer.Start();
+
+          // Pull out the thread state
+          auto *thread_state = thread_states.AccessThreadState(tid);
+
+          // Invoke work function on this thread state
+          work_func(query_state, thread_state);
+
+          // Count down the latch
+          latch.CountDown();
+
+          timer.Stop();
+          LOG_DEBUG("Finished processing thread state %u (%.2lf ms) ...", tid,
+                    timer.GetDuration());
+        });
+  }
+
+  // Wait for all tasks to complete
+  latch.Await(0);
 }
 
 void RuntimeFunctions::ThrowDivideByZeroException() {

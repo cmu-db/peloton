@@ -22,6 +22,7 @@
 #include "planner/projection_plan.h"
 #include "expression/expression_util.h"
 #include "expression/constant_value_expression.h"
+#include "executor/executor_context.h"
 #include "executor/projection_executor.h"
 #include "executor/logical_tile_factory.h"
 #include "storage/data_table.h"

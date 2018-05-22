@@ -27,6 +27,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "codegen/code_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
