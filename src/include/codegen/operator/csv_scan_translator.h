@@ -36,7 +36,7 @@ class CSVScanTranslator : public OperatorTranslator {
   CSVScanTranslator(const planner::CSVScanPlan &scan,
                     CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   void DefineAuxiliaryFunctions() override;
 
@@ -48,20 +48,14 @@ class CSVScanTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}
 
   // Similar to InitializeState(), file scans don't have any state
-  void TearDownState() override;
-
-  // Get a stringified version of this translator
-  std::string GetName() const override;
+  void TearDownQueryState() override;
 
  private:
-  // The plan
-  const planner::CSVScanPlan &scan_;
-
   // The set of attributes output by the csv scan
   std::vector<const planner::AttributeInfo *> output_attributes_;
 
   // The scanner state ID
-  RuntimeState::StateID scanner_id_;
+  QueryState::Id scanner_id_;
 
   // The generated CSV scan consumer function
   llvm::Function *consumer_func_;

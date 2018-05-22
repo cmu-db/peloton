@@ -195,7 +195,7 @@ llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
     memcmp_fn = RegisterBuiltin(
         kMemcmpFnName,
         llvm::TypeBuilder<decltype(memcmp), false>::get(GetContext()),
-        reinterpret_cast<void *>(printf));
+        reinterpret_cast<void *>(memcmp));
 #if GCC_AT_LEAST_6
 #pragma GCC diagnostic pop
 #endif

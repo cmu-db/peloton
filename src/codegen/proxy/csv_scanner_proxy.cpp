@@ -18,11 +18,10 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(CSVScanner, "util::CSVScanner", MEMBER(opaque1), MEMBER(cols),
-            MEMBER(opaque2));
+DEFINE_TYPE(CSVScanner, "util::CSVScanner", opaque1, cols, opaque2);
 
-DEFINE_TYPE(CSVScannerColumn, "util::CSVScanner::Column", MEMBER(type),
-            MEMBER(ptr), MEMBER(len), MEMBER(is_null));
+DEFINE_TYPE(CSVScannerColumn, "util::CSVScanner::Column", type, ptr, len,
+            is_null);
 
 DEFINE_METHOD(peloton::codegen::util, CSVScanner, Init);
 DEFINE_METHOD(peloton::codegen::util, CSVScanner, Destroy);

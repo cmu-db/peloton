@@ -20,6 +20,7 @@
 #include "codegen/proxy/csv_scanner_proxy.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/sql_type.h"
+#include "codegen/vector.h"
 #include "planner/csv_scan_plan.h"
 
 namespace peloton {
@@ -28,23 +29,25 @@ namespace codegen {
 CSVScanTranslator::CSVScanTranslator(const planner::CSVScanPlan &scan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), scan_(scan) {
+    : OperatorTranslator(scan, context, pipeline) {
   // Register the CSV scanner instance
-  auto &runtime_state = context.GetRuntimeState();
-  scanner_id_ = runtime_state.RegisterState(
+  auto &query_state = context.GetQueryState();
+  scanner_id_ = query_state.RegisterState(
       "csvScanner", CSVScannerProxy::GetType(GetCodeGen()));
 
   // Load information about the attributes output by the scan plan
-  scan_.GetAttributes(output_attributes_);
+  scan.GetAttributes(output_attributes_);
 }
 
-void CSVScanTranslator::InitializeState() {
+void CSVScanTranslator::InitializeQueryState() {
   auto &codegen = GetCodeGen();
+
+  auto &scan = GetPlanAs<planner::CSVScanPlan>();
 
   // Arguments
   llvm::Value *scanner_ptr = LoadStatePtr(scanner_id_);
-  llvm::Value *exec_ctx_ptr = GetCompilationContext().GetExecutorContextPtr();
-  llvm::Value *file_path = codegen.ConstString(scan_.GetFileName(), "filePath");
+  llvm::Value *exec_ctx_ptr = GetExecutorContextPtr();
+  llvm::Value *file_path = codegen.ConstString(scan.GetFileName(), "filePath");
 
   auto num_cols = static_cast<uint32_t>(output_attributes_.size());
 
@@ -71,20 +74,24 @@ void CSVScanTranslator::InitializeState() {
   // Cast the runtime type to an opaque void*. This is because we're calling
   // into pre-compiled C++ that doesn't know that the dynamically generated
   // RuntimeState* looks like.
-  llvm::Value *runtime_state_ptr = codegen->CreatePointerCast(
+  llvm::Value *query_state_ptr = codegen->CreatePointerCast(
       codegen.GetState(), codegen.VoidType()->getPointerTo());
 
   // Call CSVScanner::Init()
   codegen.Call(CSVScannerProxy::Init,
                {scanner_ptr, exec_ctx_ptr, file_path, output_col_types,
-                codegen.Const32(num_cols), consumer_func, runtime_state_ptr,
-                codegen.Const8(scan_.GetDelimiterChar()),
-                codegen.Const8(scan_.GetQuoteChar()),
-                codegen.Const8(scan_.GetEscapeChar())});
+                codegen.Const32(num_cols), consumer_func, query_state_ptr,
+                codegen.Const8(scan.GetDelimiterChar()),
+                codegen.Const8(scan.GetQuoteChar()),
+                codegen.Const8(scan.GetEscapeChar())});
 }
 
 namespace {
 
+/**
+ * This is a deferred column access class configured to load the contents of a
+ * given column.
+ */
 class CSVColumnAccess : public RowBatch::AttributeAccess {
  public:
   CSVColumnAccess(const planner::AttributeInfo *ai, llvm::Value *csv_columns,
@@ -94,6 +101,12 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
         null_str_(std::move(null_str)),
         runtime_null_(runtime_null_str) {}
 
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
   llvm::Value *Columns() const { return csv_columns_; }
 
   uint32_t ColumnIndex() const { return ai_->attribute_id; }
@@ -102,6 +115,25 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
 
   const type::SqlType &SqlType() const { return ai_->type.GetSqlType(); }
 
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Logic
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Check if a column's value is considered NULL. Given a pointer to the
+   * column's string value, and the length of the string, this function will
+   * check if the column's value is determined to be NULL. This is done by
+   * comparing the column's contents with the NULL string configured in the
+   * CSV scan plan (i.e., provided by the user).
+   *
+   * @param codegen The codegen instance
+   * @param data_ptr A pointer to the column's string value
+   * @param data_len The length of the column's string value
+   * @return True if the column is equivalent to the NULL string. False
+   * otherwise.
+   */
   llvm::Value *IsNull(CodeGen &codegen, llvm::Value *data_ptr,
                       llvm::Value *data_len) const {
     uint32_t null_str_len = static_cast<uint32_t>(null_str_.length());
@@ -127,6 +159,16 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
     return check_null.BuildPHI(cmp_res, codegen.ConstBool(false));
   }
 
+  /**
+   * Load the value of the given column with the given type, ignoring a null
+   * check.
+   *
+   * @param codegen The codegen instance
+   * @param type The SQL type of the column
+   * @param data_ptr A pointer to the column's string representation
+   * @param data_len The length of the column's string representation
+   * @return The parsed value
+   */
   Value LoadValueIgnoreNull(CodeGen &codegen, llvm::Value *type,
                             llvm::Value *data_ptr,
                             llvm::Value *data_len) const {
@@ -144,6 +186,15 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
     }
   }
 
+  /**
+   * Access this column in the given row. In reality, this function pulls out
+   * the column information from the CSVScanner state and loads/parses the
+   * column's value.
+   *
+   * @param codegen The codegen instance
+   * @param row The row. This isn't used.
+   * @return The value of the column
+   */
   Value Access(CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) override {
     // Load the type, data pointer and length values for the column
     auto *type = codegen->CreateConstInBoundsGEP2_32(
@@ -178,22 +229,31 @@ class CSVColumnAccess : public RowBatch::AttributeAccess {
   }
 
  private:
+  // Information about the attribute
   const planner::AttributeInfo *ai_;
+
+  // A pointer to the array of columns
   llvm::Value *csv_columns_;
+
+  // The NULL string configured for the CSV scan
   const std::string null_str_;
+
+  // The runtime NULL string (a constant in LLVM)
   llvm::Value *runtime_null_;
 };
 
 }  // namespace
 
+// We define the callback/consumer function for CSV parsing here
 void CSVScanTranslator::DefineAuxiliaryFunctions() {
   CodeGen &codegen = GetCodeGen();
   CompilationContext &cc = GetCompilationContext();
 
+  auto &scan = GetPlanAs<planner::CSVScanPlan>();
+
   // Define consumer function here
   std::vector<FunctionDeclaration::ArgumentInfo> arg_types = {
-      {"runtimeState",
-       cc.GetRuntimeState().FinalizeType(codegen)->getPointerTo()}};
+      {"queryState", cc.GetQueryState().GetType()->getPointerTo()}};
   FunctionDeclaration decl{codegen.GetCodeContext(), "consumer",
                            FunctionDeclaration::Visibility::Internal,
                            codegen.VoidType(), arg_types};
@@ -209,13 +269,13 @@ void CSVScanTranslator::DefineAuxiliaryFunctions() {
     llvm::Value *cols = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
         CSVScannerProxy::GetType(codegen), LoadStatePtr(scanner_id_), 0, 1));
 
-    llvm::Value *null_str = codegen.ConstString(scan_.GetNullString(), "null");
+    llvm::Value *null_str = codegen.ConstString(scan.GetNullString(), "null");
 
     // Add accessors for all columns into the row batch
     std::vector<CSVColumnAccess> column_accessors;
     for (uint32_t i = 0; i < output_attributes_.size(); i++) {
       column_accessors.emplace_back(output_attributes_[i], cols,
-                                    scan_.GetNullString(), null_str);
+                                    scan.GetNullString(), null_str);
     }
     for (uint32_t i = 0; i < output_attributes_.size(); i++) {
       one.AddAttribute(output_attributes_[i], &column_accessors[i]);
@@ -238,16 +298,9 @@ void CSVScanTranslator::Produce() const {
   GetCodeGen().Call(CSVScannerProxy::Produce, {scanner_ptr});
 }
 
-void CSVScanTranslator::TearDownState() {
+void CSVScanTranslator::TearDownQueryState() {
   auto *scanner_ptr = LoadStatePtr(scanner_id_);
   GetCodeGen().Call(CSVScannerProxy::Destroy, {scanner_ptr});
-}
-
-std::string CSVScanTranslator::GetName() const {
-  return StringUtil::Format(
-      "CSVScan(file: '%s', delimiter: '%c', quote: '%c', escape: '%c')",
-      scan_.GetFileName().c_str(), scan_.GetDelimiterChar(),
-      scan_.GetQuoteChar(), scan_.GetEscapeChar());
 }
 
 }  // namespace codegen
