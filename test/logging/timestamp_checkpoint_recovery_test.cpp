@@ -60,9 +60,9 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
-    LOG_INFO("Check the table %d %s\n%s", table_catalog->GetTableOid(),
-             table_name.c_str(), table->GetInfo().c_str());
-    /*
+    LOG_INFO("Check the table %d %s", table_catalog->GetTableOid(),
+             table_name.c_str());
+
     // check the basic information of columns
     if (table_name == "checkpoint_table_test") {
       for (auto &column_pair : table_catalog->GetColumnObjects()) {
@@ -104,7 +104,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
     // end: check the basic information of columns
 
     // check the index recovery
-    else */ if (table_name == "checkpoint_index_test") {
+    else if (table_name == "checkpoint_index_test") {
       for (auto &index_pair : table_catalog->GetIndexObjects()) {
         auto &index_catalog = index_pair.second;
         auto &index_name = index_catalog->GetIndexName();
