@@ -18,11 +18,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/container/cuckoo_map.h"
+#include "common/container/lock_free_queue.h"
 #include "common/init.h"
 #include "common/logger.h"
 #include "common/thread_pool.h"
 #include "common/internal_types.h"
-#include "common/container/lock_free_queue.h"
 #include "concurrency/transaction_context.h"
 #include "gc/gc_manager.h"
 #include "gc/recycle_stack.h"

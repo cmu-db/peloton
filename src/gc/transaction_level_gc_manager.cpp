@@ -191,7 +191,7 @@ void TransactionLevelGCManager::RecycleTransaction(
                           txn->GetEpochId());
 
   if (!txn->IsReadOnly() && \
-      txn->GetResult() != ResultType::SUCCESS && txn->IsGCSetEmpty() != true) {
+      txn->GetResult() != ResultType::SUCCESS && !txn->IsGCSetEmpty()) {
         txn->SetEpochId(epoch_manager.GetNextEpochId());
   }
 
@@ -349,13 +349,6 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   if (recycle_stack == nullptr) {
     return;
   }
-
-  tile_group_header->IncrementGCReaders();
-
-  // TODO: Ensure that immutable checks are compatible with GetRecycledTupleSlot's behavior
-  // Currently, we rely on GetRecycledTupleSlot to ignore immutable slots
-  // TODO: revisit queueing immutable ItemPointers
-  // TODO: revisit dropping immutable tile groups
 
   // If the tuple being reset no longer exists, just skip it
   if (!ResetTuple(location)) {
@@ -597,11 +590,6 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
         index->DeleteEntry(older_key.get(), indirection);
       }
     }
-
-    // this version needs to be reclaimed by the GC.
-    // if the version differs from the previous one in some columns where
-    // secondary indexes are built on, then we need to unlink the previous
-    // version from the secondary index.
   } else if (type == GCVersionType::ABORT_UPDATE) {
     // the gc'd version is a newly created version.
     // if the version differs from the previous one in some columns where
