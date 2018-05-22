@@ -12,6 +12,8 @@
 
 #include "include/gc/recycle_stack.h"
 
+#include "common/logger.h"
+
 namespace peloton {
 
 namespace gc {
@@ -53,12 +55,16 @@ void RecycleStack::Push(const ItemPointer &location) {
 ItemPointer RecycleStack::TryPop() {
   ItemPointer location = INVALID_ITEMPOINTER;
 
+  LOG_TRACE("Trying to pop a recycled slot");
+
   // try to acquire head lock
   if (!head_.lock.test_and_set(std::memory_order_acq_rel)) {
+    LOG_TRACE("Acquired head lock");
     auto node = head_.next;
     if (node != nullptr) {
       // try to acquire first node in list
       if (!node->lock.test_and_set(std::memory_order_acq_rel)) {
+        LOG_TRACE("Acquired first node lock");
         head_.next = node->next;
         location = node->location;
         // no need to release lock on node because no one can be waiting on it
@@ -73,8 +79,10 @@ ItemPointer RecycleStack::TryPop() {
   return location;
 }
 
-size_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
-  size_t remove_count = 0;
+uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
+  uint32_t remove_count = 0;
+
+  LOG_TRACE("Removing all recycled slots for TileGroup %u", tile_group_id);
 
   // acquire head lock
   while (head_.lock.test_and_set(std::memory_order_acq_rel));
@@ -108,6 +116,8 @@ size_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
 
   // prev was set to curr, which needs to be freed
   prev->lock.clear(std::memory_order_acq_rel);
+
+  LOG_TRACE("Removed %u recycled slots for TileGroup %u", remove_count, tile_group_id);
 
   return remove_count;
 }

@@ -228,28 +228,44 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
-  /*
-  * The following method use Compare and Swap to set the tilegroup's
-  * immutable flag to be true. GC must be notified in order to stop recycling
-  * slots from it
-  */
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be true
+   *
+   * Notifies the GC that TileGroup is now immutable to no longer
+   * hand out recycled slots. This is not guaranteed to be instantaneous
+   * so recycled slots may still be handed out immediately after
+   * immutability is set.
+   *
+   * @return Result of CAS
+   */
   bool SetImmutability();
 
-  /*
-  * Set's Immutable Flag to True. Only used by the Garbage Collector
-  * since it doesn't need to notify itself
-  */
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be true
+   *
+   * Does not notify the GC. Should only be used by GC when it
+   * initiates a TileGroup's immutability
+   *
+   * @return Result of CAS
+ */
   inline bool SetImmutabilityWithoutNotifyingGC() {
     bool expected = false;
     return immutable_.compare_exchange_strong(expected, true);
   }
   
-  /*
-  * The following method use Compare and Swap to set the tilegroup's
-  * immutable flag to be false. This should only be used for testing purposes
-  * because it violates a constraint of Zone Maps and the Garbage Collector
-  * that a TileGroup's immutability will never change after being set to true
-  */
+  
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be false
+   * 
+   * @warning This should only be used for testing purposes because it violates
+   * a constraint of Zone Maps and the Garbage Collector that a TileGroup's
+   * immutability will never change after being set to true
+   * 
+   * @return Result of CAS
+   */
   inline bool ResetImmutability() {
     bool expected = true;
     return immutable_.compare_exchange_strong(expected, false);

@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "common/logger.h"
 #include "common/item_pointer.h"
 
 namespace peloton {
@@ -80,7 +79,7 @@ class RecycleStack {
    * @return Number of elements removed from the stack. Useful for
    * debugging
    */
-  size_t RemoveAllWithTileGroup(const oid_t &tile_group_id);
+  uint32_t RemoveAllWithTileGroup(const oid_t &tile_group_id);
 
  private:
 

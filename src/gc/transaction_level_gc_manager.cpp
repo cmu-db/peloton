@@ -469,7 +469,7 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Reuse tuple(%u, %u) for table %u", tile_group_id,
+  LOG_TRACE("Reuse tuple(%u, %u) for table %u", location.block,
             location.offset, table_id);
 
   auto tile_group_id = location.block;
