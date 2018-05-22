@@ -6,7 +6,7 @@
 //
 // Identification: src/include/storage/data_table.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,8 @@
 #include "common/container/lock_free_array.h"
 #include "common/item_pointer.h"
 #include "common/platform.h"
+#include "common/container/lock_free_array.h"
+#include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
 #include "storage/layout.h"
@@ -42,6 +44,10 @@ namespace catalog {
 class ForeignKey;
 class Catalog;
 }  // namespace catalog
+
+namespace executor {
+class ExecutorContext;
+}  // namespace executor
 
 namespace index {
 class Index;

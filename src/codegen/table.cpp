@@ -68,9 +68,10 @@ llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
 //
 // @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                         uint32_t batch_size, ScanCallback &consumer,
-                         llvm::Value *predicate_ptr,
-                         size_t num_predicates) const {
+                         llvm::Value *tilegroup_start,
+                         llvm::Value *tilegroup_end, uint32_t batch_size,
+                         llvm::Value *predicate_ptr, size_t num_predicates,
+                         ScanCallback &consumer) const {
   // Allocate some space for the column layouts
   const auto num_columns =
       static_cast<uint32_t>(table_.GetSchema()->GetColumnCount());
@@ -88,8 +89,11 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   }
 
   // Get the number of tile groups in the given table
-  llvm::Value *tile_group_idx = codegen.Const64(0);
-  llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
+  llvm::Value *tile_group_idx =
+      (tilegroup_start != nullptr ? tilegroup_start : codegen.Const64(0));
+  llvm::Value *num_tile_groups =
+      (tilegroup_end != nullptr ? tilegroup_end
+                                : GetTileGroupCount(codegen, table_ptr));
 
   lang::Loop loop{codegen,
                   codegen->CreateICmpULT(tile_group_idx, num_tile_groups),

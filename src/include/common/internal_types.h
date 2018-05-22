@@ -24,12 +24,12 @@
 #include <unordered_set>
 #include <vector>
 
+#include "tbb/concurrent_unordered_map.h"
 #include "tbb/concurrent_unordered_set.h"
 #include "tbb/concurrent_vector.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "container/cuckoo_map.h"
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
 
@@ -422,7 +422,6 @@ enum class IsolationLevelType {
   SNAPSHOT = 2,          // snapshot isolation
   REPEATABLE_READS = 3,  // repeatable reads
   READ_COMMITTED = 4,    // read committed
-  READ_ONLY = 5          // read only
 };
 std::string IsolationLevelTypeToString(IsolationLevelType type);
 IsolationLevelType StringToIsolationLevelType(const std::string &str);
@@ -1215,7 +1214,8 @@ RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 // ItemPointer -> type
-typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
+typedef tbb::concurrent_unordered_map<ItemPointer, RWType, ItemPointerHasher,
+                                      ItemPointerComparator>
     ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,

@@ -59,7 +59,7 @@ llvm::Function *ConstructFunction(
   return func_decl;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 //===----------------------------------------------------------------------===//
 //
@@ -131,11 +131,12 @@ FunctionBuilder::FunctionBuilder(
           cc,
           ConstructFunction(cc, name, FunctionDeclaration::Visibility::External,
                             ret_type, args)) {}
-
-// When we destructing the FunctionBuilder, we just do a sanity check to ensure
-// that the user actually finished constructing the function. This is because we
-// do cleanup in Finish().
-FunctionBuilder::~FunctionBuilder() { PELOTON_ASSERT(finished_); }
+                            
+FunctionBuilder::~FunctionBuilder() {
+  if (!finished_) {
+    throw Exception{"Missing call to FunctionBuilder::ReturnAndFinish()"};
+  }
+}
 
 // Here, we just need to iterate over the arguments in the function to find a
 // match. The names of the arguments were provided and set at construction time.
@@ -227,10 +228,13 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
     return;
   }
 
+  CodeGen codegen{code_context_};
+
   if (ret != nullptr) {
-    code_context_.GetBuilder().CreateRet(ret);
+    codegen->CreateRet(ret);
   } else {
-    code_context_.GetBuilder().CreateRetVoid();
+    PELOTON_ASSERT(func_->getReturnType()->isVoidTy());
+    codegen->CreateRetVoid();
   }
 
   // Add the overflow error block if it exists
@@ -246,12 +250,32 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
   // Restore previous function construction state in the code context
   if (previous_insert_point_ != nullptr) {
     PELOTON_ASSERT(previous_function_ != nullptr);
-    code_context_.GetBuilder().SetInsertPoint(previous_insert_point_);
+    codegen->SetInsertPoint(previous_insert_point_);
     code_context_.SetCurrentFunction(previous_function_);
   }
 
   // Now we're done
   finished_ = true;
+}
+
+llvm::Value *FunctionBuilder::GetOrCacheVariable(
+    const std::string &name, const std::function<llvm::Value *()> &func) {
+  auto iter = cached_vars_.find(name);
+  if (iter != cached_vars_.end()) {
+    return iter->second;
+  } else {
+    CodeGen codegen{code_context_};
+    auto pos = codegen->GetInsertPoint();
+    if (entry_bb_->empty()) {
+      codegen->SetInsertPoint(entry_bb_);
+    } else {
+      codegen->SetInsertPoint(&entry_bb_->back());
+    }
+    auto *val = func();
+    codegen->SetInsertPoint(&*pos);
+    cached_vars_.emplace(name, val);
+    return val;
+  }
 }
 
 }  // namespace codegen

@@ -27,6 +27,10 @@ class IndexCatalogObject;
 class SystemCatalogs;
 }  // namespace catalog
 
+namespace codegen {
+class CodeContext;
+}  // namespace codegen
+
 namespace concurrency {
 class TransactionContext;
 }  // namespace concurrency

@@ -178,7 +178,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
+  if (current_txn->IsReadOnly()) {
     // do not update read set for read-only transactions.
     return true;
   }  // end READ ONLY
@@ -437,8 +437,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 void TimestampOrderingTransactionManager::PerformInsert(
     TransactionContext *const current_txn, const ItemPointer &location,
     ItemPointer *index_entry_ptr) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -477,8 +476,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   ItemPointer old_location = location;
 
@@ -562,8 +560,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn UNUSED_ATTRIBUTE,
     const ItemPointer &location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   UNUSED_ATTRIBUTE oid_t tuple_id = location.offset;
@@ -596,8 +593,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location,
     const ItemPointer &new_location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   ItemPointer old_location = location;
 
@@ -684,8 +680,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -725,7 +720,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
+  if (current_txn->IsReadOnly()) {
     EndTransaction(current_txn);
     return ResultType::SUCCESS;
   }
@@ -760,7 +755,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   oid_t database_id = 0;
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    for (const auto &tuple_entry : rw_set.GetConstIterator()) {
+    for (const auto &tuple_entry : rw_set) {
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
@@ -779,7 +774,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   // TODO (Pooja): This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
-  for (const auto &tuple_entry : rw_set.GetConstIterator()) {
+  for (const auto &tuple_entry : rw_set) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
@@ -914,8 +909,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn) {
   // a pre-declared read-only transaction will never abort.
-  PELOTON_ASSERT(current_txn->GetIsolationLevel() !=
-                 IsolationLevelType::READ_ONLY);
+  PELOTON_ASSERT(!current_txn->IsReadOnly());
 
   LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
@@ -939,7 +933,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   oid_t database_id = 0;
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    for (const auto &tuple_entry : rw_set.GetConstIterator()) {
+    for (const auto &tuple_entry : rw_set) {
       // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       const auto tile_group_id = tuple_entry.first.block;
@@ -953,7 +947,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   // Iterate through each item pointer in the read write set
   // TODO (Pooja): This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
-  for (const auto &tuple_entry : rw_set.GetConstIterator()) {
+  for (const auto &tuple_entry : rw_set) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;

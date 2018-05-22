@@ -49,8 +49,15 @@ bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value) {
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
+void CUCKOO_MAP_TYPE::Upsert(const KeyType &key, ValueType value) {
+  auto update_fn = [](UNUSED_ATTRIBUTE ValueType &value) { return; };
+  cuckoo_map.upsert(key, update_fn, value);
+}
+
+CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value) {
   auto status = cuckoo_map.update(key, value);
+  LOG_TRACE("update status : %d", status);
   return status;
 }
 
@@ -58,7 +65,6 @@ CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Erase(const KeyType &key) {
   auto status = cuckoo_map.erase(key);
   LOG_TRACE("erase status : %d", status);
-
   return status;
 }
 
@@ -102,6 +108,7 @@ CUCKOO_MAP_TYPE::GetConstIterator() const {
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;
 
+// Used in Catalog::Manager
 template class CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>;
 
 // Used in Shared Pointer test and iterator test
@@ -117,9 +124,5 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
-
-// Used in InternalTypes
-template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
-                         ItemPointerComparator>;
 
 }  // namespace peloton

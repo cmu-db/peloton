@@ -77,6 +77,13 @@ class StringUtil {
   static std::vector<std::string> Split(const std::string &str, char delimiter);
 
   /**
+   * Join multiple strings into one string. Components are concatenated by the
+   * given separator
+   */
+  static std::string Join(const std::vector<std::string> &input,
+                          const std::string &separator);
+
+  /**
    * Append the prefix to the beginning of each line in str
    */
   static std::string Prefix(const std::string &str, const std::string &prefix);

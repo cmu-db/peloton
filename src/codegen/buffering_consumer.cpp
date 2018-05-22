@@ -57,25 +57,32 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
-  state.output = &tuples_;
 }
 
-// Append the array of values (i.e., a tuple) into the consumer's buffer of
-// output tuples.
-void BufferingConsumer::BufferTuple(char *state, char *tuple,
+// Append the array of row attributes to the buffer of tuples
+//
+// Note: buffering consumers rely on an ugly mutex to protect access to the
+//       output buffer. This is ugly AF. We don't actually use it for primary
+//       query processing, so it's okay.
+void BufferingConsumer::BufferTuple(char *opaque_state, char *tuple,
                                     uint32_t num_cols) {
-  BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(
-      reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
+  auto *buffer = reinterpret_cast<Buffer *>(opaque_state);
+  std::lock_guard<std::mutex> lock{buffer->mutex};
+  buffer->output.emplace_back(reinterpret_cast<peloton::type::Value *>(tuple),
+                              num_cols);
 }
 
 // Create two pieces of state: a pointer to the output tuple vector and an
 // on-stack value array representing a single tuple.
-void BufferingConsumer::Prepare(CompilationContext &ctx) {
-  auto &codegen = ctx.GetCodeGen();
-  auto &runtime_state = ctx.GetRuntimeState();
+void BufferingConsumer::Prepare(CompilationContext &compilation_ctx) {
+  // Be sure to call our parent
+  ExecutionConsumer::Prepare(compilation_ctx);
+
+  // Install a little char* for the state we need
+  CodeGen &codegen = compilation_ctx.GetCodeGen();
+  QueryState &query_state = compilation_ctx.GetQueryState();
   consumer_state_id_ =
-      runtime_state.RegisterState("consumerState", codegen.CharPtrType());
+      query_state.RegisterState("consumerState", codegen.CharPtrType());
 }
 
 // For each output attribute, we write out the attribute's value into the
@@ -83,14 +90,15 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 // call BufferTuple(...) to append the currently active tuple into the output.
 void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                       RowBatch::Row &row) const {
-  auto &codegen = ctx.GetCodeGen();
-  auto *tuple_buffer_ = codegen.AllocateBuffer(
-      ValueProxy::GetType(codegen), static_cast<uint32_t>(output_ais_.size()),
-      "output");
+  CodeGen &codegen = ctx.GetCodeGen();
+
+  auto num_cols = static_cast<uint32_t>(output_ais_.size());
+  auto *tuple_buffer_ =
+      codegen.AllocateBuffer(ValueProxy::GetType(codegen), num_cols, "output");
   tuple_buffer_ =
       codegen->CreatePointerCast(tuple_buffer_, codegen.CharPtrType());
 
-  for (size_t i = 0; i < output_ais_.size(); i++) {
+  for (uint32_t i = 0; i < num_cols; i++) {
     // Derive the column's final value
     Value val = row.DeriveValue(codegen, output_ais_[i]);
 
@@ -99,7 +107,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
 
     // Check if it's NULL
     Value null_val;
-    lang::If val_is_null{codegen, val.IsNull(codegen)};
+    lang::If val_is_null(codegen, val.IsNull(codegen));
     {
       // If the value is NULL (i.e., has the NULL bit set), produce the NULL
       // value for the given type.
@@ -132,11 +140,22 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     codegen.CallFunc(output_func, args);
   }
 
+  auto &query_state = ctx.GetQueryState();
+  llvm::Value *buffer_ptr =
+      query_state.LoadStateValue(codegen, consumer_state_id_);
+
   // Append the tuple to the output buffer (by calling BufferTuple(...))
-  auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
-  std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
+  std::vector<llvm::Value *> args = {buffer_ptr, tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
   codegen.Call(BufferingConsumerProxy::BufferTuple, args);
+}
+
+char *BufferingConsumer::GetConsumerState() {
+  return reinterpret_cast<char *>(&buffer_);
+}
+
+const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() const {
+  return buffer_.output;
 }
 
 }  // namespace codegen

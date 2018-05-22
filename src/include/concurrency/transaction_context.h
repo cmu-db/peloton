@@ -24,8 +24,6 @@
 #include "common/printable.h"
 #include "common/internal_types.h"
 
-#define INTITIAL_RW_SET_SIZE 64
-
 namespace peloton {
 
 namespace trigger {
@@ -51,10 +49,6 @@ class TransactionContext : public Printable {
 
   TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id, const cid_t &commit_id);
- 
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id, 
-              const size_t read_write_set_size);
 
   /**
    * @brief      Destroys the object.
@@ -201,7 +195,7 @@ class TransactionContext : public Printable {
    * @return     True if in rw set, False otherwise.
    */
   bool IsInRWSet(const ItemPointer &location) {
-    return rw_set_.Contains(location);
+    return (rw_set_.find(location) != rw_set_.end());
   }
 
   /**
@@ -268,8 +262,16 @@ class TransactionContext : public Printable {
    *
    * @return     True if read only, False otherwise.
    */
-  inline bool IsReadOnly() const {
-    return is_written_ == false && insert_count_ == 0;
+  bool IsReadOnly() const {
+    return read_only_;
+  }
+
+  /**
+   * @brief      mark this context as read only
+   *
+   */
+  void SetReadOnly() {
+    read_only_ = true;
   }
 
   /**
@@ -341,6 +343,9 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  /** one default transaction is NOT 'read only' unless it is marked 'read only' explicitly*/
+  bool read_only_ = false;
 };
 
 }  // namespace concurrency

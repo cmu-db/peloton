@@ -246,18 +246,6 @@ int SeqScanPlan::SerializeSize() const {
   return size;
 }
 
-oid_t SeqScanPlan::GetColumnID(std::string col_name) {
-  auto &columns = GetTable()->GetSchema()->GetColumns();
-  oid_t index = -1;
-  for (oid_t i = 0; i < columns.size(); ++i) {
-    if (columns[i].GetName() == col_name) {
-      index = i;
-      break;
-    }
-  }
-  return index;
-}
-
 void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
 

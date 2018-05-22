@@ -16,9 +16,12 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
 #include "codegen/lang/vectorized_loop.h"
+#include "codegen/vector.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "planner/attribute_info.h"
 
 namespace peloton {
 namespace codegen {

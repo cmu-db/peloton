@@ -23,6 +23,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/delete_executor.h"
+#include "executor/executor_context.h"
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
