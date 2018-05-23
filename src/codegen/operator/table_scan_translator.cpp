@@ -216,7 +216,7 @@ void TableScanTranslator::ProduceParallel() const {
                                                   codegen.Int64Type()};
 
   // Parallel production
-  auto producer = [this, &codegen, &table](
+  auto producer = [this, &codegen](
       ConsumerContext &ctx, const std::vector<llvm::Value *> params) {
     PELOTON_ASSERT(params.size() == 2);
     llvm::Value *tilegroup_start = params[0];

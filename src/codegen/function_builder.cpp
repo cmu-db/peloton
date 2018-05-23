@@ -134,7 +134,7 @@ FunctionBuilder::FunctionBuilder(
                             
 FunctionBuilder::~FunctionBuilder() {
   if (!finished_) {
-    throw Exception{"Missing call to FunctionBuilder::ReturnAndFinish()"};
+    PELOTON_ASSERT(false); // Missing call to FunctionBuilder::ReturnAndFinish()
   }
 }
 
