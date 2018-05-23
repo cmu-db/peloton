@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/storage/storage_manager.h"
+#include "storage/storage_manager.h"
 #include "executor/hybrid_scan_executor.h"
 #include "common/container_tuple.h"
 #include "common/internal_types.h"

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cinttypes>
-#include "include/storage/storage_manager.h"
+#include "storage/storage_manager.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 

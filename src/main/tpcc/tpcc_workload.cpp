@@ -23,7 +23,7 @@
 #include <random>
 #include <cstddef>
 #include <limits>
-#include "include/storage/storage_manager.h"
+#include "storage/storage_manager.h"
 
 #include "benchmark/benchmark_common.h"
 #include "benchmark/tpcc/tpcc_workload.h"
