@@ -25,8 +25,6 @@ StorageManager::StorageManager() = default;
 
 StorageManager::~StorageManager() = default;
 
-std::shared_ptr<storage::TileGroup> StorageManager::empty_tile_group_;
-
 // Get instance of the global catalog storage manager
 StorageManager *StorageManager::GetInstance() {
   static StorageManager global_catalog_storage_manager;
