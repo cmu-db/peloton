@@ -170,9 +170,10 @@ void TimestampOrderingTransactionManager::YieldOwnership(
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
 
-bool TimestampOrderingTransactionManager::PerformRead(
-    TransactionContext *const current_txn, const ItemPointer &read_location,
-    bool acquire_ownership) {
+bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const current_txn,
+                                                      const ItemPointer &read_location,
+                                                      storage::TileGroupHeader *tile_group_header,
+                                                      bool acquire_ownership) {
   ItemPointer location = read_location;
 
   //////////////////////////////////////////////////////////
@@ -189,12 +190,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
   // TODO: what if we want to read a version that we write?
   else if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
-    oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
     // Check if it's select for update before we check the ownership
     // and modify the last reader cid
@@ -202,10 +200,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // get the latest version of this tuple.
       location = *(tile_group_header->GetIndirection(location.offset));
 
-      tile_group_id = location.block;
       tuple_id = location.offset;
-
-      tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
         // Acquire ownership if we haven't
@@ -240,12 +235,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //////////////////////////////////////////////////////////
   else if (current_txn->GetIsolationLevel() ==
            IsolationLevelType::READ_COMMITTED) {
-    oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
     // Check if it's select for update before we check the ownership.
     if (acquire_ownership == true) {
@@ -301,13 +293,9 @@ bool TimestampOrderingTransactionManager::PerformRead(
                    current_txn->GetIsolationLevel() ==
                        IsolationLevelType::REPEATABLE_READS);
 
-    oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
     LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-
     // Check if it's select for update before we check the ownership
     // and modify the last reader cid.
     if (acquire_ownership == true) {

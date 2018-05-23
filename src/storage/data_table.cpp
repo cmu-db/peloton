@@ -661,7 +661,10 @@ bool DataTable::CheckForeignKeySrcAndCascade(
                 // we can
                 // delete it later
                 bool ret =
-                    transaction_manager.PerformRead(current_txn, *ptr, true);
+                    transaction_manager.PerformRead(current_txn,
+                                                    *ptr,
+                                                    src_tile_group_header,
+                                                    true);
 
                 if (ret == false) {
                   if (src_is_owner) {
