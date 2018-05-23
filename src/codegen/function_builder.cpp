@@ -137,7 +137,6 @@ FunctionBuilder::~FunctionBuilder() {
     LOG_ERROR(
         "Missing call to FunctionBuilder::ReturnAndFinish() for function '%s'",
         func_->getName().data());
-    PELOTON_ASSERT(false);
   }
 }
 
