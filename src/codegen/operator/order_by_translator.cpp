@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/order_by_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,33 +16,126 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/vector.h"
 #include "common/logger.h"
 #include "planner/order_by_plan.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// ORDER BY TRANSLATOR
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Sorter Attribute Access
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This class is used as a deferred accessor for an attribute from the sorter..
+ */
+class OrderByTranslator::SorterAttributeAccess
+    : public RowBatch::AttributeAccess {
+ public:
+  SorterAttributeAccess(Sorter::SorterAccess &sorter_access,
+                        uint32_t col_index);
+  // Access the configured attributes in the provided row
+  Value Access(CodeGen &codegen, RowBatch::Row &row) override;
+
+ private:
+  // A random access interface to the underlying sorter
+  Sorter::SorterAccess &sorter_access_;
+  // The column index of the column/attribute we want to access
+  uint32_t col_index_;
+};
+
+/// Constructor
+OrderByTranslator::SorterAttributeAccess::SorterAttributeAccess(
+    Sorter::SorterAccess &sorter_access, uint32_t col_index)
+    : sorter_access_(sorter_access), col_index_(col_index) {}
+
+/// Access
+Value OrderByTranslator::SorterAttributeAccess::Access(CodeGen &codegen,
+                                                       RowBatch::Row &row) {
+  auto &sorted_row = sorter_access_.GetRow(row.GetTID(codegen));
+  return sorted_row.LoadColumn(codegen, col_index_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Produce Results
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This is the callback used when we're iterating over the sorted results.
+ */
+class OrderByTranslator::ProduceResults
+    : public Sorter::VectorizedIterateCallback {
+ public:
+  ProduceResults(ConsumerContext &ctx, const planner::OrderByPlan &plan,
+                 Vector &position_list);
+  // The callback function providing the current tuple in the sorter instance
+  void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
+                      llvm::Value *end_index,
+                      Sorter::SorterAccess &access) const override;
+
+ private:
+  // The translator
+  ConsumerContext &ctx_;
+  // The plan node
+  const planner::OrderByPlan &plan_;
+  // The selection vector when producing rows
+  Vector &position_list_;
+};
+
+/// Constructor
+OrderByTranslator::ProduceResults::ProduceResults(
+    ConsumerContext &ctx, const planner::OrderByPlan &plan,
+    Vector &position_list)
+    : ctx_(ctx), plan_(plan), position_list_(position_list) {}
+
+/// Callback to process a batch of rows from the sorter
+void OrderByTranslator::ProduceResults::ProcessEntries(
+    CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
+    Sorter::SorterAccess &access) const {
+  // Construct the row batch we're producing
+  auto &comp_ctx = ctx_.GetCompilationContext();
+  RowBatch batch(comp_ctx, start_index, end_index, position_list_, false);
+
+  // Add the attribute accessors for rows in this batch
+  std::vector<SorterAttributeAccess> accessors;
+  auto &output_ais = plan_.GetOutputColumnAIs();
+  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
+    accessors.emplace_back(access, col_id);
+  }
+  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
+    batch.AddAttribute(output_ais[col_id], &accessors[col_id]);
+  }
+
+  ctx_.Consume(batch);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Order By Translator
+///
+////////////////////////////////////////////////////////////////////////////////
 
 OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      plan_(plan),
-      child_pipeline_(this) {
-  LOG_DEBUG("Constructing OrderByTranslator ...");
+    : OperatorTranslator(plan, context, pipeline),
+      child_pipeline_(this, Pipeline::Parallelism::Serial) {
+  // Aggregations happen serially (for now ...)
+  pipeline.SetSerial();
 
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Register the sorter instance
-  auto &runtime_state = context.GetRuntimeState();
-  sorter_id_ =
-      runtime_state.RegisterState("sort", SorterProxy::GetType(codegen));
+  QueryState &query_state = context.GetQueryState();
+  sorter_id_ = query_state.RegisterState("sort", SorterProxy::GetType(codegen));
 
   // When sorting, we need to materialize both the output columns and the sort
   // columns. These sets may overlap. To avoid duplicating storage, we track
@@ -55,8 +148,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   std::unordered_map<oid_t, uint32_t> col_id_map;
 
   // Every output column **must** be materialized. Add them all here.
-  const auto &output_ais = plan_.GetOutputColumnAIs();
-  const auto &output_col_ids = plan_.GetOutputColumnIds();
+  const auto &output_ais = plan.GetOutputColumnAIs();
+  const auto &output_col_ids = plan.GetOutputColumnIds();
   for (uint32_t i = 0; i < output_ais.size(); i++) {
     const auto *ai = output_ais[i];
     LOG_DEBUG("Adding output column %p (%s) to format @ %u", ai,
@@ -66,8 +159,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   }
 
   // Now consider the sort columns
-  const auto &sort_col_ais = plan_.GetSortKeyAIs();
-  const auto &sort_col_ids = plan_.GetSortKeys();
+  const auto &sort_col_ais = plan.GetSortKeyAIs();
+  const auto &sort_col_ids = plan.GetSortKeys();
   PELOTON_ASSERT(!sort_col_ids.empty());
 
   for (uint32_t i = 0; i < sort_col_ais.size(); i++) {
@@ -98,13 +191,16 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 
   // Create the sorter
   sorter_ = Sorter{codegen, tuple_desc};
-
-  LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }
 
-// Initialize the sorter instance
-void OrderByTranslator::InitializeState() {
-  sorter_.Init(GetCodeGen(), LoadStatePtr(sorter_id_), compare_func_);
+void OrderByTranslator::InitializeQueryState() {
+  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+  auto *exec_ctx_ptr = GetExecutorContextPtr();
+  sorter_.Init(GetCodeGen(), sorter_ptr, exec_ctx_ptr, compare_func_);
+}
+
+void OrderByTranslator::TearDownQueryState() {
+  sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 
 //===----------------------------------------------------------------------===//
@@ -133,49 +229,42 @@ void OrderByTranslator::InitializeState() {
 // or descending order and worry about types etc.
 //===----------------------------------------------------------------------===//
 void OrderByTranslator::DefineAuxiliaryFunctions() {
-  LOG_DEBUG("Constructing 'compare' function for sort ...");
-  auto &codegen = GetCodeGen();
-  auto &storage_format = sorter_.GetStorageFormat();
+  CodeGen &codegen = GetCodeGen();
+  const auto &plan = GetPlanAs<planner::OrderByPlan>();
 
-  const auto &sort_keys = plan_.GetSortKeys();
-  const auto &descend_flags = plan_.GetDescendFlags();
+  const auto &storage_format = sorter_.GetStorageFormat();
+
+  const auto &sort_keys = plan.GetSortKeys();
+  const auto &descend_flags = plan.GetDescendFlags();
 
   // The comparison function builder
   auto *ret_type = codegen.Int32Type();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"leftTuple", codegen.CharPtrType()},
       {"rightTuple", codegen.CharPtrType()}};
-  FunctionBuilder compare{codegen.GetCodeContext(), "compare", ret_type, args};
+  FunctionBuilder compare(codegen.GetCodeContext(), "compare", ret_type, args);
   {
     llvm::Value *left_tuple = compare.GetArgumentByPosition(0);
     llvm::Value *right_tuple = compare.GetArgumentByPosition(1);
 
-    UpdateableStorage::NullBitmap left_null_bitmap{codegen, storage_format,
-                                                   left_tuple};
-    UpdateableStorage::NullBitmap right_null_bitmap{codegen, storage_format,
-                                                    right_tuple};
+    UpdateableStorage::NullBitmap left_null_bitmap(codegen, storage_format,
+                                                   left_tuple);
+    UpdateableStorage::NullBitmap right_null_bitmap(codegen, storage_format,
+                                                    right_tuple);
 
     // The result of the overall comparison
     codegen::Value result;
-    codegen::Value zero{type::Integer::Instance(), codegen.Const32(0)};
+    codegen::Value zero(type::Integer::Instance(), codegen.Const32(0));
 
     for (size_t idx = 0; idx < sort_keys.size(); idx++) {
       auto &sort_key_info = sort_key_info_[idx];
       uint32_t slot = sort_key_info.tuple_slot;
 
-      codegen::Value left, right;
-
       // Read values from storage
-      if (!left_null_bitmap.IsNullable(slot)) {
-        PELOTON_ASSERT(!right_null_bitmap.IsNullable(slot));
-        left = storage_format.GetValueSkipNull(codegen, left_tuple, slot);
-        right = storage_format.GetValueSkipNull(codegen, right_tuple, slot);
-      } else {
-        left = storage_format.GetValue(codegen, left_tuple, slot,
-                                       left_null_bitmap);
-        right = storage_format.GetValue(codegen, right_tuple, slot,
-                                        right_null_bitmap);
-      }
+      codegen::Value left =
+          storage_format.GetValue(codegen, left_tuple, slot, left_null_bitmap);
+      codegen::Value right = storage_format.GetValue(codegen, right_tuple, slot,
+                                                     right_null_bitmap);
 
       // Perform comparison
       codegen::Value cmp;
@@ -192,10 +281,10 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
         // running value to the result of the last comparison. Otherwise, carry
         // forward the comparison result of the previous attributes
         auto prev_zero = result.CompareEq(codegen, zero);
-        result = codegen::Value{
+        result = codegen::Value(
             type::Integer::Instance(),
             codegen->CreateSelect(prev_zero.GetValue(), cmp.GetValue(),
-                                  result.GetValue())};
+                                  result.GetValue()));
       }
     }
 
@@ -207,40 +296,35 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
 }
 
 void OrderByTranslator::Produce() const {
-  LOG_DEBUG("OrderBy requesting child to produce tuples ...");
-
   // Let the child produce the tuples we materialize into a buffer
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
+  auto producer = [this](ConsumerContext &ctx) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
-  auto &codegen = GetCodeGen();
-  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+    // Now iterate over the sorted list
+    auto *i32_type = codegen.Int32Type();
+    auto vec_size = Vector::kDefaultVectorSize.load();
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obPosList");
+    Vector position_list(raw_vec, vec_size, i32_type);
 
-  // The tuples have been materialized into the buffer space, NOW SORT!!!
-  sorter_.Sort(codegen, sorter_ptr);
+    const auto &plan = GetPlanAs<planner::OrderByPlan>();
+    ProduceResults callback(ctx, plan, position_list);
+    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, callback);
+  };
 
-  LOG_DEBUG("OrderBy sort complete, iterating over results ...");
-
-  // Now iterate over the sorted list
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
-  Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
-                          codegen.Int32Type()};
-
-  ProduceResults callback{*this, selection_vector};
-  sorter_.VectorizedIterate(codegen, sorter_ptr, selection_vector.GetCapacity(),
-                            callback);
-
-  LOG_DEBUG("OrderBy completed producing tuples ...");
+  GetPipeline().RunSerial(producer);
 }
 
-void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+void OrderByTranslator::Consume(ConsumerContext &ctx,
+                                RowBatch::Row &row) const {
+  CodeGen &codegen = GetCodeGen();
 
   // Pull out the attributes we need and append the tuple into the sorter
+  const auto &plan = GetPlanAs<planner::OrderByPlan>();
   std::vector<codegen::Value> tuple;
-  const auto &output_cols = plan_.GetOutputColumnAIs();
+  const auto &output_cols = plan.GetOutputColumnAIs();
   for (const auto *ai : output_cols) {
     tuple.push_back(row.DeriveValue(codegen, ai));
   }
@@ -252,60 +336,60 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
     }
   }
 
+  // Get the right sorter pointer
+  llvm::Value *sorter_ptr = nullptr;
+  if (ctx.GetPipeline().IsParallel()) {
+    auto *pipeline_ctx = ctx.GetPipelineContext();
+    sorter_ptr = pipeline_ctx->LoadStatePtr(codegen, thread_sorter_id_);
+  } else {
+    sorter_ptr = LoadStatePtr(sorter_id_);
+  }
+
   // Append the tuple into the sorter
-  sorter_.Append(codegen, LoadStatePtr(sorter_id_), tuple);
+  sorter_.Append(codegen, sorter_ptr, tuple);
 }
 
-void OrderByTranslator::TearDownState() {
-  sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
-}
-
-std::string OrderByTranslator::GetName() const { return "OrderBy"; }
-
-//===----------------------------------------------------------------------===//
-// PRODUCE RESULTS
-//===----------------------------------------------------------------------===//
-
-OrderByTranslator::ProduceResults::ProduceResults(
-    const OrderByTranslator &translator, Vector &selection_vector)
-    : translator_(translator), selection_vector_(selection_vector) {}
-
-void OrderByTranslator::ProduceResults::ProcessEntries(
-    CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
-    Sorter::SorterAccess &access) const {
-  // Construct the row batch we're producing
-  auto &compilation_context = translator_.GetCompilationContext();
-  RowBatch batch{compilation_context, start_index, end_index, selection_vector_,
-                 false};
-
-  // Add the attribute accessors for rows in this batch
-  std::vector<SorterAttributeAccess> accessors;
-  auto &output_ais = translator_.GetPlan().GetOutputColumnAIs();
-  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
-    accessors.emplace_back(access, col_id);
+void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    auto *sorter_type = SorterProxy::GetType(GetCodeGen());
+    thread_sorter_id_ = pipeline_ctx.RegisterState("sorter", sorter_type);
   }
-  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
-    batch.AddAttribute(output_ais[col_id], &accessors[col_id]);
+}
+
+void OrderByTranslator::InitializePipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+    auto *exec_ctx_ptr = GetExecutorContextPtr();
+    sorter_.Init(codegen, sorter_ptr, exec_ctx_ptr, compare_func_);
+  }
+}
+
+void OrderByTranslator::FinishPipeline(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() != child_pipeline_) {
+    return;
   }
 
-  // Create the context and send the batch up
-  ConsumerContext context{translator_.GetCompilationContext(),
-                          translator_.GetPipeline()};
-  context.Consume(batch);
+  CodeGen &codegen = GetCodeGen();
+  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+  if (pipeline_ctx.IsParallel()) {
+    auto *thread_states_ptr = GetThreadStatesPtr();
+    auto offset = pipeline_ctx.GetEntryOffset(codegen, thread_sorter_id_);
+    sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+  } else {
+    sorter_.Sort(codegen, sorter_ptr);
+  }
 }
 
-//===----------------------------------------------------------------------===//
-// SORTER TUPLE ATTRIBUTE ACCESS
-//===----------------------------------------------------------------------===//
-
-OrderByTranslator::SorterAttributeAccess::SorterAttributeAccess(
-    Sorter::SorterAccess &sorter_access, uint32_t col_index)
-    : sorter_access_(sorter_access), col_index_(col_index) {}
-
-Value OrderByTranslator::SorterAttributeAccess::Access(CodeGen &codegen,
-                                                       RowBatch::Row &row) {
-  auto &sorted_row = sorter_access_.GetRow(row.GetTID(codegen));
-  return sorted_row.LoadColumn(codegen, col_index_);
+void OrderByTranslator::TearDownPipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+    sorter_.Destroy(codegen, sorter_ptr);
+  }
 }
 
 }  // namespace codegen

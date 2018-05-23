@@ -18,6 +18,7 @@
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/layout.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace catalog {

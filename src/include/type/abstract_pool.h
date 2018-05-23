@@ -6,7 +6,7 @@
 //
 // Identification: src/include/type/abstract_pool.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,20 +19,24 @@ namespace type {
 
 // Interface of a memory pool that can quickly allocate chunks of memory
 class AbstractPool {
-public:
+ public:
+  // Virtual destructor
+  virtual ~AbstractPool() = default;
 
-  // Empty virtual destructor for proper cleanup
-  virtual ~AbstractPool(){}
-
-  // Allocate a contiguous block of memory of the given size. If the allocation
-  // is successful a non-null pointer is returned. If the allocation fails, a
-  // null pointer will be returned.
-  // TODO: Provide good error codes for failure cases.
+  /**
+   * @brief Allocate a contiguous block of memory of the given size
+   * @param size The size (in bytes) of memory to allocate
+   * @return A non-null pointer if allocation is successful. A null pointer if
+   * allocation fails.
+   *
+   * TODO: Provide good error codes for failure cases
+   */
   virtual void *Allocate(size_t size) = 0;
 
-  // Returns the provided chunk of memory back into the pool
+  /**
+   * @brief Returns the provided chunk of memory back into the pool
+   */
   virtual void Free(void *ptr) = 0;
-
 };
 
 }  // namespace type

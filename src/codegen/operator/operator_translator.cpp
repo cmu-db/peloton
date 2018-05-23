@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/operator_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,30 +17,43 @@
 namespace peloton {
 namespace codegen {
 
-OperatorTranslator::OperatorTranslator(CompilationContext &context,
+OperatorTranslator::OperatorTranslator(const planner::AbstractPlan &plan,
+                                       CompilationContext &context,
                                        Pipeline &pipeline)
-    : context_(context), pipeline_(pipeline) {
-  pipeline.Add(this);
+    : plan_(plan), context_(context), pipeline_(pipeline) {
+  pipeline.Add(this, Pipeline::Parallelism::Flexible);
 }
 
 CodeGen &OperatorTranslator::GetCodeGen() const {
   return context_.GetCodeGen();
 }
 
+llvm::Value *OperatorTranslator::GetExecutorContextPtr() const {
+  return context_.GetExecutionConsumer().GetExecutorContextPtr(context_);
+}
+
+llvm::Value *OperatorTranslator::GetTransactionPtr() const {
+  return context_.GetExecutionConsumer().GetTransactionPtr(context_);
+}
+
 llvm::Value *OperatorTranslator::GetStorageManagerPtr() const {
-  return context_.GetStorageManagerPtr();
+  return context_.GetExecutionConsumer().GetStorageManagerPtr(context_);
+}
+
+llvm::Value *OperatorTranslator::GetThreadStatesPtr() const {
+  return context_.GetExecutionConsumer().GetThreadStatesPtr(context_);
 }
 
 llvm::Value *OperatorTranslator::LoadStatePtr(
-    const RuntimeState::StateID &state_id) const {
-  auto &runtime_state = context_.GetRuntimeState();
-  return runtime_state.LoadStatePtr(GetCodeGen(), state_id);
+    const QueryState::Id &state_id) const {
+  QueryState &query_state = context_.GetQueryState();
+  return query_state.LoadStatePtr(GetCodeGen(), state_id);
 }
 
 llvm::Value *OperatorTranslator::LoadStateValue(
-    const RuntimeState::StateID &state_id) const {
-  auto &runtime_state = context_.GetRuntimeState();
-  return runtime_state.LoadStateValue(GetCodeGen(), state_id);
+    const QueryState::Id &state_id) const {
+  QueryState &query_state = context_.GetQueryState();
+  return query_state.LoadStateValue(GetCodeGen(), state_id);
 }
 
 void OperatorTranslator::Consume(ConsumerContext &context,

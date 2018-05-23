@@ -17,7 +17,7 @@
 #include "catalog/catalog.h"
 #include "codegen/buffering_consumer.h"
 #include "codegen/compilation_context.h"
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
@@ -89,18 +89,13 @@ class PelotonCodeGenTest : public PelotonTest {
                                     oid_t tile_group_count, oid_t column_count,
                                     bool is_inlined);
 
-  static void ExecuteSync(
-      codegen::Query &query,
-      std::unique_ptr<executor::ExecutorContext> executor_context,
-      codegen::QueryResultConsumer &consumer);
-
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
+      planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer);
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
-      codegen::QueryResultConsumer &consumer, bool &cached,
+      codegen::ExecutionConsumer &consumer, bool &cached,
       std::vector<type::Value> params = {});
 
   //===--------------------------------------------------------------------===//
@@ -133,7 +128,7 @@ class PelotonCodeGenTest : public PelotonTest {
 //===----------------------------------------------------------------------===//
 // A query consumer that prints the tuples to standard out
 //===----------------------------------------------------------------------===//
-class Printer : public codegen::QueryResultConsumer {
+class Printer : public codegen::ExecutionConsumer {
  public:
   Printer(std::vector<oid_t> cols, planner::BindingContext &context) {
     for (oid_t col_id : cols) {
@@ -141,11 +136,13 @@ class Printer : public codegen::QueryResultConsumer {
     }
   }
 
+  bool SupportsParallelExec() const override { return false; }
+
   // None of these are used, except ConsumeResult()
-  void Prepare(codegen::CompilationContext &) override {}
-  void InitializeState(codegen::CompilationContext &) override {}
-  void TearDownState(codegen::CompilationContext &) override {}
-  // Use
+  void InitializeQueryState(codegen::CompilationContext &) override {}
+  void TearDownQueryState(codegen::CompilationContext &) override {}
+
+  void Prepare(codegen::CompilationContext &ctx) override;
   void ConsumeResult(codegen::ConsumerContext &ctx,
                      codegen::RowBatch::Row &) const override;
 

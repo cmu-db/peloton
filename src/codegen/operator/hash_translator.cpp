@@ -29,22 +29,23 @@ namespace codegen {
 // Constructor
 HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
                                CompilationContext &context, Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), hash_plan_(hash_plan) {
-  LOG_DEBUG("Constructing HashTranslator ...");
+    : OperatorTranslator(hash_plan, context, pipeline) {
+  // Distincts are serial (for now ...)
+  pipeline.SetSerial();
 
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
+  CodeGen &codegen = GetCodeGen();
+  QueryState &query_state = context.GetQueryState();
 
   // Register the hash-table instance in the runtime state
   hash_table_id_ =
-      runtime_state.RegisterState("hash", OAHashTableProxy::GetType(codegen));
+      query_state.RegisterState("hash", OAHashTableProxy::GetType(codegen));
 
   // Prepare the input operator
-  context.Prepare(*hash_plan_.GetChild(0), pipeline);
+  context.Prepare(*hash_plan.GetChild(0), pipeline);
 
   // Prepare the hash keys
   std::vector<type::Type> key_type;
-  const auto &hash_keys = hash_plan_.GetHashKeys();
+  const auto &hash_keys = hash_plan.GetHashKeys();
   for (const auto &hash_key : hash_keys) {
     // TODO: do the hash keys have to be prepared? Pipeline?
     context.Prepare(*hash_key);
@@ -58,26 +59,20 @@ HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
 }
 
 // Initialize the hash table instance
-void HashTranslator::InitializeState() {
+void HashTranslator::InitializeQueryState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
 }
 
 // Produce!
 void HashTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
-
   // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*hash_plan_.GetChild(0));
-
-  LOG_DEBUG("Hash starting to produce results ...");
+  GetCompilationContext().Produce(*GetHashPlan().GetChild(0));
 }
 
 // Consume the tuples from the context, adding them to the hash table
 void HashTranslator::Consume(ConsumerContext &context,
                              RowBatch::Row &row) const {
-  LOG_DEBUG("Hash operator consuming results ...");
-
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Collect the keys we use to probe the hash table
   std::vector<codegen::Value> key;
@@ -94,25 +89,20 @@ void HashTranslator::Consume(ConsumerContext &context,
 }
 
 // Cleanup by destroying the aggregation hash-table
-void HashTranslator::TearDownState() {
+void HashTranslator::TearDownQueryState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
-}
-
-// Get the stringified name of this hash operator
-std::string HashTranslator::GetName() const { return "Hash"; }
-
-// Estimate the size of the dynamically constructed hash-table
-uint64_t HashTranslator::EstimateHashTableSize() const {
-  // TODO: Implement me
-  return 0;
 }
 
 void HashTranslator::CollectHashKeys(RowBatch::Row &row,
                                      std::vector<codegen::Value> &key) const {
-  auto &codegen = GetCodeGen();
-  for (const auto &hash_key : hash_plan_.GetHashKeys()) {
+  CodeGen &codegen = GetCodeGen();
+  for (const auto &hash_key : GetHashPlan().GetHashKeys()) {
     key.push_back(row.DeriveValue(codegen, *hash_key));
   }
+}
+
+const planner::HashPlan &HashTranslator::GetHashPlan() const {
+  return GetPlanAs<planner::HashPlan>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -125,8 +115,7 @@ void HashTranslator::ConsumerProbe::ProcessEntry(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE llvm::Value *data_area) const {
   // The key already exists in the hash table, which means that we can just drop
-  // this row,
-  // as it already exists in the result
+  // this row, as it already exists in the result
 }
 
 //===----------------------------------------------------------------------===//
@@ -142,10 +131,7 @@ HashTranslator::ConsumerInsert::ConsumerInsert(ConsumerContext &context,
 void HashTranslator::ConsumerInsert::StoreValue(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE llvm::Value *space) const {
-  // It is the first time this key appears, so we just pass it on to the next
-  // operator
-
-  // call consume on parent
+  // It is the first time this key appears, so we just pass it along pipeline
   context_.Consume(row_);
 }
 

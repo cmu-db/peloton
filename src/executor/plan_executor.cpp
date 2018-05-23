@@ -49,36 +49,47 @@ static void CompileAndExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn,
-                                    codegen::QueryParameters(*plan, params)));
+  // The executor context for this execution
+  executor::ExecutorContext executor_context{
+      txn, codegen::QueryParameters(*plan, params)};
 
-  // Compile the query
+  // Check if we have a cached compiled plan already
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
+    // Cached plan doesn't exist, let's compile the query
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+        *plan, executor_context.GetParams().GetQueryParametersMap(), consumer);
+
+    // Grab an instance to the plan
     query = compiled_query.get();
+
+    // Insert the compiled plan into the cache
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
-  auto on_query_result =
-    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
-        std::vector<ResultValue> values;
-        for (const auto &tuple : consumer.GetOutputTuples()) {
-          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-            auto column_val = tuple.GetValue(i);
-            auto str = column_val.IsNull() ? "" : column_val.ToString();
-            LOG_TRACE("column content: [%s]", str.c_str());
-            values.push_back(std::move(str));
-          }
-        }
-        plan->ClearParameterValues();
-        on_complete(result, std::move(values));
-      };
+  // Execute the query!
+  query->Execute(executor_context, consumer);
 
-  query->Execute(std::move(executor_context), consumer, on_query_result);
+  // Execution complete, setup the results
+  executor::ExecutionResult result;
+  result.m_processed = executor_context.num_processed;
+  result.m_result = ResultType::SUCCESS;
+
+  // Iterate over results
+  std::vector<ResultValue> values;
+  for (const auto &tuple : consumer.GetOutputTuples()) {
+    for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+      auto column_val = tuple.GetValue(i);
+      auto str = column_val.IsNull() ? "" : column_val.ToString();
+      LOG_TRACE("column content: [%s]", str.c_str());
+      values.push_back(std::move(str));
+    }
+  }
+
+  // Done, invoke callback
+  plan->ClearParameterValues();
+  on_complete(result, std::move(values));
 }
 
 static void InterpretPlan(

@@ -22,14 +22,14 @@ namespace peloton {
 namespace codegen {
 
 void ParameterCache::Populate(CodeGen &codegen,
-    llvm::Value *query_parameters_ptr) {
+                              llvm::Value *query_parameters_ptr) {
   auto &parameters = parameters_map_.GetParameters();
   for (uint32_t i = 0; i < parameters.size(); i++) {
     auto &parameter = parameters[i];
     auto type_id = parameter.GetValueType();
     auto is_nullable = parameter.IsNullable();
-    auto val = DeriveParameterValue(codegen, query_parameters_ptr, i,
-                                    type_id, is_nullable);
+    auto val = DeriveParameterValue(codegen, query_parameters_ptr, i, type_id,
+                                    is_nullable);
     values_.push_back(val);
   }
 }
@@ -38,12 +38,15 @@ codegen::Value ParameterCache::GetValue(uint32_t index) const {
   return values_[index];
 }
 
-void ParameterCache::Reset() {
-  values_.clear();
+codegen::Value ParameterCache::GetValue(
+    const expression::AbstractExpression *expr) const {
+  return GetValue(parameters_map_.GetIndex(expr));
 }
 
-codegen::Value ParameterCache::DeriveParameterValue(CodeGen &codegen,
-    llvm::Value *query_parameters_ptr, uint32_t index,
+void ParameterCache::Reset() { values_.clear(); }
+
+codegen::Value ParameterCache::DeriveParameterValue(
+    CodeGen &codegen, llvm::Value *query_parameters_ptr, uint32_t index,
     peloton::type::TypeId type_id, bool is_nullable) {
   llvm::Value *val = nullptr, *len = nullptr;
   std::vector<llvm::Value *> args = {query_parameters_ptr,

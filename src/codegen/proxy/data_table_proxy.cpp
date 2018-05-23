@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/data_table_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,8 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(DataTable, "storage::DataTable", MEMBER(opaque));
+DEFINE_TYPE(DataTable, "storage::DataTable", opaque);
+
 DEFINE_METHOD(peloton::storage, DataTable, GetTileGroupCount);
 
 }  // namespace codegen

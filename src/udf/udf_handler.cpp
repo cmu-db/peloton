@@ -1,16 +1,32 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// udf_handler.cpp
+//
+// Identification: src/backend/udf/udf_handler.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "udf/udf_handler.h"
+
+#include "codegen/codegen.h"
+#include "codegen/function_builder.h"
+#include "concurrency/transaction_context.h"
+#include "expression/function_expression.h"
+#include "udf/udf_parser.h"
 
 namespace peloton {
 namespace udf {
 
-UDFHandler::UDFHandler() {}
+UDFHandler::UDFHandler() = default;
 
 std::shared_ptr<codegen::CodeContext> UDFHandler::Execute(
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn,
-    std::string func_name, std::string func_body,
-    UNUSED_ATTRIBUTE std::vector<std::string> args_name,
-    UNUSED_ATTRIBUTE std::vector<arg_type> args_type,
-    UNUSED_ATTRIBUTE arg_type ret_type) {
+    concurrency::TransactionContext *txn, std::string func_name,
+    std::string func_body, std::vector<std::string> args_name,
+    std::vector<arg_type> args_type, arg_type ret_type) {
   return Compile(txn, func_name, func_body, args_name, args_type, ret_type);
 }
 
@@ -51,10 +67,9 @@ llvm::Function *UDFHandler::RegisterExternalFunction(
 }
 
 std::shared_ptr<codegen::CodeContext> UDFHandler::Compile(
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn,
-    std::string func_name, std::string func_body,
-    std::vector<std::string> args_name, std::vector<arg_type> args_type,
-    arg_type ret_type) {
+    concurrency::TransactionContext *txn, std::string func_name,
+    std::string func_body, std::vector<std::string> args_name,
+    std::vector<arg_type> args_type, arg_type ret_type) {
   // To contain the context of the UDF
   auto code_context = std::make_shared<codegen::CodeContext>();
   // codegen::CodeContext *code_context = new codegen::CodeContext();

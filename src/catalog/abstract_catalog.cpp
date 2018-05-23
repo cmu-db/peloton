@@ -28,6 +28,7 @@
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
 
+#include "executor/executor_context.h"
 #include "executor/delete_executor.h"
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"

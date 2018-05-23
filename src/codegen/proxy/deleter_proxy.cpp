@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/deleter_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Deleter, "codegen::Deleter", MEMBER(opaque));
+DEFINE_TYPE(Deleter, "codegen::Deleter", opaque);
 
 DEFINE_METHOD(peloton::codegen, Deleter, Init);
 DEFINE_METHOD(peloton::codegen, Deleter, Delete);

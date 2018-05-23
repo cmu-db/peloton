@@ -50,7 +50,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
   // The context for the function invocation
   type::TypeSystem::InvocationContext ctx{
       .on_error = OnError::Exception,
-      .executor_context = context_.GetExecutorContextPtr()};
+      .executor_context = GetExecutorContextPtr()};
 
   if (!func_expr.IsUDF()) {
     // The ID of the operator we're calling

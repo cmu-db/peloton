@@ -6,15 +6,18 @@
 //
 // Identification: src/include/expression/star_expression.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
+
 #include <string>
+
+#include "common/sql_node_visitor.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {
