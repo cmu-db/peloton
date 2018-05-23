@@ -225,27 +225,11 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
       // if we have already owned the version.
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
-
-      // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-              settings::SettingId::stats_mode)) != StatsType::INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-            location.block);
-      }
-
       return true;
 
     } else {
       // if it's not select for update, then update read set and return true.
-
       current_txn->RecordRead(location);
-
-      // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-              settings::SettingId::stats_mode)) != StatsType::INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-            location.block);
-      }
       return true;
     }
 
@@ -283,12 +267,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       }
       // if we have already owned the version.
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
-      // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-              settings::SettingId::stats_mode)) != StatsType::INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-            location.block);
-      }
       return true;
 
     } else {
@@ -296,13 +274,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
         if (IsOwned(current_txn, tile_group_header, tuple_id) == false) {
           current_txn->RecordRead(location);
-
-          // Increment table read op stats
-          if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-                  settings::SettingId::stats_mode)) != StatsType::INVALID) {
-            stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-                location.block);
-          }
           return true;
 
         } else {
@@ -315,14 +286,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       } else {
         // this version must already be in the read/write set.
         // so no need to update read set.
-        // current_txn->RecordRead(location);
-
-        // Increment table read op stats
-        if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-                settings::SettingId::stats_mode)) != StatsType::INVALID) {
-          stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-              location.block);
-        }
         return true;
       }
     }
@@ -379,12 +342,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
       PELOTON_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) ==
                          current_txn->GetCommitId() ||
                      GetLastReaderCommitId(tile_group_header, tuple_id) == 0);
-      // Increment table read op stats
-      if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-              settings::SettingId::stats_mode)) != StatsType::INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-            location.block);
-      }
       return true;
 
     } else {
@@ -395,13 +352,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
                                   current_txn->GetCommitId(), false) == true) {
           // update read set.
           current_txn->RecordRead(location);
-
-          // Increment table read op stats
-          if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-                  settings::SettingId::stats_mode)) != StatsType::INVALID) {
-            stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-                location.block);
-          }
           return true;
         } else {
           // if the tuple has been owned by some concurrent transactions,
@@ -419,14 +369,6 @@ bool TimestampOrderingTransactionManager::PerformRead(
 
         // this version must already be in the read/write set.
         // so no need to update read set.
-        // current_txn->RecordRead(location);
-
-        // Increment table read op stats
-        if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-                settings::SettingId::stats_mode)) != StatsType::INVALID) {
-          stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-              location.block);
-        }
         return true;
       }
     }
@@ -464,13 +406,6 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
-
-  // Increment table insert op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTableInserts(
-        location.block);
-  }
 }
 
 void TimestampOrderingTransactionManager::PerformUpdate(
@@ -548,13 +483,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
-
-  // Increment table update op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
-        new_location.block);
-  }
 }
 
 void TimestampOrderingTransactionManager::PerformUpdate(
@@ -581,13 +509,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // transaction
   // is updating a version that is installed by itself.
   // in this case, nothing needs to be performed.
-
-  // Increment table update op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
-        location.block);
-  }
 }
 
 void TimestampOrderingTransactionManager::PerformDelete(
@@ -669,13 +590,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 
   current_txn->RecordDelete(old_location);
-
-  // Increment table delete op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
-        old_location.block);
-  }
 }
 
 void TimestampOrderingTransactionManager::PerformDelete(
@@ -702,13 +616,6 @@ void TimestampOrderingTransactionManager::PerformDelete(
   } else {
     // if this version is newly inserted.
     current_txn->RecordDelete(location);
-  }
-
-  // Increment table delete op stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
-        location.block);
   }
 }
 
@@ -896,13 +803,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   EndTransaction(current_txn);
 
-  // Increment # txns committed metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-        database_id);
-  }
-
   return result;
 }
 
@@ -1084,12 +984,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
   current_txn->SetResult(ResultType::ABORTED);
   EndTransaction(current_txn);
-
-  // Increment # txns aborted metric
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
-  }
 
   return ResultType::ABORTED;
 }

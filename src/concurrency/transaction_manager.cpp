@@ -82,6 +82,58 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
+  // log RWSet and result stats
+  auto stats_type = static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode));
+
+  if (stats_type != StatsType::INVALID) {
+    auto stats_context = stats::BackendStatsContext::GetInstance();
+
+    // update counters for each element in the RWSet
+    for (const auto &element : current_txn->GetReadWriteSet()) {
+      const auto &tile_group_id = element.first.block;
+      const auto &rw_type = element.second;
+      switch (rw_type) {
+        case RWType::READ:
+        case RWType::READ_OWN:
+          stats_context->IncrementTableReads(tile_group_id);
+          break;
+        case RWType::UPDATE:
+          stats_context->IncrementTableUpdates(tile_group_id);
+          break;
+        case RWType::INSERT:
+          stats_context->IncrementTableInserts(tile_group_id);
+          break;
+        case RWType::DELETE:
+          stats_context->IncrementTableDeletes(tile_group_id);
+          break;
+        case RWType::INS_DEL:
+          stats_context->IncrementTableInserts(tile_group_id);
+          stats_context->IncrementTableDeletes(tile_group_id);
+          break;
+        default:
+          break;
+      }
+    }
+
+    oid_t database_id = 0;
+    const auto &first_tuple = current_txn->GetReadWriteSet().cbegin();
+    if (first_tuple != current_txn->GetReadWriteSet().cend()) {
+      database_id = catalog::Manager::GetInstance().GetTileGroup(first_tuple->first.block)->GetDatabaseId();
+    }
+    switch (current_txn->GetResult()) {
+      case ResultType::ABORTED:
+        stats_context->IncrementTxnAborted(database_id);
+        break;
+      case ResultType::SUCCESS:
+        stats_context->IncrementTxnCommitted(database_id);
+        break;
+      default:
+        break;
+    }
+  }
+
+  // pass transaction context to garbage collector
   if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   } else {
@@ -90,12 +142,11 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
 
   current_txn = nullptr;
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  // log timing stats
+  if (stats_type != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
-
   }
 }
 
