@@ -12,7 +12,7 @@
 
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 #include <cinttypes>
-#include <include/storage/storage_manager.h>
+#include "include/storage/storage_manager.h"
 
 #include "catalog/catalog_defaults.h"
 #include "catalog/manager.h"

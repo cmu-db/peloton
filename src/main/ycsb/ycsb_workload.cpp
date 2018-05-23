@@ -23,7 +23,7 @@
 #include <random>
 #include <cstddef>
 #include <limits>
-#include <include/storage/storage_manager.h>
+#include "include/storage/storage_manager.h"
 
 #include "benchmark/ycsb/ycsb_workload.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
