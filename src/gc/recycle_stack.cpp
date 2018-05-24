@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/gc/recycle_stack.h"
+#include "gc/recycle_stack.h"
 
 #include "common/logger.h"
 
