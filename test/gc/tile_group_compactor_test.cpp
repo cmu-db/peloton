@@ -112,7 +112,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   // sleep to allow tile group compaction to happen
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-  LOG_DEBUG("tile_group_count_after_compact: %zu",
+  LOG_DEBUG("tile_group_count_after_compact: %u",
             manager.GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups
@@ -202,7 +202,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   // sleep to allow tile group compaction to happen
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-  LOG_DEBUG("tile_group_count_after_compact: %zu",
+  LOG_DEBUG("tile_group_count_after_compact: %u",
             manager.GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups

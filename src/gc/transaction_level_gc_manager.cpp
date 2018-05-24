@@ -431,20 +431,20 @@ void TransactionLevelGCManager::RemoveObjectLevelGarbage(
     PELOTON_ASSERT(database != nullptr);
     if (table_oid == INVALID_OID) {
       storage_manager->RemoveDatabaseFromStorageManager(database_oid);
-      LOG_DEBUG("GCing database %u", database_oid);
+      LOG_TRACE("GCing database %u", database_oid);
       continue;
     }
     auto table = database->GetTableWithOid(table_oid);
     PELOTON_ASSERT(table != nullptr);
     if (index_oid == INVALID_OID) {
       database->DropTableWithOid(table_oid);
-      LOG_DEBUG("GCing table %u", table_oid);
+      LOG_TRACE("GCing table %u", table_oid);
       continue;
     }
     auto index = table->GetIndexWithOid(index_oid);
     PELOTON_ASSERT(index != nullptr);
     table->DropIndexWithOid(index_oid);
-    LOG_DEBUG("GCing index %u", index_oid);
+    LOG_TRACE("GCing index %u", index_oid);
   }
 
   delete txn_ctx;
