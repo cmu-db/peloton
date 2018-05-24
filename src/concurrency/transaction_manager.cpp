@@ -83,7 +83,7 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // log RWSet and result stats
-  auto stats_type = static_cast<StatsType>(settings::SettingsManager::GetInt(
+  const auto &stats_type = static_cast<StatsType>(settings::SettingsManager::GetInt(
       settings::SettingId::stats_mode));
 
   if (stats_type != StatsType::INVALID) {
@@ -119,7 +119,8 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     oid_t database_id = 0;
     const auto &first_tuple = current_txn->GetReadWriteSet().cbegin();
     if (first_tuple != current_txn->GetReadWriteSet().cend()) {
-      database_id = catalog::Manager::GetInstance().GetTileGroup(first_tuple->first.block)->GetDatabaseId();
+      database_id = catalog::Manager::GetInstance().
+          GetTileGroup(first_tuple->first.block)->GetDatabaseId();
     }
     switch (current_txn->GetResult()) {
       case ResultType::ABORTED:
