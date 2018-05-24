@@ -1366,8 +1366,6 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-const Layout &DataTable::GetDefaultLayout() const { return *default_layout_; }
-
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {
   trigger_list_->AddTrigger(new_trigger);
 }

@@ -343,6 +343,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto db_name = "temp_db";
   auto table_name = "temp_table";
   auto catalog = catalog::Catalog::GetInstance();
+
   // Create database.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -376,10 +377,23 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto table_oid = table_object->GetTableOid();
   auto table =
       catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto pg_layout = catalog->GetSystemCatalogs(database_oid)->GetLayoutCatalog();
+  txn_manager.CommitTransaction(txn);
+
+  // Check the first default layout
+  auto first_default_layout = table->GetDefaultLayout();
+  EXPECT_EQ(0, first_default_layout->GetOid());
+  EXPECT_TRUE(first_default_layout->IsRowStore());
+
+  // Check the first default layout in pg_layout
+  txn = txn_manager.BeginTransaction();
+  auto first_layout_oid = first_default_layout->GetOid();
+  EXPECT_EQ(
+      *(first_default_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, first_layout_oid, txn).get()));
   txn_manager.CommitTransaction(txn);
 
   // Change default layout.
-
   std::map<oid_t, std::pair<oid_t, oid_t>> default_map;
   default_map[0] = std::make_pair(0, 0);
   default_map[1] = std::make_pair(0, 1);
@@ -389,8 +403,21 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   txn = txn_manager.BeginTransaction();
   auto default_layout =
       catalog->CreateDefaultLayout(database_oid, table_oid, default_map, txn);
-  txn_manager.CommitTransaction(txn);
   EXPECT_NE(nullptr, default_layout);
+  txn_manager.CommitTransaction(txn);
+
+  // Check the changed default layout
+  auto default_layout_oid = default_layout->GetOid();
+  EXPECT_EQ(default_layout_oid, table->GetDefaultLayout()->GetOid());
+  EXPECT_FALSE(default_layout->IsColumnStore());
+  EXPECT_FALSE(default_layout->IsRowStore());
+
+  // Check the changed default layout in pg_layout
+  txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(
+      *(default_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn).get()));
+  txn_manager.CommitTransaction(txn);
 
   // Create additional layout.
   std::map<oid_t, std::pair<oid_t, oid_t>> non_default_map;
@@ -402,30 +429,41 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   txn = txn_manager.BeginTransaction();
   auto other_layout =
       catalog->CreateLayout(database_oid, table_oid, non_default_map, txn);
+  EXPECT_NE(nullptr, other_layout);
+	txn_manager.CommitTransaction(txn);
+
+  // Check the created layout
+  EXPECT_FALSE(other_layout->IsColumnStore());
+  EXPECT_FALSE(other_layout->IsRowStore());
+
+  // Check the created layout in pg_layout
+  txn = txn_manager.BeginTransaction();
+  auto other_layout_oid = other_layout->GetOid();
+  EXPECT_EQ(
+      *(other_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));
   txn_manager.CommitTransaction(txn);
 
   // Check that the default layout is still the same.
-  EXPECT_NE(*other_layout.get(), table->GetDefaultLayout());
+  EXPECT_NE(other_layout, table->GetDefaultLayout());
 
   // Drop the default layout.
-  auto default_layout_oid = default_layout->GetOid();
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(ResultType::SUCCESS, catalog->DropLayout(database_oid, table_oid,
                                                      default_layout_oid, txn));
   txn_manager.CommitTransaction(txn);
 
   // Check that default layout is reset and set to row_store.
-  EXPECT_NE(*default_layout.get(), table->GetDefaultLayout());
-  EXPECT_TRUE(table->GetDefaultLayout().IsRowStore());
+  EXPECT_NE(default_layout, table->GetDefaultLayout());
+  EXPECT_TRUE(table->GetDefaultLayout()->IsRowStore());
+  EXPECT_EQ(0, table->GetDefaultLayout()->GetOid());
 
   // Query pg_layout to ensure that the entry is dropped
   txn = txn_manager.BeginTransaction();
-  auto pg_layout = catalog->GetSystemCatalogs(database_oid)->GetLayoutCatalog();
   EXPECT_EQ(nullptr,
             pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
 
   // The additional layout must be present in pg_layout
-  auto other_layout_oid = other_layout->GetOid();
   EXPECT_EQ(
       *(other_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));
