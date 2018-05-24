@@ -93,7 +93,7 @@ void TransactionContext::Init(const size_t thread_id,
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
   RWType rw_type = RWType::INVALID;
 
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     return rw_set_it->second;
   }
@@ -102,7 +102,7 @@ RWType TransactionContext::GetRWType(const ItemPointer &location) {
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
 
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     UNUSED_ATTRIBUTE RWType rw_type = rw_set_it->second;
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
@@ -112,7 +112,7 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;
     PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
@@ -125,7 +125,7 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;
     if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
@@ -143,7 +143,7 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     PELOTON_ASSERT(false);
     return;
@@ -153,7 +153,7 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
 }
 
 bool TransactionContext::RecordDelete(const ItemPointer &location) {
-  const auto rw_set_it = rw_set_.find(location);
+  auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     RWType rw_type = rw_set_it->second;
 
