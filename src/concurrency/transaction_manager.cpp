@@ -116,12 +116,14 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
       }
     }
 
+    // get database_id from first element of RWSet
     oid_t database_id = 0;
     const auto &first_tuple = current_txn->GetReadWriteSet().cbegin();
     if (first_tuple != current_txn->GetReadWriteSet().cend()) {
       database_id = catalog::Manager::GetInstance().
           GetTileGroup(first_tuple->first.block)->GetDatabaseId();
     }
+    // update transaction result stat
     switch (current_txn->GetResult()) {
       case ResultType::ABORTED:
         stats_context->IncrementTxnAborted(database_id);
