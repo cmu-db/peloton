@@ -659,20 +659,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
-  oid_t database_id = 0;
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    for (const auto &tuple_entry : rw_set) {
-      // Call the GetConstIterator() function to explicitly lock the cuckoohash
-      // and initilaize the iterator
-      const auto tile_group_id = tuple_entry.first.block;
-      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
-      if (database_id != CATALOG_DATABASE_OID) {
-        break;
-      }
-    }
-  }
-
   // install everything.
   // 1. install a new version for update operations;
   // 2. install an empty version for delete operations;
@@ -828,20 +814,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     oid_t table_oid = std::get<1>(obj);
     oid_t index_oid = std::get<2>(obj);
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
-  }
-
-  oid_t database_id = 0;
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-          settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    for (const auto &tuple_entry : rw_set) {
-      // Call the GetConstIterator() function to explicitly lock the cuckoohash
-      // and initilaize the iterator
-      const auto tile_group_id = tuple_entry.first.block;
-      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
-      if (database_id != CATALOG_DATABASE_OID) {
-        break;
-      }
-    }
   }
 
   // Iterate through each item pointer in the read write set

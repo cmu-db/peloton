@@ -88,9 +88,10 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
 
   if (stats_type != StatsType::INVALID) {
     auto stats_context = stats::BackendStatsContext::GetInstance();
+    const auto &rw_set = current_txn->GetReadWriteSet();
 
     // update counters for each element in the RWSet
-    for (const auto &element : current_txn->GetReadWriteSet()) {
+    for (const auto &element : rw_set) {
       const auto &tile_group_id = element.first.block;
       const auto &rw_type = element.second;
       switch (rw_type) {
@@ -116,13 +117,19 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
       }
     }
 
-    // get database_id from first element of RWSet
+    // get database_id from RWSet
     oid_t database_id = 0;
-    const auto &first_tuple = current_txn->GetReadWriteSet().cbegin();
-    if (first_tuple != current_txn->GetReadWriteSet().cend()) {
+    for (const auto &tuple_entry : rw_set) {
+      // Call the GetConstIterator() function to explicitly lock the cuckoohash
+      // and initilaize the iterator
+      const auto &tile_group_id = tuple_entry.first.block;
       database_id = catalog::Manager::GetInstance().
-          GetTileGroup(first_tuple->first.block)->GetDatabaseId();
+          GetTileGroup(tile_group_id)->GetDatabaseId();
+      if (database_id != CATALOG_DATABASE_OID) {
+        break;
+      }
     }
+
     // update transaction result stat
     switch (current_txn->GetResult()) {
       case ResultType::ABORTED:
