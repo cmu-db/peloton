@@ -125,7 +125,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline),
       child_pipeline_(this, Pipeline::Parallelism::Serial) {
-  // Aggregations happen serially (for now ...)
+  // Scanning the sorter happens serially (for now ...)
   pipeline.SetSerial();
 
   // Prepare the child
@@ -253,8 +253,8 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
                                                     right_tuple);
 
     // The result of the overall comparison
-    codegen::Value result;
-    codegen::Value zero(type::Integer::Instance(), codegen.Const32(0));
+    llvm::Value *result = nullptr;
+    llvm::Value *zero = codegen.Const32(0);
 
     for (size_t idx = 0; idx < sort_keys.size(); idx++) {
       auto &sort_key_info = sort_key_info_[idx];
@@ -274,22 +274,22 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
         cmp = right.CompareForSort(codegen, left);
       }
 
+      // Comparisons for sort must never return a NULL
+      PELOTON_ASSERT(!cmp.IsNullable());
+
       if (idx == 0) {
-        result = cmp;
+        result = cmp.GetValue();
       } else {
         // If previous result is zero (meaning the values were equal), set the
         // running value to the result of the last comparison. Otherwise, carry
         // forward the comparison result of the previous attributes
-        auto prev_zero = result.CompareEq(codegen, zero);
-        result = codegen::Value(
-            type::Integer::Instance(),
-            codegen->CreateSelect(prev_zero.GetValue(), cmp.GetValue(),
-                                  result.GetValue()));
+        auto prev_zero = codegen->CreateICmpEQ(result, zero);
+        result = codegen->CreateSelect(prev_zero, cmp.GetValue(), result);
       }
     }
 
     // Return result
-    compare.ReturnAndFinish(result.GetValue());
+    compare.ReturnAndFinish(result);
   }
   // Set the function pointer
   compare_func_ = compare.GetFunction();
