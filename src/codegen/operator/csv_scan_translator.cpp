@@ -74,8 +74,8 @@ void CSVScanTranslator::InitializeQueryState() {
   // Cast the runtime type to an opaque void*. This is because we're calling
   // into pre-compiled C++ that doesn't know that the dynamically generated
   // RuntimeState* looks like.
-  llvm::Value *query_state_ptr = codegen->CreatePointerCast(
-      codegen.GetState(), codegen.VoidType()->getPointerTo());
+  llvm::Value *query_state_ptr =
+      codegen->CreatePointerCast(codegen.GetState(), codegen.VoidPtrType());
 
   // Call CSVScanner::Init()
   codegen.Call(CSVScannerProxy::Init,
