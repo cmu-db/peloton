@@ -112,9 +112,8 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   // sleep to allow tile group compaction to happen
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-  size_t tile_group_count_after_compact = manager.GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_compact: %zu",
-            tile_group_count_after_compact);
+            manager.GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups
   epoch_manager.SetCurrentEpochId(++current_eid);
@@ -203,9 +202,8 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   // sleep to allow tile group compaction to happen
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-  size_t tile_group_count_after_compact = manager.GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_compact: %zu",
-            tile_group_count_after_compact);
+            manager.GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups
   epoch_manager.SetCurrentEpochId(++current_eid);
