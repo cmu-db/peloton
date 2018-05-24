@@ -120,6 +120,30 @@ TEST_F(CatalogTests, CreatingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(CatalogTests, TestingCatalogCache) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_db_object = catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
+  auto catalog_table_objects = catalog_db_object->GetTableObjects();
+  EXPECT_NE(0, catalog_table_objects.size());
+
+  auto user_db_object = catalog->GetDatabaseObject("emp_db", txn);
+  auto user_database = storage::StorageManager::GetInstance()
+                          ->GetDatabaseWithOid(user_db_object->GetDatabaseOid());
+
+  // check expected table object is acquired
+  for (oid_t table_idx = 0; table_idx < user_database->GetTableCount(); table_idx++) {
+  	auto table = user_database->GetTable(table_idx);
+  	auto user_table_object = user_db_object->GetTableObject(table->GetOid());
+   	EXPECT_EQ(user_db_object->GetDatabaseOid(),
+    			    user_table_object->GetDatabaseOid());
+  }
+
+  txn_manager.CommitTransaction(txn);
+}
+
 TEST_F(CatalogTests, TableObject) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

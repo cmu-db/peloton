@@ -185,9 +185,6 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
       database_oid, pool_.get(), txn);
-
-  // Reset oid of each system catalog
-  system_catalogs->ResetOidForUserSpace();
 }
 
 void Catalog::Bootstrap() {
@@ -212,7 +209,8 @@ void Catalog::Bootstrap() {
   InitializeLanguages();
   InitializeFunctions();
 
-  // Reset oid of each catalog
+  // Reset oid of each catalog to avoid collisions between catalog
+  // values added by system and users when checkpoint recovery.
   DatabaseCatalog::GetInstance()->UpdateOid(OID_FOR_USER_OFFSET);
   LanguageCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
   ProcCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
@@ -799,7 +797,7 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(index_oid, txn);
+  auto index_object = pg_index->GetIndexObject(database_oid, index_oid, txn);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
                            " to drop");
@@ -809,7 +807,7 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   auto table = storage_manager->GetTableWithOid(database_oid,
                                                 index_object->GetTableOid());
   // drop record in pg_index
-  pg_index->DeleteIndex(index_oid, txn);
+  pg_index->DeleteIndex(database_oid, index_oid, txn);
   LOG_TRACE("Successfully drop index %d for table %s", index_oid,
             table->GetName().c_str());
 

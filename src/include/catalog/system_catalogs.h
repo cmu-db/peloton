@@ -115,8 +115,6 @@ class SystemCatalogs {
     return pg_query_metrics_;
   }
 
-  void ResetOidForUserSpace();
-
  private:
   ColumnCatalog *pg_attribute_;
   SchemaCatalog *pg_namespace_;
