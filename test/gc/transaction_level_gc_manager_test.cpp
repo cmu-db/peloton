@@ -35,13 +35,11 @@ namespace test {
 
 class TransactionLevelGCManagerTests : public PelotonTest {};
 
-
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
-//  auto table_id = table->GetOid();
-  while (!gc::GCManagerFactory::GetInstance()
-      .GetRecycledTupleSlot(table)
-      .IsNull())
+  //  auto table_id = table->GetOid();
+  while (
+      !gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -102,7 +100,6 @@ size_t CountOccurrencesInIndex(storage::DataTable *table, int idx,
 
   return index_entries.size();
 }
-
 
 ////////////////////////////////////////////
 // NEW TESTS
@@ -203,7 +200,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
-//  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  //  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
 
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 0));
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 0));
@@ -906,7 +903,6 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
 
 // check mem -> insert 100k -> check mem -> delete all -> check mem
 TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
-
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(1);
 
@@ -937,8 +933,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
   auto current_eid = epoch_manager.GetCurrentEpochId();
 
   //  int round = 1;
-  for(int round = 1; round <= 3; round++) {
-
+  for (int round = 1; round <= 3; round++) {
     LOG_DEBUG("Round: %d\n", round);
 
     epoch_manager.SetCurrentEpochId(++current_eid);
@@ -946,29 +941,34 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
     // insert tuples here.
     //===========================
     size_t num_inserts = 100;
-    auto insert_result = TestingTransactionUtil::BulkInsertTuples(table.get(), num_inserts);
+    auto insert_result =
+        TestingTransactionUtil::BulkInsertTuples(table.get(), num_inserts);
     EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
     // capture memory usage
     size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_insert: %zu", round, tile_group_count_after_insert);
+    LOG_DEBUG("Round %d: tile_group_count_after_insert: %zu", round,
+              tile_group_count_after_insert);
 
     epoch_manager.SetCurrentEpochId(++current_eid);
     //===========================
     // delete the tuples.
     //===========================
-    auto delete_result = TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts);
+    auto delete_result =
+        TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts);
     EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
     size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_delete: %zu", round, tile_group_count_after_delete);
+    LOG_DEBUG("Round %d: tile_group_count_after_delete: %zu", round,
+              tile_group_count_after_delete);
 
     epoch_manager.SetCurrentEpochId(++current_eid);
 
     gc_manager.ClearGarbage(0);
 
     size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
-    LOG_DEBUG("Round %d: tile_group_count_after_gc: %zu", round, tile_group_count_after_gc);
+    LOG_DEBUG("Round %d: tile_group_count_after_gc: %zu", round,
+              tile_group_count_after_gc);
     EXPECT_LT(tile_group_count_after_gc, tile_group_count_after_init + 1);
   }
 
@@ -982,9 +982,9 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("freetilegroupsdb", txn),
-      CatalogException);
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(
+                   "freetilegroupsdb", txn),
+               CatalogException);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -1306,7 +1306,8 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   const int num_key = 25;
   const size_t tuples_per_tilegroup = 5;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "immutabilitytable", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
+      num_key, "immutabilitytable", db_id, INVALID_OID, 1234, true,
+      tuples_per_tilegroup));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -1323,7 +1324,8 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   auto ret = TestingTransactionUtil::DeleteTuple(table.get(), 2);
   gc_manager.ClearGarbage(0);
 
-  // ReturnFreeSlot() should not return a tuple slot from the immutable tile group
+  // ReturnFreeSlot() should not return a tuple slot from the immutable tile
+  // group
   // should be from where ever the tombstone was inserted
   auto location = gc_manager.GetRecycledTupleSlot(table.get());
   EXPECT_NE(tile_group->GetTileGroupId(), location.block);

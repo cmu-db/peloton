@@ -20,17 +20,18 @@ namespace gc {
 
 RecycleStack::~RecycleStack() {
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel));
+  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+    ;
 
   auto curr = head_.next;
 
   // iterate through entire stack, remove all nodes
   while (curr != nullptr) {
-
     // acquire lock on curr
-    while(curr->lock.test_and_set(std::memory_order_acq_rel));
+    while (curr->lock.test_and_set(std::memory_order_acq_rel))
+      ;
 
-    head_.next = curr->next; // unlink curr
+    head_.next = curr->next;  // unlink curr
     // no need to release lock on curr because no one can be waiting on it
     // bceause we have lock on head_
     delete curr;
@@ -42,11 +43,11 @@ RecycleStack::~RecycleStack() {
 }
 
 void RecycleStack::Push(const ItemPointer &location) {
-
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel));
+  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+    ;
 
-  auto node =  new Node{location, head_.next, ATOMIC_FLAG_INIT};
+  auto node = new Node{location, head_.next, ATOMIC_FLAG_INIT};
   head_.next = node;
 
   head_.lock.clear(std::memory_order_acq_rel);
@@ -85,27 +86,28 @@ uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
   LOG_TRACE("Removing all recycled slots for TileGroup %u", tile_group_id);
 
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel));
+  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+    ;
 
   auto prev = &head_;
   auto curr = prev->next;
 
   // iterate through entire stack, remove any nodes with matching tile_group_id
   while (curr != nullptr) {
-
     // acquire lock on curr
-    while(curr->lock.test_and_set(std::memory_order_acq_rel));
+    while (curr->lock.test_and_set(std::memory_order_acq_rel))
+      ;
 
     // check if we want to remove this node
     if (curr->location.block == tile_group_id) {
-      prev->next = curr->next; // unlink curr
+      prev->next = curr->next;  // unlink curr
       // no need to release lock on curr because no one can be waiting on it
       // bceause we have lock on prev
       delete curr;
       remove_count++;
 
       curr = prev->next;
-      continue; // need to check if null and acquire lock on new curr
+      continue;  // need to check if null and acquire lock on new curr
     }
 
     // iterate
@@ -117,10 +119,11 @@ uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
   // prev was set to curr, which needs to be freed
   prev->lock.clear(std::memory_order_acq_rel);
 
-  LOG_TRACE("Removed %u recycled slots for TileGroup %u", remove_count, tile_group_id);
+  LOG_TRACE("Removed %u recycled slots for TileGroup %u", remove_count,
+            tile_group_id);
 
   return remove_count;
 }
 
-} // namespace gc
-} // namespace peloton
+}  // namespace gc
+}  // namespace peloton

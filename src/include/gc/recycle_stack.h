@@ -32,11 +32,10 @@ namespace gc {
  */
 class RecycleStack {
  public:
-
   /**
    * @return Empty RecycleStack
    */
-  RecycleStack() {};
+  RecycleStack(){};
 
   /**
    * @brief Removes all elements from the stack
@@ -82,7 +81,6 @@ class RecycleStack {
   uint32_t RemoveAllWithTileGroup(const oid_t &tile_group_id);
 
  private:
-
   struct Node {
     ItemPointer location;
     Node *next;
@@ -90,6 +88,6 @@ class RecycleStack {
   };
 
   Node head_{INVALID_ITEMPOINTER, nullptr, ATOMIC_FLAG_INIT};
-}; // class RecycleStack
-} // namespace gc
-} // namespace peloton
+};  // class RecycleStack
+}  // namespace gc
+}  // namespace peloton

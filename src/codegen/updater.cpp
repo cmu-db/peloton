@@ -152,7 +152,8 @@ void Updater::Update() {
   // Or, update with a new version
   auto new_tile_group = table_->GetTileGroupById(new_location_.block);
   PELOTON_ASSERT(new_tile_group != nullptr);
-  ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(), new_location_.offset);
+  ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
+                                               new_location_.offset);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location_.offset);
   auto result = table_->InstallVersion(&new_tuple, target_list_, txn,

@@ -59,8 +59,7 @@ void Inserter::Insert() {
   auto tile_group = table_->GetTileGroupById(location_.block).get();
   PELOTON_ASSERT(tile_group != nullptr);
 
-  ContainerTuple<storage::TileGroup> tuple(
-      tile_group, location_.offset);
+  ContainerTuple<storage::TileGroup> tuple(tile_group, location_.offset);
 
   ItemPointer *index_entry_ptr = nullptr;
   bool result = table_->InsertTuple(&tuple, location_, txn, &index_entry_ptr);

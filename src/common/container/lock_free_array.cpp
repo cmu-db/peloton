@@ -110,7 +110,6 @@ bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) const {
 
 template <typename ValueType>
 ssize_t LOCK_FREE_ARRAY_TYPE::Lookup(const ValueType &value) {
-
   for (std::size_t array_itr = 0; array_itr < lock_free_array.size();
        array_itr++) {
     auto array_value = lock_free_array.at(array_itr);

@@ -46,10 +46,14 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(false),
-    tile_group_recycling_threshold_(settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold)),
-    tile_group_freeing_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing)),
-    tile_group_compaction_(settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction)) {}
+  GCManager()
+      : is_running_(false),
+        tile_group_recycling_threshold_(settings::SettingsManager::GetDouble(
+            settings::SettingId::tile_group_recycling_threshold)),
+        tile_group_freeing_(settings::SettingsManager::GetBool(
+            settings::SettingId::tile_group_freeing)),
+        tile_group_compaction_(settings::SettingsManager::GetBool(
+            settings::SettingId::tile_group_compaction)) {}
 
   virtual ~GCManager() {}
 
@@ -60,9 +64,12 @@ class GCManager {
 
   virtual void Reset() {
     is_running_ = false;
-    tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold);
-    tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
-    tile_group_compaction_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction);
+    tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(
+        settings::SettingId::tile_group_recycling_threshold);
+    tile_group_freeing_ = settings::SettingsManager::GetBool(
+        settings::SettingId::tile_group_freeing);
+    tile_group_compaction_ = settings::SettingsManager::GetBool(
+        settings::SettingId::tile_group_compaction);
   }
 
   // Get status of whether GC thread is running or not
@@ -75,7 +82,8 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table
+                                               UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 
@@ -90,11 +98,15 @@ class GCManager {
   virtual void RecycleTransaction(
                       concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
-  virtual void AddToImmutableQueue(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {}
+  virtual void AddToImmutableQueue(const oid_t &tile_group_id
+                                       UNUSED_ATTRIBUTE) {}
 
-  virtual void SetTileGroupRecyclingThreshold(const double &threshold UNUSED_ATTRIBUTE) {}
+  virtual void SetTileGroupRecyclingThreshold(const double &threshold
+                                                  UNUSED_ATTRIBUTE) {}
 
-  virtual double GetTileGroupRecyclingThreshold() const { return tile_group_recycling_threshold_; }
+  virtual double GetTileGroupRecyclingThreshold() const {
+    return tile_group_recycling_threshold_;
+  }
 
   virtual void SetTileGroupFreeing(const bool &free UNUSED_ATTRIBUTE) {}
 
@@ -109,7 +121,6 @@ class GCManager {
                                     oid_t tuple_id);
 
  protected:
-
   volatile bool is_running_;
   volatile double tile_group_recycling_threshold_;
   volatile bool tile_group_freeing_;

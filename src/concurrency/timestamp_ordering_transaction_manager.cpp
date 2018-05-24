@@ -290,9 +290,9 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
   //////////////////////////////////////////////////////////
   else {
     PELOTON_ASSERT(current_txn->GetIsolationLevel() ==
-                       IsolationLevelType::SERIALIZABLE ||
-                   current_txn->GetIsolationLevel() ==
-                       IsolationLevelType::REPEATABLE_READS);
+                  IsolationLevelType::SERIALIZABLE ||
+              current_txn->GetIsolationLevel() ==
+                  IsolationLevelType::REPEATABLE_READS);
 
     oid_t tuple_id = location.offset;
 

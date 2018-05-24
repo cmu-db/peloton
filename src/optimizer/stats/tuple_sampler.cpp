@@ -100,7 +100,6 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
 
   LOG_TRACE("tile_count: %lu", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-
     storage::Tile *tile = tile_group->GetTile(tile_itr);
     const catalog::Schema &schema = *(tile->GetSchema());
     uint32_t tile_column_count = schema.GetColumnCount();

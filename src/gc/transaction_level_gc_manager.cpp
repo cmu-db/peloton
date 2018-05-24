@@ -30,24 +30,29 @@
 #include "storage/tuple.h"
 #include "threadpool/mono_queue_pool.h"
 
-
 namespace peloton {
 namespace gc {
 
-TransactionLevelGCManager::TransactionLevelGCManager(const uint32_t &thread_count)
-    : gc_thread_count_(thread_count), local_unlink_queues_(thread_count), reclaim_maps_(thread_count) {
-
+TransactionLevelGCManager::TransactionLevelGCManager(
+    const uint32_t &thread_count)
+    : gc_thread_count_(thread_count),
+      local_unlink_queues_(thread_count),
+      reclaim_maps_(thread_count) {
   unlink_queues_.reserve(thread_count);
 
   for (uint32_t i = 0; i < gc_thread_count_; ++i) {
-    unlink_queues_.emplace_back(std::make_shared<
-        LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+    unlink_queues_.emplace_back(
+        std::make_shared<LockFreeQueue<concurrency::TransactionContext *>>(
+            INITIAL_UNLINK_QUEUE_LENGTH));
   }
 
-  immutable_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
-  compaction_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
-  recycle_stacks_ = std::make_shared<peloton::CuckooMap<
-      oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
+  immutable_queue_ =
+      std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  compaction_queue_ =
+      std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  recycle_stacks_ = std::make_shared<
+      peloton::CuckooMap<oid_t, std::shared_ptr<RecycleStack>>>(
+      INITIAL_MAP_SIZE);
 }
 
 void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
@@ -61,27 +66,33 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
   unlink_queues_.reserve(gc_thread_count_);
 
   for (uint32_t i = 0; i < gc_thread_count_; ++i) {
-    unlink_queues_.emplace_back(std::make_shared<
-      LockFreeQueue<concurrency::TransactionContext* >>(INITIAL_UNLINK_QUEUE_LENGTH));
+    unlink_queues_.emplace_back(
+        std::make_shared<LockFreeQueue<concurrency::TransactionContext *>>(
+            INITIAL_UNLINK_QUEUE_LENGTH));
   }
 
-  immutable_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
-  compaction_queue_ = std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
-  recycle_stacks_ = std::make_shared<peloton::CuckooMap<
-      oid_t, std::shared_ptr<RecycleStack>>>(INITIAL_MAP_SIZE);
+  immutable_queue_ =
+      std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  compaction_queue_ =
+      std::make_shared<LockFreeQueue<oid_t>>(INITIAL_TG_QUEUE_LENGTH);
+  recycle_stacks_ = std::make_shared<
+      peloton::CuckooMap<oid_t, std::shared_ptr<RecycleStack>>>(
+      INITIAL_MAP_SIZE);
 
   is_running_ = false;
-  tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(settings::SettingId::tile_group_recycling_threshold);
-  tile_group_freeing_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_freeing);
-  tile_group_compaction_ = settings::SettingsManager::GetBool(settings::SettingId::tile_group_compaction);
+  tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(
+      settings::SettingId::tile_group_recycling_threshold);
+  tile_group_freeing_ = settings::SettingsManager::GetBool(
+      settings::SettingId::tile_group_freeing);
+  tile_group_compaction_ = settings::SettingsManager::GetBool(
+      settings::SettingId::tile_group_compaction);
 }
 
-TransactionLevelGCManager&
-TransactionLevelGCManager::GetInstance(const uint32_t &thread_count) {
+TransactionLevelGCManager &TransactionLevelGCManager::GetInstance(
+    const uint32_t &thread_count) {
   static TransactionLevelGCManager gc_manager(thread_count);
   return gc_manager;
 }
-
 
 void TransactionLevelGCManager::StartGC(
     std::vector<std::unique_ptr<std::thread>> &gc_threads) {
@@ -91,20 +102,22 @@ void TransactionLevelGCManager::StartGC(
   gc_threads.resize(gc_thread_count_);
 
   for (uint32_t i = 0; i < gc_thread_count_; ++i) {
-    gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
+    gc_threads[i].reset(
+        new std::thread(&TransactionLevelGCManager::Running, this, i));
   }
 }
 
-void TransactionLevelGCManager::StartGC()  {
+void TransactionLevelGCManager::StartGC() {
   LOG_TRACE("Starting GC");
   is_running_ = true;
 
   for (uint32_t i = 0; i < gc_thread_count_; ++i) {
-    thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
+    thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this,
+                                    std::move(i));
   }
 };
 
-void TransactionLevelGCManager::RegisterTable(const oid_t& table_id) {
+void TransactionLevelGCManager::RegisterTable(const oid_t &table_id) {
   // if table already registered, ignore it
   if (recycle_stacks_->Contains(table_id)) {
     return;
@@ -137,7 +150,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
 
   PELOTON_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
-            storage::TileGroupHeader::GetReservedSize());
+                 storage::TileGroupHeader::GetReservedSize());
 
   // Reclaim the varlen pool
   CheckAndReclaimVarlenColumns(tile_group, location.offset);
@@ -169,7 +182,8 @@ void TransactionLevelGCManager::Running(const uint32_t &thread_id) {
       return;
     }
 
-    if (immutable_count == 0 && reclaimed_count == 0 && unlinked_count == 0 && compaction_count == 0) {
+    if (immutable_count == 0 && reclaimed_count == 0 && unlinked_count == 0 &&
+        compaction_count == 0) {
       // sleep at most 0.8192 s
       if (backoff_shifts < 13) {
         ++backoff_shifts;
@@ -187,12 +201,11 @@ void TransactionLevelGCManager::RecycleTransaction(
     concurrency::TransactionContext *txn) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
 
-  epoch_manager.ExitEpoch(txn->GetThreadId(),
-                          txn->GetEpochId());
+  epoch_manager.ExitEpoch(txn->GetThreadId(), txn->GetEpochId());
 
-  if (!txn->IsReadOnly() && \
-      txn->GetResult() != ResultType::SUCCESS && !txn->IsGCSetEmpty()) {
-        txn->SetEpochId(epoch_manager.GetNextEpochId());
+  if (!txn->IsReadOnly() && txn->GetResult() != ResultType::SUCCESS &&
+      !txn->IsGCSetEmpty()) {
+    txn->SetEpochId(epoch_manager.GetNextEpochId());
   }
 
   // Add the transaction context to the lock-free queue
@@ -200,17 +213,17 @@ void TransactionLevelGCManager::RecycleTransaction(
 }
 
 uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
-                                      const eid_t &expired_eid) {
+                                           const eid_t &expired_eid) {
   uint32_t tuple_counter = 0;
 
   // check if any garbage can be unlinked from indexes.
   // every time we garbage collect at most MAX_PROCESSED_COUNT tuples.
-  std::vector<concurrency::TransactionContext* > garbages;
+  std::vector<concurrency::TransactionContext *> garbages;
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid,
-       this](concurrency::TransactionContext *txn_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid, this](
+          concurrency::TransactionContext *txn_ctx) -> bool {
         bool result = txn_ctx->GetEpochId() <= expired_eid;
         if (result) {
           // unlink versions from version chain and indexes
@@ -232,10 +245,10 @@ uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
     // Log the query into query_history_catalog
     if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-      if(!query_strings.empty()) {
+      if (!query_strings.empty()) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
         auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
-        for(const auto &query_string: query_strings) {
+        for (const auto &query_string : query_strings) {
           pool.SubmitTask([query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);
           });
@@ -283,7 +296,7 @@ uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
 
 // executed by a single thread. so no synchronization is required.
 uint32_t TransactionLevelGCManager::Reclaim(const uint32_t &thread_id,
-                                       const eid_t &expired_eid) {
+                                            const eid_t &expired_eid) {
   uint32_t gc_counter = 0;
 
   // we delete garbage in the free list
@@ -313,9 +326,6 @@ uint32_t TransactionLevelGCManager::Reclaim(const uint32_t &thread_id,
 // Multiple GC threads share the same recycle map
 void TransactionLevelGCManager::RecycleTupleSlots(
     concurrency::TransactionContext *txn_ctx) {
-
-  auto storage_manager = storage::StorageManager::GetInstance();
-
   // for each tile group that this txn created garbage tuples in
   for (auto &entry : *(txn_ctx->GetGCSetPtr().get())) {
     auto tile_group_id = entry.first;
@@ -339,7 +349,8 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   }
 
   oid_t table_id = tile_group->GetTableId();
-  auto table = storage::StorageManager::GetInstance()->GetTableWithOid(tile_group->GetDatabaseId(), table_id);
+  auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+      tile_group->GetDatabaseId(), table_id);
   if (table == nullptr) {
     // Guard against the table being dropped out from under us
     return;
@@ -365,13 +376,13 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto num_recycled = tile_group_header->IncrementRecycled() + 1;
   auto tuples_per_tile_group = table->GetTuplesPerTileGroup();
   bool immutable = tile_group_header->GetImmutability();
-  auto max_recycled = static_cast<size_t>(tuples_per_tile_group * GetTileGroupRecyclingThreshold());
+  auto max_recycled = static_cast<size_t>(tuples_per_tile_group *
+                                          GetTileGroupRecyclingThreshold());
 
-  // check if tile group should no longer be recycled from, and potentially compacted
+  // check if tile group should no longer be recycled from, and potentially
+  // compacted
   if (!immutable && num_recycled >= max_recycled &&
-      !table->IsActiveTileGroup(tile_group_id) &&
-      GetTileGroupFreeing()) {
-
+      !table->IsActiveTileGroup(tile_group_id) && GetTileGroupFreeing()) {
     LOG_TRACE("Setting tile_group %u to immutable", tile_group_id);
     tile_group_header->SetImmutabilityWithoutNotifyingGC();
     LOG_TRACE("Purging tile_group %u recycled slots", tile_group_id);
@@ -395,19 +406,20 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   // if this is the last remaining tuple recycled, free tile group
   if (num_recycled == tuples_per_tile_group && GetTileGroupFreeing()) {
     // Spin here until the other GC threads stop operating on this TileGroup
-    while (tile_group_header->GetGCReaders() > 1);
+    while (tile_group_header->GetGCReaders() > 1)
+      ;
     LOG_TRACE("Dropping tile_group %u", tile_group_id);
     table->DropTileGroup(tile_group_id);
   }
 
   tile_group_header->DecrementGCReaders();
 
-  LOG_TRACE("Recycled tuple slot count for tile_group %u is %zu", tile_group_id, tile_group_header->GetNumRecycled());
+  LOG_TRACE("Recycled tuple slot count for tile_group %u is %zu", tile_group_id,
+            tile_group_header->GetNumRecycled());
 }
 
 void TransactionLevelGCManager::RemoveObjectLevelGarbage(
     concurrency::TransactionContext *txn_ctx) {
-
   // Perform object-level GC (e.g. dropped tables, indexes, databases)
   auto storage_manager = storage::StorageManager::GetInstance();
   for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
@@ -442,7 +454,6 @@ void TransactionLevelGCManager::RemoveObjectLevelGarbage(
 // called by data_table, which passes in a pointer to itself
 ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
     storage::DataTable *table) {
-
   if (table == nullptr) {
     return INVALID_ITEMPOINTER;
   }
@@ -462,8 +473,8 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Reuse tuple(%u, %u) for table %u", location.block,
-            location.offset, table_id);
+  LOG_TRACE("Reuse tuple(%u, %u) for table %u", location.block, location.offset,
+            table_id);
 
   auto tile_group_id = location.block;
 
@@ -509,7 +520,6 @@ void TransactionLevelGCManager::StopGC() {
 
 void TransactionLevelGCManager::RemoveVersionsFromIndexes(
     concurrency::TransactionContext *txn_ctx) {
-
   // for each tile group that this txn created garbage tuples in
   for (auto entry : *(txn_ctx->GetGCSetPtr().get())) {
     auto tile_group_id = entry.first;
@@ -521,13 +531,12 @@ void TransactionLevelGCManager::RemoveVersionsFromIndexes(
       auto gc_type = element.second;
       RemoveVersionFromIndexes(ItemPointer(tile_group_id, offset), gc_type);
     }
-
   }
 }
 
 // unlink garbage tuples and update indexes appropriately (according to gc type)
-void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &location,
-                                                         const GCVersionType &type) {
+void TransactionLevelGCManager::RemoveVersionFromIndexes(
+    const ItemPointer &location, const GCVersionType &type) {
   // get indirection from the indirection array.
   auto tile_group =
       storage::StorageManager::GetInstance()->GetTileGroup(location.block);
@@ -546,9 +555,11 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     return;
   }
 
-  ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(), location.offset);
+  ContainerTuple<storage::TileGroup> current_tuple(tile_group.get(),
+                                                   location.offset);
 
-  auto table = dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+  auto table =
+      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   if (table == nullptr) {
     // guard against table being GC'd by another GC thread
     return;
@@ -561,16 +572,19 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     // secondary indexes are built on, then we need to delete this old version
     // from those secondary indexes
     ContainerTuple<storage::TileGroup> older_tuple(tile_group.get(),
-                                                     location.offset);
+                                                   location.offset);
 
-    ItemPointer newer_location = tile_group_header->GetPrevItemPointer(location.offset);
+    ItemPointer newer_location =
+        tile_group_header->GetPrevItemPointer(location.offset);
 
     if (newer_location == INVALID_ITEMPOINTER) {
       return;
     }
 
-    auto newer_tile_group = catalog::Manager::GetInstance().GetTileGroup(newer_location.block);
-    ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(), newer_location.offset);
+    auto newer_tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(newer_location.block);
+    ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(),
+                                                   newer_location.offset);
     // remove the older version from all the indexes
     // where it no longer matches the newer version
     for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -580,10 +594,12 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
       auto indexed_columns = index_schema->GetIndexedColumns();
 
       // build keys
-      std::unique_ptr<storage::Tuple> older_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> older_key(
+          new storage::Tuple(index_schema, true));
       older_key->SetFromTuple(&older_tuple, indexed_columns, index->GetPool());
-      std::unique_ptr<storage::Tuple> newer_key(new storage::Tuple(index_schema, true));
-      newer_key->SetFromTuple(&newer_tuple, indexed_columns,index->GetPool());
+      std::unique_ptr<storage::Tuple> newer_key(
+          new storage::Tuple(index_schema, true));
+      newer_key->SetFromTuple(&newer_tuple, indexed_columns, index->GetPool());
 
       // if older_key is different, delete it from index
       if (newer_key->Compare(*older_key) != 0) {
@@ -595,7 +611,8 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     // if the version differs from the previous one in some columns where
     // secondary indexes are built on, then we need to unlink this version
     // from the secondary index.
-    ContainerTuple<storage::TileGroup> newer_tuple(tile_group.get(), location.offset);
+    ContainerTuple<storage::TileGroup> newer_tuple(tile_group.get(),
+                                                   location.offset);
 
     ItemPointer older_location =
         tile_group_header->GetNextItemPointer(location.offset);
@@ -604,8 +621,10 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
       return;
     }
 
-    auto older_tile_group = catalog::Manager::GetInstance().GetTileGroup(older_location.block);
-    ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(), older_location.offset);
+    auto older_tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(older_location.block);
+    ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(),
+                                                   older_location.offset);
     // remove the newer version from all the indexes
     // where it no longer matches the older version
     for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -615,9 +634,11 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
       auto indexed_columns = index_schema->GetIndexedColumns();
 
       // build keys
-      std::unique_ptr<storage::Tuple> older_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> older_key(
+          new storage::Tuple(index_schema, true));
       older_key->SetFromTuple(&older_tuple, indexed_columns, index->GetPool());
-      std::unique_ptr<storage::Tuple> newer_key(new storage::Tuple(index_schema, true));
+      std::unique_ptr<storage::Tuple> newer_key(
+          new storage::Tuple(index_schema, true));
       newer_key->SetFromTuple(&newer_tuple, indexed_columns, index->GetPool());
 
       // if newer_key is different, delete it from index
@@ -632,9 +653,9 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-              type == GCVersionType::COMMIT_INS_DEL ||
-              type == GCVersionType::ABORT_INS_DEL ||
-              type == GCVersionType::COMMIT_DELETE);
+                   type == GCVersionType::COMMIT_INS_DEL ||
+                   type == GCVersionType::ABORT_INS_DEL ||
+                   type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
@@ -654,13 +675,13 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(const ItemPointer &loca
   }
 }
 
-inline unsigned int
-TransactionLevelGCManager::HashToThread(const size_t &thread_id) {
+inline unsigned int TransactionLevelGCManager::HashToThread(
+    const size_t &thread_id) {
   return (unsigned int)thread_id % gc_thread_count_;
 }
 
-std::shared_ptr<RecycleStack>
-TransactionLevelGCManager::GetTableRecycleStack(const oid_t &table_id) const {
+std::shared_ptr<RecycleStack> TransactionLevelGCManager::GetTableRecycleStack(
+    const oid_t &table_id) const {
   std::shared_ptr<RecycleStack> recycle_stack;
   if (recycle_stacks_->Find(table_id, recycle_stack)) {
     return recycle_stack;
@@ -679,7 +700,8 @@ uint32_t TransactionLevelGCManager::ProcessImmutableQueue() {
       break;
     }
 
-    auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
       continue;
     }
@@ -696,11 +718,13 @@ uint32_t TransactionLevelGCManager::ProcessImmutableQueue() {
   return num_processed;
 }
 
-void TransactionLevelGCManager::AddToImmutableQueue(const oid_t &tile_group_id) {
+void TransactionLevelGCManager::AddToImmutableQueue(
+    const oid_t &tile_group_id) {
   immutable_queue_->Enqueue(tile_group_id);
 }
 
-void TransactionLevelGCManager::AddToCompactionQueue(const oid_t &tile_group_id) {
+void TransactionLevelGCManager::AddToCompactionQueue(
+    const oid_t &tile_group_id) {
   compaction_queue_->Enqueue(tile_group_id);
 }
 

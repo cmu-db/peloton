@@ -40,7 +40,8 @@ Database::~Database() {
 // TABLE
 //===----------------------------------------------------------------------===//
 
-void Database::AddTable(storage::DataTable *table, bool is_catalog UNUSED_ATTRIBUTE) {
+void Database::AddTable(storage::DataTable *table,
+                        bool is_catalog UNUSED_ATTRIBUTE) {
   std::lock_guard<std::mutex> lock(database_mutex);
   tables.push_back(table);
 }

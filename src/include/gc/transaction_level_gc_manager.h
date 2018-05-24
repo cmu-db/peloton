@@ -38,9 +38,7 @@ static constexpr size_t INITIAL_MAP_SIZE = 256;
 static constexpr size_t MAX_PROCESSED_COUNT = 100000;
 
 class TransactionLevelGCManager : public GCManager {
-
  public:
-
   /**
    * @brief TransactionLevelGCManager should be created with GetInstance()
    */
@@ -60,7 +58,8 @@ class TransactionLevelGCManager : public GCManager {
    * @param[in] thread_count Number of Garbage Collector threads
    * @return Singleton instance of the TransactionLevelGCManager
    */
-  static TransactionLevelGCManager &GetInstance(const uint32_t &thread_count = 1);
+  static TransactionLevelGCManager &GetInstance(
+      const uint32_t &thread_count = 1);
 
   virtual void StartGC(
       std::vector<std::unique_ptr<std::thread>> &gc_threads) override;
@@ -104,7 +103,8 @@ class TransactionLevelGCManager : public GCManager {
   /**
    * @brief Attempt to get a recycled ItemPointer for this table from the GC
    * @param[in] table Pointer of the table to return a recycled ItemPointer for
-   * @return ItemPointer to a recycled tuple slot on success, INVALID_ITEMPOINTER
+   * @return ItemPointer to a recycled tuple slot on success,
+   * INVALID_ITEMPOINTER
    * otherwise
    */
   virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
@@ -154,35 +154,45 @@ class TransactionLevelGCManager : public GCManager {
 
   /**
    * @brief Override the GC recycling threshold from settings.h
-   * @param[in] threshold The ratio of recycled tuples in a TileGroup before stopping recycling
+   * @param[in] threshold The ratio of recycled tuples in a TileGroup before
+   * stopping recycling
    */
-  virtual void SetTileGroupRecyclingThreshold(const double &threshold) override { tile_group_recycling_threshold_ = threshold; }
+  virtual void SetTileGroupRecyclingThreshold(
+      const double &threshold) override {
+    tile_group_recycling_threshold_ = threshold;
+  }
 
   /**
    * @brief The current GC recycling threshold
-   * @return The ratio of recycled tuples in a TileGroup before stopping recycling
+   * @return The ratio of recycled tuples in a TileGroup before stopping
+   * recycling
    */
-  virtual double GetTileGroupRecyclingThreshold() const override { return tile_group_recycling_threshold_; }
+  virtual double GetTileGroupRecyclingThreshold() const override {
+    return tile_group_recycling_threshold_;
+  }
 
   /**
    * @brief Override the GC TileGroup freeing setting from settings.h
    * @param[in] free True to set GC to free TileGroups, false otherwise
    */
-  virtual void SetTileGroupFreeing(const bool &free) override { tile_group_freeing_ = free; }
+  virtual void SetTileGroupFreeing(const bool &free) override {
+    tile_group_freeing_ = free;
+  }
 
   /**
    * @brief The current GC TileGroup freeing setting
    * @return True if the GC is set to free TileGroups
    */
-  virtual bool GetTileGroupFreeing() const override {return tile_group_freeing_; }
+  virtual bool GetTileGroupFreeing() const override {
+    return tile_group_freeing_;
+  }
 
   /**
    * @brief Override the GC TileGroup compaction setting from settings.h
    * @param[in] compact True to set GC to compact TileGroups, false otherwise
    * @warning Setting to true expects TileGroupFreeing to be set to true first
    */
-  virtual void SetTileGroupCompaction(const bool &compact) override
-  {
+  virtual void SetTileGroupCompaction(const bool &compact) override {
     tile_group_compaction_ = compact;
     if (tile_group_compaction_) {
       PELOTON_ASSERT(tile_group_freeing_);
@@ -193,7 +203,9 @@ class TransactionLevelGCManager : public GCManager {
    * @brief The current GC TileGroup compaction setting
    * @return True if the GC is set to compact TileGroups
    */
-  virtual bool GetTileGroupCompaction() const override {return tile_group_compaction_; }
+  virtual bool GetTileGroupCompaction() const override {
+    return tile_group_compaction_;
+  }
 
   /**
    * @brief Unlink and reclaim the objects currently in queues
@@ -220,7 +232,7 @@ class TransactionLevelGCManager : public GCManager {
    * @return Number of TileGroups processed
    */
   uint32_t ProcessCompactionQueue();
-  
+
  private:
   TransactionLevelGCManager(const uint32_t &thread_count);
 
@@ -232,8 +244,8 @@ class TransactionLevelGCManager : public GCManager {
    * @return Smart pointer to the RecycleStack for the provided table.
    * May be nullptr if the table is not registered with the GC
    */
-  std::shared_ptr<RecycleStack>
-  GetTableRecycleStack(const oid_t &table_id) const;
+  std::shared_ptr<RecycleStack> GetTableRecycleStack(
+      const oid_t &table_id) const;
 
   inline unsigned int HashToThread(const size_t &thread_id);
 
@@ -277,9 +289,10 @@ class TransactionLevelGCManager : public GCManager {
    * @param[in] location ItemPointer to garbage tuple to be processed
    * @param[in] type GCVersionType for the provided garbage tuple
    */
-  void RemoveVersionFromIndexes(const ItemPointer &location, const GCVersionType &type);
+  void RemoveVersionFromIndexes(const ItemPointer &location,
+                                const GCVersionType &type);
 
- //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
   uint32_t gc_thread_count_;
@@ -312,8 +325,8 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues for to-be-reused tuples.
   // oid_t here is global DataTable oid
-  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<
-      RecycleStack>>> recycle_stacks_;
+  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<RecycleStack>>>
+      recycle_stacks_;
 };
 }
 }  // namespace peloton

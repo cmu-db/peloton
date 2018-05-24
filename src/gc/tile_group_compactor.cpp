@@ -27,18 +27,18 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
   auto pause_time = minPauseTime;
 
   while (attempts < max_attempts) {
-
-    auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
       LOG_TRACE("tile_group %u no longer exists", tile_group_id);
-      return; // this tile group no longer exists
+      return;  // this tile group no longer exists
     }
 
     storage::DataTable *table =
         dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
 
     if (table == nullptr) {
-      return; // this table no longer exists
+      return;  // this table no longer exists
     }
     bool success = MoveTuplesOutOfTileGroup(table, tile_group);
 
@@ -47,7 +47,8 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
       return;
     }
 
-    LOG_TRACE("Moving tuples out of tile_group %u failed, retrying...", tile_group_id);
+    LOG_TRACE("Moving tuples out of tile_group %u failed, retrying...",
+              tile_group_id);
     // Otherwise, transaction failed, so we'll retry with exponential backoff
     std::this_thread::sleep_for(pause_time);
     pause_time = std::min(pause_time * 2, maxPauseTime);
@@ -56,7 +57,6 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
 bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     storage::DataTable *table, std::shared_ptr<storage::TileGroup> tile_group) {
-
   auto tile_group_id = tile_group->GetTileGroupId();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -82,13 +82,13 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
                                std::move(direct_map_list)));
 
   // Update tuples in the given tile group
-  for (oid_t physical_tuple_id = 0; physical_tuple_id < tile_group->GetAllocatedTupleCount(); physical_tuple_id++) {
-
+  for (oid_t physical_tuple_id = 0;
+       physical_tuple_id < tile_group->GetAllocatedTupleCount();
+       physical_tuple_id++) {
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
     auto visibility = txn_manager.IsVisible(
-        txn, tile_group_header, physical_tuple_id,
-        VisibilityIdType::COMMIT_ID);
+        txn, tile_group_header, physical_tuple_id, VisibilityIdType::COMMIT_ID);
     if (visibility != VisibilityType::OK) {
       // ignore garbage tuples because they don't prevent tile group freeing
       continue;
@@ -96,8 +96,8 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
 
     LOG_TRACE("Moving Physical Tuple id : %u ", physical_tuple_id);
 
-    bool is_ownable = txn_manager.IsOwnable(
-            txn, tile_group_header, physical_tuple_id);
+    bool is_ownable =
+        txn_manager.IsOwnable(txn, tile_group_header, physical_tuple_id);
     if (!is_ownable) {
       LOG_TRACE("Failed to move tuple. Not ownable.");
       txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
@@ -108,8 +108,7 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     // if the tuple is not owned by any transaction and is visible to
     // current transaction, we'll try to move it to a new tile group
     bool acquired_ownership =
-        txn_manager.AcquireOwnership(txn, tile_group_header,
-                                                 physical_tuple_id);
+        txn_manager.AcquireOwnership(txn, tile_group_header, physical_tuple_id);
     if (!acquired_ownership) {
       LOG_TRACE("Failed to move tuple. Could not acquire ownership of tuple.");
       txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
@@ -119,13 +118,15 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
 
     // check again now that we have ownsership
     // to ensure that this is stil the latest version
-    bool is_latest_version = tile_group_header->GetPrevItemPointer(physical_tuple_id).IsNull();
+    bool is_latest_version =
+        tile_group_header->GetPrevItemPointer(physical_tuple_id).IsNull();
     if (is_latest_version == false) {
-      // if a tuple is not the latest version, then there's no point in moving it
-      // this also does not conflict with our compaction operation, so don't abort
+      // if a tuple is not the latest version, then there's no point in moving
+      // it
+      // this also does not conflict with our compaction operation, so don't
+      // abort
       LOG_TRACE("Skipping tuple, not latest version.");
-      txn_manager.YieldOwnership(txn, tile_group_header,
-                                         physical_tuple_id);
+      txn_manager.YieldOwnership(txn, tile_group_header, physical_tuple_id);
       continue;
     }
 
@@ -140,9 +141,9 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
 
     ContainerTuple<storage::TileGroup> old_tuple(tile_group.get(),
                                                  physical_tuple_id);
-    
+
     project_info->Evaluate(&new_tuple, &old_tuple, nullptr,
-                            executor_context.get());
+                           executor_context.get());
 
     LOG_TRACE("perform move old location: %u, %u", old_location.block,
               old_location.offset);

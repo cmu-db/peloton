@@ -221,8 +221,8 @@ void TestingTransactionUtil::AddSecondaryIndex(storage::DataTable *table) {
   key_schema->SetIndexedColumns(key_attrs);
   auto index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
-      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
-      key_schema, key_attrs, unique);
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema, key_schema,
+      key_attrs, unique);
 
   std::shared_ptr<index::Index> secondary_key_index(
       index::IndexFactory::GetIndex(index_metadata2));
@@ -475,7 +475,8 @@ bool TestingTransactionUtil::ExecuteScan(
   return true;
 }
 
-ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table, const int key) {
+ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table,
+                                               const int key) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -487,7 +488,8 @@ ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table, const 
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table, const int key) {
+ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table,
+                                               const int key) {
   srand(15721);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -499,10 +501,11 @@ ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table, const 
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table, const size_t num_tuples) {
+ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table,
+                                                    const size_t num_tuples) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=0; i < num_tuples; i++) {
+  for (size_t i = 0; i < num_tuples; i++) {
     scheduler.Txn(0).Insert(i, i);
   }
   scheduler.Txn(0).Commit();
@@ -511,10 +514,11 @@ ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table, c
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples) {
+ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table,
+                                                    const size_t num_tuples) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  for (size_t i=0; i < num_tuples; i++) {
+  for (size_t i = 0; i < num_tuples; i++) {
     scheduler.Txn(0).Delete(i, false);
   }
   scheduler.Txn(0).Commit();
@@ -523,7 +527,8 @@ ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table, c
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType TestingTransactionUtil::DeleteTuple(storage::DataTable *table, const int key) {
+ResultType TestingTransactionUtil::DeleteTuple(storage::DataTable *table,
+                                               const int key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Delete(key);
@@ -533,8 +538,9 @@ ResultType TestingTransactionUtil::DeleteTuple(storage::DataTable *table, const 
   return scheduler.schedules[0].txn_result;
 }
 
-ResultType TestingTransactionUtil::SelectTuple(storage::DataTable *table, const int key,
-                       std::vector<int> &results) {
+ResultType TestingTransactionUtil::SelectTuple(storage::DataTable *table,
+                                               const int key,
+                                               std::vector<int> &results) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
   scheduler.Txn(0).Read(key);
@@ -546,5 +552,5 @@ ResultType TestingTransactionUtil::SelectTuple(storage::DataTable *table, const 
   return scheduler.schedules[0].txn_result;
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

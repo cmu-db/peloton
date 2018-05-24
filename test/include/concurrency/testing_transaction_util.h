@@ -160,17 +160,16 @@ class TestingTransactionUtil {
 
   static ResultType InsertTuple(storage::DataTable *table, const int key);
 
-  static ResultType BulkInsertTuples(storage::DataTable *table, const size_t num_tuples);
+  static ResultType BulkInsertTuples(storage::DataTable *table,
+                                     const size_t num_tuples);
 
-  static ResultType BulkDeleteTuples(storage::DataTable *table, const size_t num_tuples);
+  static ResultType BulkDeleteTuples(storage::DataTable *table,
+                                     const size_t num_tuples);
 
   static ResultType DeleteTuple(storage::DataTable *table, const int key);
 
   static ResultType SelectTuple(storage::DataTable *table, const int key,
-                                                 std::vector<int> &results);
-
-
-
+                                std::vector<int> &results);
 };
 
 struct TransactionOperation {

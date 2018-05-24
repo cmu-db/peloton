@@ -254,16 +254,15 @@ class TileGroupHeader : public Printable {
     bool expected = false;
     return immutable_.compare_exchange_strong(expected, true);
   }
-  
-  
+
   /**
    * @brief Uses Compare and Swap to set the TileGroup's
    * immutable flag to be false
-   * 
+   *
    * @warning This should only be used for testing purposes because it violates
    * a constraint of Zone Maps and the Garbage Collector that a TileGroup's
    * immutability will never change after being set to true
-   * 
+   *
    * @return Result of CAS
    */
   inline bool ResetImmutability() {
@@ -344,13 +343,15 @@ class TileGroupHeader : public Printable {
 
   common::synchronization::SpinLatch tile_header_lock;
 
-  // Immmutable Flag. Should only be set to true when a TileGroup has used up all of its initial slots
+  // Immmutable Flag. Should only be set to true when a TileGroup has used up
+  // all of its initial slots
   // By default it will be set to false.
   std::atomic<bool> immutable_;
 
   // metadata used by the garbage collector to recycle tuples
-  std::atomic<size_t> num_recycled_; // num empty tuple slots available for reuse
-  std::atomic<size_t> num_gc_readers_; // used as a semaphor by GC
+  std::atomic<size_t>
+      num_recycled_;  // num empty tuple slots available for reuse
+  std::atomic<size_t> num_gc_readers_;  // used as a semaphor by GC
 };
 
 }  // namespace storage
