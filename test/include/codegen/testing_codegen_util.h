@@ -6,7 +6,7 @@
 //
 // Identification: test/include/codegen/testing_codegen_util.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,11 +40,22 @@ using ConstExpressionPtr =
 using PlanPtr = std::unique_ptr<planner::AbstractPlan>;
 using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
 
-//===----------------------------------------------------------------------===//
-// Common base class for all codegen tests. This class four test tables that all
-// the codegen components use. Their ID's are available through the oid_t
-// enumeration.
-//===----------------------------------------------------------------------===//
+/**
+ * This is a scoped file handle that automatically deletes/removes the file
+ * with the given name when the class goes out of scope and the destructor is
+ * called.
+ */
+struct TempFileHandle {
+  std::string name;
+  TempFileHandle(std::string _name);
+  ~TempFileHandle();
+};
+
+/**
+ * Common base class for all codegen tests. This class four test tables that all
+ * the codegen components use. Their ID's are available through the oid_t
+ * enumeration.
+ */
 class PelotonCodeGenTest : public PelotonTest {
  public:
   std::string test_db_name = "peloton_codegen";

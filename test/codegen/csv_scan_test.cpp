@@ -32,12 +32,6 @@ struct State {
   CallbackFn callback;
 };
 
-struct TempFileHandle {
-  std::string name;
-  TempFileHandle(std::string _name) : name(_name) {}
-  ~TempFileHandle() { boost::filesystem::remove(name); }
-};
-
 void CSVRowCallback(void *s) {
   auto *state = reinterpret_cast<State *>(s);
   state->callback(state->scanner->GetColumns());
