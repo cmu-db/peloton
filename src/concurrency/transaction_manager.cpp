@@ -76,8 +76,8 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   }
 
   // log RWSet and result stats
-  const auto &stats_type = static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode));
+  const auto &stats_type = static_cast<StatsType>(
+      settings::SettingsManager::GetInt(settings::SettingId::stats_mode));
 
   // update stats
   if (stats_type != StatsType::INVALID) {
@@ -248,10 +248,10 @@ VisibilityType TransactionManager::IsVisible(
   }
 }
 
-
-void TransactionManager::RecordTransactionStats(const TransactionContext * const current_txn) const {
+void TransactionManager::RecordTransactionStats(
+    const TransactionContext *const current_txn) const {
   PELOTON_ASSERT(static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID);
+                     settings::SettingId::stats_mode)) != StatsType::INVALID);
 
   auto stats_context = stats::BackendStatsContext::GetInstance();
   const auto &rw_set = current_txn->GetReadWriteSet();
@@ -278,7 +278,8 @@ void TransactionManager::RecordTransactionStats(const TransactionContext * const
         stats_context->IncrementTableInserts(tile_group_id);
         stats_context->IncrementTableDeletes(tile_group_id);
         break;
-      default:break;
+      default:
+        break;
     }
   }
 
@@ -288,8 +289,9 @@ void TransactionManager::RecordTransactionStats(const TransactionContext * const
     // Call the GetConstIterator() function to explicitly lock the cuckoohash
     // and initilaize the iterator
     const auto &tile_group_id = tuple_entry.first.block;
-    database_id = catalog::Manager::GetInstance().
-        GetTileGroup(tile_group_id)->GetDatabaseId();
+    database_id = catalog::Manager::GetInstance()
+                      .GetTileGroup(tile_group_id)
+                      ->GetDatabaseId();
     if (database_id != CATALOG_DATABASE_OID) {
       break;
     }
@@ -297,16 +299,21 @@ void TransactionManager::RecordTransactionStats(const TransactionContext * const
 
   // update transaction result stat
   switch (current_txn->GetResult()) {
-    case ResultType::ABORTED:stats_context->IncrementTxnAborted(database_id);
+    case ResultType::ABORTED:
+      stats_context->IncrementTxnAborted(database_id);
       break;
-    case ResultType::SUCCESS:stats_context->IncrementTxnCommitted(database_id);
+    case ResultType::SUCCESS:
+      stats_context->IncrementTxnCommitted(database_id);
       break;
-    default:break;
+    default:
+      break;
   }
 
   // update latency results using txn timestamp instead of LatencyMetric timer
   // divide by 1000 to get to ms
-  auto txn_latency = static_cast<double>(function::DateFunctions::Now() - current_txn->GetTimestamp()) / 1000;
+  auto txn_latency = static_cast<double>(function::DateFunctions::Now() -
+                                         current_txn->GetTimestamp()) /
+                     1000;
   stats_context->GetTxnLatencyMetric().RecordLatency(txn_latency);
 }
 
