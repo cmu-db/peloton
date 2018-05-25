@@ -203,7 +203,7 @@ class TransactionContext : public Printable {
    *
    * @return     The read write set.
    */
-  inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
+  inline const ReadWriteSet &GetReadWriteSet() const { return rw_set_; }
   inline const CreateDropSet &GetCreateDropSet() { return rw_object_set_; }
 
   /**

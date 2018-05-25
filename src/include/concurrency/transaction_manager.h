@@ -233,7 +233,16 @@ class TransactionManager {
    */
   void EndTransaction(TransactionContext *current_txn);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn) = 0;
+  /**
+   * @brief     Record transaction results
+   * @param[in] current_txn     The current transaction
+   * @warning   Assumes stats_mode != INVALID
+   */
+  void RecordTransactionStats(
+      const TransactionContext *const current_txn) const;
+
+  virtual ResultType CommitTransaction(
+      TransactionContext *const current_txn) = 0;
 
   virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
 

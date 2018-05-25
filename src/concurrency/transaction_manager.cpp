@@ -64,13 +64,6 @@ TransactionContext *TransactionManager::BeginTransaction(
     txn->SetReadOnly();
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .StartTimer();
-  }
-
   txn->SetTimestamp(function::DateFunctions::Now());
 
   return txn;
@@ -82,21 +75,23 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
+  // log RWSet and result stats
+  const auto &stats_type = static_cast<StatsType>(
+      settings::SettingsManager::GetInt(settings::SettingId::stats_mode));
+
+  // update stats
+  if (stats_type != StatsType::INVALID) {
+    RecordTransactionStats(current_txn);
+  }
+
+  // pass transaction context to garbage collector
+  if (gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
     gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   } else {
     delete current_txn;
   }
 
   current_txn = nullptr;
-
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .RecordLatency();
-
-  }
 }
 
 // this function checks whether a concurrent transaction is inserting the same
@@ -251,6 +246,75 @@ VisibilityType TransactionManager::IsVisible(
       }
     }
   }
+}
+
+void TransactionManager::RecordTransactionStats(
+    const TransactionContext *const current_txn) const {
+  PELOTON_ASSERT(static_cast<StatsType>(settings::SettingsManager::GetInt(
+                     settings::SettingId::stats_mode)) != StatsType::INVALID);
+
+  auto stats_context = stats::BackendStatsContext::GetInstance();
+  const auto &rw_set = current_txn->GetReadWriteSet();
+
+  // update counters for each element in the RWSet
+  for (const auto &element : rw_set) {
+    const auto &tile_group_id = element.first.block;
+    const auto &rw_type = element.second;
+    switch (rw_type) {
+      case RWType::READ:
+      case RWType::READ_OWN:
+        stats_context->IncrementTableReads(tile_group_id);
+        break;
+      case RWType::UPDATE:
+        stats_context->IncrementTableUpdates(tile_group_id);
+        break;
+      case RWType::INSERT:
+        stats_context->IncrementTableInserts(tile_group_id);
+        break;
+      case RWType::DELETE:
+        stats_context->IncrementTableDeletes(tile_group_id);
+        break;
+      case RWType::INS_DEL:
+        stats_context->IncrementTableInserts(tile_group_id);
+        stats_context->IncrementTableDeletes(tile_group_id);
+        break;
+      default:
+        break;
+    }
+  }
+
+  // get database_id from RWSet
+  oid_t database_id = 0;
+  for (const auto &tuple_entry : rw_set) {
+    // Call the GetConstIterator() function to explicitly lock the cuckoohash
+    // and initilaize the iterator
+    const auto &tile_group_id = tuple_entry.first.block;
+    database_id = catalog::Manager::GetInstance()
+                      .GetTileGroup(tile_group_id)
+                      ->GetDatabaseId();
+    if (database_id != CATALOG_DATABASE_OID) {
+      break;
+    }
+  }
+
+  // update transaction result stat
+  switch (current_txn->GetResult()) {
+    case ResultType::ABORTED:
+      stats_context->IncrementTxnAborted(database_id);
+      break;
+    case ResultType::SUCCESS:
+      stats_context->IncrementTxnCommitted(database_id);
+      break;
+    default:
+      break;
+  }
+
+  // update latency results using txn timestamp instead of LatencyMetric timer
+  // divide by 1000 to get to ms
+  auto txn_latency = static_cast<double>(function::DateFunctions::Now() -
+                                         current_txn->GetTimestamp()) /
+                     1000;
+  stats_context->GetTxnLatencyMetric().RecordLatency(txn_latency);
 }
 
 }  // namespace concurrency
