@@ -946,7 +946,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
     EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
     // capture memory usage
-    LOG_DEBUG("Round %d: tile_group_count_after_insert: %zu", round,
+    LOG_DEBUG("Round %d: tile_group_count_after_insert: %u", round,
               manager.GetNumLiveTileGroups());
 
     epoch_manager.SetCurrentEpochId(++current_eid);
@@ -957,7 +957,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
         TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts);
     EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
-    LOG_DEBUG("Round %d: tile_group_count_after_delete: %zu", round,
+    LOG_DEBUG("Round %d: tile_group_count_after_delete: %u", round,
               manager.GetNumLiveTileGroups());
 
     epoch_manager.SetCurrentEpochId(++current_eid);
