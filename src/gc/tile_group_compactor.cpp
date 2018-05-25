@@ -26,7 +26,7 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
   auto pause_time = minPauseTime;
 
-  while (attempts < max_attempts) {
+  while (attempts < max_attempts && threadpool::MonoQueuePool::GetInstance().IsRunning()) {
     auto tile_group =
         catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {

@@ -123,6 +123,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   LOG_DEBUG("tile_group_count_after_gc: %zu", tile_group_count_after_gc);
   EXPECT_EQ(tile_group_count_after_gc, tile_group_count_after_init);
 
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
 
@@ -213,6 +214,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   LOG_DEBUG("tile_group_count_after_gc: %zu", tile_group_count_after_gc);
   EXPECT_EQ(tile_group_count_after_delete, tile_group_count_after_gc);
 
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
 
@@ -328,6 +330,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "db");
   epoch_manager.SetCurrentEpochId(++current_epoch);
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -412,6 +415,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
 
   TestingExecutorUtil::DeleteDatabase(test_name + "db");
   epoch_manager.SetCurrentEpochId(++current_epoch);
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -493,6 +497,7 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
   table.release();
   TestingExecutorUtil::DeleteDatabase(test_name + "db");
   epoch_manager.SetCurrentEpochId(++current_epoch);
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
   EXPECT_FALSE(storage_manager->HasDatabase(db_id));
