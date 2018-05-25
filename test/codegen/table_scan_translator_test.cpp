@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -712,7 +713,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   /////////////////////////////////////////////////////////
   // Reset default_layout_ to LayoutType::COLUMN
   /////////////////////////////////////////////////////////
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   table->ResetDefaultLayout(LayoutType::COLUMN);
   catalog->GetSystemCatalogs(table->GetDatabaseOid())->GetTableCatalog()
   		->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),

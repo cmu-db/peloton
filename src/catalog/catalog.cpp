@@ -397,7 +397,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   auto default_layout = table->GetDefaultLayout();
   if (!pg_layout->InsertLayout(table_oid, default_layout, pool_.get(), txn))
     throw CatalogException("Failed to create a new layout for table "
-    		+ table_oid);
+    		+ table_name);
 
   return ResultType::SUCCESS;
 }
