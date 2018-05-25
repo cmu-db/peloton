@@ -190,8 +190,9 @@ class TransactionManager {
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(TransactionContext *const current_txn,
-                           const ItemPointer &location,
-                           bool acquire_ownership = false) = 0;
+                             const ItemPointer &location,
+                             storage::TileGroupHeader *tile_group_header,
+                             bool acquire_ownership) = 0;
 
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
