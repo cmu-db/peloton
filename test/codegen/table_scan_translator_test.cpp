@@ -712,7 +712,12 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   /////////////////////////////////////////////////////////
   // Reset default_layout_ to LayoutType::COLUMN
   /////////////////////////////////////////////////////////
+  auto txn = txn_manager.BeginTransaction();
   table->ResetDefaultLayout(LayoutType::COLUMN);
+  catalog->GetSystemCatalogs(table->GetDatabaseOid())->GetTableCatalog()
+  		->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),
+                               table->GetOid(), txn);
+  txn_manager.EndTransaction(txn);
 
   /////////////////////////////////////////////////////////
   // Load in 100 tuples

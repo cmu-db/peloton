@@ -169,22 +169,22 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   // pg_database record is shared across different databases
   system_catalogs->GetTableCatalog()->InsertTable(
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      CATALOG_DATABASE_OID, pool_.get(), txn);
+      CATALOG_DATABASE_OID, 0, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, 0, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      pool_.get(), txn);
+			0, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      pool_.get(), txn);
+			0, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, 0, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, 0, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
@@ -368,13 +368,14 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 
   // Update pg_table with table info
   pg_table->InsertTable(table_oid, table_name, schema_name,
-                        database_object->GetDatabaseOid(), pool_.get(), txn);
+                        database_object->GetDatabaseOid(),
+												table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
   oid_t column_id = 0;
   for (const auto &column : table->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool_.get(), txn);
+                               column.GetLength(), column.IsInlined(),
+															 column.GetConstraints(), pool_.get(), txn);
 
     // Create index on unique single column
     if (column.IsUnique()) {
@@ -611,6 +612,10 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
     auto database = storage_manager->GetDatabaseWithOid(database_oid);
     auto table = database->GetTableWithOid(table_oid);
     table->SetDefaultLayout(new_layout);
+
+    // update table catalog
+    catalog_map_[database_oid]->GetTableCatalog()
+    		->UpdateDefaultLayoutOid(new_layout->GetOid(), table_oid, txn);
   }
   return new_layout;
 }
@@ -854,6 +859,10 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
       LOG_DEBUG("Failed to create a new layout for table %d", table_oid);
       return ResultType::FAILURE;
     }
+
+    // update table catalog
+    catalog_map_[database_oid]->GetTableCatalog()
+    		->UpdateDefaultLayoutOid(new_default_layout->GetOid(), table_oid, txn);
   }
 
   return ResultType::SUCCESS;

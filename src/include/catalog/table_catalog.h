@@ -93,6 +93,7 @@ class TableCatalogObject {
   inline const std::string &GetSchemaName() { return schema_name; }
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
+  inline oid_t GetDefaultLayoutOid() { return default_layout_oid; }
 
  private:
   // member variables
@@ -101,6 +102,7 @@ class TableCatalogObject {
   std::string schema_name;
   oid_t database_oid;
   uint32_t version_id;
+  oid_t default_layout_oid;
 
   // Get index objects
   bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
@@ -162,12 +164,15 @@ class TableCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertTable(oid_t table_oid, const std::string &table_name,
                    const std::string &schema_name, oid_t database_oid,
-                   type::AbstractPool *pool,
+                   oid_t layout_oid, type::AbstractPool *pool,
                    concurrency::TransactionContext *txn);
   bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
 
   bool UpdateVersionId(oid_t update_val, oid_t table_oid,
                        concurrency::TransactionContext *txn);
+
+  bool UpdateDefaultLayoutOid(oid_t update_val, oid_t table_oid,
+                              concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read Related API
@@ -189,9 +194,10 @@ class TableCatalog : public AbstractCatalog {
     SCHEMA_NAME = 2,
     DATABASE_OID = 3,
     VERSION_ID = 4,
+		DEFAULT_LAYOUT_OID = 5,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
 
   enum IndexId {
     PRIMARY_KEY = 0,

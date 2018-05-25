@@ -41,12 +41,15 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                        .GetAs<oid_t>()),
       version_id(tile->GetValue(tupleId, TableCatalog::ColumnId::VERSION_ID)
                      .GetAs<uint32_t>()),
+      default_layout_oid(tile->GetValue(tupleId,
+      		TableCatalog::ColumnId::DEFAULT_LAYOUT_OID).GetAs<oid_t>()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
       column_objects(),
       column_names(),
       valid_column_objects(false),
+			valid_layout_objects_(false),
       txn(txn) {}
 
 /* @brief   insert index catalog object into cache
@@ -451,9 +454,15 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   version_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
+  auto default_layout_id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "default_layout_oid", true);
+  default_layout_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
       {table_id_column, table_name_column, schema_name_column,
-       database_id_column, version_id_column}));
+       database_id_column, version_id_column, default_layout_id_column}));
 
   return table_catalog_schema;
 }
@@ -467,7 +476,8 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                const std::string &schema_name,
-                               oid_t database_oid, type::AbstractPool *pool,
+                               oid_t database_oid, oid_t layout_oid,
+															 type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -478,12 +488,14 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
   auto val2 = type::ValueFactory::GetVarcharValue(schema_name, nullptr);
   auto val3 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val4 = type::ValueFactory::GetIntegerValue(0);
+  auto val5 = type::ValueFactory::GetIntegerValue(layout_oid);
 
   tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
   tuple->SetValue(TableCatalog::ColumnId::SCHEMA_NAME, val2, pool);
   tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val3, pool);
   tuple->SetValue(TableCatalog::ColumnId::VERSION_ID, val4, pool);
+  tuple->SetValue(TableCatalog::ColumnId::DEFAULT_LAYOUT_OID, val5, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -675,6 +687,38 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
   return UpdateWithIndexScan(update_columns, update_values, scan_values,
                              index_offset, txn);
 }
+
+/*@brief    update default layout oid column within pg_table
+ * @param   update_val   the new(updated) default layout oid
+ * @param   table_oid    which table to be updated
+ * @param   txn          TransactionContext
+ * @return  Whether update is successful
+ */
+bool TableCatalog::UpdateDefaultLayoutOid(oid_t update_val, oid_t table_oid,
+                                   concurrency::TransactionContext *txn) {
+  std::vector<oid_t> update_columns({ColumnId::DEFAULT_LAYOUT_OID});  // defalut_layou_oid
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
+  // values to execute index scan
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values to update
+  std::vector<type::Value> update_values;
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(update_val).Copy());
+
+  // get table object, then evict table object
+  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
+  		                                                        table_oid);
+  if (table_object) {
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    database_object->EvictTableObject(table_oid);
+  }
+
+  return UpdateWithIndexScan(update_columns, update_values, scan_values,
+                             index_offset, txn);
+}
+
 
 }  // namespace catalog
 }  // namespace peloton
