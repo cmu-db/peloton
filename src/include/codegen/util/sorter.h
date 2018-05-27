@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 #include <vector>
 
 #include "executor/executor_context.h"
@@ -38,6 +39,8 @@ class Sorter {
  private:
   // We allocate 4KB of buffer space upon initialization
   static constexpr uint64_t kInitialBufferSize = 4 * 1024;
+
+  using TupleList = std::vector<char *>;
 
  public:
   using ComparisonFunction = int (*)(const char *left_tuple,
@@ -93,7 +96,23 @@ class Sorter {
    *
    * @return A pointer to a memory space large enough to store one tuple
    */
-  char *StoreInputTuple();
+  char *StoreTuple();
+
+  /**
+   * Allocate space for a new input tuple intended for a top-K ordering.
+   *
+   * @param top_k The number of entries to bound the sorter
+   * @return A pointer to a memory space large enough to store one tuple
+   */
+  char *StoreTupleForTopK(uint64_t top_k);
+
+  /**
+   * This function must be called after every call to StoreTupleForTopK(). Thus,
+   * the Top-K functions should always occur in pairs.
+   *
+   * @param top_k The number of entries to bound the sorter
+   */
+  void StoreTupleForTopKFinish(uint64_t top_k);
 
   /**
    * Sort all tuples stored in this sorter instance. This is a single-threaded
@@ -114,6 +133,16 @@ class Sorter {
       const executor::ExecutorContext::ThreadStates &thread_states,
       uint32_t sorter_offset);
 
+  /**
+   *
+   * @param thread_states
+   * @param sorter_offset
+   * @param top_k
+   */
+  void SortTopKParallel(
+      const executor::ExecutorContext::ThreadStates &thread_states,
+      uint32_t sorter_offset, uint64_t top_k);
+
   //////////////////////////////////////////////////////////////////////////////
   ///
   /// Accessors
@@ -124,8 +153,51 @@ class Sorter {
   uint64_t NumTuples() const { return tuples_.size(); }
 
   /** Iterators */
-  std::vector<char *>::iterator begin() { return tuples_.begin(); }
-  std::vector<char *>::iterator end() { return tuples_.end(); }
+  TupleList::iterator begin() { return tuples_.begin(); }
+  TupleList::iterator end() { return tuples_.end(); }
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Testing Utilities
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Insert a single tuple into the sorter instance.
+   *
+   * @tparam Tuple The POD-type of the tuple
+   * @param tuple The tuple to insert
+   */
+  template <typename Tuple>
+  void TypedInsert(const Tuple &tuple);
+
+  /**
+   * Insert all tuples in the provided vector into the sorter instance.
+   *
+   * @tparam Tuple The POD-type of the tuple
+   * @param tuples The list of tuples to insert
+   */
+  template <typename Tuple>
+  void TypedInsertAll(const std::vector<Tuple> &tuples);
+
+  /**
+   * Insert a single tuple into the sorter instance for a Top-K ordering.
+   *
+   * @tparam Tuple The POD-type of the tuple
+   * @param tuple The tuple to insert
+   */
+  template <typename Tuple>
+  void TypedInsertForTopK(const Tuple &tuple, uint64_t top_k);
+
+  /**
+   * Insert all tuples in the provided vector into the sorter instance for a
+   * Top-K ordering.
+   *
+   * @tparam Tuple The POD-type of the tuple
+   * @param tuples The list of tuples to insert
+   */
+  template <typename Tuple>
+  void TypedInsertAllForTopK(const std::vector<Tuple> &tuples, uint64_t top_k);
 
  private:
   /**
@@ -142,6 +214,11 @@ class Sorter {
    * we've allocated.
    */
   void TransferMemoryBlocks(Sorter &target);
+
+  /**
+   *
+   */
+  void HeapReplaceTop();
 
  private:
   // The memory pool where this sorter sources memory from
@@ -163,13 +240,56 @@ class Sorter {
   uint64_t next_alloc_size_;
 
   // The tuples
-  std::vector<char *> tuples_;
+  TupleList tuples_;
   char **tuples_start_;
   char **tuples_end_;
 
   // The memory blocks we've allocated and their sizes
   std::vector<std::pair<void *, uint64_t>> blocks_;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Implementation below
+///
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename Tuple>
+inline void Sorter::TypedInsert(const Tuple &tuple) {
+  static_assert(
+      std::is_standard_layout<Tuple>::value && std::is_trivial<Tuple>::value,
+      "You can only use util::Sorter::TypedInsert for simple C/C++ structs "
+      "that are trivially copyable");
+  char *space = StoreTuple();
+  *reinterpret_cast<Tuple *>(space) = tuple;
+}
+
+template <typename Tuple>
+inline void Sorter::TypedInsertAll(const std::vector<Tuple> &tuples) {
+  for (const auto &tuple : tuples) {
+    TypedInsert(tuple);
+  }
+}
+
+template<typename Tuple>
+inline void Sorter::TypedInsertForTopK(const Tuple &tuple, uint64_t top_k) {
+  static_assert(
+      std::is_standard_layout<Tuple>::value && std::is_trivial<Tuple>::value,
+      "You can only use util::Sorter::TypedInsert for simple C/C++ structs "
+      "that are trivially copyable");
+  char *space = StoreTupleForTopK(top_k);
+  *reinterpret_cast<Tuple *>(space) = tuple;
+  StoreTupleForTopKFinish(top_k);
+}
+
+template<typename Tuple>
+void Sorter::TypedInsertAllForTopK(const std::vector<Tuple> &tuples,
+                                   uint64_t top_k) {
+  for (const auto &tuple : tuples) {
+    TypedInsertForTopK(tuple, top_k);
+  }
+
+}
 
 }  // namespace util
 }  // namespace codegen

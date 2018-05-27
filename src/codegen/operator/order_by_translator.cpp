@@ -311,7 +311,8 @@ void OrderByTranslator::Produce() const {
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
     ProduceResults callback(ctx, plan, position_list);
-    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, callback);
+    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, plan.GetOffset(),
+                              callback);
   };
 
   GetPipeline().RunSerial(producer);
@@ -345,8 +346,13 @@ void OrderByTranslator::Consume(ConsumerContext &ctx,
     sorter_ptr = LoadStatePtr(sorter_id_);
   }
 
-  // Append the tuple into the sorter
-  sorter_.Append(codegen, sorter_ptr, tuple);
+  // Insert the tuple into the sorter instance
+  if (plan.HasLimit()) {
+    auto top_k_bound = plan.GetOffset() + plan.GetLimit();
+    sorter_.StoreTupleForTopK(codegen, sorter_ptr, tuple, top_k_bound);
+  } else {
+    sorter_.StoreTuple(codegen, sorter_ptr, tuple);
+  }
 }
 
 void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
@@ -377,7 +383,19 @@ void OrderByTranslator::FinishPipeline(PipelineContext &pipeline_ctx) {
   if (pipeline_ctx.IsParallel()) {
     auto *thread_states_ptr = GetThreadStatesPtr();
     auto offset = pipeline_ctx.GetEntryOffset(codegen, thread_sorter_id_);
-    sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+
+    const auto &plan = GetPlanAs<planner::OrderByPlan>();
+
+    // If the plan has a limit, call SortTopKParallel() rather than the normal
+    // SortParallel() method.
+
+    if (plan.HasLimit()) {
+      auto top_k_bound = plan.GetOffset() + plan.GetLimit();
+      sorter_.SortTopKParallel(codegen, sorter_ptr, thread_states_ptr, offset,
+                               top_k_bound);
+    } else {
+      sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+    }
   } else {
     sorter_.Sort(codegen, sorter_ptr);
   }
