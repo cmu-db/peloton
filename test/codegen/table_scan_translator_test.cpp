@@ -708,7 +708,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   // Get table reference
   auto table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
                                          table_name, txn);
-  txn_manager.EndTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
   // Reset default_layout_ to LayoutType::COLUMN
@@ -718,7 +718,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   catalog->GetSystemCatalogs(table->GetDatabaseOid())->GetTableCatalog()
   		->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),
                                table->GetOid(), txn);
-  txn_manager.EndTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
   // Load in 100 tuples
