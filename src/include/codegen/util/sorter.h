@@ -126,18 +126,22 @@ class Sorter {
    *
    * @param thread_states The states object where all the sorter instances are
    * stored.
-   * @param sorter_offset The offset in each thread state where the sorters are
-   * stored.
+   * @param sorter_offset The offset into the thread's state where the sorter
+   * instance is.
    */
   void SortParallel(
       const executor::ExecutorContext::ThreadStates &thread_states,
       uint32_t sorter_offset);
 
   /**
+   * Perform a parallel Top-K of all sorter instances stored in the thread
+   * states. Each thread-local sorter instance is unsorted.
    *
-   * @param thread_states
-   * @param sorter_offset
-   * @param top_k
+   * @param thread_states The states object where all the sorter instances are
+   * stored.
+   * @param sorter_offsetThe offset into the thread's state where the sorter
+   * instance is.
+   * @param top_k The number entries at the top the caller cares for.
    */
   void SortTopKParallel(
       const executor::ExecutorContext::ThreadStates &thread_states,
@@ -216,9 +220,15 @@ class Sorter {
   void TransferMemoryBlocks(Sorter &target);
 
   /**
-   *
+   * Build a (max) heap from the tuples currently stored in the sorter instance.
    */
-  void HeapReplaceTop();
+  void BuildHeap();
+
+  /**
+   * Sift down the element at the root of the heap while maintaining the heap
+   * property.
+   */
+  void HeapSiftDown();
 
  private:
   // The memory pool where this sorter sources memory from
@@ -230,21 +240,24 @@ class Sorter {
   // The size of the tuples
   uint32_t tuple_size_;
 
-  // The following two pointers are pointers into the currently active block
-  // buffer_pos_ is the position in the block the next tuple will be written to.
-  // buffer_end_ marks the end of the block
+  // The following two members are pointers into the currently active block.
+  // 'buffer_pos_' is the position in the block where the next tuple will be
+  // written to. 'buffer_end_' marks the end of the block.
   char *buffer_pos_;
   char *buffer_end_;
 
-  // Sorters double-expand
+  // Represents the size of the next allocation the sorter makes to store new
+  // tuples.
   uint64_t next_alloc_size_;
 
-  // The tuples
+  // The tuples. 'tuples_start_' and 'tuples_end_' are pointers into the vector
+  // that point to the start and end of the vector. They are set up after all
+  // sorting has finished.
   TupleList tuples_;
   char **tuples_start_;
   char **tuples_end_;
 
-  // The memory blocks we've allocated and their sizes
+  // The memory blocks we've allocated (to store tuples) and their sizes
   std::vector<std::pair<void *, uint64_t>> blocks_;
 };
 

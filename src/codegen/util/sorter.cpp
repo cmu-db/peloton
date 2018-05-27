@@ -85,30 +85,26 @@ void Sorter::StoreTupleForTopKFinish(uint64_t top_k) {
     return;
   }
 
-  auto cmp =
-      [this](char *left, char *right) { return cmp_func_(left, right) < 0; };
-
   // If the number of buffered tuples exactly equals the bound, let's build the
   // heap (from scratch for the first time).
   if (tuples_.size() == top_k) {
-    std::make_heap(tuples_.begin(), tuples_.end(), cmp);
+    BuildHeap();
     return;
   }
 
   // Check if the most recently inserted tuple belongs in the heap
-  // TODO(pmenon): Optimize this by removing the need to pop by stashing recent
-  // inserts.
 
   char *last_insert = tuples_.back();
+
   tuples_.pop_back();
 
-  char *heap_top = tuples_[0];
+  char *heap_top = tuples_.front();
 
-  // TODO(pmenon): Optimize this by merging the pop/push process
   if (cmp_func_(last_insert, heap_top) <= 0) {
-    std::pop_heap(tuples_.begin(), tuples_.end(), cmp);
-    tuples_.back() = last_insert;
-    std::push_heap(tuples_.begin(), tuples_.end(), cmp);
+    // The last inserted tuples belongs in the top-k. Swap it with the current
+    // maximum and sift it down.
+    tuples_.front() = last_insert;
+    HeapSiftDown();
   }
 }
 
@@ -391,7 +387,43 @@ void Sorter::TransferMemoryBlocks(Sorter &target) {
   blocks_.clear();
 }
 
-void Sorter::HeapReplaceTop() {}
+void Sorter::BuildHeap() {
+  const auto compare = [this](const char *left, const char *right) {
+    return cmp_func_(left, right) < 0;
+  };
+  std::make_heap(tuples_.begin(), tuples_.end(), compare);
+}
+
+void Sorter::HeapSiftDown() {
+  const auto compare = [this](const char *left, const char *right) {
+    return cmp_func_(left, right) < 0;
+  };
+
+  uint64_t size = tuples_.size();
+  uint32_t idx = 0;
+
+  char *top = tuples_[idx];
+
+  while (true) {
+    uint32_t child = (2 * idx) + 1;
+
+    if (child >= size) {
+      break;
+    }
+
+    if (child + 1 < size && compare(tuples_[child], tuples_[child + 1]) > 0) {
+      child++;
+    }
+
+    if (compare(top, tuples_[child]) <= 0) {
+      break;
+    }
+
+    std::swap(tuples_[idx], tuples_[child]);
+    idx = child;
+  }
+  tuples_[idx] = top;
+}
 
 }  // namespace util
 }  // namespace codegen
