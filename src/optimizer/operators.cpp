@@ -51,7 +51,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.GetType()!= OpType::Get) return false;
+  if (r.GetType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -404,10 +404,15 @@ Operator LogicalDistinct::make() {
 //===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
-Operator LogicalLimit::make(int64_t offset, int64_t limit) {
+Operator LogicalLimit::make(
+    int64_t offset, int64_t limit,
+    std::vector<expression::AbstractExpression *> &&sort_exprs,
+    std::vector<bool> &&sort_ascending) {
   LogicalLimit *limit_op = new LogicalLimit;
   limit_op->offset = offset;
   limit_op->limit = limit;
+  limit_op->sort_exprs = std::move(sort_exprs);
+  limit_op->sort_ascending = std::move(sort_ascending);
   return Operator(limit_op);
 }
 
@@ -546,10 +551,15 @@ Operator PhysicalOrderBy::make() {
 //===--------------------------------------------------------------------===//
 // PhysicalLimit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
+Operator PhysicalLimit::make(
+    int64_t offset, int64_t limit,
+    std::vector<expression::AbstractExpression *> sort_exprs,
+    std::vector<bool> sort_ascending) {
   PhysicalLimit *limit_op = new PhysicalLimit;
   limit_op->offset = offset;
   limit_op->limit = limit;
+  limit_op->sort_exprs = sort_exprs;
+  limit_op->sort_acsending = sort_ascending;
   return Operator(limit_op);
 }
 

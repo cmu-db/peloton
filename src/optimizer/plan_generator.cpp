@@ -133,9 +133,34 @@ void PlanGenerator::Visit(const QueryDerivedScan *) {
 }
 
 void PlanGenerator::Visit(const PhysicalLimit *op) {
+  // Generate order by plan when there's internal sort order
+  if (!op->sort_exprs.empty()) {
+    // Otherwise generate order by plan with limit
+    vector<oid_t> column_ids;
+    PELOTON_ASSERT(children_expr_map_.size() == 1);
+    auto &child_cols_map = children_expr_map_[0];
+    for (size_t i = 0; i < output_cols_.size(); ++i) {
+      column_ids.push_back(child_cols_map[output_cols_[i]]);
+    }
+
+    PELOTON_ASSERT(op->sort_exprs.size() == op->sort_acsending.size());
+    auto sort_columns_size = op->sort_exprs.size();
+    vector<oid_t> sort_col_ids;
+    vector<bool> sort_flags;
+    for (size_t i = 0; i < sort_columns_size; ++i) {
+      sort_col_ids.push_back(child_cols_map[op->sort_exprs[i]]);
+      // planner use desc flag
+      sort_flags.push_back(!op->sort_acsending[i]);
+    }
+    output_plan_.reset(new planner::OrderByPlan(
+        sort_col_ids, sort_flags, column_ids, op->limit, op->offset));
+
+    output_plan_->AddChild(move(children_plans_[0]));
+  }
+
   unique_ptr<planner::AbstractPlan> limit_plan(
       new planner::LimitPlan(op->limit, op->offset));
-  limit_plan->AddChild(move(children_plans_[0]));
+  limit_plan->AddChild(move(output_plan_));
   output_plan_ = move(limit_plan);
 }
 
@@ -477,8 +502,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
 void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-        groupby_cols,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>>
+        *groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;

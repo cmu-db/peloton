@@ -31,7 +31,7 @@ class UpdateClause;
 }
 
 namespace catalog {
-  class TableCatalogObject;
+class TableCatalogObject;
 }
 
 namespace optimizer {
@@ -51,10 +51,10 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(oid_t get_id = 0,
-                       std::vector<AnnotatedExpression> predicates = {},
-                       std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
-                       std::string alias = "", bool update = false);
+  static Operator make(
+      oid_t get_id = 0, std::vector<AnnotatedExpression> predicates = {},
+      std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
+      std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -246,7 +246,8 @@ class LogicalAggregateAndGroupBy
 class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -258,7 +259,8 @@ class LogicalInsert : public OperatorNode<LogicalInsert> {
 
 class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -276,9 +278,14 @@ class LogicalDistinct : public OperatorNode<LogicalDistinct> {
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
  public:
-  static Operator make(int64_t offset, int64_t limit);
+  static Operator make(
+      int64_t offset, int64_t limit,
+      std::vector<expression::AbstractExpression *> &&sort_exprs,
+      std::vector<bool> &&sort_ascending);
   int64_t offset;
   int64_t limit;
+  std::vector<expression::AbstractExpression *> sort_exprs;
+  std::vector<bool> sort_ascending;
 };
 
 //===--------------------------------------------------------------------===//
@@ -286,7 +293,8 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class LogicalDelete : public OperatorNode<LogicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -317,7 +325,8 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates,
                        bool update);
@@ -339,7 +348,8 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+  static Operator make(oid_t get_id,
+                       std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates, bool update,
                        oid_t index_id, std::vector<oid_t> key_column_id_list,
@@ -402,9 +412,15 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
  public:
-  static Operator make(int64_t offset, int64_t limit);
+  static Operator make(
+      int64_t offset, int64_t limit,
+      std::vector<expression::AbstractExpression *> sort_columns,
+      std::vector<bool> sort_ascending);
   int64_t offset;
   int64_t limit;
+  // Limit may be able to fulfill sort order internally
+  std::vector<expression::AbstractExpression *> sort_exprs;
+  std::vector<bool> sort_acsending;
 };
 
 //===--------------------------------------------------------------------===//
@@ -513,7 +529,8 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
+      const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
@@ -525,7 +542,8 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
 
 class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
@@ -535,7 +553,8 @@ class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
 //===--------------------------------------------------------------------===//
 class PhysicalDelete : public OperatorNode<PhysicalDelete> {
  public:
-  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  static Operator make(
+      std::shared_ptr<catalog::TableCatalogObject> target_table);
   std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 
