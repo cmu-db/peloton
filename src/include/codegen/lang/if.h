@@ -25,8 +25,8 @@ namespace lang {
  * @brief A utility class to help generate if-then-else constructs in LLVM IR.
  *
  * Generally, callers construct an instance of this class (usually on the stack)
- * and place the code to be executed if the condition is met inside a brace as
- * follows:
+ * and place the code to be executed if the condition is met inside a pair of
+ * braces as follows:
  *
  * @code
  * llvm::Value *cond = left.CompareEq(codegen, right);
@@ -38,8 +38,12 @@ namespace lang {
  * cond_is_met.EndIf();
  * @endcode
  *
- * EndIf() must be called to complete the generation of the if-statement. The
- * caller can also generate the "false" branch (i.e., else) as follows:
+ * EndIf() is used to mark the completion/closing of the if-statement. This
+ * format resembles conditionals in native C/C++ - the code contained within the
+ * brace is only executed if the if-condition is evaluated to true. If the
+ * condition is evaluated to false, the braced-code is skipped and execution
+ * continues after the call to EndIf(). Similarly, callers can also generate an
+ * "else" clause as follows:
  *
  * @code
  * llvm::Value *cond = left.CompareEq(codegen, right);
@@ -56,10 +60,10 @@ namespace lang {
  * cond_is_met.EndIf();
  * @endcode
  *
- * The above examples demonstrate how to use the simple API. The simple allows
- * the caller to "interactively" generate an if-then-else statement without
- * relying on internal details of how the underlying IR works. This is the
- * API most users should use.
+ * The above examples demonstrate using the simple API. This API allows the
+ * caller to generate an if-then-else constructs naturally, as they could in
+ * C/C++, without relying on internal details of how the underlying IR works.
+ * This is the API most users should use.
  *
  * An advanced API also exists. The advanced API allows the caller to specify
  * the blocks to jump to in the "true" and "false" branch for the condition.
@@ -77,9 +81,50 @@ namespace lang {
  * cond_is_met.EndIf();
  * @endcode
  *
- * In the above example, the caller generated the code in the "true" branch
- * immediately; in the false branch, the caller wants to jump to the provided
- * block.
+ * In the above example, if the condition is evaluated to true, the code within
+ * the brace is executed first, then continues after the EndIf(). If the
+ * condition is evaluated to false, execution jumps to the "else_bb" block
+ * provided by the caller. If the else_bb block does not end in a terminator
+ * instruction, it will automatically jump to the first instruction after the
+ * EndIf(). This is where the advanced component comes in - you had better know
+ * what you're doing!
+ *
+ * Either of the "then" or "else" blocks can be provided using the advanced API.
+ * If neither are provided, the behaviour matches the simple API.
+ *
+ * PHIs:
+ * -----
+ * If you have an if-statement that generates or assigns values in either
+ * branches, and you would like to have them available after the if-statement,
+ * you need to generate a PHI instruction that merges them. In our IR, variables
+ * can only be assigned once (SSA); hence, if you want a variable to take on a
+ * value depending on which branch is taken, the way this is done is to create a
+ * new variable **after** the if-statement that "merges" the values from each
+ * branch into a single variable. In C, this might look like:
+ *
+ * @code
+ * uint32_t x;
+ * if (y < 10) {
+ *   x = 4;
+ * } else {
+ *   x = 5;
+ * }
+ * // use x ...
+ * @endcode
+ *
+ * Because of SSA, the above code will look like the following in our IR:
+ *
+ * @code
+ * if (y < 10) {
+ *   uint32_t x1 = 4;
+ * } else {
+ *   uint32_t x2 = 5;
+ * }
+ * uint32_t x = phi_merge(x1, x2);
+ * @endcode
+ *
+ * The above is a gross simplification of what's actually happening, but shows
+ * why we need PHI instructions.
  */
 class If {
  public:
