@@ -71,6 +71,8 @@ class AbstractScan : public AbstractPlan {
  protected:
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
 
+  void AddColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
+
   void SetPredicate(expression::AbstractExpression *predicate) {
     predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
   }
