@@ -28,9 +28,9 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class NumericFunctionsTest : public PelotonTest {};
+class NumericFunctionsTests : public PelotonTest {};
 
-TEST_F(NumericFunctionsTest, SqrtTest) {
+TEST_F(NumericFunctionsTests, SqrtTest) {
   const double column_val = 9.0;
   const double expected = sqrt(9.0);
   std::vector<type::Value> args = {
@@ -46,7 +46,7 @@ TEST_F(NumericFunctionsTest, SqrtTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(NumericFunctionsTest, FloorTest) {
+TEST_F(NumericFunctionsTests, FloorTest) {
   // Testing Floor with DecimalTypes
   std::vector<double> inputs = {9.5, 3.3, -4.4, 0.0};
   std::vector<type::Value> args;
@@ -88,7 +88,7 @@ TEST_F(NumericFunctionsTest, FloorTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(NumericFunctionsTest, RoundTest) {
+TEST_F(NumericFunctionsTests, RoundTest) {
   std::vector<double> column_vals = {9.5, 3.3, -4.4, -5.5, 0.0};
   std::vector<type::Value> args;
   for (double val : column_vals) {
@@ -104,7 +104,7 @@ TEST_F(NumericFunctionsTest, RoundTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(NumericFunctionsTest,AbsTestDouble) {
+TEST_F(NumericFunctionsTests,AbsTestDouble) {
   std::vector<double> doubleTestInputs = {9.5, -2.5, -4.4, 0.0};
   std::vector<type::Value> args;
   for (double in : doubleTestInputs) {
@@ -120,7 +120,7 @@ TEST_F(NumericFunctionsTest,AbsTestDouble) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(NumericFunctionsTest, AbsTestInt) {
+TEST_F(NumericFunctionsTests, AbsTestInt) {
   std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};
@@ -157,7 +157,7 @@ TEST_F(NumericFunctionsTest, AbsTestInt) {
   }
 }
 
-TEST_F(NumericFunctionsTest, CeilTestDouble) {
+TEST_F(NumericFunctionsTests, CeilTestDouble) {
   std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5, -0.2,
                                           0.0, 0.2, 0.5, 0.7, 35.2, 36.0,
                                           37.2222};
@@ -174,7 +174,7 @@ TEST_F(NumericFunctionsTest, CeilTestDouble) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(NumericFunctionsTest, CeilTestInt) {
+TEST_F(NumericFunctionsTests, CeilTestInt) {
   std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
   std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};

@@ -52,9 +52,11 @@ struct TempFileHandle {
 };
 
 /**
- * Common base class for all codegen tests. This class four test tables that all
- * the codegen components use. Their ID's are available through the oid_t
- * enumeration.
+ * Common base class for all codegen tests. This class has four test tables
+ * whose IDs and names are stored in test_table_oids and test_table_names,
+ * respectively. The test tables all have the exact schema: column "a" and "b"
+ * are integers, column "c" is a decimal, and column "d" is a varchar. The table
+ * with the highest OID also has a primary key on column "a".
  */
 class PelotonCodeGenTest : public PelotonTest {
  public:

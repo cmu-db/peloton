@@ -69,17 +69,6 @@ llvm::Value *CodeGen::ConstString(const std::string &str_val,
   return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
 }
 
-llvm::Value *CodeGen::ConstType(const type::Type &type) {
-  auto iter = type_variables_.find(type);
-  if (iter != type_variables_.end()) {
-    return iter->second;
-  }
-  const type::Type t = type;
-  llvm::Value *ret = ConstGenericBytes(&type, sizeof(type), "type");
-  type_variables_.insert(std::make_pair(t, ret));
-  return ret;
-}
-
 llvm::Value *CodeGen::ConstGenericBytes(const void *data, uint32_t length,
                                         const std::string &name) const {
   // Create the constant data array that wraps the input data
@@ -164,6 +153,14 @@ llvm::Value *CodeGen::Printf(const std::string &format,
   auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
 #if GCC_AT_LEAST_6
+// In newer GCC versions (i.e., GCC 6+), function attributes are part of the
+// type system and are attached to the function signature. For example, printf()
+// comes with the "noexcept" attribute. Moreover, GCC 6+ will complain when
+// attributes attached to a function (e.g., noexcept()) are not used at
+// their call-site. Below, we use decltype(printf) to get the C/C++ function
+// type of printf(...), but we discard the attributes since we don't need
+// them. Hence, on GCC 6+, compilation will fail without adding the
+// "-Wignored-attributes" flag. So, we add it here only.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
@@ -189,6 +186,14 @@ llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
   auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
   if (memcmp_fn == nullptr) {
 #if GCC_AT_LEAST_6
+// In newer GCC versions (i.e., GCC 6+), function attributes are part of the
+// type system and are attached to the function signature. For example, memcmp()
+// comes with the "throw()" attribute, among many others. Moreover, GCC 6+ will
+// complain when attributes attached to a function are not used at their
+// call-site. Below, we use decltype(memcmp) to get the C/C++ function type
+// of memcmp(...), but we discard the attributes since we don't need them.
+// Hence, on GCC 6+, compilation will fail without adding the
+// "-Wignored-attributes" flag. So, we add it here only.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif

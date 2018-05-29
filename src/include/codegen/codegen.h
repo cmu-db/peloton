@@ -59,9 +59,10 @@ class CppProxyMember {
   uint32_t slot_;
 };
 
-//===----------------------------------------------------------------------===//
-// The main wrapper around LLVM's IR Builder to generate IR
-//===----------------------------------------------------------------------===//
+/**
+ * The main API used to generate code in Peloton. Provides a thin wrapper around
+ * LLVM's IR Builder to generate IR.
+ */
 class CodeGen {
  public:
   /// Constructor and destructor
@@ -89,7 +90,8 @@ class CodeGen {
   }
   llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
+  /// Functions to return LLVM values for constant boolean, int8, int16, int32,
+  // int64, strings, and null values.
   llvm::Constant *ConstBool(bool val) const;
   llvm::Constant *Const8(int8_t val) const;
   llvm::Constant *Const16(int16_t val) const;
@@ -98,7 +100,6 @@ class CodeGen {
   llvm::Constant *ConstDouble(double val) const;
   llvm::Value *ConstString(const std::string &str_val,
                            const std::string &name) const;
-  llvm::Value *ConstType(const type::Type &type);
   llvm::Value *ConstGenericBytes(const void *data, uint32_t length,
                                  const std::string &name) const;
   llvm::Constant *Null(llvm::Type *type) const;
@@ -195,9 +196,6 @@ class CodeGen {
  private:
   // The context/module where all the code this class produces goes
   CodeContext &code_context_;
-
-  std::unordered_map<type::Type, llvm::Value *, type::TypeHasher,
-                     type::TypeEquality> type_variables_;
 };
 
 }  // namespace codegen
