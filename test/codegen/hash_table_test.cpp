@@ -94,7 +94,7 @@ TEST_F(HashTableTest, CanInsertUniqueKeys) {
   // Lookup
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -136,7 +136,7 @@ TEST_F(HashTableTest, CanInsertDuplicateKeys) {
   // Lookup
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -183,7 +183,7 @@ TEST_F(HashTableTest, CanInsertLazilyWithDups) {
   // Lookups should succeed
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -219,7 +219,7 @@ TEST_F(HashTableTest, ParallelMerge) {
   };
 
   // Insert function
-  auto insert_fn = [&add_key, &exec_ctx, &to_insert](uint64_t tid) {
+  auto insert_fn = [&add_key, &exec_ctx](uint64_t tid) {
     // Get the local table for this thread
     auto *table = reinterpret_cast<codegen::util::HashTable *>(
         exec_ctx.GetThreadStates().AccessThreadState(tid));
