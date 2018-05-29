@@ -254,8 +254,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // if passed evaluation, then perform write.
         if (eval == true) {
           LOG_TRACE("perform read operation");
-          auto res = transaction_manager.PerformRead(
-              current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(current_txn,
+                                                     tuple_location,
+                                                     tile_group_header,
+                                                     acquire_owner);
           if (!res) {
             LOG_TRACE("read nothing");
             transaction_manager.SetTransactionResult(current_txn,
@@ -519,8 +521,10 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res = transaction_manager.PerformRead(
-              current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(current_txn,
+                                                     tuple_location,
+                                                     tile_group_header,
+                                                     acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      ResultType::FAILURE);
