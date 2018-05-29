@@ -48,6 +48,9 @@ void PelotonInit::Initialize() {
     threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
 
+  // start parallel execution pool
+  threadpool::MonoQueuePool::GetExecutionInstance().Startup();
+
   int parallelism = (CONNECTION_THREAD_COUNT + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
@@ -110,6 +113,9 @@ void PelotonInit::Shutdown() {
 
   // shut down epoch.
   concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+
+  // shutdown execution thread pool
+  threadpool::MonoQueuePool::GetExecutionInstance().Shutdown();
 
   // stop worker pool
   threadpool::MonoQueuePool::GetInstance().Shutdown();

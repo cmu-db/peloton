@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/decimal_functions_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 
 namespace peloton {
 namespace codegen {
+
 DEFINE_METHOD(peloton::function, DecimalFunctions, Abs);
 
 DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
@@ -24,5 +25,6 @@ DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
 DEFINE_METHOD(peloton::function, DecimalFunctions, Round);
 
 DEFINE_METHOD(peloton::function, DecimalFunctions, Ceil);
+
 }  // namespace codegen
 }  // namespace peloton

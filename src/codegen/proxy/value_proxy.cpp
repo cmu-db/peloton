@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/value_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Value, "peloton::Value", MEMBER(opaque));
+DEFINE_TYPE(Value, "peloton::Value", opaque);
 
 }  // namespace codegen
 }  // namespace peloton

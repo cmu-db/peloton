@@ -6,7 +6,7 @@
 //
 // Identification: src/include/expression/abstract_expression.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -113,9 +113,12 @@ class AbstractExpression : public Printable {
 
   void SetExpressionType(ExpressionType type) { exp_type_ = type; }
 
-  //===----------------------------------------------------------------------===//
-  // Utilities and members for Zone Map consumption.
-  //===----------------------------------------------------------------------===//
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Utilities and members for Zone Map consumption
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
   bool IsZoneMappable();
 
   size_t GetNumberofParsedPredicates() const {
@@ -127,9 +130,6 @@ class AbstractExpression : public Printable {
   }
 
   void ClearParsedPredicates() { parsed_predicates.clear(); }
-
-  std::vector<storage::PredicateInfo> parsed_predicates;
-  //===----------------------------------------------------------------------===//
 
   /** accessors */
 
@@ -318,6 +318,9 @@ class AbstractExpression : public Printable {
    * @brief The flag indicating if there's sub-query in the current expression
    */
   bool has_subquery_ = false;
+
+  ///
+  std::vector<storage::PredicateInfo> parsed_predicates;
 };
 
 // Equality Comparator class for Abstract Expression

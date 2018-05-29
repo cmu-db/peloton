@@ -47,7 +47,7 @@ class CompactStorage {
                           std::vector<codegen::Value> &vals) const;
 
   // Get the maximum number of bytes this storage format will need
-  uint64_t MaxStorageSize() const { return storage_size_; }
+  uint32_t MaxStorageSize() const { return storage_size_; }
 
  private:
   friend class UpdateableStorage;

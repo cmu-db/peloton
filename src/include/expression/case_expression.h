@@ -6,7 +6,7 @@
 //
 // Identification: src/include/expression/case_expression.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 #include "expression/comparison_expression.h"
 #include "common/sql_node_visitor.h"
 #include "util/hash_util.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {
@@ -70,7 +71,7 @@ class CaseExpression : public AbstractExpression {
         default_expr_ != nullptr ? AbsExprPtr(default_expr_->Copy()) : nullptr);
   }
 
-  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   size_t GetWhenClauseSize() const { return clauses_.size(); }
 
@@ -138,7 +139,7 @@ class CaseExpression : public AbstractExpression {
     return hash;
   }
 
-  virtual void VisitParameters(
+  void VisitParameters(
       codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override {

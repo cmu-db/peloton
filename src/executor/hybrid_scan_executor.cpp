@@ -230,7 +230,9 @@ bool HybridScanExecutor::SeqScanUtil() {
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(current_txn, location,
+          auto res = transaction_manager.PerformRead(current_txn,
+                                                     location,
+                                                     tile_group_header,
                                                      acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
@@ -389,7 +391,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
       if (visibility == VisibilityType::OK) {
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-        auto res = transaction_manager.PerformRead(current_txn, tuple_location,
+        auto res = transaction_manager.PerformRead(current_txn,
+                                                   tuple_location,
+                                                   tile_group_header,
                                                    acquire_owner);
         if (!res) {
           transaction_manager.SetTransactionResult(current_txn,

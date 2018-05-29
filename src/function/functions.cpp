@@ -12,6 +12,9 @@
 
 #include "function/functions.h"
 
+#include "codegen/code_context.h"
+#include "codegen/value.h"
+
 namespace peloton {
 namespace function {
 

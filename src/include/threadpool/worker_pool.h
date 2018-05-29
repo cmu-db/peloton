@@ -6,13 +6,16 @@
 //
 // Identification: src/include/threadpool/worker_pool.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <atomic>
 #include <functional>
+#include <string>
+#include <thread>
 #include <vector>
 
 #include "common/container/lock_free_queue.h"
@@ -22,37 +25,44 @@ namespace threadpool {
 
 using TaskQueue = peloton::LockFreeQueue<std::function<void()>>;
 
-void WorkerFunc(std::atomic_bool *should_shutdown, TaskQueue *task_queue);
-
 /**
- * @brief A worker pool that maintains a group of worker threads.
+ * @brief A worker pool that maintains a group of worker threads. This pool is
+ * restartable, meaning it can be started again after it has been shutdown.
+ * Calls to Startup() and Shutdown() are thread-safe and idempotent.
  */
 class WorkerPool {
  public:
-  WorkerPool(size_t num_workers, TaskQueue *task_queue)
-      : num_workers_(num_workers),
-        should_shutdown_(false),
-        task_queue_(task_queue) {}
+  WorkerPool(const std::string &pool_name, uint32_t num_workers,
+             TaskQueue &task_queue);
 
-  void Startup() {
-    for (size_t i = 0; i < num_workers_; i++) {
-      workers_.emplace_back(WorkerFunc, &should_shutdown_, task_queue_);
-    }
-  }
+  /**
+   * @brief Start this worker pool. Thread-safe and idempotent.
+   */
+  void Startup();
 
-  void Shutdown() {
-    should_shutdown_ = true;
-    for (auto &worker : workers_) {
-      worker.join();
-    }
-    workers_.clear();
-  }
+  /**
+   * @brief Shutdown this worker pool. Thread-safe and idempotent.
+   */
+  void Shutdown();
+
+  /**
+   * @brief Access the number of worker threads in this pool
+   *
+   * @return The number of worker threads assigned to this pool
+   */
+  uint32_t NumWorkers() const { return num_workers_; }
 
  private:
+  // The name of this pool
+  std::string pool_name_;
+  // The worker threads
   std::vector<std::thread> workers_;
-  size_t num_workers_;
-  std::atomic_bool should_shutdown_;
-  TaskQueue *task_queue_;
+  // The number of worker threads
+  uint32_t num_workers_;
+  // Flag indicating whether the pool is running
+  std::atomic_bool is_running_;
+  // The queue where workers pick up tasks
+  TaskQueue &task_queue_;
 };
 
 }  // namespace threadpool

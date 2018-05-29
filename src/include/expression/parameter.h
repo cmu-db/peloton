@@ -13,8 +13,6 @@
 #pragma once
 
 #include "type/type.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 namespace expression {
@@ -42,7 +40,7 @@ class Parameter {
   // Get value type of the parameter
   peloton::type::TypeId GetValueType() const { return type_id_; }
 
-  // Get its nullabilityy
+  // Get its nullability
   bool IsNullable() const { return is_nullable_; }
 
  private:

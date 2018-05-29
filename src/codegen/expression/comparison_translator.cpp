@@ -50,7 +50,7 @@ codegen::Value ComparisonTranslator::DeriveValue(CodeGen &codegen,
     case ExpressionType::COMPARE_LIKE: {
       type::TypeSystem::InvocationContext ctx{
           .on_error = OnError::Exception,
-          .executor_context = context_.GetExecutorContextPtr()};
+          .executor_context = GetExecutorContextPtr()};
 
       type::Type left_type = left.GetType(), right_type = right.GetType();
       auto *binary_op = type::TypeSystem::GetBinaryOperator(

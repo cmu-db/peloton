@@ -31,11 +31,6 @@ namespace tuning {
 //===--------------------------------------------------------------------===//
 
 /**
- * Column Id to < Tile Id, Tile Column Id > 
- */
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
-
-/**
  * Sequential k-Means Clustering
  */
 class Clusterer : public Printable {

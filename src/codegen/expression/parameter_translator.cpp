@@ -20,15 +20,15 @@ namespace codegen {
 // Constructor
 ParameterTranslator::ParameterTranslator(
     const expression::ParameterValueExpression &exp, CompilationContext &ctx)
-    : ExpressionTranslator(exp, ctx) {
-  index_ = ctx.GetParameterIdx(&exp);
-}
+    : ExpressionTranslator(exp, ctx) {}
 
 // Return an LLVM value for the constant: run-time value
 codegen::Value ParameterTranslator::DeriveValue(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE RowBatch::Row &row) const {
-  return context_.GetParameterCache().GetValue(index_);
+  const auto &expr = GetExpressionAs<expression::ParameterValueExpression>();
+  const auto &parameter_cache = context_.GetParameterCache();
+  return parameter_cache.GetValue(&expr);
 }
 
 }  // namespace codegen

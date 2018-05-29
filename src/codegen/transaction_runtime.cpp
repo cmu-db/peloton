@@ -56,7 +56,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     ItemPointer location{tile_group_idx, selection_vector[idx]};
 
     // Perform the read
-    bool can_read = txn_manager.PerformRead(&txn, location);
+    bool can_read = txn_manager.PerformRead(&txn, location, tile_group_header, false);
 
     // Update the selection vector and output position
     selection_vector[out_idx] = selection_vector[idx];

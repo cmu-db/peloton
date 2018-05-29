@@ -38,7 +38,7 @@ class HashGroupByTranslator : public OperatorTranslator {
                         CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper functions this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -51,10 +51,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch &batch) const override;
 
   // Codegen any cleanup work for this translator
-  void TearDownState() override;
-
-  // Get a stringified name for this hash-table based aggregation
-  std::string GetName() const override;
+  void TearDownQueryState() override;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -63,7 +60,8 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ProduceResults : public HashTable::VectorizedIterateCallback {
    public:
     // Constructor
-    ProduceResults(const HashGroupByTranslator &translator);
+    ProduceResults(ConsumerContext &ctx, const planner::AggregatePlan &plan,
+                   const Aggregation &aggregation);
 
     // The callback
     void ProcessEntries(CodeGen &codegen, llvm::Value *start, llvm::Value *end,
@@ -71,8 +69,9 @@ class HashGroupByTranslator : public OperatorTranslator {
                         HashTable::HashTableAccess &access) const override;
 
    private:
-    // The plan details
-    const HashGroupByTranslator &translator_;
+    ConsumerContext &ctx_;
+    const planner::AggregatePlan &plan_;
+    const Aggregation &aggregation_;
   };
 
   //===--------------------------------------------------------------------===//
@@ -176,19 +175,12 @@ class HashGroupByTranslator : public OperatorTranslator {
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
 
-  const planner::AggregatePlan &GetAggregatePlan() const { return group_by_; }
-
-  const Aggregation &GetAggregation() const { return aggregation_; }
-
  private:
-  // The group-by plan
-  const planner::AggregatePlan &group_by_;
-
   // The pipeline forming all child operators of this aggregation
   Pipeline child_pipeline_;
 
   // The ID of the hash-table in the runtime state
-  RuntimeState::StateID hash_table_id_;
+  QueryState::Id hash_table_id_;
 
   // The hash table
   OAHashTable hash_table_;
