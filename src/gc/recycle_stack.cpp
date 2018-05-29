@@ -20,7 +20,7 @@ namespace gc {
 
 RecycleStack::~RecycleStack() {
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+  while (head_.lock.test_and_set(std::memory_order_acquire))
     ;
 
   auto curr = head_.next;
@@ -28,7 +28,7 @@ RecycleStack::~RecycleStack() {
   // iterate through entire stack, remove all nodes
   while (curr != nullptr) {
     // acquire lock on curr
-    while (curr->lock.test_and_set(std::memory_order_acq_rel))
+    while (curr->lock.test_and_set(std::memory_order_acquire))
       ;
 
     head_.next = curr->next;  // unlink curr
@@ -39,18 +39,18 @@ RecycleStack::~RecycleStack() {
     curr = head_.next;
   }
 
-  head_.lock.clear(std::memory_order_acq_rel);
+  head_.lock.clear(std::memory_order_release);
 }
 
 void RecycleStack::Push(const ItemPointer &location) {
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+  while (head_.lock.test_and_set(std::memory_order_acquire))
     ;
 
   auto node = new Node{location, head_.next, ATOMIC_FLAG_INIT};
   head_.next = node;
 
-  head_.lock.clear(std::memory_order_acq_rel);
+  head_.lock.clear(std::memory_order_release);
 }
 
 ItemPointer RecycleStack::TryPop() {
@@ -59,12 +59,12 @@ ItemPointer RecycleStack::TryPop() {
   LOG_TRACE("Trying to pop a recycled slot");
 
   // try to acquire head lock
-  if (!head_.lock.test_and_set(std::memory_order_acq_rel)) {
+  if (!head_.lock.test_and_set(std::memory_order_acquire)) {
     LOG_TRACE("Acquired head lock");
     auto node = head_.next;
     if (node != nullptr) {
       // try to acquire first node in list
-      if (!node->lock.test_and_set(std::memory_order_acq_rel)) {
+      if (!node->lock.test_and_set(std::memory_order_acquire)) {
         LOG_TRACE("Acquired first node lock");
         head_.next = node->next;
         location = node->location;
@@ -74,7 +74,7 @@ ItemPointer RecycleStack::TryPop() {
       }
     }
     // release lock
-    head_.lock.clear(std::memory_order_acq_rel);
+    head_.lock.clear(std::memory_order_release);
   }
 
   return location;
@@ -86,7 +86,7 @@ uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
   LOG_TRACE("Removing all recycled slots for TileGroup %u", tile_group_id);
 
   // acquire head lock
-  while (head_.lock.test_and_set(std::memory_order_acq_rel))
+  while (head_.lock.test_and_set(std::memory_order_acquire))
     ;
 
   auto prev = &head_;
@@ -95,7 +95,7 @@ uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
   // iterate through entire stack, remove any nodes with matching tile_group_id
   while (curr != nullptr) {
     // acquire lock on curr
-    while (curr->lock.test_and_set(std::memory_order_acq_rel))
+    while (curr->lock.test_and_set(std::memory_order_acquire))
       ;
 
     // check if we want to remove this node
@@ -111,13 +111,13 @@ uint32_t RecycleStack::RemoveAllWithTileGroup(const oid_t &tile_group_id) {
     }
 
     // iterate
-    prev->lock.clear(std::memory_order_acq_rel);
+    prev->lock.clear(std::memory_order_release);
     prev = curr;
     curr = prev->next;
   }
 
   // prev was set to curr, which needs to be freed
-  prev->lock.clear(std::memory_order_acq_rel);
+  prev->lock.clear(std::memory_order_release);
 
   LOG_TRACE("Removed %u recycled slots for TileGroup %u", remove_count,
             tile_group_id);
