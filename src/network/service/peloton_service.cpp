@@ -357,7 +357,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController *controller,
         LOG_ERROR("Queryplan recived desen't have type");
         break;
       }
-#if 0
+
       case PlanNodeType::SEQSCAN: {
         LOG_TRACE("SEQSCAN revieved");
         std::string plan = request->plan();
@@ -400,7 +400,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController *controller,
 
         break;
       }
-#endif
+
       default: {
         LOG_ERROR("Queryplan recived :: Unsupported TYPE: %s",
                   PlanNodeTypeToString(plan_type).c_str());
