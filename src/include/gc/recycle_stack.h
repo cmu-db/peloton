@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/item_pointer.h"
 
 namespace peloton {
