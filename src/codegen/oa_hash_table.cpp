@@ -196,7 +196,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
     data_count_inline = codegen.Const64(1);
     data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t)0UL);
   }
-  is_entry_single_value.ElseBlock("multipleValue");
+  is_entry_single_value.ElseBlock();
   {
     llvm::Type *kv_list_type = KeyValueListProxy::GetType(codegen);
     data_count_noninline = codegen->CreateIntCast(
@@ -366,7 +366,10 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
       before_jump_out_bb = codegen->GetInsertBlock();
 
       // If a key is found, we jump out of the loop since probing is complete
-      key_match_branch.EndIf(key_found_or_inserted_bb);
+      codegen->CreateBr(key_found_or_inserted_bb);
+
+      // Done
+      key_match_branch.EndIf();
     }
     hash_match_branch.EndIf();
 
