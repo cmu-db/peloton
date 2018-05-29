@@ -65,7 +65,7 @@ void PipelineContext::LoopOverStates::Do(
 
   llvm::Value *tid = codegen.Const32(0);
   llvm::Value *loop_cond = codegen->CreateICmpNE(tid, num_threads);
-  lang::Loop state_loop{codegen, loop_cond, {{"tid", tid}}};
+  lang::Loop state_loop(codegen, loop_cond, {{"tid", tid}});
   {
     // Pull out state for current TID
     tid = state_loop.GetLoopVar(0);
@@ -96,16 +96,16 @@ void PipelineContext::LoopOverStates::DoParallel(
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", ctx_.GetThreadStateType()->getPointerTo()}};
-  FunctionDeclaration decl{codegen.GetCodeContext(), name,
+  FunctionDeclaration decl(codegen.GetCodeContext(), name,
                            FunctionDeclaration::Visibility::Internal,
-                           codegen.VoidType(), args};
-  FunctionBuilder func{codegen.GetCodeContext(), decl};
+                           codegen.VoidType(), args);
+  FunctionBuilder func(codegen.GetCodeContext(), decl);
   {
     // Pull out arguments
     auto *thread_state_ptr = func.GetArgumentByPosition(1);
 
     // Setup access to the thread state
-    PipelineContext::SetState state_access{ctx_, func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access(ctx_, func.GetArgumentByPosition(1));
 
     // Execute function body
     body(thread_state_ptr);
@@ -413,11 +413,11 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_ctx) {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", pipeline_ctx.GetThreadStateType()->getPointerTo()}};
 
-  FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder init_func{cc, init_decl};
+  FunctionDeclaration init_decl(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder init_func(cc, init_decl);
   {
-    PipelineContext::SetState state_access{pipeline_ctx,
-                                           init_func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access(pipeline_ctx,
+                                           init_func.GetArgumentByPosition(1));
 
     // Set initialized flag
     pipeline_ctx.MarkInitialized(codegen);
@@ -452,7 +452,7 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_ctx) {
   // Loop over all states to allow operators to clean up components
   PipelineContext::LoopOverStates loop_state{pipeline_ctx};
   loop_state.Do([this, &pipeline_ctx](llvm::Value *thread_state) {
-    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
+    PipelineContext::SetState state_access(pipeline_ctx, thread_state);
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
@@ -486,7 +486,7 @@ void Pipeline::Run(
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
   // Create context
-  PipelineContext pipeline_ctx{*this};
+  PipelineContext pipeline_ctx(*this);
 
   // Initialize the pipeline
   InitializePipeline(pipeline_ctx);
@@ -522,8 +522,8 @@ void Pipeline::DoRun(
   }
 
   // The main function
-  FunctionDeclaration declaration{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder func{cc, declaration};
+  FunctionDeclaration declaration(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder func(cc, declaration);
   {
     auto *query_state = func.GetArgumentByPosition(0);
     auto *thread_state = func.GetArgumentByPosition(1);
@@ -538,7 +538,7 @@ void Pipeline::DoRun(
     }
 
     // Setup the thread state access for the pipeline context
-    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
+    PipelineContext::SetState state_access(pipeline_ctx, thread_state);
 
     // First initialize the execution consumer
     auto &execution_consumer = compilation_ctx_.GetExecutionConsumer();
@@ -551,7 +551,8 @@ void Pipeline::DoRun(
     }
 
     // Generate pipeline body
-    ConsumerContext ctx{compilation_ctx_, *this, &pipeline_ctx};
+    ConsumerContext ctx(compilation_ctx_, *this, &pipeline_ctx,
+                        func.GetExitBlock());
     body(ctx, pipeline_args);
 
     // Finish

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/function_builder.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,24 +17,26 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-//
-// A function declaration defines the signature of the function. A declaration
-// includes the function's name, return type, and all arguments. Additionally,
-// users can decide the visibility of the function, and define attributes on the
-// arguments of the function.
-//
-//===----------------------------------------------------------------------===//
+/**
+ * A function declaration defines the signature of the function. A declaration
+ * includes the function's name, return type, and all arguments. Additionally,
+ * users can decide the visibility of the function, and define attributes on the
+ * arguments of the function.
+ */
 class FunctionDeclaration {
  public:
-  /// The visibility of the function
+  /**
+   * The visibility of the function
+   */
   enum class Visibility : uint8_t {
     External = 0,
     ExternalAvailable = 1,
     Internal = 2,
   };
 
-  /// Information about each function argument
+  /**
+   * Captures information about each function argument
+   */
   struct ArgumentInfo {
     std::string name;
     llvm::Type *type;
@@ -42,15 +44,36 @@ class FunctionDeclaration {
         : name(std::move(_name)), type(_type) {}
   };
 
-  /// Constructor
+  /**
+   * Constructor.
+   *
+   * @param cc The context where this function's IR exists
+   * @param name The name of the function
+   * @param visibility The visibility of the function
+   * @param ret_type The return type of the function
+   * @param args The list of arguments (name and type) the function takes
+   */
   FunctionDeclaration(CodeContext &cc, const std::string &name,
                       Visibility visibility, llvm::Type *ret_type,
                       const std::vector<ArgumentInfo> &args);
 
-  /// Get the raw LLVM function declaration
+  /**
+   * Get the raw LLVM function declaration we generated
+   *
+   * @return The generated function declaration
+   */
   llvm::Function *GetDeclaredFunction() const { return func_decl_; }
 
-  /// Construct a FunctionDeclaration given a signature
+  /**
+   * Factory function to create a function declaration
+   *
+   * @param cc The context where this function's IR exists
+   * @param name The name of the function
+   * @param visibility The visibility of the function
+   * @param ret_type The return type of the function
+   * @param args The list of arguments (name and type) the function takes
+   * @return A function declaration with the provided interface
+   */
   static FunctionDeclaration MakeDeclaration(
       CodeContext &cc, const std::string &name, Visibility visibility,
       llvm::Type *ret_type, const std::vector<ArgumentInfo> &args);
@@ -58,31 +81,33 @@ class FunctionDeclaration {
  private:
   // The name of the function
   std::string name_;
+
   // The visibility of this function
   Visibility visibility_;
+
   // The return type of the function
   llvm::Type *ret_type_;
+
   // The function arguments
   std::vector<ArgumentInfo> args_info_;
+
   // The declaration
   llvm::Function *func_decl_;
 };
 
-//===----------------------------------------------------------------------===//
-//
-// A handy class to build the definition of a function. This builder either
-// creates a new function or begins the definition of previously declared
-// function using the provided declaration. After instantiation, code-generation
-// shifts to the entry point of the function allowing users to defines its
-// logic. Arguments are accessible through the GetArgumentBy*(...) methods.
-// The user completes the construction of the function by calling Finish(...),
-// after which the function is fully defined.
-//
-// FunctionBuilders can safely nest. This enables construction of one function
-// while in the middle of construction of a different function. However, to do
-// this safely, the functions must be "finished" in reverse order of nesting.
-//
-//===----------------------------------------------------------------------===//
+/**
+ * A handy class to build the definition of a function. This builder either
+ * creates a new function or begins the definition of previously declared
+ * function using the provided declaration. After instantiation, code-generation
+ * shifts to the entry point of the function allowing users to defines its
+ * logic. Arguments are accessible through the GetArgumentBy*(...) methods.
+ * The user completes the construction of the function by calling Finish(...),
+ * after which the function is fully defined.
+
+ * FunctionBuilders can safely nest. This enables construction of one function
+ * while in the middle of construction of a different function. However, to do
+ * this safely, the functions must be "finished" in reverse order of nesting.
+ */
 class FunctionBuilder {
   friend class CodeGen;
 
@@ -102,14 +127,17 @@ class FunctionBuilder {
   llvm::Value *GetArgumentByName(std::string name);
   llvm::Value *GetArgumentByPosition(uint32_t index);
 
+  ///
+  llvm::BasicBlock *GetExitBlock();
+
   /// Finish the current function
   void ReturnAndFinish(llvm::Value *res = nullptr);
 
   /// Return the function we created
   llvm::Function *GetFunction() const { return func_; }
 
-  llvm::Value *GetOrCacheVariable(const std::string &name,
-                                  const std::function<llvm::Value *()> &func);
+  llvm::Value *GetOrCacheVariable(
+      const std::string &name, const std::function<llvm::Value *()> &load_func);
 
  private:
   // Get the first basic block in this function
@@ -146,6 +174,8 @@ class FunctionBuilder {
   llvm::BasicBlock *overflow_bb_;
   // The divide-by-zero error block
   llvm::BasicBlock *divide_by_zero_bb_;
+  // The return block
+  llvm::BasicBlock *return_bb_;
 
   // Cached variables
   std::unordered_map<std::string, llvm::Value *> cached_vars_;
