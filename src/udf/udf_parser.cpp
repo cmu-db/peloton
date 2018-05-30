@@ -13,7 +13,7 @@
 #include "udf/udf_parser.h"
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/support/raw_ostream.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "codegen/codegen.h"
 
