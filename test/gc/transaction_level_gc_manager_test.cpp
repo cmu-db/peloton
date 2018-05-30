@@ -400,6 +400,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
 // Assert RQ.size = 0
 // Assert old tuple in 1 index (primary key)
 // Assert new tuple in 2 indexes
+// Test is disabled until the reuse of owned tuple slots optimization is removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
   std::string test_name = "commitinsertupdate";
   uint64_t current_epoch = 0;
@@ -457,6 +458,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
 // Assert RQ.size = 1 or 2?
 // Assert inserted tuple in 0 indexes
 // Assert updated tuple in 0 indexes
+// Test is disabled until the reuse of owned tuple slots optimization is removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortInsertUpdateTest) {
   std::string test_name = "abortinsertupdate";
   uint64_t current_epoch = 0;
@@ -467,7 +469,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortInsertUpdateTest) {
   auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
   gc_manager.Reset();
   auto storage_manager = storage::StorageManager::GetInstance();
-  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "dbb");
+  auto database = TestingExecutorUtil::InitializeDatabase(test_name + "db");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
@@ -722,6 +724,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
 // Assert RQ.size = 2
 // Assert old tuple in 0 indexes
 // Assert new tuple in 0 indexes
+// Test is disabled until the reuse of owned tuple slots optimization is removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitUpdateDeleteTest) {
   std::string test_name = "commitupdatedelete";
   uint64_t current_epoch = 0;
@@ -779,6 +782,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitUpdateDeleteTest) {
 // Assert RQ size = 2
 // Assert old tuple in 2 indexes
 // Assert new tuple in 1 index (primary key)
+// Test is disabled until the reuse of owned tuple slots optimization is removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortUpdateDeleteTest) {
   std::string test_name = "abortupdatedelete";
   uint64_t current_epoch = 0;
