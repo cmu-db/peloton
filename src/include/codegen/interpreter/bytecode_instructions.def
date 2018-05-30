@@ -231,6 +231,17 @@ HANDLE_EXPLICIT_CALL_INST(peloton_inserter_insert,
 HANDLE_EXPLICIT_CALL_INST(peloton_inserter_teardown,
                           peloton::codegen::Inserter::TearDown)
 
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_init,
+                          peloton::codegen::util::Sorter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storeinputtuple,
+                          peloton::codegen::util::Sorter::StoreInputTuple)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sort,
+                          peloton::codegen::util::Sorter::Sort)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sortparallel,
+                          peloton::codegen::util::Sorter::SortParallel)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_destroy,
+                          peloton::codegen::util::Sorter::Destroy)
+
 HANDLE_EXPLICIT_CALL_INST(peloton_zonemap_shouldscantilegroup,
                           peloton::storage::ZoneMapManager::ShouldScanTileGroup)
 HANDLE_EXPLICIT_CALL_INST(peloton_zonemap_getinstance,
@@ -282,16 +293,14 @@ HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_substr,
 HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_repeat,
                           peloton::function::StringFunctions::Repeat)
 
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_init,
-                          peloton::codegen::util::Sorter::Init)
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storeinputtuple,
-                          peloton::codegen::util::Sorter::StoreInputTuple)
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sort,
-                          peloton::codegen::util::Sorter::Sort)
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_clear,
-                          peloton::codegen::util::Sorter::Clear)
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_destroy,
-                          peloton::codegen::util::Sorter::Destroy)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_init,
+                          peloton::codegen::util::Buffer::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_append,
+                          peloton::codegen::util::Buffer::Append)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_reset,
+                          peloton::codegen::util::Buffer::Reset)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_destroy,
+                          peloton::codegen::util::Buffer::Destroy)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_abs,
                           peloton::function::DecimalFunctions::Abs)
@@ -302,10 +311,15 @@ HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_round,
 HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_ceil,
                           peloton::function::DecimalFunctions::Ceil)
 
-HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_init,
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilteraccessor_init,
                           peloton::codegen::BloomFilterAccessor::Init)
-HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_destroy,
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilteraccessor_destroy,
                           peloton::codegen::BloomFilterAccessor::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_init,
+                          peloton::codegen::util::BloomFilter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_destroy,
+                          peloton::codegen::util::BloomFilter::Destroy)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_datatable_gettilegroupcount,
                           peloton::storage::DataTable::GetTileGroupCount)
@@ -313,12 +327,20 @@ HANDLE_EXPLICIT_CALL_INST(peloton_datatable_gettilegroupcount,
 HANDLE_EXPLICIT_CALL_INST(peloton_datefunctions_now,
                           peloton::function::DateFunctions::Now)
 
-HANDLE_EXPLICIT_CALL_INST(peloton_cchashtable_init,
-                          peloton::codegen::util::CCHashTable::Init)
-HANDLE_EXPLICIT_CALL_INST(peloton_cchashtable_storetuple,
-                          peloton::codegen::util::CCHashTable::StoreTuple)
-HANDLE_EXPLICIT_CALL_INST(peloton_cchashtable_destroy,
-                          peloton::codegen::util::CCHashTable::Destroy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_init,
+                          peloton::codegen::util::HashTable::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_insert,
+                          peloton::codegen::util::HashTable::Insert)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_insertlazy,
+                          peloton::codegen::util::HashTable::InsertLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_buildlazy,
+                          peloton::codegen::util::HashTable::BuildLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_reservelazy,
+                          peloton::codegen::util::HashTable::ReserveLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_mergelazyunfinished,
+                          peloton::codegen::util::HashTable::MergeLazyUnfinished)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_destroy,
+                          peloton::codegen::util::HashTable::Destroy)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_storagemanager_gettablewithoid,
                           peloton::storage::StorageManager::GetTableWithOid)

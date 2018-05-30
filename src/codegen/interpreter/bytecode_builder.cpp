@@ -1727,8 +1727,7 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
 
       } else {
         // Function is not available in IR context, so we have to make an
-        // external
-        // function call
+        // external function call
 
         // lookup function pointer in code context
         void *raw_pointer = code_context_.LookupBuiltin(function_name).second;
@@ -1741,6 +1740,12 @@ void BytecodeBuilder::TranslateCall(const llvm::Instruction *instruction) {
         // libffi is used for external function calls
         // Here we collect all the information that will be needed at runtime
         // (function activation time) to create the libffi call interface.
+
+        // Show a hint, that an explicit wrapper could be created for this
+        // function
+        LOG_DEBUG("The interpreter will call the C++ function '%s' per libffi. "
+                  "Consider adding an explicit wrapper for this function in "
+                  "bytecode_instructions.def\n", function_name.c_str());
 
         index_t dest_slot = 0;
         if (!instruction->getType()->isVoidTy()) {

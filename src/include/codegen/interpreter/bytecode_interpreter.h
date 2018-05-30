@@ -22,6 +22,7 @@
 
 // Includes for explicit function calls
 #include "codegen/bloom_filter_accessor.h"
+#include "codegen/util/bloom_filter.h"
 #include "codegen/buffering_consumer.h"
 #include "codegen/deleter.h"
 #include "codegen/inserter.h"
@@ -31,6 +32,7 @@
 #include "codegen/tuple_runtime.h"
 #include "codegen/updater.h"
 #include "codegen/util/oa_hash_table.h"
+#include "codegen/util/hash_table.h"
 #include "codegen/util/sorter.h"
 #include "codegen/values_runtime.h"
 #include "executor/executor_context.h"
@@ -43,6 +45,7 @@
 #include "storage/storage_manager.h"
 #include "storage/tile_group.h"
 #include "storage/zone_map_manager.h"
+#include "codegen/util/buffer.h"
 
 namespace peloton {
 namespace codegen {
