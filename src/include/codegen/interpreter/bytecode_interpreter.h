@@ -30,7 +30,6 @@
 #include "codegen/transaction_runtime.h"
 #include "codegen/tuple_runtime.h"
 #include "codegen/updater.h"
-#include "codegen/util/cc_hash_table.h"
 #include "codegen/util/oa_hash_table.h"
 #include "codegen/util/sorter.h"
 #include "codegen/values_runtime.h"

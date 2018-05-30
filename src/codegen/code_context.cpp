@@ -201,7 +201,7 @@ CodeContext::CodeContext()
   engine_.reset(
       llvm::EngineBuilder(std::move(m))
           .setEngineKind(llvm::EngineKind::JIT)
-          .setMCJITMemoryManager(llvm::make_unique<PelotonMM>(builtins_))
+          .setMCJITMemoryManager(llvm::make_unique<PelotonMemoryManager>(builtins_))
           .setMCPU(llvm::sys::getHostCPUName())
           .setErrorStr(&err_str_)
           .create());
