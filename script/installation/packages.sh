@@ -106,10 +106,6 @@ if [ "$DISTRO" = "UBUNTU" ]; then
             LLVM_PKG_URL="http://apt.llvm.org/artful/"
             LLVM_PKG_TARGET="llvm-toolchain-artful main"
         fi
-        if [ "$MAJOR_VER" == "18" ]; then
-            LLVM_PKG_URL="http://apt.llvm.org/bionic/"
-            LLVM_PKG_TARGET="llvm-toolchain-bionic main"
-        fi
 
         if ! grep -q "deb $LLVM_PKG_URL $LLVM_PKG_TARGET" /etc/apt/sources.list; then
             echo -e "\n# Added by Peloton 'packages.sh' script on $(date)\ndeb $LLVM_PKG_URL $LLVM_PKG_TARGET" | sudo tee -a /etc/apt/sources.list > /dev/null
@@ -140,12 +136,6 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
-        TF_VERSION="1.5.0"
-    fi
-    # Fix for llvm on Ubuntu 18.x
-    if [ "$MAJOR_VER" == "18" ]; then
-        PKG_LLVM="llvm-6.0"
-        PKG_CLANG="clang-6.0"
         TF_VERSION="1.5.0"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
@@ -180,8 +170,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         g++ \
         libeigen3-dev \
     	ant \
-        unzip \
-        zlib1g-dev
+        unzip
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
