@@ -92,9 +92,9 @@ llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
 
   auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
   if (entry_block->empty()) {
-    return new llvm::AllocaInst(type, name, entry_block);
+    return new llvm::AllocaInst(type, 0, name, entry_block);
   } else {
-    return new llvm::AllocaInst(type, name, &entry_block->front());
+    return new llvm::AllocaInst(type, 0, name, &entry_block->front());
   }
 }
 
