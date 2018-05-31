@@ -78,25 +78,28 @@ void LimitTranslator::Consume(ConsumerContext &context,
   }
 
   // Pass the tuple only if in valid range
-  lang::If in_window{codegen, InValidWindow(codegen, next_limit)};
-  {
-    // In window, send along
-    context.Consume(row);
-  }
-  in_window.EndIf();
-}
-
-llvm::Value *LimitTranslator::InValidWindow(CodeGen &codegen,
-                                            llvm::Value *count) const {
   auto &plan = GetPlanAs<planner::LimitPlan>();
+  uint64_t offset = plan.GetOffset();
+  uint64_t bound = offset + plan.GetLimit();
 
-  // Compute: offset < count <= (offset + limit)
-  auto *gt_offset =
-      codegen->CreateICmpUGT(count, codegen.Const64(plan.GetOffset()));
-  auto *lt_limit = codegen->CreateICmpULE(
-      count, codegen.Const64(plan.GetLimit() + plan.GetOffset()));
+  // First, check if we're past the defined "offset"
 
-  return codegen->CreateAnd(gt_offset, lt_limit);
+  llvm::Value *past_offset =
+      codegen->CreateICmpUGT(next_limit, codegen.Const64(offset));
+  lang::If after_offset(codegen, past_offset, "pastOffset");
+  {
+    // Now, check if we've reached the limit
+    llvm::Value *before_limit =
+        codegen->CreateICmpULE(next_limit, codegen.Const64(bound));
+    lang::If within_limit(codegen, before_limit, "beforeLimit", nullptr,
+                          context.GetExitBlock());
+    {
+      // In window, send along
+      context.Consume(row);
+    }
+    within_limit.EndIf();
+  }
+  after_offset.EndIf();
 }
 
 }  // namespace codegen

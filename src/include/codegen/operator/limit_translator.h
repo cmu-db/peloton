@@ -44,17 +44,6 @@ class LimitTranslator : public OperatorTranslator {
   void TearDownQueryState() override {}
 
  private:
-  /**
-   * Given the current count, determine if it falls in the active window between
-   * 'offset' and 'limit' tuples.
-   *
-   * @param codegen The codegen instance
-   * @param count The current count of tuples we've seen
-   * @return True (as an LLVM value) if in the window. False otherwise.
-   */
-  llvm::Value *InValidWindow(CodeGen &codegen, llvm::Value *count) const;
-
- private:
   // We keep an 8-byte count
   QueryState::Id limit_count_id_;
 };
