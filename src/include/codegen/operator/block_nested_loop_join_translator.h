@@ -14,6 +14,7 @@
 #pragma once
 
 #include "codegen/auxiliary_producer_function.h"
+#include "codegen/buffer_accessor.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/sorter.h"
 
@@ -26,7 +27,7 @@ class NestedLoopJoinPlan;
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// The translator for a blockwise nested loop join
+// The translator for a block-wise nested loop join
 //===----------------------------------------------------------------------===//
 class BlockNestedLoopJoinTranslator : public OperatorTranslator {
  public:
@@ -34,13 +35,11 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
                                 CompilationContext &context,
                                 Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   void DefineAuxiliaryFunctions() override;
 
-  void TearDownState() override;
-
-  std::string GetName() const override;
+  void TearDownQueryState() override;
 
   void Produce() const override;
 
@@ -54,23 +53,16 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
 
   void FindMatchesForRow(ConsumerContext &ctx, RowBatch::Row &row) const;
 
-  const planner::NestedLoopJoinPlan &GetPlan() const { return nlj_plan_; }
-
  private:
-  // The plan
-  const planner::NestedLoopJoinPlan &nlj_plan_;
-
   // The pipeline for the left subtree of the plan
   Pipeline left_pipeline_;
 
   // All the attributes from the left input that are materialized
   std::vector<const planner::AttributeInfo *> unique_left_attributes_;
 
-  // The memory space we use to buffer left input tuples. We use a util::Sorter
-  // instance because it provides a simple API to append tuples into a buffer.
-  // We **DO NOT** actually sort the input at all.
-  RuntimeState::StateID buffer_id_;
-  Sorter buffer_;
+  // The memory space we use to buffer left input tuples
+  QueryState::Id buffer_id_;
+  BufferAccessor buffer_;
 
   // This controls the number of tuples we buffer before performing the nested
   // loop join. Ideally, we want the buffer to always be, at least, L2 cache

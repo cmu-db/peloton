@@ -6,63 +6,30 @@
 //
 // Identification: src/codegen/compilation_context.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/proxy/storage_manager_proxy.h"
-#include "codegen/proxy/executor_context_proxy.h"
-#include "codegen/proxy/query_parameters_proxy.h"
-#include "codegen/proxy/storage_manager_proxy.h"
+#include "codegen/pipeline.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
 namespace peloton {
 namespace codegen {
 
-namespace {
-
-// Reset the cache (if already loaded), the populate the cache
-void InitializeParameterCache(CodeGen &codegen, ParameterCache &cache,
-                              llvm::Value *runtime_query_parameters) {
-  cache.Reset();
-  cache.Populate(codegen, runtime_query_parameters);
-}
-
-}  // anonymous namespace
-
 // Constructor
-CompilationContext::CompilationContext(Query &query,
+CompilationContext::CompilationContext(CodeContext &code,
+                                       QueryState &query_state,
                                        const QueryParametersMap &parameters_map,
-                                       QueryResultConsumer &result_consumer)
-    : query_(query),
-      parameters_map_(parameters_map),
-      parameter_cache_(parameters_map_),
-      result_consumer_(result_consumer),
-      codegen_(query_.GetCodeContext()) {
-  // Allocate a storage manager instance in the runtime state
-  auto &runtime_state = GetRuntimeState();
-
-  auto *storage_manager_ptr_type =
-      StorageManagerProxy::GetType(codegen_)->getPointerTo();
-  storage_manager_state_id_ =
-      runtime_state.RegisterState("storageManager", storage_manager_ptr_type);
-
-  auto *executor_context_type =
-      ExecutorContextProxy::GetType(codegen_)->getPointerTo();
-  executor_context_state_id_ =
-      runtime_state.RegisterState("executorContext", executor_context_type);
-
-  auto *query_parameters_type =
-      QueryParametersProxy::GetType(codegen_)->getPointerTo();
-  query_parameters_state_id_ =
-      runtime_state.RegisterState("queryParameters", query_parameters_type);
-
-  // Let the query consumer modify the runtime state object
-  result_consumer_.Prepare(*this);
-}
+                                       ExecutionConsumer &execution_consumer)
+    : code_context_(code),
+      query_state_(query_state),
+      parameter_cache_(parameters_map),
+      exec_consumer_(execution_consumer),
+      codegen_(code_context_),
+      pipelines_() {}
 
 // Prepare the translator for the given operator
 void CompilationContext::Prepare(const planner::AbstractPlan &op,
@@ -85,13 +52,21 @@ void CompilationContext::Produce(const planner::AbstractPlan &op) {
 }
 
 // Generate all plan functions for the given query
-void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
+void CompilationContext::GeneratePlan(Query &query,
+                                      QueryCompiler::CompileStats *stats) {
   // Start timing
   Timer<std::ratio<1, 1000>> timer;
   timer.Start();
 
-  // First we prepare the translators for all the operators in the tree
-  Prepare(query_.GetPlan(), main_pipeline_);
+  // The main pipeline
+  Pipeline main_pipeline(*this);
+
+  // First we prepare the consumer and translators for each plan node
+  exec_consumer_.Prepare(*this);
+  Prepare(query.GetPlan(), main_pipeline);
+
+  // Finalize the runtime state
+  query_state_.FinalizeType(codegen_);
 
   if (stats != nullptr) {
     timer.Stop();
@@ -100,7 +75,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
     timer.Start();
   }
 
-  LOG_TRACE("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
+  LOG_TRACE("Main pipeline: %s", main_pipeline.GetInfo().c_str());
 
   // Generate the helper functions the query needs
   GenerateHelperFunctions();
@@ -109,7 +84,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   llvm::Function *init = GenerateInitFunction();
 
   // Generate the plan() function
-  llvm::Function *plan = GeneratePlanFunction(query_.GetPlan());
+  llvm::Function *plan = GeneratePlanFunction(query.GetPlan());
 
   // Generate the  tearDown() function
   llvm::Function *tear_down = GenerateTearDownFunction();
@@ -122,8 +97,9 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   }
 
   // Next, we prepare the query statement with the functions we've generated
-  Query::QueryFunctions funcs = {init, plan, tear_down};
-  bool prepared = query_.Prepare(funcs);
+  Query::QueryFunctions funcs = {
+      .init_func = init, .plan_func = plan, .tear_down_func = tear_down};
+  bool prepared = query.Prepare(funcs);
   if (!prepared) {
     throw Exception{"There was an error preparing the compiled query"};
   }
@@ -144,17 +120,11 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 
   // Define each auxiliary producer function
-  auto &cc = query_.GetCodeContext();
   for (auto &iter : auxiliary_producers_) {
     const auto &plan = *iter.first;
     const auto &function_declaration = iter.second;
-    FunctionBuilder func{cc, function_declaration};
+    FunctionBuilder func(code_context_, function_declaration);
     {
-      // Don't try to optimize this by moving the cache population outside the
-      // function definition. We need the call to exist within the context of
-      // the function we're generating.
-      InitializeParameterCache(codegen_, parameter_cache_,
-                               GetQueryParametersPtr());
       // Let the plan produce
       Produce(plan);
       // That's it
@@ -163,37 +133,21 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 }
 
-// Get the storage manager pointer from the runtime state
-llvm::Value *CompilationContext::GetStorageManagerPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, storage_manager_state_id_);
-}
-
-llvm::Value *CompilationContext::GetExecutorContextPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, executor_context_state_id_);
-}
-
-llvm::Value *CompilationContext::GetQueryParametersPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, query_parameters_state_id_);
-}
-
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_init", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_init", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder init_func{code_context, name, codegen_.VoidType(), args};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
+  FunctionBuilder init_func(code_context_, name, codegen_.VoidType(), args);
   {
     // Let the consumer initialize
-    result_consumer_.InitializeState(*this);
+    exec_consumer_.InitializeQueryState(*this);
 
     // Allow each operator to initialize their state
     for (auto &iter : op_translators_) {
       auto &translator = iter.second;
-      translator->InitializeState();
+      translator->InitializeQueryState();
     }
 
     // Finish the function
@@ -207,22 +161,13 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
 // Generate the code for the plan() function of the query
 llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
-  // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_plan", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_plan", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder plan_func{code_context, name, codegen_.VoidType(), args};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
+  FunctionBuilder plan_func(code_context_, name, codegen_.VoidType(), args);
   {
-    // Load the query parameter values
-    InitializeParameterCache(codegen_, parameter_cache_,
-                             GetQueryParametersPtr());
-
     // Generate the primary plan logic
     Produce(root);
-
     // Finish the function
     plan_func.ReturnAndFinish();
   }
@@ -233,22 +178,19 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
 // Generate the code for the tearDown() function of the query
 llvm::Function *CompilationContext::GenerateTearDownFunction() {
-  // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_tearDown", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_tearDown", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder tear_down_func{code_context, name, codegen_.VoidType(), args};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
+  FunctionBuilder tear_down_func(code_context_, name, codegen_.VoidType(),
+                                 args);
   {
     // Let the consumer cleanup
-    result_consumer_.TearDownState(*this);
+    exec_consumer_.TearDownQueryState(*this);
 
     // Allow each operator to clean up their state
     for (auto &iter : op_translators_) {
       auto &translator = iter.second;
-      translator->TearDownState();
+      translator->TearDownQueryState();
     }
 
     // Finish the function
@@ -280,23 +222,20 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
     return AuxiliaryProducerFunction(declaration);
   }
 
-  auto &cc = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
   // Make the declaration for the caller to use
 
   std::string fn_name;
   if (!provided_name.empty()) {
     fn_name = provided_name;
   } else {
-    fn_name = StringUtil::Format("_%lu_auxPlanFunction", cc.GetID());
+    fn_name = StringUtil::Format("_%lu_auxPlanFunction", code_context_.GetID());
   }
 
   std::vector<FunctionDeclaration::ArgumentInfo> fn_args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
 
   auto declaration = FunctionDeclaration::MakeDeclaration(
-      cc, fn_name, FunctionDeclaration::Visibility::Internal,
+      code_context_, fn_name, FunctionDeclaration::Visibility::Internal,
       codegen_.VoidType(), fn_args);
 
   // Save the function declaration for later definition

@@ -132,13 +132,13 @@ class TestingConstraintsUtil {
     // Create table.
     txn = txn_manager.BeginTransaction();
     auto result =
-        catalog->CreateTable(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name,
+        catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name,
                              std::move(table_schema), txn, false);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(ResultType::SUCCESS, result);
 
     txn = txn_manager.BeginTransaction();
-    auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME,
+    auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                                            table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_NE(nullptr, table);

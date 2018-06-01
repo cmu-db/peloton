@@ -42,7 +42,7 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
   txn_manager.CommitTransaction(txn);
 
   // Create the new column map
-  storage::column_map_type column_map;
+  column_map_type column_map;
   column_map[0] = std::make_pair(0, 0);
   column_map[1] = std::make_pair(0, 1);
   column_map[2] = std::make_pair(1, 0);

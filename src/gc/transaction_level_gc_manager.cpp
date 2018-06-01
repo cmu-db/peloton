@@ -91,7 +91,7 @@ void TransactionLevelGCManager::RecycleTransaction(
 
   epoch_manager.ExitEpoch(txn->GetThreadId(), txn->GetEpochId());
 
-  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY &&
+  if (!txn->IsReadOnly() && \
       txn->GetResult() != ResultType::SUCCESS && txn->IsGCSetEmpty() != true) {
     txn->SetEpochId(epoch_manager.GetNextEpochId());
   }
@@ -146,7 +146,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
     // Deallocate the Transaction Context of transactions that don't involve
     // any garbage collection
-    if (txn_ctx->GetIsolationLevel() == IsolationLevelType::READ_ONLY ||
+    if (txn_ctx->IsReadOnly() || \
         txn_ctx->IsGCSetEmpty()) {
       delete txn_ctx;
       continue;

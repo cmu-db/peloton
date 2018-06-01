@@ -17,18 +17,19 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "tbb/concurrent_unordered_map.h"
 #include "tbb/concurrent_unordered_set.h"
 #include "tbb/concurrent_vector.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "container/cuckoo_map.h"
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
 
@@ -421,7 +422,6 @@ enum class IsolationLevelType {
   SNAPSHOT = 2,          // snapshot isolation
   REPEATABLE_READS = 3,  // repeatable reads
   READ_COMMITTED = 4,    // read committed
-  READ_ONLY = 5          // read only
 };
 std::string IsolationLevelTypeToString(IsolationLevelType type);
 IsolationLevelType StringToIsolationLevelType(const std::string &str);
@@ -1212,7 +1212,8 @@ RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 // ItemPointer -> type
-typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
+typedef tbb::concurrent_unordered_map<ItemPointer, RWType, ItemPointerHasher,
+                                      ItemPointerComparator>
     ReadWriteSet;
 
 typedef tbb::concurrent_unordered_set<ItemPointer, ItemPointerHasher,
@@ -1397,6 +1398,15 @@ typedef std::unordered_map<expression::AbstractExpression *, unsigned,
 typedef std::unordered_set<expression::AbstractExpression *,
                            expression::ExprHasher, expression::ExprEqualCmp>
     ExprSet;
+
+//===--------------------------------------------------------------------===//
+// Storage
+//===--------------------------------------------------------------------===//
+
+/* column_map_type used to store the layout of a tile_group
+ * <column offset> to <tile offset, tile column offset>
+ */
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

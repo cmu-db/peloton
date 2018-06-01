@@ -1,12 +1,21 @@
-#include <algorithm>
-#include <cctype>
-#include <cstdio>
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// udf_parser.h
+//
+// Identification: src/include/udf/udf_parser.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <cstdlib>
-#include <iostream>  // Remove later
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "type/type.h"
 #include "udf/ast_nodes.h"
 
@@ -20,7 +29,7 @@ namespace udf {
 
 class UDFParser {
  public:
-  UDFParser(UNUSED_ATTRIBUTE concurrency::TransactionContext *txn);
+  UDFParser(concurrency::TransactionContext *txn);
 
   void ParseUDF(codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
                 std::string func_body, std::string func_name,

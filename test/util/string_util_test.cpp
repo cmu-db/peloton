@@ -192,5 +192,57 @@ TEST_F(StringUtilTests, SplitTest) {
   }  // FOR
 }
 
+TEST_F(StringUtilTests, JoinTest) {
+  {
+    // Empty input test
+    std::vector<std::string> words = {};
+    EXPECT_EQ("", StringUtil::Join(words, ","));
+    EXPECT_EQ("", StringUtil::Join(words, "_"));
+    EXPECT_EQ("", StringUtil::Join(words, "!\n"));
+  }
+
+  {
+    // Single word test
+    std::string w = "Bruh";
+    std::vector<std::string> words = {w};
+    EXPECT_EQ(w, StringUtil::Join(words, ","));
+    EXPECT_EQ(w, StringUtil::Join(words, "_"));
+    EXPECT_EQ(w, StringUtil::Join(words, "!\n"));
+  }
+
+  {
+    // Legit multi-word test
+
+    // clang-format off
+    std::vector<std::string> words = {
+        "Stop", "drop", "shut 'em down", "open up shop",
+        "Oh", "no", "that's how Ruff Ryders roll"};
+    // clang-format on
+
+    auto naive_join = [&words](const std::string &sep) -> std::string {
+      bool first = true;
+      std::string result;
+      for (const auto &word : words) {
+        if (!first) result += sep;
+        result += word;
+        first = false;
+      }
+      return result;
+    };
+
+    {
+      // Check last char doesn't have separator
+      auto ret = StringUtil::Join(words, ",");
+      EXPECT_FALSE(ret.empty());
+      EXPECT_NE(',', ret.back());
+    }
+
+    // Check using different separators
+    EXPECT_EQ(naive_join(","), StringUtil::Join(words, ","));
+    EXPECT_EQ(naive_join("_"), StringUtil::Join(words, "_"));
+    EXPECT_EQ(naive_join("!\n"), StringUtil::Join(words, "!\n"));
+  }
+}
+
 }  // namespace test
 }  // namespace peloton

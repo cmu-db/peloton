@@ -190,8 +190,9 @@ class TransactionManager {
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(TransactionContext *const current_txn,
-                           const ItemPointer &location,
-                           bool acquire_ownership = false) = 0;
+                             const ItemPointer &location,
+                             storage::TileGroupHeader *tile_group_header,
+                             bool acquire_ownership) = 0;
 
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
@@ -219,11 +220,12 @@ class TransactionManager {
   }
 
   TransactionContext *BeginTransaction(const IsolationLevelType type) {
-    return BeginTransaction(0, type);
+    return BeginTransaction(0, type, false);
   }
 
   TransactionContext *BeginTransaction(const size_t thread_id = 0,
-                                const IsolationLevelType type = isolation_level_);
+                                const IsolationLevelType type = isolation_level_,
+                                bool read_only = false);
 
   /**
    * @brief      Ends a transaction.
@@ -232,7 +234,16 @@ class TransactionManager {
    */
   void EndTransaction(TransactionContext *current_txn);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn) = 0;
+  /**
+   * @brief     Record transaction results
+   * @param[in] current_txn     The current transaction
+   * @warning   Assumes stats_mode != INVALID
+   */
+  void RecordTransactionStats(
+      const TransactionContext *const current_txn) const;
+
+  virtual ResultType CommitTransaction(
+      TransactionContext *const current_txn) = 0;
 
   virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
 

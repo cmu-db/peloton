@@ -26,7 +26,7 @@ namespace peloton {
 namespace codegen {
 
 class CodeGen;
-class RuntimeState;
+class QueryState;
 class Value;
 
 namespace type {

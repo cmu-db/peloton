@@ -646,7 +646,7 @@ TEST_F(InternalTypesTests, IsolationLevelTypeTest) {
   std::vector<IsolationLevelType> list = {
       IsolationLevelType::INVALID,        IsolationLevelType::SERIALIZABLE,
       IsolationLevelType::SNAPSHOT,       IsolationLevelType::REPEATABLE_READS,
-      IsolationLevelType::READ_COMMITTED, IsolationLevelType::READ_ONLY};
+      IsolationLevelType::READ_COMMITTED};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

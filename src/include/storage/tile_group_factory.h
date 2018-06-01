@@ -32,7 +32,7 @@ class TileGroupFactory {
   static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id,
                                  oid_t tile_group_id, AbstractTable *table,
                                  const std::vector<catalog::Schema> &schemas,
-                                 const column_map_type &column_map,
+                                 std::shared_ptr<const Layout> layout,
                                  int tuple_count);
 };
 

@@ -34,6 +34,7 @@ class SchemaCatalog;
 class TableCatalog;
 class IndexCatalog;
 class ColumnCatalog;
+class LayoutCatalog;
 
 class SystemCatalogs {
  public:
@@ -79,6 +80,13 @@ class SystemCatalogs {
     return pg_index_;
   }
 
+  LayoutCatalog *GetLayoutCatalog() {
+    if (!pg_layout_) {
+      throw CatalogException("Layout catalog has not been initialized");
+    }
+    return pg_layout_;
+  }
+
   TriggerCatalog *GetTriggerCatalog() {
     if (!pg_trigger_) {
       throw CatalogException("Trigger catalog has not been initialized");
@@ -112,6 +120,7 @@ class SystemCatalogs {
   SchemaCatalog *pg_namespace_;
   TableCatalog *pg_table_;
   IndexCatalog *pg_index_;
+  LayoutCatalog *pg_layout_;
 
   TriggerCatalog *pg_trigger_;
   // ProcCatalog *pg_proc;

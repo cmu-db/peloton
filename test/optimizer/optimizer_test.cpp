@@ -119,12 +119,14 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
-  // NOTE: everytime we create a database, there will be 8 catalog tables inside
+  // NOTE: everytime we create a database, there will be 9 catalog tables inside
+  // Additionally, we also created a table for the test.
+  oid_t expected_table_count = CATALOG_TABLES_COUNT + 1;
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            1 + CATALOG_TABLES_COUNT);
+            expected_table_count);
 
   traffic_cop.SetTcopTxnState(txn);
   LOG_INFO("Creating table");
@@ -155,11 +157,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Table Created");
   traffic_cop.CommitQueryHelper();
 
+  // Account for table created.
+  expected_table_count++;
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            2 + CATALOG_TABLES_COUNT);
+            expected_table_count);
 
   // Inserting a tuple to table_a
   traffic_cop.SetTcopTxnState(txn);

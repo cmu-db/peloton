@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/codegen.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,26 +20,42 @@
 namespace peloton {
 namespace codegen {
 
+// Forward declare
 class CodeGen;
 
-/// A proxy to a member of a class. Users must provide both the physical
-/// position of the member in the class, and the C++ type of the member.
-template <uint32_t Pos, typename T>
-struct ProxyMember {
-  // Virtual destructor
-  virtual ~ProxyMember() = default;
-};
+/**
+ * A CppProxyMember defines an access proxy to a member defined in a C++ class.
+ * Users can use this class to generate code to load values from and store
+ * values into member variables of C++ classes/structs available at runtime.
+ * Each member is defined by a slot position in the C++ struct. Slots are
+ * zero-based ordinal numbers assigned to fields increasing order of appearance
+ * in the struct/class.
+ */
+class CppProxyMember {
+ public:
+  explicit CppProxyMember(uint32_t slot) noexcept : slot_(slot) {}
 
-/// A proxy to a method in a class. Subclasses must implement GetFunction().
-template <typename T>
-struct ProxyMethod {
-  // Virtual destructor
-  virtual ~ProxyMethod() = default;
+  /**
+   * Load this member field from the provided struct pointer.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @return The value of the field
+   */
+  llvm::Value *Load(CodeGen &codegen, llvm::Value *obj_ptr) const;
 
-  // Hand off to the specialized template to define the LLVM function
-  llvm::Function *GetFunction(CodeGen &codegen) {
-    return static_cast<T *>(this)->GetFunction(codegen);
-  }
+  /**
+   * Store the provided value into this member field of the provided struct.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @param val The value of the field
+   */
+  void Store(CodeGen &codegen, llvm::Value *obj_ptr, llvm::Value *val) const;
+
+ private:
+  // The slot position
+  uint32_t slot_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -50,6 +66,9 @@ class CodeGen {
   /// Constructor and destructor
   explicit CodeGen(CodeContext &code_context);
   ~CodeGen() = default;
+
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(CodeGen);
 
   /// We forward the -> operator to LLVM's IRBuilder
   llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
@@ -63,6 +82,7 @@ class CodeGen {
   llvm::Type *Int64Type() const { return code_context_.int64_type_; }
   llvm::Type *DoubleType() const { return code_context_.double_type_; }
   llvm::Type *VoidType() const { return code_context_.void_type_; }
+  llvm::Type *VoidPtrType() const { return code_context_.void_ptr_type_; }
   llvm::PointerType *CharPtrType() const {
     return code_context_.char_ptr_type_;
   }
@@ -91,9 +111,18 @@ class CodeGen {
   llvm::Value *CallFunc(llvm::Value *fn,
                         const std::vector<llvm::Value *> &args);
   template <typename T>
-  llvm::Value *Call(ProxyMethod<T> &proxy,
-                    const std::vector<llvm::Value *> &args) {
+  llvm::Value *Call(const T &proxy, const std::vector<llvm::Value *> &args) {
     return CallFunc(proxy.GetFunction(*this), args);
+  }
+
+  template <typename T>
+  llvm::Value *Load(const T &loader, llvm::Value *obj_ptr) {
+    return loader.Load(*this, obj_ptr);
+  }
+
+  template <typename T>
+  void Store(const T &storer, llvm::Value *obj_ptr, llvm::Value *val) {
+    storer.Store(*this, obj_ptr, val);
   }
 
   //===--------------------------------------------------------------------===//
@@ -133,6 +162,7 @@ class CodeGen {
 
   /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
+  uint64_t ElementOffset(llvm::Type *type, uint32_t element_idx) const;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -160,10 +190,6 @@ class CodeGen {
  private:
   // The context/module where all the code this class produces goes
   CodeContext &code_context_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(CodeGen);
 };
 
 }  // namespace codegen

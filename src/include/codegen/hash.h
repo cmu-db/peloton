@@ -54,7 +54,7 @@ class Hash {
 
   static llvm::Value *ComputeMurmur3Hash(
       CodeGen &codegen, const std::vector<llvm::Value *> &numerics,
-      const std::vector<Hash::Varlen> &varlen_buffers);
+      const std::vector<Hash::Varlen> &varlens);
 };
 
 }  // namespace codegen

@@ -91,15 +91,14 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   }
 
   size_t tuple_column_itr = 0;
-  auto tile_schemas = tile_group->GetTileSchemas();
   size_t tile_count = tile_group->GetTileCount();
 
   LOG_TRACE("tile_count: %lu", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    oid_t tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = tile_group->GetTile(tile_itr);
+    const catalog::Schema &schema = *(tile->GetSchema());
+    uint32_t tile_column_count = schema.GetColumnCount();
 
     char *tile_tuple_location = tile->GetTupleLocation(tuple_offset);
     storage::Tuple tile_tuple(&schema, tile_tuple_location);

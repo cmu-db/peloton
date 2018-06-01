@@ -36,6 +36,11 @@
 #include "executor/logical_tile.h"
 
 namespace peloton {
+
+namespace storage {
+class Layout;
+} // namespace storage
+
 namespace catalog {
 
 class IndexCatalogObject;
@@ -45,6 +50,7 @@ class TableCatalogObject {
   friend class TableCatalog;
   friend class IndexCatalog;
   friend class ColumnCatalog;
+  friend class LayoutCatalog;
 
  public:
   TableCatalogObject(executor::LogicalTile *tile,
@@ -73,6 +79,15 @@ class TableCatalogObject {
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
 
+  // Evict all layouts from the cache
+  void EvictAllLayouts();
+
+  // Get layouts
+  std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>> GetLayouts(
+      bool cached_only = false);
+  std::shared_ptr<const storage::Layout> GetLayout(oid_t layout_id,
+                                                   bool cached_entry = false);
+
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
   inline const std::string &GetSchemaName() { return schema_name; }
@@ -97,6 +112,11 @@ class TableCatalogObject {
   bool EvictColumnObject(oid_t column_id);
   bool EvictColumnObject(const std::string &column_name);
 
+  // Insert layout into table object
+  bool InsertLayout(std::shared_ptr<const storage::Layout> layout);
+  // Evict layout_id from the table object
+  bool EvictLayout(oid_t layout_id);
+
   // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
@@ -110,6 +130,11 @@ class TableCatalogObject {
       column_names;
   bool valid_column_objects;
 
+  // cache for *all* layout objects in the table
+  std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
+      layout_objects_;
+  bool valid_layout_objects_;
+
   // Pointer to its corresponding transaction
   concurrency::TransactionContext *txn;
 };
@@ -119,6 +144,7 @@ class TableCatalog : public AbstractCatalog {
   friend class DatabaseCatalogObject;
   friend class ColumnCatalog;
   friend class IndexCatalog;
+  friend class LayoutCatalog;
   friend class Catalog;
 
  public:

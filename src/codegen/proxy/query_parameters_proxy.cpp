@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/query_parameters_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(QueryParameters, "codegen::QueryParameters", MEMBER(opaque));
+DEFINE_TYPE(QueryParameters, "codegen::QueryParameters", opaque);
 
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetBoolean);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetTinyInt);
