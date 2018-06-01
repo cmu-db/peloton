@@ -342,7 +342,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
 // Assert RQ size = 1
 // Assert old version is in 2 indexes
 // Assert new version is in 1 index (primary key)
-TEST_F(TransactionLevelGCManagerTests, AbortUpAdateSecondaryKeyTest) {
+TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   std::string test_name = "abortupdatesecondarykey";
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
@@ -883,6 +883,68 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5, b=40", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.ClearGarbage(0);
+
+  // confirm update
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * from test WHERE b=40", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ('5', result[0][0]);
+
+  EXPECT_EQ(2, GetNumRecycledTuples(table));
+  EXPECT_EQ(0, CountOccurrencesInAllIndexes(table, 3, 30));
+  EXPECT_EQ(2, CountOccurrencesInAllIndexes(table, 5, 40));
+
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+}
+
+// Scenario: Insert then Update Primary Key Test
+// Insert tuple
+// Update primary key and value
+// Commit
+// Assert RQ.size = 2 (primary key update causes delete and insert)
+// Assert old tuple in 0 indexes
+// Assert new tuple in 2 indexes
+TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdatePrimaryKeyTest) {
+  uint64_t current_epoch = 0;
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  epoch_manager.Reset(++current_epoch);
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+  gc::GCManagerFactory::Configure(1);
+  auto &gc_manager = gc::TransactionLevelGCManager::GetInstance();
+  gc_manager.Reset();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  auto table = database->GetTable(database->GetTableCount() - 1);
+  TestingTransactionUtil::AddSecondaryIndex(table);
+
+  EXPECT_EQ(0, GetNumRecycledTuples(table));
+
+  epoch_manager.SetCurrentEpochId(++current_epoch);
+
+  TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 30);");
+  TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5, b=40;");
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
