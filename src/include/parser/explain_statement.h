@@ -28,7 +28,17 @@ class ExplainStatement : public SQLStatement {
 
   void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
   std::unique_ptr<parser::SQLStatement> real_sql_stmt;
+
+  /**
+   * @brief Should be set by the binder, used in the executor to bind the stmt
+   * being explained
+   */
+  std::string default_database_name;
 };
 
 }  // namespace parser

@@ -208,42 +208,34 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
         return ProcessResult::COMPLETE;
       }
 
-      bool unnamed = false;
-      auto status = traffic_cop_->ExecuteStatement(
-          traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
+      auto status = traffic_cop_->ExecuteStatement(nullptr,
+                                                   result_format_,
+                                                   thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     };
-    case QueryType::QUERY_EXPLAIN: {
-      auto status = ExecQueryExplain(
-          query, static_cast<parser::ExplainStatement &>(*sql_stmt));
-      ExecQueryMessageGetResult(status);
-      return ProcessResult::COMPLETE;
-    }
     default: {
-      std::string stmt_name = "unamed";
+      std::string stmt_name = "";
       std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
           new parser::SQLStatementList());
       unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
       traffic_cop_->SetStatement(traffic_cop_->PrepareStatement(
           stmt_name, query, std::move(unnamed_sql_stmt_list)));
-      if (traffic_cop_->GetStatement().get() == nullptr) {
+      if (traffic_cop_->GetStatement() == nullptr) {
         SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                             traffic_cop_->GetErrorMessage()}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
       traffic_cop_->SetParamVal(std::vector<type::Value>());
-      bool unnamed = false;
       result_format_ = std::vector<int>(
           traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
-      auto status = traffic_cop_->ExecuteStatement(
-          traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
+      auto status = traffic_cop_->ExecuteStatement(nullptr,
+                                                   result_format_,
+                                                   thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
@@ -251,30 +243,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       return ProcessResult::COMPLETE;
     }
   }
-}
-
-ResultType PostgresProtocolHandler::ExecQueryExplain(
-    const std::string &query, parser::ExplainStatement &explain_stmt) {
-  std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
-      new parser::SQLStatementList());
-  unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
-  auto stmt = traffic_cop_->PrepareStatement(
-      "explain", query, std::move(unnamed_sql_stmt_list));
-  ResultType status = ResultType::UNKNOWN;
-  if (stmt != nullptr) {
-    traffic_cop_->SetStatement(stmt);
-    std::vector<std::string> plan_info = StringUtil::Split(
-        planner::PlanUtil::GetInfo(stmt->GetPlanTree().get()), '\n');
-    const std::vector<FieldInfo> tuple_descriptor = {
-        traffic_cop_->GetColumnFieldForValueType("Query plan",
-                                                 type::TypeId::VARCHAR)};
-    stmt->SetTupleDescriptor(tuple_descriptor);
-    traffic_cop_->SetResult(plan_info);
-    status = ResultType::SUCCESS;
-  } else {
-    status = ResultType::FAILURE;
-  }
-  return status;
 }
 
 void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
@@ -803,12 +771,11 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(
   }
 
   auto statement_name = traffic_cop_->GetStatement()->GetStatementName();
-  bool unnamed = statement_name.empty();
   traffic_cop_->SetParamVal(portal->GetParameters());
 
-  auto status = traffic_cop_->ExecuteStatement(
-      traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-      param_stat, result_format_, traffic_cop_->GetResult(), thread_id);
+  auto status = traffic_cop_->ExecuteStatement(param_stat,
+                                               result_format_,
+                                               thread_id);
   if (traffic_cop_->GetQueuing()) {
     return ProcessResult::PROCESSING;
   }
@@ -858,7 +825,6 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 }
 
 void PostgresProtocolHandler::GetResult() {
-  traffic_cop_->ExecuteStatementPlanGetResult();
   auto status = traffic_cop_->ExecuteStatementGetResult();
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:

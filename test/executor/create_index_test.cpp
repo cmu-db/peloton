@@ -104,9 +104,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
+    traffic_cop.ExecuteStatementGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
   }
 
   LOG_INFO("Statement executed. Result: %s",
@@ -152,9 +151,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
+    traffic_cop.ExecuteStatementGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -194,9 +192,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
+    traffic_cop.ExecuteStatementGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());

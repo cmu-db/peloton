@@ -91,9 +91,8 @@ void SetupTables(std::string database_name) {
                                             result, result_format);
     if (traffic_cop.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
-      traffic_cop.ExecuteStatementPlanGetResult();
+      traffic_cop.ExecuteStatementGetResult();
       status = traffic_cop.p_status_;
-      traffic_cop.SetQueuing(false);
     }
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());

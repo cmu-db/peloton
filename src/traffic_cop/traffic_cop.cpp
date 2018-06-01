@@ -44,7 +44,7 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
-  results_.clear();
+  result_.clear();
   param_values_.clear();
   setRowsAffected(0);
 }
@@ -137,6 +137,34 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
+
+  if (p_status_.m_result == ResultType::FAILURE) return p_status_.m_result;
+
+  auto txn_result = GetCurrentTxnState().first->GetResult();
+  if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
+    LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
+              single_statement_txn_, ResultTypeToString(txn_result).c_str());
+    switch (txn_result) {
+      case ResultType::SUCCESS:
+        // Commit single statement
+        LOG_TRACE("Commit Transaction");
+        p_status_.m_result = CommitQueryHelper();
+        break;
+
+      case ResultType::FAILURE:
+      default:
+        // Abort
+        LOG_TRACE("Abort Transaction");
+        if (single_statement_txn_) {
+          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          p_status_.m_result = AbortQueryHelper();
+        } else {
+          tcop_txn_state_.top().second = ResultType::ABORTED;
+          p_status_.m_result = ResultType::ABORTED;
+        }
+    }
+  }
+
   return p_status_.m_result;
 }
 
@@ -201,35 +229,6 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
             tcop_txn_state_.size());
   return p_status_;
-}
-
-void TrafficCop::ExecuteStatementPlanGetResult() {
-  if (p_status_.m_result == ResultType::FAILURE) return;
-
-  auto txn_result = GetCurrentTxnState().first->GetResult();
-  if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
-    LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
-              single_statement_txn_, ResultTypeToString(txn_result).c_str());
-    switch (txn_result) {
-      case ResultType::SUCCESS:
-        // Commit single statement
-        LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper();
-        break;
-
-      case ResultType::FAILURE:
-      default:
-        // Abort
-        LOG_TRACE("Abort Transaction");
-        if (single_statement_txn_) {
-          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status_.m_result = AbortQueryHelper();
-        } else {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          p_status_.m_result = ResultType::ABORTED;
-        }
-    }
-  }
 }
 
 /*
@@ -326,7 +325,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    if (query_type == QueryType::QUERY_SELECT) {
+    if (query_type == QueryType::QUERY_SELECT ||
+        query_type == QueryType::QUERY_EXPLAIN) {
       auto tuple_descriptor = GenerateTupleDescriptor(
           statement->GetStmtParseTreeList()->GetStatement(0));
       statement->SetTupleDescriptor(tuple_descriptor);
@@ -366,8 +366,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>>
-        &parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
@@ -442,7 +442,15 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
 std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfo> tuple_descriptor;
-  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
+  // EXPLAIN returns a the query plan string as a tuple
+  if (sql_stmt->GetType() == StatementType::EXPLAIN) {
+    tuple_descriptor.push_back(
+        GetColumnFieldForValueType("Query Plan", type::TypeId::VARCHAR));
+    return tuple_descriptor;
+  }
+  if (sql_stmt->GetType() != StatementType::SELECT) {
+    return tuple_descriptor;
+  }
   auto select_stmt = (parser::SelectStatement *)sql_stmt;
 
   // TODO: this is a hack which I don't have time to fix now
@@ -544,8 +552,15 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
 }
 
 ResultType TrafficCop::ExecuteStatement(
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, size_t thread_id) {
+  return ExecuteStatement(statement_, param_values_, param_stats, result_format,
+                          result_, thread_id);
+}
+
+ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
+    const std::vector<type::Value> &params,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
     size_t thread_id) {

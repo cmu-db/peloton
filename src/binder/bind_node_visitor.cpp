@@ -191,7 +191,9 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
 }
 
-// void BindNodeVisitor::Visit(const parser::ConstantValueExpression *) {}
+void BindNodeVisitor::Visit(parser::ExplainStatement *node) {
+  node->default_database_name = default_database_name_;
+}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {

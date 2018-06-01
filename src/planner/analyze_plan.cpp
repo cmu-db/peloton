@@ -4,7 +4,7 @@
 //
 // analyze_plan.cpp
 //
-// Identification: src/planner/Analyze_plan.cpp
+// Identification: src/planner/analyze_plan.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
