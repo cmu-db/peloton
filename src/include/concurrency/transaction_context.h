@@ -171,10 +171,8 @@ class TransactionContext : public Printable {
    * @brief      Delete the record.
    *
    * @param[in]  <unnamed>  The logical physical location of the record
-   *
-   * @return     Return true if we detect INS_DEL.
    */
-  bool RecordDelete(const ItemPointer &);
+  void RecordDelete(const ItemPointer &);
 
   RWType GetRWType(const ItemPointer &);
 
@@ -336,9 +334,6 @@ class TransactionContext : public Printable {
 
   /** result of the transaction */
   ResultType result_ = ResultType::SUCCESS;
-
-  bool is_written_;
-  size_t insert_count_;
 
   IsolationLevelType isolation_level_;
 

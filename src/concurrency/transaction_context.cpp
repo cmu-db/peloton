@@ -80,10 +80,6 @@ void TransactionContext::Init(const size_t thread_id,
 
   isolation_level_ = isolation;
 
-  is_written_ = false;
-
-  insert_count_ = 0;
-
   gc_set_.reset(new GCSet());
   gc_object_set_.reset(new GCObjectSet());
 
@@ -93,89 +89,48 @@ void TransactionContext::Init(const size_t thread_id,
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
   RWType rw_type = RWType::INVALID;
 
-  auto rw_set_it = rw_set_.find(location);
+  const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
-    return rw_set_it->second;
+    rw_type = rw_set_it->second;
   }
   return rw_type;
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
+  PELOTON_ASSERT(rw_set_.count(location) == 0 ||
+      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
 
-  auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    UNUSED_ATTRIBUTE RWType rw_type = rw_set_it->second;
-    PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
-    return;
+  if (rw_set_.count(location) == 0) {
+    rw_set_[location] = RWType::READ;
   }
-  rw_set_.insert(rw_set_it, std::make_pair(location, RWType::READ));
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
-  auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    RWType rw_type = rw_set_it->second;
-    PELOTON_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
-    if (rw_type == RWType::READ) {
-      rw_set_it->second = RWType::READ_OWN;
-    }
-  } else {
-    rw_set_.insert(rw_set_it, std::make_pair(location, RWType::READ_OWN));
-  }
+  PELOTON_ASSERT(rw_set_.count(location) == 0 ||
+      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+  rw_set_[location] = RWType::READ_OWN;
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
-  auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    RWType rw_type = rw_set_it->second;
-    if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
-      is_written_ = true;
-      rw_set_it->second = RWType::UPDATE;
-    } else if (rw_type == RWType::UPDATE || rw_type == RWType::INSERT) {
-      return;
-    } else {
-      // DELETE or INS_DELETE
-      PELOTON_ASSERT(false);
-    }
-  } else {
-    rw_set_.insert(rw_set_it, std::make_pair(location, RWType::UPDATE));
-  }
+  PELOTON_ASSERT(rw_set_.count(location) == 0 ||
+      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+  rw_set_[location] = RWType::UPDATE;
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
-  auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    PELOTON_ASSERT(false);
-    return;
-  }
-  rw_set_.insert(rw_set_it, std::make_pair(location, RWType::INSERT));
-  ++insert_count_;
+  PELOTON_ASSERT(rw_set_.count(location) == 0);
+  rw_set_[location] = RWType::INSERT;
 }
 
-bool TransactionContext::RecordDelete(const ItemPointer &location) {
-  auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    RWType rw_type = rw_set_it->second;
-
-    if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
-      rw_set_it->second = RWType::DELETE;
-      is_written_ = true;
-      return false;
-    } else if (rw_type == RWType::UPDATE) {
-      rw_set_it->second = RWType::DELETE;
-      return false;
-    } else if (rw_type == RWType::INSERT) {
-      rw_set_it->second = RWType::INS_DEL;
-      --insert_count_;
-      return true;
-    } else {
-      // DELETE and INS_DEL
-      PELOTON_ASSERT(false);
-      return false;
-    }
-  } else {
-    rw_set_.insert(rw_set_it, std::make_pair(location, RWType::DELETE));
-    return false;
+void TransactionContext::RecordDelete(const ItemPointer &location) {
+  PELOTON_ASSERT(rw_set_.count(location) == 0 ||
+      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+  if (rw_set_[location] == RWType::INSERT) {
+    rw_set_[location] = RWType::INS_DEL;
+  }
+  else {
+    // READ, READ_OWN, UPDATE
+    rw_set_[location] = RWType::DELETE;
   }
 }
 
