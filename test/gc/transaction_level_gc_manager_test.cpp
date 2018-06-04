@@ -992,8 +992,8 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
       num_key, "table1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
 
-  auto &manager = catalog::Manager::GetInstance();
-  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
+  auto manager = storage::StorageManager::GetInstance();
+  size_t tile_group_count_after_init = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -1013,7 +1013,7 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
 
     // capture memory usage
     LOG_DEBUG("Round %d: tile_group_count_after_insert: %u", round,
-              manager.GetNumLiveTileGroups());
+              manager->GetNumLiveTileGroups());
 
     epoch_manager.SetCurrentEpochId(++current_eid);
     //===========================
@@ -1024,13 +1024,13 @@ TEST_F(TransactionLevelGCManagerTests, FreeTileGroupsTest) {
     EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
     LOG_DEBUG("Round %d: tile_group_count_after_delete: %u", round,
-              manager.GetNumLiveTileGroups());
+              manager->GetNumLiveTileGroups());
 
     epoch_manager.SetCurrentEpochId(++current_eid);
 
     gc_manager.ClearGarbage(0);
 
-    size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
+    size_t tile_group_count_after_gc = manager->GetNumLiveTileGroups();
     LOG_DEBUG("Round %d: tile_group_count_after_gc: %zu", round,
               tile_group_count_after_gc);
     EXPECT_LT(tile_group_count_after_gc, tile_group_count_after_init + 1);
