@@ -1002,7 +1002,7 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
   PELOTON_ASSERT(tile_group_offset < GetTileGroupCount());
 
   auto tile_group_id =
-      tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
+      tile_groups_.Find(tile_group_offset);
 
   return GetTileGroupById(tile_group_id);
 }
