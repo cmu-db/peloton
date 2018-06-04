@@ -21,11 +21,7 @@
 namespace peloton {
 namespace catalog {
 
-std::shared_ptr<storage::TileGroup> Manager::empty_tile_group_;
-
 std::shared_ptr<storage::IndirectionArray> Manager::empty_indirection_array_;
-
-Manager::Manager() : tile_group_locator_(DEFAULT_LOCATOR_SIZE) {}
 
 Manager &Manager::GetInstance() {
   static Manager manager;
@@ -35,28 +31,6 @@ Manager &Manager::GetInstance() {
 //===--------------------------------------------------------------------===//
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
-
-void Manager::AddTileGroup(const oid_t oid,
-                           std::shared_ptr<storage::TileGroup> location) {
-  // add/update the catalog reference to the tile group
-  tile_group_locator_.Upsert(oid, location);
-}
-
-void Manager::DropTileGroup(const oid_t oid) {
-  // drop the catalog reference to the tile group
-  tile_group_locator_.Erase(oid);
-}
-
-std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  std::shared_ptr<storage::TileGroup> location;
-  if (tile_group_locator_.Find(oid, location)) {
-    return location;
-  }
-  return empty_tile_group_;
-}
-
-// used for logging test
-void Manager::ClearTileGroup() { tile_group_locator_.Clear(); }
 
 void Manager::AddIndirectionArray(
     const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
