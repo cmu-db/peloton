@@ -20,6 +20,7 @@
 #include "settings/settings_manager.h"
 #include "statistics/stats_aggregator.h"
 #include "storage/tile_group.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -102,7 +103,7 @@ bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
   ItemPointer &position = *((ItemPointer *)position_ptr);
 
   auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
+      storage::StorageManager::GetInstance()->GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -289,8 +290,8 @@ void TransactionManager::RecordTransactionStats(
     // Call the GetConstIterator() function to explicitly lock the cuckoohash
     // and initilaize the iterator
     const auto &tile_group_id = tuple_entry.first.block;
-    database_id = catalog::Manager::GetInstance()
-                      .GetTileGroup(tile_group_id)
+    database_id = storage::StorageManager::GetInstance()
+                      ->GetTileGroup(tile_group_id)
                       ->GetDatabaseId();
     if (database_id != CATALOG_DATABASE_OID) {
       break;

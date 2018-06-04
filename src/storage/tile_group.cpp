@@ -14,7 +14,7 @@
 
 #include <numeric>
 
-#include "catalog/manager.h"
+#include "storage/storage_manager.h"
 #include "common/container_tuple.h"
 #include "common/internal_types.h"
 #include "common/logger.h"
@@ -43,8 +43,8 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_layout_(layout) {
   tile_count_ = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count_; tile_itr++) {
-    auto &manager = catalog::Manager::GetInstance();
-    oid_t tile_id = manager.GetNextTileId();
+    StorageManager *storage_manager = storage::StorageManager::GetInstance();
+    oid_t tile_id = storage_manager->GetNextTileId();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
