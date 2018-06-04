@@ -121,18 +121,24 @@ bool StorageManager::RemoveDatabaseFromStorageManager(oid_t database_oid) {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void StorageManager::AddTileGroup(const oid_t oid,
+void StorageManager::AddTileGroup(const oid_t &oid,
                            std::shared_ptr<storage::TileGroup> location) {
-  // add/update the catalog reference to the tile group
+  // do this check first, so that count is not updated yet
+  if (!tile_group_locator_.Contains(oid)) {
+    // only increment if new tile group
+    num_live_tile_groups_.fetch_add(1);
+  }
   tile_group_locator_.Upsert(oid, location);
 }
 
-void StorageManager::DropTileGroup(const oid_t oid) {
+void StorageManager::DropTileGroup(const oid_t &oid) {
   // drop the catalog reference to the tile group
-  tile_group_locator_.Erase(oid);
+  if (tile_group_locator_.Erase(oid)) {
+    num_live_tile_groups_.fetch_sub(1);
+  }
 }
 
-std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t oid) {
+std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t &oid) {
   std::shared_ptr<storage::TileGroup> location;
   if (tile_group_locator_.Find(oid, location)) {
     return location;
@@ -141,7 +147,10 @@ std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t oid
 }
 
 // used for logging test
-void StorageManager::ClearTileGroup() { tile_group_locator_.Clear(); }
+void StorageManager::ClearTileGroup() {
+  num_live_tile_groups_.store(0);
+  tile_group_locator_.Clear();
+}
 
 }  // namespace storage
 }  // namespace peloton

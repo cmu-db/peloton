@@ -63,8 +63,6 @@ class Manager {
 
  private:
 
-  static std::shared_ptr<storage::TileGroup> invalid_tile_group_;
-
   //===--------------------------------------------------------------------===//
   // Data members for indirection array allocation
   //===--------------------------------------------------------------------===//

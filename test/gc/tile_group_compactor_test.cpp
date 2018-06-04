@@ -69,8 +69,8 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
       num_key, "table0", db_id, INVALID_OID, test_index_oid++, true,
       tuples_per_tilegroup));
 
-  auto &manager = catalog::Manager::GetInstance();
-  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
+  auto manager = storage::StorageManager::GetInstance();
+  size_t tile_group_count_after_init = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -84,7 +84,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
   // capture num tile groups occupied
-  size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_insert = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_insert: %zu",
             tile_group_count_after_insert);
   EXPECT_GT(tile_group_count_after_insert, tile_group_count_after_init);
@@ -97,7 +97,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
       TestingTransactionUtil::BulkDeleteTuples(table.get(), num_inserts - 1);
   EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
-  size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_delete = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_delete: %zu",
             tile_group_count_after_delete);
   EXPECT_EQ(tile_group_count_after_delete, tile_group_count_after_insert);
@@ -113,13 +113,13 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestSparse) {
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
   LOG_DEBUG("tile_group_count_after_compact: %u",
-            manager.GetNumLiveTileGroups());
+            manager->GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups
   epoch_manager.SetCurrentEpochId(++current_eid);
   gc_manager.ClearGarbage(0);
 
-  size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_gc = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_gc: %zu", tile_group_count_after_gc);
   EXPECT_EQ(tile_group_count_after_gc, tile_group_count_after_init);
 
@@ -161,8 +161,8 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
       num_key, "table0", db_id, INVALID_OID, test_index_oid++, true,
       tuples_per_tilegroup));
 
-  auto &manager = catalog::Manager::GetInstance();
-  size_t tile_group_count_after_init = manager.GetNumLiveTileGroups();
+  auto manager = storage::StorageManager::GetInstance();
+  size_t tile_group_count_after_init = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_init: %zu\n", tile_group_count_after_init);
 
   auto current_eid = epoch_manager.GetCurrentEpochId();
@@ -176,7 +176,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   EXPECT_EQ(ResultType::SUCCESS, insert_result);
 
   // capture num tile groups occupied
-  size_t tile_group_count_after_insert = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_insert = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_insert: %zu",
             tile_group_count_after_insert);
   EXPECT_GT(tile_group_count_after_insert, tile_group_count_after_init);
@@ -188,7 +188,7 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   auto delete_result = TestingTransactionUtil::BulkDeleteTuples(table.get(), 3);
   EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
-  size_t tile_group_count_after_delete = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_delete = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_delete: %zu",
             tile_group_count_after_delete);
   EXPECT_EQ(tile_group_count_after_init + 1, tile_group_count_after_delete);
@@ -204,13 +204,13 @@ TEST_F(TileGroupCompactorTests, GCIntegrationTestDense) {
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
   LOG_DEBUG("tile_group_count_after_compact: %u",
-            manager.GetNumLiveTileGroups());
+            manager->GetNumLiveTileGroups());
 
   // Run GC to free compacted tile groups
   epoch_manager.SetCurrentEpochId(++current_eid);
   gc_manager.ClearGarbage(0);
 
-  size_t tile_group_count_after_gc = manager.GetNumLiveTileGroups();
+  size_t tile_group_count_after_gc = manager->GetNumLiveTileGroups();
   LOG_DEBUG("tile_group_count_after_gc: %zu", tile_group_count_after_gc);
   EXPECT_EQ(tile_group_count_after_delete, tile_group_count_after_gc);
 
@@ -247,8 +247,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  size_t starting_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  size_t starting_num_live_tile_groups = storage_manager->GetNumLiveTileGroups();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // Fill a tile group with tuples
@@ -285,7 +284,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
-  auto num_tg_before_compaction = catalog_manager.GetNumLiveTileGroups();
+  auto num_tg_before_compaction = storage_manager->GetNumLiveTileGroups();
 
   // Try to compact the tile again. This time it should succeed
   compact_result = gc::TileGroupCompactor::MoveTuplesOutOfTileGroup(
@@ -297,7 +296,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   // assert num live tile groups decreased
-  auto num_tg_now = catalog_manager.GetNumLiveTileGroups();
+  auto num_tg_now = storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(num_tg_before_compaction - 1, num_tg_now);
 
   // Compact all tile groups
@@ -312,7 +311,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
   gc_manager.ClearGarbage(0);
 
   // Assert that num live tile groups is back to starting value
-  num_tg_now = catalog_manager.GetNumLiveTileGroups();
+  num_tg_now = storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(starting_num_live_tile_groups, num_tg_now);
 
   // assert that we have the moved tuple and updated tuple with expected values
@@ -362,8 +361,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  size_t starting_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  size_t starting_num_live_tile_groups = storage_manager->GetNumLiveTileGroups();
 
   oid_t starting_tgid = table->GetTileGroup(0)->GetTileGroupId();
 
@@ -379,7 +377,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   EXPECT_EQ(ResultType::SUCCESS, delete_result);
 
   auto post_delete_num_live_tile_groups =
-      catalog_manager.GetNumLiveTileGroups();
+      storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(starting_num_live_tile_groups + 2,
             post_delete_num_live_tile_groups);
 
@@ -387,7 +385,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   gc::TileGroupCompactor::CompactTileGroup(starting_tgid);
 
   // assert num live tile groups did not change
-  auto current_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  auto current_num_live_tile_groups = storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(post_delete_num_live_tile_groups, current_num_live_tile_groups);
 
   // clear garbage, triggers freeing of starting tile group
@@ -396,7 +394,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   gc_manager.ClearGarbage(0);
 
   // assert num live tile groups decreased by 1
-  current_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  current_num_live_tile_groups = storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(starting_num_live_tile_groups, current_num_live_tile_groups);
 
   // Compact tile group that no longer exists
@@ -405,7 +403,7 @@ TEST_F(TileGroupCompactorTests, EdgeCasesTest) {
   gc::TileGroupCompactor::CompactTileGroup(starting_tgid);
 
   // assert num live tile groups is what it was before started
-  current_num_live_tile_groups = catalog_manager.GetNumLiveTileGroups();
+  current_num_live_tile_groups = storage_manager->GetNumLiveTileGroups();
   EXPECT_EQ(starting_num_live_tile_groups, current_num_live_tile_groups);
 
   table.release();
@@ -448,7 +446,6 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
 
   epoch_manager.SetCurrentEpochId(++current_epoch);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // Fill a tile group with tuples
@@ -470,7 +467,7 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
       TestingTransactionUtil::ExecuteUpdate(txn, table.get(), 9, 100, true);
   EXPECT_TRUE(update_result);
 
-  auto num_tg_before_compaction = catalog_manager.GetNumLiveTileGroups();
+  auto num_tg_before_compaction = storage_manager->GetNumLiveTileGroups();
 
   // Now trigger GC, which should add this TG to compaction queue
   // Marks first tilegroup for compaction
@@ -484,14 +481,14 @@ TEST_F(TileGroupCompactorTests, RetryTest) {
   std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
   // assert num live tile groups stays the same since compaction is blocked
-  auto num_tg_now = catalog_manager.GetNumLiveTileGroups();
+  auto num_tg_now = storage_manager->GetNumLiveTileGroups();
   EXPECT_LE(num_tg_before_compaction, num_tg_now);
 
   // Commit the update txn so that the compaction is able to proceed
   txn_manager.CommitTransaction(txn);
 
   // assert num live tile groups decreased
-  num_tg_now = catalog_manager.GetNumLiveTileGroups();
+  num_tg_now = storage_manager->GetNumLiveTileGroups();
   EXPECT_LE(num_tg_before_compaction, num_tg_now);
 
   table.release();

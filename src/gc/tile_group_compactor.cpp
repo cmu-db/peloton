@@ -28,7 +28,7 @@ void TileGroupCompactor::CompactTileGroup(const oid_t &tile_group_id) {
 
   while (attempts < max_attempts && threadpool::MonoQueuePool::GetInstance().IsRunning()) {
     auto tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+        storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
       LOG_TRACE("tile_group %u no longer exists", tile_group_id);
       return;  // this tile group no longer exists
@@ -133,8 +133,8 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
     ItemPointer new_location = table->AcquireVersion();
     PELOTON_ASSERT(new_location.IsNull() == false);
 
-    auto &manager = catalog::Manager::GetInstance();
-    auto new_tile_group = manager.GetTileGroup(new_location.block);
+    auto manager = storage::StorageManager::GetInstance();
+    auto new_tile_group = manager->GetTileGroup(new_location.block);
 
     ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
                                                  new_location.offset);

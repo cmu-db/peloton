@@ -340,7 +340,7 @@ void TransactionLevelGCManager::RecycleTupleSlots(
 
 void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto tile_group_id = location.block;
-  auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+  auto tile_group = storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id);
 
   // During the resetting,
   // a table may be deconstructed because of a DROP TABLE request
@@ -582,7 +582,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(
     }
 
     auto newer_tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(newer_location.block);
+        storage::StorageManager::GetInstance()->GetTileGroup(newer_location.block);
     ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(),
                                                    newer_location.offset);
     // remove the older version from all the indexes
@@ -622,7 +622,7 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(
     }
 
     auto older_tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(older_location.block);
+        storage::StorageManager::GetInstance()->GetTileGroup(older_location.block);
     ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(),
                                                    older_location.offset);
     // remove the newer version from all the indexes
@@ -701,7 +701,7 @@ uint32_t TransactionLevelGCManager::ProcessImmutableQueue() {
     }
 
     auto tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+        storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id);
     if (tile_group == nullptr) {
       continue;
     }

@@ -1026,8 +1026,8 @@ void DataTable::DropTileGroup(const oid_t &tile_group_id) {
   if (tile_group_offset != -1) {
     tile_groups_.Erase(tile_group_offset, invalid_tile_group_id);
   }
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  catalog_manager.DropTileGroup(tile_group_id);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  storage_manager->DropTileGroup(tile_group_id);
 }
 
 bool DataTable::IsActiveTileGroup(const oid_t &tile_group_id) const {
