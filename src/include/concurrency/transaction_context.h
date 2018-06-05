@@ -53,7 +53,7 @@ class TransactionContext : public Printable {
   /**
    * @brief      Destroys the object.
    */
-  ~TransactionContext();
+  ~TransactionContext() = default;
 
  private:
   void Init(const size_t thread_id, const IsolationLevelType isolation,

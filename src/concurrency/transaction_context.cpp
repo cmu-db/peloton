@@ -61,8 +61,6 @@ TransactionContext::TransactionContext(const size_t thread_id,
   Init(thread_id, isolation, read_id, commit_id);
 }
 
-TransactionContext::~TransactionContext() {}
-
 void TransactionContext::Init(const size_t thread_id,
                               const IsolationLevelType isolation,
                               const cid_t &read_id, const cid_t &commit_id) {
@@ -80,20 +78,18 @@ void TransactionContext::Init(const size_t thread_id,
 
   isolation_level_ = isolation;
 
-  gc_set_.reset(new GCSet());
-  gc_object_set_.reset(new GCObjectSet());
+  gc_set_ = std::make_shared<GCSet>();
+  gc_object_set_ = std::make_shared<GCObjectSet>();
 
   on_commit_triggers_.reset();
 }
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
-  RWType rw_type = RWType::INVALID;
-
   const auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
-    rw_type = rw_set_it->second;
+    return rw_set_it->second;
   }
-  return rw_type;
+  return RWType::INVALID;
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
