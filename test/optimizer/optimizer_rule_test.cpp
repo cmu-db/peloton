@@ -23,12 +23,13 @@
 #include "executor/update_executor.h"
 #include "expression/abstract_expression.h"
 #include "expression/operator_expression.h"
-
+#include "expression/expression_util.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
+#include "optimizer/rule_query_rewrite.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
@@ -259,6 +260,64 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   EXPECT_EQ(1, parent_join_op->join_predicates.size());
   EXPECT_EQ(1, child_join_op->join_predicates.size());
   delete root_context;
+}
+
+TEST_F(OptimizerRuleTests, SimpleTransitiveRuleTest) {
+  std::vector<AnnotatedExpression> predicates_list;
+
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM t1, t2 WHERE t1.a = t2.b AND t1.a = t2.c");
+  auto parse_tree = stmt->GetStatement(0);
+  auto predicates_list_nonannotated = std::vector<expression::AbstractExpression *>();
+  optimizer::util::SplitPredicates(
+      reinterpret_cast<parser::SelectStatement *>(parse_tree)
+          ->where_clause.get(),
+      predicates_list_nonannotated);
+
+  for (auto predicate : predicates_list_nonannotated) {
+    std::unordered_set<std::string> table_alias_set;
+    expression::ExpressionUtil::GenerateTableAliasSet(predicate,
+                                                      table_alias_set);
+    predicates_list.push_back(AnnotatedExpression(
+        std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
+	table_alias_set));
+  }
+
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+  auto filter = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates_list));
+  filter->PushChild(join);
+
+  // Setup rule
+  TransitivePredicatesLogicalFilter rule;
+  SimplifyPredicatesLogicalFilter rule2;
+
+  EXPECT_TRUE(rule.Check(filter, nullptr));
+
+  std::shared_ptr<OptimizeContext> root_context =
+    std::make_shared<OptimizeContext>(nullptr, nullptr);
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(filter, outputs, root_context.get());
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto new_filter = outputs[0];
+  EXPECT_TRUE(rule2.Check(new_filter, nullptr));
+
+  outputs.clear();
+  rule2.Transform(new_filter, outputs, root_context.get());
+
+  auto output_filter = outputs[0]->Op().As<LogicalFilter>();
+  auto output_predicates = output_filter->predicates;
+
+  EXPECT_EQ(outputs.size(), 1);
+
+  EXPECT_EQ(outputs[0]->Children()[0], join);
+  EXPECT_EQ(output_predicates.size(), 3);
 }
 
 }  // namespace test

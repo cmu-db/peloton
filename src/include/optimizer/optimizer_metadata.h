@@ -33,6 +33,8 @@ class OptimizerMetadata {
   OptimizerMetadata()
       : timeout_limit(settings::SettingsManager::GetInt(
             settings::SettingId::task_execution_timeout)),
+        enable_transitive_predicates_(settings::SettingsManager::GetBool(
+            settings::SettingId::transitive_predicates)),
         timer(Timer<std::milli>()) {}
 
   Memo memo;
@@ -40,6 +42,7 @@ class OptimizerMetadata {
   OptimizerTaskPool *task_pool;
   catalog::CatalogCache *catalog_cache;
   unsigned int timeout_limit;
+  bool enable_transitive_predicates_;
   Timer<std::milli> timer;
   concurrency::TransactionContext* txn;
 

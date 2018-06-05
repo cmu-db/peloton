@@ -373,8 +373,12 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
       txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
-  EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
+  EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
+
   expected_oids.clear();
+  // transitive predicates adds test_table_job.id > 0 from
+  // test_table.id = test_table_job.pid and test_table_job.pid > 0
+  expected_oids.emplace(database_id, table_id, id_col_oid);
   expected_oids.emplace(database_id, table_id, lname_col_oid);
   expected_oids.emplace(database_id, table_job_id, pid_col_oid);
   EXPECT_EQ(expected_oids, affected_cols);

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "optimizer/rule_query_rewrite.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/group_expression.h"
 
@@ -60,6 +61,14 @@ RuleSet::RuleSet() {
                  new MarkJoinToInnerJoin());
   AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
                  new PullFilterThroughAggregation());
+
+  AddRewriteRule(RewriteRuleSetName::TRANSITIVE_PREDICATES,
+                 new TransitivePredicatesLogicalGet());
+  AddRewriteRule(RewriteRuleSetName::TRANSITIVE_PREDICATES,
+		 new TransitivePredicatesLogicalFilter());
+
+  AddRewriteRule(RewriteRuleSetName::SIMPLIFY_PREDICATES,
+                 new SimplifyPredicatesLogicalFilter());
 }
 
 }  // namespace optimizer

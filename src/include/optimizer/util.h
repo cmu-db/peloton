@@ -16,6 +16,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "optimizer/optimize_context.h"
+#include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 #include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
@@ -88,6 +90,33 @@ expression::AbstractExpression *CombinePredicates(
  */
 expression::AbstractExpression *CombinePredicates(
     std::vector<AnnotatedExpression> predicates);
+
+/**
+ * @brief Fills the transitive predicates table in a optimize context
+ *
+ * @param predicates The predicates to add
+ * @param transitive_table The table to fill
+ */
+void FillTransitiveTable(
+    std::vector<AnnotatedExpression> predicates,
+    std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> &transitive_table);
+
+/**
+ * @brief Generates transitive predicates from table
+ *
+ * @param predicates The existing predicates
+ * @param transitive_table The table to use
+ */
+std::vector<AnnotatedExpression> GenerateTransitivePredicates(
+    std::vector<AnnotatedExpression> predicates,
+    std::map<PredicateInfo, std::vector<expression::AbstractExpression *>> &transitive_table);
+
+/**
+ * @brief Removes trivial predicates (like 'a = a')
+ *
+ * @param predicates The existing predicates
+ */
+std::vector<AnnotatedExpression> SimplifyPredicates(std::vector<AnnotatedExpression> predicates);
 
 /**
  * @brief Extract single table precates and multi-table predicates from the expr

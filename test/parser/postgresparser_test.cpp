@@ -20,6 +20,7 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/constant_value_expression.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 
@@ -588,8 +589,7 @@ TEST_F(PostgresParserTests, InsertTest) {
     CmpBool res = five.CompareEquals(
         ((expression::ConstantValueExpression *)insert_stmt->insert_values.at(1)
              .at(1)
-             .get())
-            ->GetValue());
+             .get())->GetValue());
     EXPECT_EQ(CmpBool::CmpTrue, res);
 
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
@@ -846,20 +846,16 @@ TEST_F(PostgresParserTests, ConstraintTest) {
   EXPECT_EQ(parser::ColumnDefinition::DataType::INT, column->type);
   EXPECT_TRUE(column->default_value != nullptr);
   auto default_expr =
-      (expression::OperatorExpression *)column->default_value.get();
+      (expression::ConstantValueExpression *)column->default_value.get();
   EXPECT_TRUE(default_expr != nullptr);
-  EXPECT_EQ(ExpressionType::OPERATOR_PLUS, default_expr->GetExpressionType());
-  EXPECT_EQ(2, default_expr->GetChildrenSize());
-  auto child1 =
-      (expression::ConstantValueExpression *)default_expr->GetChild(0);
-  EXPECT_TRUE(child1 != nullptr);
-  auto child2 =
-      (expression::ConstantValueExpression *)default_expr->GetChild(1);
-  EXPECT_TRUE(child2 != nullptr);
-  EXPECT_EQ(CmpBool::CmpTrue, child1->GetValue().CompareEquals(
-                                  type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(CmpBool::CmpTrue, child2->GetValue().CompareEquals(
-                                  type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(ExpressionType::VALUE_CONSTANT, default_expr->GetExpressionType());
+  EXPECT_EQ(0, default_expr->GetChildrenSize());
+  auto child1 = default_expr->GetChild(0);
+  EXPECT_TRUE(child1 == nullptr);
+  auto child2 = default_expr->GetChild(1);
+  EXPECT_TRUE(child2 == nullptr);
+  EXPECT_EQ(CmpBool::CmpTrue, default_expr->GetValue().CompareEquals(
+                                  type::ValueFactory::GetIntegerValue(3)));
 
   // Check Second column
   column = create_stmt->columns.at(1).get();
@@ -1021,15 +1017,13 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(left)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(right)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // level
   // the level is for each row
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));

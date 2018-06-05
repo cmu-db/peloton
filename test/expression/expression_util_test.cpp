@@ -54,6 +54,76 @@ expression::AbstractExpression *createExpTree() {
       ExpressionType::CONJUNCTION_AND, exp3, exp6);
   return (root);
 }
+TEST_F(ExpressionUtilTests, OperatorFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp_two = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(2));
+
+  auto two = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::OperatorFactory(
+          ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER, exp1, exp2);
+  EXPECT_EQ(CmpBool::CmpTrue,
+            exp_two->GetValue().CompareEquals(two->GetValue()));
+  delete two;
+  delete exp_two;
+}
+
+TEST_F(ExpressionUtilTests, ComparisonFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(1));
+  auto true_value = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto cmp = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, exp1, exp2);
+
+  EXPECT_EQ(CmpBool::CmpTrue,
+            cmp->GetValue().CompareEquals(true_value->GetValue()));
+  delete true_value;
+  delete cmp;
+}
+
+TEST_F(ExpressionUtilTests, ConjunctionFactoryTest) {
+  auto exp1 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto exp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(false));
+  auto cmp = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, exp1->Copy(), exp2->Copy());
+  EXPECT_EQ(CmpBool::CmpTrue, cmp->GetValue().CompareEquals(exp2->GetValue()));
+  delete cmp;
+  delete exp1;
+  delete exp2;
+
+  auto exp3 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(true));
+  auto exp4 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetBooleanValue(false));
+  auto cmp2 = (expression::ConstantValueExpression *)
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_OR, exp3->Copy(), exp4->Copy());
+  EXPECT_EQ(CmpBool::CmpFalse,
+            cmp2->GetValue().CompareEquals(exp4->GetValue()));
+  delete cmp2;
+  delete exp3;
+  delete exp4;
+}
 
 // Make sure that we can traverse a tree
 TEST_F(ExpressionUtilTests, GetInfoTest) {
@@ -62,8 +132,6 @@ TEST_F(ExpressionUtilTests, GetInfoTest) {
 
   // Just make sure that it has our constant strings
   EXPECT_TRUE(info.size() > 0);
-  EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING1));
-  EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING2));
 }
 
 TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
@@ -103,8 +171,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
       l_column_ids, r_column_ids;
   // Table1.a = Table2.b -> nullptr
   std::unique_ptr<expression::AbstractExpression> ret_expr1(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr3));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr3));
   EXPECT_EQ(nullptr, ret_expr1.get());
   EXPECT_EQ(1, l_column_ids.size());
 
@@ -115,8 +183,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   std::unique_ptr<expression::AbstractExpression> ret_expr2(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr13.get()));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr13.get()));
 
   EXPECT_EQ(ExpressionType::COMPARE_LESSTHAN, ret_expr2->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,
@@ -149,8 +217,8 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   l_column_ids.clear();
   r_column_ids.clear();
   std::unique_ptr<expression::AbstractExpression> ret_expr3(
-      expression::ExpressionUtil::ExtractJoinColumns(
-          l_column_ids, r_column_ids, expr18.get()));
+      expression::ExpressionUtil::ExtractJoinColumns(l_column_ids, r_column_ids,
+                                                     expr18.get()));
 
   EXPECT_EQ(2, l_column_ids.size());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(

@@ -31,6 +31,9 @@
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
+#include "optimizer/rule_query_rewrite.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -67,6 +70,20 @@ void Optimizer::OptimizeLoop(int root_group_id,
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   metadata_.SetTaskPool(task_stack.get());
+
+  if (root_context->metadata->enable_transitive_predicates_) {
+    // Apply query rewrite rules
+    task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+					RewriteRuleSetName::TRANSITIVE_PREDICATES));
+
+    ExecuteTaskStack(*task_stack, root_group_id, root_context);
+  }
+
+  // Apply query rewrite rules
+  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+                                      RewriteRuleSetName::SIMPLIFY_PREDICATES));
+
+  ExecuteTaskStack(*task_stack, root_group_id, root_context);
 
   // Perform rewrite first
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,

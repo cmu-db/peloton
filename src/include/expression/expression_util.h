@@ -205,22 +205,91 @@ class ExpressionUtil {
     return new ConstantValueExpression(value);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
+  // Similar to the constructor of ComparisonExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original ComparisonExpression
+  // Constructor.
   static AbstractExpression *ComparisonFactory(ExpressionType type,
                                                AbstractExpression *left,
                                                AbstractExpression *right) {
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type >= ExpressionType::COMPARE_EQUAL &&
+         type <= ExpressionType::COMPARE_GREATERTHANOREQUALTO)) {
+      auto cmp_expr = ComparisonExpression(type, left, right);
+      auto new_value = cmp_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
     return new ComparisonExpression(type, left, right);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
+  // Similar to the constructor of ConjunctionExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original ConjunctionExpression
+  // Constructor.
   static AbstractExpression *ConjunctionFactory(ExpressionType type,
                                                 AbstractExpression *left,
                                                 AbstractExpression *right) {
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type == ExpressionType::CONJUNCTION_AND ||
+         type == ExpressionType::CONJUNCTION_OR)) {
+      ConjunctionExpression conj_expr(type, left, right);
+      auto new_value = conj_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
     return new ConjunctionExpression(type, left, right);
   }
 
+  // This function takes left and right child's ownership. You should not use
+  // them after this function returns.
+  // If the expression can be folded, left and right will be freed instantly.
+  // Otherwise they will have the same lifetime as the returned expression and
+  // will be freed when the returned expression is freed.
+  // Similar to the constructor of OperatorExpression except that
+  // this function do constant folding if possible. (when both left and right
+  // are ConstantExpression)
+  // You should use this factory function whenever possible instead of the
+  // original OperatorExpression
+  // Constructor.
   static AbstractExpression *OperatorFactory(ExpressionType type,
                                              type::TypeId value_type,
                                              AbstractExpression *left,
                                              AbstractExpression *right) {
+    if (left != nullptr && right == nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        (type == ExpressionType::OPERATOR_NOT ||
+         type == ExpressionType::OPERATOR_IS_NULL ||
+         type == ExpressionType::OPERATOR_UNARY_MINUS)) {
+      OperatorExpression operator_expr(type, value_type, left, right);
+      auto new_value = operator_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
+    if (left != nullptr && right != nullptr &&
+        left->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        right->GetExpressionType() == ExpressionType::VALUE_CONSTANT &&
+        expression::ExpressionUtil::IsOperatorExpression(type) &&
+        type < ExpressionType::OPERATOR_CAST) {
+      OperatorExpression operator_expr(type, value_type, left, right);
+      auto new_value = operator_expr.Evaluate(nullptr, nullptr, nullptr);
+      return new ConstantValueExpression(new_value);
+    }
     return new OperatorExpression(type, value_type, left, right);
   }
 
@@ -622,10 +691,10 @@ class ExpressionUtil {
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &l_column_exprs,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &r_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          r_column_exprs,
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
@@ -722,8 +791,9 @@ class ExpressionUtil {
       auto right_child = expr->GetModifiableChild(1);
 
       if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-        auto right_exp = (const expression::ConstantValueExpression
-                              *)(expr->GetModifiableChild(1));
+        auto right_exp =
+            (const expression::
+                 ConstantValueExpression *)(expr->GetModifiableChild(1));
         auto predicate_val = right_exp->GetValue();
         // Get the column id for this predicate
         auto left_exp =
