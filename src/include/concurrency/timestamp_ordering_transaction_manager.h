@@ -170,11 +170,13 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    *
    * @param      current_txn        The current transaction
    * @param[in]  location           The location of the tuple to be read
+   * @param[in]  tile_group_header  Pointer to the tile group header
    * @param[in]  acquire_ownership  The acquire ownership
    */
   virtual bool PerformRead(TransactionContext *const current_txn,
                            const ItemPointer &location,
-                           bool acquire_ownership = false);
+                           storage::TileGroupHeader *tile_group_header,
+                           bool acquire_ownership);
 
   /**
    * @brief      Perform an update operation

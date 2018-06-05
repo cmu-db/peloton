@@ -13,10 +13,17 @@
 #pragma once
 
 #include <vector>
-
+#include <atomic>
+#include "common/container/cuckoo_map.h"
 #include "common/internal_types.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
+
+namespace storage {
+  class TileGroup;
+  class IndirectionArray;
+}
 
 namespace index {
 class Index;
@@ -86,11 +93,47 @@ class StorageManager {
 
   void DestroyDatabases();
 
+
+  //===--------------------------------------------------------------------===//
+  // TILE GROUP ALLOCATION
+  //===--------------------------------------------------------------------===//
+
+  oid_t GetNextTileId() { return ++tile_oid_; }
+
+  oid_t GetNextTileGroupId() { return ++tile_group_oid_; }
+
+  oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
+
+  void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
+
+  void AddTileGroup(const oid_t oid,
+                    std::shared_ptr<storage::TileGroup> location);
+
+  void DropTileGroup(const oid_t oid);
+
+  std::shared_ptr<storage::TileGroup> GetTileGroup(const oid_t oid);
+
+  void ClearTileGroup(void);
+
  private:
   StorageManager();
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
+
+  //===--------------------------------------------------------------------===//
+  // Data member for tile allocation
+  //===--------------------------------------------------------------------===//
+
+  std::atomic<oid_t> tile_oid_ = ATOMIC_VAR_INIT(START_OID);
+
+  //===--------------------------------------------------------------------===//
+  // Data members for tile group allocation
+  //===--------------------------------------------------------------------===//
+  std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
+
+  CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> tile_group_locator_;
+  static std::shared_ptr<storage::TileGroup> empty_tile_group_;
 };
 
 }  // namespace

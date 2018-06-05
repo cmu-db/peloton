@@ -23,6 +23,7 @@
 #include <random>
 #include <cstddef>
 #include <limits>
+#include "storage/storage_manager.h"
 
 #include "benchmark/benchmark_common.h"
 #include "benchmark/tpcc/tpcc_workload.h"
@@ -74,6 +75,7 @@
 
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace benchmark {
@@ -273,9 +275,9 @@ void RunWorkload() {
            sizeof(PadInt) * num_threads);
     PELOTON_MEMCPY(commit_counts_profiles[round_id], commit_counts,
            sizeof(PadInt) * num_threads);
-    
-    auto& manager = catalog::Manager::GetInstance();
-    oid_t current_tile_group_id = manager.GetCurrentTileGroupId();
+
+    storage::StorageManager *storage_manager = storage::StorageManager::GetInstance();
+    oid_t current_tile_group_id = storage_manager->GetCurrentTileGroupId();
     if (round_id != 0) {
       state.profile_memory.push_back(current_tile_group_id - last_tile_group_id);
     }
