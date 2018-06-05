@@ -91,11 +91,19 @@ llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
   // matter where we insert it.
 
   auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+#if LLVM_VERSION_GE(5, 0)
+  if (entry_block->empty()) {
+    return new llvm::AllocaInst(type, 0, name, entry_block);
+  } else {
+    return new llvm::AllocaInst(type, 0, name, &entry_block->front());
+  }
+#else
   if (entry_block->empty()) {
     return new llvm::AllocaInst(type, name, entry_block);
   } else {
     return new llvm::AllocaInst(type, name, &entry_block->front());
   }
+#endif
 }
 
 llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
