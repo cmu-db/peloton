@@ -16,6 +16,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/layout_catalog.h"
@@ -47,6 +48,8 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       column_objects(),
       column_names(),
       valid_column_objects(false),
+			valid_layout_objects_(false),
+			valid_constraint_objects_(false),
       txn(txn) {}
 
 /* @brief   insert index catalog object into cache
@@ -372,7 +375,7 @@ TableCatalogObject::GetLayouts(bool cached_only) {
                          ->GetSystemCatalogs(database_oid)
                          ->GetLayoutCatalog();
     pg_layout->GetLayouts(table_oid, txn);
-    valid_column_objects = true;
+    valid_layout_objects_ = true;
   }
   return layout_objects_;
 }
@@ -412,6 +415,97 @@ bool TableCatalogObject::EvictLayout(oid_t layout_id) {
   return true;
 }
 
+
+/** @brief   Insert constraint object into the cache.
+ *  @param   constraint_object  Constraint object to be inserted
+ *  @return  false if the constraint object already exists in cache
+ */
+bool TableCatalogObject::InsertConstraintObject(
+		std::shared_ptr<ConstraintCatalogObject> constraint_object) {
+  // Invalid object
+  if (!constraint_object
+  		|| (constraint_object->GetConstraintOid() == INVALID_OID)) {
+    return false;
+  }
+
+  oid_t constraint_oid = constraint_object->GetConstraintOid();
+  // layout is already present in the cache.
+  if (constraint_objects_.find(constraint_oid) != constraint_objects_.end()) {
+    LOG_DEBUG("Constraint Object %u already exists in cache!", constraint_oid);
+    return false;
+  }
+
+  constraint_objects_.insert(std::make_pair(constraint_oid, constraint_object));
+  return true;
+}
+
+
+/** @brief   Evict constraint object from the cache.
+ *  @param   constraint_oid Id of the constraint to be deleted.
+ *  @return  true if constraint_oid is found and evicted; false if not found.
+ */
+bool TableCatalogObject::EvictConstraintObject(oid_t constraint_oid) {
+  if (!valid_constraint_objects_) return false;
+
+  // find the constraint object from the cache
+  auto it = constraint_objects_.find(constraint_oid);
+  if (it == constraint_objects_.end()) {
+    return false;  // constraint_oid not found in cache
+  }
+
+  auto constraint_object = it->second;
+  PELOTON_ASSERT(constraint_object);
+  constraint_objects_.erase(it);
+  return true;
+}
+
+/** @brief   evict all constraint objects from cache. */
+void TableCatalogObject::EvictAllConstraintObjects() {
+	  constraint_objects_.clear();
+	  valid_constraint_objects_ = false;
+}
+
+/** @brief   Get all constraint objects of this table.
+ *           Add it to the cache if necessary.
+ *  @param   cached_only If set to true, don't fetch the constraint objects.
+ *  @return  Map from constraint_oid to cached constraint object.
+ */
+std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
+TableCatalogObject::GetConstraintObjects(bool cached_only) {
+  if (!valid_constraint_objects_ && !cached_only) {
+    // get constraint catalog objects from pg_constraint
+    auto pg_constraint = Catalog::GetInstance()
+                         ->GetSystemCatalogs(database_oid)
+                         ->GetConstraintCatalog();
+    pg_constraint->GetConstraintObjects(table_oid, txn);
+    valid_constraint_objects_ = true;
+  }
+  return constraint_objects_;
+}
+
+/** @brief   Get the constraint catalog object of the given constraint_oid.
+ *  @param   constraint_oid The id of the constraint to be fetched.
+ *  @param   cached_only If set to true, don't fetch the constraint objects.
+ *  @return  Constraint catalog object of corresponding to the oid if present.
+ */
+std::shared_ptr<ConstraintCatalogObject>
+TableCatalogObject::GetConstraintObject(oid_t constraint_oid, bool cached_only){
+  auto it = constraint_objects_.find(constraint_oid);
+  if (it != constraint_objects_.end()) return it->second;
+
+  if (cached_only) {
+    // cache miss return empty object
+    return nullptr;
+  } else {
+    // cache miss get from pg_table
+    auto pg_constraint = Catalog::GetInstance()
+                        ->GetSystemCatalogs(database_oid)
+                        ->GetConstraintCatalog();
+    return pg_constraint->GetConstraintObject(table_oid, constraint_oid, txn);
+  }
+}
+
+
 TableCatalog::~TableCatalog() {}
 
 /*@brief   private function for initialize schema of pg_table
@@ -420,36 +514,44 @@ TableCatalog::~TableCatalog() {}
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
+  const std::string unique_constraint_name = "con_unique";
 
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  table_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  table_id_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+			TABLE_CATALOG_PKEY_OID));
+  table_id_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto table_name_column = catalog::Column(type::TypeId::VARCHAR, max_name_size,
                                            "table_name", false);
-  table_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  table_name_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::UNIQUE, unique_constraint_name,
+			TABLE_CATALOG_SKEY0_OID));
+  table_name_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "schema_name", false);
-  schema_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_name_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::UNIQUE, unique_constraint_name,
+			TABLE_CATALOG_SKEY0_OID));
+  schema_name_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
-  database_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  database_id_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto version_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "version_id", true);
-  version_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  version_id_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
       {table_id_column, table_name_column, schema_name_column,

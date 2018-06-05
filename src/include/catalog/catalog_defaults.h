@@ -33,10 +33,11 @@ namespace catalog {
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
 #define LAYOUT_CATALOG_NAME "pg_layout"
+#define CONSTRAINT_CATALOG_NAME "pg_constraint"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
-#define CATALOG_TABLES_COUNT 9
+#define CATALOG_TABLES_COUNT 10
 
 // Oid mask for each type
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
@@ -46,6 +47,7 @@ namespace catalog {
 #define TRIGGER_OID_MASK (static_cast<oid_t>(catalog::CatalogType::TRIGGER))
 #define LANGUAGE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::LANGUAGE))
 #define PROC_OID_MASK (static_cast<oid_t>(catalog::CatalogType::PROC))
+#define CONSTRAINT_OID_MASK (static_cast<oid_t>(catalog::CatalogType::CONSTRAINT))
 
 // Reserved peloton database oid
 #define CATALOG_DATABASE_OID (0 | DATABASE_OID_MASK)
@@ -64,6 +66,7 @@ namespace catalog {
 #define INDEX_CATALOG_OID (3 | TABLE_OID_MASK)
 #define COLUMN_CATALOG_OID (4 | TABLE_OID_MASK)
 #define LAYOUT_CATALOG_OID (5 | TABLE_OID_MASK)
+#define CONSTRAINT_CATALOG_OID (6 | TABLE_OID_MASK)
 
 // Reserved pg_column index oid
 #define COLUMN_CATALOG_PKEY_OID (0 | INDEX_OID_MASK)
@@ -92,6 +95,10 @@ namespace catalog {
 #define LAYOUT_CATALOG_PKEY_OID (13 | INDEX_OID_MASK)
 #define LAYOUT_CATALOG_SKEY0_OID (14 | INDEX_OID_MASK)
 
+// Reserve pg_layout index oid
+#define CONSTRAINT_CATALOG_PKEY_OID (15 | INDEX_OID_MASK)
+#define CONSTRAINT_CATALOG_SKEY0_OID (16 | INDEX_OID_MASK)
+
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24
 
@@ -105,6 +112,7 @@ enum class CatalogType : uint32_t {
   TRIGGER = 6 << CATALOG_TYPE_OFFSET,
   LANGUAGE = 7 << CATALOG_TYPE_OFFSET,
   PROC = 8 << CATALOG_TYPE_OFFSET,
+	CONSTRAINT = 9 << CATALOG_TYPE_OFFSET,
   // To be added
 };
 

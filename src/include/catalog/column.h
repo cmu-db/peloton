@@ -80,28 +80,65 @@ class Column : public Printable {
 
   inline bool IsInlined() const { return is_inlined; }
 
+  // Constraint check functions for NOT NULL and DEFAULT
   inline bool IsPrimary() const { return is_primary_; }
 
   inline bool IsUnique() const { return is_unique_; }
 
+  inline bool IsNotNull() const { return is_not_null_; }
+
+  inline bool IsDefault() const { return is_default_; }
+
+  // Manage NOT NULL constraint
+  void SetNotNull() { is_not_null_ = true; }
+
+  void ClearNotNull() { is_not_null_ = false; }
+
+  // Manage DEFAULT constraint
+  void SetDefaultValue(std::shared_ptr<type::Value> value) {
+  	default_value_ = value;
+  	is_default_ = true;
+  }
+
+  inline std::shared_ptr<type::Value> GetDefaultValue() const {
+  	return default_value_;
+  }
+
+  void ClearDefaultValue() {
+  	default_value_.reset();
+  	is_default_ = false; }
+
   // Add a constraint to the column
-  void AddConstraint(const catalog::Constraint &constraint) {
-    if (constraint.GetType() == ConstraintType::DEFAULT) {
+  void AddConstraint(const std::shared_ptr<Constraint> constraint) {
+    if (constraint->GetType() == ConstraintType::DEFAULT) {
       // Add the default constraint to the front
       constraints.insert(constraints.begin(), constraint);
     } else {
       constraints.push_back(constraint);
     }
 
-    if (constraint.GetType() == ConstraintType::PRIMARY) {
+    if (constraint->GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
     }
-    if (constraint.GetType() == ConstraintType::UNIQUE) {
+    if (constraint->GetType() == ConstraintType::UNIQUE) {
       is_unique_ = true;
     }
   }
 
-  const std::vector<Constraint> &GetConstraints() const { return constraints; }
+  // Delete a constraint from the column
+  bool DeleteConstraint(const oid_t constraint_oid);
+
+  const std::vector<std::shared_ptr<Constraint>> &GetConstraints() const {
+  	return constraints;
+  }
+
+  std::shared_ptr<Constraint> GetConstraint(oid_t constraint_oid) {
+  	for (auto constraint : constraints) {
+  		if (constraint->GetConstraintOid() == constraint_oid)
+  			return constraint;
+  	}
+  	return nullptr;
+  }
 
   hash_t Hash() const {
     hash_t hash = HashUtil::Hash(&column_type);
@@ -143,17 +180,17 @@ class Column : public Printable {
   // is the column inlined ?
   bool is_inlined = false;
 
-  // is the column contained the primary key?
-  bool is_primary_ = false;
+  // is the column allowed null
+  bool is_not_null_ = false;
 
-  // is the column unique
-  bool is_unique_ = false;
+  // is the column contained the default value
+  bool is_default_ = false;
+
+  // default value
+  std::shared_ptr<type::Value> default_value_;
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;
-
-  // Constraints
-  std::vector<Constraint> constraints;
 };
 
 }  // namespace catalog

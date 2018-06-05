@@ -23,6 +23,7 @@ class Layout;
 namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
+  friend class Catalog;
  public:
 
   LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,

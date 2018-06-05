@@ -29,33 +29,31 @@ namespace catalog {
 
 class Constraint : public Printable {
  public:
-  Constraint(ConstraintType type, std::string constraint_name)
-      : constraint_type(type), constraint_name(constraint_name) {}
   Constraint(ConstraintType type, std::string constraint_name,
-             std::string check_cmd)
-      : constraint_type(type),
-        constraint_name(constraint_name),
-        check_cmd(check_cmd) {}
+  		oid_t index_oid = INVALID_OID)
+      : constraint_type(type), constraint_name(constraint_name),
+				index_oid(index_oid) {}
+
+  Constraint(ConstraintType type, std::string constraint_name,
+             std::string check_cmd, oid_t index_oid = INVALID_OID)
+      : constraint_type(type), constraint_name(constraint_name),
+				index_oid(index_oid), check_cmd(check_cmd) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  void SetConstraintOid(oid_t oid) { constraint_oid = oid; }
+
+  oid_t GetConstraintOid() const { return constraint_oid; }
+
   ConstraintType GetType() const { return constraint_type; }
 
-  std::pair<ExpressionType, type::Value> GetCheckExpression() { return exp; }
+  // Set index oid indicating the index constructing the constraint
+  void SetIndexOid(oid_t oid) { index_oid = oid; }
 
-  // Offset into the list of "reference tables" in the Table.
-  void SetForeignKeyListOffset(oid_t offset) { fk_list_offset = offset; }
-
-  // Offset into the list of "unique indices" in the Table.
-  void SetUniqueIndexOffset(oid_t offset) { unique_index_list_offset = offset; }
-
-  // Get the offset
-  oid_t GetForeignKeyListOffset() const { return fk_list_offset; }
-
-  // Get the offset
-  oid_t GetUniqueIndexOffset() const { return unique_index_list_offset; }
+  // Get the index oid
+  oid_t GetIndexOid() const { return index_oid; }
 
   std::string GetName() const { return constraint_name; }
 
@@ -72,7 +70,7 @@ class Constraint : public Printable {
     default_value.reset(new peloton::type::Value(value));
   }
 
-  type::Value* getDefaultValue() {
+  type::Value* getDefaultValue() const {
     return default_value.get();
   }
 
@@ -82,20 +80,24 @@ class Constraint : public Printable {
     return;
   };
 
+  std::pair<ExpressionType, type::Value> GetCheckExpression() const { return exp; }
+
+  std::string GetCheckCmd() const { return check_cmd; }
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
+  oid_t constraint_oid = INVALID_OID;
+
   // The type of constraint
   ConstraintType constraint_type = ConstraintType::INVALID;
 
-  // Offsets into the Unique index and reference table lists in Table
-  oid_t fk_list_offset = INVALID_OID;
-
-  oid_t unique_index_list_offset = INVALID_OID;
-
   std::string constraint_name;
+
+  // The index constructing the constraint
+  oid_t index_oid;
 
   std::shared_ptr<type::Value> default_value;
 

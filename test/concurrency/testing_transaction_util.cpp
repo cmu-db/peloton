@@ -44,12 +44,12 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
   id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
   value_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
 
   // Create the table
   catalog::Schema *table_schema =
@@ -93,7 +93,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
   id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);

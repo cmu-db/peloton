@@ -904,6 +904,9 @@ enum class FKConstrActionType {
   SETNULL = 3,
   SETDEFAULT = 4
 };
+std::string FKConstrActionTypeToString(FKConstrActionType type);
+FKConstrActionType StringToFKConstrActionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const FKConstrActionType &type);
 
 enum class FKConstrMatchType { SIMPLE = 0, PARTIAL = 1, FULL = 2 };
 

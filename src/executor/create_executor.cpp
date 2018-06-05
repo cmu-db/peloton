@@ -128,7 +128,6 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
-      int count = 1;
       auto catalog = catalog::Catalog::GetInstance();
       auto source_table = catalog->GetTableWithName(database_name, schema_name,
                                                     table_name, current_txn);
@@ -167,27 +166,13 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
 
         // Create the catalog object and shove it into the table
-        auto catalog_fk = new catalog::ForeignKey(
-            INVALID_OID, sink_table->GetOid(), sink_col_ids, source_col_ids,
-            fk.upd_action, fk.del_action, fk.constraint_name);
-        source_table->AddForeignKey(catalog_fk);
-
-        // Register FK with the sink table for delete/update actions
-        catalog_fk = new catalog::ForeignKey(
-            source_table->GetOid(), INVALID_OID, sink_col_ids, source_col_ids,
-            fk.upd_action, fk.del_action, fk.constraint_name);
-        sink_table->RegisterForeignKeySource(catalog_fk);
-
-        // Add a non-unique index on the source table if needed
-        std::vector<std::string> source_col_names = fk.foreign_key_sources;
-        std::string index_name = table_name + "_FK_" + sink_table->GetName() +
-                                 "_" + std::to_string(count);
-        catalog->CreateIndex(database_name, schema_name, table_name,
-                             source_col_ids, index_name, false,
-                             IndexType::BWTREE, current_txn);
-        count++;
+        catalog->AddForeignKeyConstraint(source_table->GetDatabaseOid(),
+        		source_table->GetOid(), source_col_ids, sink_table->GetOid(),
+						sink_col_ids, fk.upd_action, fk.del_action, fk.constraint_name,
+						current_txn);
 
 #ifdef LOG_DEBUG_ENABLED
+        std::vector<std::string> source_col_names = fk.foreign_key_sources;
         LOG_DEBUG("Added a FOREIGN index on in %s.\n", table_name.c_str());
         LOG_DEBUG("Foreign key column names: \n");
         for (auto c : source_col_names) {

@@ -53,7 +53,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       schema_name = std::string(parse_tree->GetSchemaName());
       database_name = std::string(parse_tree->GetDatabaseName());
       std::vector<catalog::Column> columns;
-      std::vector<catalog::Constraint> column_constraints;
+      std::vector<std::shared_ptr<catalog::Constraint>> column_constraints;
 
       create_type = CreateType::TABLE;
 
@@ -71,23 +71,24 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
         // Check main constraints
         if (col->primary) {
-          catalog::Constraint constraint(ConstraintType::PRIMARY,
-                                         "con_primary");
+          std::shared_ptr<catalog::Constraint> constraint(
+          		new catalog::Constraint(ConstraintType::PRIMARY, "con_primary"));
           column_constraints.push_back(constraint);
           LOG_TRACE("Added a primary key constraint on column \"%s.%s\"",
                     table_name.c_str(), col->name.c_str());
         }
 
         if (col->not_null) {
-          catalog::Constraint constraint(ConstraintType::NOTNULL,
-                                         "con_not_null");
+          std::shared_ptr<catalog::Constraint> constraint(
+          		new catalog::Constraint(ConstraintType::NOTNULL, "con_not_null"));
           column_constraints.push_back(constraint);
           LOG_TRACE("Added a not-null constraint on column \"%s.%s\"",
                     table_name.c_str(), col->name.c_str());
         }
 
         if (col->unique) {
-          catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
+          std::shared_ptr<catalog::Constraint> constraint(
+          		new catalog::Constraint(ConstraintType::UNIQUE, "con_unique"));
           column_constraints.push_back(constraint);
           LOG_TRACE("Added a unique constraint on column \"%s.%s\"",
                     table_name.c_str(), col->name.c_str());
@@ -104,10 +105,10 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
                 dynamic_cast<expression::ConstantValueExpression *>(
                     col->default_value.get());
 
-            catalog::Constraint constraint(ConstraintType::DEFAULT,
-                                           "con_default");
+            std::shared_ptr<catalog::Constraint> constraint(
+            		new catalog::Constraint(ConstraintType::DEFAULT, "con_default"));
             type::Value v = const_expr_elem->GetValue();
-            constraint.addDefaultValue(v);
+            constraint->addDefaultValue(v);
             column_constraints.push_back(constraint);
             LOG_TRACE("Added a default constraint %s on column \"%s.%s\"",
                       v.ToString().c_str(), table_name.c_str(),
@@ -120,14 +121,15 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         if (col->check_expression != nullptr) {
           // TODO: more expression types need to be supported
           if (col->check_expression->GetValueType() == type::TypeId::BOOLEAN) {
-            catalog::Constraint constraint(ConstraintType::CHECK, "con_check");
+            std::shared_ptr<catalog::Constraint> constraint(
+            		new catalog::Constraint(ConstraintType::CHECK, "con_check"));
 
             const expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<const expression::ConstantValueExpression *>(
                     col->check_expression->GetChild(1));
 
             type::Value tmp_value = const_expr_elem->GetValue();
-            constraint.AddCheck(
+            constraint->AddCheck(
                 std::move(col->check_expression->GetExpressionType()),
                 std::move(tmp_value));
             column_constraints.push_back(constraint);

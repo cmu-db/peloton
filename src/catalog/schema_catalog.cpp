@@ -52,19 +52,24 @@ SchemaCatalog::~SchemaCatalog() {}
 std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
+  const std::string unique_constraint_name = "con_unique";
 
   auto schema_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "schema_oid", true);
-  schema_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  schema_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_id_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+			SCHEMA_CATALOG_PKEY_OID));
+  schema_id_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "schema_name", false);
-  schema_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_name_column.AddConstraint(std::make_shared<catalog::Constraint>(
+      ConstraintType::UNIQUE, unique_constraint_name,
+			SCHEMA_CATALOG_SKEY0_OID));
+  schema_name_column.AddConstraint(std::make_shared<Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> schema(
       new catalog::Schema({schema_id_column, schema_name_column}));

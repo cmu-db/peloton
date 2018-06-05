@@ -20,6 +20,8 @@
 namespace peloton {
 
 namespace catalog {
+class ForeignKey;
+class Constraint;
 class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
@@ -119,7 +121,8 @@ class Catalog {
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &schema_name,
-                         const std::string &index_name, IndexType index_type,
+                         oid_t index_oid, const std::string &index_name,
+												 IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
@@ -150,6 +153,47 @@ class Catalog {
   std::shared_ptr<const storage::Layout> CreateDefaultLayout(
       oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
       concurrency::TransactionContext *txn);
+
+  //===--------------------------------------------------------------------===//
+  // ADD FUNCTIONS
+  //===--------------------------------------------------------------------===//
+
+  /**
+   * @brief   Add a new constraint for a table except for foreign key
+   * @param   database_oid  Database to which the table belongs to
+   * @param   table_oid     Table to which the constraint has to be added
+   * @param   column_ids    Columns that the constraint affects
+   * @param   constraint    The new constraint to be registered
+   * @param   txn           TransactionContext
+   * @return  ResultType(SUCCESS or FAILURE)
+   * note: if add a new foreign key constraint, use AddForeignKeyConstraint
+   */
+  ResultType AddConstraint(oid_t database_oid, oid_t table_oid,
+  		                     const std::vector<oid_t> &column_ids,
+													 std::shared_ptr<Constraint> constraint,
+                           concurrency::TransactionContext *txn);
+
+  /**
+   * @brief   Add a new foreign key constraint for a table
+   * @param   database_oid  database to which the table belongs to
+   * @param   src_table_oid table to which the constraint has to be added
+   * @param   src_col_ids   Columns that the constraint affects
+   * @param   snk_table_oid sink table
+   * @param   snk_col_ids   Columns that limit the source columns
+   * @param   upd_action    foreign key constraint action when update
+   * @param   del_action    foreign key constraint action when delete
+   * @param   constraint_name  constraint name
+   * @param   txn           TransactionContext
+   * @return  ResultType(SUCCESS or FAILURE)
+   */
+  ResultType AddForeignKeyConstraint(oid_t database_oid, oid_t src_table_oid,
+                           const std::vector<oid_t> &src_col_ids,
+  		                     oid_t sink_table_oid,
+													 const std::vector<oid_t> &sink_col_ids,
+													 FKConstrActionType upd_action,
+													 FKConstrActionType del_action,
+													 const std::string &constraint_name,
+                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
@@ -189,6 +233,20 @@ class Catalog {
    */
   ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
                         concurrency::TransactionContext *txn);
+
+  /**
+   * @brief   Drop a new foreign key constraint for a table
+   * @param   database_oid  the database to which the table belongs to
+   * @param   table_oid     the table to which the layout belongs
+   * @param   constraint_oid    the constraint to be dropped
+   * @param   txn           TransactionContext
+   * @return  ResultType(SUCCESS or FAILURE)
+   */
+  ResultType DropConstraint(oid_t database_oid, oid_t table_oid,
+  		                     oid_t constraint_oid,
+                           concurrency::TransactionContext *txn);
+
+
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//

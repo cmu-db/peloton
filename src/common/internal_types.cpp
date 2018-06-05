@@ -2117,6 +2117,62 @@ std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
 }
 
 //===--------------------------------------------------------------------===//
+// Foreign Key Action Type - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string FKConstrActionTypeToString(FKConstrActionType type) {
+  switch (type) {
+		case FKConstrActionType::NOACTION: {
+			return ("NOACTION");
+		}
+		case FKConstrActionType::RESTRICT: {
+			return ("RESTRICT");
+		}
+		case FKConstrActionType::CASCADE: {
+			return ("CASCADE");
+		}
+		case FKConstrActionType::SETNULL: {
+			return ("SETNULL");
+		}
+		case FKConstrActionType::SETDEFAULT: {
+			return ("SETDEFAULT");
+		}
+		default: {
+			throw ConversionException(StringUtil::Format(
+					"No string conversion for FKConstrActionType value '%d'",
+					static_cast<int>(type)));
+		}
+  }
+return "INVALID";
+}
+
+FKConstrActionType StringToFKConstrActionType(const std::string &str){
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "NOACTION") {
+    return FKConstrActionType::NOACTION;
+  } else if (upper_str == "RESTRICT") {
+    return FKConstrActionType::RESTRICT;
+  } else if (upper_str == "CASCADE") {
+    return FKConstrActionType::CASCADE;
+  } else if (upper_str == "SETNULL") {
+    return FKConstrActionType::SETNULL;
+  } else if (upper_str == "SETDEFAULT") {
+    return FKConstrActionType::SETDEFAULT;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No FKConstrActionType conversion from string '%s'",
+				upper_str.c_str()));
+  }
+  return FKConstrActionType::NOACTION;
+}
+
+
+std::ostream &operator<<(std::ostream &os, const FKConstrActionType &type) {
+  os << FKConstrActionTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // SetOpType - String Utilities
 //===--------------------------------------------------------------------===//
 

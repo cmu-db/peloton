@@ -59,8 +59,9 @@ class ColumnCatalogObject {
   uint32_t column_offset;
   type::TypeId column_type;
   bool is_inlined;
-  bool is_primary;
   bool is_not_null;
+  bool is_default;
+  std::shared_ptr<type::Value> default_value;
 };
 
 class ColumnCatalog : public AbstractCatalog {
@@ -83,8 +84,15 @@ class ColumnCatalog : public AbstractCatalog {
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
-                    const std::vector<Constraint> &constraints,
+                    const std::vector<std::shared_ptr<Constraint>> constraints,
                     type::AbstractPool *pool,
+                    concurrency::TransactionContext *txn);
+  bool InsertColumn(oid_t table_oid, const std::string &column_name,
+                    oid_t column_id, oid_t column_offset,
+                    type::TypeId column_type, bool is_inlined,
+                    bool is_not_null, bool is_default,
+										const std::shared_ptr<type::Value> default_value,
+										type::AbstractPool *pool,
                     concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
@@ -106,11 +114,12 @@ class ColumnCatalog : public AbstractCatalog {
     COLUMN_OFFSET = 3,
     COLUMN_TYPE = 4,
     IS_INLINED = 5,
-    IS_PRIMARY = 6,
-    IS_NOT_NULL = 7,
+    IS_NOT_NULL = 6,
+    IS_DEFAULT = 7,
+		DEFAULT_VALUE = 8,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
   enum IndexId {
     PRIMARY_KEY = 0,

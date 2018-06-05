@@ -177,7 +177,7 @@ class Schema : public Printable {
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::NOTNULL) return false;
+      if (constraint->GetType() == ConstraintType::NOTNULL) return false;
     }
     return true;
   }
@@ -185,7 +185,7 @@ class Schema : public Printable {
   // For single column default
   inline bool AllowDefault(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::DEFAULT) {
+      if (constraint->GetType() == ConstraintType::DEFAULT) {
         return true;
       }
     }
@@ -196,8 +196,8 @@ class Schema : public Printable {
   // Get the default value for the column
   inline type::Value* GetDefaultValue(const oid_t column_id) const {
     for (auto constraint : columns[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::DEFAULT) {
-        return constraint.getDefaultValue();
+      if (constraint->GetType() == ConstraintType::DEFAULT) {
+        return constraint->getDefaultValue();
       }
     }
 
@@ -206,18 +206,22 @@ class Schema : public Printable {
 
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
-                            const catalog::Constraint &constraint) {
+                            const std::shared_ptr<Constraint> constraint) {
     columns[column_id].AddConstraint(constraint);
   }
 
   // Add constraint for column by name
   inline void AddConstraint(std::string column_name,
-                            const catalog::Constraint &constraint) {
+                            const std::shared_ptr<Constraint> constraint) {
     for (size_t column_itr = 0; column_itr < columns.size(); column_itr++) {
       if (columns[column_itr].GetName() == column_name) {
         columns[column_itr].AddConstraint(constraint);
       }
     }
+  }
+
+  inline bool DeleteConstraint(oid_t column_id, oid_t constraint_oid) {
+  	return columns[column_id].DeleteConstraint(constraint_oid);
   }
 
   inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {

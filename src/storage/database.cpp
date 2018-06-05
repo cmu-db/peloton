@@ -149,12 +149,8 @@ const std::string Database::GetInfo() const {
       if (table->HasForeignKeys()) {
         os << "foreign tables \n";
 
-        oid_t foreign_key_count = table->GetForeignKeyCount();
-        for (oid_t foreign_key_itr = 0; foreign_key_itr < foreign_key_count;
-             foreign_key_itr++) {
-          auto foreign_key = table->GetForeignKey(foreign_key_itr);
-
-          auto sink_table_oid = foreign_key->GetSinkTableOid();
+        for (auto foreign_key : table->GetForeignKeys()) {
+          auto sink_table_oid = foreign_key.second->GetSinkTableOid();
           auto sink_table = GetTableWithOid(sink_table_oid);
 
           os << "table name : " << sink_table->GetName() << std::endl;

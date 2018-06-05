@@ -45,12 +45,14 @@ namespace catalog {
 
 class IndexCatalogObject;
 class ColumnCatalogObject;
+class ConstraintCatalogObject;
 
 class TableCatalogObject {
   friend class TableCatalog;
   friend class IndexCatalog;
   friend class ColumnCatalog;
   friend class LayoutCatalog;
+  friend class ConstraintCatalog;
 
  public:
   TableCatalogObject(executor::LogicalTile *tile,
@@ -88,6 +90,15 @@ class TableCatalogObject {
   std::shared_ptr<const storage::Layout> GetLayout(oid_t layout_id,
                                                    bool cached_entry = false);
 
+  // Evict all layouts from the cache
+  void EvictAllConstraintObjects();
+
+  // Get constraints
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
+	GetConstraintObjects(bool cached_only = false);
+  std::shared_ptr<ConstraintCatalogObject>
+  GetConstraintObject(oid_t constraint_oid, bool cached_entry = false);
+
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
   inline const std::string &GetSchemaName() { return schema_name; }
@@ -117,6 +128,12 @@ class TableCatalogObject {
   // Evict layout_id from the table object
   bool EvictLayout(oid_t layout_id);
 
+  // Insert constraint object table object
+  bool InsertConstraintObject(
+  		std::shared_ptr<ConstraintCatalogObject> constraint_object);
+  // Evict constraint_oid from the table object
+  bool EvictConstraintObject(oid_t constraint_oid);
+
   // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
   std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
@@ -135,6 +152,11 @@ class TableCatalogObject {
       layout_objects_;
   bool valid_layout_objects_;
 
+  // cache for *all* layout objects in the table
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
+      constraint_objects_;
+  bool valid_constraint_objects_;
+
   // Pointer to its corresponding transaction
   concurrency::TransactionContext *txn;
 };
@@ -145,6 +167,7 @@ class TableCatalog : public AbstractCatalog {
   friend class ColumnCatalog;
   friend class IndexCatalog;
   friend class LayoutCatalog;
+  friend class ConstraintCatalog;
   friend class Catalog;
 
  public:

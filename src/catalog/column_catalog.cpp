@@ -39,10 +39,19 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
               .ToString())),
       is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
                      .GetAs<bool>()),
-      is_primary(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY)
-                     .GetAs<bool>()),
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
-                      .GetAs<bool>()) {}
+                      .GetAs<bool>()),
+      is_default(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_DEFAULT)
+               .GetAs<bool>()) {
+	// deserialize default value if the column has default constraint
+	if (is_default) {
+		std::unique_ptr<type::EphemeralPool> pool(new type::EphemeralPool());
+		auto default_value_str = tile->GetValue(tupleId,
+				ConstraintCatalog::ColumnId::DEFAULT_VALUE).ToString();
+		default_value = type::Value::DeserializeFrom(default_value_str.c_str(),
+				column_type, is_inlined, pool.get());
+	}
+}
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool,
@@ -53,8 +62,9 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
            COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID}, COLUMN_CATALOG_SKEY0_OID,
-           COLUMN_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
+  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID},
+  		     COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
+					 IndexConstraintType::UNIQUE);
   AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
            COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
@@ -63,7 +73,8 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
                  column.GetOffset(), column.GetType(), column.IsInlined(),
-                 column.GetConstraints(), pool, txn);
+								 column.IsNotNull(), column.IsDefault(),
+								 column.GetDefaultValue(), pool, txn);
     column_id++;
   }
 }
@@ -74,58 +85,62 @@ ColumnCatalog::~ColumnCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
-  const std::string primary_key_constraint_name = "primary_key";
-  const std::string not_null_constraint_name = "not_null";
+  const std::string primary_key_constraint_name = "con_primary";
+  const std::string unique_constraint_name = "con_unique";
 
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  table_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  table_id_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+			COLUMN_CATALOG_PKEY_OID));
+  table_id_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::UNIQUE, unique_constraint_name,
+			COLUMN_CATALOG_SKEY0_OID));
+  table_id_column.SetNotNull();
 
   auto column_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "column_name", false);
-  column_name_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  column_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  column_name_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+			COLUMN_CATALOG_PKEY_OID));
+  column_name_column.SetNotNull();
 
   auto column_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "column_id", true);
-  column_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  column_id_column.AddConstraint(std::make_shared<Constraint>(
+      ConstraintType::UNIQUE, unique_constraint_name,
+			COLUMN_CATALOG_SKEY0_OID));
+  column_id_column.SetNotNull();
 
   auto column_offset_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "column_offset", true);
-  column_offset_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  column_offset_column.SetNotNull();
 
   auto column_type_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "column_type", false);
-  column_type_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  column_type_column.SetNotNull();
 
   auto is_inlined_column = catalog::Column(
       type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "is_inlined", true);
-  is_inlined_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  is_inlined_column.SetNotNull();
 
   auto is_primary_column = catalog::Column(
       type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
-      "is_primary", true);
-  is_primary_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      "is_not_null", true);
+  is_primary_column.SetNotNull();
 
   auto is_not_null_column = catalog::Column(
       type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
-      "is_not_null", true);
-  is_not_null_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      "is_default", true);
+  is_not_null_column.SetNotNull();
+
+  auto default_value_column = catalog::Column(
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "default_value", false);
 
   std::unique_ptr<catalog::Schema> column_catalog_schema(new catalog::Schema(
       {table_id_column, column_name_column, column_id_column,
@@ -139,7 +154,8 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  const std::string &column_name,
                                  oid_t column_id, oid_t column_offset,
                                  type::TypeId column_type, bool is_inlined,
-                                 const std::vector<Constraint> &constraints,
+							                   bool is_not_null, bool is_default,
+																 const std::shared_ptr<type::Value> default_value,
                                  type::AbstractPool *pool,
                                  concurrency::TransactionContext *txn) {
   // Create the tuple first
@@ -153,17 +169,8 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
   auto val4 =
       type::ValueFactory::GetVarcharValue(TypeIdToString(column_type), nullptr);
   auto val5 = type::ValueFactory::GetBooleanValue(is_inlined);
-  bool is_primary = false, is_not_null = false;
-  for (auto constraint : constraints) {
-    if (constraint.GetType() == ConstraintType::PRIMARY) {
-      is_primary = true;
-    } else if (constraint.GetType() == ConstraintType::NOT_NULL ||
-               constraint.GetType() == ConstraintType::NOTNULL) {
-      is_not_null = true;
-    }
-  }
-  auto val6 = type::ValueFactory::GetBooleanValue(is_primary);
-  auto val7 = type::ValueFactory::GetBooleanValue(is_not_null);
+  auto val6 = type::ValueFactory::GetBooleanValue(is_not_null);
+  auto val7 = type::ValueFactory::GetBooleanValue(is_default);
 
   tuple->SetValue(ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(ColumnId::COLUMN_NAME, val1, pool);
@@ -171,8 +178,15 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
   tuple->SetValue(ColumnId::COLUMN_OFFSET, val3, pool);
   tuple->SetValue(ColumnId::COLUMN_TYPE, val4, pool);
   tuple->SetValue(ColumnId::IS_INLINED, val5, pool);
-  tuple->SetValue(ColumnId::IS_PRIMARY, val6, pool);
-  tuple->SetValue(ColumnId::IS_NOT_NULL, val7, pool);
+  tuple->SetValue(ColumnId::IS_NOT_NULL, val6, pool);
+  tuple->SetValue(ColumnId::IS_DEFAULT, val7, pool);
+
+  if (is_default) {
+  	char default_value_str[column_length];
+  	default_value->SerializeTo(default_value_str, is_inlined, pool);
+  	auto val8 = type::ValueFactory::GetVarcharValue(default_value_str, nullptr);
+    tuple->SetValue(ColumnId::DEFAULT_VALUE, val8, pool);
+  }
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);

@@ -113,7 +113,8 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_id", true);
   if (has_primary_key) {
-    catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
+    std::shared_ptr<catalog::Constraint> constraint(
+    		new catalog::Constraint(ConstraintType::PRIMARY, "con_primary"));
     id_column.AddConstraint(constraint);
   }
   auto name_column =

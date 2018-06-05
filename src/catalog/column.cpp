@@ -42,6 +42,22 @@ void Column::SetInlined() {
   }
 }
 
+bool Column::DeleteConstraint(oid_t constraint_oid) {
+	for (auto const_itr = constraints.begin(); const_itr != constraints.end();
+			const_itr++) {
+		if ((*const_itr)->GetConstraintOid() == constraint_oid) {
+			if ((*const_itr)->GetType() == ConstraintType::PRIMARY) {
+				is_primary_ = false;
+			} else if ((*const_itr)->GetType() == ConstraintType::UNIQUE) {
+				is_unique_ = false;
+			}
+			constraints.erase(const_itr);
+			return true;
+		}
+	}
+	return false;
+}
+
 const std::string Column::GetInfo() const {
   std::ostringstream os;
 
@@ -63,7 +79,7 @@ const std::string Column::GetInfo() const {
       } else {
         os << ", ";
       }
-      os << constraint.GetInfo();
+      os << constraint->GetInfo();
     }
     os << "}";
   }

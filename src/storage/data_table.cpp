@@ -111,12 +111,12 @@ DataTable::~DataTable() {
 
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
-    delete foreign_key;
+    delete foreign_key.second;
   }
   foreign_keys_.clear();
 
   for (auto foreign_key_src : foreign_key_sources_) {
-    delete foreign_key_src;
+    delete foreign_key_src.second;
   }
   foreign_key_sources_.clear();
 
@@ -156,10 +156,9 @@ bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
   //       look at each column individually.
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    std::vector<catalog::Constraint> column_cons =
-        schema->GetColumn(column_itr).GetConstraints();
+    auto column_cons = schema->GetColumn(column_itr).GetConstraints();
     for (auto cons : column_cons) {
-      ConstraintType type = cons.GetType();
+      ConstraintType type = cons->GetType();
       switch (type) {
         case ConstraintType::NOTNULL: {
           if (CheckNotNulls(tuple, column_itr) == false) {
@@ -755,7 +754,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
  */
 bool DataTable::CheckForeignKeyConstraints(
     const AbstractTuple *tuple, concurrency::TransactionContext *transaction) {
-  for (auto foreign_key : foreign_keys_) {
+  for (auto foreign_key_pair : foreign_keys_) {
+  	auto foreign_key = foreign_key_pair.second;
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
     try {
@@ -1150,50 +1150,29 @@ oid_t DataTable::GetValidIndexCount() const {
 // FOREIGN KEYS
 //===--------------------------------------------------------------------===//
 
-void DataTable::AddForeignKey(catalog::ForeignKey *key) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-    catalog::Constraint constraint(ConstraintType::FOREIGN,
-                                   key->GetConstraintName());
-    constraint.SetForeignKeyListOffset(GetForeignKeyCount());
-    for (auto fk_column : key->GetSourceColumnIds()) {
-      schema->AddConstraint(fk_column, constraint);
-    }
-    foreign_keys_.push_back(key);
-  }
+void DataTable::AddForeignKey(oid_t constraint_oid,
+		                          catalog::ForeignKey *key) {
+	std::lock_guard<std::mutex> lock(data_table_mutex_);
+	foreign_keys_[constraint_oid] = key;
 }
 
-catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
-  catalog::ForeignKey *key = nullptr;
-  key = foreign_keys_.at(key_offset);
-  return key;
+void DataTable::DropForeignKey(oid_t constraint_oid) {
+	std::lock_guard<std::mutex> lock(data_table_mutex_);
+	foreign_keys_.erase(constraint_oid);
 }
-
-void DataTable::DropForeignKey(const oid_t &key_offset) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-    PELOTON_ASSERT(key_offset < foreign_keys_.size());
-    foreign_keys_.erase(foreign_keys_.begin() + key_offset);
-  }
-}
-
-size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
 // Adds to the list of tables for which this table's PK is the foreign key sink
-void DataTable::RegisterForeignKeySource(catalog::ForeignKey *key) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-    foreign_key_sources_.push_back(key);
-  }
+void DataTable::RegisterForeignKeySource(oid_t constraint_oid,
+		                                     catalog::ForeignKey *key) {
+	std::lock_guard<std::mutex> lock(data_table_mutex_);
+	foreign_key_sources_[constraint_oid] = key;
 }
 
-size_t DataTable::GetForeignKeySrcCount() const {
-  return foreign_key_sources_.size();
+void DataTable::DropForeignKeySrc(oid_t constraint_oid) {
+	std::lock_guard<std::mutex> lock(data_table_mutex_);
+	foreign_key_sources_.erase(constraint_oid);
 }
 
-catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
-  return foreign_key_sources_[offset];
-}
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(

@@ -50,30 +50,32 @@ std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  table_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  table_id_column.AddConstraint(std::make_shared<catalog::Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+  		LAYOUT_CATALOG_PKEY_OID));
+  table_id_column.AddConstraint(std::make_shared<catalog::Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto layout_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "layout_oid", true);
-  layout_oid_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  layout_oid_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  layout_oid_column.AddConstraint(std::make_shared<catalog::Constraint>(
+      ConstraintType::PRIMARY, primary_key_constraint_name,
+  		LAYOUT_CATALOG_PKEY_OID));
+  layout_oid_column.AddConstraint(std::make_shared<catalog::Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto num_columns_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "num_columns", true);
-  num_columns_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  num_columns_column.AddConstraint(std::make_shared<catalog::Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_map_column = catalog::Column(
       type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
       "column_map", false);
-  column_map_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  column_map_column.AddConstraint(std::make_shared<catalog::Constraint>(
+  		ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> column_catalog_schema(
       new catalog::Schema({table_id_column, layout_oid_column,

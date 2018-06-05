@@ -89,15 +89,15 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
   if (add_primary) {
     cols[0].AddConstraint(
-        catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
+        std::make_shared<catalog::Constraint>(ConstraintType::PRIMARY, "con_primary"));
   }
   cols[2].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
   cols[3].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+      std::make_shared<catalog::Constraint>(ConstraintType::NOTNULL, "not_null"));
 
   // Return the schema
   return std::unique_ptr<catalog::Schema>{new catalog::Schema(cols)};

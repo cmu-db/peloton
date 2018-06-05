@@ -40,15 +40,18 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
   pg_table_ = new TableCatalog(database, pool, txn);
   pg_index_ = new IndexCatalog(database, pool, txn);
   pg_layout_ = new LayoutCatalog(database, pool, txn);
+  pg_constraint_ = new ConstraintCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert column information into pg_attribute
+  // and insert constraint information into pg_constraint
   std::vector<std::pair<oid_t, oid_t>> shared_tables = {
       {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
       {database_oid, TABLE_CATALOG_OID},
       {database_oid, SCHEMA_CATALOG_OID},
       {database_oid, INDEX_CATALOG_OID},
-      {database_oid, LAYOUT_CATALOG_OID}};
+      {database_oid, LAYOUT_CATALOG_OID},
+			{database_oid, CONSTRAINT_CATALOG_OID}};
 
   for (int i = 0; i < (int)shared_tables.size(); i++) {
     oid_t column_id = 0;
@@ -60,7 +63,13 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
       pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
                                   column_id, column.GetOffset(),
                                   column.GetType(), column.IsInlined(),
-                                  column.GetConstraints(), pool, txn);
+																	column.IsNotNull(), column.IsDefault(),
+																	column.GetDefaultValue(), pool, txn);
+      for (auto constraint : column.GetConstraints()) {
+      	constraint->SetConstraintOid(pg_constraint_->GetNextOid());
+        pg_constraint_->InsertConstraint(shared_tables[i].second, {column_id},
+                                         constraint, pool, txn);
+      }
       column_id++;
     }
   }
@@ -72,6 +81,7 @@ SystemCatalogs::~SystemCatalogs() {
   delete pg_table_;
   delete pg_attribute_;
   delete pg_namespace_;
+  delete pg_constraint_;
   if (pg_trigger_) delete pg_trigger_;
   // if (pg_proc) delete pg_proc;
   if (pg_table_metrics_) delete pg_table_metrics_;

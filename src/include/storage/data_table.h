@@ -208,19 +208,33 @@ class DataTable : public AbstractTable {
                                     executor::ExecutorContext *context,
                                     bool is_update);
 
-  void AddForeignKey(catalog::ForeignKey *key);
+  void AddForeignKey(oid_t constraint_oid, catalog::ForeignKey *key);
 
-  catalog::ForeignKey *GetForeignKey(const oid_t &key_offset) const;
+  std::unordered_map<oid_t, catalog::ForeignKey*> GetForeignKeys() const {
+  	return foreign_keys_;
+  }
 
-  void DropForeignKey(const oid_t &key_offset);
+  catalog::ForeignKey *GetForeignKey(oid_t constraint_oid) const {
+  	return foreign_keys_.at(constraint_oid);
+  }
 
-  size_t GetForeignKeyCount() const;
+  size_t GetForeignKeyCount() const { return foreign_keys_.size(); }
 
-  void RegisterForeignKeySource(catalog::ForeignKey *key);
+  void DropForeignKey(oid_t constraint_oid);
 
-  size_t GetForeignKeySrcCount() const;
+  void RegisterForeignKeySource(oid_t constraint_oid, catalog::ForeignKey *key);
 
-  catalog::ForeignKey *GetForeignKeySrc(const size_t) const;
+  size_t GetForeignKeySrcCount() const { return foreign_key_sources_.size(); }
+
+  std::unordered_map<oid_t, catalog::ForeignKey*> GetForeignKeySrcs() const {
+  	return foreign_key_sources_;
+  }
+
+  catalog::ForeignKey *GetForeignKeySrc(oid_t constraint_oid) const {
+  	return foreign_key_sources_.at(constraint_oid);
+  }
+
+  void DropForeignKeySrc(oid_t constraint_oid);
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -424,11 +438,11 @@ class DataTable : public AbstractTable {
 
   // CONSTRAINTS
   // fk constraints for which this table is the source
-  std::vector<catalog::ForeignKey *> foreign_keys_;
+  std::unordered_map<oid_t, catalog::ForeignKey *> foreign_keys_;
   // fk constraints for which this table is the sink
   // The complete information is stored so no need to lookup the table
   // everytime there is a constraint check
-  std::vector<catalog::ForeignKey *> foreign_key_sources_;
+  std::unordered_map<oid_t, catalog::ForeignKey *> foreign_key_sources_;
 
   // has a primary key ?
   std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);

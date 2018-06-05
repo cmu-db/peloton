@@ -89,8 +89,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.AddConstraint(std::make_shared<catalog::Constraint>(
+      		ConstraintType::NOTNULL, not_null_constraint_name));
       return column;
     } break;
 
@@ -99,8 +99,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.AddConstraint(std::make_shared<catalog::Constraint>(
+      		ConstraintType::NOTNULL, not_null_constraint_name));
       return column;
     } break;
 
@@ -109,8 +109,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
           "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.AddConstraint(std::make_shared<catalog::Constraint>(
+      		ConstraintType::NOTNULL, not_null_constraint_name));
       return column;
     } break;
 
@@ -119,8 +119,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
                           "COL_D", !is_inlined);      // inlined.
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.AddConstraint(std::make_shared<catalog::Constraint>(
+      		ConstraintType::NOTNULL, not_null_constraint_name));
       return column;
     } break;
 
