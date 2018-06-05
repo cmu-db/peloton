@@ -30,7 +30,7 @@ typedef std::chrono::time_point<clock_> time_point_;
 template <typename ResolutionRatio = std::ratio<1> >
 class Timer : public peloton::Printable {
  public:
-  Timer() : elapsed_(0), invocations_(0) {}
+  Timer() : elapsed_(0), total_(0), invocations_(0) {}
 
   inline void Start() { begin_ = clock_::now(); }
 
@@ -43,16 +43,33 @@ class Timer : public peloton::Printable {
             .count();
 
     elapsed_ += duration;
+    total_ += duration;
     invocations_++;
   }
 
-  inline void Reset() { elapsed_ = 0; }
+  /**
+   * Reset the current elapsed time counter.
+   */
+  void Reset() { elapsed_ = 0; }
 
-  // Get Elapsed duration
-  inline double GetDuration() const { return elapsed_; }
+  /**
+   * Get elapsed duration
+   * @return
+   */
+  double GetDuration() const { return elapsed_; }
 
-  // Get Number of invocations
-  inline int GetInvocations() const { return invocations_; }
+  /**
+   * Return the total amount of time measured by
+   * this timer after multiple invocations.
+   * @return
+   */
+  double GetTotalDuration() const { return (total_); }
+
+  /**
+   * Get number of invocations
+   * @return
+   */
+  int GetInvocations() const { return invocations_; }
 
   // Get a string representation for debugging
   inline const std::string GetInfo() const {
@@ -72,6 +89,11 @@ class Timer : public peloton::Printable {
 
   // Elapsed time (with desired resolution)
   double elapsed_;
+
+  /**
+   * Total amount of time (even after resets)
+   */
+  double total_;
 
   // Number of invocations
   int invocations_;

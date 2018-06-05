@@ -19,6 +19,7 @@
 #include "storage/layout.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace test {
@@ -63,8 +64,8 @@ void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
 TEST_F(ManagerTests, TransactionTest) {
   LaunchParallelTest(8, AddTileGroup);
 
-  LOG_INFO("Catalog allocations :: %u",
-           catalog::Manager::GetInstance().GetCurrentTileGroupId());
+  LOG_INFO("Storage allocations :: %u",
+           storage::StorageManager::GetInstance()->GetCurrentTileGroupId());
 
   // EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentTileGroupId(), 800);
 }

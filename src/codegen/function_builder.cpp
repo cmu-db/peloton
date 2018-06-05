@@ -143,7 +143,7 @@ FunctionBuilder::~FunctionBuilder() {
 // Here, we just need to iterate over the arguments in the function to find a
 // match. The names of the arguments were provided and set at construction time.
 llvm::Value *FunctionBuilder::GetArgumentByName(std::string name) {
-  for (auto &arg : func_->getArgumentList()) {
+  for (auto &arg : func_->args()) {
     if (arg.getName().equals(name)) {
       return &arg;
     }

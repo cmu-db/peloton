@@ -40,7 +40,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   oid_t TestTableId() { return test_table_oids[0]; }
   oid_t RightTableId() { return test_table_oids[1]; }
 
-  // SELECT b FROM table where a >= 40;
+  // SELECT a FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
     auto *a_col_exp =
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
@@ -49,6 +49,38 @@ class QueryCacheTest : public PelotonCodeGenTest {
         ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
     return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
         &GetTestTable(TestTableId()), a_gt_40, {0, 1}));
+  }
+
+  /* SELECT a FROM table where a >= 40;
+     bind_tve: flag for binding the tuple value expression
+  */
+  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanA(bool bind_tve) {
+    auto *a_col_exp =
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+    if (bind_tve) {
+      a_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 0);
+    }
+    auto *const_40_exp = PelotonCodeGenTest::ConstIntExpr(40).release();
+    auto *a_eq_40 = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, a_col_exp, const_40_exp);
+    return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), a_eq_40, {0, 1}));
+  }
+
+  /* SELECT b FROM table where b >= 41;
+     bind_tve: flag for binding the tuple value expression
+  */
+  std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlanB(bool bind_tve) {
+    auto *b_col_exp =
+        new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
+    if (bind_tve) {
+      b_col_exp->SetBoundOid(GetDatabase().GetOid(), TestTableId(), 1);
+    }
+    auto *const_41_exp = PelotonCodeGenTest::ConstIntExpr(41).release();
+    auto *b_eq_41 = new expression::ComparisonExpression(
+        ExpressionType::COMPARE_EQUAL, b_col_exp, const_41_exp);
+    return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
+        &GetTestTable(TestTableId()), b_eq_41, {0, 1}));
   }
 
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
@@ -207,6 +239,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   uint32_t num_rows_to_insert = 64;
 };
 
+
 TEST_F(QueryCacheTest, SimpleCache) {
   int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
 
@@ -249,6 +282,80 @@ TEST_F(QueryCacheTest, SimpleCache) {
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+}
+
+TEST_F(QueryCacheTest, SimpleCacheWithDiffPredicate) {
+  std::shared_ptr<planner::SeqScanPlan> scan_a = GetSeqScanPlanA(false);
+
+  std::shared_ptr<planner::SeqScanPlan> scan_b = GetSeqScanPlanB(false);
+  // Do binding
+  planner::BindingContext context_1;
+  scan_a->PerformBinding(context_1);
+  planner::BindingContext context_2;
+  scan_b->PerformBinding(context_2);
+
+  // Check if the two plans are the same
+  // Since they are not bound, the two plans are the same
+  auto hash_equal = (scan_a->Hash() == scan_b->Hash());
+  EXPECT_TRUE(hash_equal);
+
+  auto is_equal = (*scan_a.get() == *scan_b.get());
+  EXPECT_TRUE(is_equal);
+
+  // Create two plans with bound tuple value expression
+  std::shared_ptr<planner::SeqScanPlan> plan_a = GetSeqScanPlanA(true);
+
+  std::shared_ptr<planner::SeqScanPlan> plan_b = GetSeqScanPlanB(true);
+
+  auto hash_equal_2 = (plan_a->Hash() == plan_b->Hash());
+  EXPECT_FALSE(hash_equal_2);
+
+  auto is_equal_2 = (*plan_a.get() == *plan_b.get());
+  EXPECT_FALSE(is_equal_2);
+
+  // Do binding
+  planner::BindingContext context_a;
+  plan_a->PerformBinding(context_a);
+  planner::BindingContext context_b;
+  plan_b->PerformBinding(context_b);
+
+  // execute SELECT a FROM table where a == 40;
+  codegen::BufferingConsumer buffer_1{{0, 1}, context_a};
+  bool cached;
+  CompileAndExecuteCache(plan_a, buffer_1, cached);
+  auto &results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(1, results_1.size());
+  EXPECT_EQ(40, results_1[0].GetValue(0).GetAs<int32_t>());
+  EXPECT_FALSE(cached);
+
+  // clear the cache
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+  // execute SELECT b FROM table where b == 41;
+  codegen::BufferingConsumer buffer_2{{0, 1}, context_b};
+  CompileAndExecuteCache(plan_b, buffer_2, cached);
+
+  const auto &results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(1, results_2.size());
+  EXPECT_EQ(41, results_2[0].GetValue(1).GetAs<int32_t>());
+  EXPECT_FALSE(cached);
+
+  // cache has plan_b
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+
+  // re-execute SELECT a FROM table where a == 40;
+  codegen::BufferingConsumer buffer_3{{0, 1}, context_a};
+  CompileAndExecuteCache(plan_a, buffer_3, cached);
+
+  // cache should not hit
+  EXPECT_FALSE(cached);
+  const auto &results_3 = buffer_3.GetOutputTuples();
+  EXPECT_EQ(1, results_3.size());
+  EXPECT_EQ(40, results_1[0].GetValue(0).GetAs<int32_t>());
+
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
