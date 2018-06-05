@@ -62,6 +62,8 @@ class SchemaCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | SCHEMA_OID_MASK; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//

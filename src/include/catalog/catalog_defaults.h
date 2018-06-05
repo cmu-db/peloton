@@ -37,6 +37,7 @@ namespace catalog {
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
+#define OID_FOR_USER_OFFSET 10000
 #define CATALOG_TABLES_COUNT 10
 
 // Oid mask for each type
