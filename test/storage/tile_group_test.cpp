@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "storage/storage_manager.h"
 #include "common/harness.h"
 
 #include "type/value_factory.h"
@@ -92,7 +93,7 @@ TEST_F(TileGroupTests, BasicTest) {
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
           layout, 4));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
   // TUPLES
@@ -223,7 +224,7 @@ TEST_F(TileGroupTests, StressTest) {
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
           layout, 10000));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema.get());
@@ -392,7 +393,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
           layout, tuple_count));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();

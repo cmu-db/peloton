@@ -95,6 +95,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
 DataTable::~DataTable() {
   // clean up tile groups by dropping the references in the catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
 
@@ -105,7 +106,7 @@ DataTable::~DataTable() {
     if (tile_group_id != invalid_tile_group_id) {
       LOG_TRACE("Dropping tile group : %u ", tile_group_id);
       // drop tile group in catalog
-      catalog_manager.DropTileGroup(tile_group_id);
+      storage_manager->DropTileGroup(tile_group_id);
     }
   }
 
@@ -236,7 +237,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
     // when inserting a tuple
     if (tuple != nullptr) {
       auto tile_group =
-          catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
+          storage::StorageManager::GetInstance()->GetTileGroup(free_item_pointer.block);
       tile_group->CopyTuple(tuple, free_item_pointer.offset);
     }
     return free_item_pointer;
@@ -874,7 +875,7 @@ void DataTable::ResetDirty() { dirty_ = false; }
 
 TileGroup *DataTable::GetTileGroupWithLayout(
     std::shared_ptr<const Layout> layout) {
-  oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
+  oid_t tile_group_id = storage::StorageManager::GetInstance()->GetNextTileGroupId();
   return (AbstractTable::GetTileGroupWithLayout(database_oid, tile_group_id,
                                                 layout, tuples_per_tilegroup_));
 }
@@ -914,7 +915,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   tile_groups_.Append(tile_group_id);
 
   // add tile group metadata in locator
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
 
   COMPILER_MEMORY_FENCE;
 
@@ -960,7 +961,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
     LOG_TRACE("Added a tile group ");
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+    storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
 
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.
@@ -983,7 +984,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   tile_groups_.Append(tile_group_id);
 
   // add tile group in catalog
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
 
   // we must guarantee that the compiler always add tile group before adding
   // tile_group_count_.
@@ -1008,12 +1009,12 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
     const oid_t &tile_group_id) const {
-  auto &manager = catalog::Manager::GetInstance();
-  return manager.GetTileGroup(tile_group_id);
+  auto storage_manager = storage::StorageManager::GetInstance();
+  return storage_manager->GetTileGroup(tile_group_id);
 }
 
 void DataTable::DropTileGroups() {
-  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto storage_manager = storage::StorageManager::GetInstance();
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
 
@@ -1023,7 +1024,7 @@ void DataTable::DropTileGroups() {
 
     if (tile_group_id != invalid_tile_group_id) {
       // drop tile group in catalog
-      catalog_manager.DropTileGroup(tile_group_id);
+      storage_manager->DropTileGroup(tile_group_id);
     }
   }
 
@@ -1291,8 +1292,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
       tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
 
   // Get orig tile group from catalog
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
+  auto storage_tilegroup = storage::StorageManager::GetInstance();
+  auto tile_group = storage_tilegroup->GetTileGroup(tile_group_id);
   auto diff = tile_group->GetLayout().GetLayoutDifference(*default_layout_);
 
   // Check threshold for transformation
@@ -1318,7 +1319,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Set the location of the new tile group
   // and clean up the orig tile group
-  catalog_manager.AddTileGroup(tile_group_id, new_tile_group);
+  storage_tilegroup->AddTileGroup(tile_group_id, new_tile_group);
 
   return new_tile_group.get();
 }

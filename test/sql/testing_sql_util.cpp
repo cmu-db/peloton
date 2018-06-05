@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// sql_tests_util.cpp
+// testing_sql_util.cpp
 //
-// Identification: test/sql/sql_tests_util.cpp
+// Identification: test/sql/testing_sql_util.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "sql/testing_sql_util.h"
 
 #include "binder/bind_node_visitor.h"
@@ -57,7 +58,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     const std::string query, std::vector<ResultValue> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
-  LOG_INFO("Query: %s", query.c_str());
+  LOG_TRACE("Query: %s", query.c_str());
   // prepareStatement
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -91,8 +92,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
   }
-  LOG_INFO("Statement executed. Result: %s",
-           ResultTypeToString(status).c_str());
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status).c_str());
   rows_changed = traffic_cop_.getRowsAffected();
   return status;
 }
@@ -120,7 +121,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
 
   try {
-    LOG_DEBUG("\n%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
+    LOG_TRACE("\n%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
     // SetTrafficCopCounter();
     counter_.store(1);
     auto status =
@@ -132,12 +133,12 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       traffic_cop_.SetQueuing(false);
     }
     rows_changed = status.m_processed;
-    LOG_INFO("Statement executed. Result: %s",
+    LOG_TRACE("Statement executed. Result: %s",
              ResultTypeToString(status.m_result).c_str());
     return status.m_result;
   } catch (Exception &e) {
     error_message = e.what();
-    LOG_DEBUG("Testing SQL Util Caught Exception : %s", e.what());
+    LOG_TRACE("Testing SQL Util Caught Exception : %s", e.what());
     return ResultType::FAILURE;
   }
 }
@@ -201,6 +202,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
 
   // execute the query using tcop
   // prepareStatement
+  LOG_TRACE("Query: %s", query.c_str());
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
@@ -231,6 +233,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
   }
+  LOG_TRACE("Statement executed. Result: %s",
+           ResultTypeToString(status).c_str());
   return status;
 }
 
