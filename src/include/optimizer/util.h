@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #include <string>
 
 #include "expression/abstract_expression.h"
+#include "optimizer/stats/table_stats.h"
 #include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
 
@@ -33,11 +34,11 @@ class DataTable;
 namespace optimizer {
 namespace util {
 
-  /**
-   * @brief Convert upper case letters into lower case in a string
-   *
-   * @param str The string to operate on
-   */
+/**
+ * @brief Convert upper case letters into lower case in a string
+ *
+ * @param str The string to operate on
+ */
 inline void to_lower_string(std::string &str) {
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
@@ -110,7 +111,6 @@ expression::AbstractExpression *ConstructJoinPredicate(
     std::unordered_set<std::string> &table_alias_set,
     MultiTablePredicates &join_predicates);
 
-
 /**
  * @breif Check if there are any join columns in the join expression
  *  For example, expr = (expr_1) AND (expr_2) AND (expr_3)
@@ -166,6 +166,18 @@ void ExtractEquiJoinKeys(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys,
     const std::unordered_set<std::string> &left_alias,
     const std::unordered_set<std::string> &right_alias);
+
+/**
+ * @brief Calculate selectivity after applying predicates on a table
+ *
+ * @param predicate_table_stats the incoming table stats
+ * @param expr the predicate
+ *
+ * @return updated selectivity
+ */
+double CalculateSelectivityForPredicate(
+    const std::shared_ptr<TableStats> predicate_table_stats,
+    const expression::AbstractExpression *expr);
 
 }  // namespace util
 }  // namespace optimizer

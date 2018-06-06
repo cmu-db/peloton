@@ -6,7 +6,7 @@
 //
 // Identification: src/storage/data_table.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -386,7 +386,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -1094,7 +1094,12 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_.Update(index_offset, nullptr);
 
   // Drop index column info
-  indexes_columns_[index_offset].clear();
+  // indexes_columns_[index_offset].clear();
+
+  // Doing this because StatsStorage::AnalyzeStatsForAllTables
+  // assumes that the set is completely erased when the index is
+  // deleted.
+  indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
 void DataTable::DropIndexes() {

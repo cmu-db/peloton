@@ -6,24 +6,7 @@
 //
 // Identification: src/include/catalog/table_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_table
-//
-// Schema: (column position: column_name)
-// 0: table_oid (pkey)
-// 1: table_name,
-// 2: schema_name (the namespace name that this table belongs to)
-// 3: database_oid
-// 4: version_id: for fast ddl(alter table)
-//
-// Indexes: (index offset: indexed columns)
-// 0: table_oid (unique & primary key)
-// 1: table_name & schema_name(unique)
-// 2: database_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -68,6 +51,11 @@ class TableCatalogObject {
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, bool cached_only = false);
 
+  // Get index objects
+  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
+  bool EvictIndexObject(oid_t index_oid);
+  bool EvictIndexObject(const std::string &index_name);
+
   // Get columns
   void EvictAllColumnObjects();
   std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
@@ -94,6 +82,9 @@ class TableCatalogObject {
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
 
+  // NOTE: should be only used by What-if API.
+  void SetValidIndexObjects(bool is_valid);
+
  private:
   // member variables
   oid_t table_oid;
@@ -101,11 +92,6 @@ class TableCatalogObject {
   std::string schema_name;
   oid_t database_oid;
   uint32_t version_id;
-
-  // Get index objects
-  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
-  bool EvictIndexObject(oid_t index_oid);
-  bool EvictIndexObject(const std::string &index_name);
 
   // Get column objects
   bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
