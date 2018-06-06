@@ -16,6 +16,7 @@
 #include "planner/csv_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "util/string_util.h"
 #include "util/file_util.h"
 
 namespace peloton {
@@ -33,10 +34,21 @@ class CSVScanTranslatorTest : public PelotonCodeGenTest {
 };
 
 TEST_F(CSVScanTranslatorTest, IntCsvScan) {
-  // Test input
-  std::vector<std::string> rows = {"1,2,3.9,four",
-                                   "5,6,7.4,eight",
-                                   "9,10,11.1,\"twelve\""};
+  // The quoting character and a helper function to quote a given string
+  const char quote = '"';
+  const auto quote_string = [quote](std::string s) {
+    return StringUtil::Format("%c%s%c", quote, s.c_str(), quote);
+  };
+
+  // Test input rows
+  // clang-format off
+  std::vector<std::string> rows = {
+      "1,2,3.9,four",
+      "5,6,7.4,eight",
+      "9,10,11.1," + quote_string("twelve"),
+      "14,15,16.7,eighteen " + quote_string("nineteen") + " twenty " + quote_string("twenty-one")};
+  // clang-format on
+
   std::string csv_data;
   for (const auto &row : rows) {
     csv_data.append(row).append("\n");
@@ -93,7 +105,7 @@ TEST_F(CSVScanTranslatorTest, IntCsvScan) {
     const auto &output = consumer.GetOutputTuples();
     ASSERT_EQ(rows.size(), output.size());
     for (uint32_t i = 0; i < rows.size(); i++) {
-      EXPECT_EQ(rows[i], output[i].ToCSV());
+      EXPECT_EQ(StringUtil::Strip(rows[i], '"'), output[i].ToCSV());
     }
   }
 }
