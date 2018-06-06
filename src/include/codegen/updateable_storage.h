@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/updateable_storage.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,20 +15,22 @@
 #include "codegen/codegen.h"
 #include "codegen/compact_storage.h"
 #include "codegen/value.h"
-#include "codegen/lang/if.h"
 
 namespace peloton {
 namespace codegen {
 
+namespace lang {
 class If;
+}  // namespace lang
 
 //===----------------------------------------------------------------------===//
 // A storage area where slots can be updated.
 //===----------------------------------------------------------------------===//
 class UpdateableStorage {
  public:
-  // Constructor
-  UpdateableStorage() : storage_size_(0), storage_type_(nullptr) {}
+  /// Constructor
+  UpdateableStorage()
+      : storage_size_(0), storage_type_(nullptr), null_bitmap_type_(nullptr) {}
 
   // Add the given type to the storage format. We return the index that this
   // value can be found it (i.e., the index to pass into Get() to get the value)
@@ -61,6 +63,7 @@ class UpdateableStorage {
 
   // Return the format of the storage area
   llvm::Type *GetStorageType() const { return storage_type_; }
+  llvm::Type *GetNullBitmapType() const { return null_bitmap_type_; }
 
   // Return the total bytes required by this storage format
   uint32_t GetStorageSize() const { return storage_size_; }
@@ -75,7 +78,7 @@ class UpdateableStorage {
   class NullBitmap {
    public:
     NullBitmap(CodeGen &codegen, const UpdateableStorage &storage,
-               llvm::Value *bitmap_ptr);
+               llvm::Value *storage_ptr);
 
     void InitAllNull(CodeGen &codegen);
 
@@ -123,7 +126,7 @@ class UpdateableStorage {
   // The types we store in the storage area
   std::vector<type::Type> schema_;
 
-  // The physical storage format
+  // Metadata about element types stored here
   std::vector<CompactStorage::EntryInfo> storage_format_;
 
   // The total number of bytes needed for this format
@@ -131,6 +134,11 @@ class UpdateableStorage {
 
   // The finalized LLVM type that represents this storage area
   llvm::Type *storage_type_;
+
+  // The position in the final struct where the bitmap lives
+  uint32_t null_bitmap_pos_;
+  // The type of the bitmap
+  llvm::Type *null_bitmap_type_;
 };
 
 }  // namespace codegen

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/seq_scan_plan.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,38 +16,27 @@
 #include <string>
 #include <vector>
 
-#include "abstract_scan_plan.h"
-#include "common/logger.h"
-#include "expression/abstract_expression.h"
-#include "type/serializer.h"
 #include "common/internal_types.h"
+#include "common/logger.h"
+#include "planner/abstract_scan_plan.h"
+#include "type/serializer.h"
 
 namespace peloton {
-
-namespace expression {
-class Parameter;
-}
-namespace parser {
-class SelectStatement;
-}
-namespace storage {
-class DataTable;
-}
-
 namespace planner {
 
 class SeqScanPlan : public AbstractScan {
  public:
+  // This constructor is needed for the deprecated PelotonService
+  SeqScanPlan() : AbstractScan() {}
+
+  // Normal plan
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
-              const std::vector<oid_t> &column_ids, bool is_for_update = false)
-      : AbstractScan(table, predicate, column_ids) {
-    LOG_TRACE("Creating a Sequential Scan Plan");
-
+              const std::vector<oid_t> &column_ids, bool is_for_update = false,
+              bool parallel = false)
+      : AbstractScan(table, predicate, column_ids, parallel) {
     SetForUpdateFlag(is_for_update);
   }
-
-  SeqScanPlan() : AbstractScan() {}
 
   PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::SEQSCAN;
@@ -68,11 +57,9 @@ class SeqScanPlan : public AbstractScan {
   /* For init SerializeOutput */
   int SerializeSize() const override;
 
-  oid_t GetColumnID(std::string col_name);
-
   std::unique_ptr<AbstractPlan> Copy() const override {
-    AbstractPlan *new_plan = new SeqScanPlan(
-        this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
+    auto *new_plan =
+        new SeqScanPlan(GetTable(), GetPredicate()->Copy(), GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
@@ -83,12 +70,13 @@ class SeqScanPlan : public AbstractScan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(
+  void VisitParameters(
       codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
+  // This class cannot be copied or moved
   DISALLOW_COPY_AND_MOVE(SeqScanPlan);
 };
 

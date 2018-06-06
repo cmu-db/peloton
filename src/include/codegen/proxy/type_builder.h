@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/type_builder.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -138,17 +138,6 @@ struct TypeBuilder<R (T::*)(Args...)> {
 template <typename R, typename T, typename... Args>
 struct TypeBuilder<R (T::*)(Args...) const>
     : public TypeBuilder<R (T::*)(Args...)> {};
-
-template <uint32_t Pos, typename T>
-struct TypeBuilder<codegen::ProxyMember<Pos, T>> : public TypeBuilder<T> {};
-
-/// A list of types
-template <typename... Args>
-struct TypeList {
-  static std::vector<llvm::Type *> GetType(CodeGen &codegen) ALWAYS_INLINE {
-    return {TypeBuilder<Args>::GetType(codegen)...};
-  }
-};
 
 }  // namespace proxy
 }  // namespace codegen

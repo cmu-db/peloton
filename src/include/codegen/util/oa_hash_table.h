@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/util/oa_hash_table.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -79,53 +79,94 @@ class OAHashTable {
     bool HasKeyValueList() const { return status > StatusCode::SINGLE_VALUE; }
   };
 
-  // The following two are intentionally deleted to reflect the fact that this
-  // class is never directly instantiated from pre-compiled C++ code. Instead,
-  // an opaque block of memory is allocated for this object at query execution
-  // time, and handled by the query.
+  /// Constructor
+  OAHashTable(uint64_t key_size, uint64_t value_size,
+              uint64_t estimated_num_entries = kDefaultInitialSize);
 
-  // Constructor
-  OAHashTable() = delete;
-  // Destructor
-  ~OAHashTable() = delete;
+  /// Destructor
+  ~OAHashTable();
 
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
+  /**
+   * Initialize the provided hash table
+   *
+   * @param table The table we're setting up
+   * @param key_size The size of the keys in bytes
+   * @param value_size The size of the values in bytes
+   * @param estimated_num_entries An initial estimate of the number of entries
+   * that will be stored in the table
+   */
+  static void Init(OAHashTable &table, uint64_t key_size, uint64_t value_size,
+                   uint64_t estimated_num_entries);
 
-  // The number of buckets
-  uint64_t NumBuckets() const { return num_buckets_; }
-  // The total number of elements in this hash-table
-  uint64_t NumEntries() const { return num_entries_; }
-  // The total number of valid buckets
-  uint64_t NumOccupiedBuckets() const { return num_valid_buckets_; }
+  /**
+   * Clean up all resources allocated by the provided table
+   *
+   * @param table The table we're cleaning up
+   */
+  static void Destroy(OAHashTable &table);
 
-  //===--------------------------------------------------------------------===//
-  // MODIFIERS
-  //===--------------------------------------------------------------------===//
-
-  // Perform some initialization
-  void Init(uint64_t key_size, uint64_t value_size,
-            uint64_t estimated_num_entries = kDefaultInitialSize);
-
-  // This function inserts a key-value pair into the hash-table. This function
-  // isn't used from actual query execution code, but is more for testing.
+  /**
+   * Insert a key-value pair into the hash-table. Mostly used for testing.
+   *
+   * @param hash The hash value of the key
+   * @param key The key to store in the table
+   * @param value The value to store in the value
+   */
   template <typename Key, typename Value>
-  void Insert(uint64_t hash, Key &k, Value &v);
+  void Insert(uint64_t hash, const Key &key, const Value &value);
 
-  // Make room in the hash-table to store a new key-value pair in the provided
-  // HashEntry with the provided hash value.
-  //
-  // Pre-condition: the given hash-entry is either free or has pre-existing data
-  // with the same key as that which is to be inserted.
+  /**
+   * Probe a key in the hash table. Doesn't deal with duplicate values. Mostly
+   * for testing.
+   *
+   * @param hash
+   * @param key
+   * @param value
+   * @return
+   */
+  template <typename Key, typename Value>
+  bool Probe(uint64_t hash, const Key &key,
+             std::function<void(const Value &)> &consumer);
+
+  /**
+   * Make room in the hash-table to store a new key-value pair. The provided
+   * hash table entry is the initial location where the caller would like to
+   * insert.
+   *
+   * Pre-condition: the given hash-entry is either free or has pre-existing data
+   * with the same key as that which is to be inserted.
+   *
+   * @param entry The initial lookup location in the table to store the tuple
+   * @param hash The hash value of the tuple
+   *
+   * @return A memory region where the key and value can be stored
+   */
   char *StoreTuple(HashEntry *entry, uint64_t hash);
 
-  // Clean up any resources this hash-table has.
-  void Destroy();
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
-  //===--------------------------------------------------------------------===//
-  // Iteration
-  //===--------------------------------------------------------------------===//
+  /// The number of buckets
+  uint64_t NumBuckets() const { return num_buckets_; }
+
+  /// The total number of elements in this hash-table
+  uint64_t NumEntries() const { return num_entries_; }
+
+  /// The total number of valid buckets
+  uint64_t NumOccupiedBuckets() const { return num_valid_buckets_; }
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Iterator
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @brief Our hash table iterator
+   */
   class Iterator {
     friend class OAHashTable;
 
@@ -141,8 +182,7 @@ class OAHashTable {
     const char *Value();
 
    private:
-    // Private constructor, so only the HashTable can create an iterator. Begin
-    // tells us whether we've finished or not
+    // Constructor. Begin tells us whether we've finished or not
     Iterator(OAHashTable &table, bool begin);
 
     // Find the next occupied entry
@@ -159,7 +199,7 @@ class OAHashTable {
     uint32_t kvl_pos_;
   };
 
-  // Methods to begin iteration and find the end of the iterator
+  /// Methods to begin iteration and find the end of the iterator
   Iterator begin();
   Iterator end();
 
@@ -234,39 +274,90 @@ class OAHashTable {
 };
 
 template <typename Key, typename Value>
-void OAHashTable::Insert(uint64_t hash, Key &k, Value &v) {
+void OAHashTable::Insert(uint64_t hash, const Key &key, const Value &value) {
   uint64_t bucket = hash & bucket_mask_;
 
   uint64_t entry_int =
       reinterpret_cast<uint64_t>(buckets_) + bucket * entry_size_;
   while (true) {
-    HashEntry *entry = reinterpret_cast<HashEntry *>(entry_int);
+    auto *entry = reinterpret_cast<HashEntry *>(entry_int);
 
     // If entry is free, dump key and value
     if (entry->IsFree()) {
       // data points to key and data storage area
       char *data = StoreTuple(entry, hash);
-      *reinterpret_cast<Key *>(data) = k;
-      *reinterpret_cast<Value *>(data + sizeof(Key)) = v;
+      *reinterpret_cast<Key *>(data) = key;
+      *reinterpret_cast<Value *>(data + sizeof(Key)) = value;
       return;
     }
 
     // If entry isn't free, check hash first
     if (entry->hash == hash) {
       // Hashes match, check key
-      if (*reinterpret_cast<Key *>(entry->data) == k) {
+      if (*reinterpret_cast<Key *>(entry->data) == key) {
         // data points to the value place only
         char *data = StoreTuple(entry, hash);
-        *reinterpret_cast<Value *>(data) = v;
+        *reinterpret_cast<Value *>(data) = value;
         return;
       }
     }
 
     // Continue
-    bucket = (bucket == num_buckets_) ? 0 : bucket + 1;
-    entry_int = (bucket == num_buckets_) ? reinterpret_cast<uint64_t>(buckets_)
-                                         : entry_int + entry_size_;
+    bucket++;
+    entry_int += entry_size_;
+
+    // Wrap
+    if (bucket == num_buckets_) {
+      bucket = 0;
+      entry_int = reinterpret_cast<uint64_t>(buckets_);
+    }
   }
+}
+
+template <typename Key, typename Value>
+bool OAHashTable::Probe(uint64_t hash, const Key &key,
+                        std::function<void(const Value &)> &consumer) {
+  uint64_t steps = 0;
+
+  uint64_t bucket = hash & bucket_mask_;
+
+  uint64_t entry_int =
+      reinterpret_cast<uint64_t>(buckets_) + (bucket * entry_size_);
+
+  while (steps++ < num_entries_) {
+    auto *entry = reinterpret_cast<HashEntry *>(entry_int);
+    // check if entry is free
+    if (!entry->IsFree() && entry->hash == hash) {
+      // hashes match, check key
+      auto *entry_key = reinterpret_cast<Key *>(entry->data);
+      if (*entry_key == key) {
+        if (entry->HasKeyValueList()) {
+          auto *kv_list = entry->kv_list;
+          for (uint64_t pos = 0,
+                        end = GetCurrentKeyValueListSize(kv_list->size);
+               pos != end; pos += value_size_) {
+            auto *value = reinterpret_cast<Value *>(kv_list->data + pos);
+            consumer(*value);
+          }
+        } else {
+          auto *value = reinterpret_cast<Value *>(entry->data + sizeof(Key));
+          consumer(*value);
+        }
+        return true;
+      }
+    }
+
+    // Continue
+    bucket++;
+    entry_int += entry_size_;
+
+    // Wrap
+    if (bucket == num_buckets_) {
+      bucket = 0;
+      entry_int = reinterpret_cast<uint64_t>(buckets_);
+    }
+  }
+  return false;
 }
 
 }  // namespace util

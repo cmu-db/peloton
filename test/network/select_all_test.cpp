@@ -56,7 +56,7 @@ void *SelectAllTest(int port) {
     pqxx::work txn2(C);
     for (int i = 0; i < 2000; i++) {
       std::string s = "INSERT INTO template VALUES (" + std::to_string(i) + ")";
-      LOG_INFO("Start sending query");
+      LOG_TRACE("Start sending query");
       txn2.exec(s);
     }
 

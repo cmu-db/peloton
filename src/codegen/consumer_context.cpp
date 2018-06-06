@@ -20,7 +20,14 @@ namespace codegen {
 // Constructor
 ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
                                  Pipeline &pipeline)
-    : compilation_context_(compilation_context), pipeline_(pipeline) {}
+    : ConsumerContext(compilation_context, pipeline, nullptr) {}
+
+ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
+                                 Pipeline &pipeline,
+                                 PipelineContext *pipeline_context)
+    : compilation_context_(compilation_context),
+      pipeline_(pipeline),
+      pipeline_context_(pipeline_context) {}
 
 // Pass the row batch to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch &batch) {
@@ -28,7 +35,7 @@ void ConsumerContext::Consume(RowBatch &batch) {
   if (translator == nullptr) {
     // We're at the end of the query pipeline, we now send the output tuples
     // to the result consumer configured in the compilation context
-    auto &consumer = compilation_context_.GetQueryResultConsumer();
+    auto &consumer = compilation_context_.GetExecutionConsumer();
     consumer.ConsumeResult(*this, batch);
   } else {
     // We're not at the end of the pipeline, push the batch through the stages
@@ -61,7 +68,7 @@ void ConsumerContext::Consume(RowBatch::Row &row) {
 
   // We're at the end of the query pipeline, we now send the output tuples
   // to the result consumer configured in the compilation context
-  auto &consumer = compilation_context_.GetQueryResultConsumer();
+  auto &consumer = compilation_context_.GetExecutionConsumer();
   consumer.ConsumeResult(*this, row);
 }
 
@@ -69,8 +76,8 @@ CodeGen &ConsumerContext::GetCodeGen() const {
   return compilation_context_.GetCodeGen();
 }
 
-RuntimeState &ConsumerContext::GetRuntimeState() const {
-  return compilation_context_.GetRuntimeState();
+QueryState &ConsumerContext::GetQueryState() const {
+  return compilation_context_.GetQueryState();
 }
 
 }  // namespace codegen

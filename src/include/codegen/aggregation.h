@@ -16,10 +16,10 @@
 #include <array>
 
 #include "codegen/codegen.h"
+#include "codegen/oa_hash_table.h"
+#include "codegen/query_state.h"
 #include "codegen/updateable_storage.h"
 #include "codegen/value.h"
-#include "codegen/oa_hash_table.h"
-#include "codegen/runtime_state.h"
 #include "planner/aggregate_plan.h"
 
 namespace peloton {
@@ -40,7 +40,7 @@ namespace codegen {
 class Aggregation {
  public:
   // Constructor taking the runtime state reference
-  Aggregation(RuntimeState &runtime_state) : runtime_state_(runtime_state) {}
+  Aggregation(QueryState &query_state) : query_state_(query_state) {}
 
   // Setup the aggregation to handle the provided aggregates
   void Setup(CodeGen &codegen,
@@ -53,10 +53,10 @@ class Aggregation {
              bool is_global);
 
   // Codegen any initialization work for the hash tables
-  void InitializeState(CodeGen &codegen);
+  void InitializeQueryState(CodeGen &codegen);
 
   // Cleanup by destroying the aggregation hash tables
-  void TearDownState(CodeGen &codegen);
+  void TearDownQueryState(CodeGen &codegen);
 
   // Create default initial values for all global aggregate components
   void CreateInitialGlobalValues(CodeGen &codegen, llvm::Value *space) const;
@@ -169,10 +169,10 @@ class Aggregation {
 
   // Hash tables and their runtime IDs for the distinct aggregations, access via
   // index
-  std::vector<std::pair<OAHashTable, RuntimeState::StateID>> hash_table_infos_;
+  std::vector<std::pair<OAHashTable, QueryState::Id>> hash_table_infos_;
 
-  // Reference to RuntimeState, needed for the hash tables
-  RuntimeState &runtime_state_;
+  // Reference to QueryState, needed for the hash tables
+  QueryState &query_state_;
 };
 
 }  // namespace codegen

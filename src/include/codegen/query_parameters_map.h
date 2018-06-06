@@ -15,12 +15,8 @@
 #include "expression/parameter.h"
 
 namespace peloton {
-
-namespace type {
-class Value;
-}
-
 namespace codegen {
+
 class QueryParametersMap {
  public:
   QueryParametersMap() = default;

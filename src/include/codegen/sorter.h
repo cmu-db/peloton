@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/sorter.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,14 +25,76 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Sorter {
  public:
+  class IterateCallback;
+  class VectorizedIterateCallback;
+
+  Sorter();
+  Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc);
+
+  /**
+   * @brief Initialize the given sorter instance with the comparison function
+   */
+  void Init(CodeGen &codegen, llvm::Value *sorter_ptr,
+            llvm::Value *executor_ctx, llvm::Value *comparison_func) const;
+
+  /**
+   * @brief Append the given tuple into the sorter instance
+   */
+  void Append(CodeGen &codegen, llvm::Value *sorter_ptr,
+              const std::vector<codegen::Value> &tuple) const;
+
+  /**
+   * @brief Sort all the data that has been inserted into the sorter instance
+   */
+  void Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const;
+
+  /**
+   * @brief Perform a parallel sort of all materialized runs stored in the
+   * provided thread states
+   */
+  void SortParallel(CodeGen &codegen, llvm::Value *sorter_ptr,
+                    llvm::Value *thread_states, uint32_t sorter_offset) const;
+
+  /**
+   * @brief Iterate over tuples stored in this sorter tuple-at-a-time
+   */
+  void Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
+               IterateCallback &callback) const;
+
+  /**
+   * @brief Iterate over tuples in this sorter batch-at-a-time
+   */
+  void VectorizedIterate(CodeGen &codegen, llvm::Value *sorter_ptr,
+                         uint32_t vector_size,
+                         VectorizedIterateCallback &callback) const;
+
+  /**
+   * @brief Destroy all resources managed by this sorter
+   */
+  void Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const;
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  const UpdateableStorage &GetStorageFormat() const { return storage_format_; }
+
+  llvm::Value *NumTuples(CodeGen &codegen, llvm::Value *sorter_ptr) const;
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Helper classes
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
   //===--------------------------------------------------------------------===//
   // A class that provides a random access interface over a Sorter instance
   //===--------------------------------------------------------------------===//
   class SorterAccess {
    public:
-    //===------------------------------------------------------------------===//
     // A row in the sorter instance
-    //===------------------------------------------------------------------===//
     class Row {
      public:
       // Load a column at the given index in the row
@@ -71,7 +133,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   // Callback to process one entry when doing a tuple-at-a-time scan
   //===--------------------------------------------------------------------===//
-  struct IterateCallback {
+  class IterateCallback {
+   public:
     // Destructor
     virtual ~IterateCallback() = default;
 
@@ -83,7 +146,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   // Callback to process a vector of entries when doing a vectorized scan
   //===--------------------------------------------------------------------===//
-  struct VectorizedIterateCallback {
+  class VectorizedIterateCallback {
+   public:
     // Destructor
     virtual ~VectorizedIterateCallback() = default;
 
@@ -92,49 +156,6 @@ class Sorter {
                                 llvm::Value *end_index,
                                 SorterAccess &access) const = 0;
   };
-
-  // Constructor
-  Sorter();
-  Sorter(CodeGen &codegen, const std::vector<type::Type> &row_desc);
-
-  // Initialize the given sorter instance with the comparison function
-  void Init(CodeGen &codegen, llvm::Value *sorter_ptr,
-            llvm::Value *comparison_func) const;
-
-  // Append the given tuple into the sorter instance
-  void Append(CodeGen &codegen, llvm::Value *sorter_ptr,
-              const std::vector<codegen::Value> &tuple) const;
-
-  // Sort all the data that has been inserted into the sorter instance
-  void Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const;
-
-  // Reset the sorter
-  void Reset(CodeGen &codegen, llvm::Value *sorter_ptr) const;
-
-  void Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
-               IterateCallback &callback) const;
-
-  void VectorizedIterate(CodeGen &codegen, llvm::Value *sorter_ptr,
-                         uint32_t vector_size,
-                         VectorizedIterateCallback &callback) const;
-
-  void Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const;
-
-  const UpdateableStorage &GetStorageFormat() const { return storage_format_; }
-
-  llvm::Value *GetNumberOfStoredTuples(CodeGen &codegen,
-                                       llvm::Value *sorter_ptr) const;
-
- private:
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  // TODO: We should codify access to instance memory variables using templates
-  //       to something like: codegen.LoadMember<SorterProxy::start_pos>(...)
-  //===--------------------------------------------------------------------===//
-
-  llvm::Value *GetStartPosition(CodeGen &codegen,
-                                llvm::Value *sorter_ptr) const;
-  llvm::Value *GetTupleSize(CodeGen &codegen) const;
 
  private:
   // Compact storage to materialize things

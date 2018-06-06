@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/storage_manager_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@ namespace peloton {
 namespace codegen {
 
 // Define the proxy type with the single opaque member field
-DEFINE_TYPE(StorageManager, "peloton::storage::StorageManager", MEMBER(opaque));
+DEFINE_TYPE(StorageManager, "storage::StorageManager", opaque);
 
 // Define a method that proxies storage::StorageManager::GetTableWithOid()
 DEFINE_METHOD(peloton::storage, StorageManager, GetTableWithOid);

@@ -48,8 +48,8 @@ inline AuxiliaryProducerFunction::AuxiliaryProducerFunction(
 inline llvm::Value *AuxiliaryProducerFunction::Call(CodeGen &codegen) const {
   // At this point, the function cannot be NULL!
   PELOTON_ASSERT(function_ != nullptr);
-  auto *runtime_state_ptr = codegen.GetState();
-  return codegen.CallFunc(function_, {runtime_state_ptr});
+  auto *query_state_ptr = codegen.GetState();
+  return codegen.CallFunc(function_, {query_state_ptr});
 }
 
 }  // namespace codegen

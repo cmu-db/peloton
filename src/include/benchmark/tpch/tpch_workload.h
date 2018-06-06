@@ -16,7 +16,7 @@
 #include "benchmark/tpch/tpch_database.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 
 namespace peloton {
 namespace benchmark {

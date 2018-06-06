@@ -6,12 +6,13 @@
 //
 // Identification: src/codegen/aggregation.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/aggregation.h"
 
+#include "codegen/lang/if.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/bigint_type.h"
@@ -136,7 +137,7 @@ void Aggregation::Setup(
     }
 
     // Register the hash-table instance in the runtime state
-    auto hash_table_id = runtime_state_.RegisterState(
+    auto hash_table_id = query_state_.RegisterState(
         "agg_hash" + std::to_string(agg_info.source_index),
         OAHashTableProxy::GetType(codegen));
 
@@ -177,30 +178,28 @@ void Aggregation::Setup(
 }
 
 // Codegen any initialization work for the hash tables
-void Aggregation::InitializeState(CodeGen &codegen) {
+void Aggregation::InitializeQueryState(CodeGen &codegen) {
   for (auto hash_table_info : hash_table_infos_) {
     auto &hash_table = hash_table_info.first;
     auto hash_table_id = hash_table_info.second;
-    hash_table.Init(codegen,
-                    runtime_state_.LoadStatePtr(codegen, hash_table_id));
+    hash_table.Init(codegen, query_state_.LoadStatePtr(codegen, hash_table_id));
   }
 }
 
 // Cleanup by destroying the aggregation hash tables
-void Aggregation::TearDownState(CodeGen &codegen) {
+void Aggregation::TearDownQueryState(CodeGen &codegen) {
   for (auto hash_table_info : hash_table_infos_) {
     auto &hash_table = hash_table_info.first;
     auto hash_table_id = hash_table_info.second;
     hash_table.Destroy(codegen,
-                       runtime_state_.LoadStatePtr(codegen, hash_table_id));
+                       query_state_.LoadStatePtr(codegen, hash_table_id));
   }
 }
 
 void Aggregation::CreateInitialGlobalValues(CodeGen &codegen,
                                             llvm::Value *space) const {
   PELOTON_ASSERT(IsGlobal());
-  auto null_bitmap =
-      UpdateableStorage::NullBitmap{codegen, GetAggregateStorage(), space};
+  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
   null_bitmap.InitAllNull(codegen);
   null_bitmap.WriteBack(codegen);
 }
@@ -260,23 +259,20 @@ void Aggregation::CreateInitialValues(
       auto &hash_table = hash_table_infos_[agg_info.hast_table_index].first;
       auto hash_table_id = hash_table_infos_[agg_info.hast_table_index].second;
 
-      // Get runtime state pointer for this hash table
+      // Get the hash table for this hash table
       llvm::Value *state_pointer =
-          runtime_state_.LoadStatePtr(codegen, hash_table_id);
-
-      // TODO(marcel): is it possible to cache the hash value for this
-      // expression?
-      llvm::Value *hash = nullptr;
+          query_state_.LoadStatePtr(codegen, hash_table_id);
 
       // Prepare the hash keys
       std::vector<codegen::Value> key = grouping_keys;
       key.push_back(input_val);
 
       // Perform the dummy lookup in the hash table that creates the entry
+      llvm::Value *hash = nullptr;
       HashTable::NoOpInsertCallback insert_callback;
       hash_table.Insert(codegen, state_pointer, hash, key, insert_callback);
     }
-  }  // iterate aggregations
+  }
 }
 
 void Aggregation::DoInitializeValue(
@@ -288,11 +284,7 @@ void Aggregation::DoInitializeValue(
     case ExpressionType::AGGREGATE_MIN:
     case ExpressionType::AGGREGATE_MAX: {
       // For the above aggregations, the initial value is the attribute value
-      if (null_bitmap.IsNullable(storage_index)) {
-        storage_.SetValue(codegen, space, storage_index, initial, null_bitmap);
-      } else {
-        storage_.SetValueSkipNull(codegen, space, storage_index, initial);
-      }
+      storage_.SetValue(codegen, space, storage_index, initial, null_bitmap);
       break;
     }
     case ExpressionType::AGGREGATE_COUNT: {
@@ -303,13 +295,13 @@ void Aggregation::DoInitializeValue(
       } else {
         raw_initial = codegen.Const64(1);
       }
-      auto initial_val = codegen::Value{type::BigInt::Instance(), raw_initial};
+      codegen::Value initial_val{type::BigInt::Instance(), raw_initial};
       storage_.SetValueSkipNull(codegen, space, storage_index, initial_val);
       break;
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       // The initial value for COUNT(*) is 1
-      auto one = codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
+      codegen::Value one{type::BigInt::Instance(), codegen.Const64(1)};
       storage_.SetValueSkipNull(codegen, space, storage_index, one);
       break;
     }
@@ -364,7 +356,7 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
-      auto delta = Value{type::BigInt::Instance(), codegen.Const64(1)};
+      auto delta = codegen::Value{type::BigInt::Instance(), codegen.Const64(1)};
       next = curr.Add(codegen, delta);
       break;
     }
@@ -494,7 +486,7 @@ void Aggregation::AdvanceValue(
       LOG_ERROR("%s", message.c_str());
       throw Exception{ExceptionType::UNKNOWN_TYPE, message};
     }
-  }  // switch
+  }
 }
 
 // Advance each of the aggregates stored in the provided storage space
@@ -503,7 +495,7 @@ void Aggregation::AdvanceValues(
     const std::vector<codegen::Value> &next_vals,
     const std::vector<codegen::Value> &grouping_keys) const {
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_, space);
 
   // Loop over all aggregates, advancing each
   for (const auto &aggregate_info : aggregate_infos_) {
@@ -522,7 +514,7 @@ void Aggregation::AdvanceValues(
         hash_table_infos_[aggregate_info.hast_table_index].second;
 
     // Get runtime state pointer for this hash table
-    llvm::Value *ht_ptr = runtime_state_.LoadStatePtr(codegen, hash_table_id);
+    llvm::Value *ht_ptr = query_state_.LoadStatePtr(codegen, hash_table_id);
 
     // TODO(marcel): is it possible to cache the hash value for this
     // expression?
@@ -586,7 +578,7 @@ void Aggregation::FinalizeValues(
     CodeGen &codegen, llvm::Value *space,
     std::vector<codegen::Value> &final_vals) const {
   // The null bitmap tracker
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space};
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_, space);
 
   for (const auto &agg_info : aggregate_infos_) {
     ExpressionType agg_type = agg_info.aggregate_type;
@@ -594,31 +586,19 @@ void Aggregation::FinalizeValues(
       case ExpressionType::AGGREGATE_SUM:
       case ExpressionType::AGGREGATE_MIN:
       case ExpressionType::AGGREGATE_MAX: {
-        codegen::Value final_val;
-        if (null_bitmap.IsNullable(agg_info.storage_indices[0])) {
-          final_val = storage_.GetValue(
-              codegen, space, agg_info.storage_indices[0], null_bitmap);
-        } else {
-          final_val = storage_.GetValueSkipNull(codegen, space,
-                                                agg_info.storage_indices[0]);
-        }
+        codegen::Value final_val = storage_.GetValue(
+            codegen, space, agg_info.storage_indices[0], null_bitmap);
 
         // append final value to result vector
         final_vals.push_back(final_val);
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
-        // collect the final values of the SUM and the COUNT components and
-        // calculate the average
-        codegen::Value sum;
-        if (null_bitmap.IsNullable(agg_info.storage_indices[0])) {
-          sum = storage_.GetValue(codegen, space, agg_info.storage_indices[0],
-                                  null_bitmap);
-        } else {
-          sum = storage_.GetValueSkipNull(codegen, space,
-                                          agg_info.storage_indices[0]);
-        }
+        // collect the final values of the SUM and the COUNT components
+        codegen::Value sum = storage_.GetValue(
+            codegen, space, agg_info.storage_indices[0], null_bitmap);
 
+        PELOTON_ASSERT(!null_bitmap.IsNullable(agg_info.storage_indices[1]));
         codegen::Value count = storage_.GetValueSkipNull(
             codegen, space, agg_info.storage_indices[1]);
 
@@ -628,7 +608,7 @@ void Aggregation::FinalizeValues(
         codegen::Value count_casted =
             count.CastTo(codegen, type::Decimal::Instance());
 
-        // add the actual calculation
+        // Compute the average
         codegen::Value final_val =
             sum_casted.Div(codegen, count_casted, OnError::ReturnNull);
 

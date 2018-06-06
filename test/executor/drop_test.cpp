@@ -21,6 +21,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
+#include "executor/executor_context.h"
 #include "executor/drop_executor.h"
 #include "parser/postgresparser.h"
 #include "planner/drop_plan.h"

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/expression/expression_translator.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,11 @@
 #include "codegen/value.h"
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}  // namespace expression
+
 namespace codegen {
 
 // Forward declare
@@ -34,7 +39,7 @@ class ExpressionTranslator {
                        CompilationContext &ctx);
 
   // Destructor
-  virtual ~ExpressionTranslator() {}
+  virtual ~ExpressionTranslator() = default;
 
   // Compute this expression
   virtual codegen::Value DeriveValue(CodeGen &codegen,
@@ -44,6 +49,10 @@ class ExpressionTranslator {
   const T &GetExpressionAs() const {
     return static_cast<const T &>(expression_);
   }
+
+ protected:
+  // Load the executor context
+  llvm::Value *GetExecutorContextPtr() const;
 
  protected:
   // The compilation state context
