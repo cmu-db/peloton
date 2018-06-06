@@ -76,15 +76,9 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
   ValueType value = invalid_value;
   if ((lock_free_array.size() > offset)) {
     value = lock_free_array.at(offset);
-  } else {
-    return invalid_value;
   }
-  
-  if (value != invalid_value)
-    return value;
-  else {
-    return invalid_value;
-  }
+
+  return value;
 }
 
 template <typename ValueType>
