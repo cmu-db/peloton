@@ -32,7 +32,7 @@ CSVScanner::CSVScanner(peloton::type::AbstractPool &pool,
       file_path_(file_path),
       file_(),
       buffer_(nullptr),
-      buffer_begin_(0),
+      buffer_pos_(0),
       buffer_end_(0),
       line_(nullptr),
       line_len_(0),
@@ -59,12 +59,17 @@ CSVScanner::CSVScanner(peloton::type::AbstractPool &pool,
 CSVScanner::~CSVScanner() {
   if (buffer_ != nullptr) {
     memory_.Free(buffer_);
+    buffer_ = nullptr;
   }
+
   if (line_ != nullptr) {
     memory_.Free(line_);
+    line_ = nullptr;
   }
+
   if (cols_ != nullptr) {
     memory_.Free(cols_);
+    cols_ = nullptr;
   }
 }
 
@@ -90,21 +95,22 @@ void CSVScanner::Produce() {
   Initialize();
 
   // Loop lines
-  while (const char *line = NextLine()) {
+  while (char *line = NextLine()) {
     ProduceCSV(line);
   }
 }
 
 void CSVScanner::Initialize() {
   // Let's first perform a few validity checks
-  boost::filesystem::path path{file_path_};
+  boost::filesystem::path path(file_path_);
 
   if (!boost::filesystem::exists(path)) {
-    throw ExecutorException{StringUtil::Format("input path '%s' does not exist",
-                                               file_path_.c_str())};
+    throw ExecutorException(StringUtil::Format("input path '%s' does not exist",
+                                               file_path_.c_str()));
   } else if (!boost::filesystem::is_regular_file(file_path_)) {
-    throw ExecutorException{
-        StringUtil::Format("unable to read file '%s'", file_path_.c_str())};
+    auto msg =
+        StringUtil::Format("unable to read file '%s'", file_path_.c_str());
+    throw ExecutorException(msg);
   }
 
   // The path looks okay, let's try opening it
@@ -125,7 +131,7 @@ void CSVScanner::Initialize() {
 
 bool CSVScanner::NextBuffer() {
   // Do read
-  buffer_begin_ = 0;
+  buffer_pos_ = 0;
   buffer_end_ = static_cast<uint32_t>(file_.Read(buffer_, kDefaultBufferSize));
 
   // Update stats
@@ -134,7 +140,9 @@ bool CSVScanner::NextBuffer() {
   return (buffer_end_ != 0);
 }
 
-void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
+void CSVScanner::AppendToLineBuffer(const char *data, uint32_t len) {
+  PELOTON_ASSERT(len > 0);
+
   // Short-circuit if we're not appending any data
   if (len == 0) {
     return;
@@ -146,7 +154,7 @@ void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
       const auto msg = StringUtil::Format(
           "Line %u in file '%s' exceeds maximum line length: %lu",
           line_number_ + 1, file_path_.c_str(), kMaxAllocSize);
-      throw Exception{msg};
+      throw Exception(msg);
     }
 
     // The current line buffer isn't large enough to store the new bytes, so we
@@ -186,41 +194,44 @@ void CSVScanner::AppendToCurrentLine(const char *data, uint32_t len) {
   stats_.num_copies++;
 }
 
-// The main purpose of this function is to find the start of the next line in
-// the CSV file.
-const char *CSVScanner::NextLine() {
+// The objective of this function is to find a complete line in the CSV file.
+// The returned value will be a valid pointer to a null-terminated string that
+// is the next line in the CSV to be processed.
+char *CSVScanner::NextLine() {
   line_len_ = 0;
+
+  const char quote = quote_;
+  const char escape = (quote_ == escape_ ? static_cast<char>('\0') : escape_);
 
   bool in_quote = false;
   bool last_was_escape = false;
-  bool copied_to_line_buf = false;
 
-  uint32_t line_end = buffer_begin_;
-
-  char quote = quote_;
-  char escape = (quote_ == escape_ ? static_cast<char>('\0') : escape_);
+  const char *buf = buffer_;
+  uint32_t curr_buffer_pos = buffer_pos_;
 
   while (true) {
-    if (line_end >= buffer_end_) {
+    if (curr_buffer_pos == buffer_end_) {
       // We need to read more data from the CSV file. But first, we need to copy
       // all the data in the read-buffer (i.e., [buffer_begin_, buffer_end_] to
       // the line-buffer.
-
-      AppendToCurrentLine(buffer_ + buffer_begin_,
-                          static_cast<uint32_t>(buffer_end_ - buffer_begin_));
-
-      // Now, read more data
-      if (!NextBuffer()) {
-        return nullptr;
+      if (buffer_pos_ < curr_buffer_pos) {
+        AppendToLineBuffer(buffer_ + buffer_pos_,
+                           curr_buffer_pos - buffer_pos_);
+        buffer_pos_ = curr_buffer_pos;
       }
 
       // Reset positions
-      line_end = buffer_begin_;
-      copied_to_line_buf = true;
+      curr_buffer_pos = 0;
+
+      // Now, read more data
+      if (!NextBuffer()) {
+        // We hit en EOF
+        break;
+      }
     }
 
     // Read character
-    char c = buffer_[line_end];
+    char c = buf[curr_buffer_pos++];
 
     if (in_quote && c == escape) {
       last_was_escape = !last_was_escape;
@@ -235,47 +246,120 @@ const char *CSVScanner::NextLine() {
     // Process the new-line character. If we a new-line and we're not currently
     // in a quoted section, we're done.
     if (c == '\n' && !in_quote) {
-      buffer_[line_end] = '\0';
       break;
     }
+  }
 
-    // Move along
-    line_end++;
+  // Flush remaining valid bytes
+  if (buffer_pos_ < curr_buffer_pos) {
+    AppendToLineBuffer(buffer_ + buffer_pos_, curr_buffer_pos - buffer_pos_);
+    buffer_pos_ = curr_buffer_pos;
   }
 
   // Increment line number
   line_number_++;
 
-  if (copied_to_line_buf) {
-    AppendToCurrentLine(buffer_, line_end);
-    buffer_begin_ = line_end + 1;
-    return line_;
-  } else {
-    const char *ret = buffer_ + buffer_begin_;
-    buffer_begin_ = line_end + 1;
-    return ret;
+  // If we didn't transfer any bytes to the line buffer, we must have reached an
+  // EOF. If so, return null indicating there are no more lines.
+  if (line_len_ == 0) {
+    return nullptr;
   }
+
+  // A full line has been transferred to the line buffer, but we also copied the
+  // newline character. Strip it off now.
+  line_len_--;
+  line_[line_len_] = '\0';
+
+  // Done
+  return line_;
 }
 
-void CSVScanner::ProduceCSV(const char *line) {
-  // At this point, we have a well-formed line. Let's pull out pointers to the
-  // columns.
+void CSVScanner::ProduceCSV(char *line) {
+  const char delimiter = delimiter_;
+  const char quote = quote_;
+  const char escape = escape_;
 
-  const auto *iter = line;
+  // The iterator over characters in the line
+  char *iter = line;
+
   for (uint32_t col_idx = 0; col_idx < num_cols_; col_idx++) {
-    // Start points to the beginning of the column's data value
-    const char *start = iter;
+    char *col_begin = iter;
+    char *col_end = nullptr;
 
-    // Eat text until the next delimiter
-    while (*iter != 0 && *iter != delimiter_) {
-      iter++;
+    // We need to move col_end to the end of the column's data. Along the way,
+    // we may need to shift data down due to quotes and escapes. Inspired by
+    // Postgres.
+    {
+      char *out = col_begin;
+      while (true) {
+        // This first loop looks for either the delimiter character or the end
+        // of the line, indicating the end of a columns data. It breaks out of
+        // the loop if a quote character is found. It flows into a second loop
+        // whose only purpose is to find the end of the quoted section.
+        while (true) {
+          char c = *iter++;
+
+          // If we see the delimiter character, or the end of the string,
+          // finish
+          if (c == delimiter || c == '\0') {
+            col_end = out;
+            iter--;
+            goto colend;
+          }
+
+          // If we see a quote character, move to the second loop to find the
+          // closing quote.
+          if (c == quote) {
+            break;
+          }
+
+          *out++ = c;
+        }
+
+        while (true) {
+          char c = *iter++;
+
+          // If we see the end of the line *within* a quoted section, throw
+          // error
+          if (c == '\0') {
+            throw Exception(StringUtil::Format(
+                "unterminated CSV quoted field at %u", col_idx));
+          }
+
+          // If we see an escape character within a quoted section, we need to
+          // check if the following character is a quote. If so, we must
+          // escape it
+          if (c == escape) {
+            char next = *iter;
+            if (next == quote || next == escape) {
+              *out++ = next;
+              iter++;
+              continue;
+            }
+          }
+
+          // If we see the closing quote, we're done.
+          if (c == quote) {
+            break;
+          }
+
+          *out++ = c;
+        }
+      }
     }
 
-    // At this point, iter points to the end of the column's data value
+  colend:
+    // If we've reached the of the line, but haven't setup all the columns, then
+    // we're missing data for the remaining columns and should throw an error.
+    if (*iter == '\0' && col_idx != (num_cols_ - 1)) {
+      throw Exception(
+          StringUtil::Format("missing data for column %u on line %u",
+                             (col_idx + 2), line_number_));
+    }
 
     // Let's setup the columns
-    cols_[col_idx].ptr = start;
-    cols_[col_idx].len = static_cast<uint32_t>(iter - start);
+    cols_[col_idx].ptr = col_begin;
+    cols_[col_idx].len = static_cast<uint32_t>(col_end - col_begin);
     cols_[col_idx].is_null = (cols_[col_idx].len == 0);
 
     // Eat delimiter, moving to next column

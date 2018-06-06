@@ -42,8 +42,8 @@ void File::Open(const std::string &name, File::AccessMode access_mode) {
 
   // Check error
   if (fd == -1) {
-    throw Exception{
-        StringUtil::Format("Unable to read file '%s'", name.c_str())};
+    throw Exception(
+        StringUtil::Format("unable to read file '%s'", name.c_str()));
   }
 
   // Done
@@ -59,8 +59,8 @@ uint64_t File::Read(void *data, uint64_t len) const {
 
   // Check error
   if (bytes_read == -1) {
-    throw Exception{
-        StringUtil::Format("Error reading file: %s", strerror(errno))};
+    throw Exception(
+        StringUtil::Format("error reading file: %s", strerror(errno)));
   }
 
   // Done
@@ -76,8 +76,8 @@ uint64_t File::Write(void *data, uint64_t len) const {
 
   // Check error
   if (bytes_written == -1) {
-    throw Exception{
-        StringUtil::Format("Error writing to file: %s", strerror(errno))};
+    throw Exception(
+        StringUtil::Format("error writing to file: %s", strerror(errno)));
   }
 
   // Done
@@ -91,23 +91,23 @@ uint64_t File::Size() const {
   // Save the current position
   off_t curr_off = lseek(fd_, 0, SEEK_CUR);
   if (curr_off == -1) {
-    throw Exception{StringUtil::Format(
-        "unable to read current position in file: %s", strerror(errno))};
+    throw Exception(StringUtil::Format(
+        "unable to read current position in file: %s", strerror(errno)));
   }
 
   // Seek to the end of the file, returning the new file position i.e., the
   // size of the file in bytes.
   off_t off = lseek(fd_, 0, SEEK_END);
   if (off == -1) {
-    throw Exception{StringUtil::Format(
-        "unable to move file position to end file: %s", strerror(errno))};
+    throw Exception(StringUtil::Format(
+        "unable to move file position to end file: %s", strerror(errno)));
   }
 
   off_t restore = lseek(fd_, curr_off, SEEK_SET);
   if (restore == -1) {
-    throw Exception{StringUtil::Format(
+    throw Exception(StringUtil::Format(
         "unable to restore position after moving to the end: %s",
-        strerror(errno))};
+        strerror(errno)));
   }
 
   // Restore position

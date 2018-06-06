@@ -158,17 +158,17 @@ class CSVScanner {
   // Initialize the scan
   void Initialize();
 
-  // Append bytes to the end of the currently accruing line.
-  void AppendToCurrentLine(const char *data, uint32_t len);
+  // Append bytes to the end of the line buffer
+  void AppendToLineBuffer(const char *data, uint32_t len);
 
   // Read the next line from the CSV file
-  const char *NextLine();
+  char *NextLine();
 
   // Read a buffer's worth of data from the CSV file
   bool NextBuffer();
 
   // Produce CSV data stored in the provided line
-  void ProduceCSV(const char *line);
+  void ProduceCSV(char *line);
 
  private:
   // All memory allocations happen from this pool
@@ -180,10 +180,10 @@ class CSVScanner {
   // The CSV file handle
   peloton::util::File file_;
 
-  // The temporary buffer where raw file contents are read into
+  // The temporary read-buffer where raw file contents are first read into
   // TODO: make these unique_ptr's with a customer deleter
   char *buffer_;
-  uint32_t buffer_begin_;
+  uint32_t buffer_pos_;
   uint32_t buffer_end_;
 
   // A pointer to the start of a line in the CSV file
