@@ -1318,16 +1318,9 @@ void BytecodeBuilder::TranslateGetElementPtr(
     } else if (auto *struct_type = llvm::dyn_cast<llvm::StructType>(type)) {
       uint64_t index = GetConstantIntegerValueUnsigned(operand);
       PELOTON_ASSERT(index < struct_type->getNumElements());
-      size_t offset = 0;
 
-      for (unsigned int i = 0; i < index; i++) {
-        llvm::Type *sub_type = struct_type->getElementType(i);
-
-        // Add size of subtype to pointer
-        offset += code_context_.GetTypeAllocSize(sub_type);
-      }
-
-      overall_offset += offset;
+      // get element offset
+      overall_offset += code_context_.GetStructElementOffset(struct_type, index);
 
       // get inner type for next iteration
       type = struct_type->getElementType(index);
@@ -1865,12 +1858,8 @@ void BytecodeBuilder::TranslateExtractValue(
     } else if (auto *struct_type = llvm::dyn_cast<llvm::StructType>(type)) {
       PELOTON_ASSERT(index < struct_type->getNumElements());
 
-      for (unsigned int i = 0; i < index; i++) {
-        llvm::Type *sub_type = struct_type->getElementType(i);
-
-        // Add size of subtype to offset
-        offset_bits += code_context_.GetTypeAllocSizeInBits(sub_type);
-      }
+      // get element offset
+      offset_bits += code_context_.GetStructElementOffset(struct_type, index) * 8;
 
       // get inner type for next iteration
       type = struct_type->getElementType(index);

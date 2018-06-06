@@ -103,6 +103,9 @@ class CodeContext {
   /// This also includes the padding
   size_t GetTypeAllocSizeInBits(llvm::Type *type) const;
 
+  /// Get the offset of element <index> inside a struct in byte
+  size_t GetStructElementOffset(llvm::StructType *type, size_t index) const;
+
   /// Dump the contents of all the code in this context
   /// Attention: this function may change the IR!
   void DumpContents() const;

@@ -351,6 +351,10 @@ size_t CodeContext::GetTypeAllocSizeInBits(llvm::Type *type) const {
   return GetDataLayout().getTypeAllocSizeInBits(type);
 }
 
+size_t CodeContext::GetStructElementOffset(llvm::StructType *type, size_t index) const {
+  return GetDataLayout().getStructLayout(type)->getElementOffset(index);
+}
+
 // TODO(marcel) same as LookupBuiltin?
 CodeContext::FuncPtr CodeContext::GetRawFunctionPointer(
     llvm::Function *fn) const {
