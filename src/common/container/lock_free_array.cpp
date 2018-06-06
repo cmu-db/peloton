@@ -73,23 +73,18 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
     const std::size_t &offset, const ValueType &invalid_value) const {
   LOG_TRACE("Find Valid at %lu", offset);
 
-  std::size_t valid_array_itr = 0;
-  std::size_t array_itr;
-  auto lock_free_array_offset = lock_free_array.size();
-  for (array_itr = 0; array_itr < lock_free_array_offset; array_itr++) {
-    auto value = lock_free_array.at(array_itr);
-    if (value != invalid_value) {
-      // Check offset
-      if (valid_array_itr == offset) {
-        return value;
-      }
-
-      // Update valid value count
-      valid_array_itr++;
-    }
+  ValueType value = invalid_value;
+  if ((lock_free_array.size() > offset)) {
+    value = lock_free_array.at(offset);
+  } else {
+    return invalid_value;
   }
-
-  return invalid_value;
+  
+  if (value != invalid_value)
+    return value;
+  else {
+    return invalid_value;
+  }
 }
 
 template <typename ValueType>

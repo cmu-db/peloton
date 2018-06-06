@@ -95,10 +95,11 @@ RWType TransactionContext::GetRWType(const ItemPointer &location) {
 void TransactionContext::RecordRead(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
       (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
-
-  if (rw_set_.count(location) == 0) {
-    rw_set_[location] = RWType::READ;
+  auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end()) {
+    return;
   }
+  rw_set_[location] = RWType::READ;
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
