@@ -32,11 +32,10 @@ void Query::Execute(executor::ExecutorContext &executor_context,
                     ExecutionConsumer &consumer, RuntimeStats *stats) {
   CodeGen codegen{code_context_};
 
-  llvm::Type *runtime_state_type = query_state_.FinalizeType(codegen);
-  size_t parameter_size = codegen.SizeOf(runtime_state_type);
+  llvm::Type *query_state_type = query_state_.GetType();
+  size_t parameter_size = codegen.SizeOf(query_state_type);
   PELOTON_ASSERT((parameter_size % 8 == 0) &&
-                 parameter_size >= sizeof(FunctionArguments) &&
-                 "parameter size not multiple of 8");
+      "parameter size not multiple of 8");
 
   // Allocate some space for the function arguments
   std::unique_ptr<char[]> param_data{new char[parameter_size]};
