@@ -42,8 +42,8 @@ void StatsCalculator::Visit(const LogicalGet *op) {
     return;
   }
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
-      StatsStorage::GetInstance()->GetTableStats(op->table->GetDatabaseOid(),
-                                                 op->table->GetTableOid(), txn_));
+      StatsStorage::GetInstance()->GetTableStats(
+          op->table->GetDatabaseOid(), op->table->GetTableOid(), txn_));
   // First, get the required stats of the base table
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>> required_stats;
   for (auto &col : required_cols_) {
@@ -96,7 +96,7 @@ void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
   }
 }
 
-void StatsCalculator::Visit(const LogicalInnerJoin *op) {
+void StatsCalculator::Visit(const LogicalJoin *op) {
   // Check if there's join condition
   PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
   auto left_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(0));
@@ -143,7 +143,8 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
       column_stats = std::make_shared<ColumnStats>(
           *left_child_group->GetStats(tv_expr->GetColFullName()));
     } else {
-      PELOTON_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      PELOTON_ASSERT(
+          right_child_group->HasColumnStats(tv_expr->GetColFullName()));
       column_stats = std::make_shared<ColumnStats>(
           *right_child_group->GetStats(tv_expr->GetColFullName()));
     }
@@ -154,9 +155,7 @@ void StatsCalculator::Visit(const LogicalInnerJoin *op) {
   // TODO(boweic): calculate stats based on predicates other than join
   // conditions
 }
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *op) {}
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *op) {}
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *op) {}
+
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalSemiJoin *op) {}
 void StatsCalculator::Visit(const LogicalAggregateAndGroupBy *) {
   // TODO(boweic): For now we just pass the stats needed without any
@@ -235,8 +234,8 @@ void StatsCalculator::AddBaseTableStats(
 
 void StatsCalculator::UpdateStatsForFilter(
     size_t num_rows,
-    std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
-        &predicate_stats,
+    std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &
+        predicate_stats,
     const std::vector<AnnotatedExpression> &predicates) {
   // First, construct the table stats as the interface needed it to compute
   // selectivity
@@ -285,10 +284,10 @@ double StatsCalculator::CalculateSelectivityForPredicate(
             : 0;
 
     auto left_expr = expr->GetChild(1 - right_index);
-    PELOTON_ASSERT(left_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto col_name =
-        reinterpret_cast<const expression::TupleValueExpression *>(left_expr)
-            ->GetColFullName();
+    PELOTON_ASSERT(left_expr->GetExpressionType() ==
+                   ExpressionType::VALUE_TUPLE);
+    auto col_name = reinterpret_cast<const expression::TupleValueExpression *>(
+                        left_expr)->GetColFullName();
 
     auto expr_type = expr->GetExpressionType();
     if (right_index == 0) {
@@ -314,14 +313,12 @@ double StatsCalculator::CalculateSelectivityForPredicate(
     if (expr->GetChild(right_index)->GetExpressionType() ==
         ExpressionType::VALUE_CONSTANT) {
       value = reinterpret_cast<expression::ConstantValueExpression *>(
-                  expr->GetModifiableChild(right_index))
-                  ->GetValue();
+                  expr->GetModifiableChild(right_index))->GetValue();
     } else {
-      value = type::ValueFactory::GetParameterOffsetValue(
-                  reinterpret_cast<expression::ParameterValueExpression *>(
-                      expr->GetModifiableChild(right_index))
-                      ->GetValueIdx())
-                  .Copy();
+      value =
+          type::ValueFactory::GetParameterOffsetValue(
+              reinterpret_cast<expression::ParameterValueExpression *>(
+                  expr->GetModifiableChild(right_index))->GetValueIdx()).Copy();
     }
     ValueCondition condition(col_name, expr_type, value);
     selectivity =

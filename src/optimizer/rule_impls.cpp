@@ -30,38 +30,46 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 
 ///////////////////////////////////////////////////////////////////////////////
-/// InnerJoinCommutativity
-InnerJoinCommutativity::InnerJoinCommutativity() {
-  type_ = RuleType::INNER_JOIN_COMMUTE;
+/// JoinCommutativity
+JoinCommutativity::JoinCommutativity() {
+  type_ = RuleType::JOIN_COMMUTE;
 
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
 }
 
-bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
-                                   OptimizeContext *context) const {
+bool JoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
+                              OptimizeContext *context) const {
   (void)context;
   (void)expr;
   return true;
 }
 
-void InnerJoinCommutativity::Transform(
+void JoinCommutativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  auto join_op = input->Op().As<LogicalInnerJoin>();
+  auto join_op = input->Op().As<LogicalJoin>();
   auto join_predicates =
       std::vector<AnnotatedExpression>(join_op->join_predicates);
+
+  auto join_type = join_op->type;
+  if (join_type == JoinType::LEFT) {
+    join_type = JoinType::RIGHT;
+  } else if (join_type == JoinType::RIGHT) {
+    join_type = JoinType::LEFT;
+  }
+
   auto result_plan = std::make_shared<OperatorExpression>(
-      LogicalInnerJoin::make(join_predicates));
+      LogicalJoin::make(join_type, join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 2);
-  LOG_TRACE(
-      "Reorder left child with op %s and right child with op %s for inner join",
-      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
+  LOG_TRACE("Reorder left child with op %s and right child with op %s for join",
+            children[0]->Op().GetName().c_str(),
+            children[1]->Op().GetName().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
 
@@ -69,42 +77,100 @@ void InnerJoinCommutativity::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// InnerJoinAssociativity
-InnerJoinAssociativity::InnerJoinAssociativity() {
-  type_ = RuleType::INNER_JOIN_ASSOCIATE;
+/// JoinAssociativity
+JoinAssociativity::JoinAssociativity() {
+  type_ = RuleType::JOIN_ASSOCIATE;
 
   // Create left nested join
-  auto left_child = std::make_shared<Pattern>(OpType::InnerJoin);
+  auto left_child = std::make_shared<Pattern>(OpType::LogicalJoin);
   left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
   left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
 
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
 
-  match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
 }
 
-// TODO: As far as I know, theres nothing else that needs to be checked
-bool InnerJoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
-                                   OptimizeContext *context) const {
+bool JoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
+                              OptimizeContext *context) const {
   (void)context;
-  (void)expr;
-  return true;
+  // Associativity rules taken from
+  // http://15721.courses.cs.cmu.edu/spring2017/papers/14-optimizer1/p539-moerkotte.pdf
+  /*
+   * (A inner B) inner C = A inner (B inner C)
+   * (A right B) inner C = A right (B inner C)
+   * (A inner B) left  C = A inner (B left  C)
+   * (A left  B) left  C = A left  (B left  C) with Strong Predicates PBC
+   * (A full  B) left  C = A full  (B left  C) with Strong Predicate PBC
+   * (A right B) right C = A right (B right C) with Strong Predicate PAB
+   * (A right B) full  C = A right (B full  C) with Strong Predicate PAB
+   * (A full  B) full  C = A full  (B full  C) with Strong Predicate PAB & PBC
+   */
+  auto parent_join = expr->Op().As<LogicalJoin>();
+  std::vector<std::shared_ptr<OperatorExpression>> children = expr->Children();
+  auto child_join = children[0]->Op().As<LogicalJoin>();
+  auto middle = children[0]->Children()[1];
+  // Get Alias sets
+  auto &memo = context->metadata->memo;
+  auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
+  const auto &middle_group_aliases_set =
+      memo.GetGroupByID(middle_group_id)->GetTableAliases();
+
+  if (parent_join->type == JoinType::INNER) {
+    if (child_join->type == JoinType::INNER ||
+        child_join->type == JoinType::RIGHT) {
+      return true;
+    }
+  } else if (parent_join->type == JoinType::LEFT) {
+    if (child_join->type == JoinType::INNER) {
+      return true;
+    } else if (child_join->type == JoinType::LEFT ||
+               child_join->type == JoinType::OUTER) {
+      return util::StrongPredicates(parent_join->join_predicates,
+                                    middle_group_aliases_set);
+    }
+  } else if (parent_join->type == JoinType::RIGHT) {
+    if (child_join->type == JoinType::RIGHT) {
+      return util::StrongPredicates(child_join->join_predicates,
+                                    middle_group_aliases_set);
+    }
+  } else if (parent_join->type == JoinType::OUTER) {
+    if (child_join->type == JoinType::RIGHT) {
+      return util::StrongPredicates(child_join->join_predicates,
+                                    middle_group_aliases_set);
+    } else if (child_join->type == JoinType::OUTER) {
+      auto parent_join_predicates =
+          std::vector<AnnotatedExpression>(parent_join->join_predicates);
+      auto child_join_predicates =
+          std::vector<AnnotatedExpression>(child_join->join_predicates);
+
+      std::vector<AnnotatedExpression> check_predicates;
+      check_predicates.insert(check_predicates.end(),
+                              parent_join_predicates.begin(),
+                              parent_join_predicates.end());
+      check_predicates.insert(check_predicates.end(),
+                              child_join_predicates.begin(),
+                              child_join_predicates.end());
+      return util::StrongPredicates(check_predicates, middle_group_aliases_set);
+    }
+  }
+  return false;
 }
 
-void InnerJoinAssociativity::Transform(
+void JoinAssociativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
   // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
   // right) Variables are named accordingly to above transformation
-  auto parent_join = input->Op().As<LogicalInnerJoin>();
+  auto parent_join = input->Op().As<LogicalJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 2);
-  PELOTON_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
+  PELOTON_ASSERT(children[0]->Op().GetType() == OpType::LogicalJoin);
   PELOTON_ASSERT(children[0]->Children().size() == 2);
-  auto child_join = children[0]->Op().As<LogicalInnerJoin>();
+  auto child_join = children[0]->Op().As<LogicalJoin>();
   auto left = children[0]->Children()[0];
   auto middle = children[0]->Children()[1];
   auto right = children[1];
@@ -153,17 +219,21 @@ void InnerJoinAssociativity::Transform(
     }
   }
 
+  JoinType new_parent_join_type;
+  JoinType new_child_join_type;
+  new_parent_join_type = child_join->type;
+  new_child_join_type = parent_join->type;
   // Construct new child join operator
   std::shared_ptr<OperatorExpression> new_child_join =
       std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(new_child_join_predicates));
+          LogicalJoin::make(new_child_join_type, new_child_join_predicates));
   new_child_join->PushChild(middle);
   new_child_join->PushChild(right);
 
   // Construct new parent join operator
   std::shared_ptr<OperatorExpression> new_parent_join =
       std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(new_parent_join_predicates));
+          LogicalJoin::make(new_parent_join_type, new_parent_join_predicates));
   new_parent_join->PushChild(left);
   new_parent_join->PushChild(new_child_join);
 
@@ -275,9 +345,8 @@ void GetToIndexScan::Transform(
         sort_by_asc_base_column = false;
         break;
       }
-      auto bound_oids =
-          reinterpret_cast<expression::TupleValueExpression *>(expr)
-              ->GetBoundOid();
+      auto bound_oids = reinterpret_cast<expression::TupleValueExpression *>(
+                            expr)->GetBoundOid();
       sort_col_ids.push_back(std::get<2>(bound_oids));
     }
     // Check whether any index can fulfill sort property
@@ -358,20 +427,16 @@ void GetToIndexScan::Transform(
         if (value_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
           value_list.push_back(
               reinterpret_cast<expression::ConstantValueExpression *>(
-                  value_expr)
-                  ->GetValue());
+                  value_expr)->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
-                            expr->GetModifiableChild(1))
-                            ->GetValueType()));
+                            expr->GetModifiableChild(1))->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
                   reinterpret_cast<expression::ParameterValueExpression *>(
-                      value_expr)
-                      ->GetValueIdx())
-                  .Copy());
+                      value_expr)->GetValueIdx()).Copy());
           LOG_TRACE("Parameter offset: %s",
                     (*value_list.rbegin()).GetInfo().c_str());
         }
@@ -612,16 +677,16 @@ void LogicalAggregateToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// InnerJoinToInnerNLJoin
-InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
-  type_ = RuleType::INNER_JOIN_TO_NL_JOIN;
+/// JoinToNLJoin
+JoinToNLJoin::JoinToNLJoin() {
+  type_ = RuleType::JOIN_TO_NL_JOIN;
 
   // TODO NLJoin currently only support left deep tree
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
 
   // Initialize a pattern for optimizer to match
-  match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
 
   // Add node - we match join relation R and S
   match_pattern->AddChild(left_child);
@@ -630,19 +695,19 @@ InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   return;
 }
 
-bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   OptimizeContext *context) const {
+bool JoinToNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                         OptimizeContext *context) const {
   (void)context;
   (void)plan;
   return true;
 }
 
-void InnerJoinToInnerNLJoin::Transform(
+void JoinToNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  // first build an expression representing hash join
-  const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
+  // first build an expression representing nested loop join
+  const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();
   PELOTON_ASSERT(children.size() == 2);
@@ -655,13 +720,14 @@ void InnerJoinToInnerNLJoin::Transform(
   std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
   std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
-  util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
+  util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
   PELOTON_ASSERT(right_keys.size() == left_keys.size());
-  auto result_plan =
-      std::make_shared<OperatorExpression>(PhysicalInnerNLJoin::make(
-          inner_join->join_predicates, left_keys, right_keys));
+  std::shared_ptr<OperatorExpression> result_plan;
+
+  result_plan = std::make_shared<OperatorExpression>(PhysicalNLJoin::make(
+      join->type, join->join_predicates, left_keys, right_keys));
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
@@ -673,16 +739,16 @@ void InnerJoinToInnerNLJoin::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// InnerJoinToInnerHashJoin
-InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
-  type_ = RuleType::INNER_JOIN_TO_HASH_JOIN;
+/// JoinToInnerHashJoin
+JoinToHashJoin::JoinToHashJoin() {
+  type_ = RuleType::JOIN_TO_HASH_JOIN;
 
   // Make three node types for pattern matching
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
 
   // Initialize a pattern for optimizer to match
-  match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalJoin);
 
   // Add node - we match join relation R and S as well as the predicate exp
   match_pattern->AddChild(left_child);
@@ -691,19 +757,19 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   return;
 }
 
-bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                     OptimizeContext *context) const {
+bool JoinToHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                           OptimizeContext *context) const {
   (void)context;
   (void)plan;
   return true;
 }
 
-void InnerJoinToInnerHashJoin::Transform(
+void JoinToHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
   // first build an expression representing hash join
-  const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
+  const LogicalJoin *join = input->Op().As<LogicalJoin>();
 
   auto children = input->Children();
   PELOTON_ASSERT(children.size() == 2);
@@ -716,14 +782,14 @@ void InnerJoinToInnerHashJoin::Transform(
   std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
   std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
-  util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
+  util::ExtractEquiJoinKeys(join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
   PELOTON_ASSERT(right_keys.size() == left_keys.size());
   if (!left_keys.empty()) {
     auto result_plan =
-        std::make_shared<OperatorExpression>(PhysicalInnerHashJoin::make(
-            inner_join->join_predicates, left_keys, right_keys));
+        std::make_shared<OperatorExpression>(PhysicalHashJoin::make(
+            join->type, join->join_predicates, left_keys, right_keys));
 
     // Then push all children into the child list of the new operator
     result_plan->PushChild(children[0]);
@@ -807,7 +873,8 @@ PushFilterThroughJoin::PushFilterThroughJoin() {
   type_ = RuleType::PUSH_FILTER_THROUGH_JOIN;
 
   // Make three node types for pattern matching
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::InnerJoin));
+  std::shared_ptr<Pattern> child(
+      std::make_shared<Pattern>(OpType::LogicalJoin));
   child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
   child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
 
@@ -843,6 +910,11 @@ void PushFilterThroughJoin::Transform(
   std::vector<AnnotatedExpression> right_predicates;
   std::vector<AnnotatedExpression> join_predicates;
 
+  auto join_type = join_op_expr->Op().As<LogicalJoin>()->type;
+  bool outer_push =
+      (join_type == JoinType::OUTER || join_type == JoinType::LEFT ||
+       join_type == JoinType::RIGHT);
+
   // Loop over all predicates, check each of them if they can be pushed down to
   // either the left child or the right child to be evaluated
   // All predicates in this loop follow conjunction relationship because we
@@ -850,10 +922,12 @@ void PushFilterThroughJoin::Transform(
   // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
-    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set)) {
+    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set) &&
+        !outer_push) {
       left_predicates.emplace_back(predicate);
     } else if (util::IsSubset(right_group_aliases_set,
-                              predicate.table_alias_set)) {
+                              predicate.table_alias_set) &&
+               !outer_push) {
       right_predicates.emplace_back(predicate);
     } else {
       join_predicates.emplace_back(predicate);
@@ -862,12 +936,12 @@ void PushFilterThroughJoin::Transform(
 
   // Construct join operator
   auto pre_join_predicate =
-      join_op_expr->Op().As<LogicalInnerJoin>()->join_predicates;
+      join_op_expr->Op().As<LogicalJoin>()->join_predicates;
   join_predicates.insert(join_predicates.end(), pre_join_predicate.begin(),
                          pre_join_predicate.end());
   std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(join_predicates));
+      std::make_shared<OperatorExpression>(LogicalJoin::make(
+          join_op_expr->Op().As<LogicalJoin>()->type, join_predicates));
 
   // Construct left filter if any
   if (!left_predicates.empty()) {
@@ -1087,7 +1161,7 @@ void MarkJoinToInnerJoin::Transform(
   PELOTON_ASSERT(mark_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
 
   output->PushChild(join_children[0]);
   output->PushChild(join_children[1]);
@@ -1138,7 +1212,7 @@ void SingleJoinToInnerJoin::Transform(
   PELOTON_ASSERT(single_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
 
   output->PushChild(join_children[0]);
   output->PushChild(join_children[1]);

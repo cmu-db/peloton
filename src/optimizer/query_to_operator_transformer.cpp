@@ -120,6 +120,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   predicates_ = std::move(pre_predicates);
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
+  auto pre_predicates = std::move(predicates_);
+  
   // Get left operator
   node->left->Accept(this);
   auto left_expr = output_expr_;
@@ -133,23 +135,26 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   switch (node->type) {
     case JoinType::INNER: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
-      join_expr =
-          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalJoin::make(JoinType::INNER, predicates_));
       break;
     }
     case JoinType::OUTER: {
+      predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalOuterJoin::make(node->condition->Copy()));
+          LogicalJoin::make(JoinType::OUTER, predicates_));
       break;
     }
     case JoinType::LEFT: {
+      predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalLeftJoin::make(node->condition->Copy()));
+          LogicalJoin::make(JoinType::LEFT, predicates_));
       break;
     }
     case JoinType::RIGHT: {
+      predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalRightJoin::make(node->condition->Copy()));
+          LogicalJoin::make(JoinType::RIGHT, predicates_));
       break;
     }
     case JoinType::SEMI: {
@@ -165,6 +170,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   join_expr->PushChild(right_expr);
 
   output_expr_ = join_expr;
+  predicates_ = std::move(pre_predicates);
 }
 void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   if (node->select != nullptr) {
@@ -201,8 +207,8 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     // Build a left deep join tree
     for (size_t i = 1; i < node->list.size(); i++) {
       node->list.at(i)->Accept(this);
-      auto join_expr =
-          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      auto join_expr = std::make_shared<OperatorExpression>(
+          LogicalJoin::make(JoinType::INNER));
       join_expr->PushChild(prev_expr);
       join_expr->PushChild(output_expr_);
       PELOTON_ASSERT(join_expr->Children().size() == 2);

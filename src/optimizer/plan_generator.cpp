@@ -198,7 +198,7 @@ void PlanGenerator::Visit(const PhysicalDistinct *) {
   output_plan_ = move(hash_plan);
 }
 
-void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
+void PlanGenerator::Visit(const PhysicalNLJoin *op) {
   std::unique_ptr<const planner::ProjectInfo> proj_info;
   std::shared_ptr<const catalog::Schema> proj_schema;
   GenerateProjectionForJoin(proj_info, proj_schema);
@@ -214,18 +214,18 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
   vector<oid_t> right_keys;
   for (auto &expr : op->left_keys) {
     PELOTON_ASSERT(children_expr_map_[0].find(expr.get()) !=
-                   children_expr_map_[0].end());
+              children_expr_map_[0].end());
     left_keys.push_back(children_expr_map_[0][expr.get()]);
   }
   for (auto &expr : op->right_keys) {
     PELOTON_ASSERT(children_expr_map_[1].find(expr.get()) !=
-                   children_expr_map_[1].end());
+              children_expr_map_[1].end());
     right_keys.emplace_back(children_expr_map_[1][expr.get()]);
   }
 
-  auto join_plan =
+  unique_ptr<planner::AbstractPlan> join_plan =
       unique_ptr<planner::AbstractPlan>(new planner::NestedLoopJoinPlan(
-          JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
+          op->type, move(join_predicate), move(proj_info), proj_schema,
           left_keys, right_keys));
 
   join_plan->AddChild(move(children_plans_[0]));
@@ -233,13 +233,7 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
   output_plan_ = move(join_plan);
 }
 
-void PlanGenerator::Visit(const PhysicalLeftNLJoin *) {}
-
-void PlanGenerator::Visit(const PhysicalRightNLJoin *) {}
-
-void PlanGenerator::Visit(const PhysicalOuterNLJoin *) {}
-
-void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
+void PlanGenerator::Visit(const PhysicalHashJoin *op) {
   std::unique_ptr<const planner::ProjectInfo> proj_info;
   std::shared_ptr<const catalog::Schema> proj_schema;
   GenerateProjectionForJoin(proj_info, proj_schema);
@@ -267,7 +261,7 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
   }
   // Evaluate Expr for hash plan
   vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
-  for (auto &expr : op->right_keys) {
+  for (const auto &expr : op->right_keys) {
     auto hash_key = expr->Copy();
     expression::ExpressionUtil::EvaluateExpression(r_child_map, hash_key);
     hash_keys.emplace_back(hash_key);
@@ -277,7 +271,7 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
   hash_plan->AddChild(move(children_plans_[1]));
 
   auto join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
-      JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
+      op->type, move(join_predicate), move(proj_info), proj_schema,
       left_keys, right_keys, settings::SettingsManager::GetBool(
                                  settings::SettingId::hash_join_bloom_filter)));
 
@@ -285,12 +279,6 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
   join_plan->AddChild(move(hash_plan));
   output_plan_ = move(join_plan);
 }
-
-void PlanGenerator::Visit(const PhysicalLeftHashJoin *) {}
-
-void PlanGenerator::Visit(const PhysicalRightHashJoin *) {}
-
-void PlanGenerator::Visit(const PhysicalOuterHashJoin *) {}
 
 void PlanGenerator::Visit(const PhysicalInsert *op) {
   unique_ptr<planner::AbstractPlan> insert_plan(new planner::InsertPlan(

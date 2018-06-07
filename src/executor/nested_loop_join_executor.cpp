@@ -101,7 +101,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
       LOG_TRACE("Left is done which means all join comparison completes");
-      return false;
+      return BuildOuterJoinOutput();
     }
 
     // If left tile result is not done, continue the left tuples

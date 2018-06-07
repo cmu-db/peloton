@@ -33,7 +33,7 @@ vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression *gexpr,
 
 // TODO(boweic): support stats derivation for derivedGet
 void ChildStatsDeriver::Visit(const LogicalQueryDerivedGet *) {}
-void ChildStatsDeriver::Visit(const LogicalInnerJoin *op) {
+void ChildStatsDeriver::Visit(const LogicalJoin *op) {
   PassDownRequiredCols();
   for (auto &annotated_expr : op->join_predicates) {
     auto predicate = annotated_expr.expr.get();
@@ -44,9 +44,7 @@ void ChildStatsDeriver::Visit(const LogicalInnerJoin *op) {
     }
   }
 }
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *) {}
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *) {}
-void ChildStatsDeriver::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *) {}
+
 void ChildStatsDeriver::Visit(const LogicalSemiJoin *) {}
 // TODO(boweic): support stats of aggregation
 void ChildStatsDeriver::Visit(const LogicalAggregateAndGroupBy *) {

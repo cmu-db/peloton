@@ -26,9 +26,9 @@ namespace optimizer {
 /**
  * @brief (A join B) -> (B join A)
  */
-class InnerJoinCommutativity : public Rule {
+class JoinCommutativity : public Rule {
  public:
-  InnerJoinCommutativity();
+  JoinCommutativity();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -41,10 +41,9 @@ class InnerJoinCommutativity : public Rule {
 /**
  * @brief (A join B) join C -> A join (B join C)
  */
-
-class InnerJoinAssociativity : public Rule {
+class JoinAssociativity : public Rule {
  public:
-  InnerJoinAssociativity();
+  JoinAssociativity();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -210,11 +209,11 @@ class LogicalAggregateToPhysical : public Rule {
 };
 
 /**
- * @brief (Logical Inner Join -> Inner Nested-Loop Join)
+ * @brief (Logical Join -> Nested-Loop Join)
  */
-class InnerJoinToInnerNLJoin : public Rule {
+class JoinToNLJoin : public Rule {
  public:
-  InnerJoinToInnerNLJoin();
+  JoinToNLJoin();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -225,11 +224,11 @@ class InnerJoinToInnerNLJoin : public Rule {
 };
 
 /**
- * @brief (Logical Inner Join -> Inner Hash Join)
+ * @brief (Logical Join -> Hash Join)
  */
-class InnerJoinToInnerHashJoin : public Rule {
+class JoinToHashJoin : public Rule {
  public:
-  InnerJoinToInnerHashJoin();
+  JoinToHashJoin();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -341,7 +340,8 @@ class EmbedFilterIntoGet : public Rule {
 ///////////////////////////////////////////////////////////////////////////////
 /// Unnesting rules
 // We use this promise to determine which rules should be applied first if
-// multiple rules are applicable, we need to first pull filters up through mark-join
+// multiple rules are applicable, we need to first pull filters up through
+// mark-join
 // then turn mark-join into a regular join operator
 enum class UnnestPromise { Low = 1, High };
 // TODO(boweic): MarkJoin and SingleJoin should not be transformed into inner

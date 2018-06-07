@@ -143,37 +143,37 @@ void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
+
 void ChildPropertyDeriver::Visit(const PhysicalOrderBy *) {}
-void ChildPropertyDeriver::Visit(const PhysicalInnerNLJoin *) {
-  DeriveForJoin();
-}
-void ChildPropertyDeriver::Visit(const PhysicalLeftNLJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalRightNLJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalOuterNLJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalInnerHashJoin *) {
+
+void ChildPropertyDeriver::Visit(const PhysicalNLJoin *) {
   DeriveForJoin();
 }
 
-void ChildPropertyDeriver::Visit(const PhysicalLeftHashJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalRightHashJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalOuterHashJoin *) {}
+void ChildPropertyDeriver::Visit(const PhysicalHashJoin *) {
+  DeriveForJoin();
+}
+
 void ChildPropertyDeriver::Visit(const PhysicalInsert *) {
   vector<shared_ptr<PropertySet>> child_input_properties;
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
+
 void ChildPropertyDeriver::Visit(const PhysicalInsertSelect *) {
   // Let child fulfil all the required properties
   vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
+
 void ChildPropertyDeriver::Visit(const PhysicalUpdate *) {
   // Let child fulfil all the required properties
   vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
+
 void ChildPropertyDeriver::Visit(const PhysicalDelete *) {
   // Let child fulfil all the required properties
   vector<shared_ptr<PropertySet>> child_input_properties{requirements_};

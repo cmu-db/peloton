@@ -1325,8 +1325,8 @@ std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 
 enum class RuleType : uint32_t {
   // Transformation rules (logical -> logical)
-  INNER_JOIN_COMMUTE = 0,
-  INNER_JOIN_ASSOCIATE,
+  JOIN_COMMUTE = 0,
+  JOIN_ASSOCIATE,
 
   // Don't move this one
   LogicalPhysicalDelimiter,
@@ -1342,6 +1342,8 @@ enum class RuleType : uint32_t {
   INSERT_SELECT_TO_PHYSICAL,
   AGGREGATE_TO_HASH_AGGREGATE,
   AGGREGATE_TO_PLAIN_AGGREGATE,
+  JOIN_TO_NL_JOIN,
+  JOIN_TO_HASH_JOIN,
   INNER_JOIN_TO_NL_JOIN,
   INNER_JOIN_TO_HASH_JOIN,
   IMPLEMENT_DISTINCT,

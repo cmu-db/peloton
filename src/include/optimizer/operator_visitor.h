@@ -32,14 +32,8 @@ class OperatorVisitor {
   virtual void Visit(const QueryDerivedScan *) {}
   virtual void Visit(const PhysicalOrderBy *) {}
   virtual void Visit(const PhysicalLimit *) {}
-  virtual void Visit(const PhysicalInnerNLJoin *) {}
-  virtual void Visit(const PhysicalLeftNLJoin *) {}
-  virtual void Visit(const PhysicalRightNLJoin *) {}
-  virtual void Visit(const PhysicalOuterNLJoin *) {}
-  virtual void Visit(const PhysicalInnerHashJoin *) {}
-  virtual void Visit(const PhysicalLeftHashJoin *) {}
-  virtual void Visit(const PhysicalRightHashJoin *) {}
-  virtual void Visit(const PhysicalOuterHashJoin *) {}
+  virtual void Visit(const PhysicalNLJoin *) {}
+  virtual void Visit(const PhysicalHashJoin *) {}
   virtual void Visit(const PhysicalInsert *) {}
   virtual void Visit(const PhysicalInsertSelect *) {}
   virtual void Visit(const PhysicalDelete *) {}
@@ -58,10 +52,7 @@ class OperatorVisitor {
   virtual void Visit(const LogicalMarkJoin *) {}
   virtual void Visit(const LogicalSingleJoin *) {}
   virtual void Visit(const LogicalDependentJoin *) {}
-  virtual void Visit(const LogicalInnerJoin *) {}
-  virtual void Visit(const LogicalLeftJoin *) {}
-  virtual void Visit(const LogicalRightJoin *) {}
-  virtual void Visit(const LogicalOuterJoin *) {}
+  virtual void Visit(const LogicalJoin *) {}
   virtual void Visit(const LogicalSemiJoin *) {}
   virtual void Visit(const LogicalAggregateAndGroupBy *) {}
   virtual void Visit(const LogicalInsert *) {}

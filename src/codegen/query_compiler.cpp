@@ -74,9 +74,10 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     case PlanNodeType::HASHJOIN: {
       const auto &join = static_cast<const planner::AbstractJoinPlan &>(plan);
       // Right now, only support inner joins
-      if (join.GetJoinType() == JoinType::INNER) {
-        break;
+      if (join.GetJoinType() != JoinType::INNER) {
+        return false;
       }
+      break;
     }
     case PlanNodeType::HASH: {
       break;

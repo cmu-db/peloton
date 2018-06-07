@@ -366,8 +366,8 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
-  auto join_op = group_expr->Op().As<LogicalInnerJoin>();
+  EXPECT_EQ(OpType::LogicalJoin, group_expr->Op().GetType());
+  auto join_op = group_expr->Op().As<LogicalJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 
@@ -453,8 +453,9 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
-  auto join_op = group_expr->Op().As<LogicalInnerJoin>();
+  EXPECT_EQ(OpType::LogicalJoin, group_expr->Op().GetType());
+  auto join_op = group_expr->Op().As<LogicalJoin>();
+  EXPECT_EQ(JoinType::INNER, join_op->type);
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 

@@ -123,25 +123,13 @@ void InputColumnDeriver::Visit(const PhysicalAggregate *op) {
 
 void InputColumnDeriver::Visit(const PhysicalDistinct *) { Passdown(); }
 
-void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *op) {
+void InputColumnDeriver::Visit(const PhysicalNLJoin *op) {
   JoinHelper(op);
 }
 
-void InputColumnDeriver::Visit(const PhysicalLeftNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalRightNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalOuterNLJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *op) {
+void InputColumnDeriver::Visit(const PhysicalHashJoin *op) {
   JoinHelper(op);
 }
-
-void InputColumnDeriver::Visit(const PhysicalLeftHashJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalRightHashJoin *) {}
-
-void InputColumnDeriver::Visit(const PhysicalOuterHashJoin *) {}
 
 void InputColumnDeriver::Visit(const PhysicalInsert *) {
   output_input_cols_ =
@@ -246,13 +234,13 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   const vector<unique_ptr<expression::AbstractExpression>> *left_keys = nullptr;
   const vector<unique_ptr<expression::AbstractExpression>> *right_keys =
       nullptr;
-  if (op->GetType() == OpType::InnerHashJoin) {
-    auto join_op = reinterpret_cast<const PhysicalInnerHashJoin *>(op);
+  if (op->GetType() == OpType::HashJoin) {
+    auto join_op = reinterpret_cast<const PhysicalHashJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
     right_keys = &(join_op->right_keys);
-  } else if (op->GetType() == OpType::InnerNLJoin) {
-    auto join_op = reinterpret_cast<const PhysicalInnerNLJoin *>(op);
+  } else if (op->GetType() == OpType::NLJoin) {
+    auto join_op = reinterpret_cast<const PhysicalNLJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
     right_keys = &(join_op->right_keys);

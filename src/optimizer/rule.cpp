@@ -28,8 +28,8 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 }
 
 RuleSet::RuleSet() {
-  AddTransformationRule(new InnerJoinCommutativity());
-  AddTransformationRule(new InnerJoinAssociativity());
+  AddTransformationRule(new JoinCommutativity());
+  AddTransformationRule(new JoinAssociativity());
   AddImplementationRule(new LogicalDeleteToPhysical());
   AddImplementationRule(new LogicalUpdateToPhysical());
   AddImplementationRule(new LogicalInsertToPhysical());
@@ -40,13 +40,13 @@ RuleSet::RuleSet() {
   AddImplementationRule(new GetToSeqScan());
   AddImplementationRule(new GetToIndexScan());
   AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
-  AddImplementationRule(new InnerJoinToInnerNLJoin());
-  AddImplementationRule(new InnerJoinToInnerHashJoin());
+  AddImplementationRule(new JoinToNLJoin());
+  AddImplementationRule(new JoinToHashJoin());
   AddImplementationRule(new ImplementDistinct());
   AddImplementationRule(new ImplementLimit());
 
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
-                 new PushFilterThroughJoin());
+		 new PushFilterThroughJoin());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughAggregation());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,

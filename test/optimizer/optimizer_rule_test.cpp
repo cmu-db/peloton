@@ -36,6 +36,7 @@
 #include "planner/update_plan.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {
@@ -49,15 +50,19 @@ using namespace optimizer;
 class OptimizerRuleTests : public PelotonTest {};
 
 TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
+  // Start Join Structure: left JOIN right
+  // End Join Structure: right JOIN left
+
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
-  auto join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
   join->PushChild(left_get);
   join->PushChild(right_get);
 
   // Setup rule
-  InnerJoinCommutativity rule;
+  JoinCommutativity rule;
 
   EXPECT_TRUE(rule.Check(join, nullptr));
 
@@ -69,6 +74,90 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
 
   EXPECT_EQ(output_join->Children()[0], right_get);
   EXPECT_EQ(output_join->Children()[1], left_get);
+}
+
+TEST_F(OptimizerRuleTests, LeftJoinCommutativeRuleTest) {
+  // Start Join Structure: left LEFT JOIN right
+  // End Join Structure: right RIGHT JOIN left
+
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::LEFT));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::RIGHT);
+}
+
+TEST_F(OptimizerRuleTests, RightJoinCommutativeRuleTest) {
+  // Start Join Structure: left RIGHT JOIN right
+  // End Join Structure: right LEFT JOIN left
+
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::RIGHT));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::LEFT);
+}
+
+TEST_F(OptimizerRuleTests, OuterJoinCommutativeRuleTest) {
+  // Start Join Structure: left OUTER JOIN right
+  // End Join Structure: right OUTER JOIN left
+
+  // Build op plan node to match rule
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto join =
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::OUTER));
+  join->PushChild(left_get);
+  join->PushChild(right_get);
+
+  // Setup rule
+  JoinCommutativity rule;
+
+  EXPECT_TRUE(rule.Check(join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+  EXPECT_EQ(output_join->Op().As<LogicalJoin>()->type, JoinType::OUTER);
 }
 
 TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
@@ -113,7 +202,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   child_join_predicates.push_back(pred);
 
   auto child_join = std::make_shared<OperatorExpression>(
-      LogicalInnerJoin::make(child_join_predicates));
+      LogicalJoin::make(JoinType::INNER, child_join_predicates));
   child_join->PushChild(left_leaf);
   child_join->PushChild(middle_leaf);
   optimizer.GetMetadata().memo.InsertExpression(
@@ -126,7 +215,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   parent_join_predicates.push_back(pred);
 
   auto parent_join = std::make_shared<OperatorExpression>(
-      LogicalInnerJoin::make(parent_join_predicates));
+      LogicalJoin::make(JoinType::INNER, parent_join_predicates));
   parent_join->PushChild(child_join);
   parent_join->PushChild(right_leaf);
 
@@ -138,15 +227,14 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
   EXPECT_EQ(right_leaf, parent_join->Children()[1]);
-  EXPECT_EQ(1,
-            parent_join->Op().As<LogicalInnerJoin>()->join_predicates.size());
+  EXPECT_EQ(1, parent_join->Op().As<LogicalJoin>()->join_predicates.size());
   EXPECT_EQ(1, parent_join->Children()[0]
                    ->Op()
-                   .As<LogicalInnerJoin>()
+                   .As<LogicalJoin>()
                    ->join_predicates.size());
 
   // Setup rule
-  InnerJoinAssociativity rule;
+  JoinAssociativity rule;
 
   EXPECT_TRUE(rule.Check(parent_join, root_context));
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
@@ -159,8 +247,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   EXPECT_EQ(middle_leaf, output_join->Children()[1]->Children()[0]);
   EXPECT_EQ(right_leaf, output_join->Children()[1]->Children()[1]);
 
-  auto parent_join_op = output_join->Op().As<LogicalInnerJoin>();
-  auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
+  auto parent_join_op = output_join->Op().As<LogicalJoin>();
+  auto child_join_op = output_join->Children()[1]->Op().As<LogicalJoin>();
   EXPECT_EQ(2, parent_join_op->join_predicates.size());
   EXPECT_EQ(0, child_join_op->join_predicates.size());
   delete root_context;
@@ -201,7 +289,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
 
   // Make Child Join
   auto child_join =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalJoin::make(JoinType::INNER));
   child_join->PushChild(left_leaf);
   child_join->PushChild(middle_leaf);
   optimizer.GetMetadata().memo.InsertExpression(
@@ -221,7 +309,7 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   parent_join_predicates.push_back(pred2);
 
   auto parent_join = std::make_shared<OperatorExpression>(
-      LogicalInnerJoin::make(parent_join_predicates));
+      LogicalJoin::make(JoinType::INNER, parent_join_predicates));
   parent_join->PushChild(child_join);
   parent_join->PushChild(right_leaf);
 
@@ -233,15 +321,14 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
   EXPECT_EQ(right_leaf, parent_join->Children()[1]);
-  EXPECT_EQ(2,
-            parent_join->Op().As<LogicalInnerJoin>()->join_predicates.size());
+  EXPECT_EQ(2, parent_join->Op().As<LogicalJoin>()->join_predicates.size());
   EXPECT_EQ(0, parent_join->Children()[0]
                    ->Op()
-                   .As<LogicalInnerJoin>()
+                   .As<LogicalJoin>()
                    ->join_predicates.size());
 
   // Setup rule
-  InnerJoinAssociativity rule;
+  JoinAssociativity rule;
 
   EXPECT_TRUE(rule.Check(parent_join, root_context));
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
@@ -254,8 +341,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   EXPECT_EQ(middle_leaf, output_join->Children()[1]->Children()[0]);
   EXPECT_EQ(right_leaf, output_join->Children()[1]->Children()[1]);
 
-  auto parent_join_op = output_join->Op().As<LogicalInnerJoin>();
-  auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
+  auto parent_join_op = output_join->Op().As<LogicalJoin>();
+  auto child_join_op = output_join->Children()[1]->Op().As<LogicalJoin>();
   EXPECT_EQ(1, parent_join_op->join_predicates.size());
   EXPECT_EQ(1, child_join_op->join_predicates.size());
   delete root_context;

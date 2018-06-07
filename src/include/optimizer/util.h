@@ -19,6 +19,8 @@
 #include "expression/abstract_expression.h"
 #include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
+#include "optimizer/optimize_context.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 
@@ -33,11 +35,11 @@ class DataTable;
 namespace optimizer {
 namespace util {
 
-  /**
-   * @brief Convert upper case letters into lower case in a string
-   *
-   * @param str The string to operate on
-   */
+/**
+ * @brief Convert upper case letters into lower case in a string
+ *
+ * @param str The string to operate on
+ */
 inline void to_lower_string(std::string &str) {
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
@@ -110,7 +112,6 @@ expression::AbstractExpression *ConstructJoinPredicate(
     std::unordered_set<std::string> &table_alias_set,
     MultiTablePredicates &join_predicates);
 
-
 /**
  * @breif Check if there are any join columns in the join expression
  *  For example, expr = (expr_1) AND (expr_2) AND (expr_3)
@@ -152,8 +153,8 @@ ConstructSelectElementMap(
  */
 expression::AbstractExpression *TransformQueryDerivedTablePredicates(
     const std::unordered_map<std::string,
-                             std::shared_ptr<expression::AbstractExpression>>
-        &alias_to_expr_map,
+                             std::shared_ptr<expression::AbstractExpression>> &
+        alias_to_expr_map,
     expression::AbstractExpression *expr);
 
 /**
@@ -167,6 +168,25 @@ void ExtractEquiJoinKeys(
     const std::unordered_set<std::string> &left_alias,
     const std::unordered_set<std::string> &right_alias);
 
+/**
+ * @brief Given an operator expression and context information, check if it
+ *  is strong predicate w.r.t to one table
+ *  A predicate p is strong w.r.t S if the fact that all attributes from S are
+ *  NULL implies that p evaluates to false
+ *  It is used in AssociativityRule transforms when certain joins are applied
+ */
+bool StrongPredicates(
+    std::vector<AnnotatedExpression> predicates,
+    const std::unordered_set<std::string> &middle_group_aliases_set);
+
+/**
+ * @brief Replace the tuple_value_expression in given expression which
+ * contains table in middle_group_aliases_set with constant_value_expression
+ * with False value
+ */
+expression::AbstractExpression *PredicateEvaluate(
+    expression::AbstractExpression *expr,
+    const std::unordered_set<std::string> &middle_group_aliases_set);
 }  // namespace util
 }  // namespace optimizer
 }  // namespace peloton
