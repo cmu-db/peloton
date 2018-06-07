@@ -13,6 +13,7 @@
 #include "udf/udf_parser.h"
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "codegen/codegen.h"
 
@@ -45,7 +46,7 @@ void UDFParser::ParseUDF(codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
       code_context.SetUDF(func_ptr);
 
       // To check correctness of the codegened UDF
-      func_ptr->dump();
+      func_ptr->print(llvm::errs(), nullptr);
     }
   }
 }
