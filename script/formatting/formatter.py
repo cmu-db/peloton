@@ -20,7 +20,7 @@ sys.path.append(
     os.path.abspath(os.path.dirname(__file__)).replace('/formatting', '')
     )
 from helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG,\
-clang_format
+clang_format, hunks_from_staged_files, hunks_from_last_commits
 
 ## ==============================================
 ## CONFIGURATION
@@ -69,7 +69,7 @@ HEADER_REGEX = re.compile(r"((\/\/===-*===\/\/\n(\/\/.*\n)*\/\/===-*===\/\/[\n]*
 ## ==============================================
 
 
-def format_file(file_path, update_header, clang_format_code):
+def format_file(file_path, file_hunks, update_header, clang_format_code):
     """Formats the file passed as argument."""
     file_name = os.path.basename(file_path)
     abs_path = os.path.abspath(file_path)
@@ -104,7 +104,7 @@ def format_file(file_path, update_header, clang_format_code):
             file.write(file_data)
 
         elif clang_format_code:
-            clang_format(file_path)
+            clang_format(file_path, file_hunks)
 
     #END WITH
 #END FORMAT__FILE(FILE_NAME)
@@ -118,7 +118,7 @@ def format_dir(dir_path, update_header, clang_format_code):
             file_path = subdir + os.path.sep + file
 
             if file_path.endswith(".h") or file_path.endswith(".cpp"):
-                format_file(file_path, update_header, clang_format_code)
+                format_file(file_path, None, update_header, clang_format_code)
             #END IF
         #END FOR [file]
     #END FOR [os.walk]
@@ -147,8 +147,15 @@ if __name__ == '__main__':
         )
     PARSER.add_argument(
         "-f", "--staged-files",
-        help='Action: Apply the selected action(s) to all staged files (git)',
+        help='Action: Apply the selected action(s) to all staged files (git). ' + 
+        '(clang-format will only touch the staged lines)',
         action='store_true'
+        )
+    PARSER.add_argument(
+        "-n", "--number-commits",
+        help='Action: Apply the selected action(s) to all changes of the last ' + 
+        '<n> commits (clang-format will only touch the changed lines)',
+        type=int, default=0
         )
     PARSER.add_argument(
         'paths', metavar='PATH', type=str, nargs='*',
@@ -157,33 +164,41 @@ if __name__ == '__main__':
 
     ARGS = PARSER.parse_args()
 
+    # TARGETS is a list of files with an optional list of hunks, represented as
+    # pair (start, end) of line numbers, 1 based. 
+    # element of TARGETS: (filename, None) or (filename, [(start,end)])
+
     if ARGS.staged_files:
-        PELOTON_DIR_bytes = bytes(PELOTON_DIR, 'utf-8')
-        TARGETS = [
-            str(os.path.abspath(os.path.join(PELOTON_DIR_bytes, f)), 'utf-8') \
-            for f in subprocess.check_output(
-                ["git", "diff", "--name-only", "HEAD", "--cached",
-                 "--diff-filter=d"
-                ]
-            ).split()]
+        TARGETS = hunks_from_staged_files()
 
         if not TARGETS:
             LOG.error(
                 "no staged files or not calling from a repository -- exiting"
                 )
             sys.exit("no staged files or not calling from a repository")
+            
+    elif ARGS.number_commits > 0:
+        TARGETS = hunks_from_last_commits(ARGS.number_commits)
+
+        if not TARGETS:
+            LOG.error(
+                "no changes could be extracted for formatting -- exiting"
+                )
+            sys.exit("no changes could be extracted for formatting")
+      
     elif not ARGS.paths:
         LOG.error("no files or directories given -- exiting")
         sys.exit("no files or directories given")
+        
     else:
-        TARGETS = ARGS.paths
+        TARGETS = [(f, None) for f in ARGS.paths]
 
-    for x in TARGETS:
-        if os.path.isfile(x):
-            LOG.info("Scanning file: %s", x)
-            format_file(x, ARGS.update_header, ARGS.clang_format_code)
-        elif os.path.isdir(x):
-            LOG.info("Scanning directory %s", x)
-            format_dir(x, ARGS.update_header, ARGS.clang_format_code)
+    for f, hunks in TARGETS:
+        if os.path.isfile(f):
+            LOG.info("Scanning file: %s", f)
+            format_file(f, hunks, ARGS.update_header, ARGS.clang_format_code)
+        elif os.path.isdir(f):
+            LOG.info("Scanning directory %s", f)
+            format_dir(f, ARGS.update_header, ARGS.clang_format_code)
     ## FOR
 ## IF
