@@ -128,7 +128,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   // Create table.
   std::unique_ptr<storage::DataTable> table(CreateTable());
   //  storage::DataTable* table = CreateTable();
-  LOG_INFO("%s", table->GetInfo().c_str());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
 
   // Do a select to get the original values
   //  std::unique_ptr<Statement> statement;
@@ -150,17 +150,17 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      executor::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
-  //  LOG_INFO("Statement executed. Result: %s",
+  //  LOG_DEBUG("Statement executed. Result: %s",
   //  ResultTypeToString(status.m_result).c_str());
 }
 
 TEST_F(UpdateTests, UpdatingOld) {
-  LOG_INFO("Bootstrapping...");
+  LOG_DEBUG("Bootstrapping...");
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-  LOG_INFO("Bootstrapping completed!");
+  LOG_DEBUG("Bootstrapping completed!");
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer);
@@ -168,7 +168,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
                               &TestingSQLUtil::counter_);
   // Create a table first
-  LOG_INFO("Creating a table...");
+  LOG_DEBUG("Creating a table...");
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_id", true);
@@ -191,7 +191,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   create_executor.Init();
   create_executor.Execute();
 
-  LOG_INFO("Table created!");
+  LOG_DEBUG("Table created!");
 
   storage::DataTable *table = catalog->GetTableWithName(
       DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
@@ -201,8 +201,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
 
-  LOG_INFO("Inserting a tuple...");
-  LOG_INFO(
+  LOG_DEBUG("Inserting a tuple...");
+  LOG_DEBUG(
       "Query: INSERT INTO department_table(dept_id,manager_id,dept_name) "
       "VALUES (1,12,'hello_1');");
   std::unique_ptr<Statement> statement;
@@ -211,25 +211,25 @@ TEST_F(UpdateTests, UpdatingOld) {
                                 "department_table(dept_id,manager_id,dept_name)"
                                 " VALUES (1,12,'hello_1');"));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  LOG_INFO("Building parse tree...");
+  LOG_DEBUG("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
       "(1,12,'hello_1');");
-  LOG_INFO("Building parse tree completed!");
+  LOG_DEBUG("Building parse tree completed!");
 
-  LOG_INFO("Binding parse tree...");
+  LOG_DEBUG("Binding parse tree...");
   auto parse_tree = insert_stmt->GetStatement(0);
   auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
-  LOG_INFO("Binding parse tree completed!");
+  LOG_DEBUG("Binding parse tree completed!");
 
-  LOG_INFO("Building plan tree...");
+  LOG_DEBUG("Building plan tree...");
 
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
-  LOG_INFO("Building plan tree completed!");
+  LOG_DEBUG("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
-  LOG_INFO("Executing plan...\n%s",
+  LOG_DEBUG("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   std::vector<int> result_format;
@@ -243,39 +243,39 @@ TEST_F(UpdateTests, UpdatingOld) {
     status = traffic_cop.p_status_;
     traffic_cop.SetQueuing(false);
   }
-  LOG_INFO("Statement executed. Result: %s",
+  LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  LOG_INFO("Tuple inserted!");
+  LOG_DEBUG("Tuple inserted!");
   traffic_cop.CommitQueryHelper();
 
-  LOG_INFO("%s", table->GetInfo().c_str());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
 
-  LOG_INFO("Updating a tuple...");
-  LOG_INFO(
+  LOG_DEBUG("Updating a tuple...");
+  LOG_DEBUG(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   statement.reset(new Statement(
       "UPDATE",
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1"));
-  LOG_INFO("Building parse tree...");
+  LOG_DEBUG("Building parse tree...");
   auto update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
-  LOG_INFO("Building parse tree completed!");
+  LOG_DEBUG("Building parse tree completed!");
 
-  LOG_INFO("Binding parse tree...");
+  LOG_DEBUG("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
   bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
-  LOG_INFO("Binding parse tree completed!");
+  LOG_DEBUG("Binding parse tree completed!");
 
-  LOG_INFO("Building plan tree...");
+  LOG_DEBUG("Building plan tree...");
 
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
-  LOG_INFO("Building plan tree completed!");
-  LOG_INFO("Executing plan...\n%s",
+  LOG_DEBUG("Building plan tree completed!");
+  LOG_DEBUG("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -287,40 +287,40 @@ TEST_F(UpdateTests, UpdatingOld) {
     status = traffic_cop.p_status_;
     traffic_cop.SetQueuing(false);
   }
-  LOG_INFO("Statement executed. Result: %s",
+  LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  LOG_INFO("Tuple Updated!");
+  LOG_DEBUG("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
 
-  LOG_INFO("%s", table->GetInfo().c_str());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
 
-  LOG_INFO("Updating another tuple...");
-  LOG_INFO(
+  LOG_DEBUG("Updating another tuple...");
+  LOG_DEBUG(
       "Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE "
       "dept_id = 1");
   statement.reset(new Statement("UPDATE",
                                 "UPDATE department_table SET manager_id = "
                                 "manager_id + 1 WHERE dept_id = 1"));
-  LOG_INFO("Building parse tree...");
+  LOG_DEBUG("Building parse tree...");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = "
       "1");
-  LOG_INFO("Building parse tree completed!");
+  LOG_DEBUG("Building parse tree completed!");
 
-  LOG_INFO("Binding parse tree...");
+  LOG_DEBUG("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
   bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
-  LOG_INFO("Binding parse tree completed!");
+  LOG_DEBUG("Binding parse tree completed!");
 
-  LOG_INFO("Building plan tree...");
+  LOG_DEBUG("Building plan tree...");
 
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
-  LOG_INFO("Building plan tree completed!");
-  LOG_INFO("Executing plan...\n%s",
+  LOG_DEBUG("Building plan tree completed!");
+  LOG_DEBUG("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -332,34 +332,34 @@ TEST_F(UpdateTests, UpdatingOld) {
     status = traffic_cop.p_status_;
     traffic_cop.SetQueuing(false);
   }
-  LOG_INFO("Statement executed. Result: %s",
+  LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  LOG_INFO("Tuple Updated!");
+  LOG_DEBUG("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
 
-  LOG_INFO("%s", table->GetInfo().c_str());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
-  LOG_INFO("Updating primary key...");
-  LOG_INFO("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
+  LOG_DEBUG("Updating primary key...");
+  LOG_DEBUG("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   statement.reset(new Statement(
       "UPDATE", "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1"));
-  LOG_INFO("Building parse tree...");
+  LOG_DEBUG("Building parse tree...");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
-  LOG_INFO("Building parse tree completed!");
+  LOG_DEBUG("Building parse tree completed!");
 
-  LOG_INFO("Binding parse tree...");
+  LOG_DEBUG("Binding parse tree...");
   parse_tree = update_stmt->GetStatement(0);
   bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
-  LOG_INFO("Binding parse tree completed!");
+  LOG_DEBUG("Binding parse tree completed!");
 
-  LOG_INFO("Building plan tree...");
+  LOG_DEBUG("Building plan tree...");
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
-  LOG_INFO("Building plan tree completed!");
-  LOG_INFO("Executing plan...\n%s",
+  LOG_DEBUG("Building plan tree completed!");
+  LOG_DEBUG("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -371,37 +371,37 @@ TEST_F(UpdateTests, UpdatingOld) {
     status = traffic_cop.p_status_;
     traffic_cop.SetQueuing(false);
   }
-  LOG_INFO("Statement executed. Result: %s",
+  LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  LOG_INFO("Tuple Updated!");
+  LOG_DEBUG("Tuple Updated!");
   traffic_cop.CommitQueryHelper();
 
-  LOG_INFO("%s", table->GetInfo().c_str());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
   traffic_cop.SetTcopTxnState(txn);
 
-  LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
+  LOG_DEBUG("Deleting a tuple...");
+  LOG_DEBUG("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
   statement.reset(new Statement(
       "DELETE", "DELETE FROM department_table WHERE dept_name = 'CS'"));
-  LOG_INFO("Building parse tree...");
+  LOG_DEBUG("Building parse tree...");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
-  LOG_INFO("Building parse tree completed!");
+  LOG_DEBUG("Building parse tree completed!");
 
-  LOG_INFO("Binding parse tree...");
+  LOG_DEBUG("Binding parse tree...");
   parse_tree = delete_stmt->GetStatement(0);
   bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
-  LOG_INFO("Binding parse tree completed!");
+  LOG_DEBUG("Binding parse tree completed!");
 
-  LOG_INFO("Building plan tree...");
+  LOG_DEBUG("Building plan tree...");
 
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, txn));
-  LOG_INFO("Building plan tree completed!");
-  LOG_INFO("Executing plan...\n%s",
+  LOG_DEBUG("Building plan tree completed!");
+  LOG_DEBUG("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -413,9 +413,9 @@ TEST_F(UpdateTests, UpdatingOld) {
     status = traffic_cop.p_status_;
     traffic_cop.SetQueuing(false);
   }
-  LOG_INFO("Statement executed. Result: %s",
+  LOG_DEBUG("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
-  LOG_INFO("Tuple deleted!");
+  LOG_DEBUG("Tuple deleted!");
   traffic_cop.CommitQueryHelper();
 
   // free the database just created
