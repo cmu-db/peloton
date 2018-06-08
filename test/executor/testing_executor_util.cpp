@@ -16,6 +16,7 @@
 #include <ctime>
 #include <memory>
 #include <vector>
+#include "storage/storage_manager.h"
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
@@ -181,7 +182,7 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
           TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
           layout, tuple_count));
 
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(),
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_ptr->GetTileGroupId(),
                                                tile_group_ptr);
   return tile_group_ptr;
 }
