@@ -13,7 +13,7 @@
 #include "codegen/type/decimal_type.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/decimal_functions_proxy.h"
+#include "codegen/proxy/numeric_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
@@ -192,9 +192,9 @@ struct Abs : public TypeSystem::UnaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-    const override {
+      const override {
     llvm::Value *raw_ret =
-      codegen.Call(DecimalFunctionsProxy::Abs, {val.GetValue()});
+        codegen.Call(NumericFunctionsProxy::Abs, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
   }
 };
@@ -213,7 +213,7 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
     llvm::Value *raw_ret =
-        codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
+        codegen.Call(NumericFunctionsProxy::Floor, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
   }
 };
@@ -232,7 +232,7 @@ struct Round : public TypeSystem::UnaryOperatorHandleNull {
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
       const override {
     llvm::Value *raw_ret =
-        codegen.Call(DecimalFunctionsProxy::Round, {val.GetValue()});
+        codegen.Call(NumericFunctionsProxy::Round, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
   }
 };
@@ -252,7 +252,7 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
       const override {
     PELOTON_ASSERT(SupportsType(val.GetType()));
 
-    auto *result = codegen.Call(DecimalFunctionsProxy::Ceil, {val.GetValue()});
+    auto *result = codegen.Call(NumericFunctionsProxy::Ceil, {val.GetValue()});
 
     return Value{Decimal::Instance(), result};
   }
@@ -473,21 +473,17 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DECIMAL};
 
+// clang-format off
 // Explicit casting rules
 CastDecimal kCastDecimal;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT,
-     kCastDecimal},
-    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL,
-     kCastDecimal}};
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::SMALLINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::INTEGER, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BIGINT, kCastDecimal},
+    {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::DECIMAL, kCastDecimal}};
+// clang-format on
 
 // Comparison operations
 CompareDecimal kCompareDecimal;
@@ -560,6 +556,12 @@ void Decimal::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.DoubleType();
   len_type = nullptr;
+}
+
+llvm::Function *Decimal::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  // TODO: We should be using the precision/scale in the output function
+  return NumericFunctionsProxy::InputDecimal.GetFunction(codegen);
 }
 
 llvm::Function *Decimal::GetOutputFunction(

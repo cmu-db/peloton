@@ -23,24 +23,24 @@ namespace peloton {
 namespace parser {
 class SQLStatementList;
 class SQLStatement;
-}
+}  // namespace parser
 
 namespace planner {
 class AbstractPlan;
-};
+}  // namespace planner
 
 namespace optimizer {
 class OperatorExpression;
-}
+}  // namespace optimizer
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace test {
-  class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
-} 
+class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
+}  // namespace test
 
 namespace optimizer {
 
@@ -60,8 +60,10 @@ class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
 
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
-  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  friend class ::peloton::test::
+      OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
 
  public:
   Optimizer(const Optimizer &) = delete;
@@ -83,23 +85,26 @@ class Optimizer : public AbstractOptimizer {
   OptimizerMetadata &GetMetadata() { return metadata_; }
 
   /* For test purposes only */
-  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
-  concurrency::TransactionContext *txn) {
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(
+      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */
   void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                        std::shared_ptr<OptimizeContext> root_context) {
+                            std::shared_ptr<OptimizeContext> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
 
  private:
-  /* HandleDDLStatement - Check and handle DDL statment (currently only support
-   *CREATE), set
-   * is_ddl_stmt to false if there is no DDL statement.
+  /**
+   * Check and handle the provided DDL statement, returning the resulting plan
+   * if parsed tree is a DDL statement. The is_ddl_stmt parameter is set to
+   * indicate if the parse tree was indeed a DDL statement.
    *
-   * tree: a peloton query tree representing a select query
-   * return: the DDL plan if it is a DDL statement
+   * @param tree A parsed SQL statement
+   * @param[out] is_ddl_stmt Set to true if the SQL statement is DDL
+   * @param txn The transactional context
+   * @return The constructed plan tree representing the DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       parser::SQLStatement *tree, bool &is_ddl_stmt,
