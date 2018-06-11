@@ -48,24 +48,26 @@ namespace concurrency {
  *    i : insert
  */
 
-TransactionContext::TransactionContext(const size_t thread_id,
+TransactionContext::TransactionContext(bool read_only, const size_t thread_id,
                                        const IsolationLevelType isolation,
                                        const cid_t &read_id) {
-  Init(thread_id, isolation, read_id);
+  Init(read_only, thread_id, isolation, read_id);
 }
 
-TransactionContext::TransactionContext(const size_t thread_id,
+TransactionContext::TransactionContext(bool read_only, const size_t thread_id,
                                        const IsolationLevelType isolation,
                                        const cid_t &read_id,
                                        const cid_t &commit_id) {
-  Init(thread_id, isolation, read_id, commit_id);
+  Init(read_only, thread_id, isolation, read_id, commit_id);
 }
 
 TransactionContext::~TransactionContext() {}
 
-void TransactionContext::Init(const size_t thread_id,
+void TransactionContext::Init(bool read_only, const size_t thread_id,
                               const IsolationLevelType isolation,
                               const cid_t &read_id, const cid_t &commit_id) {
+  read_only_ = read_only;
+
   read_id_ = read_id;
 
   // commit id can be set at a transaction's commit phase.

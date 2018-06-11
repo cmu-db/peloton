@@ -32,7 +32,7 @@ ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
 
 TransactionContext *TransactionManager::BeginTransaction(
-    const size_t thread_id, const IsolationLevelType type, bool read_only) {
+    bool read_only, const size_t thread_id, const IsolationLevelType type) {
   TransactionContext *txn = nullptr;
 
   if (type == IsolationLevelType::SNAPSHOT) {
@@ -45,9 +45,10 @@ TransactionContext *TransactionManager::BeginTransaction(
       cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(
           thread_id, TimestampType::COMMIT);
 
-      txn = new TransactionContext(thread_id, type, read_id, commit_id);
+      txn = new TransactionContext(read_only, thread_id, type, read_id,
+                                   commit_id);
     } else {
-      txn = new TransactionContext(thread_id, type, read_id);
+      txn = new TransactionContext(read_only, thread_id, type, read_id);
     }
 
   } else {
@@ -58,11 +59,7 @@ TransactionContext *TransactionManager::BeginTransaction(
     // transaction processing with decentralized epoch manager
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::READ);
-    txn = new TransactionContext(thread_id, type, read_id);
-  }
-
-  if (read_only) {
-    txn->SetReadOnly();
+    txn = new TransactionContext(read_only, thread_id, type, read_id);
   }
 
   txn->SetTimestamp(function::DateFunctions::Now());
