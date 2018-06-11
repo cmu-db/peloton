@@ -665,7 +665,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     oid_t tuple_slot = item_ptr.offset;
 
     if (tile_group_id != last_tile_group_id) {
-      tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      tile_group_header =
+          storage_manager->GetTileGroup(tile_group_id)->GetHeader();
     }
 
     if (tuple_entry.second == RWType::READ_OWN) {
@@ -823,7 +824,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     oid_t tuple_slot = item_ptr.offset;
 
     if (tile_group_id != last_tile_group_id) {
-      tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      tile_group_header =
+          storage_manager->GetTileGroup(tile_group_id)->GetHeader();
     }
 
     if (tuple_entry.second == RWType::READ_OWN) {

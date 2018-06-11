@@ -94,7 +94,8 @@ RWType TransactionContext::GetRWType(const ItemPointer &location) {
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
-      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+                 (rw_set_[location] != RWType::DELETE &&
+                  rw_set_[location] != RWType::INS_DEL));
   auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     return;
@@ -104,13 +105,15 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
-      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+                 (rw_set_[location] != RWType::DELETE &&
+                  rw_set_[location] != RWType::INS_DEL));
   rw_set_[location] = RWType::READ_OWN;
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
-      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+                 (rw_set_[location] != RWType::DELETE &&
+                  rw_set_[location] != RWType::INS_DEL));
   rw_set_[location] = RWType::UPDATE;
 }
 
@@ -121,12 +124,12 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
 
 void TransactionContext::RecordDelete(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
-      (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
+                 (rw_set_[location] != RWType::DELETE &&
+                  rw_set_[location] != RWType::INS_DEL));
   auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end() && rw_set_it->second == RWType::INSERT) {
     rw_set_it->second = RWType::INS_DEL;
-  }
-  else {
+  } else {
     rw_set_[location] = RWType::DELETE;
   }
 }

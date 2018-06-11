@@ -96,8 +96,7 @@ TEST_F(LockFreeArrayTests, SharedPointerTest2) {
 }
 
 TEST_F(LockFreeArrayTests, FindValidAndEraseTest) {
-
-  typedef uint32_t  value_type;
+  typedef uint32_t value_type;
 
   {
     LockFreeArray<value_type> array;
@@ -105,7 +104,7 @@ TEST_F(LockFreeArrayTests, FindValidAndEraseTest) {
     value_type invalid_value = 6288;
 
     size_t const element_count = 3;
-    for (size_t element = 0; element < element_count; ++element ) {
+    for (size_t element = 0; element < element_count; ++element) {
       array.Append(element);
     }
 
@@ -120,12 +119,10 @@ TEST_F(LockFreeArrayTests, FindValidAndEraseTest) {
     // in range, erased
     EXPECT_EQ(invalid_value, array.FindValid(2, invalid_value));
   }
-
 }
 
 TEST_F(LockFreeArrayTests, ClearAndIsEmptyTest) {
-
-  typedef uint32_t  value_type;
+  typedef uint32_t value_type;
 
   {
     LockFreeArray<value_type> array;
@@ -133,7 +130,7 @@ TEST_F(LockFreeArrayTests, ClearAndIsEmptyTest) {
     EXPECT_TRUE(array.IsEmpty());
 
     size_t const element_count = 3;
-    for (size_t element = 0; element < element_count; ++element ) {
+    for (size_t element = 0; element < element_count; ++element) {
       array.Append(element);
     }
 
@@ -145,16 +142,12 @@ TEST_F(LockFreeArrayTests, ClearAndIsEmptyTest) {
 
     EXPECT_TRUE(array.IsEmpty());
 
-
     EXPECT_FALSE(array.Contains(2));
-
   }
-
 }
 
 TEST_F(LockFreeArrayTests, ContainsTest) {
-
-  typedef uint32_t  value_type;
+  typedef uint32_t value_type;
 
   {
     LockFreeArray<value_type> array;
@@ -162,7 +155,7 @@ TEST_F(LockFreeArrayTests, ContainsTest) {
     EXPECT_FALSE(array.Contains(2));
 
     size_t const element_count = 3;
-    for (size_t element = 0; element < element_count; ++element ) {
+    for (size_t element = 0; element < element_count; ++element) {
       array.Append(element);
     }
 
@@ -171,20 +164,17 @@ TEST_F(LockFreeArrayTests, ContainsTest) {
     array.Clear();
 
     EXPECT_FALSE(array.Contains(2));
-
   }
-
 }
 
 TEST_F(LockFreeArrayTests, UpdateTest) {
-
-  typedef uint32_t  value_type;
+  typedef uint32_t value_type;
 
   {
     LockFreeArray<value_type> array;
 
     size_t const element_count = 3;
-    for (size_t element = 0; element < element_count; ++element ) {
+    for (size_t element = 0; element < element_count; ++element) {
       array.Append(element);
     }
 
@@ -193,9 +183,7 @@ TEST_F(LockFreeArrayTests, UpdateTest) {
     array.Update(2, 6288);
 
     EXPECT_EQ(6288, array.Find(2));
-
   }
-
 }
 
 }  // namespace test

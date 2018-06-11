@@ -36,7 +36,8 @@ template <typename ValueType>
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
 
 template <typename ValueType>
-void LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, const ValueType &value) {
+void LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset,
+                                  const ValueType &value) {
   LOG_TRACE("Update at %lu", offset);
   PELOTON_ASSERT(lock_free_array.size() > offset);
   lock_free_array.at(offset) = value;
