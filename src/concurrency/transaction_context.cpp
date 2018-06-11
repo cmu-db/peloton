@@ -101,7 +101,6 @@ RWType TransactionContext::GetRWType(const ItemPointer &location) {
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
-
   auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end()) {
     UNUSED_ATTRIBUTE RWType rw_type = rw_set_it->second;
