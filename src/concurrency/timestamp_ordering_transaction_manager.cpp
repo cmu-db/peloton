@@ -667,6 +667,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     if (tile_group_id != last_tile_group_id) {
       tile_group_header =
           storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      last_tile_group_id = tile_group_id;
     }
 
     if (tuple_entry.second == RWType::READ_OWN) {
@@ -826,6 +827,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     if (tile_group_id != last_tile_group_id) {
       tile_group_header =
           storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      last_tile_group_id = tile_group_id;
     }
 
     if (tuple_entry.second == RWType::READ_OWN) {
