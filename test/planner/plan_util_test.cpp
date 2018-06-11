@@ -106,7 +106,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   static_cast<parser::UpdateStatement *>(sql_stmt)
       ->table->TryBindDatabaseName(TEST_DB_NAME);
   std::set<oid_t> affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->GetCatalogCache(), *sql_stmt);
 
   // id and first_name are affected
   EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
@@ -121,7 +121,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   static_cast<parser::UpdateStatement *>(sql_stmt)
       ->table->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->GetCatalogCache(), *sql_stmt);
 
   // only first_name is affected
   EXPECT_EQ(1, static_cast<int>(affected_indexes.size()));
@@ -136,7 +136,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   static_cast<parser::DeleteStatement *>(sql_stmt)
       ->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->GetCatalogCache(), *sql_stmt);
 
   // all indexes are affected
   EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
@@ -151,7 +151,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   static_cast<parser::InsertStatement *>(sql_stmt)
       ->TryBindDatabaseName(TEST_DB_NAME);
   affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->GetCatalogCache(), *sql_stmt);
 
   // all indexes are affected
   EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
@@ -164,7 +164,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   affected_indexes =
-      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+      planner::PlanUtil::GetAffectedIndexes(txn->GetCatalogCache(), *sql_stmt);
 
   // no indexes are affected
   EXPECT_EQ(0, static_cast<int>(affected_indexes.size()));
@@ -262,7 +262,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   bind_node_visitor.BindNameToNode(sql_stmt);
   std::vector<planner::col_triplet> affected_cols_vector =
       planner::PlanUtil::GetIndexableColumns(
-          txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+          txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   std::set<planner::col_triplet> affected_cols(affected_cols_vector.begin(),
                                                affected_cols_vector.end());
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
@@ -277,7 +277,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(0, static_cast<int>(affected_cols.size()));
@@ -291,7 +291,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(0, static_cast<int>(affected_cols.size()));
@@ -304,7 +304,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
@@ -320,7 +320,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(0, static_cast<int>(affected_cols.size()));
@@ -334,7 +334,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));
@@ -350,7 +350,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(3, static_cast<int>(affected_cols.size()));
@@ -370,7 +370,7 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   sql_stmt = sql_stmt_list->GetStatement(0);
   bind_node_visitor.BindNameToNode(sql_stmt);
   affected_cols_vector = planner::PlanUtil::GetIndexableColumns(
-      txn->catalog_cache, std::move(sql_stmt_list), TEST_DB_COLUMNS);
+      txn->GetCatalogCache(), std::move(sql_stmt_list), TEST_DB_COLUMNS);
   affected_cols = std::set<planner::col_triplet>(affected_cols_vector.begin(),
                                                  affected_cols_vector.end());
   EXPECT_EQ(2, static_cast<int>(affected_cols.size()));

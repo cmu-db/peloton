@@ -62,7 +62,7 @@ class PlanUtil {
    * @return set of affected index object ids
    */
   static const std::set<oid_t> GetAffectedIndexes(
-      catalog::CatalogCache &catalog_cache,
+      std::shared_ptr<catalog::CatalogCache> catalog_cache,
       const parser::SQLStatement &sql_stmt);
 
   /**
@@ -73,7 +73,7 @@ class PlanUtil {
   * @return vector of affected column ids with triplet format
   */
   static const std::vector<col_triplet> GetIndexableColumns(
-      catalog::CatalogCache &catalog_cache,
+      std::shared_ptr<catalog::CatalogCache> catalog_cache,
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
       const std::string &db_name);
 

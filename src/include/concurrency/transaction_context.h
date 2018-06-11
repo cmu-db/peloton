@@ -70,6 +70,14 @@ class TransactionContext : public Printable {
   //===--------------------------------------------------------------------===//
 
   /**
+   * @brief Get the CatalogCache for this txn
+   * @return the CatalogCache for this txn
+   */
+  inline std::shared_ptr<catalog::CatalogCache> GetCatalogCache() const {
+    return (catalog_cache);
+  }
+
+  /**
    * @brief      Gets the thread identifier.
    *
    * @return     The thread identifier.
@@ -282,13 +290,13 @@ class TransactionContext : public Printable {
     return isolation_level_;
   }
 
-  /** cache for table catalog objects */
-  catalog::CatalogCache catalog_cache;
-
  private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+
+  /** cache for table catalog objects */
+  std::shared_ptr<catalog::CatalogCache> catalog_cache;
 
   /** transaction id */
   txn_id_t txn_id_;

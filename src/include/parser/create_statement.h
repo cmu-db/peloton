@@ -215,7 +215,15 @@ struct ColumnDefinition {
  */
 class CreateStatement : public TableRefStatement {
  public:
-  enum CreateType { kTable, kDatabase, kIndex, kTrigger, kSchema, kView };
+  enum CreateType {
+    kTable,
+    kDatabase,
+    kIndex,
+    kTrigger,
+    kSchema,
+    kView,
+    kSequence
+  };
 
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
@@ -252,6 +260,14 @@ class CreateStatement : public TableRefStatement {
   std::unique_ptr<expression::AbstractExpression> trigger_when;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
+
+  // attributes related to sequences
+  std::string sequence_name;
+  int64_t seq_start = 1;
+  int64_t seq_increment = 1;
+  int64_t seq_max_value = LONG_MAX;
+  int64_t seq_min_value = 1;
+  bool seq_cycle = false;
 };
 
 }  // namespace parser

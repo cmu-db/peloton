@@ -514,7 +514,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid,
 
   // evict from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
@@ -536,7 +536,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   }
   // try get from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) return table_object;
 
   // cache miss, get from pg_table
@@ -582,7 +582,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+  auto database_object = txn->GetCatalogCache()->GetDatabaseObject(database_oid);
   if (database_object) {
     auto table_object =
         database_object->GetTableObject(table_name, schema_name, true);
@@ -677,7 +677,7 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
 
   // get table object, then evict table object
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);

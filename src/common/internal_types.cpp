@@ -332,6 +332,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::SCHEMA: {
       return "SCHEMA";
     }
+    case CreateType::SEQUENCE: {
+      return "SEQUENCE";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for CreateType value '%d'",
@@ -357,6 +360,8 @@ CreateType StringToCreateType(const std::string &str) {
     return CreateType::TRIGGER;
   } else if (upper_str == "SCHEMA") {
     return CreateType::SCHEMA;
+  } else if (upper_str == "SEQUENCE") {
+    return CreateType::SEQUENCE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No CreateType conversion from string '%s'", upper_str.c_str()));
@@ -391,6 +396,9 @@ std::string DropTypeToString(DropType type) {
     case DropType::SCHEMA: {
       return "SCHEMA";
     }
+    case DropType::SEQUENCE: {
+      return "SEQUENCE";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for DropType value '%d'",
@@ -416,6 +424,8 @@ DropType StringToDropType(const std::string &str) {
     return DropType::TRIGGER;
   } else if (upper_str == "SCHEMA") {
     return DropType::SCHEMA;
+  } else if (upper_str == "SEQUENCE") {
+    return DropType::SEQUENCE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DropType conversion from string '%s'", upper_str.c_str()));
@@ -557,6 +567,8 @@ std::string QueryTypeToString(QueryType query_type) {
       return "CREATE TRIGGER";
     case QueryType::QUERY_CREATE_SCHEMA:
       return "CREATE SCHEMA";
+    case QueryType::QUERY_CREATE_SEQUENCE:
+      return "CREATE SEQUENCE";
     case QueryType::QUERY_CREATE_VIEW:
       return "CREATE VIEW";
     case QueryType::QUERY_DROP:
@@ -618,6 +630,7 @@ QueryType StringToQueryType(const std::string &str) {
       {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
       {"CREATE SCHEMA", QueryType::QUERY_CREATE_SCHEMA},
       {"CREATE VIEW", QueryType::QUERY_CREATE_VIEW},
+      {"CREATE SEQUENCE", QueryType::QUERY_CREATE_SEQUENCE},
       {"OTHER", QueryType::QUERY_OTHER},
   };
   std::unordered_map<std::string, QueryType>::iterator it =
@@ -687,6 +700,9 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
             break;
           case parser::CreateStatement::CreateType::kView:
             query_type = QueryType::QUERY_CREATE_VIEW;
+            break;
+          case parser::CreateStatement::CreateType::kSequence:
+            query_type = QueryType::QUERY_CREATE_SEQUENCE;
             break;
         }
         break;

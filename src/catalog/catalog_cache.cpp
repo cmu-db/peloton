@@ -15,6 +15,7 @@
 #include "catalog/catalog_cache.h"
 
 #include "catalog/database_catalog.h"
+#include "catalog/sequence_catalog.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -111,6 +112,14 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
   return it->second;
 }
 
+std::vector<std::shared_ptr<DatabaseCatalogObject>> CatalogCache::GetAllDatabaseObjects() {
+  std::vector<std::shared_ptr<DatabaseCatalogObject>> databases;
+  for (auto it : database_objects_cache) {
+    databases.push_back(it.second);
+  }
+  return (databases);
+}
+
 /*@brief   search table catalog object from all cached database objects
  * @param   table_oid
  * @return  table catalog object; if not found return null
@@ -150,6 +159,80 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 			database_object->GetCachedIndexObject(index_name, schema_name);
 	if (index_object) return index_object;
   return nullptr;
+}
+
+/*@brief   insert sequence catalog object into cache
+ * @param  sequence_object
+ * @return  false only if sequence already exists in cache or invalid
+ */
+bool CatalogCache::InsertSequenceObject(
+    std::shared_ptr<SequenceCatalogObject> sequence_object) {
+  if (!sequence_object || sequence_object->seq_oid == INVALID_OID) {
+    return false;  // invalid object
+  }
+
+  std::size_t hash_key = GetHashKey(sequence_object->seq_name,
+                                    sequence_object->db_oid);
+
+  // check if already in cache
+  if (sequence_objects_cache.find(hash_key) !=
+          sequence_objects_cache.end()) {
+    LOG_DEBUG("Sequence %s already exists in cache!",
+              sequence_object->seq_name.c_str());
+    return false;
+  }
+
+  sequence_objects_cache.insert(
+          std::make_pair(hash_key, sequence_object));
+  return true;
+}
+
+/*@brief   evict sequence catalog object from cache
+ * @param  sequence_name
+ * @param  database_oid
+ * @return  true if specified sequence is found and evicted;
+ *          false if not found
+ */
+bool CatalogCache::EvictSequenceObject(const std::string & sequence_name,
+         oid_t database_oid) {
+  std::size_t hash_key = GetHashKey(sequence_name, database_oid);
+
+  auto it = sequence_objects_cache.find(hash_key);
+  if (it == sequence_objects_cache.end()) {
+    return false;  // sequence not found in cache
+  }
+
+  auto sequence_object = it->second;
+  PELOTON_ASSERT(sequence_object);
+  sequence_objects_cache.erase(it);
+  return true;
+}
+
+/*@brief   get sequence catalog object from cache
+ * @param  sequence_name
+ * @param  database_oid
+ * @return  sequence catalog object; if not found return object with invalid oid
+ */
+std::shared_ptr<SequenceCatalogObject> CatalogCache::GetSequenceObject(
+            const std::string & sequence_name, oid_t database_oid) {
+  std::size_t hash_key = GetHashKey(sequence_name, database_oid);
+  auto it = sequence_objects_cache.find(hash_key);
+  if (it == sequence_objects_cache.end()) {
+    return nullptr;
+  }
+  return it->second;
+}
+
+/*@brief  get the hash key given the sequence information
+ * @param  sequence_name
+ * @param  database_oid
+ * @return  hash key
+ */
+std::size_t CatalogCache::GetHashKey(const std::string sequence_name,
+     oid_t database_oid) {
+  std::tuple<std::string, size_t> key(sequence_name, database_oid);
+  boost::hash<std::tuple<std::string, size_t>> key_hash;
+  return key_hash(key);
 }
 
 }  // namespace catalog

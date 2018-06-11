@@ -83,6 +83,11 @@ void TransactionContext::Init(const size_t thread_id,
   gc_set_ = std::make_shared<GCSet>();
   gc_object_set_ = std::make_shared<GCObjectSet>();
 
+  // TODO: I think that we need to delete this object when
+  // we delete the TransactionContext. It probably shouldn't
+  // be a shared_ptr since the TransactionContext owns it
+  catalog_cache.reset(new catalog::CatalogCache());
+
   on_commit_triggers_.reset();
 }
 

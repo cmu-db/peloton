@@ -32,6 +32,8 @@
 #include "function/date_functions.h"
 #include "function/numeric_functions.h"
 #include "function/old_engine_string_functions.h"
+#include "function/string_functions.h"
+#include "function/sequence_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "settings/settings_manager.h"
@@ -1308,6 +1310,20 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Like,
                                     function::OldEngineStringFunctions::Like},
           txn);
+      // Sequence
+      AddBuiltinFunction(
+              "nextval", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+              internal_lang, "Nextval",
+              function::BuiltInFuncType{OperatorId::Nextval,
+                                        function::SequenceFunctions::_Nextval},
+              txn);
+      AddBuiltinFunction(
+              "currval", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+              internal_lang, "Currval",
+              function::BuiltInFuncType{OperatorId::Currval,
+                                        function::SequenceFunctions::_Currval},
+              txn);
+
 
       /**
        * decimal functions
