@@ -122,11 +122,11 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
 void TransactionContext::RecordDelete(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
       (rw_set_[location] != RWType::DELETE && rw_set_[location] != RWType::INS_DEL));
-  if (rw_set_[location] == RWType::INSERT) {
-    rw_set_[location] = RWType::INS_DEL;
+  auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end() && rw_set_it->second == RWType::INSERT) {
+    rw_set_it->second = RWType::INS_DEL;
   }
   else {
-    // READ, READ_OWN, UPDATE
     rw_set_[location] = RWType::DELETE;
   }
 }
