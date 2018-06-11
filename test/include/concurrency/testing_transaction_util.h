@@ -242,7 +242,8 @@ class TransactionThread {
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
         /** starts a read only transaction*/
-        txn = txn_manager->BeginTransaction(0, IsolationLevelType::SNAPSHOT, true);
+        txn = txn_manager->BeginTransaction(0, IsolationLevelType::SNAPSHOT,
+                                            true);
       } else {
         txn = txn_manager->BeginTransaction();
       }
@@ -354,7 +355,6 @@ class TransactionScheduler {
         table(datatable_),
         time(0),
         concurrent(false) {
-
     for (size_t i = 0; i < num_txn; i++) {
       if (read_only_.find(i) != read_only_.end()) {
         schedules.emplace_back(i, true);
