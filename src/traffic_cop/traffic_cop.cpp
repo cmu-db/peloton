@@ -164,7 +164,9 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     // new txn, reset result status
     curr_state.second = ResultType::SUCCESS;
     single_statement_txn_ = true;
-    txn = txn_manager.BeginTransaction(thread_id);
+    // txn is read-only for single-statement select
+    bool read_only = statement_->GetQueryType() == QueryType::QUERY_SELECT;
+    txn = txn_manager.BeginTransaction(read_only, thread_id);
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
