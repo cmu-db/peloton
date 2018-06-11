@@ -14,6 +14,10 @@
 ## Supported environments:
 ##  * Ubuntu (14.04, 16.04, 18.04)
 ##  * macOS
+##
+## Update (2018-06-08):
+## We are no longer able to support RedHat/Fedora because those
+## environments are not supported by TensorFlow.
 ## =================================================================
 
 set -o errexit
@@ -187,27 +191,6 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
-## DEBIAN
-## ------------------------------------------------
-elif [ "$DISTRO" = "DEBIAN OS" ]; then
-    echo "Error: Debian is not currently supported"
-    exit 1
-
-## ------------------------------------------------
-## FEDORA
-## ------------------------------------------------
-elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    echo "Error: Fedora is not currently supported"
-    exit 1
-
-## ------------------------------------------------
-## REDHAT
-## ------------------------------------------------
-elif [[ "$DISTRO" == *"REDHAT"* ]]; then
-    echo "Error: Red Hat is not currently supported"
-    exit 1
-
-## ------------------------------------------------
 ## DARWIN (macOS)
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DARWIN" ]; then
@@ -248,7 +231,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
 ## UNKNOWN
 ## ------------------------------------------------
 else
-    echo "Unknown distribution '$DISTRO'"
+    echo "Unsupported distribution '$DISTRO'"
     echo "Please contact our support team for additional help." \
          "Be sure to include the contents of this message"
     echo "Platform: $(uname -a)"
