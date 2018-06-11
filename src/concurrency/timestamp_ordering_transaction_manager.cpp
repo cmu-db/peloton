@@ -623,6 +623,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //// handle other isolation levels
   //////////////////////////////////////////////////////////
 
+  auto &rw_set = current_txn->GetReadWriteSet();
+
+  // if no modifying queries, treat as read-only
+  if (rw_set.empty()) {
+    EndTransaction(current_txn);
+    return ResultType::SUCCESS;
+  }
+
   auto storage_manager = storage::StorageManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -631,7 +639,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
 
-  auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
 
   auto gc_set = current_txn->GetGCSetPtr();
