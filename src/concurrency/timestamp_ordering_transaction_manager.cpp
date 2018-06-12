@@ -653,9 +653,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // 3. install a new tuple for insert operations.
   // Iterate through each item pointer in the read write set
 
-  // TODO (Pooja): This might be inefficient since we will have to get the
-  // tile_group_header for each entry. Check if this needs to be consolidated
-
   oid_t last_tile_group_id = INVALID_OID;
   storage::TileGroupHeader *tile_group_header = nullptr;
 
@@ -813,8 +810,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   }
 
   // Iterate through each item pointer in the read write set
-  // TODO (Pooja): This might be inefficient since we will have to get the
-  // tile_group_header for each entry. Check if this needs to be consolidated
 
   oid_t last_tile_group_id = INVALID_OID;
   storage::TileGroupHeader *tile_group_header = nullptr;

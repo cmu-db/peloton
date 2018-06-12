@@ -171,8 +171,9 @@ class TransactionContext : public Printable {
    * @brief      Delete the record.
    *
    * @param[in]  <unnamed>  The logical physical location of the record
+   * @return    true if INS_DEL, false if DELETE
    */
-  void RecordDelete(const ItemPointer &);
+  bool RecordDelete(const ItemPointer &);
 
   RWType GetRWType(const ItemPointer &);
 

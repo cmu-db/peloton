@@ -101,23 +101,21 @@ TEST_F(LockFreeArrayTests, FindValidAndEraseTest) {
   {
     LockFreeArray<value_type> array;
 
-    value_type invalid_value = 6288;
-
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element) {
       array.Append(element);
     }
 
     // in range, valid
-    EXPECT_EQ(2, array.FindValid(2, invalid_value));
+    EXPECT_EQ(2, array.FindValid(2, INVALID_OID));
 
     // out of range
-    EXPECT_EQ(invalid_value, array.FindValid(6, invalid_value));
+    EXPECT_EQ(INVALID_OID, array.FindValid(6, INVALID_OID));
 
-    array.Erase(2, invalid_value);
+    array.Erase(2, INVALID_OID);
 
     // in range, erased
-    EXPECT_EQ(invalid_value, array.FindValid(2, invalid_value));
+    EXPECT_EQ(INVALID_OID, array.FindValid(2, INVALID_OID));
   }
 }
 
