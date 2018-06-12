@@ -55,7 +55,7 @@ struct Buffer {
    * @return Whether there is any more bytes between the cursor and
    *         the end of the buffer
    */
-  inline bool HasMore(size_t bytes = 1) { return offset_ + bytes < size_; }
+  inline bool HasMore(size_t bytes = 1) { return offset_ + bytes <= size_; }
 
   /**
    * @return Whether the buffer is at capacity. (All usable space is filled
@@ -71,7 +71,7 @@ struct Buffer {
   /**
    * @return Capacity of the buffer (not actual size)
    */
-  inline constexpr size_t Capacity() { return SOCKET_BUFFER_SIZE; }
+  inline constexpr size_t Capacity() const { return SOCKET_BUFFER_SIZE; }
 
   /**
    * Shift contents to align the current cursor with start of the buffer,
@@ -189,7 +189,7 @@ class WriteBuffer: public Buffer {
    * @return Remaining capacity
    */
   inline size_t RemainingCapacity() {
-    return Capacity() - size_;
+    return Capacity() - size_ + 1;
   }
 
   /**
@@ -202,7 +202,7 @@ class WriteBuffer: public Buffer {
 
   /**
    * Append the desired range into current buffer
-   * @tparam InputIt iterator type
+   * @tparam InputIt iterator type.
    * @param first beginning of range
    * @param len length of range
    */
@@ -219,7 +219,7 @@ class WriteBuffer: public Buffer {
    */
   template <typename T>
   inline void Append(T val) {
-    Append(&val, sizeof(T));
+    Append(reinterpret_cast<uchar *>(&val), sizeof(T));
   }
 };
 

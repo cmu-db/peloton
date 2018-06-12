@@ -41,8 +41,6 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   // It is not necessary to have an explicit cast here because the reused
   // wrapper always use Posix methods, as we never update their type in the
   // reusable wrappers map.
-  auto new_wrapper = new std::shared_ptr<NetworkIoWrapper>(
-      reinterpret_cast<PosixSocketIoWrapper *>(reused_wrapper.get()));
   return reused_wrapper;
 }
 
@@ -62,8 +60,7 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(std::shared_ptr<
     // ssl handshake is done, need to use new methods for the original wrappers;
     // We do not update the type in the reusable wrappers map because it is not
     // relevant.
-    io_wrapper = new std::shared_ptr<NetworkIoWrapper>(
-        reinterpret_cast<SslSocketIoWrapper *>(io_wrapper.get()));
+    io_wrapper.reset(reinterpret_cast<SslSocketIoWrapper *>(io_wrapper.get()));
   }
 
   // The wrapper already uses SSL methods.

@@ -955,10 +955,10 @@ bool PostgresProtocolHandler::ReadPacket(ReadBuffer &rbuf, InputPacket &rpkt) {
     auto bytes_required = rpkt.ExtendedBytesRequired();
     // read minimum of the two ranges
     auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf.Begin() + rbuf.buf_ptr,
-                                rbuf.Begin() + rbuf.buf_ptr + read_size);
+    rpkt.AppendToExtendedBuffer(rbuf.Begin() + rbuf.offset_,
+                                rbuf.Begin() + rbuf.offset_ + read_size);
     // data has been copied, move ptr
-    rbuf.buf_ptr += read_size;
+    rbuf.offset_ += read_size;
     if (bytes_required > bytes_available) {
       // more data needs to be read
       return false;
@@ -967,14 +967,14 @@ bool PostgresProtocolHandler::ReadPacket(ReadBuffer &rbuf, InputPacket &rpkt) {
     rpkt.InitializePacket();
     return true;
   } else {
-    if (rbuf.IsReadDataAvailable(rpkt.len) == false) {
+    if (rbuf.HasMore(rpkt.len) == false) {
       // data not available yet, return
       return false;
     }
     // Initialize the packet's "contents"
-    rpkt.InitializePacket(rbuf.buf_ptr, rbuf.Begin());
+    rpkt.InitializePacket(rbuf.offset_, rbuf.Begin());
     // We have processed the data, move buffer pointer
-    rbuf.buf_ptr += rpkt.len;
+    rbuf.offset_ += rpkt.len;
   }
 
   return true;

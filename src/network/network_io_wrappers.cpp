@@ -37,12 +37,14 @@ Transition NetworkIoWrapper::WritePacket(OutputPacket *pkt) {
   pkt->skip_header_write = true;
 
   // Write Packet Content
-  while (pkt->len != 0) {
-    if (wbuf_->HasSpaceFor(pkt->len))
+  for (size_t len = pkt->len; len != 0;) {
+    if (wbuf_->HasSpaceFor(pkt->len)) {
       wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, pkt->len);
-    else {
+      break;
+    } else {
       auto write_size = wbuf_->RemainingCapacity();
       wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, write_size);
+      len -= write_size;
       pkt->write_ptr += write_size;
       auto result = FlushWriteBuffer();
       if (FlushWriteBuffer() != Transition::PROCEED)
@@ -84,8 +86,7 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
         case EAGAIN:
           // Equal to EWOULDBLOCK
           return result;
-        case EINTR:
-          continue;
+        case EINTR:continue;
         default:LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Error when filling read buffer " +
               std::to_string(errno));
@@ -156,8 +157,9 @@ Transition SslSocketIoWrapper::FlushWriteBuffer() {
                         ERR_get_error());
         throw NetworkProcessException("SSL write error");
     }
+  }
 
-    return Transition::PROCEED;
+  return Transition::PROCEED;
 }
 
 Transition SslSocketIoWrapper::Close() {

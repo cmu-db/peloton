@@ -161,8 +161,8 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
     : conn_handler_(handler) {
   // We will always handle connections using posix until (potentially) first SSL
   // handshake.
-  io_wrapper_ = std::move(NetworkIoWrapperFactory::GetInstance()
-                              .NewNetworkIoWrapper(sock_fd));
+  io_wrapper_ = NetworkIoWrapperFactory::GetInstance()
+                              .NewNetworkIoWrapper(sock_fd);
 }
 
 Transition ConnectionHandle::TryWrite() {

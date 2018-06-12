@@ -49,9 +49,9 @@ class NetworkIoWrapper {
                    std::shared_ptr<ReadBuffer> &rbuf,
                    std::shared_ptr<WriteBuffer> &wbuf)
       : sock_fd_(sock_fd),
-        conn_ssl_context_(nullptr),
         rbuf_(std::move(rbuf)),
-        wbuf_(std::move(wbuf)) {}
+        wbuf_(std::move(wbuf)),
+        conn_ssl_context_(nullptr) {}
   // It is worth noting that because of the way we are reinterpret-casting between
   // derived types, it is necessary that they share the same members.
   int sock_fd_;
