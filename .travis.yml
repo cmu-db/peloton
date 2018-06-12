@@ -10,8 +10,9 @@ matrix:
           compiler: clang
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
-              - NAME="clang Debug"
+              - NAME="clang Debug/Tests/AddressSanitizer"
               - PELOTON_BUILD_TYPE=Debug
+              - SANITIZER=Address
               - COVERALLS=Off
 
         # Linux builds for gcc 5
@@ -32,31 +33,8 @@ matrix:
               - CXX=g++-5
               - CC=gcc-5
               - PELOTON_BUILD_TYPE=Debug
+              - SANITIZER=Address
               - COVERALLS=On
-          # override script value to run also tests and benchmarks
-          script:
-              # create build directory
-              - mkdir build
-              - cd build
-              # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
-              - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
-              # build
-              - make -j4
-              # run tests
-              - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
-              - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
-              # build benchmarks
-              - make benchmark -j4
-              # install peloton
-              - make install
-              # run psql tests
-              - bash ../script/testing/psql/psql_test.sh
-              # run jdbc tests
-              - python ../script/validators/jdbc_validator.py
-              # run junit tests
-              - python ../script/testing/junit/run_junit.py
-              # upload coverage info
-              - make coveralls
 
         - os: linux
           sudo: required
@@ -75,29 +53,8 @@ matrix:
               - CXX=g++-5
               - CC=gcc-5
               - PELOTON_BUILD_TYPE=Release
+              - SANITIZER=
               - COVERALLS=Off
-          # override script value to run also tests and benchmarks
-          script:
-              # create build directory
-              - mkdir build
-              - cd build
-              # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
-              - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
-              # build
-              - make -j4
-              # run tests
-              - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
-              - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
-              # build benchmarks
-              - make benchmark -j4
-              # install peloton
-              - make install
-              # run psql tests
-              - bash ../script/testing/psql/psql_test.sh
-              # run jdbc tests
-              - python ../script/validators/jdbc_validator.py
-              # run junit tests
-              - python ../script/testing/junit/run_junit.py
 
 install:
     # setup environment
@@ -114,6 +71,20 @@ script:
     - mkdir build
     - cd build
     # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
-    - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+    - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=$SANITIZER ..
     # build
     - make -j4
+    # run tests
+    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
+    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
+    # install peloton
+    - make install
+    # run psql tests
+    - bash ../script/testing/psql/psql_test.sh
+    # run jdbc tests
+    - python ../script/validators/jdbc_validator.py
+    # run junit tests
+    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then python ../script/testing/junit/run_junit.py; fi
+    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 python ../script/testing/junit/run_junit.py; fi
+    # upload coverage info
+    - if [[ $COVERALLS == 'On' ]]; then make coveralls; fi

@@ -332,7 +332,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   auto txn = txn_manager.BeginTransaction();
   // using transaction to get table from catalog
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test2", txn);
+      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test2", txn);
   EXPECT_NE(nullptr, table);
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
@@ -354,7 +354,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
 
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
-                   DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "test2", txn),
+                   DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test2", txn),
                peloton::Exception);
   txn_manager.CommitTransaction(txn);
 }

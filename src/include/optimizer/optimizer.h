@@ -27,15 +27,15 @@ class SQLStatement;
 
 namespace planner {
 class AbstractPlan;
-};
+}  // namespace planner
 
 namespace optimizer {
 class OperatorExpression;
-}
+}  // namespace optimizer
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace test {
 class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
@@ -107,12 +107,15 @@ class Optimizer : public AbstractOptimizer {
   }
 
  private:
-  /* HandleDDLStatement - Check and handle DDL statment (currently only support
-   *CREATE), set
-   * is_ddl_stmt to false if there is no DDL statement.
+  /**
+   * Check and handle the provided DDL statement, returning the resulting plan
+   * if parsed tree is a DDL statement. The is_ddl_stmt parameter is set to
+   * indicate if the parse tree was indeed a DDL statement.
    *
-   * tree: a peloton query tree representing a select query
-   * return: the DDL plan if it is a DDL statement
+   * @param tree A parsed SQL statement
+   * @param[out] is_ddl_stmt Set to true if the SQL statement is DDL
+   * @param txn The transactional context
+   * @return The constructed plan tree representing the DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       parser::SQLStatement *tree, bool &is_ddl_stmt,

@@ -10,16 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "trigger/trigger.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
+#include "executor/executor_context.h"
+#include "expression/constant_value_expression.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/abstract_table.h"
+#include "trigger/trigger.h"
 
 namespace peloton {
 namespace test {
@@ -56,7 +58,7 @@ class TriggerTests : public PelotonTest {
         new executor::ExecutorContext(txn));
 
     // Create plans
-    planner::CreatePlan node(table_name, DEFUALT_SCHEMA_NAME, DEFAULT_DB_NAME,
+    planner::CreatePlan node(table_name, DEFAULT_SCHEMA_NAME, DEFAULT_DB_NAME,
                              std::move(table_schema), CreateType::TABLE);
 
     // Create executer
@@ -73,7 +75,7 @@ class TriggerTests : public PelotonTest {
     auto txn = txn_manager.BeginTransaction();
 
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, std::string(table_name), txn);
+        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, std::string(table_name), txn);
 
     std::unique_ptr<executor::ExecutorContext> context(
         new executor::ExecutorContext(txn));
@@ -148,7 +150,7 @@ class TriggerTests : public PelotonTest {
     // Check the effect of creation
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
-            DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
+            DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(trigger_number, target_table->GetTriggerNumber());
     trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -276,7 +278,7 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
+          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -363,7 +365,7 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "accounts", txn);
+          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "accounts", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -467,7 +469,7 @@ TEST_F(TriggerTests, OtherTypesTriggers) {
   auto txn = txn_manager.BeginTransaction();
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
+          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);
 
   trigger::TriggerList *new_trigger_list = target_table->GetTriggerList();

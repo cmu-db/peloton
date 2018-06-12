@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "type/value_factory.h"
 #include "catalog/query_history_catalog.h"
 
 #include "catalog/catalog.h"

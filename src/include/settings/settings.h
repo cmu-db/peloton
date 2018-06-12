@@ -116,6 +116,17 @@ SETTING_int(gc_num_threads,
             1, 128,
             true, true)
 
+SETTING_bool(parallel_execution,
+             "Enable parallel execution of queries (default: true)",
+             true,
+             true, true)
+
+SETTING_int(min_parallel_table_scan_size,
+            "Minimum number of tuples a table must have before we consider performing parallel scans (default: 10K)",
+            10 * 1000,
+            1, std::numeric_limits<int32_t>::max(),
+            true, true)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
@@ -123,16 +134,6 @@ SETTING_int(gc_num_threads,
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// SETTINGURATION
-//===----------------------------------------------------------------------===//
-
-// Display configuration
-SETTING_bool(display_settings,
-            "Display settings (default: false)",
-            false,
-            true, true)
 
 //===----------------------------------------------------------------------===//
 // STATISTICS
@@ -199,6 +200,15 @@ SETTING_bool(codegen,
             true,
             true, true)
 
+SETTING_bool(print_ir_stats,
+             "Print statistics on generated IR (default: false)",
+             false,
+             true, true)
+
+SETTING_bool(dump_ir,
+             "Enable logging of all generated IR (default: false)",
+             false,
+             true, true)
 
 //===----------------------------------------------------------------------===//
 // Optimizer
@@ -209,8 +219,8 @@ SETTING_bool(predicate_push_down,
              true, true)
 
 SETTING_bool(hash_join_bloom_filter,
-             "Enable bloom filter for hash join in codegen (default: true)",
-             true,
+             "Enable bloom filter for hash join in codegen (default: false)",
+             false,
              true, true)
 
 SETTING_int(task_execution_timeout,
@@ -224,3 +234,9 @@ SETTING_int(task_execution_timeout,
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
+
+// Display configuration
+SETTING_bool(display_settings,
+             "Display settings (default: false)",
+             false,
+             true, true)

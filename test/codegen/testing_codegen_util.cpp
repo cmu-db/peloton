@@ -12,6 +12,8 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include <boost/filesystem.hpp>
+
 #include "catalog/table_catalog.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/value_proxy.h"
@@ -28,11 +30,15 @@
 namespace peloton {
 namespace test {
 
+TempFileHandle::TempFileHandle(std::string _name) : name(_name) {}
+TempFileHandle::~TempFileHandle() { boost::filesystem::remove(name); }
+
 //===----------------------------------------------------------------------===//
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
+PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup,
+                                       peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -41,9 +47,10 @@ PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
   catalog->CreateDatabase(test_db_name, txn);
   test_db = catalog->GetDatabaseWithName(test_db_name, txn);
   // Create test table
-  CreateTestTables(txn, tuples_per_tilegroup);
+  CreateTestTables(txn, tuples_per_tilegroup, layout_type);
 
   txn_manager.CommitTransaction(txn);
+  layout_table = nullptr;
 }
 
 PelotonCodeGenTest::~PelotonCodeGenTest() {
@@ -103,27 +110,28 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 
 // Create all the test tables, but don't load any data
 void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
-                                          oid_t tuples_per_tilegroup) {
+                                          oid_t tuples_per_tilegroup,
+                                          peloton::LayoutType layout_type) {
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
-                         tuples_per_tilegroup);
+                         tuples_per_tilegroup, layout_type);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
-    catalog->CreateTable(test_db_name, DEFUALT_SCHEMA_NAME, test_table_names[i],
+    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
                          std::move(table_schema), txn, false,
-                         tuples_per_tilegroup);
+                         tuples_per_tilegroup, layout_type);
     test_table_oids.push_back(catalog
                                   ->GetTableObject(test_db_name,
-                                                   DEFUALT_SCHEMA_NAME,
+                                                   DEFAULT_SCHEMA_NAME,
                                                    test_table_names[i], txn)
                                   ->GetTableOid());
   }
@@ -175,26 +183,82 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   txn_manager.CommitTransaction(txn);
 }
 
-void PelotonCodeGenTest::ExecuteSync(
-    codegen::Query &query,
-    std::unique_ptr<executor::ExecutorContext> executor_context,
-    codegen::QueryResultConsumer &consumer) {
-  std::mutex mu;
-  std::condition_variable cond;
-  bool finished = false;
-  query.Execute(std::move(executor_context), consumer,
-                [&](executor::ExecutionResult) {
-                  std::unique_lock<decltype(mu)> lock(mu);
-                  finished = true;
-                  cond.notify_one();
-                });
+void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
+    peloton::LayoutType layout_type, uint32_t tuples_per_tilegroup,
+    uint32_t tile_group_count, uint32_t column_count, bool is_inlined) {
+  uint32_t tuple_count = tuples_per_tilegroup * tile_group_count;
+  /////////////////////////////////////////////////////////
+  // Define the schema.
+  /////////////////////////////////////////////////////////
 
-  std::unique_lock<decltype(mu)> lock(mu);
-  cond.wait(lock, [&] { return finished; });
+  std::vector<catalog::Column> columns;
+
+  for (oid_t col_itr = 0; col_itr <= column_count; col_itr++) {
+    auto column = catalog::Column(
+        type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+        "FIELD" + std::to_string(col_itr), is_inlined);
+
+    columns.push_back(column);
+  }
+
+  std::unique_ptr<catalog::Schema> table_schema =
+      std::unique_ptr<catalog::Schema>(new catalog::Schema(columns));
+  std::string table_name("LAYOUT_TABLE");
+
+  /////////////////////////////////////////////////////////
+  // Create table.
+  /////////////////////////////////////////////////////////
+
+  bool is_catalog = false;
+  auto *catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  const bool allocate = true;
+  auto txn = txn_manager.BeginTransaction();
+
+  // Insert table in catalog
+  catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
+                       std::move(table_schema), txn, is_catalog,
+                       tuples_per_tilegroup, layout_type);
+  // Get table reference
+  layout_table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
+                                           table_name, txn);
+  txn_manager.EndTransaction(txn);
+
+  /////////////////////////////////////////////////////////
+  // Load in the data
+  /////////////////////////////////////////////////////////
+
+  // Insert tuples into tile_group.
+
+  txn = txn_manager.BeginTransaction();
+  auto table_schema_ptr = layout_table->GetSchema();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  for (oid_t row_id = 0; row_id < tuple_count; row_id++) {
+    int populate_value = row_id;
+
+    storage::Tuple tuple(table_schema_ptr, allocate);
+
+    for (oid_t col_id = 0; col_id <= column_count; col_id++) {
+      auto value = type::ValueFactory::GetIntegerValue(populate_value + col_id);
+      tuple.SetValue(col_id, value, testing_pool);
+    }
+
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+        layout_table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
+    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+  }
+
+  txn_manager.CommitTransaction(txn);
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
+    planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer) {
   codegen::QueryParameters parameters(plan, {});
 
   // Start a transaction.
@@ -203,14 +267,14 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
   // Compile the query.
   codegen::QueryCompiler::CompileStats stats;
-  auto compiled_query = codegen::QueryCompiler().Compile(
+  auto query = codegen::QueryCompiler().Compile(
       plan, parameters.GetQueryParametersMap(), consumer, &stats);
 
-  // Execute the query.
-  ExecuteSync(*compiled_query,
-              std::unique_ptr<executor::ExecutorContext>(
-                  new executor::ExecutorContext(txn, std::move(parameters))),
-              consumer);
+  // Executor context
+  executor::ExecutorContext exec_ctx{txn, std::move(parameters)};
+
+  // Execute the query
+  query->Execute(exec_ctx, consumer);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
@@ -220,15 +284,14 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
-    codegen::QueryResultConsumer &consumer, bool &cached,
+    codegen::ExecutionConsumer &consumer, bool &cached,
     std::vector<type::Value> params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn,
-                                    codegen::QueryParameters(*plan, params)));
+  executor::ExecutorContext exec_ctx{txn,
+                                     codegen::QueryParameters(*plan, params)};
 
   // Compile
   codegen::QueryCompiler::CompileStats stats;
@@ -237,13 +300,13 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+        *plan, exec_ctx.GetParams().GetQueryParametersMap(), consumer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
   // Execute the query.
-  ExecuteSync(*query, std::move(executor_context), consumer);
+  query->Execute(exec_ctx, consumer);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
@@ -337,6 +400,10 @@ ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
 // PRINTER
 //===----------------------------------------------------------------------===//
 
+void Printer::Prepare(codegen::CompilationContext &ctx) {
+  ExecutionConsumer::Prepare(ctx);
+}
+
 void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
                             codegen::RowBatch::Row &row) const {
   codegen::CodeGen &codegen = ctx.GetCodeGen();
@@ -384,7 +451,7 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
   format.append("]\n");
 
   // Make the printf call
-  codegen.CallPrintf(format, cols);
+  codegen.Printf(format, cols);
 }
 
 }  // namespace test

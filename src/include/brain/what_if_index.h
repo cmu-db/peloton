@@ -49,17 +49,27 @@ class WhatIfIndex {
       std::shared_ptr<parser::SQLStatement> query, IndexConfiguration &config,
       std::string database_name, concurrency::TransactionContext *txn);
 
- private:
   /**
-   * @brief GetTablesUsed
-   * Given a parsed & bound query, this function updates all the tables
-   * referenced.
+   * @brief GetCostAndBestPlanTree
+   * Perform optimization on the given parsed & bound SQL statement and
+   * return the best physical plan tree and the cost associated with it.
    *
-   * @param query - a parsed and bound SQL statement
-   * @param table_names - where the table names will be stored.
+   * Use this when the referenced table names are already known.
+   *
+   * @param query
+   * @param tables_used
+   * @param config
+   * @param database_name
+   * @param txn
+   * @return
    */
-  static void GetTablesReferenced(std::shared_ptr<parser::SQLStatement> query,
-                                  std::unordered_set<std::string> &table_names);
+  static std::unique_ptr<optimizer::OptimizerPlanInfo> GetCostAndBestPlanTree(
+      std::pair<std::shared_ptr<parser::SQLStatement>,
+                std::unordered_set<std::string>> query,
+      IndexConfiguration &config, std::string database_name,
+      concurrency::TransactionContext *txn);
+
+ private:
   /**
    * @brief Creates a hypothetical index catalog object, that would be used
    * to fill the catalog cache.

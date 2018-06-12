@@ -77,6 +77,13 @@ class StringUtil {
   static std::vector<std::string> Split(const std::string &str, char delimiter);
 
   /**
+   * Join multiple strings into one string. Components are concatenated by the
+   * given separator
+   */
+  static std::string Join(const std::vector<std::string> &input,
+                          const std::string &separator);
+
+  /**
    * Append the prefix to the beginning of each line in str
    */
   static std::string Prefix(const std::string &str, const std::string &prefix);
@@ -126,6 +133,19 @@ class StringUtil {
   static void RTrim(std::string &str);
 
   static std::string Indent(const int num_indent);
+
+  /**
+   * Return a new string that has stripped all occurrences of the provided
+   * character from the provided string.
+   *
+   * NOTE: This function copies the input string into a new string, which is
+   * wasteful. Don't use this for performance critical code, please!
+   *
+   * @param str The input string
+   * @param c The character we want to remove
+   * @return A new string with no occurrences of the provided character
+   */
+  static std::string Strip(const std::string &str, char c);
 };
 
 }  // namespace peloton

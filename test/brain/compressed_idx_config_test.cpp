@@ -67,7 +67,7 @@ class CompressedIdxConfigTest : public PelotonTest {
         new catalog::Schema({a_column, b_column, c_column}));
 
     auto txn = txn_manager_->BeginTransaction();
-    catalog_->CreateTable(db_name, DEFUALT_SCHEMA_NAME, table_name,
+    catalog_->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
                           std::move(table_schema), txn);
     txn_manager_->CommitTransaction(txn);
   }
@@ -90,7 +90,7 @@ class CompressedIdxConfigTest : public PelotonTest {
         new catalog::Schema({a_column, b_column, c_column}));
 
     auto txn = txn_manager_->BeginTransaction();
-    catalog_->CreateTable(db_name, DEFUALT_SCHEMA_NAME, table_name,
+    catalog_->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
                           std::move(table_schema), txn);
     txn_manager_->CommitTransaction(txn);
   }
@@ -104,7 +104,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
     const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-                               ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
+                               ->GetTableObject(table_name, DEFAULT_SCHEMA_NAME)
                                ->GetTableOid();
     const auto table_obj = db_obj->GetTableWithOid(table_oid);
 
@@ -116,9 +116,9 @@ class CompressedIdxConfigTest : public PelotonTest {
     std::vector<oid_t> index_a_b = {col_a, col_b};
     std::vector<oid_t> index_b_c = {col_b, col_c};
 
-    catalog_->CreateIndex(db_name, DEFUALT_SCHEMA_NAME, table_name, index_a_b,
+    catalog_->CreateIndex(db_name, DEFAULT_SCHEMA_NAME, table_name, index_a_b,
                           "index_a_b", false, IndexType::BWTREE, txn);
-    catalog_->CreateIndex(db_name, DEFUALT_SCHEMA_NAME, table_name, index_b_c,
+    catalog_->CreateIndex(db_name, DEFAULT_SCHEMA_NAME, table_name, index_b_c,
                           "index_b_c", false, IndexType::BWTREE, txn);
 
     result.push_back(std::make_shared<brain::HypotheticalIndexObject>(
@@ -137,7 +137,7 @@ class CompressedIdxConfigTest : public PelotonTest {
   oid_t GetTableOid(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-                               ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
+                               ->GetTableObject(table_name, DEFAULT_SCHEMA_NAME)
                                ->GetTableOid();
     txn_manager_->CommitTransaction(txn);
     return table_oid;
@@ -152,7 +152,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
     const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-                               ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
+                               ->GetTableObject(table_name, DEFAULT_SCHEMA_NAME)
                                ->GetTableOid();
     const auto table_obj = db_obj->GetTableWithOid(table_oid);
     std::vector<std::shared_ptr<brain::HypotheticalIndexObject>> result;
@@ -161,7 +161,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     auto col_c = table_obj->GetSchema()->GetColumnID("c");
     std::vector<oid_t> index_a_c = {col_a, col_c};
 
-    catalog_->CreateIndex(db_name, DEFUALT_SCHEMA_NAME, table_name, index_a_c,
+    catalog_->CreateIndex(db_name, DEFAULT_SCHEMA_NAME, table_name, index_a_c,
                           "index_a_c", false, IndexType::BWTREE, txn);
 
     result.push_back(std::make_shared<brain::HypotheticalIndexObject>(
@@ -174,7 +174,7 @@ class CompressedIdxConfigTest : public PelotonTest {
 
   void DropTable(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
-    catalog_->DropTable(db_name, DEFUALT_SCHEMA_NAME, table_name, txn);
+    catalog_->DropTable(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
     txn_manager_->CommitTransaction(txn);
   }
 
@@ -192,7 +192,7 @@ class CompressedIdxConfigTest : public PelotonTest {
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
     const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-                               ->GetTableObject(table_name, DEFUALT_SCHEMA_NAME)
+                               ->GetTableObject(table_name, DEFAULT_SCHEMA_NAME)
                                ->GetTableOid();
     const auto table_obj = db_obj->GetTableWithOid(table_oid);
     std::vector<oid_t> col_oids;

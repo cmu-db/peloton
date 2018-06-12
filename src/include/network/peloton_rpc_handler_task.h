@@ -37,6 +37,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
+#include "optimizer/stats/stats_storage.h"
 #include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
@@ -109,9 +110,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
       col_oid_vector.push_back(col);
     }
 
-    // ** Get the table name and column names. **
     // Create transaction to query the catalog.
-
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 

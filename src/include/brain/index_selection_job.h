@@ -23,6 +23,8 @@ class IndexSelectionJob : public BrainJob {
       : BrainJob(env),
         last_timestamp_(0),
         num_queries_threshold_(num_queries_threshold) {}
+  const std::string brain_suggested_index_prefix_str = "brain_suggested_index";
+
   /**
    * Task function.
    * @param env
@@ -42,6 +44,17 @@ class IndexSelectionJob : public BrainJob {
    * @param keys
    */
   void CreateIndexRPC(brain::HypotheticalIndexObject *index);
+
+  /**
+   * Finds current indexes - suggested indexes.
+   * @param cur_indexes
+   * @param best_config
+   * @return indexes that are not useful and to be dropped.
+   */
+  std::vector<std::shared_ptr<catalog::IndexCatalogObject>> GetIndexesToDrop(
+      std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>>
+          &cur_indexes,
+      brain::IndexConfiguration best_config);
 
   /**
    * Sends an RPC message to server for drop indexes.

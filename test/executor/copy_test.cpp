@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "common/statement.h"
 #include "executor/copy_executor.h"
+#include "executor/executor_context.h"
 #include "executor/seq_scan_executor.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"

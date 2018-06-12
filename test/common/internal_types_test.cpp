@@ -325,8 +325,8 @@ TEST_F(InternalTypesTests, PlanNodeTypeTest) {
       PlanNodeType::ORDERBY, PlanNodeType::PROJECTION,
       PlanNodeType::MATERIALIZE, PlanNodeType::LIMIT, PlanNodeType::DISTINCT,
       PlanNodeType::SETOP, PlanNodeType::APPEND, PlanNodeType::AGGREGATE_V2,
-      PlanNodeType::HASH, PlanNodeType::RESULT, PlanNodeType::COPY,
-      PlanNodeType::MOCK};
+      PlanNodeType::HASH, PlanNodeType::RESULT,
+      PlanNodeType::EXPORT_EXTERNAL_FILE, PlanNodeType::MOCK};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -646,7 +646,7 @@ TEST_F(InternalTypesTests, IsolationLevelTypeTest) {
   std::vector<IsolationLevelType> list = {
       IsolationLevelType::INVALID,        IsolationLevelType::SERIALIZABLE,
       IsolationLevelType::SNAPSHOT,       IsolationLevelType::REPEATABLE_READS,
-      IsolationLevelType::READ_COMMITTED, IsolationLevelType::READ_ONLY};
+      IsolationLevelType::READ_COMMITTED};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

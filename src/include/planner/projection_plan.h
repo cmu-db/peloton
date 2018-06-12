@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/projection_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,12 +22,12 @@ namespace peloton {
 
 namespace catalog {
 class Schema;
-}
+}  // namespace catalog
 
 namespace expression {
 class AbstractExpression;
 class Parameter;
-}
+}  // namespace expression
 
 namespace planner {
 
@@ -43,13 +43,13 @@ class ProjectionPlan : public AbstractPlan {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  inline const planner::ProjectInfo *GetProjectInfo() const {
+  const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
-  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
+  const catalog::Schema *GetSchema() const { return schema_.get(); }
 
-  inline PlanNodeType GetPlanNodeType() const override {
+  PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::PROJECTION;
   }
 
@@ -78,7 +78,8 @@ class ProjectionPlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 

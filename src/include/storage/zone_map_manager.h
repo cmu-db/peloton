@@ -6,10 +6,9 @@
 //
 // Identification: src/include/storage/zone_map_manager.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -17,9 +16,14 @@
 
 #include "common/macros.h"
 #include "common/internal_types.h"
-#include "type/value_factory.h"
-#include "concurrency/transaction_context.h"
+#include "type/value.h"
+
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+}  // namespace concurrency
+
 namespace storage {
 
 class DataTable;
@@ -49,9 +53,9 @@ class ZoneMapManager {
   void CreateZoneMapsForTable(storage::DataTable *table,
                               concurrency::TransactionContext *txn);
 
-  void CreateOrUpdateZoneMapForTileGroup(storage::DataTable *table, 
+  void CreateOrUpdateZoneMapForTileGroup(storage::DataTable *table,
                                          oid_t tile_group_idx,
-                                        concurrency::TransactionContext *txn);
+                                         concurrency::TransactionContext *txn);
 
   void CreateOrUpdateZoneMapInCatalog(oid_t database_id, oid_t table_id,
                                       oid_t tile_group_id, oid_t col_itr,
@@ -63,9 +67,8 @@ class ZoneMapManager {
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t col_itr);
 
   bool ShouldScanTileGroup(storage::PredicateInfo *parsed_predicates,
-                                      int32_t num_predicates,
-                                      storage::DataTable *table,
-                                      int64_t tile_group_id);
+                           int32_t num_predicates, storage::DataTable *table,
+                           int64_t tile_group_id);
 
   bool ZoneMapTableExists();
 
@@ -83,26 +86,33 @@ class ZoneMapManager {
   std::unique_ptr<ZoneMapManager::ColumnStatistics> GetResultVectorAsZoneMap(
       std::unique_ptr<std::vector<type::Value>> &result_vector);
 
-  bool checkEqual(type::Value predicateVal, ColumnStatistics *stats) {
-    return ((stats->min).CompareLessThanEquals(predicateVal)) == CmpBool::CmpTrue &&
-           ((stats->max).CompareGreaterThanEquals(predicateVal) == CmpBool::CmpTrue);
+  static bool CheckEqual(const type::Value &predicate_val,
+                         ColumnStatistics *stats) {
+    const type::Value &min = stats->min;
+    const type::Value &max = stats->max;
+    return (min.CompareLessThanEquals(predicate_val)) == CmpBool::CmpTrue &&
+           (max.CompareGreaterThanEquals(predicate_val) == CmpBool::CmpTrue);
   }
 
-  bool checkLessThan(type::Value predicateVal, ColumnStatistics *stats) {
-    return (predicateVal.CompareGreaterThan(stats->min) == CmpBool::CmpTrue);
+  static bool CheckLessThan(const type::Value &predicate_val,
+                            ColumnStatistics *stats) {
+    return predicate_val.CompareGreaterThan(stats->min) == CmpBool::CmpTrue;
   }
 
-  bool checkLessThanEquals(type::Value predicateVal, ColumnStatistics *stats) {
-    return (predicateVal.CompareGreaterThanEquals(stats->min) == CmpBool::CmpTrue);
+  static bool CheckLessThanEquals(const type::Value &predicate_val,
+                                  ColumnStatistics *stats) {
+    return predicate_val.CompareGreaterThanEquals(stats->min) ==
+           CmpBool::CmpTrue;
   }
 
-  bool checkGreaterThan(type::Value predicateVal, ColumnStatistics *stats) {
-    return (predicateVal.CompareLessThan(stats->max) == CmpBool::CmpTrue);
+  static bool CheckGreaterThan(const type::Value &predicate_val,
+                               ColumnStatistics *stats) {
+    return predicate_val.CompareLessThan(stats->max) == CmpBool::CmpTrue;
   }
 
-  bool checkGreaterThanEquals(type::Value predicateVal,
-                              ColumnStatistics *stats) {
-    return (predicateVal.CompareLessThanEquals(stats->max) == CmpBool::CmpTrue);
+  static bool CheckGreaterThanEquals(const type::Value &predicate_val,
+                                     ColumnStatistics *stats) {
+    return predicate_val.CompareLessThanEquals(stats->max) == CmpBool::CmpTrue;
   }
 
   //===--------------------------------------------------------------------===//
@@ -112,5 +122,6 @@ class ZoneMapManager {
 
   bool zone_map_table_exists;
 };
-}
-}
+
+}  // namespace storage
+}  // namespace peloton

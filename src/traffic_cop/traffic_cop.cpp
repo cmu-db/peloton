@@ -6,7 +6,7 @@
 //
 // Identification: src/traffic_cop/traffic_cop.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -305,8 +305,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
+  // Log the query only if we have a statement.
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
+    tcop_txn_state_.top().first->AddQueryString(
+        query_string.c_str());
   }
 
   // TODO(Tianyi) Move Statement Planing into Statement's method
@@ -521,6 +523,11 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
     case type::TypeId::VARBINARY: {
       field_type = PostgresValueType::TEXT;
       field_size = 255;
+      break;
+    }
+    case type::TypeId::DATE: {
+      field_type = PostgresValueType::DATE;
+      field_size = 4;
       break;
     }
     case type::TypeId::TIMESTAMP: {

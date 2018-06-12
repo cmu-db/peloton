@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/values_runtime_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,7 +29,6 @@ PROXY(ValuesRuntime) {
   DECLARE_METHOD(OutputDecimal);
   DECLARE_METHOD(OutputVarchar);
   DECLARE_METHOD(OutputVarbinary);
-  DECLARE_METHOD(CompareStrings);
 };
 
 }  // namespace codegen

@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/type/tinyint_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,6 +14,7 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
+#include "codegen/proxy/numeric_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/decimal_type.h"
@@ -516,21 +517,17 @@ std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::INTEGER, peloton::type::TypeId::BIGINT,
     peloton::type::TypeId::DECIMAL};
 
+// clang-format off
 // Explicit casting rules
 CastTinyInt kCastTinyInt;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT,
-     kCastTinyInt},
-    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL,
-     kCastTinyInt}};
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BOOLEAN, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::TINYINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::SMALLINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::INTEGER, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::BIGINT, kCastTinyInt},
+    {peloton::type::TypeId::TINYINT, peloton::type::TypeId::DECIMAL, kCastTinyInt}};
+// clang-format on
 
 // Comparison operations
 CompareTinyInt kCompareTinyInt;
@@ -601,6 +598,11 @@ void TinyInt::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.Int8Type();
   len_type = nullptr;
+}
+
+llvm::Function *TinyInt::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return NumericFunctionsProxy::InputTinyInt.GetFunction(codegen);
 }
 
 llvm::Function *TinyInt::GetOutputFunction(

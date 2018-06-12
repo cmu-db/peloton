@@ -6,25 +6,26 @@
 //
 // Identification: src/storage/zone_map_manager.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/zone_map_manager.h"
 
 #include "catalog/catalog.h"
 #include "catalog/zone_map_catalog.h"
 #include "catalog/database_catalog.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
-#include "storage/zone_map_manager.h"
 
 namespace peloton {
 namespace storage {
 
 /**
- * @brief   Get instance of the global zone map manager
+ * @brief Get instance of the global zone map manager
  */
 ZoneMapManager *ZoneMapManager::GetInstance() {
   static ZoneMapManager global_zone_map_manager;
@@ -37,7 +38,7 @@ ZoneMapManager::ZoneMapManager() {
 }
 
 /**
- * @brief   The function creates the zone map table in catalog 
+ * @brief The function creates the zone map table in catalog
  */
 void ZoneMapManager::CreateZoneMapTableInCatalog() {
   LOG_DEBUG("Create the Zone Map table");
@@ -49,12 +50,13 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
 }
 
 /**
- * @brief   The function creates zone maps for all tile groups for a 
- *          given table
- * @param   table ptr and a transaction handle
+ * @brief The function creates zone maps for all tile groups for a given table
+ *
+ * @param table The table we're creating the zone map for
+ * @param txn The transaction handle under which we create the zone map
  */
-void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
-                                            concurrency::TransactionContext *txn) {
+void ZoneMapManager::CreateZoneMapsForTable(
+    storage::DataTable *table, concurrency::TransactionContext *txn) {
   PELOTON_ASSERT(table != nullptr);
   // Scan over the tile groups, check for immutable flag to be true
   // and keep adding to the zone map catalog
@@ -73,15 +75,18 @@ void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
 }
 
 /**
- * @brief   The function creates zone maps for a given tile group. If it
- *          already exists it is deleted and replaced with the updated values.
- * @param   table_ptr, tile_group_index and transaction_ptr
+ * @brief The function creates zone maps for a given tile group. If it already
+ * exists it is deleted and replaced with the updated values.
+ *
+ * @param table The table we're creating the zone map for
+ * @param tile_group_idx The ID of the tile group we're creating the zone map
+ * @param txn The transaction handle under which we create the zone map
  */
 void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
     storage::DataTable *table, oid_t tile_group_idx,
     concurrency::TransactionContext *txn) {
   LOG_DEBUG("Creating Zone Maps for TileGroupId : %u", tile_group_idx);
-  
+
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   auto schema = table->GetSchema();
@@ -115,9 +120,17 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
 }
 
 /**
- * @brief  The function inserts the catalog keys and values in the zone map table
- *          present in catalog
- * @param   database_id, table_id, tile_group_index, column_id, min, max and type
+ * @brief The function inserts the catalog keys and values in the zone map table
+ * present in catalog
+ *
+ * @param database_id The ID of the database the table belongs to
+ * @param table_id The ID of the table the zonemap is for
+ * @param tile_group_idx The ID of the tile group the zone map is for
+ * @param column_id The ID of the column we're creating stats for
+ * @param min The minimum value of the column in the tile group
+ * @param max The maxmimum value of the column in the tile group
+ * @param type The type of column
+ * @param txn The transaciton handle used to insert into the catalog
  */
 void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
     oid_t database_id, oid_t table_id, oid_t tile_group_idx, oid_t column_id,
@@ -144,8 +157,13 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
 }
 
 /**
- * @brief   The function gets the column statistics given the catalog keys
- * @param   database_id, table_id, tile_group_index, column_id
+ * Retrieves column statistics for the given column from the catalog.
+ *
+ * @param database_id The ID of the database the table belongs to
+ * @param table_id The ID of the table the zonemap is for
+ * @param tile_group_idx The ID of the tile group the zone map is for
+ * @param column_id The ID of the column we're creating stats for
+ *
  * @return  unique pointer to the column statistics for a given column
  */
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
@@ -159,42 +177,44 @@ ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
   txn_manager.CommitTransaction(txn);
 
   if (result_vector == nullptr) {
-    return NULL;
+    return nullptr;
   }
   return GetResultVectorAsZoneMap(result_vector);
 }
 
 /**
- * @brief   The function performs deserialization back from VARCHAR
- * @param   the result tile obtained from catalog after lookup
+ * The function performs deserialization back from VARCHAR
+ *
+ * @param[out] result_vector the result tile obtained from catalog after lookup
+ *
  * @return  unique pointer to the column statistics for a given column
  */
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
 ZoneMapManager::GetResultVectorAsZoneMap(
     std::unique_ptr<std::vector<type::Value>> &result_vector) {
-  type::Value min_varchar =
-      (*result_vector)[static_cast<int>(
-        catalog::ZoneMapCatalog::ZoneMapOffset::MINIMUM_OFF)];
-  type::Value max_varchar =
-      (*result_vector)[static_cast<int>(
-        catalog::ZoneMapCatalog::ZoneMapOffset::MAXIMUM_OFF)];
-  type::Value type_varchar =
-      (*result_vector)[static_cast<int>(
-        catalog::ZoneMapCatalog::ZoneMapOffset::TYPE_OFF)];
+  type::Value min_varchar = (*result_vector)[static_cast<int>(
+      catalog::ZoneMapCatalog::ZoneMapOffset::MINIMUM_OFF)];
+  type::Value max_varchar = (*result_vector)[static_cast<int>(
+      catalog::ZoneMapCatalog::ZoneMapOffset::MAXIMUM_OFF)];
+  type::Value type_varchar = (*result_vector)[static_cast<int>(
+      catalog::ZoneMapCatalog::ZoneMapOffset::TYPE_OFF)];
 
   return std::unique_ptr<ZoneMapManager::ColumnStatistics>(
-    new ZoneMapManager::ColumnStatistics(
-      {GetValueAsOriginal(min_varchar, type_varchar),
-      GetValueAsOriginal(max_varchar, type_varchar)}));
+      new ZoneMapManager::ColumnStatistics(
+          {GetValueAsOriginal(min_varchar, type_varchar),
+           GetValueAsOriginal(max_varchar, type_varchar)}));
 }
 
 /**
- * @brief   The function compares the predicate against the zone map for
- *          the column present in catalog
- * @param   parsed predicates array, number of predicates, table_ptr and 
- *          tile_group_index
- * @return  True if tile group needs to be scanned.
- *          False if tile group can be skipped.
+ * The function compares the predicate against the zone map for the column
+ * present in catalog.
+ *
+ * @param parsed predicates array
+ * @param num_predicates
+ * @param table
+ * @param tile_group_idx
+ *
+ * @return  True if tile group needs to be scanned, false if it can be skipped
  */
 bool ZoneMapManager::ShouldScanTileGroup(
     storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
@@ -216,27 +236,27 @@ bool ZoneMapManager::ShouldScanTileGroup(
     }
     switch (comparison_operator) {
       case (int)ExpressionType::COMPARE_EQUAL:
-        if (!checkEqual(predicate_value, stats.get())) {
+        if (!CheckEqual(predicate_value, stats.get())) {
           return false;
         }
         break;
       case (int)ExpressionType::COMPARE_LESSTHAN:
-        if (!checkLessThan(predicate_value, stats.get())) {
+        if (!CheckLessThan(predicate_value, stats.get())) {
           return false;
         }
         break;
       case (int)ExpressionType::COMPARE_LESSTHANOREQUALTO:
-        if (!checkLessThanEquals(predicate_value, stats.get())) {
+        if (!CheckLessThanEquals(predicate_value, stats.get())) {
           return false;
         }
         break;
       case (int)ExpressionType::COMPARE_GREATERTHAN:
-        if (!checkGreaterThan(predicate_value, stats.get())) {
+        if (!CheckGreaterThan(predicate_value, stats.get())) {
           return false;
         }
         break;
       case (int)ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-        if (!checkGreaterThanEquals(predicate_value, stats.get())) {
+        if (!CheckGreaterThanEquals(predicate_value, stats.get())) {
           return false;
         }
         break;
@@ -247,7 +267,8 @@ bool ZoneMapManager::ShouldScanTileGroup(
 }
 
 /**
- * @brief   Checks whether a zone map table in catalog was created.
+ * Checks whether a zone map table in catalog was created.
+ *
  * @return  True if the zone map table in catalog exists and vice versa
  */
 bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }

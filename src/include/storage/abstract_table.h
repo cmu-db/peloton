@@ -19,17 +19,16 @@
 #include <set>
 #include <string>
 
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "common/internal_types.h"
+#include "storage/layout.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
 namespace peloton {
-
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace concurrency {
 class TransactionContext;
@@ -77,13 +76,11 @@ class AbstractTable : public Printable {
   // LAYOUT TYPE 
   //===--------------------------------------------------------------------===//
 
-  void SetLayoutType(peloton::LayoutType layout) {
-    layout_type = layout;
+  void SetDefaultLayout(std::shared_ptr<const Layout> layout) {
+    default_layout_ = layout;
   }
 
-  peloton::LayoutType GetLayoutType() {
-    return layout_type;
-  }
+  std::shared_ptr<const Layout> GetDefaultLayout() { return default_layout_; }
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -142,10 +139,8 @@ class AbstractTable : public Printable {
   //===--------------------------------------------------------------------===//
 
   TileGroup *GetTileGroupWithLayout(oid_t database_id, oid_t tile_group_id,
-                                    const column_map_type &partitioning,
+                                    std::shared_ptr<const Layout> layout,
                                     const size_t num_tuples);
-
-  column_map_type GetTileGroupLayout() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -164,7 +159,8 @@ class AbstractTable : public Printable {
    */
   bool own_schema_;
 
-  peloton::LayoutType layout_type;
+  // Default layout of the table
+  std::shared_ptr<const Layout> default_layout_;
 };
 
 }  // namespace storage

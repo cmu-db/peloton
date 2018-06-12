@@ -15,8 +15,9 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/function_builder.h"
+#include "codegen/lang/if.h"
 #include "codegen/operator/projection_translator.h"
-#include "codegen/proxy/sorter_proxy.h"
+#include "codegen/proxy/buffer_proxy.h"
 #include "planner/nested_loop_join_plan.h"
 #include "settings/settings_manager.h"
 
@@ -26,11 +27,11 @@ namespace codegen {
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// This class implements a block-wise nested loop join. It does this by using
-/// a buffer (in our case, a Sorter instance) into which tuples are buffered
-/// from the left side. If this buffer is full, we call a second, generated
-/// function that joins the buffer with all tuples from the right side. This
-/// generated "joinBuffer" function implements the nested-loop portion. The
-/// psuedocode for an INNER join would be:
+/// a Buffer (an expandable, contiguous memory region) into which tuples are
+/// buffered from the left side. If this buffer is full, we call a second,
+/// generated function that joins the buffer with all tuples from the right
+/// side. This generated "joinBuffer" function implements the nested-loop
+/// portion. The psuedocode for an INNER join would be:
 ///
 /// function main():
 ///   Buffer b
@@ -56,11 +57,10 @@ namespace codegen {
 BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     const planner::NestedLoopJoinPlan &nlj_plan, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      nlj_plan_(nlj_plan),
-      left_pipeline_(this) {
+    : OperatorTranslator(nlj_plan, context, pipeline),
+      left_pipeline_(this, Pipeline::Parallelism::Serial) {
   PELOTON_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
-            "NLJ must have exactly two children");
+                 "NLJ must have exactly two children");
 
   // Prepare children
   context.Prepare(*nlj_plan.GetChild(0), left_pipeline_);
@@ -97,16 +97,16 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
   }
 
   // Allocate buffer instance in runtime state and configure its accessor
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
+  CodeGen &codegen = GetCodeGen();
+  QueryState &query_state = context.GetQueryState();
   buffer_id_ =
-      runtime_state.RegisterState("buffer", SorterProxy::GetType(codegen));
-  buffer_ = Sorter{codegen, left_input_desc};
+      query_state.RegisterState("buffer", BufferProxy::GetType(codegen));
+  buffer_ = BufferAccessor(codegen, left_input_desc);
 
   // Determine the number of rows to buffer before flushing it through the join
   auto max_buffer_size = settings::SettingsManager::GetDouble(
       settings::SettingId::bnlj_buffer_size);
-  auto row_size = buffer_.GetStorageFormat().GetStorageSize();
+  auto row_size = buffer_.GetTupleSize();
   max_buf_rows_ =
       static_cast<uint32_t>(std::max(1.0, max_buffer_size / row_size));
 
@@ -115,29 +115,19 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
       max_buffer_size, row_size, max_buf_rows_);
 }
 
-void BlockNestedLoopJoinTranslator::InitializeState() {
-  auto &codegen = GetCodeGen();
-  auto *null_func = codegen.Null(
-      proxy::TypeBuilder<util::Sorter::ComparisonFunction>::GetType(codegen));
-  buffer_.Init(codegen, LoadStatePtr(buffer_id_), null_func);
+void BlockNestedLoopJoinTranslator::InitializeQueryState() {
+  buffer_.Init(GetCodeGen(), LoadStatePtr(buffer_id_));
 }
 
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
-  const auto &right_producer = *GetPlan().GetChild(1);
-  auto &compilation_context = GetCompilationContext();
+  const planner::AbstractPlan &right_producer = *GetPlan().GetChild(1);
+  CompilationContext &compilation_context = GetCompilationContext();
   join_buffer_func_ = compilation_context.DeclareAuxiliaryProducer(
       right_producer, "joinBuffer");
 }
 
-void BlockNestedLoopJoinTranslator::TearDownState() {
+void BlockNestedLoopJoinTranslator::TearDownQueryState() {
   buffer_.Destroy(GetCodeGen(), LoadStatePtr(buffer_id_));
-}
-
-std::string BlockNestedLoopJoinTranslator::GetName() const {
-  auto max_buffer_size = settings::SettingsManager::GetDouble(
-      settings::SettingId::bnlj_buffer_size);
-  return StringUtil::Format("BlockNestedLoopJoin[buffer: %.2lf KB, # rows: %u]",
-                            (max_buffer_size / 1024.0), max_buf_rows_);
 }
 
 void BlockNestedLoopJoinTranslator::Produce() const {
@@ -145,11 +135,10 @@ void BlockNestedLoopJoinTranslator::Produce() const {
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
   // Flush any remaining buffered tuples through the join
-  auto &codegen = GetCodeGen();
-  auto *num_tuples =
-      buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
-  lang::If has_tuples{codegen,
-                      codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
+  CodeGen &codegen = GetCodeGen();
+  auto *num_tuples = buffer_.NumTuples(codegen, LoadStatePtr(buffer_id_));
+  auto *flush_buffer = codegen->CreateICmpNE(num_tuples, codegen.Const32(0));
+  lang::If has_tuples(codegen, flush_buffer);
   {
     // Flush remaining
     join_buffer_func_.Call(codegen);
@@ -159,12 +148,12 @@ void BlockNestedLoopJoinTranslator::Produce() const {
 
 bool BlockNestedLoopJoinTranslator::IsFromLeftChild(
     const Pipeline &pipeline) const {
-  return pipeline.GetChild() == left_pipeline_.GetChild();
+  return pipeline == left_pipeline_;
 }
 
 void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
     UNUSED_ATTRIBUTE ConsumerContext &context, RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Construct tuple
   std::vector<Value> tuple;
@@ -177,10 +166,10 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
   buffer_.Append(codegen, buffer_ptr, tuple);
 
   // Check if we should process the filled buffer
-  auto *buf_size = buffer_.GetNumberOfStoredTuples(codegen, buffer_ptr);
+  auto *buf_size = buffer_.NumTuples(codegen, buffer_ptr);
   auto *flush_buffer_cond =
       codegen->CreateICmpUGE(buf_size, codegen.Const32(max_buf_rows_));
-  lang::If flush_buffer{codegen, flush_buffer_cond};
+  lang::If flush_buffer(codegen, flush_buffer_cond);
   {
     // Process and reset buffer
     join_buffer_func_.Call(codegen);
@@ -210,7 +199,7 @@ namespace {
 
 // This is the callback called for every tuple in the buffer. There's a bit of
 // ceremony, but it's just a callback function.
-class BufferedTupleCallback : public Sorter::IterateCallback {
+class BufferedTupleCallback : public BufferAccessor::IterateCallback {
  public:
   // Constructor
   BufferedTupleCallback(
@@ -263,7 +252,7 @@ void BufferedTupleCallback::ProcessEntry(
   } else {
     // Check predicate before sending to parent
     const auto &valid = right_row_.DeriveValue(codegen, *predicate);
-    lang::If valid_match{codegen, valid};
+    lang::If valid_match(codegen, valid);
     {
       // Valid tuple
       ProjectAndConsume();
@@ -288,7 +277,8 @@ void BufferedTupleCallback::ProjectAndConsume() const {
 
 void BlockNestedLoopJoinTranslator::FindMatchesForRow(
     ConsumerContext &ctx, RowBatch::Row &row) const {
-  BufferedTupleCallback callback{GetPlan(), unique_left_attributes_, ctx, row};
+  const auto &plan = GetPlanAs<planner::NestedLoopJoinPlan>();
+  BufferedTupleCallback callback{plan, unique_left_attributes_, ctx, row};
   buffer_.Iterate(GetCodeGen(), LoadStatePtr(buffer_id_), callback);
 }
 

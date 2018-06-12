@@ -27,7 +27,7 @@ namespace brain {
 struct IndexConfigComparator {
   IndexConfigComparator(Workload &workload) { this->w = &workload; }
   bool operator()(const std::pair<IndexConfiguration, double> &s1,
-                  const std::pair<IndexConfiguration, double> &s2) {
+                  const std::pair<IndexConfiguration, double> &s2) const {
     // Order by cost. If cost is same, then by the number of indexes
     // Unless the configuration is exactly the same, get some ordering
 

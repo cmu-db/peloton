@@ -15,7 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Varlen, "peloton::Varlen", MEMBER(length), MEMBER(ptr));
+DEFINE_TYPE(Varlen, "peloton::Varlen", length, ptr);
 
 }  // namespace codegen
 }  // namespace peloton

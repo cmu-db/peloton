@@ -66,6 +66,7 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
   std::vector<int> admissible_indexes;
   query_strs.push_back("SELECT * FROM " + table_name +
                        " WHERE a < 1 or b > 4 GROUP BY a");
+  // 2 indexes will be choosen in GetAdmissibleIndexes - a, b
   admissible_indexes.push_back(2);
   query_strs.push_back("SELECT a, b, c FROM " + table_name +
                        " WHERE a < 1 or b > 4 ORDER BY a");
@@ -90,8 +91,8 @@ TEST_F(IndexSelectionTest, AdmissibleIndexesTest) {
     brain::IndexSelection is(w, knobs, txn);
 
     brain::IndexConfiguration ic;
-    is.GetAdmissibleIndexes(queries[i], ic);
-    LOG_DEBUG("Admissible indexes %ld, %s", i, ic.ToString().c_str());
+    is.GetAdmissibleIndexes(queries[i].first, ic);
+    LOG_TRACE("Admissible indexes %ld, %s", i, ic.ToString().c_str());
     auto indexes = ic.GetIndexes();
     EXPECT_EQ(ic.GetIndexCount(), admissible_indexes[i]);
   }
@@ -141,14 +142,15 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   index_selection.GenerateCandidateIndexes(candidate_config, admissible_config,
                                            workload);
 
-  LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
-  LOG_DEBUG("Admissible Indexes: %s", admissible_config.ToString().c_str());
-  LOG_DEBUG("Candidate Indexes: %s", candidate_config.ToString().c_str());
+  LOG_TRACE("Admissible Index Count: %ld", admissible_config.GetIndexCount());
+  LOG_TRACE("Admissible Indexes: %s", admissible_config.ToString().c_str());
+  LOG_TRACE("Candidate Indexes: %s", candidate_config.ToString().c_str());
 
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // TODO: There is no data in the table. Indexes should not help. Should return
   // 0. But currently, the cost with index for a query if 0.0 if there are no
-  // rows in the table where as the cost without the index is 1.0
+  // rows in the table where as the cost without the index is 1.0. This needs to
+  // be fixed in the cost model. Or is this behaviour of optimizer fine?
   // EXPECT_EQ(candidate_config.GetIndexCount(), 0);
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
 
@@ -163,9 +165,9 @@ TEST_F(IndexSelectionTest, CandidateIndexGenerationTest) {
   brain::IndexSelection is(workload, knobs, txn);
   is.GenerateCandidateIndexes(candidate_config, admissible_config, workload);
 
-  LOG_DEBUG("Admissible Index Count: %ld", admissible_config.GetIndexCount());
-  LOG_DEBUG("Admissible Indexes: %s", admissible_config.ToString().c_str());
-  LOG_DEBUG("Candidate Indexes: %s", candidate_config.ToString().c_str());
+  LOG_TRACE("Admissible Index Count: %ld", admissible_config.GetIndexCount());
+  LOG_TRACE("Admissible Indexes: %s", admissible_config.ToString().c_str());
+  LOG_TRACE("Candidate Indexes: %s", candidate_config.ToString().c_str());
   EXPECT_EQ(admissible_config.GetIndexCount(), 2);
   // Indexes help reduce the cost of the queries, so they get selected.
   EXPECT_EQ(candidate_config.GetIndexCount(), 2);
@@ -355,7 +357,7 @@ TEST_F(IndexSelectionTest, MultiColumnIndexGenerationTest) {
 TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   std::string database_name = DEFAULT_DB_NAME;
 
-  int num_rows = 1000;  // number of rows to be inserted.
+  int num_rows = 2000;  // number of rows to be inserted.
 
   TestingIndexSelectionUtil testing_util(database_name);
   auto config =
@@ -394,8 +396,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -417,8 +419,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -441,8 +443,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -464,8 +466,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -489,8 +491,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(3, best_config.GetIndexCount());
 
@@ -500,17 +502,17 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
   expected_config = {expected_indexes};
 
-  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> 
-  alternate_expected_indexes = {
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>>
+      alternate_expected_indexes = {
       testing_util.CreateHypotheticalIndex("dummy2", {"a", "b"}, &is),
       testing_util.CreateHypotheticalIndex("dummy2", {"c", "a"}, &is),
       testing_util.CreateHypotheticalIndex("dummy2", {"b", "c"}, &is)};
-  brain::IndexConfiguration alternate_expected_config = 
-      {alternate_expected_indexes};
+  brain::IndexConfiguration alternate_expected_config = {
+      alternate_expected_indexes};
 
   // It can choose either AC or CA based on the distribution of C and A
-  EXPECT_TRUE((expected_config == best_config) || 
-              (alternate_expected_config == best_config));
+  EXPECT_TRUE((expected_config == best_config) ||
+      (alternate_expected_config == best_config));
 
   /** Test 6
    * Choose 1 index with up to 3 columns
@@ -525,8 +527,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -550,8 +552,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
@@ -565,70 +567,12 @@ TEST_F(IndexSelectionTest, IndexSelectionTest1) {
   txn_manager.CommitTransaction(txn);
 }
 
-// It is difficult to predict the output of this test, should remove it or
-// think of a better way of writing this test
 /**
  * @brief end-to-end test which takes in a workload of queries
  * and spits out the set of indexes that are the best ones for more
  * complex workloads.
  */
-// TEST_F(IndexSelectionTest, IndexSelectionTest2) {
-//   std::string database_name = DEFAULT_DB_NAME;
-//   int num_rows = 1000;  // number of rows to be inserted.
-
-//   TestingIndexSelectionUtil testing_util(database_name);
-//   auto config =
-//     testing_util.GetQueryStringsWorkload(QueryStringsWorkloadType::D);
-//   auto table_schemas = config.first;
-//   auto query_strings = config.second;
-
-//   // Create and populate tables.
-//   for (auto table_schema : table_schemas) {
-//     testing_util.CreateTable(table_schema);
-//     testing_util.InsertIntoTable(table_schema, num_rows);
-//   }
-
-//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//   auto txn = txn_manager.BeginTransaction();
-
-//   brain::Workload workload(query_strings, database_name, txn);
-//   EXPECT_EQ(workload.Size(), query_strings.size());
-
-//   brain::IndexConfiguration best_config;
-//   std::set<std::shared_ptr<brain::HypotheticalIndexObject>> expected_indexes;
-//   brain::IndexConfiguration expected_config;
-
-//   size_t max_index_cols = 3;
-//   size_t enumeration_threshold = 1;
-//   size_t num_indexes = 2;
-//   brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
-//                                       num_indexes};
-//   brain::IndexSelection is = {workload, knobs, txn};
-
-//   is.GetBestIndexes(best_config);
-
-//   LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-//   LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
-
-//   EXPECT_EQ(2, best_config.GetIndexCount());
-
-//   expected_indexes = {
-//       testing_util.CreateHypotheticalIndex("d_student", {"id", "name"}, &is),
-//       testing_util.CreateHypotheticalIndex("d_student", {"cgpa", "gpa", "name"},
-//           &is)};
-//   expected_config = {expected_indexes};
-
-//   EXPECT_TRUE(expected_config == best_config);
-
-//   txn_manager.CommitTransaction(txn);
-// }
-
-/**
- * @brief end-to-end test which takes in a workload of queries
- * and spits out the set of indexes that are the best ones for more
- * complex workloads.
- */
-TEST_F(IndexSelectionTest, IndexSelectionTest3) {
+TEST_F(IndexSelectionTest, IndexSelectionTest2) {
   std::string database_name = DEFAULT_DB_NAME;
   int num_rows = 2000;  // number of rows to be inserted.
 
@@ -667,8 +611,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(1, best_config.GetIndexCount());
 
@@ -690,8 +634,8 @@ TEST_F(IndexSelectionTest, IndexSelectionTest3) {
 
   is.GetBestIndexes(best_config);
 
-  LOG_DEBUG("Best Indexes: %s", best_config.ToString().c_str());
-  LOG_DEBUG("Best Index Count: %ld", best_config.GetIndexCount());
+  LOG_TRACE("Best Indexes: %s", best_config.ToString().c_str());
+  LOG_TRACE("Best Index Count: %ld", best_config.GetIndexCount());
 
   EXPECT_EQ(2, best_config.GetIndexCount());
 
