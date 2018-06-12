@@ -297,7 +297,7 @@ TEST_F(TileGroupCompactorTests, ConcurrentUpdateTest) {
 
   // assert num live tile groups decreased
   auto num_tg_now = storage_manager->GetNumLiveTileGroups();
-  EXPECT_EQ(num_tg_before_compaction - 1, num_tg_now);
+  EXPECT_LT(num_tg_now, num_tg_before_compaction);
 
   // Compact all tile groups
   for (size_t i = 0; i < table->GetTileGroupCount(); i++) {
