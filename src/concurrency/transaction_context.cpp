@@ -115,7 +115,7 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
                  (rw_set_[location] != RWType::DELETE &&
                   rw_set_[location] != RWType::INS_DEL));
   auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end() {
+  if (rw_set_it != rw_set_.end()) {
     if (rw_set_it->second == RWType::READ || rw_set_it->second == RWType::READ_OWN) {
       rw_set_it->second = RWType::UPDATE;
     }
