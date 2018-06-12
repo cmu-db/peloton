@@ -627,6 +627,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   // if no modifying queries, treat as read-only
   if (rw_set.empty()) {
+    LOG_TRACE("Empty RW set, ending transaction.");
     EndTransaction(current_txn);
     return ResultType::SUCCESS;
   }
