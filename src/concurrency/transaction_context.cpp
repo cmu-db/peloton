@@ -114,7 +114,10 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.count(location) == 0 ||
                  (rw_set_[location] != RWType::DELETE &&
                   rw_set_[location] != RWType::INS_DEL));
-  rw_set_[location] = RWType::UPDATE;
+  auto rw_set_it = rw_set_.find(location);
+  if (rw_set_it != rw_set_.end() && (rw_set_it->second == RWType::READ || rw_set_it->second == RWType::READ_OWN)) {
+    rw_set_it->second = RWType::UPDATE;
+  }
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
