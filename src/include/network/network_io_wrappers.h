@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// client_socket_wrapper.h
+// network_io_wrappers.h
 //
-// Identification: src/include/network/client_socket_wrapper.h
+// Identification: src/include/network/network_io_wrappers.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <openssl/ssl.h>
 #include <memory>
 #include <utility>
-#include "network/marshal.h"
 #include "common/exception.h"
 #include "common/utility.h"
+#include "network/marshal.h"
 
 namespace peloton {
 namespace network {
@@ -36,6 +36,7 @@ namespace network {
  */
 class NetworkIoWrapper {
   friend class NetworkIoWrapperFactory;
+
  public:
   // TODO(Tianyu): Change and document after we refactor protocol handler
   virtual Transition FillReadBuffer() = 0;
@@ -44,16 +45,16 @@ class NetworkIoWrapper {
 
   inline int GetSocketFd() { return sock_fd_; }
   Transition WritePacket(OutputPacket *pkt);
-  // TODO(Tianyu): Make these protected when protocol handler refactor is complete
-  NetworkIoWrapper(int sock_fd,
-                   std::shared_ptr<ReadBuffer> &rbuf,
+  // TODO(Tianyu): Make these protected when protocol handler refactor is
+  // complete
+  NetworkIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> &rbuf,
                    std::shared_ptr<WriteBuffer> &wbuf)
       : sock_fd_(sock_fd),
         rbuf_(std::move(rbuf)),
         wbuf_(std::move(wbuf)),
         conn_ssl_context_(nullptr) {}
-  // It is worth noting that because of the way we are reinterpret-casting between
-  // derived types, it is necessary that they share the same members.
+  // It is worth noting that because of the way we are reinterpret-casting
+  // between derived types, it is necessary that they share the same members.
   int sock_fd_;
   std::shared_ptr<ReadBuffer> rbuf_;
   std::shared_ptr<WriteBuffer> wbuf_;
@@ -65,8 +66,7 @@ class NetworkIoWrapper {
  */
 class PosixSocketIoWrapper : public NetworkIoWrapper {
  public:
-  PosixSocketIoWrapper(int sock_fd,
-                       std::shared_ptr<ReadBuffer> rbuf,
+  PosixSocketIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> rbuf,
                        std::shared_ptr<WriteBuffer> wbuf);
 
   Transition FillReadBuffer() override;
@@ -91,5 +91,5 @@ class SslSocketIoWrapper : public NetworkIoWrapper {
   Transition FlushWriteBuffer() override;
   Transition Close() override;
 };
-} // namespace network
-} // namespace peloton
+}  // namespace network
+}  // namespace peloton

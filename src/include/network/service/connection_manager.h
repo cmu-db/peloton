@@ -15,8 +15,8 @@
 #include <event2/event.h>
 #include <pthread.h>
 
-#include "common/synchronization/mutex_latch.h"
 #include "common/synchronization/condition.h"
+#include "common/synchronization/mutex_latch.h"
 #include "network/service/tcp_connection.h"
 
 namespace peloton {

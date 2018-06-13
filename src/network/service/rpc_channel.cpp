@@ -6,23 +6,23 @@
 //
 // Identification: src/network/service/rpc_channel.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "network/service/rpc_type.h"
-#include "network/service/rpc_client.h"
 #include "network/service/rpc_channel.h"
-#include "network/service/rpc_controller.h"
-#include "network/service/tcp_connection.h"
-#include "network/service/connection_manager.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "network/service/connection_manager.h"
+#include "network/service/rpc_client.h"
+#include "network/service/rpc_controller.h"
+#include "network/service/rpc_type.h"
+#include "network/service/tcp_connection.h"
 
 #include <google/protobuf/descriptor.h>
 
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 namespace peloton {
 namespace network {

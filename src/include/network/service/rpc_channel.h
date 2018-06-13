@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
-#include "network_address.h"
 #include "common/logger.h"
+#include "network_address.h"
 #include "peloton/proto/abstract_service.pb.h"
 
-#include <google/protobuf/service.h>
 #include <google/protobuf/message.h>
+#include <google/protobuf/service.h>
 
 namespace peloton {
 namespace network {

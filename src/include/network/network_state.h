@@ -19,11 +19,11 @@ namespace network {
  * @see ConnectionHandle::StateMachine
  */
 enum class ConnState {
-  READ,            // State that reads data from the network
-  WRITE,           // State the writes data to the network
-  PROCESS,         // State that runs the network protocol on received data
-  CLOSING,         // State for closing the client connection
-  SSL_INIT,        // State to flush out responses and doing (Real) SSL handshake
+  READ,      // State that reads data from the network
+  WRITE,     // State the writes data to the network
+  PROCESS,   // State that runs the network protocol on received data
+  CLOSING,   // State for closing the client connection
+  SSL_INIT,  // State to flush out responses and doing (Real) SSL handshake
 };
 
 /**

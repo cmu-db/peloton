@@ -6,7 +6,7 @@
 //
 // Identification: src/network/connection_handle.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,13 +15,13 @@
 
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
+#include "network/network_io_wrapper_factory.h"
 #include "network/peloton_server.h"
 #include "network/postgres_protocol_handler.h"
 #include "network/protocol_handler_factory.h"
-#include "network/network_io_wrapper_factory.h"
 
-#include "settings/settings_manager.h"
 #include "common/utility.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace network {
@@ -65,42 +65,46 @@ namespace {
 #define DEFINE_STATE(s) \
   case ConnState::s: {  \
     switch (t) {
-
 #define ON(t)         \
   case Transition::t: \
     return
 #define SET_STATE_TO(s) \
   {                     \
-  ConnState::s,
-#define AND_INVOKE(m)                          \
-  ([](ConnectionHandle & w) { return w.m(); }) \
+    ConnState::s,
+#define AND_INVOKE(m)                         \
+  ([](ConnectionHandle &w) { return w.m(); }) \
+  }                                           \
+  ;
+#define AND_WAIT_ON_READ                      \
+  ([](ConnectionHandle &w) {                  \
+    w.UpdateEventFlags(EV_READ | EV_PERSIST); \
+    return Transition::NONE;                  \
+  })                                          \
+  }                                           \
+  ;
+#define AND_WAIT_ON_WRITE                      \
+  ([](ConnectionHandle &w) {                   \
+    w.UpdateEventFlags(EV_WRITE | EV_PERSIST); \
+    return Transition::NONE;                   \
+  })                                           \
   }                                            \
   ;
-#define AND_WAIT_ON_READ                                               \
-  ([](ConnectionHandle &w) { w.UpdateEventFlags(EV_READ | EV_PERSIST); \
-                            return Transition::NONE; })                \
-  }                                                                    \
+#define AND_WAIT_ON_PELOTON        \
+  ([](ConnectionHandle &w) {       \
+    w.StopReceivingNetworkEvent(); \
+    return Transition::NONE;       \
+  })                               \
+  }                                \
   ;
-#define AND_WAIT_ON_WRITE                                               \
-  ([](ConnectionHandle &w) { w.UpdateEventFlags(EV_WRITE | EV_PERSIST); \
-                            return Transition::NONE; })                 \
-  }                                                                     \
-  ;
-#define AND_WAIT_ON_PELOTON                                             \
-  ([](ConnectionHandle &w) { w.StopReceivingNetworkEvent(); \
-                            return Transition::NONE; })                 \
-  }                                                                     \
-  ;
-#define END_DEF                                                   \
-  default:                                                        \
-    throw std::runtime_error("undefined transition");             \
-    }                                                             \
+#define END_DEF                                       \
+  default:                                            \
+    throw std::runtime_error("undefined transition"); \
+    }                                                 \
     }
 
-#define END_STATE_DEF                                             \
-  ON(TERMINATE) SET_STATE_TO(CLOSING) AND_INVOKE(CloseConnection) \
-  END_DEF
-}
+#define END_STATE_DEF \
+  ON(TERMINATE) SET_STATE_TO(CLOSING) AND_INVOKE(CloseConnection) END_DEF
+}  // namespace
 
 // clang-format off
 DEF_TRANSITION_GRAPH
@@ -139,10 +143,10 @@ DEF_TRANSITION_GRAPH
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
     END_STATE_DEF
 END_DEF
-// clang-format on
+    // clang-format on
 
-void ConnectionHandle::StateMachine::Accept(Transition action,
-                                            ConnectionHandle &connection) {
+    void ConnectionHandle::StateMachine::Accept(Transition action,
+                                                ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -161,21 +165,20 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
     : conn_handler_(handler) {
   // We will always handle connections using posix until (potentially) first SSL
   // handshake.
-  io_wrapper_ = NetworkIoWrapperFactory::GetInstance()
-                              .NewNetworkIoWrapper(sock_fd);
+  io_wrapper_ =
+      NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd);
 }
 
 Transition ConnectionHandle::TryWrite() {
   for (; next_response_ < protocol_handler_->responses_.size();
-         next_response_++) {
+       next_response_++) {
     auto result = io_wrapper_->WritePacket(
         protocol_handler_->responses_[next_response_].get());
     if (result != Transition::PROCEED) return result;
   }
   protocol_handler_->responses_.clear();
   next_response_ = 0;
-  if (protocol_handler_->GetFlushFlag())
-    return io_wrapper_->FlushWriteBuffer();
+  if (protocol_handler_->GetFlushFlag()) return io_wrapper_->FlushWriteBuffer();
   protocol_handler_->SetFlushFlag(false);
   return Transition::PROCEED;
 }
@@ -189,18 +192,22 @@ Transition ConnectionHandle::Process() {
     protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
         ProtocolHandlerType::Postgres, &tcop_);
 
-  ProcessResult status =
-      protocol_handler_->Process(*(io_wrapper_->rbuf_),
-                                 (size_t) conn_handler_->Id());
+  ProcessResult status = protocol_handler_->Process(
+      *(io_wrapper_->rbuf_), (size_t)conn_handler_->Id());
 
   switch (status) {
-    case ProcessResult::MORE_DATA_REQUIRED: return Transition::NEED_READ;
-    case ProcessResult::COMPLETE: return Transition::PROCEED;
-    case ProcessResult::PROCESSING: return Transition::NEED_RESULT;
-    case ProcessResult::TERMINATE: return Transition::TERMINATE;
-    case ProcessResult::NEED_SSL_HANDSHAKE: return Transition::NEED_SSL_HANDSHAKE;
+    case ProcessResult::MORE_DATA_REQUIRED:
+      return Transition::NEED_READ;
+    case ProcessResult::COMPLETE:
+      return Transition::PROCEED;
+    case ProcessResult::PROCESSING:
+      return Transition::NEED_RESULT;
+    case ProcessResult::TERMINATE:
+      return Transition::TERMINATE;
+    case ProcessResult::NEED_SSL_HANDSHAKE:
+      return Transition::NEED_SSL_HANDSHAKE;
     default:
-    LOG_ERROR("Unknown process result");
+      LOG_ERROR("Unknown process result");
       throw NetworkProcessException("Unknown process result");
   }
 }
@@ -218,7 +225,8 @@ Transition ConnectionHandle::TrySslHandshake() {
     auto write_ret = TryWrite();
     if (write_ret != Transition::PROCEED) return write_ret;
   }
-  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(io_wrapper_);
+  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(
+      io_wrapper_);
 }
 
 Transition ConnectionHandle::CloseConnection() {
@@ -227,7 +235,6 @@ Transition ConnectionHandle::CloseConnection() {
   conn_handler_->UnregisterEvent(network_event_);
   io_wrapper_->Close();
   return Transition::NONE;
-
 }
 }  // namespace network
 }  // namespace peloton

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// connection_handle_factory.cpp
+// network_io_wrapper_factory.cpp
 //
-// Identification: src/network/connection_handle_factory.cpp
+// Identification: src/network/network_io_wrapper_factory.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -19,11 +19,9 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   auto it = reusable_wrappers_.find(conn_fd);
   if (it == reusable_wrappers_.end()) {
     // No reusable wrappers
-    auto wrapper = std::make_shared<PosixSocketIoWrapper>(conn_fd,
-                                                          std::make_shared<
-                                                              ReadBuffer>(),
-                                                          std::make_shared<
-                                                              WriteBuffer>());
+    auto wrapper = std::make_shared<PosixSocketIoWrapper>(
+        conn_fd, std::make_shared<ReadBuffer>(),
+        std::make_shared<WriteBuffer>());
     reusable_wrappers_[conn_fd] =
         std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(
             wrapper);
@@ -44,12 +42,12 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   return reused_wrapper;
 }
 
-Transition NetworkIoWrapperFactory::PerformSslHandshake(std::shared_ptr<
-    NetworkIoWrapper> &io_wrapper) {
+Transition NetworkIoWrapperFactory::PerformSslHandshake(
+    std::shared_ptr<NetworkIoWrapper> &io_wrapper) {
   if (io_wrapper->conn_ssl_context_ == nullptr) {
     // Initial handshake, the incoming type is a posix socket wrapper
     auto *context = io_wrapper->conn_ssl_context_ =
-                        SSL_new(PelotonServer::ssl_context);
+        SSL_new(PelotonServer::ssl_context);
     // TODO(Tianyu): Is it the right thing here to throw exceptions?
     if (context == nullptr)
       throw NetworkProcessException("ssl context for conn failed");
@@ -72,14 +70,14 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(std::shared_ptr<
 
   int err = SSL_get_error(context, ssl_accept_ret);
   switch (err) {
-    case SSL_ERROR_WANT_READ:return Transition::NEED_READ;
-    case SSL_ERROR_WANT_WRITE:return Transition::NEED_WRITE;
-//      case SSL_ERROR_SSL:
-//      case SSL_ERROR_ZERO_RETURN:
-//      case SSL_ERROR_SYSCALL:
-    default:LOG_ERROR("SSL Error, error code %d", err);
+    case SSL_ERROR_WANT_READ:
+      return Transition::NEED_READ;
+    case SSL_ERROR_WANT_WRITE:
+      return Transition::NEED_WRITE;
+    default:
+      LOG_ERROR("SSL Error, error code %d", err);
       return Transition::TERMINATE;
   }
 }
-} // namespace network
-} // namespace peloton
+}  // namespace network
+}  // namespace peloton

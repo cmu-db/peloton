@@ -6,7 +6,7 @@
 //
 // Identification: src/network/connection_handler_task.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,22 +45,21 @@ void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
 
   // read fully
   while (bytes_read < sizeof(int)) {
-    ssize_t result = read(new_conn_recv_fd,
-                          client_fd + bytes_read,
+    ssize_t result = read(new_conn_recv_fd, client_fd + bytes_read,
                           sizeof(int) - bytes_read);
     if (result < 0) {
       LOG_ERROR("Error when reading from dispatch");
     }
-    bytes_read += (size_t) result;
+    bytes_read += (size_t)result;
   }
 
-  // Smart pointers are not used here because libevent does not take smart pointers.
-  // During the life time of this object, the pointer to it will be maintained
-  // by libevent rather than by our own code. The object will have to be cleaned
-  // up by one of its methods (i.e. we call a method with "delete this" and have
-  // the object commit suicide from libevent. )
-  (new ConnectionHandle(*reinterpret_cast<int *>(client_fd),
-                        this))->RegisterToReceiveEvents();
+  // Smart pointers are not used here because libevent does not take smart
+  // pointers. During the life time of this object, the pointer to it will be
+  // maintained by libevent rather than by our own code. The object will have to
+  // be cleaned up by one of its methods (i.e. we call a method with "delete
+  // this" and have the object commit suicide from libevent. )
+  (new ConnectionHandle(*reinterpret_cast<int *>(client_fd), this))
+      ->RegisterToReceiveEvents();
 }
 
 }  // namespace network

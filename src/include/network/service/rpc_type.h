@@ -19,5 +19,5 @@ namespace service {
 enum MessageType { MSG_TYPE_INVALID = 0, MSG_TYPE_REQ, MSG_TYPE_REP };
 
 }  // namespace service
-}  // namespace message
+}  // namespace network
 }  // namespace peloton

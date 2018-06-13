@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// client_socket_wrapper.cpp
+// network_io_wrappers.cpp
 //
-// Identification: src/network/client_socket_wrapper.cpp
+// Identification: src/network/network_io_wrappers.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -13,8 +13,8 @@
 #include "network/network_io_wrappers.h"
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-#include <sys/file.h>
 #include <openssl/err.h>
+#include <sys/file.h>
 #include "network/peloton_server.h"
 
 namespace peloton {
@@ -86,10 +86,12 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
         case EAGAIN:
           // Equal to EWOULDBLOCK
           return result;
-        case EINTR:continue;
-        default:LOG_ERROR("Error writing: %s", strerror(errno));
+        case EINTR:
+          continue;
+        default:
+          LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Error when filling read buffer " +
-              std::to_string(errno));
+                                        std::to_string(errno));
       }
   }
   return result;
@@ -98,11 +100,13 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
 Transition PosixSocketIoWrapper::FlushWriteBuffer() {
   while (wbuf_->HasMore()) {
     auto bytes_written = wbuf_->WriteOutTo(sock_fd_);
-    if (bytes_written < 0)
-      switch (errno) {
-        case EINTR: continue;
-        case EAGAIN: return Transition::NEED_WRITE;
-        default:LOG_ERROR("Error writing: %s", strerror(errno));
+    if (bytes_written < 0) switch (errno) {
+        case EINTR:
+          continue;
+        case EAGAIN:
+          return Transition::NEED_WRITE;
+        default:
+          LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Fatal error during write");
       }
   }
@@ -117,13 +121,17 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
   while (!rbuf_->Full()) {
     auto ret = rbuf_->FillBufferFrom(conn_ssl_context_);
     switch (ret) {
-      case SSL_ERROR_NONE:result = Transition::PROCEED;
+      case SSL_ERROR_NONE:
+        result = Transition::PROCEED;
         break;
-      case SSL_ERROR_ZERO_RETURN: return Transition::TERMINATE;
+      case SSL_ERROR_ZERO_RETURN:
+        return Transition::TERMINATE;
         // The SSL packet is partially loaded to the SSL buffer only,
         // More data is required in order to decode the wh`ole packet.
-      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
-      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
+      case SSL_ERROR_WANT_READ:
+        return Transition::NEED_READ;
+      case SSL_ERROR_WANT_WRITE:
+        return Transition::NEED_WRITE;
       case SSL_ERROR_SYSCALL:
         if (errno == EINTR) {
           LOG_INFO("Error SSL Reading: EINTR");
@@ -131,8 +139,7 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
         }
         // Intentional fallthrough
       default:
-        throw NetworkProcessException(
-            "SSL read error: " + std::to_string(ret));
+        throw NetworkProcessException("SSL read error: " + std::to_string(ret));
     }
   }
   return result;
@@ -142,9 +149,12 @@ Transition SslSocketIoWrapper::FlushWriteBuffer() {
   while (wbuf_->Full()) {
     auto ret = wbuf_->WriteOutTo(conn_ssl_context_);
     switch (ret) {
-      case SSL_ERROR_NONE: break;
-      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
-      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
+      case SSL_ERROR_NONE:
+        break;
+      case SSL_ERROR_WANT_WRITE:
+        return Transition::NEED_WRITE;
+      case SSL_ERROR_WANT_READ:
+        return Transition::NEED_READ;
       case SSL_ERROR_SYSCALL:
         // If interrupted, try again.
         if (errno == EINTR) {
@@ -152,9 +162,8 @@ Transition SslSocketIoWrapper::FlushWriteBuffer() {
           break;
         }
         // Intentional Fallthrough
-      default:LOG_ERROR("SSL write error: %d, error code: %lu",
-                        ret,
-                        ERR_get_error());
+      default:
+        LOG_ERROR("SSL write error: %d, error code: %lu", ret, ERR_get_error());
         throw NetworkProcessException("SSL write error");
     }
   }
@@ -172,7 +181,8 @@ Transition SslSocketIoWrapper::Close() {
       case SSL_ERROR_WANT_READ:
         // More work to do before shutdown
         return Transition::NEED_READ;
-      default:LOG_ERROR("Error shutting down ssl session, err: %d", err);
+      default:
+        LOG_ERROR("Error shutting down ssl session, err: %d", err);
     }
   }
   // SSL context is explicitly deallocated here because socket wrapper
@@ -185,5 +195,5 @@ Transition SslSocketIoWrapper::Close() {
   return Transition::NONE;
 }
 
-} // namespace network
-} // namespace peloton
+}  // namespace network
+}  // namespace peloton

@@ -32,9 +32,9 @@
 
 #include "marshal.h"
 #include "network/connection_handler_task.h"
+#include "network/network_io_wrappers.h"
 #include "network_state.h"
 #include "protocol_handler.h"
-#include "network/network_io_wrappers.h"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -57,7 +57,8 @@ class ConnectionHandle {
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
 
   /**
-   * @brief Signal to libevent that this ConnectionHandle is ready to handle events
+   * @brief Signal to libevent that this ConnectionHandle is ready to handle
+   * events
    *
    * This method needs to be called separately after initialization for the
    * connection handle to do anything. The reason why this is not performed in
@@ -69,12 +70,14 @@ class ConnectionHandle {
     workpool_event_ = conn_handler_->RegisterManualEvent(
         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
-    // TODO(Tianyi): should put the initialization else where.. check correctness
-    // first.
-    tcop_.SetTaskCallback([](void *arg) {
-      struct event *event = static_cast<struct event *>(arg);
-      event_active(event, EV_WRITE, 0);
-    }, workpool_event_);
+    // TODO(Tianyi): should put the initialization else where.. check
+    // correctness first.
+    tcop_.SetTaskCallback(
+        [](void *arg) {
+          struct event *event = static_cast<struct event *>(arg);
+          event_active(event, EV_WRITE, 0);
+        },
+        workpool_event_);
 
     network_event_ = conn_handler_->RegisterEvent(
         io_wrapper_->GetSocketFd(), EV_READ | EV_PERSIST,
@@ -90,9 +93,7 @@ class ConnectionHandle {
 
   /* State Machine Actions */
   // TODO(Tianyu): Write some documentation when feeling like it
-  inline Transition TryRead() {
-    return io_wrapper_->FillReadBuffer();
-  }
+  inline Transition TryRead() { return io_wrapper_->FillReadBuffer(); }
   Transition TryWrite();
   Transition Process();
   Transition GetResult();
@@ -100,16 +101,14 @@ class ConnectionHandle {
   Transition CloseConnection();
 
   /**
-   * Updates the event flags of the network event. This configures how the handler
-   * reacts to client activity from this connection.
+   * Updates the event flags of the network event. This configures how the
+   * handler reacts to client activity from this connection.
    * @param flags new flags for the event handle.
    */
   inline void UpdateEventFlags(short flags) {
-    conn_handler_->UpdateEvent(network_event_,
-                               io_wrapper_->GetSocketFd(),
-                               flags,
-                               METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent),
-                               this);
+    conn_handler_->UpdateEvent(
+        network_event_, io_wrapper_->GetSocketFd(), flags,
+        METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   }
 
   /**
@@ -183,9 +182,8 @@ class ConnectionHandle {
    */
   inline bool HasResponse() {
     return (protocol_handler_->responses_.size() != 0) ||
-        (io_wrapper_->wbuf_->size_ != 0);
+           (io_wrapper_->wbuf_->size_ != 0);
   }
-
 
   ConnectionHandlerTask *conn_handler_;
   std::shared_ptr<NetworkIoWrapper> io_wrapper_;
@@ -195,7 +193,6 @@ class ConnectionHandle {
   tcop::TrafficCop tcop_;
   // TODO(Tianyu): Put this into protocol handler in a later refactor
   unsigned int next_response_ = 0;
-
 };
 }  // namespace network
 }  // namespace peloton

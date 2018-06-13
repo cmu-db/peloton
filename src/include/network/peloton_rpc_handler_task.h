@@ -29,7 +29,6 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
   }
 };
 
-
 class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
   explicit PelotonRpcHandlerTask(const char *address) : address_(address) {}

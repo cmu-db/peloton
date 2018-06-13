@@ -15,11 +15,11 @@
 #include <string>
 #include <vector>
 
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 #include "network/network_state.h"
 
 #define BUFFER_INIT_SIZE 100
@@ -31,8 +31,8 @@ namespace network {
  * A plain old buffer with a movable cursor, the meaning of which is dependent
  * on the use case.
  *
- * The buffer has a fix capacity and one can write a variable amount of meaningful
- * bytes into it. We call this amount "size" of the buffer.
+ * The buffer has a fix capacity and one can write a variable amount of
+ * meaningful bytes into it. We call this amount "size" of the buffer.
  */
 struct Buffer {
  public:
@@ -92,7 +92,7 @@ struct Buffer {
 /**
  * A buffer specialize for read
  */
-class ReadBuffer: public Buffer {
+class ReadBuffer : public Buffer {
  public:
   /**
    * Read as many bytes as possible using SSL read
@@ -101,8 +101,7 @@ class ReadBuffer: public Buffer {
    */
   inline int FillBufferFrom(SSL *context) {
     ERR_clear_error();
-    ssize_t bytes_read =
-        SSL_read(context, &buf_[size_], Capacity() - size_);
+    ssize_t bytes_read = SSL_read(context, &buf_[size_], Capacity() - size_);
     int err = SSL_get_error(context, bytes_read);
     if (err == SSL_ERROR_NONE) size_ += bytes_read;
     return err;
@@ -116,7 +115,7 @@ class ReadBuffer: public Buffer {
   inline int FillBufferFrom(int fd) {
     ssize_t bytes_read = read(fd, &buf_[size_], Capacity() - size_);
     if (bytes_read > 0) size_ += bytes_read;
-    return (int) bytes_read;
+    return (int)bytes_read;
   }
 
   /**
@@ -133,8 +132,7 @@ class ReadBuffer: public Buffer {
    * @param dest Desired memory location to read into
    */
   inline void Read(size_t bytes, void *dest) {
-    std::copy(buf_.begin() + offset_,
-              buf_.begin() + offset_ + bytes,
+    std::copy(buf_.begin() + offset_, buf_.begin() + offset_ + bytes,
               reinterpret_cast<uchar *>(dest));
     offset_ += bytes;
   }
@@ -156,7 +154,7 @@ class ReadBuffer: public Buffer {
 /**
  * A buffer specialized for write
  */
-class WriteBuffer: public Buffer {
+class WriteBuffer : public Buffer {
  public:
   /**
    * Write as many bytes as possible using SSL write
@@ -165,8 +163,7 @@ class WriteBuffer: public Buffer {
    */
   inline int WriteOutTo(SSL *context) {
     ERR_clear_error();
-    ssize_t bytes_written =
-        SSL_write(context, &buf_[offset_], size_ - offset_);
+    ssize_t bytes_written = SSL_write(context, &buf_[offset_], size_ - offset_);
     int err = SSL_get_error(context, bytes_written);
     if (err == SSL_ERROR_NONE) offset_ += bytes_written;
     return err;
@@ -180,7 +177,7 @@ class WriteBuffer: public Buffer {
   inline int WriteOutTo(int fd) {
     ssize_t bytes_written = write(fd, &buf_[offset_], size_ - offset_);
     if (bytes_written > 0) offset_ += bytes_written;
-    return (int) bytes_written;
+    return (int)bytes_written;
   }
 
   /**
@@ -188,17 +185,13 @@ class WriteBuffer: public Buffer {
    * maximum capacity minus the capacity already in use.
    * @return Remaining capacity
    */
-  inline size_t RemainingCapacity() {
-    return Capacity() - size_ + 1;
-  }
+  inline size_t RemainingCapacity() { return Capacity() - size_ + 1; }
 
   /**
    * @param bytes Desired number of bytes to write
    * @return Whether the buffer can accommodate the number of bytes given
    */
-  inline bool HasSpaceFor(size_t bytes) {
-    return RemainingCapacity() >= bytes;
-  }
+  inline bool HasSpaceFor(size_t bytes) { return RemainingCapacity() >= bytes; }
 
   /**
    * Append the desired range into current buffer
@@ -222,7 +215,6 @@ class WriteBuffer: public Buffer {
     Append(reinterpret_cast<uchar *>(&val), sizeof(T));
   }
 };
-
 
 class InputPacket {
  public:

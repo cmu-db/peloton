@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 #include <thread>
-#include <map>
 
 #include "common/logger.h"
 #include "rpc_method.h"

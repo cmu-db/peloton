@@ -6,14 +6,14 @@
 //
 // Identification: src/network/marshal.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "network/marshal.h"
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include "network/marshal.h"
 
 #include <netinet/in.h>
 
