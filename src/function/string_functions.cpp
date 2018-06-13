@@ -14,6 +14,8 @@
 
 #include "common/macros.h"
 #include "executor/executor_context.h"
+#include "type/type_util.h"
+#include "type/abstract_pool.h"
 
 namespace peloton {
 namespace function {
@@ -218,6 +220,37 @@ uint32_t StringFunctions::Length(
     UNUSED_ATTRIBUTE const char *str, uint32_t length) {
   PELOTON_ASSERT(str != nullptr);
   return length;
+}
+
+int32_t StringFunctions::CompareStrings(const char *str1, uint32_t len1,
+                                        const char *str2, uint32_t len2) {
+  return peloton::type::TypeUtil::CompareStrings(str1, len1, str2, len2);
+}
+
+void StringFunctions::WriteString(const char *data, uint32_t len, char *buf,
+                                  peloton::type::AbstractPool &pool) {
+  struct Varlen {
+    uint32_t len;
+    char data[0];
+  };
+
+  // Allocate memory for the Varlen object
+  auto *area = static_cast<Varlen *>(pool.Allocate(sizeof(uint32_t) + len));
+
+  // Populate it
+  area->len = len;
+  PELOTON_MEMCPY(area->data, data, len);
+
+  // Store a pointer to the Varlen object into the target memory space
+  *reinterpret_cast<Varlen **>(buf) = area;
+}
+
+// TODO(pmenon): UTF8 checking, string checking, lots of error handling here
+// TODO(pmenon): Why do we need this +1 on the length ?
+StringFunctions::StrWithLen StringFunctions::InputString(
+    UNUSED_ATTRIBUTE const codegen::type::Type &type, const char *data,
+    uint32_t len) {
+  return StringFunctions::StrWithLen{data, len + 1};
 }
 
 }  // namespace function

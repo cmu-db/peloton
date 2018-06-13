@@ -41,7 +41,7 @@ class AggregatePlan : public AbstractPlan {
             bool distinct = false);
 
     // Bindings
-    void PerformBinding(BindingContext &binding_context);
+    void PerformBinding(bool is_global, BindingContext &binding_context);
 
     AggTerm Copy() const;
   };

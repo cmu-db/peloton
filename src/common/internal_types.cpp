@@ -1304,6 +1304,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::INDEXSCAN: {
       return ("INDEXSCAN");
     }
+    case PlanNodeType::CSVSCAN: {
+      return ("CSVSCAN");
+    }
     case PlanNodeType::NESTLOOP: {
       return ("NESTLOOP");
     }
@@ -1379,9 +1382,6 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::RESULT: {
       return ("RESULT");
     }
-    case PlanNodeType::COPY: {
-      return ("COPY");
-    }
     case PlanNodeType::MOCK: {
       return ("MOCK");
     }
@@ -1390,6 +1390,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PlanNodeType::ANALYZE: {
       return ("ANALYZE");
+    }
+    case PlanNodeType::EXPORT_EXTERNAL_FILE: {
+      return ("EXPORT_EXTERNAL_FILE");
     }
     default: {
       throw ConversionException(
@@ -1408,6 +1411,8 @@ PlanNodeType StringToPlanNodeType(const std::string &str) {
     return PlanNodeType::SEQSCAN;
   } else if (upper_str == "INDEXSCAN") {
     return PlanNodeType::INDEXSCAN;
+  } else if (upper_str == "CSVSCAN") {
+    return PlanNodeType::CSVSCAN;
   } else if (upper_str == "NESTLOOP") {
     return PlanNodeType::NESTLOOP;
   } else if (upper_str == "NESTLOOPINDEX") {
@@ -1456,12 +1461,12 @@ PlanNodeType StringToPlanNodeType(const std::string &str) {
     return PlanNodeType::HASH;
   } else if (upper_str == "RESULT") {
     return PlanNodeType::RESULT;
-  } else if (upper_str == "COPY") {
-    return PlanNodeType::COPY;
   } else if (upper_str == "MOCK") {
     return PlanNodeType::MOCK;
   } else if (upper_str == "ANALYZE") {
     return PlanNodeType::ANALYZE;
+  } else if (upper_str == "EXPORT_EXTERNAL_FILE") {
+    return PlanNodeType::EXPORT_EXTERNAL_FILE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
@@ -1874,6 +1879,32 @@ CopyType StringToCopyType(const std::string &str) {
 
 std::ostream &operator<<(std::ostream &os, const CopyType &type) {
   os << CopyTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// ExternalFileFormat - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string ExternalFileFormatToString(ExternalFileFormat format) {
+  switch (format) {
+    case ExternalFileFormat::CSV:
+    default:
+      return "CSV";
+  }
+}
+
+ExternalFileFormat StringToExternalFileFormat(const std::string &str) {
+  auto upper = StringUtil::Upper(str);
+  if (upper == "CSV") {
+    return ExternalFileFormat::CSV;
+  }
+  throw ConversionException(StringUtil::Format(
+      "No ExternalFileFormat for input '%s'", upper.c_str()));
+}
+
+std::ostream &operator<<(std::ostream &os, const ExternalFileFormat &format) {
+  os << ExternalFileFormatToString(format);
   return os;
 }
 

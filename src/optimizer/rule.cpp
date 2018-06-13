@@ -39,11 +39,13 @@ RuleSet::RuleSet() {
   AddImplementationRule(new GetToDummyScan());
   AddImplementationRule(new GetToSeqScan());
   AddImplementationRule(new GetToIndexScan());
+  AddImplementationRule(new LogicalExternalFileGetToPhysical());
   AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
   AddImplementationRule(new InnerJoinToInnerNLJoin());
   AddImplementationRule(new InnerJoinToInnerHashJoin());
   AddImplementationRule(new ImplementDistinct());
   AddImplementationRule(new ImplementLimit());
+  AddImplementationRule(new LogicalExportToPhysicalExport());
 
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughJoin());

@@ -97,20 +97,13 @@ namespace peloton {
 #endif /* CHECK_INVARIANTS */
 
 //===--------------------------------------------------------------------===//
-// override
+// Compiler version checks
 //===--------------------------------------------------------------------===//
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)
-#define GCC_AT_LEAST_47 1
+#if __GNUC__ > 6 || (__GNUC__ == 6 && __GNUC_MINOR__ >= 0)
+#define GCC_AT_LEAST_6 1
 #else
-#define GCC_AT_LEAST_47 0
-#endif
-
-// g++-4.6 does not support override
-#if GCC_AT_LEAST_47
-#define OVERRIDE override
-#else
-#define OVERRIDE
+#define GCC_AT_LEAST_6 0
 #endif
 
 //===--------------------------------------------------------------------===//

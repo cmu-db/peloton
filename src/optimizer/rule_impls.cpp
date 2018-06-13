@@ -275,9 +275,8 @@ void GetToIndexScan::Transform(
         sort_by_asc_base_column = false;
         break;
       }
-      auto bound_oids =
-          reinterpret_cast<expression::TupleValueExpression *>(expr)
-              ->GetBoundOid();
+      auto bound_oids = reinterpret_cast<expression::TupleValueExpression *>(
+                            expr)->GetBoundOid();
       sort_col_ids.push_back(std::get<2>(bound_oids));
     }
     // Check whether any index can fulfill sort property
@@ -358,20 +357,16 @@ void GetToIndexScan::Transform(
         if (value_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
           value_list.push_back(
               reinterpret_cast<expression::ConstantValueExpression *>(
-                  value_expr)
-                  ->GetValue());
+                  value_expr)->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
-                            expr->GetModifiableChild(1))
-                            ->GetValueType()));
+                            expr->GetModifiableChild(1))->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
                   reinterpret_cast<expression::ParameterValueExpression *>(
-                      value_expr)
-                      ->GetValueIdx())
-                  .Copy());
+                      value_expr)->GetValueIdx()).Copy());
           LOG_TRACE("Parameter offset: %s",
                     (*value_list.rbegin()).GetInfo().c_str());
         }
@@ -436,6 +431,34 @@ void LogicalQueryDerivedGetToPhysical::Transform(
       std::make_shared<OperatorExpression>(QueryDerivedScan::make(
           get->get_id, get->table_alias, get->alias_to_expr_map));
   result_plan->PushChild(input->Children().at(0));
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalExternalFileGetToPhysical
+LogicalExternalFileGetToPhysical::LogicalExternalFileGetToPhysical() {
+  type_ = RuleType::EXTERNAL_FILE_GET_TO_PHYSICAL;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalExternalFileGet);
+}
+
+bool LogicalExternalFileGetToPhysical::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  return true;
+}
+
+void LogicalExternalFileGetToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  const auto *get = input->Op().As<LogicalExternalFileGet>();
+
+  auto result_plan = std::make_shared<OperatorExpression>(
+      ExternalFileScan::make(get->get_id, get->format, get->file_name,
+                             get->delimiter, get->quote, get->escape));
+
+  PELOTON_ASSERT(input->Children().empty());
 
   transformed.push_back(result_plan);
 }
@@ -792,6 +815,38 @@ void ImplementLimit::Transform(
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 1);
 
+  result_plan->PushChild(children[0]);
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalExport to Physical Export
+LogicalExportToPhysicalExport::LogicalExportToPhysicalExport() {
+  type_ = RuleType::EXPORT_EXTERNAL_FILE_TO_PHYSICAL;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalExportExternalFile);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+}
+
+bool LogicalExportToPhysicalExport::Check(
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  return true;
+}
+
+void LogicalExportToPhysicalExport::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  const auto *export_op = input->Op().As<LogicalExportExternalFile>();
+
+  auto result_plan =
+      std::make_shared<OperatorExpression>(PhysicalExportExternalFile::make(
+          export_op->format, export_op->file_name, export_op->delimiter,
+          export_op->quote, export_op->escape));
+
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PELOTON_ASSERT(children.size() == 1);
   result_plan->PushChild(children[0]);
 
   transformed.push_back(result_plan);
