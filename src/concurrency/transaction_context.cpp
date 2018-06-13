@@ -76,6 +76,8 @@ void TransactionContext::Init(const size_t thread_id,
 
   thread_id_ = thread_id;
 
+  is_written_ = false;
+
   isolation_level_ = isolation;
 
   gc_set_ = std::make_shared<GCSet>();
@@ -115,18 +117,18 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
                  (rw_set_[location] != RWType::DELETE &&
                   rw_set_[location] != RWType::INS_DEL));
   auto rw_set_it = rw_set_.find(location);
-  if (rw_set_it != rw_set_.end()) {
-    if (rw_set_it->second == RWType::READ || rw_set_it->second == RWType::READ_OWN) {
-      rw_set_it->second = RWType::UPDATE;
-    }
-    return;
+  if (rw_set_it != rw_set_.end() && (rw_set_it->second == RWType::READ ||
+                                  rw_set_it->second == RWType::READ_OWN)) {
+    rw_set_it->second = RWType::UPDATE;
+    is_written_ = true;
   }
-  rw_set_[location] = RWType::UPDATE;
+  PELOTON_ASSERT(is_written_);
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
   PELOTON_ASSERT(rw_set_.find(location) == rw_set_.end());
   rw_set_[location] = RWType::INSERT;
+  is_written_ = true;
 }
 
 bool TransactionContext::RecordDelete(const ItemPointer &location) {
@@ -135,10 +137,12 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
                   rw_set_[location] != RWType::INS_DEL));
   auto rw_set_it = rw_set_.find(location);
   if (rw_set_it != rw_set_.end() && rw_set_it->second == RWType::INSERT) {
+    PELOTON_ASSERT(is_written_);
     rw_set_it->second = RWType::INS_DEL;
     return true;
   } else {
     rw_set_[location] = RWType::DELETE;
+    is_written_ = true;
     return false;
   }
 }

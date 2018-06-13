@@ -338,6 +338,8 @@ class TransactionContext : public Printable {
 
   IsolationLevelType isolation_level_;
 
+  bool is_written_;
+
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
   /** one default transaction is NOT 'read only' unless it is marked 'read only' explicitly*/
