@@ -52,10 +52,10 @@ class Manager {
 
   oid_t GetCurrentIndirectionArrayId() { return indirection_array_oid_; }
 
-  void AddIndirectionArray(const oid_t &oid,
+  void AddIndirectionArray(const oid_t oid,
                            std::shared_ptr<storage::IndirectionArray> location);
 
-  void DropIndirectionArray(const oid_t &oid);
+  void DropIndirectionArray(const oid_t oid);
 
   void ClearIndirectionArray(void);
 

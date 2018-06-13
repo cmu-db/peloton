@@ -121,7 +121,7 @@ bool StorageManager::RemoveDatabaseFromStorageManager(oid_t database_oid) {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void StorageManager::AddTileGroup(const oid_t &oid,
+void StorageManager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
   // do this check first, so that count is not updated yet
   if (!tile_group_locator_.Contains(oid)) {
@@ -131,14 +131,14 @@ void StorageManager::AddTileGroup(const oid_t &oid,
   tile_group_locator_.Upsert(oid, location);
 }
 
-void StorageManager::DropTileGroup(const oid_t &oid) {
+void StorageManager::DropTileGroup(const oid_t oid) {
   // drop the catalog reference to the tile group
   if (tile_group_locator_.Erase(oid)) {
     num_live_tile_groups_.fetch_sub(1);
   }
 }
 
-std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t &oid) {
+std::shared_ptr<storage::TileGroup> StorageManager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
   if (tile_group_locator_.Find(oid, location)) {
     return location;

@@ -97,7 +97,11 @@ class LockFreeArray {
    */
   bool Contains(const ValueType &value) const;
 
-  // Find offset of an element
+  /**
+   * Finds the offset of an element given its value
+   * @param value Element to search the array for
+   * @return -1 if element not found, offset of element otherwise
+   */
   ssize_t Lookup(const ValueType &value);
 
  private:

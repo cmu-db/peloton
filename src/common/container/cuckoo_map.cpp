@@ -128,10 +128,6 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
 
-// Used in InternalTypes
-template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
-                         ItemPointerComparator>;
-
 // Used in TransactionLevelGCManager
 template class CuckooMap<oid_t, std::shared_ptr<gc::RecycleStack>>;
 
