@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/table_storage.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,7 @@
 
 #include "catalog/schema.h"
 #include "codegen/lang/if.h"
-#include "codegen/proxy/tuple_runtime_proxy.h"
+#include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/type/sql_type.h"
 #include "codegen/type/type.h"
 #include "codegen/value.h"
@@ -49,7 +49,7 @@ void TableStorage::StoreValues(CodeGen &codegen, llvm::Value *tuple_ptr,
       }
       value_is_null.ElseBlock();
       {
-        codegen.Call(TupleRuntimeProxy::CreateVarlen,
+        codegen.Call(StringFunctionsProxy::WriteString,
                      {value.GetValue(), value.GetLength(), val_ptr, pool});
       }
       value_is_null.EndIf();

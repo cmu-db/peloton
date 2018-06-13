@@ -29,6 +29,9 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(RTrim);
   DECLARE_METHOD(Substr);
   DECLARE_METHOD(Repeat);
+  DECLARE_METHOD(CompareStrings);
+  DECLARE_METHOD(WriteString);
+  DECLARE_METHOD(InputString);
 };
 
 PROXY(StrWithLen) {

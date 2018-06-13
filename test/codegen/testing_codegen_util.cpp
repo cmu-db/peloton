@@ -12,6 +12,8 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include <boost/filesystem.hpp>
+
 #include "catalog/table_catalog.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/value_proxy.h"
@@ -27,6 +29,9 @@
 
 namespace peloton {
 namespace test {
+
+TempFileHandle::TempFileHandle(std::string _name) : name(_name) {}
+TempFileHandle::~TempFileHandle() { boost::filesystem::remove(name); }
 
 //===----------------------------------------------------------------------===//
 // PELOTON CODEGEN TEST
@@ -446,7 +451,7 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
   format.append("]\n");
 
   // Make the printf call
-  codegen.CallPrintf(format, cols);
+  codegen.Printf(format, cols);
 }
 
 }  // namespace test

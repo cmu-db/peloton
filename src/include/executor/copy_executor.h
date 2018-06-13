@@ -40,9 +40,6 @@ class CopyExecutor : public AbstractExecutor {
 
   bool DExecute();
 
-  // Initialize the column ids for query parameters
-  void InitParamColIds();
-
   bool InitFileHandle(const char *name, const char *mode);
 
   // Flush the local buffer
