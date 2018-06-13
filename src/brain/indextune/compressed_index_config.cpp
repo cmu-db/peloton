@@ -17,10 +17,10 @@ namespace brain {
 
 CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
-    size_t max_index_size, bool dry_run, catalog::Catalog *catalog,
+    size_t max_index_size, RunMode run_mode, catalog::Catalog *catalog,
     concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
-      dry_run_{dry_run},
+      run_mode_{run_mode},
       catalog_{catalog},
       txn_manager_{txn_manager},
       next_table_offset_{0},
@@ -140,7 +140,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     UnsetBit(current_bit);
 
     // Current bit is not an empty index (empty set)
-    if (!dry_run_ &&
+    if (run_mode_ == RunMode::ActualRun &&
         table_offset_reverse_map_.find(current_bit) ==
             table_offset_reverse_map_.end()) {
       // 2. drop its corresponding index in catalog
@@ -167,7 +167,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     SetBit(current_bit);
 
     // Current bit is not an empty index (empty set)
-    if (!dry_run_ &&
+    if (run_mode_ == RunMode::ActualRun &&
         table_offset_reverse_map_.find(current_bit) ==
             table_offset_reverse_map_.end()) {
       txn = txn_manager_->BeginTransaction();

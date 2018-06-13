@@ -16,16 +16,16 @@ namespace peloton {
 namespace brain {
 LSPIIndexTuner::LSPIIndexTuner(
     const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
-    bool single_col_idx, size_t max_index_size, bool dry_run,
+    CandidateSelectionType cand_sel_type, size_t max_index_size, RunMode run_mode,
     peloton::catalog::Catalog *catalog,
     peloton::concurrency::TransactionManager *txn_manager)
     : db_name_{db_name},
-      single_col_idx_{single_col_idx},
+      cand_sel_type_{cand_sel_type},
       max_index_size_{max_index_size},
-      dry_run_{dry_run} {
+      run_mode_{run_mode} {
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, ignore_table_oids,
-                                         max_index_size, dry_run, catalog,
+                                         max_index_size, run_mode, catalog,
                                          txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
@@ -54,7 +54,7 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   boost::dynamic_bitset<> add_candidate_set, drop_candidate_set;
   for (size_t i = 0; i < num_queries; i++) {
     CompressedIndexConfigUtil::AddCandidates(*index_config_, queries[i],
-                                             add_candidate_set, single_col_idx_,
+                                             add_candidate_set, cand_sel_type_,
                                              max_index_size_);
     add_candidate_sets.push_back(std::move(add_candidate_set));
     CompressedIndexConfigUtil::DropCandidates(*index_config_, queries[i],

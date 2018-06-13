@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <string>
+#include "brain/indextune/lspi/lspi_common.h"
 #include "brain/indextune/compressed_index_config.h"
 #include "brain/indextune/compressed_index_config_util.h"
 #include "brain/indextune/lspi/lstdq.h"
@@ -32,8 +33,8 @@ class LSPIIndexTuner {
  public:
   explicit LSPIIndexTuner(
       const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
-      bool single_col_idx, size_t max_index_size, bool dry_run = false,
-      catalog::Catalog *catalog = nullptr,
+      CandidateSelectionType cand_sel_type, size_t max_index_size,
+      RunMode run_mode = ActualRun, catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
    * Given a recent set of queries and their latency on the current
@@ -54,9 +55,9 @@ class LSPIIndexTuner {
  private:
   // Database to tune
   std::string db_name_;
-  bool single_col_idx_;
+  CandidateSelectionType cand_sel_type_;
   size_t max_index_size_;
-  bool dry_run_;
+  RunMode run_mode_;
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;

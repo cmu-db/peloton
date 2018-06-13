@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/index_selection.h"
+#include "brain/indextune/lspi/lspi_common.h"
 #include "brain/indextune/compressed_index_config.h"
 #include "brain/indextune/compressed_index_config_util.h"
 #include "catalog/catalog.h"
@@ -34,6 +35,8 @@ class CompressedIdxConfigTest : public PelotonTest {
       : catalog_{catalog::Catalog::GetInstance()},
         txn_manager_{&concurrency::TransactionManagerFactory::GetInstance()} {}
 
+  // TODO: Clean up all these utility fns - push into the index selection util
+
   /**
    * @brief Create a new database
    */
@@ -47,7 +50,7 @@ class CompressedIdxConfigTest : public PelotonTest {
    * @brief Create a new table with schema (a INT, b INT, c INT). b is PRIMARY
    * KEY.
    */
-  void CreateTable_TypeA(const std::string &db_name,
+  void CreateTable_WPkey(const std::string &db_name,
                          const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -75,8 +78,8 @@ class CompressedIdxConfigTest : public PelotonTest {
   /**
    * @brief Create a new table with schema (a INT, b INT, c INT).
    */
-  void CreateTable_TypeB(const std::string &db_name,
-                         const std::string &table_name) {
+  void CreateTable_WoPkey(const std::string &db_name,
+                          const std::string &table_name) {
     auto a_column = catalog::Column(
         type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
         "a", true);
@@ -99,7 +102,7 @@ class CompressedIdxConfigTest : public PelotonTest {
    * @brief Create two indexes on columns (a, b) and (b, c), respectively
    */
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
-  CreateIndex_TypeA(const std::string &db_name, const std::string &table_name) {
+  CreateIndex_WPkey(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
@@ -147,7 +150,7 @@ class CompressedIdxConfigTest : public PelotonTest {
    * @brief Create one index on columns (a, c)
    */
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
-  CreateIndex_TypeB(const std::string &db_name, const std::string &table_name) {
+  CreateIndex_WoPkey(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
     const auto db_obj = catalog_->GetDatabaseWithName(db_name, txn);
     const auto db_oid = db_obj->GetOid();
@@ -225,14 +228,14 @@ TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
 
-  CreateTable_TypeA(database_name, table_name_1);
-  CreateTable_TypeB(database_name, table_name_2);
-  CreateTable_TypeB(database_name, table_name_3);
+  CreateTable_WPkey(database_name, table_name_1);
+  CreateTable_WoPkey(database_name, table_name_2);
+  CreateTable_WoPkey(database_name, table_name_3);
 
   // create index on (a1, b1) and (b1, c1)
-  auto idx_objs = CreateIndex_TypeA(database_name, table_name_1);
+  auto idx_objs = CreateIndex_WPkey(database_name, table_name_1);
   // create index on (a2, c2)
-  auto idx_objs_B = CreateIndex_TypeB(database_name, table_name_2);
+  auto idx_objs_B = CreateIndex_WoPkey(database_name, table_name_2);
   // No index on table 3
   // Put everything in the vector of index objects
   idx_objs.insert(idx_objs.end(), idx_objs_B.begin(), idx_objs_B.end());
@@ -279,10 +282,10 @@ TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
   std::set<oid_t> ignore_table_oids;
   brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
                                                     ignore_table_oids);
-  CreateTable_TypeA(database_name, table_name_1);
+  CreateTable_WPkey(database_name, table_name_1);
 
   // create index on (a1, b1) and (b1, c1)
-  auto idx_objs = CreateIndex_TypeA(database_name, table_name_1);
+  auto idx_objs = CreateIndex_WPkey(database_name, table_name_1);
 
   auto comp_idx_config =
       brain::CompressedIndexConfigContainer(database_name, ignore_table_oids);
@@ -304,9 +307,9 @@ TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
   brain::CompressedIndexConfigUtil::DropCandidates(
       comp_idx_config, query_string, drop_candidates);
   brain::CompressedIndexConfigUtil::AddCandidates(
-      comp_idx_config, query_string, add_candidates_single, true, 0);
+      comp_idx_config, query_string, add_candidates_single, brain::CandidateSelectionType::Simple, 0);
   brain::CompressedIndexConfigUtil::AddCandidates(
-      comp_idx_config, query_string, add_candidates_multiple, false, 2);
+      comp_idx_config, query_string, add_candidates_multiple, brain::CandidateSelectionType::Exhaustive, 2);
 
   auto index_empty =
       GetHypotheticalIndexObjectFromString(database_name, table_name_1, {});

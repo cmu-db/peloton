@@ -13,6 +13,7 @@
 #pragma once
 
 #include <boost/dynamic_bitset.hpp>
+#include "brain/indextune/lspi/lspi_common.h"
 #include "brain/indextune/compressed_index_config.h"
 
 namespace peloton {
@@ -25,7 +26,7 @@ class CompressedIndexConfigUtil {
    * @param container: input container
    * @param query: query in question
    * @param add_candidates: the resulting add_candidates
-   * @param single_col_idx: whether use single-column index
+   * @param cand_sel_type: candidate index selection mechanism to follow
    * @param max_index_size: max number of columns to use to build index
    * permutations
    * @return the permuation as a bitset
@@ -33,7 +34,7 @@ class CompressedIndexConfigUtil {
   static void AddCandidates(CompressedIndexConfigContainer &container,
                             const std::string &query,
                             boost::dynamic_bitset<> &add_candidates,
-                            bool single_col_idx, size_t max_index_size);
+                            CandidateSelectionType cand_sel_type, size_t max_index_size);
   /**
    * Given a SQLStatement, generate drop candidates
    * @param container: input container

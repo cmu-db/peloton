@@ -17,7 +17,7 @@ namespace brain {
 
 void CompressedIndexConfigUtil::AddCandidates(
     CompressedIndexConfigContainer &container, const std::string &query,
-    boost::dynamic_bitset<> &add_candidates, bool single_col_idx,
+    boost::dynamic_bitset<> &add_candidates, CandidateSelectionType cand_sel_type,
     size_t max_index_size) {
   add_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
   auto sql_stmt_list = ToBindedSqlStmtList(container, query);
@@ -38,7 +38,7 @@ void CompressedIndexConfigUtil::AddCandidates(
     return;
   }
 
-  if (single_col_idx) {
+  if (cand_sel_type == CandidateSelectionType::Simple) {
     for (const auto &each_triplet : indexable_cols_vector) {
       const auto db_oid = std::get<0>(each_triplet);
       const auto table_oid = std::get<1>(each_triplet);

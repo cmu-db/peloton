@@ -21,6 +21,7 @@
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "planner/plan_util.h"
+#include "brain/indextune/lspi/lspi_common.h"
 
 namespace peloton {
 namespace brain {
@@ -42,7 +43,7 @@ class CompressedIndexConfigContainer {
   explicit CompressedIndexConfigContainer(
       const std::string &database_name,
       const std::set<oid_t> &ignore_table_oids, size_t max_index_size = 3,
-      bool dry_run = false, catalog::Catalog *catalog = nullptr,
+      RunMode run_mode = ActualRun, catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
   /**
@@ -144,7 +145,7 @@ class CompressedIndexConfigContainer {
 
  private:
   std::string database_name_;
-  bool dry_run_;
+  RunMode run_mode_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
 

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "brain/indextune/lspi/lspi_common.h"
 #include "brain/indextune/lspi/lspi_tuner.h"
 #include "brain/indextune/lspi/lstdq.h"
 #include "brain/indextune/lspi/rlse.h"
@@ -448,7 +449,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, brain::CandidateSelectionType::Exhaustive,
                                     MAX_INDEX_SIZE);
   vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
 
@@ -541,7 +542,7 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, brain::CandidateSelectionType::Exhaustive,
                                     MAX_INDEX_SIZE);
   vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
 
@@ -634,7 +635,7 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, brain::CandidateSelectionType::Exhaustive,
                                     MAX_INDEX_SIZE);
   vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
 
@@ -727,7 +728,7 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
     testing_util.InsertIntoTable(table_schema, TBL_ROWS);
   }
 
-  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, false,
+  brain::LSPIIndexTuner index_tuner(database_name, ignore_table_oids, brain::CandidateSelectionType::Exhaustive,
                                     MAX_INDEX_SIZE);
   vector_eig query_costs_no_tuning = vector_eig::Zero(query_strings.size());
 
