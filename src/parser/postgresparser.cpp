@@ -1505,23 +1505,59 @@ parser::PrepareStatement *PostgresParser::PrepareTransform(PrepareStmt *root) {
   return result;
 }
 
-// TODO: Only support COPY TABLE TO FILE and DELIMITER option
 parser::CopyStatement *PostgresParser::CopyTransform(CopyStmt *root) {
-  auto result = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
-  result->cpy_table.reset(RangeVarTransform(root->relation));
-  result->file_path = root->filename;
-  for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
-    auto def_elem = reinterpret_cast<DefElem *>(cell->data.ptr_value);
-    if (strcmp(def_elem->defname, "delimiter") == 0) {
-      auto delimiter = reinterpret_cast<value *>(def_elem->arg)->val.str;
-      result->delimiter = *delimiter;
-      break;
+  static constexpr char kDelimiterTok[] = "delimiter";
+  static constexpr char kFormatTok[] = "format";
+  static constexpr char kQuoteTok[] = "quote";
+  static constexpr char kEscapeTok[] = "escape";
+
+  // The main return value
+  auto *result = new CopyStatement();
+
+  if (root->relation) {
+    result->table.reset(RangeVarTransform(root->relation));
+  } else {
+    result->select_stmt.reset(
+        SelectTransform(reinterpret_cast<SelectStmt *>(root->query)));
+  }
+
+  result->file_path = (root->filename != nullptr ? root->filename : "");
+  result->is_from = root->is_from;
+
+  // Handle options
+  ListCell *cell = nullptr;
+  for_each_cell(cell, root->options->head) {
+    auto *def_elem = reinterpret_cast<DefElem *>(cell->data.ptr_value);
+
+    // Check delimiter
+    if (strncmp(def_elem->defname, kDelimiterTok, sizeof(kDelimiterTok)) == 0) {
+      auto *delimiter_val = reinterpret_cast<value *>(def_elem->arg);
+      result->delimiter = *delimiter_val->val.str;
+    }
+
+    // Check format
+    if (strncmp(def_elem->defname, kFormatTok, sizeof(kFormatTok)) == 0) {
+      auto *format_val = reinterpret_cast<value *>(def_elem->arg);
+      result->format = StringToExternalFileFormat(format_val->val.str);
+    }
+
+    // Check quote
+    if (strncmp(def_elem->defname, kQuoteTok, sizeof(kQuoteTok)) == 0) {
+      auto *quote_val = reinterpret_cast<value *>(def_elem->arg);
+      result->quote = *quote_val->val.str;
+    }
+
+    // Check escape
+    if (strncmp(def_elem->defname, kEscapeTok, sizeof(kEscapeTok)) == 0) {
+      auto *escape_val = reinterpret_cast<value *>(def_elem->arg);
+      result->escape = *escape_val->val.str;
     }
   }
+
   return result;
 }
 
-// Analyze statment is parsed with vacuum statment.
+// Analyze statment is parsed with vacuum statement.
 parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   if (root->options != VACOPT_ANALYZE) {
     throw NotImplementedException("Vacuum not supported.");

@@ -12,7 +12,11 @@
 
 #pragma once
 
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
+
 #include "codegen/codegen.h"
+#include "codegen/proxy/type_builder.h"
 
 namespace peloton {
 namespace codegen {
@@ -20,36 +24,68 @@ namespace codegen {
 /// This file contains several macros that help in creating proxies to C++
 /// classes.
 
-#define PROXY(N) struct N##Proxy
+#define PROXY(clazz) struct clazz##Proxy
 
-#define DECLARE_MEMBER(P, T, N) \
-  static const ::peloton::codegen::ProxyMember<P, T> _##N;
+#define DECLARE_MEMBER(slot_, type, name)                                      \
+  /*                                                                           \
+   * This macro does three things:                                             \
+   *   1. It defines a typedef for the C/C++ type of the member.               \
+   *   2. It defines a typedef for the slot/position in the struct the member  \
+   *      can be found.                                                        \
+   *   3. It defines a static member accessor. This will be defined later when \
+   *      the whole struct is defined (i.e., in DEFINE_TYPE()).                \
+   */                                                                          \
+  using name##_type = type;                                                    \
+  using name##_slot = std::integral_constant<uint32_t, slot_>;                 \
+  static const CppProxyMember name;
 
 #define DECLARE_TYPE \
   static ::llvm::Type *GetType(::peloton::codegen::CodeGen &codegen);
 
-#define DECLARE_METHOD(N)                                                      \
-  struct _##N : public ::peloton::codegen::ProxyMethod<_##N> {                 \
-    static const char *k##N##FnName;                                           \
-    ::llvm::Function *GetFunction(::peloton::codegen::CodeGen &codegen) const; \
-  };                                                                           \
-  static _##N N;
+#define DECLARE_METHOD(name)                   \
+  struct _##name {                             \
+    static ::llvm::Function *GetFunction(      \
+        ::peloton::codegen::CodeGen &codegen); \
+  };                                           \
+  static _##name name;
 
-#define MEMBER(N) decltype(_##N)
-#define FIELDS(...) \
-  (::peloton::codegen::proxy::TypeList<__VA_ARGS__>::GetType(codegen))
+#define MEMBER_TYPE(r, data, member_name)              \
+  ::peloton::codegen::proxy::TypeBuilder<BOOST_PP_CAT( \
+      member_name, _type)>::GetType(codegen),
 
-#define DEFINE_TYPE(P, N, ...)                                            \
-  ::llvm::Type *P##Proxy::GetType(::peloton::codegen::CodeGen &codegen) { \
-    static constexpr const char *kTypeName = N;                           \
-    /* Check if type has already been registered */                       \
-    ::llvm::Type *type = codegen.LookupType(kTypeName);                   \
-    if (type != nullptr) {                                                \
-      return type;                                                        \
-    }                                                                     \
-    ::std::vector<::llvm::Type *> fields = (FIELDS(__VA_ARGS__));         \
-    return ::llvm::StructType::create(codegen.GetContext(), fields,       \
-                                      kTypeName);                         \
+#define DEFINE_MEMBER(r, clazz, member_name)                                 \
+  /*                                                                         \
+   * Here we define and initialize the proxy member. Each member is          \
+   * initialized with the slot/position in the struct it lives in. This slot \
+   * position was provided when the member was declared.                     \
+   */                                                                        \
+  const CppProxyMember BOOST_PP_CAT(                                         \
+      clazz, Proxy)::member_name{BOOST_PP_CAT(member_name, _slot)()};
+
+#define DEFINE_TYPE(clazz, str_name, members...)                               \
+  /* First we invoke DEFINE_MEMBER() on each proxy member to initialize it */  \
+  BOOST_PP_SEQ_FOR_EACH(DEFINE_MEMBER, clazz,                                  \
+                        BOOST_PP_VARIADIC_TO_SEQ(members))                     \
+                                                                               \
+  /* This is the function that constructs the LLVM layout of the proxy type */ \
+  ::llvm::Type *clazz##Proxy::GetType(::peloton::codegen::CodeGen &codegen) {  \
+    static constexpr const char *kTypeName = str_name;                         \
+    /* Check if type has already been registered */                            \
+    ::llvm::Type *type = codegen.LookupType(kTypeName);                        \
+    if (type != nullptr) {                                                     \
+      return type;                                                             \
+    }                                                                          \
+    /*                                                                         \
+     * The type hasn't been registered. We need to construct a vector of       \
+     * llvm::Type * that define the layout of the struct/class. To do this, we \
+     * iterate over each of the members, find an appropriate TypeBuilder to    \
+     * build the LLVM type. We know each member's type because a type-def was  \
+     * defined when the member was first declared.                             \
+     */                                                                        \
+    ::std::vector<::llvm::Type *> member_types = {BOOST_PP_SEQ_FOR_EACH(       \
+        MEMBER_TYPE, _, BOOST_PP_VARIADIC_TO_SEQ(members))};                   \
+    return ::llvm::StructType::create(codegen.GetContext(), member_types,      \
+                                      kTypeName);                              \
   }
 
 namespace proxy {
@@ -195,31 +231,31 @@ struct MemFn<R (*)(Args..., ...), T, F> {
 
 #define STR(x) #x
 
-#define DEFINE_METHOD(NS, C, F)                                                \
-  C##Proxy::_##F C##Proxy::F = {};                                             \
-  const char *C##Proxy::_##F::k##F##FnName = STR(NS::C::F);                    \
-  ::llvm::Function *C##Proxy::_##F::GetFunction(                               \
-      ::peloton::codegen::CodeGen &codegen) const {                            \
-    /* If the function has already been defined, return it. */                 \
-    if (::llvm::Function *func = codegen.LookupBuiltin(k##F##FnName)) {        \
-      return func;                                                             \
-    }                                                                          \
-                                                                               \
-    /* Ensure either a function pointer or a member function pointer */        \
-    static_assert(                                                             \
-        ((::std::is_pointer<decltype(&NS::C::F)>::value &&                     \
-          ::std::is_function<typename ::std::remove_pointer<decltype(          \
-              &NS::C::F)>::type>::value) ||                                    \
-         ::std::is_member_function_pointer<decltype(&NS::C::F)>::value),       \
-        "You must provide a pointer to the function you want to proxy");       \
-                                                                               \
-    /* The function hasn't been registered. Do it now. */                      \
-    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                   \
-        ::peloton::codegen::proxy::TypeBuilder<decltype(&NS::C::F)>::GetType(  \
-            codegen));                                                         \
-    auto *func_type =                                                          \
-        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());   \
-    return codegen.RegisterBuiltin(k##F##FnName, func_type, MEMFN(&NS::C::F)); \
+#define DEFINE_METHOD(NS, C, F)                                               \
+  C##Proxy::_##F C##Proxy::F = {};                                            \
+  ::llvm::Function *C##Proxy::_##F::GetFunction(                              \
+      ::peloton::codegen::CodeGen &codegen) {                                 \
+    static constexpr const char *kFnName = STR(NS::C::F);                     \
+    /* If the function has already been defined, return it. */                \
+    if (::llvm::Function *func = codegen.LookupBuiltin(kFnName)) {            \
+      return func;                                                            \
+    }                                                                         \
+                                                                              \
+    /* Ensure either a function pointer or a member function pointer */       \
+    static_assert(                                                            \
+        ((::std::is_pointer<decltype(&NS::C::F)>::value &&                    \
+          ::std::is_function<typename ::std::remove_pointer<decltype(         \
+              &NS::C::F)>::type>::value) ||                                   \
+         ::std::is_member_function_pointer<decltype(&NS::C::F)>::value),      \
+        "You must provide a pointer to the function you want to proxy");      \
+                                                                              \
+    /* The function hasn't been registered. Do it now. */                     \
+    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                  \
+        ::peloton::codegen::proxy::TypeBuilder<decltype(&NS::C::F)>::GetType( \
+            codegen));                                                        \
+    auto *func_type =                                                         \
+        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());  \
+    return codegen.RegisterBuiltin(kFnName, func_type, MEMFN(&NS::C::F));     \
   }
 
 #define TYPE_BUILDER(PROXY, TYPE)                                      \

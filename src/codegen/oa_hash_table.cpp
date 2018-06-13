@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/oa_hash_table.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -58,16 +58,6 @@ llvm::Value *OAHashTable::HashKey(
   return Hash::HashValues(codegen, key);
 }
 
-// Load the value of a field from the given hash table instance.
-// NOTE: the type returned is the actual type registered in HashTable type
-llvm::Value *OAHashTable::LoadHashTableField(CodeGen &codegen,
-                                             llvm::Value *hash_table,
-                                             uint32_t field_id) const {
-  llvm::Type *hash_table_type = OAHashTableProxy::GetType(codegen);
-  return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-      hash_table_type, hash_table, 0, field_id));
-}
-
 // Return the element stored in a specified field of a HashEntry struct. Since
 // we also need to access data field, the offset is an extra argument
 llvm::Value *OAHashTable::LoadHashEntryField(CodeGen &codegen,
@@ -115,7 +105,8 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
                                                     llvm::Value *entry_ptr,
                                                     llvm::Value *index) const {
   // hash_table_size = hash_table->num_buckets_
-  llvm::Value *hash_table_size = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *hash_table_size =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
   // next_index = index + 1
   llvm::Value *next_index = codegen->CreateAdd(index, codegen.Const64(1));
   // next_entry_p = entry_p + HashEntrySize()
@@ -128,7 +119,7 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
                      codegen->CreateICmpEQ(next_index, hash_table_size)};
   {
     wrap_back_index = codegen.Const64(0);
-    wrap_back_entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+    wrap_back_entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
   }
   wrap_back.EndIf();
 
@@ -144,7 +135,7 @@ llvm::Value *OAHashTable::GetEntry(CodeGen &codegen, llvm::Value *hash_table,
   llvm::Value *byte_offset = codegen->CreateMul(
       codegen.Const64(hash_entry_size_),
       codegen->CreateZExtOrBitCast(index, codegen.Int64Type()));
-  llvm::Value *base_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *base_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
   return AdvancePointer(codegen, base_ptr, byte_offset);
 }
 
@@ -154,7 +145,8 @@ OAHashTable::HashTablePos OAHashTable::GetEntryByHash(
   // We need both to judge whether to wrap back
 
   // Load bucket mask from the hash table field #2 (3rd)
-  llvm::Value *bucket_mask = LoadHashTableField(codegen, hash_table, 2);
+  llvm::Value *bucket_mask =
+      codegen.Load(OAHashTableProxy::bucket_mask, hash_table);
   llvm::Value *index = codegen->CreateAnd(bucket_mask, hash_value);
   llvm::Value *entry_ptr = GetEntry(codegen, hash_table, index);
   return HashTablePos{index, entry_ptr};
@@ -277,9 +269,8 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
   llvm::Value *status_neq_zero = IsPtrUnEqualTo(codegen, kv_p, 0UL);
 
   lang::Loop probe_loop{
-      codegen,
-      status_neq_zero,
-      {{"Probe.entry", entry_ptr}, {"Probe.index", index}, {"Probe.kvl", kv_p}}};
+      codegen, status_neq_zero,
+      {{"probeEntry", entry_ptr}, {"probeIndex", index}, {"probeKvl", kv_p}}};
   {
     entry_ptr = probe_loop.GetLoopVar(0);
     index = probe_loop.GetLoopVar(1);
@@ -331,9 +322,8 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing(
             // Start a loop. Since we know at least one value exits, we build
             // a do-while loop.
             lang::Loop value_loop{
-                codegen,
-                codegen.ConstBool(true),
-                {{"Probe.counter", loop_counter}, {"Probe.dataPtr", data_ptr}}};
+                codegen, codegen.ConstBool(true),
+                {{"probeCounter", loop_counter}, {"probeDataPtr", data_ptr}}};
             {
               // Loop variables
               loop_counter = value_loop.GetLoopVar(0);
@@ -542,14 +532,15 @@ void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
 void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
                           IterateCallback &callback) const {
   // Load the size of the array
-  llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *num_buckets =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
 
   // Create a constant number from entry size
   llvm::Value *entry_size = codegen.Const64(HashEntrySize());
 
   // This is the first entry in the hash table
   // The type of this pointer is HashEntry without key and value field
-  llvm::Value *entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
 
   // Create an uint64_t variable which is the current index in the array
   // and initialize it with cosntant number 0
@@ -561,9 +552,8 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
 
   // (1) loop var = bucket_index; loop cond = bucket_cond
   lang::Loop bucket_loop{
-      codegen,
-      bucket_cond,
-      {{"Iterate.entryIndex", entry_index}, {"Iterate.entryPtr", entry_ptr}}};
+      codegen, bucket_cond,
+      {{"iterateEntryIndex", entry_index}, {"iterateEntryPtr", entry_ptr}}};
   {
     entry_index = bucket_loop.GetLoopVar(0);
     entry_ptr = bucket_loop.GetLoopVar(1);
@@ -594,7 +584,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
       lang::Loop read_value_loop{
           codegen,
           codegen.ConstBool(true),  // Always pass
-          {{"Iterate.counter", val_index}, {"Iterate.dataPtr", data_ptr}}};
+          {{"iterateCounter", val_index}, {"iterateDataPtr", data_ptr}}};
       {
         val_index = read_value_loop.GetLoopVar(0);
         data_ptr = read_value_loop.GetLoopVar(1);
@@ -630,14 +620,15 @@ void OAHashTable::VectorizedIterate(
   PELOTON_ASSERT((size & (size - 1)) == 0);
 
   // The start of the buckets array
-  llvm::Value *entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
 
   // Load the size of the array
-  llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *num_buckets =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
   num_buckets = codegen->CreateTruncOrBitCast(num_buckets, codegen.Int32Type());
 
-  lang::VectorizedLoop vector_loop{
-      codegen, num_buckets, size, {{"currEntryPtr", entry_ptr}}};
+  lang::VectorizedLoop vector_loop(codegen, num_buckets, size,
+                                   {{"currEntryPtr", entry_ptr}});
   {
     auto curr_range = vector_loop.GetCurrentRange();
     llvm::Value *start = curr_range.start;
@@ -646,9 +637,9 @@ void OAHashTable::VectorizedIterate(
 
     // Initial filter loop
     std::vector<lang::Loop::LoopVariable> loop_vars = {
-        {"VectorizedIterate.pos", start},
-        {"VectorizedIterate.selPos", codegen.Const32(0)},
-        {"VectorizedIterate.currEntryPtr", entry_ptr}};
+        {"vectorizedIteratePos", start},
+        {"vectorizedIterateSelPos", codegen.Const32(0)},
+        {"vectorizedIterateCurrEntryPtr", entry_ptr}};
     lang::Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
     {
       llvm::Value *pos = filter_loop.GetLoopVar(0);
@@ -730,13 +721,8 @@ void OAHashTable::PrefetchBucket(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Function *prefetch_func = llvm::Intrinsic::getDeclaration(
       &codegen.GetModule(), llvm::Intrinsic::prefetch);
   std::vector<llvm::Value *> fn_args = {
-      // The address we're prefetching
-      entry_ptr,
-      // The type of prefetch (i.e., fetch for read or write)
-      codegen.Const32(static_cast<uint32_t>(pf_type)),
-      // The degree of temporal locality
+      entry_ptr, codegen.Const32(static_cast<uint32_t>(pf_type)),
       codegen.Const32(static_cast<uint32_t>(locality)),
-      // The type of prefetch (i.e., instruction or data cache)
       codegen.Const32(kDataCache)};
   codegen.CallFunc(prefetch_func, fn_args);
 }

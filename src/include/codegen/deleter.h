@@ -15,7 +15,6 @@
 #include <cstdint>
 
 #include "common/macros.h"
-#include "executor/executor_context.h"
 
 namespace peloton {
 

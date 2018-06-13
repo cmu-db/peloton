@@ -68,9 +68,10 @@ class AbstractCatalog {
                          concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-  GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
-                         std::vector<type::Value> values,
-                         std::vector<ExpressionType> expr_types,
+  GetResultWithIndexScan(const std::vector<oid_t> &column_offsets,
+                         const oid_t &index_offset,
+                         const std::vector<type::Value> &values,
+                         const std::vector<ExpressionType> &expr_types,
                          concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>

@@ -77,7 +77,7 @@ void IndexSelection::GenerateCandidateIndexes(
       Workload wi(query, workload.GetDatabaseName());
 
       IndexConfiguration ai;
-      GetAdmissibleIndexes(query, ai);
+      GetAdmissibleIndexes(query.first, ai);
       admissible_config.Merge(ai);
 
       IndexConfiguration pruned_ai;
@@ -86,9 +86,10 @@ void IndexSelection::GenerateCandidateIndexes(
       // candidates for each query.
       candidate_config.Merge(pruned_ai);
     }
-    LOG_DEBUG("Single column candidate indexes: %lu", candidate_config.GetIndexCount());
+    LOG_TRACE("Single column candidate indexes: %lu",
+              candidate_config.GetIndexCount());
   } else {
-    LOG_DEBUG("Pruning multi-column indexes");
+    LOG_TRACE("Pruning multi-column indexes");
     IndexConfiguration pruned_ai;
     PruneUselessIndexes(candidate_config, workload, pruned_ai);
     candidate_config.Set(pruned_ai);
@@ -112,8 +113,8 @@ void IndexSelection::PruneUselessIndexes(IndexConfiguration &config,
 
       auto c1 = ComputeCost(c, w);
       auto c2 = ComputeCost(empty_config, w);
-      LOG_DEBUG("Cost with index %s is %lf", c.ToString().c_str(), c1);
-      LOG_DEBUG("Cost without is %lf", c2);
+      LOG_TRACE("Cost with index %s is %lf", c.ToString().c_str(), c1);
+      LOG_TRACE("Cost without is %lf", c2);
 
       if (c1 < c2) {
         is_useful = true;
@@ -152,12 +153,12 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
   // 3. If Cost (S U {I}) >= Cost(S) then exit
   // Else S = S U {I}
   // 4. If |S| = k then exit
-  LOG_DEBUG("GREEDY: Starting with the following index: %s",
-           indexes.ToString().c_str());
+  LOG_TRACE("GREEDY: Starting with the following index: %s",
+            indexes.ToString().c_str());
   size_t current_index_count = indexes.GetIndexCount();
 
-  LOG_DEBUG("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
-           current_index_count, k);
+  LOG_TRACE("GREEDY: At start: #indexes chosen : %zu, #num_indexes: %zu",
+            current_index_count, k);
 
   if (current_index_count >= k) return;
 
@@ -174,11 +175,11 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
       new_indexes = indexes;
       new_indexes.AddIndexObject(index);
       cur_cost = ComputeCost(new_indexes, workload);
-      LOG_DEBUG("GREEDY: Considering this index: %s \n with cost: %lf",
-               index->ToString().c_str(), cur_cost);
-      if (cur_cost < cur_min_cost || (best_index != nullptr &&
-          cur_cost == cur_min_cost &&
-          new_indexes.ToString() < best_index->ToString())) {
+      LOG_TRACE("GREEDY: Considering this index: %s \n with cost: %lf",
+                index->ToString().c_str(), cur_cost);
+      if (cur_cost < cur_min_cost ||
+          (best_index != nullptr && cur_cost == cur_min_cost &&
+           new_indexes.ToString() < best_index->ToString())) {
         cur_min_cost = cur_cost;
         best_index = index;
       }
@@ -186,8 +187,8 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
     // if we found a better configuration
     if (cur_min_cost < global_min_cost) {
-      LOG_DEBUG("GREEDY: Adding the following index: %s",
-               best_index->ToString().c_str());
+      LOG_TRACE("GREEDY: Adding the following index: %s",
+                best_index->ToString().c_str());
       indexes.AddIndexObject(best_index);
       remaining_indexes.RemoveIndexObject(best_index);
       current_index_count++;
@@ -195,12 +196,12 @@ void IndexSelection::GreedySearch(IndexConfiguration &indexes,
 
       // we are done with all remaining indexes
       if (remaining_indexes.GetIndexCount() == 0) {
-        LOG_DEBUG("GREEDY: Breaking because nothing more");
+        LOG_TRACE("GREEDY: Breaking because nothing more");
         break;
       }
     } else {  // we did not find any better index to add to our current
               // configuration
-      LOG_DEBUG("GREEDY: Breaking because nothing better found");
+      LOG_TRACE("GREEDY: Breaking because nothing better found");
       break;
     }
   }
@@ -258,9 +259,8 @@ void IndexSelection::ExhaustiveEnumeration(IndexConfiguration &indexes,
   result_index_config.erase({empty, cost_empty});
 
   for (auto index : result_index_config) {
-
-    LOG_DEBUG("EXHAUSTIVE: Index: %s, Cost: %lf", index.first.ToString().c_str(),
-             index.second);
+    LOG_TRACE("EXHAUSTIVE: Index: %s, Cost: %lf",
+              index.first.ToString().c_str(), index.second);
   }
 
   // Since the insertion into the sets ensures the order of cost, get the first
@@ -444,8 +444,8 @@ double IndexSelection::ComputeCost(IndexConfiguration &config,
   double cost = 0.0;
   auto queries = workload.GetQueries();
   for (auto query : queries) {
-    std::pair<IndexConfiguration, parser::SQLStatement *> state = {config,
-                                                                   query.get()};
+    std::pair<IndexConfiguration, parser::SQLStatement *> state = {
+        config, query.first.get()};
     if (context_.memo_.find(state) != context_.memo_.end()) {
       cost += context_.memo_[state];
     } else {

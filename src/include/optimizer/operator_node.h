@@ -27,6 +27,7 @@ enum class OpType {
   Leaf,
   // Logical ops
   Get,
+  LogicalExternalFileGet,
   LogicalQueryDerivedGet,
   LogicalProjection,
   LogicalFilter,
@@ -45,12 +46,14 @@ enum class OpType {
   LogicalUpdate,
   LogicalLimit,
   LogicalDistinct,
+  LogicalExportExternalFile,
   // Separate between logical and physical ops
   LogicalPhysicalDelimiter,
   // Physical ops
   DummyScan, /* Dummy Physical Op for SELECT without FROM*/
   SeqScan,
   IndexScan,
+  ExternalFileScan,
   QueryDerivedScan,
   OrderBy,
   PhysicalLimit,
@@ -69,7 +72,8 @@ enum class OpType {
   Update,
   Aggregate,
   HashGroupBy,
-  SortGroupBy
+  SortGroupBy,
+  ExportExternalFile,
 };
 
 //===--------------------------------------------------------------------===//

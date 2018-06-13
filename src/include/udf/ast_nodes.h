@@ -1,17 +1,35 @@
-#include "codegen/code_context.h"
-#include "codegen/codegen.h"
-#include "codegen/function_builder.h"
-#include "codegen/value.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Support/raw_ostream.h"  // For errs()
-#include "type/type.h"
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// ast_nodes.h
+//
+// Identification: src/include/udf/ast_nodes.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "type/type_id.h"
+
+namespace llvm {
+class Function;
+}  // namespace llvm
 
 namespace peloton {
+
+namespace codegen {
+class CodeGen;
+class FunctionBuilder;
+class Value;
+}  // namespace codegen
+
 namespace udf {
 
 using arg_type = type::TypeId;

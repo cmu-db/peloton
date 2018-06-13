@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/operator_to_plan_transformer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,12 +15,15 @@
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
+#include "codegen/type/type.h"
 #include "concurrency/transaction_context.h"
 #include "expression/expression_util.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/properties.h"
 #include "planner/aggregate_plan.h"
+#include "planner/csv_scan_plan.h"
 #include "planner/delete_plan.h"
+#include "planner/export_external_file_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
@@ -75,14 +78,38 @@ void PlanGenerator::Visit(const DummyScan *) {
 }
 
 void PlanGenerator::Visit(const PhysicalSeqScan *op) {
+  // Generate output column IDs for plan
   vector<oid_t> column_ids = GenerateColumnsForScan();
+
+  // Generate the predicate in the scan
   auto predicate = GeneratePredicateForScan(
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
-  output_plan_.reset(new planner::SeqScanPlan(
-      storage::StorageManager::GetInstance()->GetTableWithOid(
-          op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
-      predicate.release(), column_ids));
+
+  // Pull out the raw table from storage
+  auto *data_table = storage::StorageManager::GetInstance()->GetTableWithOid(
+      op->table_->GetDatabaseOid(), op->table_->GetTableOid());
+
+  // Check if we should do a parallel scan
+  bool parallel_exec_enabled = settings::SettingsManager::GetBool(
+      settings::SettingId::parallel_execution);
+
+  bool parallel_scan = parallel_exec_enabled;
+  if (parallel_exec_enabled) {
+    // Parallel scans are enabled. Check if the table meets the minimum number
+    // of tuples to support parallel execution.
+    auto num_tilegroups = data_table->GetTileGroupCount();
+    auto num_tuples = data_table->GetTupleCount();
+    auto min_parallel_table_scan_size =
+        static_cast<uint32_t>(settings::SettingsManager::GetInt(
+            settings::SettingId::min_parallel_table_scan_size));
+    parallel_scan =
+        (num_tilegroups > 1 && num_tuples > min_parallel_table_scan_size);
+  }
+
+  output_plan_.reset(new planner::SeqScanPlan(data_table, predicate.release(),
+                                              column_ids, op->is_for_update,
+                                              parallel_scan));
 }
 
 void PlanGenerator::Visit(const PhysicalIndexScan *op) {
@@ -101,6 +128,26 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       storage::StorageManager::GetInstance()->GetTableWithOid(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
       predicate.release(), column_ids, index_scan_desc, false));
+}
+
+void PlanGenerator::Visit(const ExternalFileScan *op) {
+  switch (op->format) {
+    case ExternalFileFormat::CSV: {
+      // First construct the output column descriptions
+      std::vector<planner::CSVScanPlan::ColumnInfo> cols;
+      for (const auto *output_col : output_cols_) {
+        auto col_info = planner::CSVScanPlan::ColumnInfo{
+            .name = "", .type = output_col->GetValueType()};
+        cols.emplace_back(std::move(col_info));
+      }
+
+      // Create the plan
+      output_plan_.reset(
+          new planner::CSVScanPlan(op->file_name, std::move(cols),
+                                   op->delimiter, op->quote, op->escape));
+      break;
+    }
+  }
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {
@@ -340,6 +387,14 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   output_plan_ = move(update_plan);
 }
 
+void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
+  unique_ptr<planner::AbstractPlan> export_plan{
+      new planner::ExportExternalFilePlan(op->file_name, op->delimiter,
+                                          op->quote, op->escape)};
+  export_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(export_plan);
+}
+
 /************************* Private Functions *******************************/
 vector<unique_ptr<expression::AbstractExpression>>
 PlanGenerator::GenerateTableTVExprs(
@@ -453,8 +508,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
 void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>>
-        *groupby_cols,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+        groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;

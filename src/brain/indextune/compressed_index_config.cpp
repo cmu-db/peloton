@@ -187,7 +187,7 @@ void CompressedIndexConfigContainer::AdjustIndexes(
       stringStream << "automated_index_" << current_bit;
       const std::string temp_index_name = stringStream.str();
 
-      catalog_->CreateIndex(database_name_, DEFUALT_SCHEMA_NAME, table_name,
+      catalog_->CreateIndex(database_name_, DEFAULT_SCHEMA_NAME, table_name,
                             index_vector, temp_index_name, false,
                             IndexType::BWTREE, txn);
 

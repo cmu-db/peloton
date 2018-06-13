@@ -6,15 +6,15 @@
 //
 // Identification: src/include/codegen/consumer_context.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "codegen/pipeline.h"
+#include "codegen/query_state.h"
 #include "codegen/row_batch.h"
-#include "codegen/runtime_state.h"
 #include "codegen/value.h"
 
 namespace peloton {
@@ -27,6 +27,7 @@ namespace codegen {
 
 // Forward declare
 class CompilationContext;
+class PipelineContext;
 
 //===----------------------------------------------------------------------===//
 // This is just a glue class that manages the given pipeline and provides access
@@ -37,19 +38,27 @@ class ConsumerContext {
  public:
   // Constructor
   ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
+  ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline,
+                  PipelineContext *pipeline_context);
+
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(ConsumerContext);
 
   // Pass this consumer context to the parent of the caller of consume()
   void Consume(RowBatch &batch);
   void Consume(RowBatch::Row &row);
 
+  CompilationContext &GetCompilationContext() { return compilation_context_; }
+
   // Get the code generator instance
   CodeGen &GetCodeGen() const;
 
-  // Get the runtime state
-  RuntimeState &GetRuntimeState() const;
+  // Get the query state
+  QueryState &GetQueryState() const;
 
-  // Get the pipeline
+  // Get the pipeline and the context
   const Pipeline &GetPipeline() const { return pipeline_; }
+  PipelineContext *GetPipelineContext() const { return pipeline_context_; }
 
  private:
   // The compilation context
@@ -57,10 +66,7 @@ class ConsumerContext {
 
   // The pipeline of operators that this context passes through
   Pipeline &pipeline_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(ConsumerContext);
+  PipelineContext *pipeline_context_;
 };
 
 }  // namespace codegen

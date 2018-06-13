@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/query_compiler.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,15 +27,16 @@ QueryCompiler::QueryCompiler() : next_id_(0) {}
 // Compile the given query statement
 std::unique_ptr<Query> QueryCompiler::Compile(
     const planner::AbstractPlan &root, const QueryParametersMap &parameters_map,
-    QueryResultConsumer &result_consumer, CompileStats *stats) {
+    ExecutionConsumer &result_consumer, CompileStats *stats) {
   // The query statement we compile
   std::unique_ptr<Query> query{new Query(root)};
 
   // Set up the compilation context
-  CompilationContext context{*query, parameters_map, result_consumer};
+  CompilationContext context{query->GetCodeContext(), query->GetQueryState(),
+                             parameters_map, result_consumer};
 
   // Perform the compilation
-  context.GeneratePlan(stats);
+  context.GeneratePlan(*query, stats);
 
   // Return the compiled query statement
   return query;
@@ -45,6 +46,7 @@ std::unique_ptr<Query> QueryCompiler::Compile(
 bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
+    case PlanNodeType::CSVSCAN:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::DELETE:
     case PlanNodeType::INSERT:

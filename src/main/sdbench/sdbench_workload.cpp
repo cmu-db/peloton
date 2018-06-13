@@ -561,8 +561,9 @@ static void CopyColumn(oid_t col_itr) {
     // Begin copy
     oid_t orig_tile_offset, orig_tile_column_offset;
     auto orig_tile_group = sdbench_table->GetTileGroup(tile_group_itr);
-    orig_tile_group->LocateTileAndColumn(col_itr, orig_tile_offset,
-                                         orig_tile_column_offset);
+    auto orig_layout = orig_tile_group->GetLayout();
+    orig_layout.LocateTileAndColumn(col_itr, orig_tile_offset,
+                                    orig_tile_column_offset);
     auto orig_tile = orig_tile_group->GetTile(orig_tile_offset);
     oid_t tuple_count = state.tuples_per_tilegroup;
     for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {

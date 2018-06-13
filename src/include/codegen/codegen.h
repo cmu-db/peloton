@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/codegen.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,40 +16,61 @@
 #include <vector>
 
 #include "codegen/code_context.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
 
+// Forward declare
 class CodeGen;
 
-/// A proxy to a member of a class. Users must provide both the physical
-/// position of the member in the class, and the C++ type of the member.
-template <uint32_t Pos, typename T>
-struct ProxyMember {
-  // Virtual destructor
-  virtual ~ProxyMember() = default;
+/**
+ * A CppProxyMember defines an access proxy to a member defined in a C++ class.
+ * Users can use this class to generate code to load values from and store
+ * values into member variables of C++ classes/structs available at runtime.
+ * Each member is defined by a slot position in the C++ struct. Slots are
+ * zero-based ordinal numbers assigned to fields increasing order of appearance
+ * in the struct/class.
+ */
+class CppProxyMember {
+ public:
+  explicit CppProxyMember(uint32_t slot) noexcept : slot_(slot) {}
+
+  /**
+   * Load this member field from the provided struct pointer.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @return The value of the field
+   */
+  llvm::Value *Load(CodeGen &codegen, llvm::Value *obj_ptr) const;
+
+  /**
+   * Store the provided value into this member field of the provided struct.
+   *
+   * @param codegen The codegen instance
+   * @param obj_ptr A pointer to a runtime C++ struct
+   * @param val The value of the field
+   */
+  void Store(CodeGen &codegen, llvm::Value *obj_ptr, llvm::Value *val) const;
+
+ private:
+  // The slot position
+  uint32_t slot_;
 };
 
-/// A proxy to a method in a class. Subclasses must implement GetFunction().
-template <typename T>
-struct ProxyMethod {
-  // Virtual destructor
-  virtual ~ProxyMethod() = default;
-
-  // Hand off to the specialized template to define the LLVM function
-  llvm::Function *GetFunction(CodeGen &codegen) {
-    return static_cast<T *>(this)->GetFunction(codegen);
-  }
-};
-
-//===----------------------------------------------------------------------===//
-// The main wrapper around LLVM's IR Builder to generate IR
-//===----------------------------------------------------------------------===//
+/**
+ * The main API used to generate code in Peloton. Provides a thin wrapper around
+ * LLVM's IR Builder to generate IR.
+ */
 class CodeGen {
  public:
   /// Constructor and destructor
   explicit CodeGen(CodeContext &code_context);
   ~CodeGen() = default;
+
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(CodeGen);
 
   /// We forward the -> operator to LLVM's IRBuilder
   llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
@@ -63,23 +84,26 @@ class CodeGen {
   llvm::Type *Int64Type() const { return code_context_.int64_type_; }
   llvm::Type *DoubleType() const { return code_context_.double_type_; }
   llvm::Type *VoidType() const { return code_context_.void_type_; }
+  llvm::Type *VoidPtrType() const { return code_context_.void_ptr_type_; }
   llvm::PointerType *CharPtrType() const {
     return code_context_.char_ptr_type_;
   }
   llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
+  /// Functions to return LLVM values for constant boolean, int8, int16, int32,
+  // int64, strings, and null values.
   llvm::Constant *ConstBool(bool val) const;
   llvm::Constant *Const8(int8_t val) const;
   llvm::Constant *Const16(int16_t val) const;
   llvm::Constant *Const32(int32_t val) const;
   llvm::Constant *Const64(int64_t val) const;
   llvm::Constant *ConstDouble(double val) const;
-  llvm::Constant *ConstString(const std::string &s) const;
+  llvm::Value *ConstString(const std::string &str_val,
+                           const std::string &name) const;
+  llvm::Value *ConstGenericBytes(const void *data, uint32_t length,
+                                 const std::string &name) const;
   llvm::Constant *Null(llvm::Type *type) const;
   llvm::Constant *NullPtr(llvm::PointerType *type) const;
-  /// Wrapper for pointer for constant string
-  llvm::Value *ConstStringPtr(const std::string &s) const;
 
   llvm::Value *AllocateVariable(llvm::Type *type, const std::string &name);
   llvm::Value *AllocateBuffer(llvm::Type *element_type, uint32_t num_elems,
@@ -91,16 +115,27 @@ class CodeGen {
   llvm::Value *CallFunc(llvm::Value *fn,
                         const std::vector<llvm::Value *> &args);
   template <typename T>
-  llvm::Value *Call(ProxyMethod<T> &proxy,
-                    const std::vector<llvm::Value *> &args) {
+  llvm::Value *Call(const T &proxy, const std::vector<llvm::Value *> &args) {
     return CallFunc(proxy.GetFunction(*this), args);
+  }
+
+  template <typename T>
+  llvm::Value *Load(const T &loader, llvm::Value *obj_ptr) {
+    return loader.Load(*this, obj_ptr);
+  }
+
+  template <typename T>
+  void Store(const T &storer, llvm::Value *obj_ptr, llvm::Value *val) {
+    storer.Store(*this, obj_ptr, val);
   }
 
   //===--------------------------------------------------------------------===//
   // C/C++ standard library functions
   //===--------------------------------------------------------------------===//
-  llvm::Value *CallPrintf(const std::string &format,
-                          const std::vector<llvm::Value *> &args);
+  llvm::Value *Printf(const std::string &format,
+                      const std::vector<llvm::Value *> &args);
+  llvm::Value *Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
+                      llvm::Value *len);
   llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//
@@ -133,6 +168,7 @@ class CodeGen {
 
   /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
+  uint64_t ElementOffset(llvm::Type *type, uint32_t element_idx) const;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -160,10 +196,6 @@ class CodeGen {
  private:
   // The context/module where all the code this class produces goes
   CodeContext &code_context_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(CodeGen);
 };
 
 }  // namespace codegen

@@ -64,17 +64,96 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // Just scan the table
     {
+      //same as 'ConcurrentReadOnlyTransactionTest'
+      thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
       concurrency::EpochManagerFactory::GetInstance().Reset();
+      concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+      gc::GCManagerFactory::Configure();
+      gc::GCManagerFactory::GetInstance().StartGC();
+
+      //this consists of 2 txns. 1.catalog creation 2.test table creation
       storage::DataTable *table = TestingTransactionUtil::CreateTable();
-      
-      TransactionScheduler scheduler(1, table, &txn_manager, true);
+
+      //manually update snapshot epoch number, so later snapshot read must get a larger epoch than table creating txn
+      //or it may read nothing
+      //wait one epoch. so that global epoch is guaranteed to increase
+      std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
+      concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
+
+      TransactionScheduler scheduler(1, table, &txn_manager, {0});
       scheduler.Txn(0).Scan(0);
       scheduler.Txn(0).Commit();
 
       scheduler.Run();
 
-      // Snapshot read cannot read the recent insert
-      EXPECT_EQ(0, scheduler.schedules[0].results.size());
+      //it should read all the 10 tuples
+      EXPECT_EQ(10, scheduler.schedules[0].results.size());
+
+      gc::GCManagerFactory::GetInstance().StopGC();
+      concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+      thread_pool.Shutdown();
+      //reset to default value, other test cases
+      gc::GCManagerFactory::Configure(0);
+    }
+  }
+}
+
+// test r/w txn with a read-only txn runs concurrently
+TEST_F(SerializableTransactionTests, ConcurrentReadOnlyTransactionTest) {
+  for (auto protocol_type : PROTOCOL_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol_type, ISOLATION_LEVEL_TYPE);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//    Txn #0 | Txn #1
+//    ----------------
+//    BEGIN  |
+//    W(X)   |
+//           | BEGIN R/O
+//           | R(X)
+//    W(X)   |
+//    COMMIT |
+//           | R(X)
+//           | COMMIT
+
+    {
+      //if gc manager is active, finishing a txn will make the txn be removed from epoch list as well.
+      //epoch manager needs this behavior to find the largest expired txn id.
+      //that id is used to determine whether snapshot epoch falls behind and needs update.
+      //gc and epoch manager both depend on thread pool
+      thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
+      concurrency::EpochManagerFactory::GetInstance().Reset();
+      concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+      gc::GCManagerFactory::Configure();
+      gc::GCManagerFactory::GetInstance().StartGC();
+
+      //this contains 2 txns: 1.create catalog table 2.create test table
+      storage::DataTable *table = TestingTransactionUtil::CreateTable();
+
+      //force snapshot epoch to be updated. it should be larger than table creation txn's epoch
+      std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
+      concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
+
+      TransactionScheduler scheduler(2, table, &txn_manager, {1});
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(0).Update(0, 2);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+
+      //read only txn should read the same snapshot that exists after table creation and before update txn commits
+      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
+      EXPECT_EQ(0, scheduler.schedules[1].results[1]);
+
+      gc::GCManagerFactory::GetInstance().StopGC();
+      concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+      thread_pool.Shutdown();
+      //reset it to default value for test cases
+      gc::GCManagerFactory::Configure(0);
     }
   }
 }

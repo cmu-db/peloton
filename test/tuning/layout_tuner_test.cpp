@@ -23,7 +23,7 @@
 
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
-#include "storage/tile_group.h"
+#include "storage/layout.h"
 
 namespace peloton {
 namespace test {
@@ -38,14 +38,17 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
+  std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
+
+  auto data_table =
+      TestingExecutorUtil::CreateTableUpdateCatalog(tuple_count, db_name);
+
   // Create a table and populate it
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_count, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
-  false,
-                                   true, txn);
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
+                                     true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Check column count
@@ -56,12 +59,11 @@ TEST_F(LayoutTunerTests, BasicTest) {
   tuning::LayoutTuner &layout_tuner = tuning::LayoutTuner::GetInstance();
 
   // Attach table to index tuner
-  layout_tuner.AddTable(data_table.get());
+  layout_tuner.AddTable(data_table);
 
   // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s",
-  layout_tuner.GetColumnMapInfo(old_default_layout).c_str());
+  LOG_INFO("Layout: %s", old_default_layout.GetColumnMapInfo().c_str());
 
   // Start layout tuner
   layout_tuner.Start();
@@ -107,25 +109,30 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check new default tile group layout
   auto new_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s",
-  layout_tuner.GetColumnMapInfo(new_default_layout).c_str());
+  LOG_INFO("Layout: %s", new_default_layout.GetColumnMapInfo().c_str());
 
   // Ensure that the layout has been changed
   EXPECT_NE(new_default_layout, old_default_layout);
 
   // Check the new default table layout
-  column_count = new_default_layout.size();
+  column_count = new_default_layout.GetColumnCount();
   EXPECT_EQ(column_count, 4);
-  auto first_column_tile = new_default_layout[0].first;
-  auto second_column_tile = new_default_layout[1].first;
-  auto third_column_tile = new_default_layout[2].first;
-  auto fourth_column_tile = new_default_layout[3].first;
-  EXPECT_EQ(first_column_tile, 0);
-  EXPECT_EQ(second_column_tile, 0);
-  EXPECT_EQ(third_column_tile, 0);
-  EXPECT_EQ(fourth_column_tile, 1);
 
+  // Check the tile corresponding to each column.
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(0), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2), 0);
+  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3), 1);
 
+  // Check the per tile stats of the new layout
+  // The layout must contain 2 tiles with the following stats
+  // 0 -> 3
+  // 1 -> 1
+  auto layout_stats = new_default_layout.GetLayoutStats();
+  EXPECT_EQ(layout_stats[0], 3);
+  EXPECT_EQ(layout_stats[1], 1);
+
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 }  // namespace test

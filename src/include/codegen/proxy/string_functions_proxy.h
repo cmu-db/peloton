@@ -13,8 +13,6 @@
 #pragma once
 
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
-#include "codegen/proxy/type_builder.h"
 #include "function/string_functions.h"
 
 namespace peloton {
@@ -31,6 +29,9 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(RTrim);
   DECLARE_METHOD(Substr);
   DECLARE_METHOD(Repeat);
+  DECLARE_METHOD(CompareStrings);
+  DECLARE_METHOD(WriteString);
+  DECLARE_METHOD(InputString);
 };
 
 PROXY(StrWithLen) {

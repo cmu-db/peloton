@@ -24,12 +24,13 @@ namespace index_selection {
 /**
  * Table column type.
  */
-enum TupleValueType { INTEGER, FLOAT, STRING };
+enum TupleValueType { INTEGER, FLOAT, STRING, INTEGERPKEY };
 
 /**
  * Represents workload types used in the test cases.
  */
-enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2, SingleTableThreeColW = 3, MultiTableMultiColW = 4 };
+enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2,
+  SingleTableThreeColW = 3, MultiTableMultiColW = 4, SingleTableNoop = 5, MultiTableNoop = 6 };
 
 /**
  * Represents the schema for creating tables in the test cases.
@@ -92,6 +93,13 @@ class TestingIndexSelectionUtil {
   std::shared_ptr<brain::HypotheticalIndexObject> CreateHypotheticalIndex(
       std::string table_name, std::vector<std::string> cols,
       brain::IndexSelection *is = nullptr);
+
+  /**
+   * Given a hypothetical index object, this method creates an actual index
+   * corresponding to that hypothetical index object
+   * @param index_obj: hypothetical index object
+   */
+  void CreateIndex(std::shared_ptr<brain::HypotheticalIndexObject> index_obj);
 
   /**
    * Return a micro workload

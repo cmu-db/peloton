@@ -205,11 +205,6 @@ void InsertPlan::SetDefaultValue(uint32_t idx) {
     values_.push_back(*v);
 }
 
-type::AbstractPool *InsertPlan::GetPlanPool() {
-  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
-  return pool_.get();
-}
-
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   auto *schema = target_table_->GetSchema();
@@ -236,15 +231,19 @@ void InsertPlan::PerformBinding(BindingContext &binding_context) {
   const auto &children = GetChildren();
 
   if (children.size() == 1) {
+    // Let child bind
     children[0]->PerformBinding(binding_context);
 
+    // Pull out what we need
     auto *scan = static_cast<planner::AbstractScan *>(children[0].get());
-    auto &col_ids = scan->GetColumnIds();
+
+    std::vector<oid_t> col_ids;
+    scan->GetOutputColumns(col_ids);
+
     for (oid_t col_id = 0; col_id < col_ids.size(); col_id++) {
       ais_.push_back(binding_context.Find(col_id));
     }
   }
-  // Binding is not required if there is no child
 }
 
 hash_t InsertPlan::Hash() const {

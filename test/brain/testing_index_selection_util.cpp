@@ -47,6 +47,19 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
   // 2. Create all the required workload query strings.
   // Note on Naming of workloads: <num_tables>Table<num_accessed_cols>ColW
   switch (type) {
+    case SingleTableNoop: {
+      table_name = "dummy0";
+      table_schemas.emplace_back(
+          table_name,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGERPKEY},
+              {"c", TupleValueType::INTEGER}});
+      // This query string is not actually executed - only used for testing
+      // add/drop candidates
+      query_strs.push_back("UPDATE dummy0 SET a = 0 WHERE b = 1 AND c = 2");
+      break;
+    }
     case SingleTableTwoColW1: {
       table_name = "dummy1";
       table_schemas.emplace_back(
@@ -57,11 +70,11 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
               {"c", TupleValueType::INTEGER},
               {"d", TupleValueType::INTEGER}});
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE a = 160 and a = 250");
+          " WHERE a = 160 and a = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE c = 190 and c = 250");
+          " WHERE c = 190 and c = 250");
       query_strs.push_back("SELECT a, b, c FROM " + table_name +
-                           " WHERE a = 190 and c = 250");
+          " WHERE a = 190 and c = 250");
       break;
     }
     case SingleTableTwoColW2: {
@@ -77,17 +90,17 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
       query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 190");
       query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE a = 190 and b = 250");
+          " WHERE a = 190 and b = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE a = 190 and b = 250");
+          " WHERE a = 190 and b = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 190 and a = 250");
+          " WHERE b = 190 and a = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 190 and c = 250");
+          " WHERE b = 190 and c = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 190 and c = 250");
+          " WHERE b = 190 and c = 250");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE a = 190 and c = 250");
+          " WHERE a = 190 and c = 250");
       break;
     }
     case SingleTableThreeColW: {
@@ -103,21 +116,46 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
               {"f", TupleValueType::INTEGER},
               {"g", TupleValueType::INTEGER}});
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE a = 160 and b = 199 and c = 1009");
+          " WHERE a = 160 and b = 199 and c = 1009");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 190 and a = 677 and c = 987");
+          " WHERE b = 190 and a = 677 and c = 987");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 81 and c = 123 and a = 122");
+          " WHERE b = 81 and c = 123 and a = 122");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 81 and c = 123 and d = 122");
+          " WHERE b = 81 and c = 123 and d = 122");
       query_strs.push_back("SELECT * FROM " + table_name + " WHERE b = 81");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE b = 81 and c = 12");
+          " WHERE b = 81 and c = 12");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE d = 81 and e = 123 and f = 122");
+          " WHERE d = 81 and e = 123 and f = 122");
       query_strs.push_back("SELECT * FROM " + table_name + " WHERE d = 81");
       query_strs.push_back("SELECT * FROM " + table_name +
-                           " WHERE d = 81 and e = 12");
+          " WHERE d = 81 and e = 12");
+      break;
+    }
+    case MultiTableNoop: {
+      std::string table_name_1 = "dummy1";
+      table_schemas.emplace_back(
+          table_name_1,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGERPKEY},
+              {"c", TupleValueType::INTEGER}});
+      std::string table_name_2 = "dummy2";
+      table_schemas.emplace_back(
+          table_name_2,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGER},
+              {"c", TupleValueType::INTEGER}});
+      std::string table_name_3 = "dummy3";
+      table_schemas.emplace_back(
+          table_name_3,
+          std::initializer_list<std::pair<std::string, TupleValueType>>{
+              {"a", TupleValueType::INTEGER},
+              {"b", TupleValueType::INTEGER},
+              {"c", TupleValueType::INTEGER}});
+      // No workload
       break;
     }
     case MultiTableMultiColW: {
@@ -239,6 +277,9 @@ void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
       case STRING:
         s_stream << "VARCHAR(30)";
         break;
+      case INTEGERPKEY:
+        s_stream << "INT PRIMARY KEY";
+        break;
       default:
         PELOTON_ASSERT(false);
     }
@@ -247,13 +288,13 @@ void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
     }
   }
   s_stream << ");";
-  LOG_TRACE("Create table: %s", s_stream.str().c_str());
+  LOG_DEBUG("Create table: %s", s_stream.str().c_str());
   TestingSQLUtil::ExecuteSQLQuery(s_stream.str());
 }
 
 // Inserts specified number of tuples into the table with random values.
 void TestingIndexSelectionUtil::InsertIntoTable(TableSchema schema,
-                                                 long num_tuples) {
+                                                long num_tuples) {
   // Insert tuples into table
   for (int i = 0; i < num_tuples; i++) {
     std::ostringstream oss;
@@ -262,6 +303,9 @@ void TestingIndexSelectionUtil::InsertIntoTable(TableSchema schema,
       auto type = schema.cols[col].second;
       switch (type) {
         case INTEGER:
+          oss << rand() % 1000;
+          break;
+        case INTEGERPKEY:
           oss << rand() % 1000;
           break;
         case FLOAT:
@@ -308,7 +352,7 @@ TestingIndexSelectionUtil::CreateHypotheticalIndex(
 
   // Get the existing table so that we can find its oid and the cols oids.
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name_, DEFUALT_SCHEMA_NAME, table_name, txn);
+      database_name_, "public", table_name, txn);
   auto col_obj_pairs = table_object->GetColumnObjects();
 
   std::vector<oid_t> col_ids;
@@ -359,6 +403,19 @@ void TestingIndexSelectionUtil::DropTable(std::string table_name) {
   TestingSQLUtil::ExecuteSQLQuery(create_str);
 }
 
+void TestingIndexSelectionUtil::CreateIndex(std::shared_ptr<brain::HypotheticalIndexObject> index_obj) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto catalog = catalog::Catalog::GetInstance();
+  std::string table_name =
+      catalog->GetTableObject(index_obj->db_oid, index_obj->table_oid, txn)->GetTableName();
+
+  catalog->CreateIndex(database_name_, DEFAULT_SCHEMA_NAME, table_name,
+                       index_obj->column_oids, index_obj->ToString(), false,
+                       IndexType::BWTREE, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 double TestingIndexSelectionUtil::WhatIfIndexCost(std::string query,
                                                    brain::IndexConfiguration &config,
                                                    std::string database_name) {
@@ -382,6 +439,6 @@ double TestingIndexSelectionUtil::WhatIfIndexCost(std::string query,
   return cost;
 }
 
-}  // namespace index_suggestion
+}  // namespace index_selection
 }  // namespace test
 }  // namespace peloton

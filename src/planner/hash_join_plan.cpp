@@ -6,7 +6,7 @@
 //
 // Identification: src/planner/hash_join_plan.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,26 +26,6 @@ namespace planner {
 HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
                            std::unique_ptr<const ProjectInfo> &&proj_info,
                            std::shared_ptr<const catalog::Schema> &proj_schema,
-                           bool build_bloomfilter)
-    : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
-                       proj_schema),
-      build_bloomfilter_(build_bloomfilter) {}
-
-// outer_hashkeys is added for IN-subquery
-HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
-                           std::unique_ptr<const ProjectInfo> &&proj_info,
-                           std::shared_ptr<const catalog::Schema> &proj_schema,
-                           const std::vector<oid_t> &outer_hashkeys,
-                           bool build_bloomfilter)
-    : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
-                       proj_schema),
-      build_bloomfilter_(build_bloomfilter) {
-  outer_column_ids_ = outer_hashkeys;  // added for IN-subquery
-}
-
-HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
-                           std::unique_ptr<const ProjectInfo> &&proj_info,
-                           std::shared_ptr<const catalog::Schema> &proj_schema,
                            std::vector<ExpressionPtr> &left_hash_keys,
                            std::vector<ExpressionPtr> &right_hash_keys,
                            bool build_bloomfilter)
@@ -55,6 +35,20 @@ HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
       right_hash_keys_(std::move(right_hash_keys)),
       build_bloomfilter_(build_bloomfilter) {}
 
+void HashJoinPlan::GetLeftHashKeys(
+    std::vector<const expression::AbstractExpression *> &keys) const {
+  for (const auto &left_key : left_hash_keys_) {
+    keys.push_back(left_key.get());
+  }
+}
+
+void HashJoinPlan::GetRightHashKeys(
+    std::vector<const expression::AbstractExpression *> &keys) const {
+  for (const auto &right_key : right_hash_keys_) {
+    keys.push_back(right_key.get());
+  }
+}
+
 void HashJoinPlan::HandleSubplanBinding(bool is_left,
                                         const BindingContext &input) {
   auto &keys = is_left ? left_hash_keys_ : right_hash_keys_;
@@ -62,6 +56,32 @@ void HashJoinPlan::HandleSubplanBinding(bool is_left,
     auto *key_exp = const_cast<expression::AbstractExpression *>(key.get());
     key_exp->PerformBinding({&input});
   }
+}
+
+std::unique_ptr<AbstractPlan> HashJoinPlan::Copy() const {
+  // Predicate
+  ExpressionPtr predicate_copy(GetPredicate() ? GetPredicate()->Copy()
+                                              : nullptr);
+
+  // Schema
+  std::shared_ptr<const catalog::Schema> schema_copy(
+      catalog::Schema::CopySchema(GetSchema()));
+
+  // Left and right hash keys
+  std::vector<ExpressionPtr> left_hash_keys_copy, right_hash_keys_copy;
+  for (const auto &left_hash_key : left_hash_keys_) {
+    left_hash_keys_copy.emplace_back(left_hash_key->Copy());
+  }
+  for (const auto &right_hash_key : right_hash_keys_) {
+    right_hash_keys_copy.emplace_back(right_hash_key->Copy());
+  }
+
+  // Create plan copy
+  auto *new_plan =
+      new HashJoinPlan(GetJoinType(), std::move(predicate_copy),
+                       GetProjInfo()->Copy(), schema_copy, left_hash_keys_copy,
+                       right_hash_keys_copy, build_bloomfilter_);
+  return std::unique_ptr<AbstractPlan>(new_plan);
 }
 
 hash_t HashJoinPlan::Hash() const {
