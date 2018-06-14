@@ -58,7 +58,6 @@ void *TestRoutine(int port) {
 
     pqxx::work txn1(C);
 
-
     // basic test
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");

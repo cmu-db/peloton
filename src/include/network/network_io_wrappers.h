@@ -38,6 +38,7 @@ class NetworkIoWrapper {
   friend class NetworkIoWrapperFactory;
 
  public:
+  virtual bool SslAble() const = 0;
   // TODO(Tianyu): Change and document after we refactor protocol handler
   virtual Transition FillReadBuffer() = 0;
   virtual Transition FlushWriteBuffer() = 0;
@@ -51,14 +52,15 @@ class NetworkIoWrapper {
                    std::shared_ptr<WriteBuffer> &wbuf)
       : sock_fd_(sock_fd),
         rbuf_(std::move(rbuf)),
-        wbuf_(std::move(wbuf)),
-        conn_ssl_context_(nullptr) {}
-  // It is worth noting that because of the way we are reinterpret-casting
-  // between derived types, it is necessary that they share the same members.
+        wbuf_(std::move(wbuf)) {}
+
+  DISALLOW_COPY(NetworkIoWrapper)
+
+  NetworkIoWrapper(NetworkIoWrapper &&other) = default;
+
   int sock_fd_;
   std::shared_ptr<ReadBuffer> rbuf_;
   std::shared_ptr<WriteBuffer> wbuf_;
-  SSL *conn_ssl_context_;
 };
 
 /**
@@ -69,6 +71,8 @@ class PosixSocketIoWrapper : public NetworkIoWrapper {
   PosixSocketIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> rbuf,
                        std::shared_ptr<WriteBuffer> wbuf);
 
+
+  inline bool SslAble() const override { return false; }
   Transition FillReadBuffer() override;
   Transition FlushWriteBuffer() override;
   inline Transition Close() override {
@@ -82,14 +86,19 @@ class PosixSocketIoWrapper : public NetworkIoWrapper {
  */
 class SslSocketIoWrapper : public NetworkIoWrapper {
  public:
-  // An SslSocketIoWrapper is always derived from a PosixSocketIoWrapper,
-  // as the handshake process happens over posix sockets. Use the method
-  // in NetworkIoWrapperFactory to get an SslSocketWrapper.
-  SslSocketIoWrapper() = delete;
+  // Realistically, an SslSocketIoWrapper is always derived from a
+  // PosixSocketIoWrapper, as the handshake process happens over posix sockets.
+  SslSocketIoWrapper(NetworkIoWrapper &&other, SSL *ssl)
+    : NetworkIoWrapper(std::move(other)), conn_ssl_context_(ssl) {}
 
+  inline bool SslAble() const override { return true; }
   Transition FillReadBuffer() override;
   Transition FlushWriteBuffer() override;
   Transition Close() override;
+
+ private:
+  friend class NetworkIoWrapperFactory;
+  SSL *conn_ssl_context_;
 };
 }  // namespace network
 }  // namespace peloton

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
 #include "network/network_io_wrapper_factory.h"
 
 namespace peloton {
@@ -30,40 +31,35 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
 
   // Construct new wrapper by reusing buffers from the old one.
   // The old one will be deallocated as we replace the last reference to it
-  // in the reusable_wrappers_ map
-  auto reused_wrapper = it->second;
-  reused_wrapper->rbuf_->Reset();
-  reused_wrapper->wbuf_->Reset();
-  reused_wrapper->sock_fd_ = conn_fd;
-  reused_wrapper->conn_ssl_context_ = nullptr;
-  // It is not necessary to have an explicit cast here because the reused
-  // wrapper always use Posix methods, as we never update their type in the
-  // reusable wrappers map.
+  // in the reusable_wrappers_ map. We still need to explicitly call the
+  // constructor so the flags are set properly on the new file descriptor.
+  auto &reused_wrapper = it->second;
+  reused_wrapper = std::make_shared<PosixSocketIoWrapper>(conn_fd,
+                                                          reused_wrapper->rbuf_,
+                                                          reused_wrapper->wbuf_);
   return reused_wrapper;
 }
 
 Transition NetworkIoWrapperFactory::PerformSslHandshake(
     std::shared_ptr<NetworkIoWrapper> &io_wrapper) {
-  if (io_wrapper->conn_ssl_context_ == nullptr) {
-    // Initial handshake, the incoming type is a posix socket wrapper
-    auto *context = io_wrapper->conn_ssl_context_ =
-        SSL_new(PelotonServer::ssl_context);
-    // TODO(Tianyu): Is it the right thing here to throw exceptions?
+  SSL *context;
+  if (!io_wrapper->SslAble()) {
+    context = SSL_new(PelotonServer::ssl_context);
     if (context == nullptr)
       throw NetworkProcessException("ssl context for conn failed");
     SSL_set_session_id_context(context, nullptr, 0);
     if (SSL_set_fd(context, io_wrapper->sock_fd_) == 0)
       throw NetworkProcessException("Failed to set ssl fd");
-
-    // ssl handshake is done, need to use new methods for the original wrappers;
-    // We do not update the type in the reusable wrappers map because it is not
-    // relevant.
-    io_wrapper.reset(reinterpret_cast<SslSocketIoWrapper *>(io_wrapper.get()));
+    io_wrapper =
+        std::make_shared<SslSocketIoWrapper>(std::move(*io_wrapper), context);
+  } else {
+    auto ptr = std::dynamic_pointer_cast<SslSocketIoWrapper, NetworkIoWrapper>(
+        io_wrapper);
+    context = ptr->conn_ssl_context_;
   }
 
   // The wrapper already uses SSL methods.
   // Yuchen: "Post-connection verification?"
-  auto *context = io_wrapper->conn_ssl_context_;
   ERR_clear_error();
   int ssl_accept_ret = SSL_accept(context);
   if (ssl_accept_ret > 0) return Transition::PROCEED;
@@ -74,8 +70,7 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(
       return Transition::NEED_READ;
     case SSL_ERROR_WANT_WRITE:
       return Transition::NEED_WRITE;
-    default:
-      LOG_ERROR("SSL Error, error code %d", err);
+    default:LOG_ERROR("SSL Error, error code %d", err);
       return Transition::TERMINATE;
   }
 }

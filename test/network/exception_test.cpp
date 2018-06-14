@@ -22,8 +22,6 @@
 #include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 
-#define NUM_THREADS 1
-
 namespace peloton {
 namespace test {
 

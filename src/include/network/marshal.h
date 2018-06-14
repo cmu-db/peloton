@@ -51,7 +51,7 @@ struct Buffer {
 
   /**
    * @param bytes The amount of bytes to check between the cursor and the end
-   *              of the buffer (defaults to 1)
+   *              of the buffer (defaults to any)
    * @return Whether there is any more bytes between the cursor and
    *         the end of the buffer
    */
@@ -71,7 +71,7 @@ struct Buffer {
   /**
    * @return Capacity of the buffer (not actual size)
    */
-  inline constexpr size_t Capacity() const { return SOCKET_BUFFER_SIZE; }
+  inline size_t Capacity() const { return SOCKET_BUFFER_SIZE; }
 
   /**
    * Shift contents to align the current cursor with start of the buffer,
@@ -139,7 +139,8 @@ class ReadBuffer : public Buffer {
 
   /**
    * Read a value of type T off of the buffer, advancing cursor by appropriate
-   * amount
+   * amount. Does NOT convert from network bytes order. It is the caller's
+   * responsibility to do so.
    * @tparam T type of value to read off. Preferably a primitive type
    * @return the value of type T
    */
@@ -185,7 +186,7 @@ class WriteBuffer : public Buffer {
    * maximum capacity minus the capacity already in use.
    * @return Remaining capacity
    */
-  inline size_t RemainingCapacity() { return Capacity() - size_ + 1; }
+  inline size_t RemainingCapacity() { return Capacity() - size_; }
 
   /**
    * @param bytes Desired number of bytes to write
@@ -194,7 +195,7 @@ class WriteBuffer : public Buffer {
   inline bool HasSpaceFor(size_t bytes) { return RemainingCapacity() >= bytes; }
 
   /**
-   * Append the desired range into current buffer
+   * Append the desired range into current buffer.
    * @tparam InputIt iterator type.
    * @param first beginning of range
    * @param len length of range
@@ -206,7 +207,8 @@ class WriteBuffer : public Buffer {
   }
 
   /**
-   * Append the given value into the current buffer
+   * Append the given value into the current buffer. Does NOT convert to
+   * network byte order. It is up to the caller to do so.
    * @tparam T input type
    * @param val value to write into buffer
    */

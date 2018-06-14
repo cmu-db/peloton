@@ -21,25 +21,25 @@ namespace peloton {
 namespace network {
 Transition NetworkIoWrapper::WritePacket(OutputPacket *pkt) {
   // Write Packet Header
-  if (pkt->skip_header_write) return Transition::PROCEED;
+  if (!pkt->skip_header_write) {
+    if (!wbuf_->HasSpaceFor(1 + sizeof(int32_t))) {
+      auto result = FlushWriteBuffer();
+      if (FlushWriteBuffer() != Transition::PROCEED)
+        // Unable to flush buffer, socket presumably not ready for write
+        return result;
+    }
 
-  if (!wbuf_->HasSpaceFor(1 + sizeof(int32_t))) {
-    auto result = FlushWriteBuffer();
-    if (FlushWriteBuffer() != Transition::PROCEED)
-      // Unable to flush buffer, socket presumably not ready for write
-      return result;
+    wbuf_->Append(static_cast<unsigned char>(pkt->msg_type));
+    if (!pkt->single_type_pkt)
+      // Need to convert bytes to network order
+      wbuf_->Append(htonl(pkt->len + sizeof(int32_t)));
+    pkt->skip_header_write = true;
   }
-
-  wbuf_->Append(static_cast<unsigned char>(pkt->msg_type));
-  if (!pkt->single_type_pkt)
-    // Need to convert bytes to network order
-    wbuf_->Append(htonl(pkt->len + sizeof(int32_t)));
-  pkt->skip_header_write = true;
 
   // Write Packet Content
   for (size_t len = pkt->len; len != 0;) {
-    if (wbuf_->HasSpaceFor(pkt->len)) {
-      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, pkt->len);
+    if (wbuf_->HasSpaceFor(len)) {
+      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, len);
       break;
     } else {
       auto write_size = wbuf_->RemainingCapacity();
@@ -129,7 +129,7 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
         // The SSL packet is partially loaded to the SSL buffer only,
         // More data is required in order to decode the wh`ole packet.
       case SSL_ERROR_WANT_READ:
-        return Transition::NEED_READ;
+        return result;
       case SSL_ERROR_WANT_WRITE:
         return Transition::NEED_WRITE;
       case SSL_ERROR_SYSCALL:
@@ -146,7 +146,7 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
 }
 
 Transition SslSocketIoWrapper::FlushWriteBuffer() {
-  while (wbuf_->Full()) {
+  while (wbuf_->HasMore()) {
     auto ret = wbuf_->WriteOutTo(conn_ssl_context_);
     switch (ret) {
       case SSL_ERROR_NONE:
@@ -167,7 +167,7 @@ Transition SslSocketIoWrapper::FlushWriteBuffer() {
         throw NetworkProcessException("SSL write error");
     }
   }
-
+  wbuf_->Reset();
   return Transition::PROCEED;
 }
 

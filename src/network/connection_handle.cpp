@@ -129,8 +129,8 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(PROCESS) AND_INVOKE(GetResult)
         ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
         ON(NEED_READ) SET_STATE_TO(READ) AND_INVOKE(TryRead)
-          // Client connections are ignored while we wait on peloton
-          // to execute the query
+        // Client connections are ignored while we wait on peloton
+        // to execute the query
         ON(NEED_RESULT) SET_STATE_TO(PROCESS) AND_WAIT_ON_PELOTON
         ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
     END_STATE_DEF
@@ -145,8 +145,8 @@ DEF_TRANSITION_GRAPH
 END_DEF
     // clang-format on
 
-    void ConnectionHandle::StateMachine::Accept(Transition action,
-                                                ConnectionHandle &connection) {
+void ConnectionHandle::StateMachine::Accept(Transition action,
+                                            ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -162,12 +162,8 @@ END_DEF
 }
 
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
-    : conn_handler_(handler) {
-  // We will always handle connections using posix until (potentially) first SSL
-  // handshake.
-  io_wrapper_ =
-      NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd);
-}
+    : conn_handler_(handler),
+      io_wrapper_(NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd)) {}
 
 Transition ConnectionHandle::TryWrite() {
   for (; next_response_ < protocol_handler_->responses_.size();
