@@ -30,11 +30,6 @@
 namespace peloton {
 namespace catalog {
 
-/* @brief   Get the nextval of the sequence
- * @return  the next value of the sequence.
- * @exception throws SequenceException if the sequence exceeds the upper/lower
- * limit.
- */
 int64_t SequenceCatalogObject::GetNextVal() {
   int64_t result = seq_curr_val;
   seq_prev_val = result;
@@ -93,20 +88,7 @@ SequenceCatalog::SequenceCatalog(const std::string &database_name,
 
 SequenceCatalog::~SequenceCatalog() {}
 
-/* @brief   Insert the sequence by name.
- * @param   database_oid  the databse_oid associated with the sequence
- * @param   sequence_name the name of the sequence
- * @param   seq_increment the increment per step of the sequence
- * @param   seq_max       the max value of the sequence
- * @param   seq_min       the min value of the sequence
- * @param   seq_start     the start of the sequence
- * @param   seq_cycle     whether the sequence cycles
- * @param   pool          an instance of abstract pool
- * @param   txn           current transaction
- * @return  ResultType::SUCCESS if the sequence exists, ResultType::FAILURE
- * otherwise.
- * @exception throws SequenceException if the sequence already exists.
- */
+
 bool SequenceCatalog::InsertSequence(oid_t database_oid,
                                      std::string sequence_name,
                                      int64_t seq_increment, int64_t seq_max,
@@ -151,13 +133,6 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
   return InsertTuple(std::move(tuple), txn);
 }
 
-/* @brief   Delete the sequence by name.
- * @param   database_name  the database name associated with the sequence
- * @param   sequence_name the name of the sequence
- * @param   txn           current transaction
- * @return  ResultType::SUCCESS if the sequence exists, throw exception
- * otherwise.
- */
 ResultType SequenceCatalog::DropSequence(const std::string &database_name,
                                          const std::string &sequence_name,
                                          concurrency::TransactionContext *txn) {
@@ -188,12 +163,6 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
-/* @brief   Delete the sequence by name. The sequence is guaranteed to exist.
- * @param   database_oid  the databse_oid associated with the sequence
- * @param   sequence_name the name of the sequence
- * @param   txn           current transaction
- * @return  The result of DeleteWithIndexScan.
- */
 bool SequenceCatalog::DeleteSequenceByName(
     const std::string &sequence_name, oid_t database_oid,
     concurrency::TransactionContext *txn) {
@@ -205,12 +174,6 @@ bool SequenceCatalog::DeleteSequenceByName(
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-/* @brief   get sequence from pg_sequence table
- * @param   database_oid  the databse_oid associated with the sequence
- * @param   sequence_name the name of the sequence
- * @param   txn           current transaction
- * @return  a SequenceCatalogObject if the sequence is found, nullptr otherwise
- */
 std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
     oid_t database_oid, const std::string &sequence_name,
     concurrency::TransactionContext *txn) {
@@ -254,12 +217,6 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   return new_sequence;
 }
 
-/* @brief   update the next value of the sequence in the underlying storage
- * @param   sequence_oid  the sequence_oid of the sequence
- * @param   nextval       the nextval of the sequence
- * @param   txn           current transaction
- * @return  the result of the transaction
- */
 bool SequenceCatalog::UpdateNextVal(oid_t sequence_oid, int64_t nextval,
     concurrency::TransactionContext *txn){
   std::vector<oid_t> update_columns({SequenceCatalog::ColumnId::SEQUENCE_VALUE});
@@ -272,14 +229,6 @@ bool SequenceCatalog::UpdateNextVal(oid_t sequence_oid, int64_t nextval,
   return UpdateWithIndexScan(update_columns, update_values, scan_values, index_offset, txn);
 }
 
-/* @brief   get sequence oid from pg_sequence table given sequence_name and
- * database_oid
- * @param   database_oid  the databse_oid associated with the sequence
- * @param   sequence_name the name of the sequence
- * @param   txn           current transaction
- * @return  the oid_t of the sequence if the sequence is found, INVALID_OID
- * otherwise
- */
 oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name,
                                       oid_t database_oid,
                                       concurrency::TransactionContext *txn) {

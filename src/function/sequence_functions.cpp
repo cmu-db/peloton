@@ -42,23 +42,24 @@ uint32_t SequenceFunctions::Nextval(executor::ExecutorContext &ctx,
   auto database_catalog = all_databases[0];
   LOG_DEBUG("Get database oid: %u", database_catalog->GetDatabaseOid());
 
+  auto sequence_catalog = catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(database_catalog->GetDatabaseOid())
+          ->GetSequenceCatalog();
+
   // initialize a new transaction for incrementing sequence value
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto mini_txn = txn_manager.BeginTransaction();
 
   // evict the old cached copy of sequence
-  txn->GetCatalogCache()->EvictSequenceObject(sequence_name,
-                                              database_catalog->GetDatabaseOid());
-  auto sequence_object =
-          catalog::Catalog::GetInstance()
-          ->GetSystemCatalogs(database_catalog->GetDatabaseOid())
-          ->GetSequenceCatalog()
-          ->GetSequence(database_catalog->GetDatabaseOid(),
-                        sequence_name, mini_txn);
+//  txn->GetCatalogCache()->EvictSequenceObject(sequence_name,
+//                                              database_catalog->GetDatabaseOid());
+  auto sequence_object = sequence_catalog
+          ->GetSequence(database_catalog->GetDatabaseOid(), sequence_name, mini_txn);
 
   if (sequence_object != nullptr) {
-    uint32_t val = sequence_object->GetNextVal();
+    int64_t val = sequence_object->GetNextVal();
     int64_t curr_val = sequence_object->GetCurrVal();
+
     // insert the new copy of sequence into cache for future currval
     txn->GetCatalogCache()->InsertSequenceObject(sequence_object);
 
