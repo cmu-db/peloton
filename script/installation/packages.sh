@@ -12,9 +12,12 @@
 ## g++ manually.
 ##
 ## Supported environments:
-##  * Ubuntu (14.04, 16.04)
-##  * Fedora
-##  * OSX
+##  * Ubuntu (14.04, 16.04, 18.04)
+##  * macOS
+##
+## Update (2018-06-08):
+## We are no longer able to support RedHat/Fedora because those
+## environments are not supported by TensorFlow.
 ## =================================================================
 
 set -o errexit
@@ -44,6 +47,9 @@ TF_TYPE="cpu"
 function install_protobuf3.4.0() {
     # Install Relevant tooling
     # Remove any old versions of protobuf
+    # Note: Protobuf 3.5+ PPA available Ubuntu Bionic(18.04) onwards - Should be used
+    # when we retire 16.04 too: https://launchpad.net/~maarten-fonville/+archive/ubuntu/protobuf
+    # This PPA unfortunately doesnt have Protobuf 3.5 for 16.04, but does for 14.04/18.04+
     DISTRIB=$1 # ubuntu/fedora
     if [ "$DISTRIB" == "ubuntu" ]; then
         sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
@@ -60,7 +66,7 @@ function install_protobuf3.4.0() {
     wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
     tar -xzf protobuf-cpp-3.4.0.tar.gz
     cd protobuf-3.4.0
-    ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
+    ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig || exit 1
     cd ..
     # Cleanup
     rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
@@ -106,6 +112,10 @@ if [ "$DISTRO" = "UBUNTU" ]; then
             LLVM_PKG_URL="http://apt.llvm.org/artful/"
             LLVM_PKG_TARGET="llvm-toolchain-artful main"
         fi
+        if [ "$MAJOR_VER" == "18" ]; then
+            LLVM_PKG_URL="http://apt.llvm.org/bionic/"
+            LLVM_PKG_TARGET="llvm-toolchain-bionic main"
+        fi
 
         if ! grep -q "deb $LLVM_PKG_URL $LLVM_PKG_TARGET" /etc/apt/sources.list; then
             echo -e "\n# Added by Peloton 'packages.sh' script on $(date)\ndeb $LLVM_PKG_URL $LLVM_PKG_TARGET" | sudo tee -a /etc/apt/sources.list > /dev/null
@@ -136,6 +146,12 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
+        TF_VERSION="1.5.0"
+    fi
+    # Fix for llvm on Ubuntu 18.x
+    if [ "$MAJOR_VER" == "18" ]; then
+        PKG_LLVM="llvm-3.9"
+        PKG_CLANG="clang-3.9"
         TF_VERSION="1.5.0"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
@@ -170,159 +186,15 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         g++ \
         libeigen3-dev \
     	ant \
-        unzip
+        unzip \
+        zlib1g-dev
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
-## DEBIAN
-## ------------------------------------------------
-elif [ "$DISTRO" = "DEBIAN OS" ]; then
-    sudo apt-get -q --ignore-missing -y install \
-        git \
-        g++ \
-        clang \
-        cmake \
-        libgflags-dev \
-        libprotobuf-dev \
-        protobuf-compiler \
-        bison \
-        flex \
-        libevent-dev \
-        libboost-dev \
-        libboost-thread-dev \
-        libboost-filesystem-dev \
-        libjemalloc-dev \
-        libssl-dev \
-        valgrind \
-        lcov \
-        libpqxx-dev \
-        llvm-dev \
-        libedit-dev \
-        postgresql-client \
-        libtbb-dev \
-        libeigen3-dev
-
-## ------------------------------------------------
-## FEDORA
-## ------------------------------------------------
-elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    case $DISTRO_VER in
-        26) LLVM="llvm";;
-        *)  LLVM="llvm4.0";;
-    esac
-    TF_VERSION="1.5.0"
-    TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
-    LinkerConfigCmd="sudo ldconfig"
-    sudo dnf -q install -y \
-        git \
-        gcc-c++ \
-        make \
-        cmake \
-        gflags-devel \
-        bison \
-        flex \
-        libevent-devel \
-        openssl-devel \
-        boost-devel \
-        jemalloc-devel \
-        valgrind \
-        lcov \
-        libpqxx-devel \
-        libpqxx \
-        ${LLVM} \
-        ${LLVM}-devel \
-        ${LLVM}-static \
-        libedit-devel \
-        postgresql \
-        libasan \
-        libtsan \
-        libubsan \
-        libatomic \
-        tbb-devel \
-        python3-pip \
-        curl \
-        autoconf \
-        automake \
-        libtool
-    # Install version of protobuf needed by C-API
-    install_protobuf3.4.0 "fedora"
-    # Install tensorflow
-    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
-
-## ------------------------------------------------
-## REDHAT
-## ------------------------------------------------
-elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
-    function install_package() {
-        if [ "$#" -lt 1 ]; then
-            echo "The download path is required."
-            exit 1
-        fi
-
-        pushd $TMPDIR
-        wget -nc --no-check-certificate "$1"
-        tpath=$(basename "$1")
-        dpath=$(tar --exclude='*/*' -tf "$tpath")
-        tar xzf $tpath
-        pushd $dpath
-        if [ -e "bootstrap.sh" ]; then
-            ./bootstrap.sh
-            sudo ./b2 install
-        else
-            ./configure
-            make
-            sudo make install
-        fi
-        popd; popd
-        return 0
-}
-
-#Package download paths
-    PKGS=(
-        "https://github.com/schuhschuh/gflags/archive/v2.0.tar.gz"
-    )
-#Add EPEL repository first
-    sudo yum -q -y install epel-release
-    sudo yum -q -y upgrade epel-release
-
-#Simple installations via yum
-    sudo yum -q -y install \
-        git \
-        gcc-c++ \
-        make \
-        cmake3 \
-        flex \
-        bison \
-        libevent-devel \
-        openssl-devel \
-        boost-devel \
-        protobuf-devel \
-        jemalloc-devel \
-        libedit-devel \
-        valgrind \
-        lcov \
-        m4 \
-        doxygen \
-        graphviz \
-        libpqxx \
-        libpqxx-devel \
-        llvm3.9 \
-        llvm3.9-static \
-        llvm3.9-devel \
-        postgresql \
-        libtbb-dev
-
-    # Manually download some packages to guarantee
-    # version compatibility
-    for pkg_path in ${PKGS[@]}; do
-        install_package $pkg_path
-    done
-
-## ------------------------------------------------
-## DARWIN (OSX)
+## DARWIN (macOS)
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DARWIN" ]; then
     set +o errexit
@@ -362,7 +234,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
 ## UNKNOWN
 ## ------------------------------------------------
 else
-    echo "Unknown distribution '$DISTRO'"
+    echo "Unsupported distribution '$DISTRO'"
     echo "Please contact our support team for additional help." \
          "Be sure to include the contents of this message"
     echo "Platform: $(uname -a)"
