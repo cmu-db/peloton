@@ -36,7 +36,7 @@ class CSVScanTranslatorTest : public PelotonCodeGenTest {
 TEST_F(CSVScanTranslatorTest, IntCsvScan) {
   // The quoting character and a helper function to quote a given string
   const char quote = '"';
-  const auto quote_string = [quote](std::string s) {
+  const auto quote_string = [](std::string s) {
     return StringUtil::Format("%c%s%c", quote, s.c_str(), quote);
   };
 
