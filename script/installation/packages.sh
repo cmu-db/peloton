@@ -47,6 +47,9 @@ TF_TYPE="cpu"
 function install_protobuf3.4.0() {
     # Install Relevant tooling
     # Remove any old versions of protobuf
+    # Note: Protobuf 3.5+ PPA available Ubuntu Bionic(18.04) onwards - Should be used
+    # when we retire 16.04 too: https://launchpad.net/~maarten-fonville/+archive/ubuntu/protobuf
+    # This PPA unfortunately doesnt have Protobuf 3.5 for 16.04, but does for 14.04/18.04+
     DISTRIB=$1 # ubuntu/fedora
     if [ "$DISTRIB" == "ubuntu" ]; then
         sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
@@ -63,7 +66,7 @@ function install_protobuf3.4.0() {
     wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
     tar -xzf protobuf-cpp-3.4.0.tar.gz
     cd protobuf-3.4.0
-    ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
+    ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig || exit 1
     cd ..
     # Cleanup
     rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
