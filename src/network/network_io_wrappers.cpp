@@ -80,7 +80,7 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
     if (bytes_read > 0)
       result = Transition::PROCEED;
     else if (bytes_read == 0)
-      return Transition::TERMINATE;
+      throw NetworkProcessException("EOF at socket");
     else
       switch (errno) {
         case EAGAIN:
@@ -125,7 +125,7 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
         result = Transition::PROCEED;
         break;
       case SSL_ERROR_ZERO_RETURN:
-        return Transition::TERMINATE;
+        throw NetworkProcessException("EOF at socket");
         // The SSL packet is partially loaded to the SSL buffer only,
         // More data is required in order to decode the wh`ole packet.
       case SSL_ERROR_WANT_READ:

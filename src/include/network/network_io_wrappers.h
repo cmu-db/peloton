@@ -48,8 +48,9 @@ class NetworkIoWrapper {
   Transition WritePacket(OutputPacket *pkt);
   // TODO(Tianyu): Make these protected when protocol handler refactor is
   // complete
-  NetworkIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> &rbuf,
-                   std::shared_ptr<WriteBuffer> &wbuf)
+  NetworkIoWrapper(int sock_fd,
+                   std::shared_ptr<ReadBuffer> rbuf,
+                   std::shared_ptr<WriteBuffer> wbuf)
       : sock_fd_(sock_fd),
         rbuf_(std::move(rbuf)),
         wbuf_(std::move(wbuf)) {}

@@ -21,11 +21,11 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   if (it == reusable_wrappers_.end()) {
     // No reusable wrappers
     auto wrapper = std::make_shared<PosixSocketIoWrapper>(
-        conn_fd, std::make_shared<ReadBuffer>(),
+        conn_fd,
+        std::make_shared<ReadBuffer>(),
         std::make_shared<WriteBuffer>());
     reusable_wrappers_[conn_fd] =
-        std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(
-            wrapper);
+        std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(wrapper);
     return wrapper;
   }
 
@@ -66,12 +66,11 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(
 
   int err = SSL_get_error(context, ssl_accept_ret);
   switch (err) {
-    case SSL_ERROR_WANT_READ:
-      return Transition::NEED_READ;
-    case SSL_ERROR_WANT_WRITE:
-      return Transition::NEED_WRITE;
-    default:LOG_ERROR("SSL Error, error code %d", err);
-      return Transition::TERMINATE;
+    case SSL_ERROR_WANT_READ:return Transition::NEED_READ;
+    case SSL_ERROR_WANT_WRITE:return Transition::NEED_WRITE;
+    default:
+      throw NetworkProcessException(
+          "SSL Error, error code" + std::to_string(err));
   }
 }
 }  // namespace network

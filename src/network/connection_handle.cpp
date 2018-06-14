@@ -101,9 +101,6 @@ namespace {
     throw std::runtime_error("undefined transition"); \
     }                                                 \
     }
-
-#define END_STATE_DEF \
-  ON(TERMINATE) SET_STATE_TO(CLOSING) AND_INVOKE(CloseConnection) END_DEF
 }  // namespace
 
 // clang-format off
@@ -116,14 +113,14 @@ DEF_TRANSITION_GRAPH
           // during handshake. From peloton's perspective we are still waiting
           // for reads.
         ON(NEED_WRITE) SET_STATE_TO(READ) AND_WAIT_ON_WRITE
-    END_STATE_DEF
+    END_DEF
 
     DEFINE_STATE(SSL_INIT)
         ON(WAKEUP) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
         ON(NEED_READ) SET_STATE_TO(SSL_INIT) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(SSL_INIT) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
-    END_STATE_DEF
+    END_DEF
 
     DEFINE_STATE(PROCESS)
         ON(WAKEUP) SET_STATE_TO(PROCESS) AND_INVOKE(GetResult)
@@ -133,7 +130,7 @@ DEF_TRANSITION_GRAPH
         // to execute the query
         ON(NEED_RESULT) SET_STATE_TO(PROCESS) AND_WAIT_ON_PELOTON
         ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
-    END_STATE_DEF
+    END_DEF
 
     DEFINE_STATE(WRITE)
         ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
@@ -141,7 +138,7 @@ DEF_TRANSITION_GRAPH
         ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
-    END_STATE_DEF
+    END_DEF
 END_DEF
     // clang-format on
 
@@ -199,7 +196,8 @@ Transition ConnectionHandle::Process() {
     case ProcessResult::PROCESSING:
       return Transition::NEED_RESULT;
     case ProcessResult::TERMINATE:
-      return Transition::TERMINATE;
+      // TODO(Tianyu): Remove this when we convert ProcessResult
+      throw NetworkProcessException("Error when processing");
     case ProcessResult::NEED_SSL_HANDSHAKE:
       return Transition::NEED_SSL_HANDSHAKE;
     default:
