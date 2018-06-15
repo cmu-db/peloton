@@ -22,8 +22,8 @@ enum class ConnState {
   READ,      // State that reads data from the network
   WRITE,     // State the writes data to the network
   PROCESS,   // State that runs the network protocol on received data
-  CLOSING,   // State for closing the client connection
   SSL_INIT,  // State to flush out responses and doing (Real) SSL handshake
+  SHUTDOWN   // Final sink state to close down the connection
 };
 
 /**
@@ -38,7 +38,8 @@ enum class Transition {
   NEED_READ,
   NEED_RESULT,
   NEED_SSL_HANDSHAKE,
-  NEED_WRITE
+  NEED_WRITE,
+  END
 };
 }  // namespace network
 }  // namespace peloton

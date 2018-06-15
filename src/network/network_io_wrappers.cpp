@@ -80,7 +80,7 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
     if (bytes_read > 0)
       result = Transition::PROCEED;
     else if (bytes_read == 0)
-      throw NetworkProcessException("EOF at socket");
+      return Transition::END;
     else
       switch (errno) {
         case EAGAIN:
@@ -125,7 +125,7 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
         result = Transition::PROCEED;
         break;
       case SSL_ERROR_ZERO_RETURN:
-        throw NetworkProcessException("EOF at socket");
+        return Transition::END;
         // The SSL packet is partially loaded to the SSL buffer only,
         // More data is required in order to decode the wh`ole packet.
       case SSL_ERROR_WANT_READ:
@@ -177,10 +177,11 @@ Transition SslSocketIoWrapper::Close() {
   if (ret != 0) {
     int err = SSL_get_error(conn_ssl_context_, ret);
     switch (err) {
-      case SSL_ERROR_WANT_WRITE:
+      // More work to do before shutdown
       case SSL_ERROR_WANT_READ:
-        // More work to do before shutdown
         return Transition::NEED_READ;
+      case SSL_ERROR_WANT_WRITE:
+        return Transition::NEED_WRITE;
       default:
         LOG_ERROR("Error shutting down ssl session, err: %d", err);
     }

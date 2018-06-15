@@ -101,6 +101,8 @@ namespace {
     throw std::runtime_error("undefined transition"); \
     }                                                 \
     }
+#define END_STATE_DEF \
+  ON(END) SET_STATE_TO(SHUTDOWN) AND_INVOKE(TryCloseConnection) END_DEF
 }  // namespace
 
 // clang-format off
@@ -109,18 +111,19 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(TryRead)
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
         ON(NEED_READ) SET_STATE_TO(READ) AND_WAIT_ON_READ
-          // This case happens only when we use SSL and are blocked on a write
-          // during handshake. From peloton's perspective we are still waiting
-          // for reads.
+        // This case happens only when we use SSL and are blocked on a write
+        // during handshake. From peloton's perspective we are still waiting
+        // for reads.
         ON(NEED_WRITE) SET_STATE_TO(READ) AND_WAIT_ON_WRITE
-    END_DEF
+        ON(END) SET_STATE_TO(SHUTDOWN) AND_INVOKE(TryCloseConnection)
+    END_STATE_DEF
 
     DEFINE_STATE(SSL_INIT)
         ON(WAKEUP) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
         ON(NEED_READ) SET_STATE_TO(SSL_INIT) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(SSL_INIT) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
-    END_DEF
+    END_STATE_DEF
 
     DEFINE_STATE(PROCESS)
         ON(WAKEUP) SET_STATE_TO(PROCESS) AND_INVOKE(GetResult)
@@ -130,7 +133,7 @@ DEF_TRANSITION_GRAPH
         // to execute the query
         ON(NEED_RESULT) SET_STATE_TO(PROCESS) AND_WAIT_ON_PELOTON
         ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
-    END_DEF
+    END_STATE_DEF
 
     DEFINE_STATE(WRITE)
         ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
@@ -138,7 +141,16 @@ DEF_TRANSITION_GRAPH
         ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
-    END_DEF
+    END_STATE_DEF
+
+    DEFINE_STATE(SHUTDOWN)
+      ON(WAKEUP) SET_STATE_TO(SHUTDOWN) AND_INVOKE(TryCloseConnection)
+      // TODO(Tianyu): It is unclear whether this would work. We don't seem
+      // to handle it before and it is unknown what condition triggers these
+      // edge cases. OpenSSL documentation says they exist though.
+      ON(NEED_READ) SET_STATE_TO(SHUTDOWN) AND_WAIT_ON_READ
+      ON(NEED_WRITE) SET_STATE_TO(SHUTDOWN) AND_WAIT_ON_WRITE
+    END_STATE_DEF
 END_DEF
     // clang-format on
 
@@ -152,7 +164,7 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
       next = result.second(connection);
     } catch (NetworkProcessException &e) {
       LOG_ERROR("%s\n", e.what());
-      connection.CloseConnection();
+      connection.TryCloseConnection();
       return;
     }
   }
@@ -223,11 +235,21 @@ Transition ConnectionHandle::TrySslHandshake() {
       io_wrapper_);
 }
 
-Transition ConnectionHandle::CloseConnection() {
+Transition ConnectionHandle::TryCloseConnection() {
   LOG_DEBUG("Attempt to close the connection %d", io_wrapper_->GetSocketFd());
-  // Remove listening event
+  Transition close = io_wrapper_->Close();
+  // More work needs to be down before actual closure if the close is
+  // unsuccessful,
+  if (close != Transition::PROCEED) return close;
+  // Only after the connection is closed is it safe to remove events,
+  // after this point no object in the system has reference to this
+  // connection handle and we will need to destruct and exit.
+  conn_handler_->UnregisterEvent(workpool_event_);
   conn_handler_->UnregisterEvent(network_event_);
-  io_wrapper_->Close();
+  // This object is essentially managed by libevent (which unfortunately does
+  // not accept shared_ptrs.) and thus as we shut down we need to manually
+  // deallocate this object.
+  delete this;
   return Transition::NONE;
 }
 }  // namespace network
