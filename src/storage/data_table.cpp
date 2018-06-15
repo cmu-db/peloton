@@ -155,12 +155,12 @@ bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
   //       column. Like maybe can store a list of just columns that
   //       even have constraints defined so that we don't have to
   //       look at each column individually.
-  oid_t column_count = schema->GetColumnCount();
+  size_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    std::vector<catalog::Constraint> column_cons =
+    const std::vector<catalog::Constraint> &column_constraints =
         schema->GetColumn(column_itr).GetConstraints();
-    for (auto cons : column_cons) {
-      ConstraintType type = cons.GetType();
+    for (const auto &constraint : column_constraints) {
+      ConstraintType type = constraint.GetType();
       switch (type) {
         case ConstraintType::NOTNULL: {
           if (CheckNotNulls(tuple, column_itr) == false) {
@@ -208,9 +208,9 @@ bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
           LOG_TRACE("%s", error.c_str());
           throw ConstraintException(error);
         }
-      }  // SWITCH
-    }    // FOR (constraints)
-  }      // FOR (columns)
+      }
+    }
+  }
   return true;
 }
 

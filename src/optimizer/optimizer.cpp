@@ -214,13 +214,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       ddl_plan = move(analyze_plan);
       break;
     }
-    case StatementType::COPY: {
-      LOG_TRACE("Adding Copy plan...");
-      parser::CopyStatement *copy_parse_tree =
-          static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
-      break;
-    }
     default:
       is_ddl_stmt = false;
   }
@@ -266,20 +259,33 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
   switch (tree->GetType()) {
     case StatementType::SELECT: {
-      auto select = reinterpret_cast<parser::SelectStatement *>(tree);
+      auto *select = reinterpret_cast<parser::SelectStatement *>(tree);
       GetQueryInfoHelper(select->select_list, select->order, output_exprs,
                          physical_props);
       break;
     }
     case StatementType::INSERT: {
-      auto insert = reinterpret_cast<parser::InsertStatement *>(tree);
+      auto *insert = reinterpret_cast<parser::InsertStatement *>(tree);
       if (insert->select != nullptr)
         GetQueryInfoHelper(insert->select->select_list, insert->select->order,
                            output_exprs, physical_props);
       break;
     }
+    case StatementType::COPY: {
+      auto *copy = reinterpret_cast<parser::CopyStatement *>(tree);
+      if (copy->select_stmt != nullptr) {
+        GetQueryInfoHelper(copy->select_stmt->select_list,
+                           copy->select_stmt->order, output_exprs,
+                           physical_props);
+      } else {
+        std::unique_ptr<parser::OrderDescription> order;
+        GetQueryInfoHelper(copy->select_list, order, output_exprs,
+                           physical_props);
+      }
+      break;
+    }
     default:
-      ;
+      break;
   }
 
   return QueryInfo(output_exprs, physical_props);

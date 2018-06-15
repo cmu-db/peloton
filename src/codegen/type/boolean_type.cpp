@@ -6,12 +6,13 @@
 //
 // Identification: src/codegen/type/boolean_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/boolean_type.h"
 
+#include "codegen/proxy/numeric_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/varchar_type.h"
@@ -84,7 +85,8 @@ struct CastBooleanToVarchar : public TypeSystem::CastHandleNull {
 
     // Convert this boolean (unsigned int) into a string
     llvm::Value *str_val = codegen->CreateSelect(
-        value.GetValue(), codegen.ConstString("T"), codegen.ConstString("F"));
+        value.GetValue(), codegen.ConstString("T", "true"),
+        codegen.ConstString("F", "false"));
 
     // We could be casting this non-nullable value to a nullable type
     llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
@@ -250,18 +252,16 @@ struct LogicalOr : public TypeSystem::BinaryOperatorHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::BOOLEAN};
 
-
+// clang-format off
 // Explicit casts
 CastBooleanToInteger kBooleanToInteger;
 CastBooleanToDecimal kBooleanToDecimal;
 CastBooleanToVarchar kBooleanToVarchar;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER,
-     kBooleanToInteger},
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR,
-     kBooleanToVarchar},
-    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL,
-     kBooleanToDecimal}};
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER, kBooleanToInteger},
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR, kBooleanToVarchar},
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL, kBooleanToDecimal}};
+// clang-format on
 
 // Comparison operations
 CompareBoolean kCompareBoolean;
@@ -323,6 +323,11 @@ void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.BoolType();
   len_type = nullptr;
+}
+
+llvm::Function *Boolean::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return NumericFunctionsProxy::InputBoolean.GetFunction(codegen);
 }
 
 llvm::Function *Boolean::GetOutputFunction(

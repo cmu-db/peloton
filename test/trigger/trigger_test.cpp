@@ -10,17 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "trigger/trigger.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
 #include "executor/executor_context.h"
+#include "expression/constant_value_expression.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/abstract_table.h"
+#include "trigger/trigger.h"
 
 namespace peloton {
 namespace test {

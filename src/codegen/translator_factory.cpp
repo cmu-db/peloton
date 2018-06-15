@@ -23,6 +23,7 @@
 #include "codegen/expression/parameter_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "codegen/operator/block_nested_loop_join_translator.h"
+#include "codegen/operator/csv_scan_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
@@ -37,10 +38,12 @@
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
+#include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/aggregate_plan.h"
+#include "planner/csv_scan_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
@@ -65,6 +68,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::SEQSCAN: {
       auto &scan = static_cast<const planner::SeqScanPlan &>(plan_node);
       translator = new TableScanTranslator(scan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::CSVSCAN: {
+      auto &scan = static_cast<const planner::CSVScanPlan &>(plan_node);
+      translator = new CSVScanTranslator(scan, context, pipeline);
       break;
     }
     case PlanNodeType::PROJECTION: {

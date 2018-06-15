@@ -17,7 +17,6 @@
 #include <string>
 
 #include "expression/abstract_expression.h"
-#include "parser/copy_statement.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -121,12 +120,6 @@ expression::AbstractExpression *ConstructJoinPredicate(
 bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
                          const std::unordered_set<std::string> &r_group_alias,
                          const expression::AbstractExpression *expr);
-
-/**
- * @brief Create a copy plan based on the copy statement
- */
-std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
-    parser::CopyStatement *copy_stmt);
 
 /**
  * @brief Construct the map from subquery column name to the actual expression

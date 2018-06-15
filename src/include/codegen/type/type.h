@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include "type/type_id.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace codegen {
@@ -76,6 +77,21 @@ class Type {
 
   // Get this type, but as non-NULL-able
   Type AsNonNullable() const;
+};
+
+struct TypeHasher {
+  std::size_t operator()(const type::Type &type) const {
+    // TODO: hash the other parts
+    auto hash = HashUtil::Hash(&type.type_id);
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&type.nullable));
+    return hash;
+  }
+};
+
+struct TypeEquality {
+  bool operator()(const type::Type &l, const type::Type &r) const {
+    return l == r;
+  }
 };
 
 }  // namespace type

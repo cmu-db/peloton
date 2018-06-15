@@ -30,7 +30,7 @@
 #include "codegen/code_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
-#include "function/decimal_functions.h"
+#include "function/numeric_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
@@ -1315,43 +1315,43 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
 
       /**
@@ -1360,126 +1360,126 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
                          type::TypeId::SMALLINT, internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Round",
           function::BuiltInFuncType{OperatorId::Round,
-                                    function::DecimalFunctions::_Round},
+                                    function::NumericFunctions::_Round},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       /**

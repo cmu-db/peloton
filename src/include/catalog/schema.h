@@ -126,7 +126,7 @@ class Schema : public Printable {
     return columns[column_id].IsInlined();
   }
 
-  inline const Column GetColumn(const oid_t column_id) const {
+  inline const Column &GetColumn(const oid_t column_id) const {
     return columns[column_id];
   }
 

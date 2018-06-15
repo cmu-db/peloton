@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "codegen/code_context.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
@@ -58,9 +59,10 @@ class CppProxyMember {
   uint32_t slot_;
 };
 
-//===----------------------------------------------------------------------===//
-// The main wrapper around LLVM's IR Builder to generate IR
-//===----------------------------------------------------------------------===//
+/**
+ * The main API used to generate code in Peloton. Provides a thin wrapper around
+ * LLVM's IR Builder to generate IR.
+ */
 class CodeGen {
  public:
   /// Constructor and destructor
@@ -88,18 +90,20 @@ class CodeGen {
   }
   llvm::Type *ArrayType(llvm::Type *type, uint32_t num_elements) const;
 
-  /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
+  /// Functions to return LLVM values for constant boolean, int8, int16, int32,
+  // int64, strings, and null values.
   llvm::Constant *ConstBool(bool val) const;
   llvm::Constant *Const8(int8_t val) const;
   llvm::Constant *Const16(int16_t val) const;
   llvm::Constant *Const32(int32_t val) const;
   llvm::Constant *Const64(int64_t val) const;
   llvm::Constant *ConstDouble(double val) const;
-  llvm::Constant *ConstString(const std::string &s) const;
+  llvm::Value *ConstString(const std::string &str_val,
+                           const std::string &name) const;
+  llvm::Value *ConstGenericBytes(const void *data, uint32_t length,
+                                 const std::string &name) const;
   llvm::Constant *Null(llvm::Type *type) const;
   llvm::Constant *NullPtr(llvm::PointerType *type) const;
-  /// Wrapper for pointer for constant string
-  llvm::Value *ConstStringPtr(const std::string &s) const;
 
   llvm::Value *AllocateVariable(llvm::Type *type, const std::string &name);
   llvm::Value *AllocateBuffer(llvm::Type *element_type, uint32_t num_elems,
@@ -128,8 +132,10 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   // C/C++ standard library functions
   //===--------------------------------------------------------------------===//
-  llvm::Value *CallPrintf(const std::string &format,
-                          const std::vector<llvm::Value *> &args);
+  llvm::Value *Printf(const std::string &format,
+                      const std::vector<llvm::Value *> &args);
+  llvm::Value *Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
+                      llvm::Value *len);
   llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//
