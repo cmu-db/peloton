@@ -268,9 +268,6 @@ HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputvarchar,
 HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputvarbinary,
                           peloton::codegen::ValuesRuntime::OutputVarbinary)
 
-HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_comparestrings,
-                          peloton::codegen::ValuesRuntime::CompareStrings)
-
 HANDLE_EXPLICIT_CALL_INST(peloton_executorcontext_gettransaction,
                           peloton::executor::ExecutorContext::GetTransaction)
 
@@ -292,6 +289,8 @@ HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_substr,
                           peloton::function::StringFunctions::Substr)
 HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_repeat,
                           peloton::function::StringFunctions::Repeat)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_comparestrings,
+                          peloton::function::StringFunctions::CompareStrings)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_buffer_init,
                           peloton::codegen::util::Buffer::Init)
@@ -302,14 +301,14 @@ HANDLE_EXPLICIT_CALL_INST(peloton_buffer_reset,
 HANDLE_EXPLICIT_CALL_INST(peloton_buffer_destroy,
                           peloton::codegen::util::Buffer::Destroy)
 
-HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_abs,
-                          peloton::function::DecimalFunctions::Abs)
-HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_floor,
-                          peloton::function::DecimalFunctions::Floor)
-HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_round,
-                          peloton::function::DecimalFunctions::Round)
-HANDLE_EXPLICIT_CALL_INST(peloton_decimalfunctions_ceil,
-                          peloton::function::DecimalFunctions::Ceil)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_abs,
+                          peloton::function::NumericFunctions::Abs)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_floor,
+                          peloton::function::NumericFunctions::Floor)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_round,
+                          peloton::function::NumericFunctions::Round)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_ceil,
+                          peloton::function::NumericFunctions::Ceil)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilteraccessor_init,
                           peloton::codegen::BloomFilterAccessor::Init)
@@ -344,9 +343,6 @@ HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_destroy,
 
 HANDLE_EXPLICIT_CALL_INST(peloton_storagemanager_gettablewithoid,
                           peloton::storage::StorageManager::GetTableWithOid)
-
-HANDLE_EXPLICIT_CALL_INST(peloton_tupleruntime_createvarlen,
-                          peloton::codegen::TupleRuntime::CreateVarlen)
 
 HANDLE_EXPLICIT_CALL_INST(peloton_tilegroup_getnexttupleslot,
                           peloton::storage::TileGroup::GetNextTupleSlot)

@@ -150,7 +150,7 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
 
 llvm::Value *CodeGen::Printf(const std::string &format,
                              const std::vector<llvm::Value *> &args) {
-  auto *printf_fn = LookupBuiltin("printf");
+  auto *printf_fn = LookupBuiltin("printf").first;
   if (printf_fn == nullptr) {
 #if GCC_AT_LEAST_6
 // In newer GCC versions (i.e., GCC 6+), function attributes are part of the
@@ -183,7 +183,7 @@ llvm::Value *CodeGen::Printf(const std::string &format,
 llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
                              llvm::Value *len) {
   static constexpr char kMemcmpFnName[] = "memcmp";
-  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
+  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName).first;
   if (memcmp_fn == nullptr) {
 #if GCC_AT_LEAST_6
 // In newer GCC versions (i.e., GCC 6+), function attributes are part of the
