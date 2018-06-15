@@ -28,13 +28,16 @@ class CompressedIndexConfigUtil {
    * @param add_candidates: the resulting add_candidates
    * @param cand_sel_type: candidate index selection mechanism to follow
    * @param max_index_size: max number of columns to use to build index
-   * permutations
+   * permutations(useful only when doing an exhaustive search)
+   * @param knobs: Knobs if using Autoadmin candidate selection
    * @return the permuation as a bitset
    */
   static void AddCandidates(CompressedIndexConfigContainer &container,
                             const std::string &query,
                             boost::dynamic_bitset<> &add_candidates,
-                            CandidateSelectionType cand_sel_type, size_t max_index_size);
+                            CandidateSelectionType cand_sel_type,
+                            size_t max_index_size = 0,
+                            IndexSelectionKnobs knobs = {});
   /**
    * Given a SQLStatement, generate drop candidates
    * @param container: input container
@@ -128,6 +131,10 @@ class CompressedIndexConfigUtil {
       const std::vector<oid_t> &cols, size_t max_index_size,
       std::vector<oid_t> &index_conf, boost::dynamic_bitset<> &bitset,
       oid_t db_oid, oid_t table_oid);
+
+  static void MarkPrefixClosure(const CompressedIndexConfigContainer &container,
+                                boost::dynamic_bitset<> &bitset,
+                                const std::shared_ptr<brain::HypotheticalIndexObject>& hypot_index_obj);
 };
 }  // namespace brain
 }  // namespace peloton

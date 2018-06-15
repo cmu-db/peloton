@@ -34,7 +34,8 @@ class LSPIIndexTuner {
   explicit LSPIIndexTuner(
       const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
       CandidateSelectionType cand_sel_type, size_t max_index_size,
-      RunMode run_mode = ActualRun, catalog::Catalog *catalog = nullptr,
+      double variance_init = 1e-3, double reg_coeff = 1,
+      catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
   /**
    * Given a recent set of queries and their latency on the current
@@ -45,7 +46,9 @@ class LSPIIndexTuner {
    * @param query_latency_pairs: vector of <query string, latency> pairs
    */
   void Tune(const std::vector<std::string> &queries,
-            const std::vector<double> &query_latencies);
+            const std::vector<double> &query_latencies,
+            std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& add_set,
+            std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& drop_set);
   void FindOptimalConfig(const boost::dynamic_bitset<> &curr_config_set,
                          const boost::dynamic_bitset<> &add_candidate_set,
                          const boost::dynamic_bitset<> &drop_candidate_set,
@@ -57,7 +60,6 @@ class LSPIIndexTuner {
   std::string db_name_;
   CandidateSelectionType cand_sel_type_;
   size_t max_index_size_;
-  RunMode run_mode_;
   // Index configuration object - Represents current set of indexes compactly
   // and exposes APIs for generating a search space for our RL algorithm
   std::unique_ptr<CompressedIndexConfigContainer> index_config_;

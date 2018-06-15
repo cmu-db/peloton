@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/indextune/compressed_index_config_util.h"
+#include "brain/index_selection.h"
 
 namespace peloton {
 namespace brain {
@@ -18,72 +19,81 @@ namespace brain {
 void CompressedIndexConfigUtil::AddCandidates(
     CompressedIndexConfigContainer &container, const std::string &query,
     boost::dynamic_bitset<> &add_candidates, CandidateSelectionType cand_sel_type,
-    size_t max_index_size) {
+    size_t max_index_size, IndexSelectionKnobs knobs) {
   add_candidates = boost::dynamic_bitset<>(container.GetConfigurationCount());
-  auto sql_stmt_list = ToBindedSqlStmtList(container, query);
-  auto txn = container.GetTransactionManager()->BeginTransaction();
-  container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
-
-  std::vector<planner::col_triplet> indexable_cols_vector =
-      planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
-                                             std::move(sql_stmt_list),
-                                             container.GetDatabaseName());
-  container.GetTransactionManager()->CommitTransaction(txn);
-
-  if (indexable_cols_vector.empty()) {
-    for (const auto it : container.table_offset_map_) {
-      const auto table_offset = it.second;
-      add_candidates.set(table_offset);
-    }
-    return;
+  // First add all {} empty index bits
+  for (const auto it : container.table_offset_map_) {
+    const auto table_offset = it.second;
+    add_candidates.set(table_offset);
   }
-
-  if (cand_sel_type == CandidateSelectionType::Simple) {
-    for (const auto &each_triplet : indexable_cols_vector) {
-      const auto db_oid = std::get<0>(each_triplet);
-      const auto table_oid = std::get<1>(each_triplet);
-      const auto col_oid = std::get<2>(each_triplet);
-
-      std::vector<oid_t> col_oids = {col_oid};
-      auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
-          db_oid, table_oid, col_oids);
-
-      SetBit(container, add_candidates, idx_new);
+  if(cand_sel_type == CandidateSelectionType::AutoAdmin) {
+    // Generate autoadmin candidates
+    IndexConfiguration best_config;
+    auto txn = container.GetTransactionManager()->BeginTransaction();
+    std::vector<std::string> queries = {query};
+    brain::Workload w = {queries, container.GetDatabaseName(), txn};
+    brain::IndexSelection is = {w, knobs, txn};
+    is.GetBestIndexes(best_config);
+    container.GetTransactionManager()->CommitTransaction(txn);
+    for(const auto& hypot_index_obj: best_config.GetIndexes()) {
+      MarkPrefixClosure(container, add_candidates, hypot_index_obj);
     }
+  } else if (cand_sel_type == CandidateSelectionType::Simple || cand_sel_type == CandidateSelectionType::Exhaustive) {
+    auto sql_stmt_list = ToBindedSqlStmtList(container, query);
+    auto txn = container.GetTransactionManager()->BeginTransaction();
+    container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
 
-    return;
-  }
+    std::vector<planner::col_triplet> indexable_cols_vector =
+        planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
+                                               std::move(sql_stmt_list),
+                                               container.GetDatabaseName());
+    container.GetTransactionManager()->CommitTransaction(txn);
 
-  // Aggregate all columns in the same table
-  std::unordered_map<oid_t, brain::HypotheticalIndexObject> aggregate_map;
-  for (const auto &each_triplet : indexable_cols_vector) {
-    const auto db_oid = std::get<0>(each_triplet);
-    const auto table_oid = std::get<1>(each_triplet);
-    const auto col_oid = std::get<2>(each_triplet);
+    if (cand_sel_type == CandidateSelectionType::Simple) {
+      for (const auto &each_triplet : indexable_cols_vector) {
+        const auto db_oid = std::get<0>(each_triplet);
+        const auto table_oid = std::get<1>(each_triplet);
+        const auto col_oid = std::get<2>(each_triplet);
 
-    if (aggregate_map.find(table_oid) == aggregate_map.end()) {
-      aggregate_map[table_oid] = brain::HypotheticalIndexObject();
-      aggregate_map.at(table_oid).db_oid = db_oid;
-      aggregate_map.at(table_oid).table_oid = table_oid;
+        std::vector<oid_t> col_oids = {col_oid};
+        auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
+            db_oid, table_oid, col_oids);
+
+        SetBit(container, add_candidates, idx_new);
+      }
+    } else if (cand_sel_type == CandidateSelectionType::Exhaustive) {
+      // Aggregate all columns in the same table
+      std::unordered_map<oid_t, brain::HypotheticalIndexObject> aggregate_map;
+      for (const auto &each_triplet : indexable_cols_vector) {
+        const auto db_oid = std::get<0>(each_triplet);
+        const auto table_oid = std::get<1>(each_triplet);
+        const auto col_oid = std::get<2>(each_triplet);
+
+        if (aggregate_map.find(table_oid) == aggregate_map.end()) {
+          aggregate_map[table_oid] = brain::HypotheticalIndexObject();
+          aggregate_map.at(table_oid).db_oid = db_oid;
+          aggregate_map.at(table_oid).table_oid = table_oid;
+        }
+
+        aggregate_map.at(table_oid).column_oids.push_back(col_oid);
+      }
+
+      const auto db_oid = container.GetDatabaseOID();
+
+      for (const auto it : aggregate_map) {
+        const auto table_oid = it.first;
+        const auto &column_oids = it.second.column_oids;
+
+        // Insert empty index
+        add_candidates.set(container.GetTableOffsetStart(table_oid));
+
+        std::vector<oid_t> index_conf;
+
+        // Insert index consisting of up to max_index_size columns
+        PermuateConfigurations(container, column_oids, max_index_size, index_conf,
+                               add_candidates, db_oid, table_oid);
+      }
     }
-
-    aggregate_map.at(table_oid).column_oids.push_back(col_oid);
-  }
-
-  const auto db_oid = aggregate_map.begin()->second.db_oid;
-
-  for (const auto it : aggregate_map) {
-    const auto table_oid = it.first;
-    const auto &column_oids = it.second.column_oids;
-
-    // Insert empty index
-    add_candidates.set(container.GetTableOffsetStart(table_oid));
-
-    std::vector<oid_t> index_conf;
-
-    // Insert index consisting of up to max_index_size columns
-    PermuateConfigurations(container, column_oids, max_index_size, index_conf,
-                           add_candidates, db_oid, table_oid);
   }
 }
 
@@ -174,9 +184,15 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
     vector_eig &query_config_vec) {
   size_t num_configs = curr_config_set.size();
   query_config_vec = vector_eig::Zero(2 * num_configs);
+
+  // Featurization mechanism: Add candidates
+  // 1 if idx belongs to add cand set + current state config
+  // -1 if idx belongs to add cand set + not in curr state config
+  // 0 otherwise
   size_t offset_rec = 0;
+  // TODO(saatviks): Disabling this for now
+//   query_config_vec[offset_rec] = 1.0;
   size_t config_id_rec = add_candidate_set.find_first();
-  query_config_vec[offset_rec] = 1.0;
   while (config_id_rec != boost::dynamic_bitset<>::npos) {
     if (curr_config_set.test(config_id_rec)) {
       query_config_vec[offset_rec + config_id_rec] = 1.0f;
@@ -185,14 +201,18 @@ void CompressedIndexConfigUtil::ConstructQueryConfigFeature(
     }
     config_id_rec = add_candidate_set.find_next(config_id_rec);
   }
+
+  // Featurization mechanism: Drop candidates
+  // 1 if idx belongs to drop cand set + current state config
+  // 0 otherwise
   size_t offset_drop = num_configs;
   size_t config_id_drop = drop_candidate_set.find_first();
-  query_config_vec[offset_drop] = 1.0;
+  // TODO(saatviks): Disabling this for now
+//   query_config_vec[offset_drop] = 1.0;
   while (config_id_drop != boost::dynamic_bitset<>::npos) {
     if (curr_config_set.test(config_id_drop)) {
       query_config_vec[offset_drop + config_id_drop] = 1.0f;
     }
-    // else case shouldnt happen
     config_id_drop = drop_candidate_set.find_next(config_id_drop);
   }
 }
@@ -262,6 +282,18 @@ void CompressedIndexConfigUtil::PermuateConfigurations(
                              bitset, db_oid, table_oid);
       index_conf.pop_back();
     }
+  }
+}
+
+void CompressedIndexConfigUtil::MarkPrefixClosure(const CompressedIndexConfigContainer &container,
+                                                  boost::dynamic_bitset<> &bitset,
+                                                  const std::shared_ptr<HypotheticalIndexObject> &hypot_index_obj) {
+  auto &col_oids = hypot_index_obj->column_oids;
+  for(size_t i = 1; i <= hypot_index_obj->column_oids.size(); i++) {
+    auto index_conf = std::vector<oid_t>(col_oids.begin(), col_oids.begin() + i);
+    auto idx_new = std::make_shared<brain::HypotheticalIndexObject>(
+        hypot_index_obj->db_oid, hypot_index_obj->table_oid, index_conf);
+    SetBit(container, bitset, idx_new);
   }
 }
 

@@ -120,7 +120,7 @@ TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
   }
 }
 
-TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
+TEST_F(CompressedIdxConfigTest, AddSimpleCandidatesTest) {
   std::string database_name = DEFAULT_DB_NAME;
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -160,44 +160,202 @@ TEST_F(CompressedIdxConfigTest, AddDropCandidatesTest) {
       3);
 
   std::string query_string = query_strings[0];
-  boost::dynamic_bitset<> drop_candidates, add_candidates_single,
-      add_candidates_multiple;
-  brain::CompressedIndexConfigUtil::DropCandidates(
-      comp_idx_config, query_string, drop_candidates);
+  boost::dynamic_bitset<> add_candidates_simple;
   brain::CompressedIndexConfigUtil::AddCandidates(
-      comp_idx_config, query_string, add_candidates_single,
-      brain::CandidateSelectionType::Simple, 0);
-  brain::CompressedIndexConfigUtil::AddCandidates(
-      comp_idx_config, query_string, add_candidates_multiple,
-      brain::CandidateSelectionType::Exhaustive, 2);
+      comp_idx_config, query_string, add_candidates_simple,
+      brain::CandidateSelectionType::Simple);
 
   auto index_empty = testing_util.CreateHypotheticalIndex(table_name, {});
   auto index_b = testing_util.CreateHypotheticalIndex(table_name, {"b"});
   auto index_c =
       testing_util.CreateHypotheticalIndex(table_name, {"c"});
-  auto index_b_c = testing_util.CreateHypotheticalIndex(table_name, {"b", "c"});
-  auto index_c_b = testing_util.CreateHypotheticalIndex(table_name, {"c", "b"});
 
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
-      add_expect_indexes_single = {index_b, index_c};
+      add_expect_indexes_simple = {index_empty, index_b, index_c};
+
+  auto add_expect_bitset_simple =
+      brain::CompressedIndexConfigUtil::GenerateBitSet(
+          comp_idx_config, add_expect_indexes_simple);
+
+  EXPECT_EQ(*add_expect_bitset_simple, add_candidates_simple);
+}
+
+TEST_F(CompressedIdxConfigTest, AddAutoAdminCandidatesTest) {
+  std::string database_name = DEFAULT_DB_NAME;
+  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+
+  // Initialization
+  std::set<oid_t> ignore_table_oids;
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ignore_table_oids);
+  auto config = testing_util.GetQueryStringsWorkload(
+      index_selection::QueryStringsWorkloadType::SingleTableNoop);
+
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
+
+  // Create all the required tables for this workloads.
+  for (auto &table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+  }
+
+  std::string table_name = table_schemas[0].table_name;
+
+  auto index_ab = testing_util.CreateHypotheticalIndex(table_name, {"a", "b"});
+  testing_util.CreateIndex(index_ab);
+  auto index_bc = testing_util.CreateHypotheticalIndex(table_name, {"b", "c"});
+  testing_util.CreateIndex(index_bc);
+
+  auto comp_idx_config =
+      brain::CompressedIndexConfigContainer(database_name, ignore_table_oids);
+  LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
+  // Total configuration = total number of permutations: 1 * 3! + 3 * 2! + 3 *
+  // 1! + 1 = 16
+  EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
+  // 2 created + PK index being created by default
+  EXPECT_FALSE(
+      comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name)));
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name)),
+      3);
+  size_t max_index_cols = 2; // multi-column index limit
+  size_t enumeration_threshold = 2;  // naive enumeration
+  size_t num_indexes = 1; // essentially get all possible indexes
+  brain::IndexSelectionKnobs knobs = {max_index_cols, enumeration_threshold,
+                                      num_indexes};
+  std::string query_string = query_strings[0];
+  boost::dynamic_bitset<> add_candidates;
+  // TODO(saatviks): Indexes generated seem a bit weird - need to recheck whats happening here
+  // When turning up `num_indexes` to 10, this doesnt recommend 1, 2, (1, 2) and (2, 1)?
+  // Logs show correct set, but actual returned seem to be from 1 iteration less
+  brain::CompressedIndexConfigUtil::AddCandidates(
+      comp_idx_config, query_string, add_candidates,
+      brain::CandidateSelectionType::AutoAdmin, 0, knobs);
+
+  auto index_empty = testing_util.CreateHypotheticalIndex(table_name, {});
+  auto index_b = testing_util.CreateHypotheticalIndex(table_name, {"b"});
+
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
-      add_expect_indexes_multiple = {index_empty, index_b, index_c, index_b_c,
-                                     index_c_b};
+      add_expect_indexes = {index_empty, index_b};
+
+  auto add_expect_bitset =
+      brain::CompressedIndexConfigUtil::GenerateBitSet(
+          comp_idx_config, add_expect_indexes);
+
+  EXPECT_EQ(*add_expect_bitset, add_candidates);
+}
+
+TEST_F(CompressedIdxConfigTest, AddExhaustiveCandidatesTest) {
+  std::string database_name = DEFAULT_DB_NAME;
+  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+
+  // Initialization
+  std::set<oid_t> ignore_table_oids;
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ignore_table_oids);
+  auto config = testing_util.GetQueryStringsWorkload(
+      index_selection::QueryStringsWorkloadType::SingleTableNoop);
+
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
+
+  // Create all the required tables for this workloads.
+  for (auto &table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+  }
+
+  std::string table_name = table_schemas[0].table_name;
+
+  auto index_ab = testing_util.CreateHypotheticalIndex(table_name, {"a", "b"});
+  testing_util.CreateIndex(index_ab);
+  auto index_bc = testing_util.CreateHypotheticalIndex(table_name, {"b", "c"});
+  testing_util.CreateIndex(index_bc);
+
+  auto comp_idx_config =
+      brain::CompressedIndexConfigContainer(database_name, ignore_table_oids);
+  LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
+  // Total configuration = total number of permutations: 1 * 3! + 3 * 2! + 3 *
+  // 1! + 1 = 16
+  EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
+  // 2 created + PK index being created by default
+  EXPECT_FALSE(
+      comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name)));
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name)),
+      3);
+
+  std::string query_string = query_strings[0];
+  boost::dynamic_bitset<> add_candidates_exhaustive;
+  brain::CompressedIndexConfigUtil::AddCandidates(
+      comp_idx_config, query_string, add_candidates_exhaustive,
+      brain::CandidateSelectionType::Exhaustive, 2);
+
+  auto index_empty = testing_util.CreateHypotheticalIndex(table_name, {});
+  auto index_b = testing_util.CreateHypotheticalIndex(table_name, {"b"});
+  auto index_c = testing_util.CreateHypotheticalIndex(table_name, {"c"});
+  auto index_cb = testing_util.CreateHypotheticalIndex(table_name, {"c", "b"});
+
+  std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
+      add_expect_indexes_exhaustive = {index_empty, index_b, index_c, index_bc, index_cb};
+
+  auto add_expect_bitset_exhaustive =
+      brain::CompressedIndexConfigUtil::GenerateBitSet(
+          comp_idx_config, add_expect_indexes_exhaustive);
+
+  EXPECT_EQ(*add_expect_bitset_exhaustive, add_candidates_exhaustive);
+}
+
+TEST_F(CompressedIdxConfigTest, DropCandidatesTest) {
+  std::string database_name = DEFAULT_DB_NAME;
+  index_selection::TestingIndexSelectionUtil testing_util(database_name);
+
+  // Initialization
+  std::set<oid_t> ignore_table_oids;
+  brain::CompressedIndexConfigUtil::GetIgnoreTables(database_name,
+                                                    ignore_table_oids);
+  auto config = testing_util.GetQueryStringsWorkload(
+      index_selection::QueryStringsWorkloadType::SingleTableNoop);
+
+  auto table_schemas = config.first;
+  auto query_strings = config.second;
+
+  // Create all the required tables for this workloads.
+  for (auto &table_schema : table_schemas) {
+    testing_util.CreateTable(table_schema);
+  }
+
+  std::string table_name = table_schemas[0].table_name;
+
+  auto index_ab = testing_util.CreateHypotheticalIndex(table_name, {"a", "b"});
+  testing_util.CreateIndex(index_ab);
+  auto index_bc = testing_util.CreateHypotheticalIndex(table_name, {"b", "c"});
+  testing_util.CreateIndex(index_bc);
+
+  auto comp_idx_config =
+      brain::CompressedIndexConfigContainer(database_name, ignore_table_oids);
+  LOG_DEBUG("bitset: %s", comp_idx_config.ToString().c_str());
+  // Total configuration = total number of permutations: 1 * 3! + 3 * 2! + 3 *
+  // 1! + 1 = 16
+  EXPECT_EQ(comp_idx_config.GetConfigurationCount(), 16);
+  // 2 created + PK index being created by default
+  EXPECT_FALSE(
+      comp_idx_config.EmptyConfig(GetTableOid(database_name, table_name)));
+  EXPECT_EQ(
+      comp_idx_config.GetNumIndexes(GetTableOid(database_name, table_name)),
+      3);
+
+  std::string query_string = query_strings[0];
+  boost::dynamic_bitset<> drop_candidates;
+  brain::CompressedIndexConfigUtil::DropCandidates(
+      comp_idx_config, query_string, drop_candidates);
+
   // since b is primary key, we will ignore index {a, b}
   std::vector<std::shared_ptr<brain::HypotheticalIndexObject>>
       drop_expect_indexes = {};
 
-  auto add_expect_bitset_single =
-      brain::CompressedIndexConfigUtil::GenerateBitSet(
-          comp_idx_config, add_expect_indexes_single);
-  auto add_expect_bitset_multiple =
-      brain::CompressedIndexConfigUtil::GenerateBitSet(
-          comp_idx_config, add_expect_indexes_multiple);
   auto drop_expect_bitset = brain::CompressedIndexConfigUtil::GenerateBitSet(
       comp_idx_config, drop_expect_indexes);
 
-  EXPECT_EQ(*add_expect_bitset_single, add_candidates_single);
-  EXPECT_EQ(*add_expect_bitset_multiple, add_candidates_multiple);
   EXPECT_EQ(*drop_expect_bitset, drop_candidates);
 
 }

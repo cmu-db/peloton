@@ -24,13 +24,13 @@ namespace index_selection {
 /**
  * Table column type.
  */
-enum TupleValueType { INTEGER, FLOAT, STRING, INTEGERPKEY };
+enum class TupleValueType { INTEGER, FLOAT, STRING, INTEGERPKEY };
 
 /**
  * Represents workload types used in the test cases.
  */
-enum QueryStringsWorkloadType { SingleTableTwoColW1 = 1, SingleTableTwoColW2 = 2,
-  SingleTableThreeColW = 3, MultiTableMultiColW = 4, SingleTableNoop = 5, MultiTableNoop = 6 };
+enum class QueryStringsWorkloadType { SingleTableTwoColW1, SingleTableTwoColW2,
+  SingleTableThreeColW, MultiTableMultiColW, SingleTableNoop, MultiTableNoop };
 
 /**
  * Represents the schema for creating tables in the test cases.

@@ -38,7 +38,8 @@ class RLSEModel {
    * Any changes to feature length will need model reinitialization
    * explicitly by the user
    */
-  explicit RLSEModel(size_t feat_len, double variance_init = 1e-3);
+  explicit RLSEModel(size_t feat_len, double variance_init = 1e-3,
+                     double reg_coeff = 1, bool random_weights = false);
   /**
    * Update model weights
    * @param feat_vector: Feature vector(X) - Independent variables
@@ -49,6 +50,7 @@ class RLSEModel {
    * running the workload with the current Index config
    */
   void Update(const vector_eig &feat_vector, double true_val);
+
   /**
    * Predicts the dependent variable(y) given the independent variable(X)
    * @param feat_vector: X
@@ -56,11 +58,17 @@ class RLSEModel {
    */
   double Predict(const vector_eig &feat_vector) const;
 
+  vector_eig GetWeights() const  {
+    return weights_;
+  };
+
  private:
   // feature length
   size_t feat_len_;
   // model variance
   matrix_eig model_variance_;
+  // Regularization coefficient
+  double reg_coeff_;
   // parameters of model
   vector_eig weights_;
 };

@@ -43,14 +43,16 @@ class CompressedIndexConfigContainer {
   explicit CompressedIndexConfigContainer(
       const std::string &database_name,
       const std::set<oid_t> &ignore_table_oids, size_t max_index_size = 3,
-      RunMode run_mode = ActualRun, catalog::Catalog *catalog = nullptr,
+      catalog::Catalog *catalog = nullptr,
       concurrency::TransactionManager *txn_manager = nullptr);
 
   /**
    * @brief Given a new bitset, add/drop corresponding indexes and update
    * current bitset
    */
-  void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset);
+  void AdjustIndexes(const boost::dynamic_bitset<> &new_bitset,
+                     std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& add_set,
+                     std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& drop_set);
 
   // **Useful getter fns**
 
@@ -91,13 +93,6 @@ class CompressedIndexConfigContainer {
       size_t global_offset) const;
 
   /**
- * Given a global offset, get the corresponding internal index config repr
- * @param global_offset: the global offset
- * @return the internal index config mapped to this "global_offset"
- */
-  std::vector<oid_t> GetIndexColumns(size_t global_offset) const;
-
-  /**
    * @brief Get the current index configuration as a bitset(read-only)
    */
   const boost::dynamic_bitset<> *GetCurrentIndexConfig() const;
@@ -112,6 +107,8 @@ class CompressedIndexConfigContainer {
   catalog::Catalog *GetCatalog();
 
   std::string GetDatabaseName() const;
+
+  oid_t GetDatabaseOID() const { return database_oid_; };
   /**
    * @brief Given a table oid get the bitset offset where it lies
    */
@@ -121,8 +118,11 @@ class CompressedIndexConfigContainer {
    */
   size_t GetTableOffsetEnd(oid_t table_oid) const;
   /**
-   * @brief Given a table oid get the bitset offset the next table_oid lies.
-   * Here next refers to next on the bitset
+   * @brief Given a bitset offset, get the current table_oid.
+   */
+  oid_t GetCurrentTableOID(size_t idx) const;
+  /**
+   * @brief Given a bitset offset, get the  bitset offset where the next table_oid lies.
    */
   size_t GetNextTableIdx(size_t start_idx) const;
   /**
@@ -145,9 +145,9 @@ class CompressedIndexConfigContainer {
 
  private:
   std::string database_name_;
-  RunMode run_mode_;
   catalog::Catalog *catalog_;
   concurrency::TransactionManager *txn_manager_;
+  oid_t database_oid_;
 
   /**
    * Add an index to current configuration
@@ -218,9 +218,6 @@ class CompressedIndexConfigContainer {
 
   // This map is just the reverse mapping of table_offset_map_
   std::map<size_t, oid_t> table_offset_reverse_map_;
-
-  // This map stores global offset -> index's oid
-  std::unordered_map<size_t, oid_t> offset_to_indexoid_;
 
   // the next offset of a new table(during construction)
   // the end pointer - post construction

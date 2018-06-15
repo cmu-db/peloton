@@ -431,6 +431,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 0.04;
   int TBL_ROWS = 100;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> add_set, drop_set;
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -493,7 +494,7 @@ TEST_F(LSPITests, TuneTestTwoColTable1) {
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
       LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
+      index_tuner.Tune(batch_queries, batch_costs, add_set, drop_set);
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector.array().mean();
@@ -524,6 +525,7 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 0.05;
   int TBL_ROWS = 100;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> add_set, drop_set;
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -586,7 +588,7 @@ TEST_F(LSPITests, TuneTestTwoColTable2) {
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
       LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
+      index_tuner.Tune(batch_queries, batch_costs, add_set, drop_set);
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector.array().mean();
@@ -617,6 +619,7 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 0.05;
   int TBL_ROWS = 100;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> add_set, drop_set;
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -679,7 +682,7 @@ TEST_F(LSPITests, TuneTestThreeColTable) {
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
       LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
+      index_tuner.Tune(batch_queries, batch_costs, add_set, drop_set);
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector.array().mean();
@@ -710,6 +713,7 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
   // This threshold depends on #rows in the tables
   double MIN_COST_THRESH = 100.0;
   int TBL_ROWS = 100;
+  std::set<std::shared_ptr<brain::HypotheticalIndexObject>> add_set, drop_set;
 
   index_selection::TestingIndexSelectionUtil testing_util(database_name);
 
@@ -772,7 +776,7 @@ TEST_F(LSPITests, TuneTestMultiColMultiTable) {
     // Perform tuning
     if (i % CATALOG_SYNC_INTERVAL == 0) {
       LOG_DEBUG("Tuning...");
-      index_tuner.Tune(batch_queries, batch_costs);
+      index_tuner.Tune(batch_queries, batch_costs, add_set, drop_set);
       batch_queries.clear();
       batch_costs.clear();
       double mean_cost = cost_vector.array().mean();

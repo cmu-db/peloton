@@ -47,7 +47,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
   // 2. Create all the required workload query strings.
   // Note on Naming of workloads: <num_tables>Table<num_accessed_cols>ColW
   switch (type) {
-    case SingleTableNoop: {
+    case QueryStringsWorkloadType::SingleTableNoop: {
       table_name = "dummy0";
       table_schemas.emplace_back(
           table_name,
@@ -60,7 +60,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
       query_strs.push_back("UPDATE dummy0 SET a = 0 WHERE b = 1 AND c = 2");
       break;
     }
-    case SingleTableTwoColW1: {
+    case QueryStringsWorkloadType::SingleTableTwoColW1: {
       table_name = "dummy1";
       table_schemas.emplace_back(
           table_name,
@@ -77,7 +77,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
           " WHERE a = 190 and c = 250");
       break;
     }
-    case SingleTableTwoColW2: {
+    case QueryStringsWorkloadType::SingleTableTwoColW2: {
       table_name = "dummy2";
       table_schemas.emplace_back(
           table_name,
@@ -103,7 +103,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
           " WHERE a = 190 and c = 250");
       break;
     }
-    case SingleTableThreeColW: {
+    case QueryStringsWorkloadType::SingleTableThreeColW: {
       table_name = "dummy3";
       table_schemas.emplace_back(
           table_name,
@@ -133,7 +133,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
           " WHERE d = 81 and e = 12");
       break;
     }
-    case MultiTableNoop: {
+    case QueryStringsWorkloadType::MultiTableNoop: {
       std::string table_name_1 = "dummy1";
       table_schemas.emplace_back(
           table_name_1,
@@ -158,7 +158,7 @@ TestingIndexSelectionUtil::GetQueryStringsWorkload(
       // No workload
       break;
     }
-    case MultiTableMultiColW: {
+    case QueryStringsWorkloadType::MultiTableMultiColW: {
       std::string table_name_1 = "d_student";
       table_schemas.emplace_back(
           table_name_1,
@@ -268,16 +268,16 @@ void TestingIndexSelectionUtil::CreateTable(TableSchema schema) {
     s_stream << schema.cols[i].first;
     s_stream << " ";
     switch (schema.cols[i].second) {
-      case FLOAT:
+      case TupleValueType::FLOAT:
         s_stream << "FLOAT";
         break;
-      case INTEGER:
+      case TupleValueType::INTEGER:
         s_stream << "INT";
         break;
-      case STRING:
+      case TupleValueType::STRING:
         s_stream << "VARCHAR(30)";
         break;
-      case INTEGERPKEY:
+      case TupleValueType::INTEGERPKEY:
         s_stream << "INT PRIMARY KEY";
         break;
       default:
@@ -302,16 +302,16 @@ void TestingIndexSelectionUtil::InsertIntoTable(TableSchema schema,
     for (auto col = 0UL; col < schema.cols.size(); col++) {
       auto type = schema.cols[col].second;
       switch (type) {
-        case INTEGER:
+        case TupleValueType::INTEGER:
           oss << rand() % 1000;
           break;
-        case INTEGERPKEY:
+        case TupleValueType::INTEGERPKEY:
           oss << rand() % 1000;
           break;
-        case FLOAT:
+        case TupleValueType::FLOAT:
           oss << (float)(rand() % 100);
           break;
-        case STRING:
+        case TupleValueType::STRING:
           oss << "'str" << rand() % RAND_MAX << "'";
           break;
         default:

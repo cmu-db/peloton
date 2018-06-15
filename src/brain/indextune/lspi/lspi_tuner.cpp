@@ -16,19 +16,19 @@ namespace peloton {
 namespace brain {
 LSPIIndexTuner::LSPIIndexTuner(
     const std::string &db_name, const std::set<oid_t> &ignore_table_oids,
-    CandidateSelectionType cand_sel_type, size_t max_index_size, RunMode run_mode,
+    CandidateSelectionType cand_sel_type, size_t max_index_size,
+    double variance_init, double reg_coeff,
     peloton::catalog::Catalog *catalog,
     peloton::concurrency::TransactionManager *txn_manager)
     : db_name_{db_name},
       cand_sel_type_{cand_sel_type},
-      max_index_size_{max_index_size},
-      run_mode_{run_mode} {
+      max_index_size_{max_index_size}{
   index_config_ = std::unique_ptr<CompressedIndexConfigContainer>(
       new CompressedIndexConfigContainer(db_name, ignore_table_oids,
-                                         max_index_size, run_mode, catalog,
+                                         max_index_size, catalog,
                                          txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
-  rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len));
+  rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len, variance_init, reg_coeff));
   lstdq_model_ = std::unique_ptr<LSTDQModel>(new LSTDQModel(feat_len));
   prev_config_vec = vector_eig::Zero(feat_len);
   // Empty config
@@ -41,7 +41,9 @@ const CompressedIndexConfigContainer *LSPIIndexTuner::GetConfigContainer()
 }
 
 void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
-                          const std::vector<double> &query_costs) {
+                          const std::vector<double> &query_costs,
+                          std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& add_set,
+                          std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& drop_set) {
   size_t num_queries = queries.size();
   std::vector<boost::dynamic_bitset<>> add_candidate_sets;
   std::vector<boost::dynamic_bitset<>> drop_candidate_sets;
@@ -86,7 +88,7 @@ void LSPIIndexTuner::Tune(const std::vector<std::string> &queries,
   lstdq_model_->Update(prev_config_vec, new_config_vec, cost_avg);
 
   // Step 5: Adjust to the most optimal query config
-  index_config_->AdjustIndexes(optimal_config_set);
+  index_config_->AdjustIndexes(optimal_config_set, add_set, drop_set);
   // TODO(saatviks, weichenl): Is this a heavy op?
   PELOTON_ASSERT(optimal_config_set == *index_config_->GetCurrentIndexConfig());
 }
@@ -116,8 +118,10 @@ void LSPIIndexTuner::FindOptimalConfig(
       LOG_DEBUG("Prev: %s", index_config_->ToString(curr_config_set).c_str());
       LOG_DEBUG("Trying Add Cand: %s",
                 index_config_->ToString(hypothetical_config).c_str());
-      LOG_DEBUG("Eigen Vector: %s",
+      LOG_DEBUG("QueryConfig Vector: %s",
                 CompressedIndexConfigUtil::ToString(query_config_vec).c_str());
+      LOG_DEBUG("RLSE Wts: %s",
+                CompressedIndexConfigUtil::ToString(rlse_model_->GetWeights()).c_str());
       // Construct the query-state and state feature
       CompressedIndexConfigUtil::ConstructQueryConfigFeature(
           hypothetical_config, add_candidate_set, drop_candidate_set,

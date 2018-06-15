@@ -17,15 +17,14 @@ namespace brain {
 
 CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     const std::string &database_name, const std::set<oid_t> &ignore_table_oids,
-    size_t max_index_size, RunMode run_mode, catalog::Catalog *catalog,
+    size_t max_index_size, catalog::Catalog *catalog,
     concurrency::TransactionManager *txn_manager)
     : database_name_{database_name},
-      run_mode_{run_mode},
       catalog_{catalog},
       txn_manager_{txn_manager},
       next_table_offset_{0},
       cur_index_config_{nullptr} {
-  if (nullptr == catalog_) {
+  if (catalog_ == nullptr) {
     catalog_ = catalog::Catalog::GetInstance();
     catalog_->Bootstrap();
   }
@@ -37,7 +36,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
   auto txn = txn_manager_->BeginTransaction();
 
   const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
-  const auto db_oid = db_obj->GetDatabaseOid();
+  database_oid_ = db_obj->GetDatabaseOid();
   const auto table_objs = db_obj->GetTableObjects();
 
   // Uniq identifier per index config
@@ -86,14 +85,12 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     } else {
       for (const auto &index_obj : index_objs) {
         const auto &indexed_cols = index_obj.second->GetKeyAttrs();
-        const auto index_oid = index_obj.first;
 
         std::vector<oid_t> col_oids(indexed_cols);
         auto idx_obj = std::make_shared<brain::HypotheticalIndexObject>(
-            db_oid, table_oid, col_oids);
+            database_oid_, table_oid, col_oids);
 
         const auto global_index_offset = GetGlobalOffset(idx_obj);
-        offset_to_indexoid_[global_index_offset] = index_oid;
 
         SetBit(global_index_offset);
       }
@@ -124,39 +121,26 @@ void CompressedIndexConfigContainer::EnumerateConfigurations(
   }
 }
 
+// TODO: Add HypotheticalIndexObject set to Add/Drop index RPC call here
 void CompressedIndexConfigContainer::AdjustIndexes(
-    const boost::dynamic_bitset<> &new_bitset) {
+    const boost::dynamic_bitset<> &new_bitset,
+    std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& add_set,
+    std::set<std::shared_ptr<brain::HypotheticalIndexObject>>& drop_set) {
+
   boost::dynamic_bitset<> &ori_bitset = *cur_index_config_;
 
   const auto drop_bitset = ori_bitset - new_bitset;
 
-  auto txn = txn_manager_->BeginTransaction();
-  const auto database_oid =
-      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
   for (size_t current_bit = drop_bitset.find_first();
        current_bit != boost::dynamic_bitset<>::npos;
        current_bit = drop_bitset.find_next(current_bit)) {
     // 1. unset current bit
     UnsetBit(current_bit);
 
-    // Current bit is not an empty index (empty set)
-    if (run_mode_ == RunMode::ActualRun &&
-        table_offset_reverse_map_.find(current_bit) ==
-            table_offset_reverse_map_.end()) {
-      // 2. drop its corresponding index in catalog
-      oid_t index_oid = offset_to_indexoid_.at(current_bit);
-      // TODO (weichenl): This will call into the storage manager and delete the
-      // index in the real table storage, which we don't have on the brain side.
-      // We need a way to only delete the entry in the catalog table, and then
-      // issue a RPC call to let Peloton server really drop the index (using
-      // this DropIndex method).
-      catalog_->DropIndex(database_oid, index_oid, txn);
+    // 2. add to the drop_set
+    drop_set.insert(GetIndex(current_bit));
 
-      // 3. erase its entry in the maps
-      offset_to_indexoid_.erase(current_bit);
-    }
   }
-  txn_manager_->CommitTransaction(txn);
 
   const auto add_bitset = new_bitset - ori_bitset;
 
@@ -166,45 +150,8 @@ void CompressedIndexConfigContainer::AdjustIndexes(
     // 1. set current bit
     SetBit(current_bit);
 
-    // Current bit is not an empty index (empty set)
-    if (run_mode_ == RunMode::ActualRun &&
-        table_offset_reverse_map_.find(current_bit) ==
-            table_offset_reverse_map_.end()) {
-      txn = txn_manager_->BeginTransaction();
-
-      // 2. add its corresponding index in catalog
-      const auto new_index = GetIndex(current_bit);
-      const auto table_name = catalog_->GetDatabaseObject(database_name_, txn)
-                                  ->GetTableObject(new_index->table_oid)
-                                  ->GetTableName();
-
-      std::set<oid_t> temp_oids(new_index->column_oids.begin(),
-                                new_index->column_oids.end());
-
-      std::vector<oid_t> index_vector(temp_oids.begin(), temp_oids.end());
-
-      std::ostringstream stringStream;
-      stringStream << "automated_index_" << current_bit;
-      const std::string temp_index_name = stringStream.str();
-
-      catalog_->CreateIndex(database_name_, DEFAULT_SCHEMA_NAME, table_name,
-                            index_vector, temp_index_name, false,
-                            IndexType::BWTREE, txn);
-
-      txn_manager_->CommitTransaction(txn);
-
-      txn = txn_manager_->BeginTransaction();
-
-      // 3. insert its entry in the maps
-      const auto index_object = catalog_->GetDatabaseObject(database_name_, txn)
-                                    ->GetTableObject(new_index->table_oid)
-                                    ->GetIndexObject(temp_index_name);
-      const auto index_oid = index_object->GetIndexOid();
-
-      txn_manager_->CommitTransaction(txn);
-
-      offset_to_indexoid_[current_bit] = index_oid;
-    }
+    // 2. add to add_set
+    add_set.insert(GetIndex(current_bit));
   }
 }
 
@@ -234,7 +181,12 @@ void CompressedIndexConfigContainer::UnsetBit(size_t offset) {
 size_t CompressedIndexConfigContainer::GetGlobalOffset(
     const std::shared_ptr<brain::HypotheticalIndexObject> &index_obj) const {
   oid_t table_oid = index_obj->table_oid;
-  return table_indexid_map_.at(table_oid).at(index_obj->column_oids);
+  if(index_obj->column_oids.empty()) {
+    return table_offset_map_.at(table_oid);
+  } else {
+    return table_indexid_map_.at(table_oid).at(index_obj->column_oids);
+  }
+
 }
 
 bool CompressedIndexConfigContainer::IsSet(
@@ -249,51 +201,12 @@ bool CompressedIndexConfigContainer::IsSet(const size_t offset) const {
 
 std::shared_ptr<brain::HypotheticalIndexObject>
 CompressedIndexConfigContainer::GetIndex(size_t global_offset) const {
-  size_t table_offset;
-  if (table_offset_reverse_map_.find(global_offset) ==
-      table_offset_reverse_map_.end()) {
-    auto it = table_offset_reverse_map_.lower_bound(global_offset);
-    if (it == table_offset_reverse_map_.end()) {
-      table_offset = table_offset_reverse_map_.rbegin()->first;
-    } else {
-      --it;
-      table_offset = it->first;
-    }
-  } else {
-    table_offset = global_offset;
-  }
-
-  const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
+  const oid_t table_oid = GetCurrentTableOID(global_offset);
   std::vector<oid_t> col_oids =
       indexid_table_map_.at(table_oid).at(global_offset);
 
-  auto txn = txn_manager_->BeginTransaction();
-  const auto db_oid =
-      catalog_->GetDatabaseObject(database_name_, txn)->GetDatabaseOid();
-  txn_manager_->CommitTransaction(txn);
-
-  return std::make_shared<brain::HypotheticalIndexObject>(db_oid, table_oid,
+  return std::make_shared<brain::HypotheticalIndexObject>(database_oid_, table_oid,
                                                           col_oids);
-}
-
-std::vector<oid_t> CompressedIndexConfigContainer::GetIndexColumns(
-    size_t global_offset) const {
-  size_t table_offset;
-  if (table_offset_reverse_map_.find(global_offset) ==
-      table_offset_reverse_map_.end()) {
-    auto it = table_offset_reverse_map_.lower_bound(global_offset);
-    if (it == table_offset_reverse_map_.end()) {
-      table_offset = table_offset_reverse_map_.rbegin()->first;
-    } else {
-      --it;
-      table_offset = it->first;
-    }
-  } else {
-    table_offset = global_offset;
-  }
-
-  const oid_t table_oid = table_offset_reverse_map_.at(table_offset);
-  return indexid_table_map_.at(table_oid).at(global_offset);
 }
 
 size_t CompressedIndexConfigContainer::GetConfigurationCount() const {
@@ -327,6 +240,18 @@ size_t CompressedIndexConfigContainer::GetTableOffsetEnd(
     oid_t table_oid) const {
   size_t start_idx = GetTableOffsetStart(table_oid);
   return GetNextTableIdx(start_idx);
+}
+
+oid_t CompressedIndexConfigContainer::GetCurrentTableOID(size_t idx) const {
+  auto gteq_iter = table_offset_reverse_map_.lower_bound(idx);
+  if(gteq_iter->first == idx) {
+    // Idx = Offset corresponding to table OID
+    return gteq_iter->second;
+  } else {
+    // Idx = Offset corresponding to table OID one after the one we want
+    gteq_iter--;
+    return gteq_iter->second;
+  }
 }
 
 size_t CompressedIndexConfigContainer::GetNextTableIdx(size_t start_idx) const {
