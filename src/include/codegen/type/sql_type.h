@@ -56,6 +56,8 @@ class SqlType {
   virtual void GetTypeForMaterialization(CodeGen &codegen,
                                          llvm::Type *&val_type,
                                          llvm::Type *&len_type) const = 0;
+  virtual llvm::Function *GetInputFunction(CodeGen &codegen,
+                                           const Type &type) const = 0;
   virtual llvm::Function *GetOutputFunction(CodeGen &codegen,
                                             const Type &type) const = 0;
   virtual const TypeSystem &GetTypeSystem() const = 0;

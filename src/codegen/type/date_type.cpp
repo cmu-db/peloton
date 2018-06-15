@@ -14,6 +14,7 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
@@ -130,11 +131,12 @@ struct CompareDate : public TypeSystem::SimpleComparisonHandleNull {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
 
+// clang-format off
 // Explicit casts
 CastDateToTimestamp kDateToTimestamp;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP,
-     kDateToTimestamp}};
+    {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP, kDateToTimestamp}};
+// clang-format on
 
 // Comparison operations
 CompareDate kCompareDate;
@@ -185,6 +187,11 @@ void Date::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                      llvm::Type *&len_type) const {
   val_type = codegen.Int32Type();
   len_type = nullptr;
+}
+
+llvm::Function *Date::GetInputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  return DateFunctionsProxy::InputDate.GetFunction(codegen);
 }
 
 llvm::Function *Date::GetOutputFunction(

@@ -39,6 +39,7 @@ class ChildPropertyDeriver : public OperatorVisitor {
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
   void Visit(const PhysicalIndexScan *) override;
+  void Visit(const ExternalFileScan *) override;
   void Visit(const QueryDerivedScan *op) override;
   void Visit(const PhysicalOrderBy *) override;
   void Visit(const PhysicalLimit *) override;
@@ -58,6 +59,7 @@ class ChildPropertyDeriver : public OperatorVisitor {
   void Visit(const PhysicalSortGroupBy *) override;
   void Visit(const PhysicalDistinct *) override;
   void Visit(const PhysicalAggregate *) override;
+  void Visit(const PhysicalExportExternalFile *) override;
 
  private:
   void DeriveForJoin();

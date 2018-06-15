@@ -105,6 +105,33 @@ TEST_F(HashTableTest, CanInsertUniqueKeys) {
   }
 }
 
+TEST_F(HashTableTest, BuildEmptyHashTable) {
+  codegen::util::HashTable table{GetMemPool(), sizeof(Key), sizeof(Value)};
+
+  std::vector<Key> keys;
+
+  // Insert keys
+  for (uint32_t i = 0; i < 10; i++) {
+    Key k{1, i};
+    // do NOT insert into hash table
+
+    keys.emplace_back(k);
+  }
+
+  EXPECT_EQ(0, table.NumElements());
+
+  // Build lazy
+  table.BuildLazy();
+
+  // Lookups should succeed
+  for (const auto &key : keys) {
+    std::function<void(const Value &v)> f =
+        [](UNUSED_ATTRIBUTE const Value &v) {};
+    auto ret = table.TypedProbe(key.Hash(), key, f);
+    EXPECT_EQ(false, ret);
+  }
+}
+
 TEST_F(HashTableTest, CanInsertDuplicateKeys) {
   codegen::util::HashTable table{GetMemPool(), sizeof(Key), sizeof(Value)};
 

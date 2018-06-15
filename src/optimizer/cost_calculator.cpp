@@ -59,6 +59,11 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
                  memo_->GetGroupByID(gexpr_->GetGroupID())->GetNumRows() *
                      DEFAULT_TUPLE_COST;
 }
+
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const ExternalFileScan *) {
+  output_cost_ = 0.0;
+}
+
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {
   output_cost_ = 0.f;
 }

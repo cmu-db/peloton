@@ -6,23 +6,25 @@
 //
 // Identification: src/executor/copy_executor.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
+#include "executor/copy_executor.h"
+
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "common/logger.h"
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/copy_executor.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile_factory.h"
-#include "planner/copy_plan.h"
+#include "planner/export_external_file_plan.h"
 #include "storage/table_factory.h"
 #include "network/postgres_protocol_handler.h"
 #include "common/exception.h"
 #include "common/macros.h"
-#include <sys/stat.h>
-#include <sys/mman.h>
 
 namespace peloton {
 namespace executor {
@@ -35,7 +37,7 @@ CopyExecutor::CopyExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
-CopyExecutor::~CopyExecutor() {}
+CopyExecutor::~CopyExecutor() = default;
 
 /**
  * @brief Basic initialization.
@@ -45,25 +47,18 @@ bool CopyExecutor::DInit() {
   PELOTON_ASSERT(children_.size() == 1);
 
   // Grab info from plan node and check it
-  const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
+  const auto &node = GetPlanNode<planner::ExportExternalFilePlan>();
 
-  bool success = InitFileHandle(node.file_path.c_str(), "w");
+  bool success = InitFileHandle(node.GetFileName().c_str(), "w");
 
   if (success == false) {
-    throw ExecutorException("Failed to create file " + node.file_path +
+    throw ExecutorException("Failed to create file " + node.GetFileName() +
                             ". Try absolute path and make sure you have the "
                             "permission to access this file.");
-    return false;
   }
-  LOG_DEBUG("Created target copy output file: %s", node.file_path.c_str());
-
-  // Whether we're copying the parameters which require deserialization
-  if (node.deserialize_parameters) {
-    InitParamColIds();
-  }
+  LOG_DEBUG("Created target copy output file: %s", node.GetFileName().c_str());
   return true;
 }
-
 
 bool CopyExecutor::InitFileHandle(const char *name, const char *mode) {
   auto file = fopen(name, mode);
@@ -120,33 +115,6 @@ void CopyExecutor::FFlushFsync() {
   if (ret != 0) {
     LOG_ERROR("Error occurred in fsync(%s)", strerror(errno));
   }
-}
-
-void CopyExecutor::InitParamColIds() {
-  // If we're going to deserialize prepared statement, get the column ids for
-  // the varbinary columns first
-  // auto catalog = catalog::Catalog::GetInstance();
-  // try {
-  //   auto query_metric_table =
-  //       catalog->GetTableWithName(CATALOG_DATABASE_NAME, QUERY_METRIC_NAME);
-  //   auto schema = query_metric_table->GetSchema();
-  //   auto &cols = schema->GetColumns();
-  //   for (unsigned int i = 0; i < cols.size(); i++) {
-  //     auto col_name = cols[i].column_name.c_str();
-  //     if (std::strcmp(col_name, QUERY_PARAM_TYPE_COL_NAME) == 0) {
-  //       param_type_col_id = i;
-  //     } else if (std::strcmp(col_name, QUERY_PARAM_FORMAT_COL_NAME) == 0) {
-  //       param_format_col_id = i;
-  //     } else if (std::strcmp(col_name, QUERY_PARAM_VAL_COL_NAME) == 0) {
-  //       param_val_col_id = i;
-  //     } else if (std::strcmp(col_name, QUERY_NUM_PARAM_COL_NAME) == 0) {
-  //       num_param_col_id = i;
-  //     }
-  //   }
-  // }
-  // catch (Exception &e) {
-  //   e.PrintStackTrace();
-  // }
 }
 
 void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
