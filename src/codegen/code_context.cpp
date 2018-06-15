@@ -378,14 +378,14 @@ void CodeContext::DumpContents() const {
 
   // First, write out the LLVM IR file
   {
-    std::string ll_fname = "dump_" + std::to_string(id_) + "_plan.ll";
+    std::string ll_fname = "dump_plan_" + std::to_string(id_) + ".ll";
     llvm::raw_fd_ostream ll_ostream{ll_fname, error_code, llvm::sys::fs::F_RW};
     module_->print(ll_ostream, nullptr, false);
   }
 
   // Now, write out the raw ASM
   {
-    std::string asm_fname = "dump_" + std::to_string(id_) + "_plan.s";
+    std::string asm_fname = "dump_plan_" + std::to_string(id_) + ".s";
     llvm::raw_fd_ostream asm_ostream{asm_fname, error_code,
                                      llvm::sys::fs::F_RW};
     llvm::legacy::PassManager pass_manager;

@@ -25,8 +25,8 @@ class MathUtil {
    * Performs a division of two integer values and rounds up the result.
    * Calculation is made using a trick with integer division.
    */
-  static ALWAYS_INLINE inline size_t DivRoundUp(size_t numerator,
-                                                size_t denominator) {
+  static constexpr ALWAYS_INLINE inline size_t DivRoundUp(size_t numerator,
+                                                          size_t denominator) {
     // division must be integer division
     return (numerator + denominator - 1) / denominator;
   }

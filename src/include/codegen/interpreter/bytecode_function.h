@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "common/macros.h"
+#include "util/math_util.h"
 
 namespace llvm {
 class Instruction;
@@ -208,8 +209,8 @@ class BytecodeFunction {
   static ALWAYS_INLINE inline size_t GetInteralCallInstructionSlotSize(
       const InternalCallInstruction *instruction) {
     const size_t number_slots =
-        ((2 * (4 + instruction->number_args)) + sizeof(instr_slot_t) - 1) /
-        sizeof(instr_slot_t);
+        MathUtil::DivRoundUp(sizeof(uint16_t) * (4 + instruction->number_args),
+                             sizeof(instr_slot_t));
     PELOTON_ASSERT(number_slots > 0);
     return number_slots;
   }
@@ -223,8 +224,8 @@ class BytecodeFunction {
    */
   static constexpr ALWAYS_INLINE inline size_t
   GetExplicitCallInstructionSlotSize(size_t number_args) {
-    return ((2 * (1 + number_args)) + sizeof(instr_slot_t) - 1) /
-           sizeof(instr_slot_t);
+    return MathUtil::DivRoundUp(sizeof(uint16_t) * (1 + number_args),
+                                sizeof(instr_slot_t));
   }
 
   /**

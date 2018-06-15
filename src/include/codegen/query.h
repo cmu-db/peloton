@@ -13,11 +13,9 @@
 #pragma once
 
 #include "codegen/code_context.h"
+#include "codegen/parameter_cache.h"
 #include "codegen/query_parameters.h"
 #include "codegen/query_state.h"
-#include "codegen/parameter_cache.h"
-#include "executor/executor_context.h"
-#include "storage/storage_manager.h"
 
 namespace peloton {
 

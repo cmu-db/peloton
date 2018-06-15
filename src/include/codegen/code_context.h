@@ -47,7 +47,6 @@ class BytecodeBuilder;
 class CodeContext {
   friend class CodeGen;
   friend class FunctionBuilder;
-  friend class PelotonMM;
   friend class interpreter::BytecodeBuilder;
 
  public:
