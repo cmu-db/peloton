@@ -148,11 +148,12 @@ struct Now : public TypeSystem::NoArgOperator {
 std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
 
+// clang-format off
 // Explicit casts
 CastTimestampToDate kTimestampToDate;
 std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
-    {peloton::type::TypeId::TIMESTAMP, peloton::type::TypeId::DATE,
-     kTimestampToDate}};
+    {peloton::type::TypeId::TIMESTAMP, peloton::type::TypeId::DATE, kTimestampToDate}};
+// clang-format on
 
 // Comparisons
 CompareTimestamp kCompareTimestamp;
@@ -207,6 +208,12 @@ void Timestamp::GetTypeForMaterialization(CodeGen &codegen,
                                           llvm::Type *&len_type) const {
   val_type = codegen.Int64Type();
   len_type = nullptr;
+}
+
+llvm::Function *Timestamp::GetInputFunction(
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE const Type &type) const {
+  throw NotImplementedException{"Timestamp input not implemented yet"};
 }
 
 llvm::Function *Timestamp::GetOutputFunction(

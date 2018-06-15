@@ -33,6 +33,11 @@ PROXY(AbstractExpression) {
   DECLARE_TYPE;
 };
 
+PROXY(Type) {
+  DECLARE_MEMBER(0, char[sizeof(codegen::type::Type)], opaque);
+  DECLARE_TYPE;
+};
+
 PROXY(RuntimeFunctions) {
   DECLARE_METHOD(HashMurmur3);
   DECLARE_METHOD(HashCrc64);
@@ -47,6 +52,7 @@ PROXY(RuntimeFunctions) {
 
 TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);
 TYPE_BUILDER(AbstractExpression, expression::AbstractExpression);
+TYPE_BUILDER(Type, codegen::type::Type);
 
 }  // namespace codegen
 }  // namespace peloton

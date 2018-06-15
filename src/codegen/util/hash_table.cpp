@@ -191,6 +191,9 @@ char *HashTable::Insert(uint64_t hash) {
 }
 
 void HashTable::BuildLazy() {
+  // Early exit if no elements have been added (hash table is still valid)
+  if (num_elems_ == 0) return;
+
   // Grab entry head
   Entry *head = directory_[0];
 

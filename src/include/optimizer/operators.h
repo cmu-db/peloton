@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -7,7 +6,7 @@
 //
 // Identification: src/include/optimizer/operators.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -66,6 +65,28 @@ class LogicalGet : public OperatorNode<LogicalGet> {
   std::shared_ptr<catalog::TableCatalogObject> table;
   std::string table_alias;
   bool is_for_update;
+};
+
+//===--------------------------------------------------------------------===//
+// External file get
+//===--------------------------------------------------------------------===//
+class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
+ public:
+  static Operator make(oid_t get_id, ExternalFileFormat format,
+                       std::string file_name, char delimiter, char quote,
+                       char escape);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  // identifier for all get operators
+  oid_t get_id;
+  ExternalFileFormat format;
+  std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
@@ -313,6 +334,26 @@ class LogicalUpdate : public OperatorNode<LogicalUpdate> {
 };
 
 //===--------------------------------------------------------------------===//
+// Export to external file
+//===--------------------------------------------------------------------===//
+class LogicalExportExternalFile
+    : public OperatorNode<LogicalExportExternalFile> {
+ public:
+  static Operator make(ExternalFileFormat format, std::string file_name,
+                       char delimiter, char quote, char escape);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  ExternalFileFormat format;
+  std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
+};
+
+//===--------------------------------------------------------------------===//
 // DummyScan
 //===--------------------------------------------------------------------===//
 class DummyScan : public OperatorNode<DummyScan> {
@@ -374,6 +415,28 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
   std::vector<oid_t> key_column_id_list;
   std::vector<ExpressionType> expr_type_list;
   std::vector<type::Value> value_list;
+};
+
+//===--------------------------------------------------------------------===//
+// Physical external file scan
+//===--------------------------------------------------------------------===//
+class ExternalFileScan : public OperatorNode<ExternalFileScan> {
+ public:
+  static Operator make(oid_t get_id, ExternalFileFormat format,
+                       std::string file_name, char delimiter, char quote,
+                       char escape);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  // identifier for all get operators
+  oid_t get_id;
+  ExternalFileFormat format;
+  std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
@@ -569,6 +632,26 @@ class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
 
   std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::unique_ptr<parser::UpdateClause>> *updates;
+};
+
+//===--------------------------------------------------------------------===//
+// Physical ExportExternalFile
+//===--------------------------------------------------------------------===//
+class PhysicalExportExternalFile
+    : public OperatorNode<PhysicalExportExternalFile> {
+ public:
+  static Operator make(ExternalFileFormat format, std::string file_name,
+                       char delimiter, char quote, char escape);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  ExternalFileFormat format;
+  std::string file_name;
+  char delimiter;
+  char quote;
+  char escape;
 };
 
 //===--------------------------------------------------------------------===//
