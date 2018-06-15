@@ -47,6 +47,9 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
+// Initialize the default database_oid
+oid_t TestingExecutorUtil::database_oid = INVALID_OID;
+
 storage::Database *TestingExecutorUtil::InitializeDatabase(
     const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
@@ -56,6 +59,7 @@ storage::Database *TestingExecutorUtil::InitializeDatabase(
   EXPECT_EQ(ResultType::SUCCESS, result);
   auto database = catalog->GetDatabaseWithName(db_name, txn);
   txn_manager.CommitTransaction(txn);
+  database_oid = database->GetOid();
   return (database);
 }
 
@@ -66,6 +70,7 @@ void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
   auto result = catalog->DropDatabaseWithName(db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
+  database_oid = INVALID_OID;
 }
 
 /** @brief Helper function for defining schema */
@@ -349,7 +354,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
   bool own_schema = true;
   bool adapt_table = false;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, table_oid, table_schema, table_name,
+      database_oid, table_oid, table_schema, table_name,
       tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
@@ -422,7 +427,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
 }
 
 storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
-    int tuples_per_tilegroup_count, std::string &db_name) {
+    int tuples_per_tilegroup_count, const std::string &db_name) {
   auto table_schema = std::unique_ptr<catalog::Schema>(
       new catalog::Schema({GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2),
                            GetColumnInfo(3)}));

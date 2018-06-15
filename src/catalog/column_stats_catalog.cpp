@@ -13,6 +13,7 @@
 #include "catalog/column_stats_catalog.h"
 
 #include "catalog/catalog.h"
+#include "catalog/schema.h"
 #include "executor/logical_tile.h"
 #include "optimizer/stats/column_stats_collector.h"
 #include "storage/data_table.h"
@@ -21,52 +22,78 @@
 namespace peloton {
 namespace catalog {
 
-ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static ColumnStatsCatalog column_stats_catalog{txn};
-  return &column_stats_catalog;
-}
-
-ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." COLUMN_STATS_CATALOG_NAME
-                      " ("
-                      "database_id    INT NOT NULL, "
-                      "table_id       INT NOT NULL, "
-                      "column_id      INT NOT NULL, "
-                      "num_rows        INT NOT NULL, "
-                      "cardinality    DECIMAL NOT NULL, "
-                      "frac_null      DECIMAL NOT NULL, "
-                      "most_common_vals  VARCHAR, "
-                      "most_common_freqs VARCHAR, "
-                      "histogram_bounds  VARCHAR, "
-                      "column_name       VARCHAR, "
-                      "has_index         BOOLEAN);",
-                      txn) {
-  // unique key: (database_id, table_id, column_id)
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
-      {0, 1, 2}, COLUMN_STATS_CATALOG_NAME "_skey0", true, IndexType::BWTREE,
-      txn);
-  // non-unique key: (database_id, table_id)
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
-      {0, 1}, COLUMN_STATS_CATALOG_NAME "_skey1", false, IndexType::BWTREE,
-      txn);
+ColumnStatsCatalog::ColumnStatsCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
+    : AbstractCatalog(COLUMN_STATS_CATALOG_OID, COLUMN_STATS_CATALOG_NAME,
+                      InitializeSchema().release(), pg_catalog) {
+  // Add indexes for pg_column_stats
+  AddIndex({ColumnId::TABLE_ID, ColumnId::COLUMN_ID},
+           COLUMN_STATS_CATALOG_SKEY0_OID, COLUMN_STATS_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({ColumnId::TABLE_ID}, COLUMN_STATS_CATALOG_SKEY1_OID,
+           COLUMN_STATS_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 }
 
 ColumnStatsCatalog::~ColumnStatsCatalog() {}
 
+std::unique_ptr<catalog::Schema> ColumnStatsCatalog::InitializeSchema() {
+  const std::string not_null_constraint_name = "notnull";
+  const auto not_null_constraint =
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name);
+
+  auto table_id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "table_id", true);
+  table_id_column.AddConstraint(not_null_constraint);
+  auto column_id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "column_id", true);
+  column_id_column.AddConstraint(not_null_constraint);
+  auto num_rows_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "num_rows", true);
+  num_rows_column.AddConstraint(not_null_constraint);
+  auto cardinality_column = catalog::Column(
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+      "cardinality", true);
+  cardinality_column.AddConstraint(not_null_constraint);
+  auto frac_null_column = catalog::Column(
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+      "frac_null", true);
+  frac_null_column.AddConstraint(not_null_constraint);
+  auto most_common_vals_column = catalog::Column(
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "most_common_vals", false);
+  auto most_common_freqs_column = catalog::Column(
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "most_common_freqs", false);
+  auto histogram_bounds_column = catalog::Column(
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "histogram_bounds", false);
+  auto column_name_column = catalog::Column(
+      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
+      "column_name", false);
+  auto has_index_column = catalog::Column(
+      type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
+      "has_index", true);
+
+  std::unique_ptr<catalog::Schema> column_stats_schema(new catalog::Schema(
+      {table_id_column, column_id_column, num_rows_column, cardinality_column,
+       frac_null_column, most_common_vals_column, most_common_freqs_column,
+       histogram_bounds_column, column_name_column, has_index_column}));
+  return column_stats_schema;
+}
+
 bool ColumnStatsCatalog::InsertColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
-    double cardinality, double frac_null, std::string most_common_vals,
+    oid_t table_id, oid_t column_id, int num_rows, double cardinality,
+    double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, bool has_index, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
   auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
   auto val_column_id = type::ValueFactory::GetIntegerValue(column_id);
   auto val_num_row = type::ValueFactory::GetIntegerValue(num_rows);
@@ -96,7 +123,6 @@ bool ColumnStatsCatalog::InsertColumnStats(
       type::ValueFactory::GetVarcharValue(column_name);
   type::Value val_has_index = type::ValueFactory::GetBooleanValue(has_index);
 
-  tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
   tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
   tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
   tuple->SetValue(ColumnId::NUM_ROWS, val_num_row, nullptr);
@@ -113,12 +139,10 @@ bool ColumnStatsCatalog::InsertColumnStats(
 }
 
 bool ColumnStatsCatalog::DeleteColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+    oid_t table_id, oid_t column_id, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
@@ -126,8 +150,7 @@ bool ColumnStatsCatalog::DeleteColumnStats(
 }
 
 std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+    oid_t table_id, oid_t column_id, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
       {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
@@ -135,7 +158,6 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
@@ -175,7 +197,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(
-    oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
+    oid_t table_id, concurrency::TransactionContext *txn,
     std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
         &column_stats_map) {
   std::vector<oid_t> column_ids(
@@ -186,7 +208,6 @@ size_t ColumnStatsCatalog::GetTableStats(
   oid_t index_offset = IndexId::SECONDARY_KEY_1;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   auto result_tiles =

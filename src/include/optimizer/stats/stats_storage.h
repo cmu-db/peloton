@@ -41,10 +41,6 @@ class StatsStorage {
 
   StatsStorage();
 
-  /* Functions for managing stats table and schema */
-
-  void CreateStatsTableInCatalog();
-
   /* Functions for adding, updating and quering stats */
 
   void InsertOrUpdateTableStats(storage::DataTable *table,
@@ -71,8 +67,8 @@ class StatsStorage {
 
   /* Functions for triggerring stats collection */
 
-  ResultType AnalyzeStatsForAllTables(
-      concurrency::TransactionContext *txn = nullptr);
+  ResultType AnalyzeStatsForAllTablesWithDatabaseOid(
+      oid_t database_oid, concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalyzeStatsForTable(
       storage::DataTable *table,

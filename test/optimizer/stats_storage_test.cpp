@@ -51,15 +51,15 @@ std::unique_ptr<storage::DataTable> InitializeTestTable() {
 
 storage::DataTable *CreateTestDBAndTable() {
   const std::string test_db_name = "test_db";
-  auto database = TestingExecutorUtil::InitializeDatabase(test_db_name);
+  TestingExecutorUtil::InitializeDatabase(test_db_name);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   storage::DataTable *data_table =
-      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false);
+      TestingExecutorUtil::CreateTableUpdateCatalog(tuple_per_tilegroup,
+                                                    test_db_name);
   TestingExecutorUtil::PopulateTable(data_table, tuple_count, false, false,
                                      true, txn);
-  database->AddTable(data_table);
   txn_manager.CommitTransaction(txn);
   return data_table;
 }
@@ -93,6 +93,8 @@ void VerifyAndPrintColumnStats(storage::DataTable *data_table,
 }
 
 TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
+  const std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
   auto data_table = InitializeTestTable();
 
   // Collect stats.
@@ -108,6 +110,7 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
                                           table_stats_collector.get());
 
   VerifyAndPrintColumnStats(data_table.get(), 4);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
@@ -115,7 +118,10 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
 
-  oid_t database_id = 1;
+  const std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
+
+  oid_t database_id = TestingExecutorUtil::GetDatabaseOid();
   oid_t table_id = 2;
   oid_t column_id = 3;
   int num_rows = 10;
@@ -146,6 +152,7 @@ TEST_F(StatsStorageTests, InsertAndGetColumnStatsTest) {
   auto column_stats_ptr2 =
       stats_storage->GetColumnStatsByID(database_id, table_id, column_id + 1);
   EXPECT_EQ(column_stats_ptr2, nullptr);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
@@ -153,7 +160,10 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
 
-  oid_t database_id = 1;
+  const std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
+
+  oid_t database_id = TestingExecutorUtil::GetDatabaseOid();
   oid_t table_id = 2;
   oid_t column_id = 3;
 
@@ -193,9 +203,13 @@ TEST_F(StatsStorageTests, UpdateColumnStatsTest) {
   EXPECT_EQ(column_stats_ptr->frac_null, frac_null_1);
 
   EXPECT_EQ(column_stats_ptr->column_name, column_name_1);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 TEST_F(StatsStorageTests, AnalyzeStatsForTableTest) {
+  const std::string db_name = "test_db";
+  TestingExecutorUtil::InitializeDatabase(db_name);
+
   auto data_table = InitializeTestTable();
 
   // Analyze table.
@@ -213,43 +227,53 @@ TEST_F(StatsStorageTests, AnalyzeStatsForTableTest) {
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table.get(), 4);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 // TODO: Add more tables.
 TEST_F(StatsStorageTests, AnalyzeStatsForAllTablesTest) {
+  const std::string db_name = "test_db";
   auto data_table = CreateTestDBAndTable();
+  auto db_oid = data_table->GetDatabaseOid();
 
   StatsStorage *stats_storage = StatsStorage::GetInstance();
 
   // Must pass in the transaction.
-  ResultType result = stats_storage->AnalyzeStatsForAllTables();
+  ResultType result =
+      stats_storage->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid);
   EXPECT_EQ(result, ResultType::FAILURE);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  result = stats_storage->AnalyzeStatsForAllTables(txn);
+  result = stats_storage->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid, txn);
   EXPECT_EQ(result, ResultType::SUCCESS);
   txn_manager.CommitTransaction(txn);
 
   // Check the correctness of the stats.
   VerifyAndPrintColumnStats(data_table, 4);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 TEST_F(StatsStorageTests, GetTableStatsTest) {
-  auto data_table = InitializeTestTable();
+  const std::string db_name = "test_db";
+  auto data_table = CreateTestDBAndTable();
+  auto db_oid = data_table->GetDatabaseOid();
 
   StatsStorage *stats_storage = StatsStorage::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  stats_storage->AnalyzeStatsForAllTables(txn);
+  ResultType result =
+      stats_storage->AnalyzeStatsForAllTablesWithDatabaseOid(db_oid, txn);
+  EXPECT_EQ(ResultType::SUCCESS, result);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
-      data_table->GetDatabaseOid(), data_table->GetOid(), txn);
+  std::shared_ptr<TableStats> table_stats =
+      stats_storage->GetTableStats(db_oid, data_table->GetOid(), txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(table_stats->num_rows, tuple_count);
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 }  // namespace test

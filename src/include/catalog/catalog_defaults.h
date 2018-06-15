@@ -26,17 +26,18 @@ namespace catalog {
 #define CATALOG_DATABASE_NAME "peloton"
 
 // Catalog tables
-// 5 basic catalog tables
+// basic catalog tables
 #define DATABASE_CATALOG_NAME "pg_database"
 #define SCHEMA_CATALOG_NAME "pg_namespace"
 #define TABLE_CATALOG_NAME "pg_table"
 #define INDEX_CATALOG_NAME "pg_index"
 #define COLUMN_CATALOG_NAME "pg_attribute"
 #define LAYOUT_CATALOG_NAME "pg_layout"
+#define COLUMN_STATS_CATALOG_NAME "pg_column_stats"
 
 // Local oids from START_OID = 0 to START_OID + OID_OFFSET are reserved
 #define OID_OFFSET 100
-#define CATALOG_TABLES_COUNT 9
+#define CATALOG_TABLES_COUNT 10
 
 // Oid mask for each type
 #define DATABASE_OID_MASK (static_cast<oid_t>(catalog::CatalogType::DATABASE))
@@ -64,6 +65,7 @@ namespace catalog {
 #define INDEX_CATALOG_OID (3 | TABLE_OID_MASK)
 #define COLUMN_CATALOG_OID (4 | TABLE_OID_MASK)
 #define LAYOUT_CATALOG_OID (5 | TABLE_OID_MASK)
+#define COLUMN_STATS_CATALOG_OID (6 | TABLE_OID_MASK)
 
 // Reserved pg_column index oid
 #define COLUMN_CATALOG_PKEY_OID (0 | INDEX_OID_MASK)
@@ -91,6 +93,10 @@ namespace catalog {
 // Reserve pg_layout index oid
 #define LAYOUT_CATALOG_PKEY_OID (13 | INDEX_OID_MASK)
 #define LAYOUT_CATALOG_SKEY0_OID (14 | INDEX_OID_MASK)
+
+// Reserved pg_column_stats index oid
+#define COLUMN_STATS_CATALOG_SKEY0_OID (15 | INDEX_OID_MASK)
+#define COLUMN_STATS_CATALOG_SKEY1_OID (16 | INDEX_OID_MASK)
 
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24

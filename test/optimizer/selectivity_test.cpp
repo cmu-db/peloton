@@ -119,6 +119,10 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
 TEST_F(SelectivityTests, LikeSelectivityTest) {
   const int tuple_count = 1000;
   const int tuple_per_tilegroup = 100;
+  const std::string db_name = "test_db";
+
+  // Initialize the DB inorder to initialize pg_column_stats
+  TestingExecutorUtil::InitializeDatabase(db_name);
 
   // Create a table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -160,6 +164,9 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
 
   EXPECT_EQ(like_than_sel_1, 1);
   EXPECT_EQ(like_than_sel_2, 0);
+
+  // Drop the database created
+  TestingExecutorUtil::DeleteDatabase(db_name);
 }
 
 TEST_F(SelectivityTests, EqualSelectivityTest) {

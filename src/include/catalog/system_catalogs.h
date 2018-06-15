@@ -29,12 +29,13 @@ class Database;
 }  // namespace storage
 
 namespace catalog {
+class ColumnCatalog;
+class ColumnStatsCatalog;
 class DatabaseCatalog;
+class IndexCatalog;
+class LayoutCatalog;
 class SchemaCatalog;
 class TableCatalog;
-class IndexCatalog;
-class ColumnCatalog;
-class LayoutCatalog;
 
 class SystemCatalogs {
  public:
@@ -57,6 +58,13 @@ class SystemCatalogs {
       throw CatalogException("Column catalog has not been initialized");
     }
     return pg_attribute_;
+  }
+
+  ColumnStatsCatalog *GetColumnStatsCatalog() {
+    if (!pg_column_stats_) {
+      throw CatalogException("ColumnStats catalog has not been initialized");
+    }
+    return pg_column_stats_;
   }
 
   SchemaCatalog *GetSchemaCatalog() {
@@ -117,6 +125,7 @@ class SystemCatalogs {
 
  private:
   ColumnCatalog *pg_attribute_;
+  ColumnStatsCatalog *pg_column_stats_;
   SchemaCatalog *pg_namespace_;
   TableCatalog *pg_table_;
   IndexCatalog *pg_index_;

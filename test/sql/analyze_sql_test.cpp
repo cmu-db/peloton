@@ -74,7 +74,7 @@ TEST_F(AnalyzeSQLTests, AnalyzeSingleTableTest) {
   txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   storage::DataTable *db_column_stats_collector_table =
-      catalog->GetTableWithName(CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME,
+      catalog->GetTableWithName(DEFAULT_DB_NAME, CATALOG_SCHEMA_NAME,
                                 COLUMN_STATS_CATALOG_NAME, txn);
   EXPECT_NE(db_column_stats_collector_table, nullptr);
   EXPECT_EQ(db_column_stats_collector_table->GetTupleCount(), 4);

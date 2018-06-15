@@ -60,8 +60,15 @@ class TestingExecutorUtil {
    * @brief Intializes the catalog with a new database with the give name.
    */
   static storage::Database *InitializeDatabase(const std::string &db_name);
-
+  /**
+   * @brief Drops the catalog of the database with the give name.
+   */
   static void DeleteDatabase(const std::string &db_name);
+
+  /**
+   * @brief Returns the current database_oid.
+   */
+  static oid_t GetDatabaseOid() { return database_oid; }
 
   /**
    * @brief Creates a basic tile group with allocated but not populated
@@ -81,7 +88,7 @@ class TestingExecutorUtil {
    * @return A pointer to the DataTable created.
    */
   static storage::DataTable *CreateTableUpdateCatalog(
-      int tuples_per_tilegroup_count, std::string &db_name);
+      int tuples_per_tilegroup_count, const std::string &db_name);
 
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
@@ -122,6 +129,9 @@ class TestingExecutorUtil {
   /** Print the tuples from a vector of logical tiles */
   static std::string GetTileVectorInfo(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
+
+ private:
+  static oid_t database_oid;
 };
 
 }  // namespace test
