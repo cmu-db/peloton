@@ -115,7 +115,6 @@ DEF_TRANSITION_GRAPH
         // during handshake. From peloton's perspective we are still waiting
         // for reads.
         ON(NEED_WRITE) SET_STATE_TO(READ) AND_WAIT_ON_WRITE
-        ON(END) SET_STATE_TO(SHUTDOWN) AND_INVOKE(TryCloseConnection)
     END_STATE_DEF
 
     DEFINE_STATE(SSL_INIT)
