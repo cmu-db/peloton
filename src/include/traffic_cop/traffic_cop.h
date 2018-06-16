@@ -181,12 +181,6 @@ class TrafficCop {
 
   static TcopTxnState &GetDefaultTxnState();
 
-  TcopTxnState &GetCurrentTxnState();
-
-  ResultType BeginQueryHelper(size_t thread_id);
-
-  ResultType AbortQueryHelper();
-
   // Get all data tables from a TableRef.
   // For multi-way join
   // still a HACK

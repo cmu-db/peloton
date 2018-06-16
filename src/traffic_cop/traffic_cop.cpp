@@ -78,56 +78,6 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
-ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
-  if (tcop_txn_state_.empty()) {
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction(thread_id);
-    // this shouldn't happen
-    if (txn == nullptr) {
-      LOG_DEBUG("Begin txn failed");
-      // TODO Throw an exception
-    }
-    // initialize the current result as success
-    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-    return ResultType::SUCCESS;
-  } else {
-    // We do not support nested query
-    // TODO Throw an exception
-  }
-  return ResultType::SUCCESS;
-}
-
-ResultType TrafficCop::CommitQueryHelper() {
-  // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) {
-    // TODO throw an execption
-  }
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
-  auto txn = curr_state.first;
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  if (curr_state.second != ResultType::ABORTED) {
-    // txn committed
-    return txn_manager.CommitTransaction(txn);
-  } else {
-    // otherwise, rollback
-    return txn_manager.AbortTransaction(txn);
-  }
-}
-
-ResultType TrafficCop::AbortQueryHelper() {
-  // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) {
-    // TODO Throw a exception
-  }
-  auto &curr_state = tcop_txn_state_.top();
-  tcop_txn_state_.pop();
-  auto txn = curr_state.first;
-  // explicitly abort the txn only if it has not aborted already
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  return txn_manager.AbortTransaction(txn);
-}
-
 ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
