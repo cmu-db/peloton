@@ -247,7 +247,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
-      // TODO call Get Result here
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     }
