@@ -16,7 +16,6 @@
 #include <memory>
 
 #include "catalog/catalog.h"
-#include "catalog/foreign_key.h"
 #include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
@@ -53,8 +52,6 @@ ConstraintCatalogObject::ConstraintCatalogObject(executor::LogicalTile *tile,
   switch(constraint_type) {
   case ConstraintType::PRIMARY:
   case ConstraintType::UNIQUE:
-  case ConstraintType::NOTNULL:
-  case ConstraintType::NOT_NULL:
   	// nothing to do more
   	break;
 
@@ -75,17 +72,16 @@ ConstraintCatalogObject::ConstraintCatalogObject(executor::LogicalTile *tile,
   	break;
   }
 
-  case ConstraintType::DEFAULT:
-  	default_value = tile->GetValue(tupleId,
-				ConstraintCatalog::ColumnId::DEFAULT_VALUE).ToString();
+  case ConstraintType::CHECK: {
+		auto dv_val =
+				tile->GetValue(tupleId, ConstraintCatalog::ColumnId::CHECK_EXP_BIN);
+		CopySerializeInput input_buffer(dv_val.GetData(), dv_val.GetLength());
+		ExpressionType exp_type = (ExpressionType)input_buffer.ReadInt();
+		type::TypeId value_type = (type::TypeId)input_buffer.ReadInt();
+		auto exp_value = type::Value::DeserializeFrom(input_buffer, value_type);
+		check_exp =	std::make_pair(exp_type, exp_value);
   	break;
-
-  case ConstraintType::CHECK:
-  	check_cmd = tile->GetValue(tupleId,
-				ConstraintCatalog::ColumnId::CHECK_CMD).ToString();
-		check_exp = tile->GetValue(tupleId,
-				ConstraintCatalog::ColumnId::CHECK_EXP).ToString();
-  	break;
+  }
 
   case ConstraintType::EXCLUSION:
   default:
@@ -112,45 +108,33 @@ ConstraintCatalog::~ConstraintCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> ConstraintCatalog::InitializeSchema() {
-  const std::string primary_key_constraint_name = "primary_key";
-  const std::string not_null_constraint_name = "not_null";
-
   auto constraint_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "constraint_oid", true);
-  constraint_oid_column.AddConstraint(std::make_shared<Constraint>(
-      ConstraintType::PRIMARY, primary_key_constraint_name,
-			CONSTRAINT_CATALOG_PKEY_OID));
-  constraint_oid_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  constraint_oid_column.SetNotNull();
 
   auto constraint_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "constraint_name_", false);
-  constraint_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  constraint_name_column.SetNotNull();
 
   auto constraint_type_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "constraint_type", false);
-  constraint_type_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  constraint_type_column.SetNotNull();
 
   auto table_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_oid_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  table_oid_column.SetNotNull();
 
   auto column_ids_column = catalog::Column(
       type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
       "column_ids", false);
-  column_ids_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  column_ids_column.SetNotNull();
 
   auto index_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_oid", true);
-  index_oid_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  index_oid_column.SetNotNull();
 
   auto fk_sink_table_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -166,30 +150,30 @@ std::unique_ptr<catalog::Schema> ConstraintCatalog::InitializeSchema() {
   auto fk_delete_action_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "fk_delete_action", false);
 
-  auto default_value_column = catalog::Column(
+  auto check_exp_src_column = catalog::Column(
       type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-      "default_value", false);
+      "check_exp_src", false);
 
-  auto check_cmd_column = catalog::Column(
-      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-      "check_cmd", false);
+  auto check_exp_bin_column = catalog::Column(
+      type::TypeId::VARBINARY, type::Type::GetTypeSize(type::TypeId::VARBINARY),
+      "check_exp_bin", false);
 
-  auto check_exp_column = catalog::Column(
-      type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
-      "check_exp", false);
-
-  std::unique_ptr<catalog::Schema> column_catalog_schema(new catalog::Schema(
+  std::unique_ptr<catalog::Schema> constraint_catalog_schema(new catalog::Schema(
       {constraint_oid_column, constraint_name_column, constraint_type_column,
   	   table_oid_column, column_ids_column, index_oid_column,
-			 fk_sink_table_oid_column, fk_sink_col_ids_column,
-			 fk_update_action_column, fk_delete_action_column, default_value_column,
-			 check_cmd_column, check_exp_column}));
+			 fk_sink_table_oid_column, fk_sink_col_ids_column, fk_update_action_column,
+			 fk_delete_action_column, check_exp_src_column, check_exp_bin_column}));
 
-  return column_catalog_schema;
+  constraint_catalog_schema->AddConstraint(std::make_shared<Constraint>(
+  		CONSTRAINT_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+			CONSTRAINT_CATALOG_OID, std::vector<oid_t>{ColumnId::CONSTRAINT_OID},
+			CONSTRAINT_CATALOG_PKEY_OID));
+
+  return constraint_catalog_schema;
 }
 
 /*@brief    Insert a constraint into the pg_constraint table
- *          This targets PRIMARY KEY, UNIQUE, DEFAULt, CHECK or NOT NULL constraint
+ *          This targets PRIMARY KEY, FOREIGN KEY, UNIQUE or CHECK constraint
  * @param   table_oid  oid of the table related to this constraint
  * @param   column_ids  vector of oids of column related to this constraint
  * @param   constraint  to be inserted into pg_constraint
@@ -197,14 +181,9 @@ std::unique_ptr<catalog::Schema> ConstraintCatalog::InitializeSchema() {
  * @param   txn  TransactionContext for adding the constraint.
  * @return  true on success.
  */
-bool ConstraintCatalog::InsertConstraint(oid_t table_oid,
-		const std::vector<oid_t> &column_ids,
-		const std::shared_ptr<Constraint> constraint,
+bool ConstraintCatalog::InsertConstraint(const std::shared_ptr<Constraint> constraint,
 		type::AbstractPool *pool, concurrency::TransactionContext *txn) {
-	// Check usage
-	PELOTON_ASSERT(constraint->GetType() != ConstraintType::FOREIGN);
-
-  // Create the tuple first
+	// Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -213,9 +192,10 @@ bool ConstraintCatalog::InsertConstraint(oid_t table_oid,
   auto val1 = type::ValueFactory::GetVarcharValue(constraint->GetName(), nullptr);
   auto val2 =	type::ValueFactory::GetVarcharValue(
   		ConstraintTypeToString(constraint->GetType()), nullptr);
-  auto val3 = type::ValueFactory::GetIntegerValue(table_oid);
+  auto val3 = type::ValueFactory::GetIntegerValue(constraint->GetTableOid());
   std::stringstream ss;
-  for (auto column_oid : column_ids) ss << std::to_string(column_oid) << " ";
+  for (auto column_oid : constraint->GetColumnIds())
+  	ss << std::to_string(column_oid) << " ";
   auto val4 =	type::ValueFactory::GetVarcharValue(ss.str(), nullptr);
   auto val5 = type::ValueFactory::GetIntegerValue(constraint->GetIndexOid());
 
@@ -235,47 +215,53 @@ bool ConstraintCatalog::InsertConstraint(oid_t table_oid,
   	PELOTON_ASSERT(constraint->GetIndexOid() != INVALID_OID);
   	break;
 
-  case ConstraintType::NOTNULL:
-  case ConstraintType::NOT_NULL:
-  	// nothing to do more
-  	break;
+  case ConstraintType::FOREIGN: {
+  	// need to set a valid index oid
+  	PELOTON_ASSERT(constraint->GetIndexOid() != INVALID_OID);
 
-  case ConstraintType::DEFAULT: {
-  	// set value of default value
-  	PELOTON_ASSERT(column_ids.size() == 1);
-  	auto column = storage::StorageManager::GetInstance()
-  	    ->GetTableWithOid(database_oid, table_oid)->GetSchema()
-				->GetColumn(column_ids.at(0));
-  	char default_value_str[column.GetLength()];
-  	constraint->getDefaultValue()->SerializeTo(default_value_str, column.IsInlined(),
-  			                                      pool);
-  	auto val6 = type::ValueFactory::GetVarcharValue(default_value_str, nullptr);
+  	auto val6 = type::ValueFactory::GetIntegerValue(constraint->GetFKSinkTableOid());
+    std::stringstream snk_ss;
+    for (auto column_oid : constraint->GetFKSinkColumnIds())
+    	snk_ss << std::to_string(column_oid) << " ";
+    auto val7 =	type::ValueFactory::GetVarcharValue(snk_ss.str(), nullptr);
+    auto val8 =	type::ValueFactory::GetVarcharValue(
+    				FKConstrActionTypeToString(constraint->GetFKUpdateAction()), nullptr);
+    auto val9 =	type::ValueFactory::GetVarcharValue(
+    				FKConstrActionTypeToString(constraint->GetFKDeleteAction()), nullptr);
 
-    tuple->SetValue(ColumnId::DEFAULT_VALUE, val6, pool);
+    tuple->SetValue(ColumnId::FK_SINK_TABLE_OID, val6, pool);
+    tuple->SetValue(ColumnId::FK_SINK_COL_IDS, val7, pool);
+    tuple->SetValue(ColumnId::FK_UPDATE_ACTION, val8, pool);
+    tuple->SetValue(ColumnId::FK_DELETE_ACTION, val9, pool);
   	break;
   }
 
   case ConstraintType::CHECK: {
   	// set value of check expression
-  	PELOTON_ASSERT(column_ids.size() == 1);
-  	auto val6 =
-  			type::ValueFactory::GetVarcharValue(constraint->GetCheckCmd(), nullptr);
+  	PELOTON_ASSERT(constraint->GetColumnIds().size() == 1);
   	auto exp = constraint->GetCheckExpression();
   	auto column = storage::StorageManager::GetInstance()
-  	    ->GetTableWithOid(database_oid, table_oid)->GetSchema()
-				->GetColumn(column_ids.at(0));
-  	char exp_value_str[column.GetLength()];
-  	exp.second.SerializeTo(exp_value_str, column.IsInlined(), pool);
-  	std::stringstream exp_ss;
-  	exp_ss << ExpressionTypeToString(exp.first) << " " << exp_value_str;
-    auto val7 = type::ValueFactory::GetVarcharValue(exp_ss.str(), nullptr);
+  	    ->GetTableWithOid(database_oid, constraint->GetTableOid())->GetSchema()
+				->GetColumn(constraint->GetColumnIds().at(0));
 
-    tuple->SetValue(ColumnId::CHECK_CMD, val6, pool);
-    tuple->SetValue(ColumnId::CHECK_EXP, val7, pool);
+  	std::stringstream exp_ss;
+  	exp_ss << column.GetName()
+           << " " << ExpressionTypeToString(exp.first)
+           << " " << exp.second.ToString();
+    auto val6 = type::ValueFactory::GetVarcharValue(exp_ss.str(), nullptr);
+
+  	CopySerializeOutput output_buffer;
+  	output_buffer.WriteInt((int)exp.first);
+  	output_buffer.WriteInt((int)column.GetType());
+  	exp.second.SerializeTo(output_buffer);
+  	auto val7 = type::ValueFactory::GetVarbinaryValue(
+  			(unsigned char*)output_buffer.Data(), output_buffer.Size(), true, pool);
+
+    tuple->SetValue(ColumnId::CHECK_EXP_SRC, val6, pool);
+    tuple->SetValue(ColumnId::CHECK_EXP_BIN, val7, pool);
   	break;
   }
 
-  case ConstraintType::FOREIGN:
   case ConstraintType::EXCLUSION:
   default:
   	// unexpected constraint type
@@ -285,64 +271,6 @@ bool ConstraintCatalog::InsertConstraint(oid_t table_oid,
   	return false;
   }
 
-
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
-}
-
-/*@brief    Insert a constraint into the pg_constraint table
- *          This targets only FOREIGN KEY constraint
- * @param   table_oid  oid of the table related to this constraint
- * @param   column_ids  vector of oids of column related to this constraint
- * @param   constraint  to be inserted into pg_constraint
- * @param   foreign_key  foreign key information as constraint
- * @param   pool  to allocate memory for the column_map column.
- * @param   txn  TransactionContext for adding the constraint.
- * @return  true on success.
- */
-bool ConstraintCatalog::InsertConstraint(oid_t table_oid,
-		const std::vector<oid_t> &column_ids,
-		const std::shared_ptr<Constraint> constraint,
-		const ForeignKey &foreign_key, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
-	// Check usage
-	PELOTON_ASSERT(constraint->GetType() == ConstraintType::FOREIGN);
-	PELOTON_ASSERT(constraint->GetIndexOid() != INVALID_OID);
-
-  // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
-
-  auto val0 = type::ValueFactory::GetIntegerValue(constraint->GetConstraintOid());
-  auto val1 = type::ValueFactory::GetVarcharValue(constraint->GetName(), nullptr);
-  auto val2 =
-  		type::ValueFactory::GetVarcharValue(ConstraintTypeToString(constraint->GetType()),
-  				                                nullptr);
-  auto val3 = type::ValueFactory::GetIntegerValue(table_oid);
-  std::stringstream src_ss;
-  for (auto column_oid : column_ids) src_ss << std::to_string(column_oid) << " ";
-  auto val4 =	type::ValueFactory::GetVarcharValue(src_ss.str(), nullptr);
-  auto val5 = type::ValueFactory::GetIntegerValue(constraint->GetIndexOid());
-  auto val6 = type::ValueFactory::GetIntegerValue(foreign_key.GetSinkTableOid());
-  std::stringstream snk_ss;
-  for (auto column_oid : foreign_key.GetSinkColumnIds())
-  	snk_ss << std::to_string(column_oid) << " ";
-  auto val7 =	type::ValueFactory::GetVarcharValue(snk_ss.str(), nullptr);
-  auto val8 =	type::ValueFactory::GetVarcharValue(
-  				FKConstrActionTypeToString(foreign_key.GetUpdateAction()), nullptr);
-  auto val9 =	type::ValueFactory::GetVarcharValue(
-  				FKConstrActionTypeToString(foreign_key.GetDeleteAction()), nullptr);
-
-  tuple->SetValue(ColumnId::CONSTRAINT_OID, val0, pool);
-  tuple->SetValue(ColumnId::CONSTRAINT_NAME, val1, pool);
-  tuple->SetValue(ColumnId::CONSTRAINT_TYPE, val2, pool);
-  tuple->SetValue(ColumnId::TABLE_OID, val3, pool);
-  tuple->SetValue(ColumnId::COLUMN_IDS, val4, pool);
-  tuple->SetValue(ColumnId::INDEX_OID, val5, pool);
-  tuple->SetValue(ColumnId::FK_SINK_TABLE_OID, val6, pool);
-  tuple->SetValue(ColumnId::FK_SINK_COL_IDS, val7, pool);
-  tuple->SetValue(ColumnId::FK_UPDATE_ACTION, val8, pool);
-  tuple->SetValue(ColumnId::FK_DELETE_ACTION, val9, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);

@@ -45,7 +45,6 @@ namespace peloton {
 namespace catalog {
 
 class Constraint;
-class ForeignKey;
 
 class ConstraintCatalogObject {
 	friend class ConstraintCatalog;
@@ -63,9 +62,7 @@ class ConstraintCatalogObject {
   inline const std::vector<oid_t> &GetFKSinkColumnIds() { return fk_sink_col_ids; }
   inline FKConstrActionType GetFKUpdateAction() { return fk_update_action; }
   inline FKConstrActionType GetFKDeleteAction() { return fk_delete_action; }
-  inline const std::string &GetDefaultValue() { return default_value; }
-  inline const std::string &GetCheckCmd() { return check_cmd; }
-  inline const std::string &GetCheckExp() { return check_exp; }
+  inline const std::pair<ExpressionType, type::Value> &GetCheckExp() { return check_exp; }
 
  private:
   // member variables
@@ -79,9 +76,7 @@ class ConstraintCatalogObject {
   std::vector<oid_t> fk_sink_col_ids;
 	FKConstrActionType fk_update_action;
 	FKConstrActionType fk_delete_action;
-	std::string default_value; // original : std::shared_ptr<type::Value>
-	std::string check_cmd;
-	std::string check_exp; // original : std::pair<ExpressionType, type::Value>
+	std::pair<ExpressionType, type::Value> check_exp;
 };
 
 class ConstraintCatalog : public AbstractCatalog {
@@ -102,16 +97,8 @@ class ConstraintCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  // Basic insert for primary key, unique, check, default or not null constraint
-  bool InsertConstraint(oid_t table_oid, const std::vector<oid_t> &column_ids,
-                        const std::shared_ptr<Constraint> constraint,
+  bool InsertConstraint(const std::shared_ptr<Constraint> constraint,
 												type::AbstractPool *pool,
-                        concurrency::TransactionContext *txn);
-
-  // insert for foreign key constraint
-  bool InsertConstraint(oid_t table_oid, const std::vector<oid_t> &column_ids,
-                        const std::shared_ptr<Constraint> constraint,
-												const ForeignKey &foreign_key, type::AbstractPool *pool,
                         concurrency::TransactionContext *txn);
 
   bool DeleteConstraints(oid_t table_oid, concurrency::TransactionContext *txn);
@@ -143,12 +130,11 @@ class ConstraintCatalog : public AbstractCatalog {
     FK_SINK_COL_IDS = 7,
     FK_UPDATE_ACTION = 8,
     FK_DELETE_ACTION = 9,
-    DEFAULT_VALUE = 10,
-    CHECK_CMD = 11,
-    CHECK_EXP = 12,
+    CHECK_EXP_SRC = 10,
+    CHECK_EXP_BIN = 11,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
   enum IndexId {
     PRIMARY_KEY = 0,

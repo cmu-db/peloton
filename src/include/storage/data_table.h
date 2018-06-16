@@ -198,6 +198,7 @@ class DataTable : public AbstractTable {
   const std::vector<std::set<oid_t>> &GetIndexColumns() const {
     return indexes_columns_;
   }
+
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
@@ -207,34 +208,6 @@ class DataTable : public AbstractTable {
                                     concurrency::TransactionContext *transaction,
                                     executor::ExecutorContext *context,
                                     bool is_update);
-
-  void AddForeignKey(oid_t constraint_oid, catalog::ForeignKey *key);
-
-  std::unordered_map<oid_t, catalog::ForeignKey*> GetForeignKeys() const {
-  	return foreign_keys_;
-  }
-
-  catalog::ForeignKey *GetForeignKey(oid_t constraint_oid) const {
-  	return foreign_keys_.at(constraint_oid);
-  }
-
-  size_t GetForeignKeyCount() const { return foreign_keys_.size(); }
-
-  void DropForeignKey(oid_t constraint_oid);
-
-  void RegisterForeignKeySource(oid_t constraint_oid, catalog::ForeignKey *key);
-
-  size_t GetForeignKeySrcCount() const { return foreign_key_sources_.size(); }
-
-  std::unordered_map<oid_t, catalog::ForeignKey*> GetForeignKeySrcs() const {
-  	return foreign_key_sources_;
-  }
-
-  catalog::ForeignKey *GetForeignKeySrc(oid_t constraint_oid) const {
-  	return foreign_key_sources_.at(constraint_oid);
-  }
-
-  void DropForeignKeySrc(oid_t constraint_oid);
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -303,12 +276,6 @@ class DataTable : public AbstractTable {
 
   // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
-
-  bool HasPrimaryKey() const { return (has_primary_key_); }
-
-  bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
-
-  bool HasForeignKeys() const { return (foreign_keys_.empty() == false); }
 
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
@@ -438,20 +405,6 @@ class DataTable : public AbstractTable {
 
   // columns present in the indexes
   std::vector<std::set<oid_t>> indexes_columns_;
-
-  // CONSTRAINTS
-  // fk constraints for which this table is the source
-  std::unordered_map<oid_t, catalog::ForeignKey *> foreign_keys_;
-  // fk constraints for which this table is the sink
-  // The complete information is stored so no need to lookup the table
-  // everytime there is a constraint check
-  std::unordered_map<oid_t, catalog::ForeignKey *> foreign_key_sources_;
-
-  // has a primary key ?
-  std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);
-
-  // # of unique constraints
-  std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples. must be atomic as multiple transactions can perform insert
   // concurrently.

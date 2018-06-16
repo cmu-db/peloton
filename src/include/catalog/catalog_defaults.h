@@ -96,9 +96,35 @@ namespace catalog {
 #define LAYOUT_CATALOG_PKEY_OID (13 | INDEX_OID_MASK)
 #define LAYOUT_CATALOG_SKEY0_OID (14 | INDEX_OID_MASK)
 
-// Reserve pg_layout index oid
+// Reserve pg_constraint index oid
 #define CONSTRAINT_CATALOG_PKEY_OID (15 | INDEX_OID_MASK)
 #define CONSTRAINT_CATALOG_SKEY0_OID (16 | INDEX_OID_MASK)
+
+// Reserved pg_column constraint oid
+#define COLUMN_CATALOG_CON_PKEY_OID (0 | CONSTRAINT_OID_MASK)
+#define COLUMN_CATALOG_CON_UNI0_OID (1 | CONSTRAINT_OID_MASK)
+
+// Reserved pg_index index oid
+#define INDEX_CATALOG_CON_PKEY_OID (2 | CONSTRAINT_OID_MASK)
+#define INDEX_CATALOG_CON_UNI0_OID (3 | CONSTRAINT_OID_MASK)
+
+// Reserved pg_database index oid
+#define DATABASE_CATALOG_CON_PKEY_OID (4 | CONSTRAINT_OID_MASK)
+#define DATABASE_CATALOG_CON_UNI0_OID (5 | CONSTRAINT_OID_MASK)
+
+// Reserved pg_namespace index oid
+#define SCHEMA_CATALOG_CON_PKEY_OID (6 | CONSTRAINT_OID_MASK)
+#define SCHEMA_CATALOG_CON_UNI0_OID (7 | CONSTRAINT_OID_MASK)
+
+// Reserved pg_table index oid
+#define TABLE_CATALOG_CON_PKEY_OID (8 | CONSTRAINT_OID_MASK)
+#define TABLE_CATALOG_CON_UNI0_OID (9 | CONSTRAINT_OID_MASK)
+
+// Reserve pg_layout index oid
+#define LAYOUT_CATALOG_CON_PKEY_OID (10 | CONSTRAINT_OID_MASK)
+
+// Reserve pg_constraint index oid
+#define CONSTRAINT_CATALOG_CON_PKEY_OID (11 | CONSTRAINT_OID_MASK)
 
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24

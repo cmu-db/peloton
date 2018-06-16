@@ -12,6 +12,8 @@
 
 #include "statistics/testing_stats_util.h"
 
+#include "catalog/catalog.h"
+#include "catalog/table_catalog.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 #include "executor/insert_executor.h"
@@ -112,25 +114,23 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_id", true);
-  if (has_primary_key) {
-    std::shared_ptr<catalog::Constraint> constraint(
-    		new catalog::Constraint(ConstraintType::PRIMARY, "con_primary"));
-    id_column.AddConstraint(constraint);
-  }
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 256, "dept_name", false);
-
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
+
+  auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFAULT_SCHEMA_NAME, "emp_db",
-                           std::move(table_schema), CreateType::TABLE);
-  executor::CreateExecutor create_executor(&node, context.get());
-  create_executor.Init();
-  create_executor.Execute();
+  catalog->CreateTable("emp_db", DEFAULT_SCHEMA_NAME, "department_table",
+                       std::move(table_schema), txn);
+
+  if (has_primary_key) {
+    auto table_object = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
+    		                                        "department_table", txn);
+    catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
+    		table_object->GetTableOid(), {0}, "con_primary", txn);
+  }
   txn_manager.CommitTransaction(txn);
 }
 

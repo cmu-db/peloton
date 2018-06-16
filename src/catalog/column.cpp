@@ -21,68 +21,50 @@ namespace catalog {
 
 void Column::SetLength(size_t column_length) {
   // Set the column length based on whether it is inlined
-  if (is_inlined) {
-    fixed_length = column_length;
-    variable_length = 0;
+  if (is_inlined_) {
+    fixed_length_ = column_length;
+    variable_length_ = 0;
   } else {
-    fixed_length = sizeof(uintptr_t);
-    variable_length = column_length;
+    fixed_length_ = sizeof(uintptr_t);
+    variable_length_ = column_length;
   }
 }
 
 void Column::SetInlined() {
-  switch (column_type) {
+  switch (column_type_) {
     case type::TypeId::VARCHAR:
     case type::TypeId::VARBINARY:
       break;  // No change of inlined setting
 
     default:
-      is_inlined = true;
+      is_inlined_ = true;
       break;
   }
-}
-
-bool Column::DeleteConstraint(oid_t constraint_oid) {
-	for (auto const_itr = constraints.begin(); const_itr != constraints.end();
-			const_itr++) {
-		if ((*const_itr)->GetConstraintOid() == constraint_oid) {
-			if ((*const_itr)->GetType() == ConstraintType::PRIMARY) {
-				is_primary_ = false;
-			} else if ((*const_itr)->GetType() == ConstraintType::UNIQUE) {
-				is_unique_ = false;
-			}
-			constraints.erase(const_itr);
-			return true;
-		}
-	}
-	return false;
 }
 
 const std::string Column::GetInfo() const {
   std::ostringstream os;
 
-  os << "Column[" << column_name << ", " << TypeIdToString(column_type) << ", "
-     << "Offset:" << column_offset << ", ";
+  os << "Column[" << column_name_ << ", "
+  	 << TypeIdToString(column_type_) << ", "
+     << "Offset:" << column_offset_ << ", ";
 
-  if (is_inlined) {
-    os << "FixedLength:" << fixed_length;
+  if (is_inlined_) {
+    os << "FixedLength:" << fixed_length_;
   } else {
-    os << "VarLength:" << variable_length;
+    os << "VarLength:" << variable_length_;
   }
 
-  if (constraints.empty() == false) {
-    os << ", {";
-    bool first = true;
-    for (auto constraint : constraints) {
-      if (first) {
-        first = false;
-      } else {
-        os << ", ";
-      }
-      os << constraint->GetInfo();
-    }
-    os << "}";
+  if (is_not_null_ && has_default_) {
+  	os << ", {NOT NULL, DEFAULT:"
+  		 << default_value_->ToString() << "}";
+  } else if (is_not_null_) {
+  	os << ", {NOT NULL}";
+  } else if (has_default_) {
+  	os << ", {DEFAULT:"
+  		 << default_value_->ToString() << "}";
   }
+
   os << "]";
 
   return (os.str());

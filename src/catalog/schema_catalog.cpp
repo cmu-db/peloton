@@ -38,9 +38,9 @@ SchemaCatalog::SchemaCatalog(
     : AbstractCatalog(SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME,
                       InitializeSchema().release(), database) {
   // Add indexes for pg_namespace
-  AddIndex({0}, SCHEMA_CATALOG_PKEY_OID, SCHEMA_CATALOG_NAME "_pkey",
+  AddIndex({ColumnId::SCHEMA_OID}, SCHEMA_CATALOG_PKEY_OID, SCHEMA_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({1}, SCHEMA_CATALOG_SKEY0_OID, SCHEMA_CATALOG_NAME "_skey0",
+  AddIndex({ColumnId::SCHEMA_NAME}, SCHEMA_CATALOG_SKEY0_OID, SCHEMA_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
 }
 
@@ -50,29 +50,28 @@ SchemaCatalog::~SchemaCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  const std::string primary_key_constraint_name = "primary_key";
-  const std::string unique_constraint_name = "con_unique";
-
   auto schema_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "schema_oid", true);
-  schema_id_column.AddConstraint(std::make_shared<Constraint>(
-      ConstraintType::PRIMARY, primary_key_constraint_name,
-			SCHEMA_CATALOG_PKEY_OID));
-  schema_id_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_id_column.SetNotNull();
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "schema_name", false);
-  schema_name_column.AddConstraint(std::make_shared<catalog::Constraint>(
-      ConstraintType::UNIQUE, unique_constraint_name,
-			SCHEMA_CATALOG_SKEY0_OID));
-  schema_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_name_column.SetNotNull();
 
   std::unique_ptr<catalog::Schema> schema(
       new catalog::Schema({schema_id_column, schema_name_column}));
+
+  schema->AddConstraint(std::make_shared<Constraint>(
+  		SCHEMA_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+			SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_OID},
+			SCHEMA_CATALOG_PKEY_OID));
+
+  schema->AddConstraint(std::make_shared<catalog::Constraint>(
+  		SCHEMA_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+			SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_NAME},
+			SCHEMA_CATALOG_SKEY0_OID));
+
   return schema;
 }
 

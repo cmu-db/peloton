@@ -12,7 +12,6 @@
 
 #include <sstream>
 
-#include "catalog/foreign_key.h"
 #include "codegen/query_cache.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -146,11 +145,11 @@ const std::string Database::GetInfo() const {
         }
       }
 
-      if (table->HasForeignKeys()) {
+      if (table->GetSchema()->HasForeignKeys()) {
         os << "foreign tables \n";
 
-        for (auto foreign_key : table->GetForeignKeys()) {
-          auto sink_table_oid = foreign_key.second->GetSinkTableOid();
+        for (auto foreign_key : table->GetSchema()->GetForeignKeyConstraints()) {
+          auto sink_table_oid = foreign_key->GetFKSinkTableOid();
           auto sink_table = GetTableWithOid(sink_table_oid);
 
           os << "table name : " << sink_table->GetName() << std::endl;

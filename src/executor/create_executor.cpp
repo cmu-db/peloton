@@ -13,7 +13,6 @@
 #include "executor/create_executor.h"
 
 #include "catalog/catalog.h"
-#include "catalog/foreign_key.h"
 #include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
@@ -125,65 +124,115 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Creating table succeeded!");
-
-    // Add the foreign key constraint (or other multi-column constraints)
-    if (node.GetForeignKeys().empty() == false) {
-      auto catalog = catalog::Catalog::GetInstance();
-      auto source_table = catalog->GetTableWithName(database_name, schema_name,
-                                                    table_name, current_txn);
-
-      for (auto fk : node.GetForeignKeys()) {
-        auto sink_table = catalog->GetTableWithName(
-            database_name, schema_name, fk.sink_table_name, current_txn);
-        // Source Column Offsets
-        std::vector<oid_t> source_col_ids;
-        for (auto col_name : fk.foreign_key_sources) {
-          oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
-          if (col_id == INVALID_OID) {
-            std::string error = StringUtil::Format(
-                "Invalid source column name '%s.%s' for foreign key '%s'",
-                table_name.c_str(), col_name.c_str(),
-                fk.constraint_name.c_str());
-            throw ExecutorException(error);
-          }
-          source_col_ids.push_back(col_id);
-        }  // FOR
-        PELOTON_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
-
-        // Sink Column Offsets
-        std::vector<oid_t> sink_col_ids;
-        for (auto col_name : fk.foreign_key_sinks) {
-          oid_t col_id = sink_table->GetSchema()->GetColumnID(col_name);
-          if (col_id == INVALID_OID) {
-            std::string error = StringUtil::Format(
-                "Invalid sink column name '%s.%s' for foreign key '%s'",
-                sink_table->GetName().c_str(), col_name.c_str(),
-                fk.constraint_name.c_str());
-            throw ExecutorException(error);
-          }
-          sink_col_ids.push_back(col_id);
-        }  // FOR
-        PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
-
-        // Create the catalog object and shove it into the table
-        catalog->AddForeignKeyConstraint(source_table->GetDatabaseOid(),
-        		source_table->GetOid(), source_col_ids, sink_table->GetOid(),
-						sink_col_ids, fk.upd_action, fk.del_action, fk.constraint_name,
-						current_txn);
-
-#ifdef LOG_DEBUG_ENABLED
-        std::vector<std::string> source_col_names = fk.foreign_key_sources;
-        LOG_DEBUG("Added a FOREIGN index on in %s.\n", table_name.c_str());
-        LOG_DEBUG("Foreign key column names: \n");
-        for (auto c : source_col_names) {
-          LOG_DEBUG("FK col name: %s\n", c.c_str());
+    auto catalog = catalog::Catalog::GetInstance();
+    auto source_table = catalog->GetTableWithName(database_name, schema_name,
+                                                  table_name, current_txn);
+    // Add the primary key constraint
+    if (node.HasPrimaryKey()) {
+      auto pk = node.GetPrimaryKey();
+    	std::vector<oid_t> col_ids;
+      for (auto col_name : pk.primary_key_cols) {
+        oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+        if (col_id == INVALID_OID) {
+          std::string error = StringUtil::Format(
+              "Invalid key column name '%s.%s' for primary key '%s'",
+              table_name.c_str(), col_name.c_str(),
+              pk.constraint_name.c_str());
+          throw ExecutorException(error);
         }
-        for (auto c : fk.foreign_key_sinks) {
-          LOG_DEBUG("FK sink col name: %s\n", c.c_str());
-        }
-#endif
+      	col_ids.push_back(col_id);
       }
+      PELOTON_ASSERT(col_ids.size() == pk.primary_key_cols.size());
+
+      // Create the catalog object and shove it into the table
+      catalog->AddPrimaryKeyConstraint(source_table->GetDatabaseOid(),
+      		source_table->GetOid(), col_ids, pk.constraint_name, current_txn);
     }
+
+    // Add the unique constraint
+    for (auto unique : node.GetUniques()) {
+    	std::vector<oid_t> col_ids;
+      for (auto col_name : unique.unique_cols) {
+        oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+        if (col_id == INVALID_OID) {
+          std::string error = StringUtil::Format(
+              "Invalid key column name '%s.%s' for unique '%s'",
+              table_name.c_str(), col_name.c_str(),
+							unique.constraint_name.c_str());
+          throw ExecutorException(error);
+        }
+      	col_ids.push_back(col_id);
+      }
+      PELOTON_ASSERT(col_ids.size() == unique.unique_cols.size());
+
+      // Create the catalog object and shove it into the table
+      catalog->AddUniqueConstraint(source_table->GetDatabaseOid(),
+      		source_table->GetOid(), col_ids, unique.constraint_name, current_txn);
+    }
+
+    // Add the foreign key constraint
+		for (auto fk : node.GetForeignKeys()) {
+			auto sink_table = catalog->GetTableWithName(
+					database_name, schema_name, fk.sink_table_name, current_txn);
+			// Source Column Offsets
+			std::vector<oid_t> source_col_ids;
+			for (auto col_name : fk.foreign_key_sources) {
+				oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+				if (col_id == INVALID_OID) {
+					std::string error = StringUtil::Format(
+							"Invalid source column name '%s.%s' for foreign key '%s'",
+							table_name.c_str(), col_name.c_str(),
+							fk.constraint_name.c_str());
+					throw ExecutorException(error);
+				}
+				source_col_ids.push_back(col_id);
+			}  // FOR
+			PELOTON_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
+
+			// Sink Column Offsets
+			std::vector<oid_t> sink_col_ids;
+			for (auto col_name : fk.foreign_key_sinks) {
+				oid_t col_id = sink_table->GetSchema()->GetColumnID(col_name);
+				if (col_id == INVALID_OID) {
+					std::string error = StringUtil::Format(
+							"Invalid sink column name '%s.%s' for foreign key '%s'",
+							sink_table->GetName().c_str(), col_name.c_str(),
+							fk.constraint_name.c_str());
+					throw ExecutorException(error);
+				}
+				sink_col_ids.push_back(col_id);
+			}  // FOR
+			PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
+
+			// Create the catalog object and shove it into the table
+			catalog->AddForeignKeyConstraint(source_table->GetDatabaseOid(),
+					source_table->GetOid(), source_col_ids, sink_table->GetOid(),
+					sink_col_ids, fk.upd_action, fk.del_action, fk.constraint_name,
+					current_txn);
+		}
+
+    // Add the check constraint
+    for (auto check : node.GetChecks()) {
+    	std::vector<oid_t> col_ids;
+      for (auto col_name : check.check_cols) {
+        oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+        if (col_id == INVALID_OID) {
+          std::string error = StringUtil::Format(
+              "Invalid key column name '%s.%s' for unique '%s'",
+              table_name.c_str(), col_name.c_str(),
+							check.constraint_name.c_str());
+          throw ExecutorException(error);
+        }
+      	col_ids.push_back(col_id);
+      }
+      PELOTON_ASSERT(col_ids.size() == check.check_cols.size());
+
+      // Create the catalog object and shove it into the table
+      catalog->AddCheckConstraint(source_table->GetDatabaseOid(),
+      		source_table->GetOid(), col_ids, check.exp,	check.constraint_name,
+					current_txn);
+    }
+
   } else if (current_txn->GetResult() == ResultType::FAILURE) {
     LOG_TRACE("Creating table failed!");
   } else {

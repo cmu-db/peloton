@@ -16,7 +16,6 @@
 #include "catalog/testing_constraints_util.h"
 
 #include "catalog/catalog.h"
-#include "catalog/foreign_key.h"
 #include "common/internal_types.h"
 #include "concurrency/testing_transaction_util.h"
 #include "executor/executors.h"
@@ -29,7 +28,8 @@
 
 #define CONSTRAINT_NOTNULL_TEST
 #define CONSTRAINT_DEFAULT_TEST
-//#define CONSTRAINT_CHECK_TEST
+// #define CONSTRAINT_CHECK_TEST
+// #define CONSTRAINT_UNIQUE_TEST
 
 namespace peloton {
 namespace test {
@@ -52,15 +52,15 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  140           141   142     "143"
 
   // Set all of the columns to be NOT NULL
-  std::vector<std::vector<catalog::Constraint>> constraints;
+  std::vector<oid_t> notnull_col_ids;
   for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
-    constraints.push_back(
-        {catalog::Constraint(ConstraintType::NOTNULL, "notnull_constraint")});
+  	notnull_col_ids.push_back(i);
   }
-  std::vector<catalog::MultiConstraint> multi_constraints;
+  std::unordered_map<oid_t, type::Value> default_values;
   storage::DataTable *data_table =
-      TestingConstraintsUtil::CreateAndPopulateTable(constraints,
-                                                     multi_constraints);
+      TestingConstraintsUtil::CreateTable(notnull_col_ids,
+      		                                default_values);
+  TestingConstraintsUtil::PopulateTable(data_table);
 
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -113,29 +113,42 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
 #ifdef CONSTRAINT_DEFAULT_TEST
 TEST_F(ConstraintsTests, DEFAULTTEST) {
-  // Set all of the columns to be NOT NULL
-  std::vector<std::vector<catalog::Constraint>> constraints;
+	// Set default value within col_B
+  std::vector<oid_t> notnull_col_ids;
+  std::unordered_map<oid_t, type::Value> default_values;
   for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
-    // COL_A
-    if (i == 0) {
-      constraints.push_back(
-          {catalog::Constraint(ConstraintType::PRIMARY, "pkey")});
-    }
     // COL_B
-    else if (i == 1) {
-      catalog::Constraint default_const(ConstraintType::DEFAULT, "default");
-      default_const.addDefaultValue(
-          type::ValueFactory::GetIntegerValue(DEFAULT_VALUE));
-      constraints.push_back({});
+    if (i == 1) {
+      default_values[i] =
+          type::ValueFactory::GetIntegerValue(DEFAULT_VALUE);
     }
-    // COL_C + COL_D
+    // COL_A + COL_C + COL_D
     else {
-      constraints.push_back({});
+      // do nothing
     }
   }
-  std::vector<catalog::MultiConstraint> multi_constraints;
-  TestingConstraintsUtil::CreateAndPopulateTable(constraints,
-                                                 multi_constraints);
+  storage::DataTable *data_table =
+      TestingConstraintsUtil::CreateTable(notnull_col_ids,
+      		                                default_values);
+  // Add primary key
+  auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  for (oid_t i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
+    // COL_A
+    if (i == 0) {
+      catalog->AddPrimaryKeyConstraint(data_table->GetDatabaseOid(),
+      		data_table->GetOid(), {i}, "con_primary", txn);
+    }
+    // COL_B + COL_C + COL_D
+    else {
+      // do nothing
+    }
+  }
+  txn_manager.CommitTransaction(txn);
+
+  // populate test data
+  TestingConstraintsUtil::PopulateTable(data_table);
 
   // Bootstrap
   std::vector<ResultValue> result;
@@ -153,13 +166,14 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
                                                 rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
 
-  sql = StringUtil::Format("SELECT col_d FROM %s WHERE col_a = 9999",
+  sql = StringUtil::Format("SELECT col_b FROM %s WHERE col_a = 9999",
                            CONSTRAINTS_TEST_TABLE);
   status = TestingSQLUtil::ExecuteSQLQuery(sql, result, tuple_descriptor,
                                            rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
   std::string resultStr = TestingSQLUtil::GetResultValueAsString(result, 0);
-  LOG_INFO("OUTPUT:\n%s", resultStr.c_str());
+  EXPECT_EQ(std::to_string(DEFAULT_VALUE), resultStr);
+  LOG_INFO("OUTPUT:%s", resultStr.c_str());
 }
 #endif
 
@@ -173,32 +187,38 @@ TEST_F(ConstraintsTests, CHECKTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
-
-  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
-  auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
-  type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
-  constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
-  column1.AddConstraint(constraints);
-  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(),
-            constraints.GetInfo().c_str());
-  catalog::Schema *table_schema = new catalog::Schema({column1});
-  std::string table_name("TEST_TABLE");
-  bool own_schema = true;
-  bool adapt_table = false;
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
-      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-  std::unique_ptr<storage::DataTable> data_table(table);
-
+  auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
+  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({column1}));
+
+  std::string table_name("TEST_TABLE");
+  auto result = catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                     table_name, std::move(table_schema),
+																		 txn, false);
+  EXPECT_EQ(ResultType::SUCCESS, result);
+
+  auto data_table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                         table_name, txn);
+  EXPECT_NE(nullptr, data_table);
+
+  // add check constraint
+  type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
+  catalog->AddCheckConstraint(data_table->GetDatabaseOid(), data_table->GetOid(),
+  		{0}, "", std::make_pair(ExpressionType::COMPARE_GREATERTHAN, tmp_value),
+			"con_check", txn);
+  txn_manager.CommitTransaction(txn);
 
   // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   // Test1: insert a tuple with column  meet the constraint requirment
   bool hasException = false;
   try {
     TestingConstraintsUtil::ExecuteOneInsert(
-        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
+        txn, data_table, type::ValueFactory::GetIntegerValue(10));
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -208,7 +228,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   hasException = false;
   try {
     TestingConstraintsUtil::ExecuteOneInsert(
-        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
+        txn, data_table, type::ValueFactory::GetIntegerValue(-1));
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -216,7 +236,12 @@ TEST_F(ConstraintsTests, CHECKTest) {
 
   // commit this transaction
   txn_manager.CommitTransaction(txn);
-  delete data_table.release();
+
+
+  txn = txn_manager.BeginTransaction();
+  auto result = catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  EXPECT_EQ(ResultType::SUCCESS, result);
+  txn_manager.CommitTransaction(txn);
 }
 #endif
 
@@ -225,22 +250,23 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "B", false, 1);
 
-  auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
-  column1.AddConstraint(constraints);
-  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(),
-            constraints.GetInfo().c_str());
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
-  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME,
-                                               DEFAULT_SCHEMA_NAME, table_name,
-                                               std::move(table_schema), txn);
-  storage::DataTable *table = catalog::Catalog::GetInstance()->GetTableWithName(
+  auto result = catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                     table_name, std::move(table_schema),
+																		 txn, false);
+  EXPECT_EQ(ResultType::SUCCESS, result);
+
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
+
+  catalog->AddUniqueConstraint(table->GetDatabaseOid(), table->GetOid(),
+                              {0}, "con_unique", txn);
   txn_manager.CommitTransaction(txn);
 
   // table->AddUNIQUEIndex();
@@ -286,7 +312,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 #endif

@@ -884,14 +884,11 @@ enum class PostgresConstraintType {
 
 enum class ConstraintType {
   INVALID = INVALID_TYPE_ID,  // invalid
-  NOT_NULL = 1,               // notnull
-  NOTNULL = 2,                // notnull
-  DEFAULT = 3,                // default
-  CHECK = 4,                  // check
-  PRIMARY = 5,                // primary key
-  UNIQUE = 6,                 // unique
-  FOREIGN = 7,                // foreign key
-  EXCLUSION = 8               // foreign key
+  CHECK = 1,                  // check
+  PRIMARY = 2,                // primary key
+  UNIQUE = 3,                 // unique
+  FOREIGN = 4,                // foreign key
+  EXCLUSION = 5               // foreign key
 };
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);

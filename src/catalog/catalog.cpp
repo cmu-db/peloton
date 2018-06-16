@@ -16,7 +16,6 @@
 #include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/foreign_key.h"
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
@@ -398,7 +397,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                         database_object->GetDatabaseOid(),
                         table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
 
-  // Insert column info and constraint info into each catalog
+  // Insert column info into each catalog
   oid_t column_id = 0;
   std::vector<oid_t> pkey_attrs, unique_attrs;
   std::shared_ptr<Constraint> pkey_constraint, unique_constraint;
@@ -406,33 +405,9 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
 															 column.GetLength(), column.IsInlined(),
-															 column.IsNotNull(), column.IsDefault(),
+															 column.IsNotNull(), column.HasDefault(),
 															 column.GetDefaultValue(), pool_.get(), txn);
-
-    // Add constraint information into the catalog and create index if need
-    for (auto constraint : column.GetConstraints()) {
-    	if (constraint->GetType() == ConstraintType::PRIMARY) {
-      	pkey_attrs.push_back(column_id);
-      	pkey_constraint = constraint;
-    	}
-    	else if (constraint->GetType() == ConstraintType::UNIQUE) {
-      	unique_attrs.push_back(column_id);
-      	unique_constraint = constraint;
-    	}
-    	else if (constraint->GetType() != ConstraintType::FOREIGN) {
-    		AddConstraint(database->GetOid(), table_oid, {column_id}, constraint, txn);
-    	}
-    }
-
     column_id++;
-  }
-
-  // Add multi-column constraint for primary key and unique
-  if (pkey_attrs.size() > 0) {
-		AddConstraint(database->GetOid(), table_oid, pkey_attrs, pkey_constraint, txn);
-  }
-  if (unique_attrs.size() > 0) {
-		AddConstraint(database->GetOid(), table_oid, unique_attrs, unique_constraint, txn);
   }
 
   // Create layout as default layout
@@ -600,64 +575,186 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
 }
 
 //===--------------------------------------------------------------------===//
-// ADD FUNCTIONS
+// SET FUNCTIONS FOR COLUMN CONSTRAINT
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief   Add a new constraint for a table except for foreign key
+ * @brief   Set not null constraint for a column
+ * @param   database_oid  Database to which the table belongs to
+ * @param   table_oid     Table to which the constraint has to be set
+ * @param   column_id     Column that the constraint affects
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::SetNotNullConstraint(oid_t database_oid, oid_t table_oid,
+		oid_t column_id, concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+  auto column = schema->GetColumn(column_id);
+
+  // Check not null
+  if (column.IsNotNull()) {
+  	throw CatalogException("Column " + column.GetName() +
+  			" in table " + table_object->GetTableName() +
+				" is already NOT NULL.");
+  }
+
+
+  // Update pg_column to set constraint of the column
+  auto pg_column = catalog_map_[database_oid]->GetColumnCatalog();
+  pg_column->UpdateNotNullConstraint(table_oid, column.GetName(), true, txn);
+
+  // Set not null constraint in the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 	  schema->SetNotNull(column_id);
+ 	}
+
+  return ResultType::SUCCESS;
+}
+
+/**
+ * @brief   Set default constraint for a column
+ * @param   database_oid  Database to which the table belongs to
+ * @param   table_oid     Table to which the constraint has to be set
+ * @param   column_id     Column that the constraint affects
+ * @param   default_value Value for the default constraint
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::SetDefaultConstraint(oid_t database_oid, oid_t table_oid,
+		oid_t column_id, const type::Value &default_value,
+		concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+  auto column = schema->GetColumn(column_id);
+
+  // Check default
+  if (column.HasDefault()) {
+  	throw CatalogException("Column " + column.GetName()
+  			+	" in table" + table_object->GetTableName()
+				+ " is already set default value '" + column.GetDefaultValue()->ToString()
+				+ "'.");
+  }
+
+  // Update pg_column to set constraint of the column
+  auto pg_column = catalog_map_[database_oid]->GetColumnCatalog();
+  pg_column->UpdateDefaultConstraint(table_oid, column.GetName(), true, &default_value, txn);
+
+  // Set default constraint in the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 	  schema->SetDefaultValue(column_id, default_value);
+ 	}
+
+ 	return ResultType::SUCCESS;
+}
+
+
+//===--------------------------------------------------------------------===//
+// ADD FUNCTIONS FOR TABLE CONSTRAINT
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief   Add a new primary constraint for a table
  * @param   database_oid  Database to which the table belongs to
  * @param   table_oid     Table to which the constraint has to be added
  * @param   column_ids    Columns that the constraint affects
- * @param   constraint    The new constraint to be registered
+ * @param   constraint_name  constraint name
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::AddPrimaryKeyConstraint(oid_t database_oid, oid_t table_oid,
+		const std::vector<oid_t> &column_ids, const std::string &constraint_name,
+		concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+
+  // Check primary key in the table
+  if (schema->HasPrimary()) {
+  	throw CatalogException("Table " + table_object->GetTableName()
+  			+	" already has primary key.");
+  }
+
+  // Create index
+	std::string index_name = table_object->GetTableName() + "_pkey";
+	auto index_oid = catalog_map_[database_oid]->GetIndexCatalog()->GetNextOid();
+	CreateIndex(database_oid, table_oid, column_ids, table_object->GetSchemaName(),
+							index_oid, index_name, IndexType::BWTREE,
+							IndexConstraintType::PRIMARY_KEY, true, txn);
+
+  // Insert constraint into pg_constraint
+  auto pg_constraint = catalog_map_[database_oid]->GetConstraintCatalog();
+  std::shared_ptr<Constraint> constraint(
+  		new Constraint(pg_constraint->GetNextOid(), ConstraintType::PRIMARY,
+                     constraint_name, table_oid, column_ids, index_oid));
+  pg_constraint->InsertConstraint(constraint, pool_.get(), txn);
+
+  // Add constraint into the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 		schema->AddConstraint(constraint);
+ 	}
+
+	LOG_DEBUG("Added a PRIMARY KEY constraint in %s.",
+						table_object->GetTableName().c_str());
+
+  return ResultType::SUCCESS;
+}
+
+/**
+ * @brief   Add a new unique constraint for a table
+ * @param   database_oid  Database to which the table belongs to
+ * @param   table_oid     Table to which the constraint has to be added
+ * @param   column_ids    Columns that the constraint affects
+ * @param   constraint_name  constraint name
  * @param   txn           TransactionContext
  * @return  ResultType(SUCCESS or FAILURE)
  * note: if add a new foreign key constraint, use AddForeignKeyConstraint
  */
-ResultType Catalog::AddConstraint(oid_t database_oid, oid_t table_oid,
-		const std::vector<oid_t> &column_ids, std::shared_ptr<Constraint> constraint,
+ResultType Catalog::AddUniqueConstraint(oid_t database_oid, oid_t table_oid,
+		const std::vector<oid_t> &column_ids, const std::string &constraint_name,
 		concurrency::TransactionContext *txn) {
 	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
 			->GetTableObject(table_oid, txn);
-  auto storage_manager = storage::StorageManager::GetInstance();
-  auto table = storage_manager->GetTableWithOid(database_oid, table_oid);
-  auto schema = table->GetSchema();
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
 
-  // If constraint is PRIMARY KEY or UNIQUE, create index
-  auto index_oid = INVALID_OID;
-  if (constraint->GetType() == ConstraintType::PRIMARY) {
-    std::string index_name = table_object->GetTableName() + "_pkey";
-    index_oid = catalog_map_[database_oid]->GetIndexCatalog()->GetNextOid();
-    CreateIndex(database_oid, table_oid, column_ids, table_object->GetSchemaName(),
-    		        index_oid, index_name, IndexType::BWTREE,
-								IndexConstraintType::PRIMARY_KEY, true, txn);
-    LOG_DEBUG("Added a PRIMARY KEY index in %s.",
-    		      table_object->GetTableName().c_str());
-
-    // set index oid to constraint
-    constraint->SetIndexOid(index_oid);
-
-  } else if (constraint->GetType() == ConstraintType::UNIQUE) {
-  	// create index for unique
-    std::stringstream index_name(table->GetName().c_str());
-    for (auto column_id : column_ids)
-    	index_name << "_" + schema->GetColumn(column_id).GetName();
-    index_name << "_UNIQ";
-    index_oid = catalog_map_[database_oid]->GetIndexCatalog()->GetNextOid();
-    CreateIndex(database_oid, table_oid, column_ids, table_object->GetSchemaName(),
-    		        index_oid, index_name.str(), IndexType::BWTREE,
-								IndexConstraintType::UNIQUE, true, txn);
-    LOG_DEBUG("Added a UNIQUE index in %s.",
-    		      table_object->GetTableName().c_str());
-
-    // set index oid to constraint
-    constraint->SetIndexOid(index_oid);
-  }
+  // Create index
+  std::stringstream index_name(table_object->GetTableName().c_str());
+  for (auto column_id : column_ids)
+  	index_name << "_" + schema->GetColumn(column_id).GetName();
+  index_name << "_UNIQ";
+  auto index_oid = catalog_map_[database_oid]->GetIndexCatalog()->GetNextOid();
+  CreateIndex(database_oid, table_oid, column_ids, table_object->GetSchemaName(),
+  		        index_oid, index_name.str(), IndexType::BWTREE,
+							IndexConstraintType::UNIQUE, true, txn);
 
   // Insert constraint into pg_constraint
   auto pg_constraint = catalog_map_[database_oid]->GetConstraintCatalog();
- 	constraint->SetConstraintOid(pg_constraint->GetNextOid());
-  pg_constraint->InsertConstraint(table_oid, column_ids, constraint,
-  		                            pool_.get(), txn);
+  std::shared_ptr<Constraint> constraint(
+  		new Constraint(pg_constraint->GetNextOid(), ConstraintType::UNIQUE,
+                     constraint_name, table_oid, column_ids, index_oid));
+  pg_constraint->InsertConstraint(constraint, pool_.get(), txn);
+
+  // Add constraint into the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 		schema->AddConstraint(constraint);
+ 	}
+
+  LOG_DEBUG("Added a UNIQUE constraint in %s.",
+  		      table_object->GetTableName().c_str());
 
   return ResultType::SUCCESS;
 }
@@ -667,8 +764,8 @@ ResultType Catalog::AddConstraint(oid_t database_oid, oid_t table_oid,
  * @param   database_oid  database to which the table belongs to
  * @param   src_table_oid table to which the constraint has to be added
  * @param   src_col_ids   Columns that the constraint affects
- * @param   snk_table_oid sink table
- * @param   snk_col_ids   Columns that limit the source columns
+ * @param   sink_table_oid sink table
+ * @param   sink_col_ids   Columns that limit the source columns
  * @param   upd_action    foreign key constraint action when update
  * @param   del_action    foreign key constraint action when delete
  * @param   constraint_name  constraint name
@@ -690,18 +787,6 @@ ResultType Catalog::AddForeignKeyConstraint(oid_t database_oid,
   auto sink_table =
   		storage_manager->GetTableWithOid(database_oid, sink_table_oid);
 
-	// Create the catalog object and shove it into the table
-	auto src_fk = new catalog::ForeignKey(
-			INVALID_OID, sink_table_oid, sink_col_ids, src_col_ids,
-			upd_action, del_action, constraint_name);
-	src_table->AddForeignKey(constraint_oid, src_fk);
-
-	// Register FK with the sink table for delete/update actions
-	auto sink_fk = new catalog::ForeignKey(
-			src_table_oid, INVALID_OID, sink_col_ids, src_col_ids,
-			upd_action, del_action, constraint_name);
-	sink_table->RegisterForeignKeySource(constraint_oid, sink_fk);
-
 	// Add a non-unique index on the source table if needed
 	auto src_table_object = catalog_map_[database_oid]->GetTableCatalog()
 			->GetTableObject(src_table_oid, txn);
@@ -718,24 +803,69 @@ ResultType Catalog::AddForeignKeyConstraint(oid_t database_oid,
 
   // Insert constraint into pg_constraint
   std::shared_ptr<Constraint> constraint(
-  		new Constraint(ConstraintType::FOREIGN, constraint_name, index_oid));
- 	constraint->SetConstraintOid(constraint_oid);
- 	ForeignKey fk(src_table_oid, sink_table_oid, sink_col_ids, src_col_ids,
-			          upd_action, del_action, constraint_name);
-  pg_constraint->InsertConstraint(src_table_oid, src_col_ids, constraint,
-  		                            fk, pool_.get(), txn);
+  		new Constraint(constraint_oid, ConstraintType::FOREIGN, constraint_name,
+                     src_table_oid, src_col_ids, index_oid, sink_table_oid,
+										 sink_col_ids, upd_action, del_action));
+  pg_constraint->InsertConstraint(constraint, pool_.get(), txn);
 
-  // add constraint into schema in source table
+  // add constraint into schema in source table and sink table
  	{
  		std::lock_guard<std::mutex> lock(catalog_mutex);
- 		for (auto fk_column : src_col_ids) {
- 			src_schema->AddConstraint(fk_column, constraint);
- 		}
+ 		src_schema->AddConstraint(constraint);
+ 		sink_table->GetSchema()->RegisterForeignKeySource(constraint);
  	}
+
+  LOG_DEBUG("Added a FOREIGN KEY constraint in %s to %s.",
+  		      src_table_object->GetTableName().c_str(),
+						catalog_map_[database_oid]->GetTableCatalog()
+									->GetTableObject(sink_table_oid, txn)
+									->GetTableName().c_str());
 
   return ResultType::SUCCESS;
 }
 
+/**
+ * @brief   Add a new check constraint for a table
+ * @param   database_oid  Database to which the table belongs to
+ * @param   table_oid     Table to which the constraint has to be added
+ * @param   column_ids    Columns that the constraint affects
+ * @param   cmd           Command string for check constraint
+ * @param   exp           Expression for check constraint
+ * @param   constraint_name  constraint name
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ * note: if add a new foreign key constraint, use AddForeignKeyConstraint
+ */
+ResultType Catalog::AddCheckConstraint(oid_t database_oid, oid_t table_oid,
+		const std::vector<oid_t> &column_ids,
+		const std::pair<ExpressionType, type::Value> &exp,
+		const std::string &constraint_name,
+		concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+
+  // Insert constraint into pg_constraint
+  auto pg_constraint = catalog_map_[database_oid]->GetConstraintCatalog();
+  std::shared_ptr<Constraint> constraint(
+  		new Constraint(pg_constraint->GetNextOid(), ConstraintType::CHECK,
+                     constraint_name, table_oid, column_ids, INVALID_OID,
+										 exp));
+  pg_constraint->InsertConstraint(constraint, pool_.get(), txn);
+
+  // Add constraint into the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 		schema->AddConstraint(constraint);
+ 	}
+
+  LOG_DEBUG("Added a CHECK constraint in %s.",
+  		      table_object->GetTableName().c_str());
+
+  return ResultType::SUCCESS;
+}
 
 //===----------------------------------------------------------------------===//
 // DROP FUNCTIONS
@@ -990,10 +1120,88 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
   return ResultType::SUCCESS;
 }
 
+
 /**
- * @brief   Drop a new foreign key constraint for a table
+ * @brief   Drop not null constraint for a column
  * @param   database_oid  the database to which the table belongs to
- * @param   table_oid     the table to which the layout belongs
+ * @param   table_oid     the table to which the column belongs to
+ * @param   column_id     the column which has the not null constraint
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::DropNotNullConstraint(oid_t database_oid,
+		                             oid_t table_oid, oid_t column_id,
+                                 concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+  auto column = schema->GetColumn(column_id);
+
+  // Check not null
+  if (!column.IsNotNull()) {
+  	throw CatalogException("Column " + column.GetName() +
+  			" in table " + table_object->GetTableName() +
+				" isn't NOT NULL.");
+  }
+
+  // Update pg_column to set constraint of the column
+  auto pg_column = catalog_map_[database_oid]->GetColumnCatalog();
+  pg_column->UpdateNotNullConstraint(table_oid, column.GetName(), false, txn);
+
+  // Set not null constraint in the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 	  schema->DropNotNull(column_id);
+ 	}
+
+  return ResultType::SUCCESS;
+
+}
+
+/**
+ * @brief   Drop default constraint for a column
+ * @param   database_oid  the database to which the table belongs to
+ * @param   table_oid     the table to which the column belongs to
+ * @param   column_id     the column which has the default constraint
+ * @param   txn           TransactionContext
+ * @return  ResultType(SUCCESS or FAILURE)
+ */
+ResultType Catalog::DropDefaultConstraint(oid_t database_oid,
+		                             oid_t table_oid, oid_t column_id,
+                                 concurrency::TransactionContext *txn) {
+	auto table_object = catalog_map_[database_oid]->GetTableCatalog()
+			->GetTableObject(table_oid, txn);
+  auto schema = storage::StorageManager::GetInstance()
+      ->GetTableWithOid(database_oid, table_oid)
+			->GetSchema();
+  auto column = schema->GetColumn(column_id);
+
+  // Check default
+  if (!column.HasDefault()) {
+  	throw CatalogException("Column " + column.GetName()
+  			+ " in table" + table_object->GetTableName()
+				+ " doesn't have default value.");
+  }
+
+  // Update pg_column to set constraint of the column
+  auto pg_column = catalog_map_[database_oid]->GetColumnCatalog();
+  pg_column->UpdateDefaultConstraint(table_oid, column.GetName(), false, nullptr, txn);
+
+  // Set default constraint in the schema
+ 	{
+ 		std::lock_guard<std::mutex> lock(catalog_mutex);
+ 	  schema->DropDefaultValue(column_id);
+ 	}
+
+ 	return ResultType::SUCCESS;
+}
+
+/**
+ * @brief   Drop a constraint for a table
+ * @param   database_oid  the database to which the table belongs to
+ * @param   table_oid     the table which has the constraint
  * @param   constraint_oid    the constraint to be dropped
  * @param   txn           TransactionContext
  * @return  ResultType(SUCCESS or FAILURE)
@@ -1007,8 +1215,8 @@ ResultType Catalog::DropConstraint(oid_t database_oid, oid_t table_oid,
 
   // delete constraint object from pg_constraint
   if (!pg_constraint->DeleteConstraint(table_oid, constraint_oid, txn)) {
-		LOG_DEBUG("Failed to delete the constraint: %d", constraint_oid);
-		return ResultType::FAILURE;
+  	throw CatalogException("Failed to delete the constraint: "
+  			+ std::to_string(constraint_oid));
   }
 
   // delete index if exists
@@ -1019,16 +1227,20 @@ ResultType Catalog::DropConstraint(oid_t database_oid, oid_t table_oid,
 	// delete constraint from table
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(database_oid, table_oid);
+  table->GetSchema()->DropConstraint(constraint_oid);
   if (constraint_object->GetConstraintType() == ConstraintType::FOREIGN) {
-    auto sink_table = storage_manager->GetTableWithOid(database_oid,
-    				constraint_object->GetFKSinkTableOid());
-  	table->DropForeignKey(constraint_object->GetConstraintOid());
-  	sink_table->DropForeignKeySrc(constraint_object->GetConstraintOid());
+    auto sink_table = storage_manager
+    		->GetTableWithOid(database_oid,
+    				              constraint_object->GetFKSinkTableOid());
+  	sink_table->GetSchema()
+  			      ->DeleteForeignKeySource(constraint_object->GetConstraintOid());
   }
-  if (!table->GetSchema()->DeleteConstraint(table_oid, constraint_oid)) {
-		LOG_DEBUG("Failed to delete the constraint: %d", constraint_oid);
-		return ResultType::FAILURE;
-  }
+
+  LOG_DEBUG("Drop a %s constraint in %s.",
+            ConstraintTypeToString(constraint_object->GetConstraintType()).c_str(),
+						catalog_map_[database_oid]->GetTableCatalog()
+															->GetTableObject(table_oid, txn)
+															->GetTableName().c_str());
 
   return ResultType::SUCCESS;
 }

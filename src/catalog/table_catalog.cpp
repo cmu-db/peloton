@@ -328,12 +328,13 @@ TableCatalog::TableCatalog(
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), database) {
   // Add indexes for pg_namespace
-  AddIndex({0}, TABLE_CATALOG_PKEY_OID, TABLE_CATALOG_NAME "_pkey",
-           IndexConstraintType::PRIMARY_KEY);
-  AddIndex({1, 2}, TABLE_CATALOG_SKEY0_OID, TABLE_CATALOG_NAME "_skey0",
+  AddIndex({ColumnId::TABLE_OID}, TABLE_CATALOG_PKEY_OID,
+           TABLE_CATALOG_NAME "_pkey", IndexConstraintType::PRIMARY_KEY);
+  AddIndex({ColumnId::TABLE_NAME, ColumnId::SCHEMA_NAME},
+           TABLE_CATALOG_SKEY0_OID, TABLE_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
-  AddIndex({3}, TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1",
-           IndexConstraintType::DEFAULT);
+  AddIndex({ColumnId::DATABASE_OID}, TABLE_CATALOG_SKEY1_OID,
+           TABLE_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 }
 
 /** @brief   Insert layout object into the cache.
@@ -514,56 +515,47 @@ TableCatalog::~TableCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
-  const std::string primary_key_constraint_name = "primary_key";
-  const std::string not_null_constraint_name = "not_null";
-  const std::string unique_constraint_name = "con_unique";
-
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.AddConstraint(std::make_shared<Constraint>(
-      ConstraintType::PRIMARY, primary_key_constraint_name,
-			TABLE_CATALOG_PKEY_OID));
-  table_id_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  table_id_column.SetNotNull();
 
   auto table_name_column = catalog::Column(type::TypeId::VARCHAR, max_name_size,
                                            "table_name", false);
-  table_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::UNIQUE, unique_constraint_name,
-			TABLE_CATALOG_SKEY0_OID));
-  table_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  table_name_column.SetNotNull();
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size, "schema_name", false);
-  schema_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::UNIQUE, unique_constraint_name,
-			TABLE_CATALOG_SKEY0_OID));
-  schema_name_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_name_column.SetNotNull();
 
   auto database_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
-  database_id_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  database_id_column.SetNotNull();
 
   auto version_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "version_id", true);
-  version_id_column.AddConstraint(std::make_shared<Constraint>(
-  		ConstraintType::NOTNULL, not_null_constraint_name));
+  version_id_column.SetNotNull();
 
   auto default_layout_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "default_layout_oid", true);
-  default_layout_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  default_layout_id_column.SetNotNull();
 
   std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
       {table_id_column, table_name_column, schema_name_column,
        database_id_column, version_id_column, default_layout_id_column}));
+
+  table_catalog_schema->AddConstraint(std::make_shared<Constraint>(
+  		TABLE_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+			TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID},
+			TABLE_CATALOG_PKEY_OID));
+
+  table_catalog_schema->AddConstraint(std::make_shared<Constraint>(
+  		TABLE_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+			TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_NAME, ColumnId::SCHEMA_NAME},
+			TABLE_CATALOG_SKEY0_OID));
 
   return table_catalog_schema;
 }

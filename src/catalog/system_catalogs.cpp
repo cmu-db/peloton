@@ -54,24 +54,21 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
 			{database_oid, CONSTRAINT_CATALOG_OID}};
 
   for (int i = 0; i < (int)shared_tables.size(); i++) {
+  	auto schema = storage::StorageManager::GetInstance()
+       ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
+       ->GetSchema();
     oid_t column_id = 0;
-    for (auto column :
-         storage::StorageManager::GetInstance()
-             ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
-             ->GetSchema()
-             ->GetColumns()) {
+    for (auto column : schema->GetColumns()) {
       pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
                                   column_id, column.GetOffset(),
                                   column.GetType(), column.GetLength(),
 																	column.IsInlined(), column.IsNotNull(),
-																	column.IsDefault(), column.GetDefaultValue(),
+																	column.HasDefault(), column.GetDefaultValue(),
 																	pool, txn);
-      for (auto constraint : column.GetConstraints()) {
-      	constraint->SetConstraintOid(pg_constraint_->GetNextOid());
-        pg_constraint_->InsertConstraint(shared_tables[i].second, {column_id},
-                                         constraint, pool, txn);
-      }
       column_id++;
+    }
+    for (auto constraint : schema->GetConstraints()) {
+      pg_constraint_->InsertConstraint(constraint.second, pool, txn);
     }
   }
 }
@@ -124,6 +121,7 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 	pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
+	pg_constraint_->UpdateOid(OID_FOR_USER_OFFSET);
 	// pg_layout_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
 	// pg_proc->UpdateOid(OID_FOR_USER_OFFSET);

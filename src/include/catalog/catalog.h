@@ -20,7 +20,6 @@
 namespace peloton {
 
 namespace catalog {
-class ForeignKey;
 class Constraint;
 class Schema;
 class DatabaseCatalogObject;
@@ -154,38 +153,40 @@ class Catalog {
       oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
       concurrency::TransactionContext *txn);
 
+
   //===--------------------------------------------------------------------===//
-  // ADD FUNCTIONS
+  // SET FUNCTIONS FOR COLUMN CONSTRAINT
   //===--------------------------------------------------------------------===//
 
-  /**
-   * @brief   Add a new constraint for a table except for foreign key
-   * @param   database_oid  Database to which the table belongs to
-   * @param   table_oid     Table to which the constraint has to be added
-   * @param   column_ids    Columns that the constraint affects
-   * @param   constraint    The new constraint to be registered
-   * @param   txn           TransactionContext
-   * @return  ResultType(SUCCESS or FAILURE)
-   * note: if add a new foreign key constraint, use AddForeignKeyConstraint
-   */
-  ResultType AddConstraint(oid_t database_oid, oid_t table_oid,
-  		                     const std::vector<oid_t> &column_ids,
-													 std::shared_ptr<Constraint> constraint,
-                           concurrency::TransactionContext *txn);
+  // Set not null constraint for a column
+  ResultType SetNotNullConstraint(oid_t database_oid, oid_t table_oid,
+                                  oid_t column_id,
+																	concurrency::TransactionContext *txn);
 
-  /**
-   * @brief   Add a new foreign key constraint for a table
-   * @param   database_oid  database to which the table belongs to
-   * @param   src_table_oid table to which the constraint has to be added
-   * @param   src_col_ids   Columns that the constraint affects
-   * @param   snk_table_oid sink table
-   * @param   snk_col_ids   Columns that limit the source columns
-   * @param   upd_action    foreign key constraint action when update
-   * @param   del_action    foreign key constraint action when delete
-   * @param   constraint_name  constraint name
-   * @param   txn           TransactionContext
-   * @return  ResultType(SUCCESS or FAILURE)
-   */
+  // Set default constraint for a column
+  ResultType SetDefaultConstraint(oid_t database_oid, oid_t table_oid,
+                                  oid_t column_id,
+																	const type::Value &default_value,
+																	concurrency::TransactionContext *txn);
+
+
+  //===--------------------------------------------------------------------===//
+  // ADD FUNCTIONS FOR TABLE CONSTRAINT
+  //===--------------------------------------------------------------------===//
+
+  // Add a new primary constraint for a table
+  ResultType AddPrimaryKeyConstraint(oid_t database_oid, oid_t table_oid,
+                                     const std::vector<oid_t> &column_ids,
+																		 const std::string &constraint_name,
+																		 concurrency::TransactionContext *txn);
+
+  // Add a new unique constraint for a table
+  ResultType AddUniqueConstraint(oid_t database_oid, oid_t table_oid,
+                                 const std::vector<oid_t> &column_ids,
+																 const std::string &constraint_name,
+																 concurrency::TransactionContext *txn);
+
+  // Add a new foreign key constraint for a table
   ResultType AddForeignKeyConstraint(oid_t database_oid, oid_t src_table_oid,
                            const std::vector<oid_t> &src_col_ids,
   		                     oid_t sink_table_oid,
@@ -194,6 +195,13 @@ class Catalog {
 													 FKConstrActionType del_action,
 													 const std::string &constraint_name,
                            concurrency::TransactionContext *txn);
+
+  // Add a new check constraint for a table
+  ResultType AddCheckConstraint(oid_t database_oid, oid_t table_oid,
+                                const std::vector<oid_t> &column_ids,
+																const std::pair<ExpressionType, type::Value> &exp,
+																const std::string &constraint_name,
+																concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
@@ -234,14 +242,17 @@ class Catalog {
   ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
                         concurrency::TransactionContext *txn);
 
-  /**
-   * @brief   Drop a new foreign key constraint for a table
-   * @param   database_oid  the database to which the table belongs to
-   * @param   table_oid     the table to which the layout belongs
-   * @param   constraint_oid    the constraint to be dropped
-   * @param   txn           TransactionContext
-   * @return  ResultType(SUCCESS or FAILURE)
-   */
+  // Drop not null constraint for a column
+  ResultType DropNotNullConstraint(oid_t database_oid, oid_t table_oid,
+                                   oid_t column_id,
+                                   concurrency::TransactionContext *txn);
+
+  // Drop default constraint for a column
+  ResultType DropDefaultConstraint(oid_t database_oid, oid_t table_oid,
+                                   oid_t column_id,
+                                   concurrency::TransactionContext *txn);
+
+  // Drop constraint for a table
   ResultType DropConstraint(oid_t database_oid, oid_t table_oid,
   		                     oid_t constraint_oid,
                            concurrency::TransactionContext *txn);
