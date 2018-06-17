@@ -114,7 +114,6 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 	pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
-	// pg_layout_->UpdateOid(OID_FOR_USER_OFFSET);
 	pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
 	// pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
 }

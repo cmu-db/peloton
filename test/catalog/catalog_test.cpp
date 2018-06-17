@@ -385,7 +385,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
 
   // Check the first default layout
   auto first_default_layout = table->GetDefaultLayout();
-  EXPECT_EQ(0, first_default_layout->GetOid());
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID, first_default_layout->GetOid());
   EXPECT_TRUE(first_default_layout->IsRowStore());
 
   // Check the first default layout in pg_layout and pg_table
@@ -465,13 +465,13 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   // Check that default layout is reset and set to row_store.
   EXPECT_NE(default_layout, table->GetDefaultLayout());
   EXPECT_TRUE(table->GetDefaultLayout()->IsRowStore());
-  EXPECT_EQ(0, table->GetDefaultLayout()->GetOid());
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID, table->GetDefaultLayout()->GetOid());
 
   // Query pg_layout and pg_table to ensure that the entry is dropped
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(nullptr,
             pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
-  EXPECT_EQ(0,
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID,
   		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
 
   // The additional layout must be present in pg_layout

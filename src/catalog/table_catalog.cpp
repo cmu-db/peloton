@@ -696,7 +696,7 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
  */
 bool TableCatalog::UpdateDefaultLayoutOid(oid_t update_val, oid_t table_oid,
                                    concurrency::TransactionContext *txn) {
-  std::vector<oid_t> update_columns({ColumnId::DEFAULT_LAYOUT_OID});  // defalut_layou_oid
+  std::vector<oid_t> update_columns({ColumnId::DEFAULT_LAYOUT_OID});  // defalut_layout_oid
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   // values to execute index scan
   std::vector<type::Value> scan_values;

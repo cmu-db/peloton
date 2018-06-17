@@ -169,22 +169,22 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   // pg_database record is shared across different databases
   system_catalogs->GetTableCatalog()->InsertTable(
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      CATALOG_DATABASE_OID, 0, pool_.get(), txn);
+      CATALOG_DATABASE_OID, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, 0, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-			0, pool_.get(), txn);
+      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-			0, pool_.get(), txn);
+      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, 0, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, 0, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {

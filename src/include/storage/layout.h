@@ -17,12 +17,6 @@
 #include "common/internal_types.h"
 #include "common/printable.h"
 
-//@{
-/** @brief  Pre-defined OIDs for ROW and COLUMN store.  */
-#define ROW_STORE_OID 0
-#define COLUMN_STORE_OID 1
-//@}
-
 namespace peloton {
 
 namespace catalog {

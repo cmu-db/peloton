@@ -58,6 +58,10 @@ namespace catalog {
 #define CATALOG_SCHEMA_NAME "pg_catalog"
 #define DEFAULT_SCHEMA_NAME "public"
 
+// Reserved layout oid
+#define ROW_STORE_LAYOUT_OID 0
+#define COLUMN_STORE_LAYOUT_OID 1
+
 // Reserved pg_xxx table oid
 #define DATABASE_CATALOG_OID (0 | TABLE_OID_MASK)
 #define SCHEMA_CATALOG_OID (1 | TABLE_OID_MASK)

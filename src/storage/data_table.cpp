@@ -67,7 +67,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
-      current_layout_oid_(ATOMIC_VAR_INIT(COLUMN_STORE_OID)),
+      current_layout_oid_(ATOMIC_VAR_INIT(COLUMN_STORE_LAYOUT_OID)),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
   if (is_catalog == true) {
