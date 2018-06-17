@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cinttypes>
+#include "storage/storage_manager.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 
@@ -126,8 +127,8 @@ bool DeleteExecutor::DExecute() {
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
 
-      auto &manager = catalog::Manager::GetInstance();
-      tile_group = manager.GetTileGroup(old_location.block).get();
+      auto storage_manager = storage::StorageManager::GetInstance();
+      tile_group = storage_manager->GetTileGroup(old_location.block).get();
       tile_group_header = tile_group->GetHeader();
 
       physical_tuple_id = old_location.offset;

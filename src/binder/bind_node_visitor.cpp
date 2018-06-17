@@ -166,7 +166,19 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
 }
 
 void BindNodeVisitor::Visit(parser::LimitDescription *) {}
-void BindNodeVisitor::Visit(parser::CopyStatement *) {}
+
+void BindNodeVisitor::Visit(parser::CopyStatement *node) {
+  context_ = std::make_shared<BinderContext>(nullptr);
+  if (node->table != nullptr) {
+    node->table->Accept(this);
+
+    // If the table is given, we're either writing or reading all columns
+    context_->GenerateAllColumnExpressions(node->select_list);
+  } else {
+    node->select_stmt->Accept(this);
+  }
+}
+
 void BindNodeVisitor::Visit(parser::CreateFunctionStatement *) {}
 void BindNodeVisitor::Visit(parser::CreateStatement *node) {
   node->TryBindDatabaseName(default_database_name_);

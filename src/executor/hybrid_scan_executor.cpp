@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "storage/storage_manager.h"
 #include "executor/hybrid_scan_executor.h"
 #include "common/container_tuple.h"
 #include "common/internal_types.h"
@@ -230,7 +231,9 @@ bool HybridScanExecutor::SeqScanUtil() {
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(current_txn, location,
+          auto res = transaction_manager.PerformRead(current_txn,
+                                                     location,
+                                                     tile_group_header,
                                                      acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
@@ -375,8 +378,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       item_pointers_.insert(tuple_location);
     }
 
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
 
     // perform transaction read
@@ -389,7 +392,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
       if (visibility == VisibilityType::OK) {
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-        auto res = transaction_manager.PerformRead(current_txn, tuple_location,
+        auto res = transaction_manager.PerformRead(current_txn,
+                                                   tuple_location,
+                                                   tile_group_header,
                                                    acquire_owner);
         if (!res) {
           transaction_manager.SetTransactionResult(current_txn,
@@ -421,7 +426,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
           }
         }
 
-        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group = storage_manager->GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
@@ -429,8 +434,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuples.first);
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto tile_group = storage_manager->GetTileGroup(tuples.first);
 
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
 

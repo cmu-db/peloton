@@ -255,5 +255,9 @@ void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
 }
 
+void RuntimeFunctions::ThrowInvalidInputStringException() {
+  throw std::runtime_error("ERROR: invalid input string");
+}
+
 }  // namespace codegen
 }  // namespace peloton

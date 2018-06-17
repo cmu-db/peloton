@@ -12,13 +12,6 @@
 
 #pragma once
 #include "tbb/concurrent_vector.h"
-#include "tbb/tbb_allocator.h"
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
-#include <array>
-#include <atomic>
-#include <memory>
 
 namespace peloton {
 
@@ -35,33 +28,74 @@ class LockFreeArray {
   LockFreeArray();
   ~LockFreeArray();
 
-  // Update a item
-  bool Update(const std::size_t &offset, ValueType value);
+  /**
+   * Assigns the provided value to the provided offset.
+   *
+   * @param offset  Element offset to update
+   * @param value   Value to be assigned
+   */
+  void Update(const std::size_t &offset, const ValueType &value);
 
-  // Append an item
-  bool Append(ValueType value);
+  /**
+   * Appends an element to the end of the array
+   *
+   * @param value   Value to be appended
+   */
+  void Append(const ValueType &value);
 
-  // Get a item
+  /**
+   * Returns the element at the offset
+   *
+   * @returns   Element at offset
+   */
   ValueType Find(const std::size_t &offset) const;
 
-  // Get a valid item
+  /**
+   * Returns the element at the offset, or invalid_value if
+   * the element does not exist.
+   *
+   * @param offset          Element offset to access
+   * @param invalid_value   Sentinel value to return if element
+   *                        does not exist or offset out of range
+   * @returns               Element at offset or invalid_value
+   */
   ValueType FindValid(const std::size_t &offset,
                       const ValueType &invalid_value) const;
 
-  // Delete key from the lock_free_array
-  bool Erase(const std::size_t &offset, const ValueType &invalid_value);
+  /**
+   * Assigns the provided invalid_value to the provided offset.
+   *
+   * @param offset          Element offset to update
+   * @param invalid_value   Invalid value to be assigned
+   */
+  void Erase(const std::size_t &offset, const ValueType &invalid_value);
 
-  // Returns item count in the lock_free_array
+  /**
+   *
+   * @return Number of elements in the underlying structure
+   */
   size_t GetSize() const;
 
-  // Checks if the lock_free_array is empty
+  /**
+   *
+   * @return True if empty, false otherwise
+   */
   bool IsEmpty() const;
 
-  // Clear all elements and reset them to default value
+  /**
+   * Resets the underlying data structure to have 0 elements
+   */
   void Clear();
 
-  // Exists ?
-  bool Contains(const ValueType &value);
+  /**
+   *
+   * Check the lock-free array for the provided value.
+   * O(n) time complexity.
+   *
+   * @param value  value to search for
+   * @return       True if element present, false otherwise
+   */
+  bool Contains(const ValueType &value) const;
 
  private:
   // lock free array

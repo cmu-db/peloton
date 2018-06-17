@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer_task.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,6 +22,7 @@
 
 namespace peloton {
 namespace optimizer {
+
 //===--------------------------------------------------------------------===//
 // Base class
 //===--------------------------------------------------------------------===//
@@ -30,13 +31,16 @@ void OptimizerTask::ConstructValidRules(
     std::vector<std::unique_ptr<Rule>> &rules,
     std::vector<RuleWithPromise> &valid_rules) {
   for (auto &rule : rules) {
-    if (group_expr->Op().GetType() !=
-            rule->GetMatchPattern()->Type() ||  // Root pattern type mismatch
-        group_expr->HasRuleExplored(rule.get()) ||  // Rule has been applied
+    // Check if we can apply the rule
+    bool root_pattern_mismatch =
+        group_expr->Op().GetType() != rule->GetMatchPattern()->Type();
+    bool already_explored = group_expr->HasRuleExplored(rule.get());
+    bool child_pattern_mismatch =
         group_expr->GetChildrenGroupsSize() !=
-            rule->GetMatchPattern()
-                ->GetChildPatternsSize())  // Children size does not math
+        rule->GetMatchPattern()->GetChildPatternsSize();
+    if (root_pattern_mismatch || already_explored || child_pattern_mismatch) {
       continue;
+    }
 
     auto promise = rule->Promise(group_expr, context);
     if (promise > 0) valid_rules.emplace_back(rule.get(), promise);

@@ -54,6 +54,12 @@ class Invalid : public SqlType, public Singleton<Invalid> {
     throw Exception{"INVALID type doesn't have a materialization type"};
   }
 
+  llvm::Function *GetInputFunction(
+      UNUSED_ATTRIBUTE CodeGen &codegen,
+      UNUSED_ATTRIBUTE const Type &type) const override {
+    throw Exception{"INVALID type does not have an input function"};
+  }
+
   llvm::Function *GetOutputFunction(
       UNUSED_ATTRIBUTE CodeGen &codegen,
       UNUSED_ATTRIBUTE const Type &type) const override {

@@ -17,6 +17,7 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"

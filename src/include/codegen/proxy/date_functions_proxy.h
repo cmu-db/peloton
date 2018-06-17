@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/date_functions_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,8 +18,11 @@ namespace peloton {
 namespace codegen {
 
 PROXY(DateFunctions) {
-  // Proxy everything in function::StringFunctions
+  // Utility functions
   DECLARE_METHOD(Now);
+
+  // Input functions
+  DECLARE_METHOD(InputDate);
 };
 
 }  // namespace codegen

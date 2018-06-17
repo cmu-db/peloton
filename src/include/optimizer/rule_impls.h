@@ -73,6 +73,18 @@ class GetToSeqScan : public Rule {
                  OptimizeContext *context) const override;
 };
 
+class LogicalExternalFileGetToPhysical : public Rule {
+ public:
+  LogicalExternalFileGetToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
 /**
  * @brief Generate dummy scan for queries like "SELECT 1", there's no actual
  * table to generate
@@ -260,6 +272,21 @@ class ImplementDistinct : public Rule {
 class ImplementLimit : public Rule {
  public:
   ImplementLimit();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+/**
+ * @brief Logical Export to External File -> Physical Export to External file
+ */
+class LogicalExportToPhysicalExport : public Rule {
+ public:
+  LogicalExportToPhysicalExport();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;

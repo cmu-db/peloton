@@ -523,6 +523,11 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
       field_size = 255;
       break;
     }
+    case type::TypeId::DATE: {
+      field_type = PostgresValueType::DATE;
+      field_size = 4;
+      break;
+    }
     case type::TypeId::TIMESTAMP: {
       field_type = PostgresValueType::TIMESTAMPS;
       field_size = 64;  // FIXME: Bytes???
