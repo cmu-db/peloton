@@ -53,7 +53,10 @@ class NetworkIoWrapper {
                    std::shared_ptr<WriteBuffer> wbuf)
       : sock_fd_(sock_fd),
         rbuf_(std::move(rbuf)),
-        wbuf_(std::move(wbuf)) {}
+        wbuf_(std::move(wbuf)) {
+    rbuf_->Reset();
+    wbuf_->Reset();
+  }
 
   DISALLOW_COPY(NetworkIoWrapper)
 
