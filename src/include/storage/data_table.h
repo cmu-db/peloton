@@ -265,7 +265,10 @@ class DataTable : public AbstractTable {
     default_layout_ = std::shared_ptr<const Layout>(
         new const Layout(schema->GetColumnCount(), type));
   }
-  const Layout &GetDefaultLayout() const;
+
+  const std::shared_ptr<const Layout> GetDefaultLayout() const {
+  	return default_layout_;
+  }
 
   //===--------------------------------------------------------------------===//
   // INDEX TUNER

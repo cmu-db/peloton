@@ -167,16 +167,18 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid,
+bool IndexCatalog::DeleteIndex(oid_t database_oid, oid_t index_oid,
                                concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
+  		                                                        index_oid);
   if (index_object) {
     auto table_object =
-        txn->catalog_cache.GetCachedTableObject(index_object->GetTableOid());
+        txn->catalog_cache.GetCachedTableObject(database_oid,
+        		                                    index_object->GetTableOid());
     table_object->EvictAllIndexObjects();
   }
 
@@ -184,12 +186,13 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid,
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-    oid_t index_oid, concurrency::TransactionContext *txn) {
+    oid_t database_oid, oid_t index_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+  auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
+  		                                                        index_oid);
   if (index_object) {
     return index_object;
   }
@@ -224,14 +227,15 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-    const std::string &index_name, const std::string &schema_name,
-    concurrency::TransactionContext *txn) {
+		const std::string &database_name, const std::string &index_name,
+		const std::string &schema_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto index_object =
-      txn->catalog_cache.GetCachedIndexObject(index_name, schema_name);
+      txn->catalog_cache.GetCachedIndexObject(database_name, index_name,
+      		                                    schema_name);
   if (index_object) {
     return index_object;
   }

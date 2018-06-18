@@ -63,7 +63,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s", old_default_layout.GetColumnMapInfo().c_str());
+  LOG_INFO("Layout: %s", old_default_layout->GetColumnMapInfo().c_str());
 
   // Start layout tuner
   layout_tuner.Start();
@@ -109,26 +109,26 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // Check new default tile group layout
   auto new_default_layout = data_table->GetDefaultLayout();
-  LOG_INFO("Layout: %s", new_default_layout.GetColumnMapInfo().c_str());
+  LOG_INFO("Layout: %s", new_default_layout->GetColumnMapInfo().c_str());
 
   // Ensure that the layout has been changed
-  EXPECT_NE(new_default_layout, old_default_layout);
+  EXPECT_NE(*new_default_layout, *old_default_layout);
 
   // Check the new default table layout
-  column_count = new_default_layout.GetColumnCount();
+  column_count = new_default_layout->GetColumnCount();
   EXPECT_EQ(column_count, 4);
 
   // Check the tile corresponding to each column.
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(0), 0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(1), 0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(2), 0);
-  EXPECT_EQ(new_default_layout.GetTileIdFromColumnId(3), 1);
+  EXPECT_EQ(new_default_layout->GetTileIdFromColumnId(0), 0);
+  EXPECT_EQ(new_default_layout->GetTileIdFromColumnId(1), 0);
+  EXPECT_EQ(new_default_layout->GetTileIdFromColumnId(2), 0);
+  EXPECT_EQ(new_default_layout->GetTileIdFromColumnId(3), 1);
 
   // Check the per tile stats of the new layout
   // The layout must contain 2 tiles with the following stats
   // 0 -> 3
   // 1 -> 1
-  auto layout_stats = new_default_layout.GetLayoutStats();
+  auto layout_stats = new_default_layout->GetLayoutStats();
   EXPECT_EQ(layout_stats[0], 3);
   EXPECT_EQ(layout_stats[1], 1);
 
