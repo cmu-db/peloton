@@ -116,6 +116,8 @@ bool TileGroupCompactor::MoveTuplesOutOfTileGroup(
       return false;
     }
 
+    txn->RecordReadOwn(old_location);
+
     // check again now that we have ownsership
     // to ensure that this is stil the latest version
     bool is_latest_version =
