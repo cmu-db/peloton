@@ -623,14 +623,13 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //// handle other isolation levels
   //////////////////////////////////////////////////////////
 
-  auto &rw_set = current_txn->GetReadWriteSet();
-
-  // if no modifying queries, treat as read-only
-  if (rw_set.empty()) {
-    LOG_TRACE("Empty RW set, ending transaction.");
+  if (!current_txn->IsWritten()) {
+    LOG_TRACE("Transaction not yet written, ending transaction.");
     EndTransaction(current_txn);
     return ResultType::SUCCESS;
   }
+
+  auto &rw_set = current_txn->GetReadWriteSet();
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();

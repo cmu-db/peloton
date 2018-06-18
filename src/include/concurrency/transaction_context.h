@@ -267,6 +267,13 @@ class TransactionContext : public Printable {
   bool IsReadOnly() const { return read_only_; }
 
   /**
+   * @brief      Determines if already written.
+   *
+   * @return     True if already written, False otherwise.
+   */
+  bool IsWritten() const { return is_written_; }
+
+  /**
    * @brief      Gets the isolation level.
    *
    * @return     The isolation level.

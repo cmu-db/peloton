@@ -112,6 +112,7 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
                  (rw_set_[location] != RWType::DELETE &&
                   rw_set_[location] != RWType::INS_DEL));
   rw_set_[location] = RWType::READ_OWN;
+  is_written_ = true;
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
