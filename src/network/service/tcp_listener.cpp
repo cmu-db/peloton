@@ -6,14 +6,14 @@
 //
 // Identification: src/network/service/tcp_listener.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "network/service/tcp_listener.h"
-#include "network/service/tcp_connection.h"
-#include "network/service/rpc_type.h"
 #include "network/service/connection_manager.h"
+#include "network/service/rpc_type.h"
+#include "network/service/tcp_connection.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
@@ -101,7 +101,8 @@ void Listener::Run(void *arg) {
 void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             struct sockaddr *address,
                             UNUSED_ATTRIBUTE int socklen, void *ctx) {
-  PELOTON_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
+  PELOTON_ASSERT(listener != NULL && address != NULL && socklen >= 0 &&
+                 ctx != NULL);
 
   LOG_TRACE("Server: connection received");
 

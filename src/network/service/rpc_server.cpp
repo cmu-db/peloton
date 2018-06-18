@@ -6,19 +6,19 @@
 //
 // Identification: src/network/service/rpc_server.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "network/service/rpc_server.h"
-#include "network/service/rpc_controller.h"
-#include "network/service/connection_manager.h"
-#include "common/logger.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>
+#include "common/logger.h"
+#include "network/service/connection_manager.h"
+#include "network/service/rpc_controller.h"
 
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 namespace peloton {
 namespace network {

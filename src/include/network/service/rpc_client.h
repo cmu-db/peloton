@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include "rpc_type.h"
-#include "rpc_controller.h"
-#include "rpc_channel.h"
-#include "peloton_endpoint.h"
-#include "peloton/proto/abstract_service.pb.h"
 #include "common/logger.h"
+#include "peloton/proto/abstract_service.pb.h"
+#include "peloton_endpoint.h"
+#include "rpc_channel.h"
+#include "rpc_controller.h"
+#include "rpc_type.h"
 
 #include <google/protobuf/stubs/common.h>
 

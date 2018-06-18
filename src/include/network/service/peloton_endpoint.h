@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "rpc_server.h"
 #include "peloton_service.h"
+#include "rpc_server.h"
 
 namespace peloton {
 namespace network {

@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 #include <thread>
-#include <mutex>
-#include <condition_variable>
 
 namespace peloton {
 namespace network {

@@ -6,21 +6,21 @@
 //
 // Identification: src/network/service/tcp_connection.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
 #include <functional>
+#include <iostream>
 #include <mutex>
 
 #include <pthread.h>
 
-#include "network/service/tcp_connection.h"
+#include "common/macros.h"
 #include "network/service/connection_manager.h"
 #include "network/service/peloton_service.h"
 #include "network/service/rpc_type.h"
-#include "common/macros.h"
+#include "network/service/tcp_connection.h"
 
 namespace peloton {
 namespace network {
@@ -152,7 +152,8 @@ void *Connection::ProcessMessage(void *connection) {
 
     // Get the hashcode of the rpc method
     uint64_t opcode = 0;
-    PELOTON_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
+    PELOTON_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN,
+                   sizeof(opcode));
 
     // Get the rpc method meta info: method descriptor
     RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);

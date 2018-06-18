@@ -25,5 +25,5 @@ namespace service {
 //===----------------------------------------------------------------------===//
 
 }  // namespace service
-}  // namespace message
+}  // namespace network
 }  // namespace peloton

@@ -12,17 +12,17 @@
 
 #pragma once
 
-#include "rpc_server.h"
+#include "common/logger.h"
+#include "network_address.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
-#include "network_address.h"
-#include "common/logger.h"
+#include "rpc_server.h"
 
-#include <event2/bufferevent.h>
 #include <event2/buffer.h>
+#include <event2/bufferevent.h>
+#include <event2/event.h>
 #include <event2/listener.h>
 #include <event2/util.h>
-#include <event2/event.h>
 
 #include <memory>
 

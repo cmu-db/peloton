@@ -6,28 +6,28 @@
 //
 // Identification: src/network/service/peloton_service.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "network/service/peloton_service.h"
-#include "network/service/peloton_endpoint.h"
-#include "network/service/rpc_server.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "executor/plan_executor.h"
+#include "network/service/peloton_endpoint.h"
+#include "network/service/rpc_server.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
-#include "common/internal_types.h"
 
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <iostream>
 #include <cinttypes>
+#include <iostream>
 
 namespace peloton {
 namespace network {
