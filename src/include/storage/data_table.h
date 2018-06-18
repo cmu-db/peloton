@@ -134,8 +134,8 @@ class DataTable : public AbstractTable {
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
-      bool check_fk = true);
+                   concurrency::TransactionContext *transaction,
+                   ItemPointer **index_entry_ptr, bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -167,12 +167,11 @@ class DataTable : public AbstractTable {
 
   int GetTriggerNumber();
 
-  trigger::Trigger* GetTriggerByIndex(int n);
+  trigger::Trigger *GetTriggerByIndex(int n);
 
-  trigger::TriggerList* GetTriggerList();
+  trigger::TriggerList *GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn);
-
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -203,11 +202,10 @@ class DataTable : public AbstractTable {
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
-  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
-                                    storage::Tuple *new_tuple,
-                                    concurrency::TransactionContext *transaction,
-                                    executor::ExecutorContext *context,
-                                    bool is_update);
+  bool CheckForeignKeySrcAndCascade(
+      storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
+      concurrency::TransactionContext *transaction,
+      executor::ExecutorContext *context, bool is_update);
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -254,7 +252,7 @@ class DataTable : public AbstractTable {
   }
 
   const std::shared_ptr<const Layout> GetDefaultLayout() const {
-  	return default_layout_;
+    return default_layout_;
   }
 
   //===--------------------------------------------------------------------===//
@@ -316,8 +314,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
-//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
-//                          std::vector<oid_t> cols) const;
+  //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+  //                          std::vector<oid_t> cols) const;
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   //              std::pair<ExpressionType, type::Value> exp) const;

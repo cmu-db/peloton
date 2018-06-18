@@ -83,24 +83,24 @@ TEST_F(CatalogTests, CreatingTable) {
   catalog->CreateTable("emp_db", DEFAULT_SCHEMA_NAME, "emp_table",
                        std::move(table_schema), txn);
   catalog->CreateTable("emp_db", DEFAULT_SCHEMA_NAME, "department_table",
-											 std::move(table_schema_2), txn);
+                       std::move(table_schema_2), txn);
   catalog->CreateTable("emp_db", DEFAULT_SCHEMA_NAME, "salary_table",
-											 std::move(table_schema_3), txn);
+                       std::move(table_schema_3), txn);
 
-  auto emp = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
-  		                               "emp_table", txn);
+  auto emp =
+      catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME, "emp_table", txn);
   auto department = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
-  		                               "department_table", txn);
+                                            "department_table", txn);
   auto salary = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
-  		                               "salary_table", txn);
+                                        "salary_table", txn);
 
   catalog->AddPrimaryKeyConstraint(emp->GetDatabaseOid(), emp->GetTableOid(),
-  		                             {0}, "con_primary", txn);
+                                   {0}, "con_primary", txn);
   catalog->AddPrimaryKeyConstraint(department->GetDatabaseOid(),
-                                   department->GetTableOid(),
-  		                             {0}, "con_primary", txn);
-  catalog->AddPrimaryKeyConstraint(salary->GetDatabaseOid(), salary->GetTableOid(),
-  		                             {0}, "con_primary", txn);
+                                   department->GetTableOid(), {0},
+                                   "con_primary", txn);
+  catalog->AddPrimaryKeyConstraint(
+      salary->GetDatabaseOid(), salary->GetTableOid(), {0}, "con_primary", txn);
 
   // insert random tuple into DATABASE_METRICS_CATALOG and check
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
@@ -114,13 +114,13 @@ TEST_F(CatalogTests, CreatingTable) {
   *param.buf = 'a';
   auto database_object = catalog->GetDatabaseObject("emp_db", txn);
   catalog->GetSystemCatalogs(database_object->GetDatabaseOid())
-         ->GetQueryMetricsCatalog()
-         ->InsertQueryMetrics("a query", database_object->GetDatabaseOid(), 1,
-                              param, param, param, 1, 1, 1, 1, 1, 1, 1,
-															pool.get(), txn);
+      ->GetQueryMetricsCatalog()
+      ->InsertQueryMetrics("a query", database_object->GetDatabaseOid(), 1,
+                           param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
+                           txn);
   auto param1 = catalog->GetSystemCatalogs(database_object->GetDatabaseOid())
-                       ->GetQueryMetricsCatalog()
-                       ->GetParamTypes("a query", txn);
+                    ->GetQueryMetricsCatalog()
+                    ->GetParamTypes("a query", txn);
   EXPECT_EQ(1, param1.len);
   EXPECT_EQ('a', *param1.buf);
   // check colum object
@@ -133,20 +133,23 @@ TEST_F(CatalogTests, TestingCatalogCache) {
   auto txn = txn_manager.BeginTransaction();
 
   auto catalog = catalog::Catalog::GetInstance();
-  auto catalog_db_object = catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
+  auto catalog_db_object =
+      catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
   auto catalog_table_objects = catalog_db_object->GetTableObjects();
   EXPECT_NE(0, catalog_table_objects.size());
 
   auto user_db_object = catalog->GetDatabaseObject("emp_db", txn);
-  auto user_database = storage::StorageManager::GetInstance()
-                          ->GetDatabaseWithOid(user_db_object->GetDatabaseOid());
+  auto user_database =
+      storage::StorageManager::GetInstance()->GetDatabaseWithOid(
+          user_db_object->GetDatabaseOid());
 
   // check expected table object is acquired
-  for (oid_t table_idx = 0; table_idx < user_database->GetTableCount(); table_idx++) {
-  	auto table = user_database->GetTable(table_idx);
-  	auto user_table_object = user_db_object->GetTableObject(table->GetOid());
-   	EXPECT_EQ(user_db_object->GetDatabaseOid(),
-    			    user_table_object->GetDatabaseOid());
+  for (oid_t table_idx = 0; table_idx < user_database->GetTableCount();
+       table_idx++) {
+    auto table = user_database->GetTable(table_idx);
+    auto user_table_object = user_db_object->GetTableObject(table->GetOid());
+    EXPECT_EQ(user_db_object->GetDatabaseOid(),
+              user_table_object->GetDatabaseOid());
   }
 
   txn_manager.CommitTransaction(txn);
@@ -171,7 +174,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
   EXPECT_EQ(type::Type::GetTypeSize(type::TypeId::INTEGER),
-  		column_objects[0]->GetColumnLength());
+            column_objects[0]->GetColumnLength());
   EXPECT_TRUE(column_objects[0]->IsInlined());
   EXPECT_FALSE(column_objects[0]->IsNotNull());
   EXPECT_FALSE(column_objects[0]->HasDefault());
@@ -181,7 +184,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(1, column_objects[1]->GetColumnId());
   EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
-  EXPECT_EQ(32,	column_objects[1]->GetColumnLength());
+  EXPECT_EQ(32, column_objects[1]->GetColumnLength());
   EXPECT_TRUE(column_objects[1]->IsInlined());
   EXPECT_FALSE(column_objects[1]->IsNotNull());
   EXPECT_FALSE(column_objects[1]->HasDefault());
@@ -405,7 +408,8 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
       *(first_default_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, first_layout_oid, txn).get()));
   EXPECT_EQ(first_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+            catalog->GetTableObject(database_oid, table_oid, txn)
+                ->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Change default layout.
@@ -434,7 +438,8 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
       *(default_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn).get()));
   EXPECT_EQ(default_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+            catalog->GetTableObject(database_oid, table_oid, txn)
+                ->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Create additional layout.
@@ -448,7 +453,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto other_layout =
       catalog->CreateLayout(database_oid, table_oid, non_default_map, txn);
   EXPECT_NE(nullptr, other_layout);
-	txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 
   // Check the created layout
   EXPECT_FALSE(other_layout->IsColumnStore());
@@ -465,7 +470,8 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   // Check that the default layout is still the same.
   EXPECT_NE(other_layout, table->GetDefaultLayout());
   EXPECT_NE(other_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+            catalog->GetTableObject(database_oid, table_oid, txn)
+                ->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Drop the default layout.
@@ -486,7 +492,8 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   EXPECT_EQ(nullptr,
             pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
   EXPECT_EQ(ROW_STORE_LAYOUT_OID,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+            catalog->GetTableObject(database_oid, table_oid, txn)
+                ->GetDefaultLayoutOid());
 
   // The additional layout must be present in pg_layout
   EXPECT_EQ(
@@ -500,7 +507,6 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
 TEST_F(CatalogTests, ConstraintCatalogTest) {
   auto db_name = "con_db";
   auto sink_table_name = "sink_table";
@@ -512,8 +518,9 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   EXPECT_EQ(ResultType::SUCCESS, catalog->CreateDatabase(db_name, txn));
 
   // Create table for foreign key.
-  auto sink_val0 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "sink_val0", true);
+  auto sink_val0 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "sink_val0", true);
   std::unique_ptr<catalog::Schema> sink_table_schema(
       new catalog::Schema({sink_val0}));
   EXPECT_EQ(ResultType::SUCCESS,
@@ -521,25 +528,31 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
                                  std::move(sink_table_schema), txn));
 
   // Create table for constraint catalog test, and set column constraints.
-  auto con_val0 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val0", true);
-  auto con_val1 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val1", true);
-  auto con_val2 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val2", true);
-  auto con_val3 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val3", true);
-  auto con_val4 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val4", true);
-  auto con_val5 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val5", true);
-  auto con_val6 = catalog::Column(type::TypeId::INTEGER,
-  		type::Type::GetTypeSize(type::TypeId::INTEGER), "con_val6", true);
+  auto con_val0 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val0", true);
+  auto con_val1 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val1", true);
+  auto con_val2 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val2", true);
+  auto con_val3 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val3", true);
+  auto con_val4 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val4", true);
+  auto con_val5 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val5", true);
+  auto con_val6 = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "con_val6", true);
   con_val5.SetNotNull();
   con_val6.SetDefaultValue(type::ValueFactory::GetIntegerValue(555));
-  std::unique_ptr<catalog::Schema> con_table_schema(
-      new catalog::Schema({con_val0, con_val1, con_val2, con_val3, con_val4,
-                           con_val5, con_val6}));
+  std::unique_ptr<catalog::Schema> con_table_schema(new catalog::Schema(
+      {con_val0, con_val1, con_val2, con_val3, con_val4, con_val5, con_val6}));
   EXPECT_EQ(ResultType::SUCCESS,
             catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, con_table_name,
                                  std::move(con_table_schema), txn));
@@ -548,42 +561,40 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
 
   auto database_oid =
       catalog->GetDatabaseObject(db_name, txn)->GetDatabaseOid();
-  auto sink_table_object =
-      catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME, sink_table_name, txn);
-  auto sink_table =
-      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, sink_table_name, txn);
+  auto sink_table_object = catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME,
+                                                   sink_table_name, txn);
+  auto sink_table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
+                                              sink_table_name, txn);
   auto sink_table_oid = sink_table_object->GetTableOid();
-  auto con_table_object =
-      catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME, con_table_name, txn);
-  auto con_table =
-      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, con_table_name, txn);
+  auto con_table_object = catalog->GetTableObject(db_name, DEFAULT_SCHEMA_NAME,
+                                                  con_table_name, txn);
+  auto con_table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
+                                             con_table_name, txn);
   auto con_table_oid = con_table_object->GetTableOid();
-
 
   // Add primary key constraint to sink table
   EXPECT_EQ(ResultType::SUCCESS,
-  		catalog->AddPrimaryKeyConstraint(database_oid, sink_table_oid, {0},
-  		                                 "con_primary", txn));
+            catalog->AddPrimaryKeyConstraint(database_oid, sink_table_oid, {0},
+                                             "con_primary", txn));
 
   // Add constraints for constraint catalog test.
   EXPECT_EQ(ResultType::SUCCESS,
-  		catalog->AddPrimaryKeyConstraint(database_oid, con_table_oid, {0, 1},
-  		                                 "con_primary", txn));
+            catalog->AddPrimaryKeyConstraint(database_oid, con_table_oid,
+                                             {0, 1}, "con_primary", txn));
   EXPECT_EQ(ResultType::SUCCESS,
-  		catalog->AddUniqueConstraint(database_oid, con_table_oid, {2},
-  		                             "con_unique", txn));
+            catalog->AddUniqueConstraint(database_oid, con_table_oid, {2},
+                                         "con_unique", txn));
 
   EXPECT_EQ(ResultType::SUCCESS,
-  		catalog->AddForeignKeyConstraint(database_oid, con_table_oid, {3},
-  		                                 sink_table_oid, {0},
-																			 FKConstrActionType::NOACTION,
-																			 FKConstrActionType::NOACTION,
-																			 "con_foreign", txn));
+            catalog->AddForeignKeyConstraint(
+                database_oid, con_table_oid, {3}, sink_table_oid, {0},
+                FKConstrActionType::NOACTION, FKConstrActionType::NOACTION,
+                "con_foreign", txn));
   auto exp = std::make_pair(ExpressionType::COMPARE_GREATERTHAN,
                             type::ValueFactory::GetIntegerValue(0));
   EXPECT_EQ(ResultType::SUCCESS,
-  		catalog->AddCheckConstraint(database_oid, con_table_oid, {4},
-  		                            exp, "con_check", txn));
+            catalog->AddCheckConstraint(database_oid, con_table_oid, {4}, exp,
+                                        "con_check", txn));
 
   LOG_DEBUG("Success all constraint creations");
 
@@ -591,16 +602,16 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   auto constraint_objects = sink_table_object->GetConstraintObjects();
   EXPECT_EQ(1, constraint_objects.size());
   for (auto constraint_object_pair : constraint_objects) {
-  	auto con_oid = constraint_object_pair.first;
-  	auto con_object = constraint_object_pair.second;
-  	auto column_ids = con_object->GetColumnIds();
+    auto con_oid = constraint_object_pair.first;
+    auto con_object = constraint_object_pair.second;
+    auto column_ids = con_object->GetColumnIds();
     EXPECT_LE(1, column_ids.size());
-		auto constraint = sink_table->GetSchema()->GetConstraint(con_oid);
-		EXPECT_EQ(constraint->GetName(), con_object->GetConstraintName());
-		EXPECT_EQ(constraint->GetType(), con_object->GetConstraintType());
-		EXPECT_EQ(constraint->GetTableOid(), con_object->GetTableOid());
-		EXPECT_EQ(constraint->GetIndexOid(), con_object->GetIndexOid());
-		EXPECT_EQ(constraint->GetColumnIds().size(), column_ids.size());
+    auto constraint = sink_table->GetSchema()->GetConstraint(con_oid);
+    EXPECT_EQ(constraint->GetName(), con_object->GetConstraintName());
+    EXPECT_EQ(constraint->GetType(), con_object->GetConstraintType());
+    EXPECT_EQ(constraint->GetTableOid(), con_object->GetTableOid());
+    EXPECT_EQ(constraint->GetIndexOid(), con_object->GetIndexOid());
+    EXPECT_EQ(constraint->GetColumnIds().size(), column_ids.size());
   }
 
   // Check foreign key as sink table
@@ -610,98 +621,108 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   EXPECT_EQ(con_table_oid, fk_source->GetTableOid());
   EXPECT_EQ(sink_table_oid, fk_source->GetFKSinkTableOid());
 
-	LOG_DEBUG("%s", sink_table->GetSchema()->GetInfo().c_str());
+  LOG_DEBUG("%s", sink_table->GetSchema()->GetInfo().c_str());
   LOG_DEBUG("Complete check for sink table");
 
   // Single column constraints
   for (auto column_object_pair : con_table_object->GetColumnObjects()) {
-  	auto column_id = column_object_pair.first;
-  	auto column_object = column_object_pair.second;
-  	auto column = con_table->GetSchema()->GetColumn(column_id);
+    auto column_id = column_object_pair.first;
+    auto column_object = column_object_pair.second;
+    auto column = con_table->GetSchema()->GetColumn(column_id);
 
-		if (column_object->GetColumnName() == "con_val5") {
-	  	LOG_DEBUG("Check not null constraint in column:%s",
-	  			column_object->GetColumnName().c_str());
-			EXPECT_TRUE(column_object->IsNotNull());
-			EXPECT_EQ(column.IsNotNull(), column_object->IsNotNull());
-		} else if (column_object->GetColumnName() == "con_val6") {
-	  	LOG_DEBUG("Check default constraint in column:%s",
-	  			column_object->GetColumnName().c_str());
-			EXPECT_TRUE(column_object->HasDefault());
-			EXPECT_EQ(column.HasDefault(), column_object->HasDefault());
-			EXPECT_EQ(column.GetDefaultValue()
-					             ->CompareEquals(column_object->GetDefaultValue()),
-								CmpBool::CmpTrue);
-		}
+    if (column_object->GetColumnName() == "con_val5") {
+      LOG_DEBUG("Check not null constraint in column:%s",
+                column_object->GetColumnName().c_str());
+      EXPECT_TRUE(column_object->IsNotNull());
+      EXPECT_EQ(column.IsNotNull(), column_object->IsNotNull());
+    } else if (column_object->GetColumnName() == "con_val6") {
+      LOG_DEBUG("Check default constraint in column:%s",
+                column_object->GetColumnName().c_str());
+      EXPECT_TRUE(column_object->HasDefault());
+      EXPECT_EQ(column.HasDefault(), column_object->HasDefault());
+      EXPECT_EQ(column.GetDefaultValue()->CompareEquals(
+                    column_object->GetDefaultValue()),
+                CmpBool::CmpTrue);
+    }
   }
 
-	// Multi-column constraints
+  // Multi-column constraints
   constraint_objects = con_table_object->GetConstraintObjects();
   EXPECT_EQ(4, constraint_objects.size());
-	for (auto constraint_object_pair : constraint_objects) {
-		auto con_oid = constraint_object_pair.first;
-		auto con_object = constraint_object_pair.second;
+  for (auto constraint_object_pair : constraint_objects) {
+    auto con_oid = constraint_object_pair.first;
+    auto con_object = constraint_object_pair.second;
 
-		LOG_DEBUG("Check constraint:%s (%s)", con_object->GetConstraintName().c_str(),
-				ConstraintTypeToString(con_object->GetConstraintType()).c_str());
+    LOG_DEBUG("Check constraint:%s (%s)",
+              con_object->GetConstraintName().c_str(),
+              ConstraintTypeToString(con_object->GetConstraintType()).c_str());
 
-  	auto constraint = con_table->GetSchema()->GetConstraint(con_oid);
-  	EXPECT_NE(nullptr, constraint);
-		EXPECT_EQ(constraint->GetName(), con_object->GetConstraintName());
-		EXPECT_EQ(constraint->GetType(), con_object->GetConstraintType());
-		EXPECT_EQ(con_table_oid, con_object->GetTableOid());
-		EXPECT_EQ(constraint->GetIndexOid(), con_object->GetIndexOid());
-		EXPECT_EQ(constraint->GetColumnIds().size(), con_object->GetColumnIds().size());
+    auto constraint = con_table->GetSchema()->GetConstraint(con_oid);
+    EXPECT_NE(nullptr, constraint);
+    EXPECT_EQ(constraint->GetName(), con_object->GetConstraintName());
+    EXPECT_EQ(constraint->GetType(), con_object->GetConstraintType());
+    EXPECT_EQ(con_table_oid, con_object->GetTableOid());
+    EXPECT_EQ(constraint->GetIndexOid(), con_object->GetIndexOid());
+    EXPECT_EQ(constraint->GetColumnIds().size(),
+              con_object->GetColumnIds().size());
 
-		switch (con_object->GetConstraintType()) {
-		case ConstraintType::PRIMARY:
-		case ConstraintType::UNIQUE:
-			break;
+    switch (con_object->GetConstraintType()) {
+      case ConstraintType::PRIMARY:
+      case ConstraintType::UNIQUE:
+        break;
 
-		case ConstraintType::FOREIGN: {
-			EXPECT_EQ(fk_source.get(), constraint.get());
-			EXPECT_EQ(constraint->GetFKSinkTableOid(), con_object->GetFKSinkTableOid());
-			EXPECT_EQ(constraint->GetFKSinkColumnIds().size(),
-					con_object->GetFKSinkColumnIds().size());
-			EXPECT_EQ(constraint->GetFKUpdateAction(), con_object->GetFKUpdateAction());
-			EXPECT_EQ(constraint->GetFKDeleteAction(), con_object->GetFKDeleteAction());
-			break;
-		}
+      case ConstraintType::FOREIGN: {
+        EXPECT_EQ(fk_source.get(), constraint.get());
+        EXPECT_EQ(constraint->GetFKSinkTableOid(),
+                  con_object->GetFKSinkTableOid());
+        EXPECT_EQ(constraint->GetFKSinkColumnIds().size(),
+                  con_object->GetFKSinkColumnIds().size());
+        EXPECT_EQ(constraint->GetFKUpdateAction(),
+                  con_object->GetFKUpdateAction());
+        EXPECT_EQ(constraint->GetFKDeleteAction(),
+                  con_object->GetFKDeleteAction());
+        break;
+      }
 
-		case ConstraintType::CHECK: {
-			EXPECT_EQ(1, con_object->GetColumnIds().size());
-			auto column = con_table->GetSchema()->GetColumn(con_object->GetColumnIds().at(0));
-			EXPECT_EQ(constraint->GetCheckExpression().first, con_object->GetCheckExp().first);
-			EXPECT_EQ(constraint->GetCheckExpression().second.CompareEquals(
-					con_object->GetCheckExp().second), CmpBool::CmpTrue);
-			break;
-		}
-		default:
-			LOG_DEBUG("Unexpected constraint appeared: %s",
-					ConstraintTypeToString(con_object->GetConstraintType()).c_str());
-			EXPECT_TRUE(false);
-		}
+      case ConstraintType::CHECK: {
+        EXPECT_EQ(1, con_object->GetColumnIds().size());
+        auto column =
+            con_table->GetSchema()->GetColumn(con_object->GetColumnIds().at(0));
+        EXPECT_EQ(constraint->GetCheckExpression().first,
+                  con_object->GetCheckExp().first);
+        EXPECT_EQ(constraint->GetCheckExpression().second.CompareEquals(
+                      con_object->GetCheckExp().second),
+                  CmpBool::CmpTrue);
+        break;
+      }
+      default:
+        LOG_DEBUG(
+            "Unexpected constraint appeared: %s",
+            ConstraintTypeToString(con_object->GetConstraintType()).c_str());
+        EXPECT_TRUE(false);
+    }
   }
   txn_manager.CommitTransaction(txn);
 
-	LOG_DEBUG("%s", con_table->GetSchema()->GetInfo().c_str());
+  LOG_DEBUG("%s", con_table->GetSchema()->GetInfo().c_str());
   LOG_DEBUG("Complete check for constraint table");
 
   // Drop constraint
   txn = txn_manager.BeginTransaction();
   auto con_schema = con_table->GetSchema();
   for (auto not_null_column_id : con_schema->GetNotNullColumns()) {
-		EXPECT_EQ(ResultType::SUCCESS,
-				catalog->DropNotNullConstraint(database_oid, con_table_oid,
-                                       not_null_column_id, txn));
+    EXPECT_EQ(ResultType::SUCCESS,
+              catalog->DropNotNullConstraint(database_oid, con_table_oid,
+                                             not_null_column_id, txn));
   }
-	EXPECT_EQ(ResultType::SUCCESS,
-			catalog->DropDefaultConstraint(database_oid, con_table_oid, 6, txn));
-	for (auto constraint : con_schema->GetConstraints()) {
-		EXPECT_EQ(ResultType::SUCCESS,
-				catalog->DropConstraint(database_oid, con_table_oid,
-						                    constraint.second->GetConstraintOid(), txn));
-	}
+  EXPECT_EQ(ResultType::SUCCESS, catalog->DropDefaultConstraint(
+                                     database_oid, con_table_oid, 6, txn));
+  for (auto constraint : con_schema->GetConstraints()) {
+    EXPECT_EQ(
+        ResultType::SUCCESS,
+        catalog->DropConstraint(database_oid, con_table_oid,
+                                constraint.second->GetConstraintOid(), txn));
+  }
   txn_manager.CommitTransaction(txn);
 
   LOG_DEBUG("Complete drop constraints in constraint table");
@@ -711,7 +732,6 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   catalog->DropDatabaseWithName(db_name, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 }  // namespace test
 }  // namespace peloton

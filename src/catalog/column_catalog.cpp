@@ -39,20 +39,21 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
       column_length(
-				  tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_LENGTH)
-				      .GetAs<uint32_t>()),
+          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_LENGTH)
+              .GetAs<uint32_t>()),
       is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
                      .GetAs<bool>()),
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()),
       has_default(tile->GetValue(tupleId, ColumnCatalog::ColumnId::HAS_DEFAULT)
-               .GetAs<bool>()) {
-	// deserialize default value if the column has default constraint
-	if (has_default) {
-		auto dv_val = tile->GetValue(tupleId, ColumnCatalog::ColumnId::DEFAULT_VALUE_BIN);
-		CopySerializeInput input_buffer(dv_val.GetData(), dv_val.GetLength());
-		default_value = type::Value::DeserializeFrom(input_buffer, column_type);
-	}
+                      .GetAs<bool>()) {
+  // deserialize default value if the column has default constraint
+  if (has_default) {
+    auto dv_val =
+        tile->GetValue(tupleId, ColumnCatalog::ColumnId::DEFAULT_VALUE_BIN);
+    CopySerializeInput input_buffer(dv_val.GetData(), dv_val.GetLength());
+    default_value = type::Value::DeserializeFrom(input_buffer, column_type);
+  }
 }
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
@@ -64,9 +65,8 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
            COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID},
-  		     COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
-					 IndexConstraintType::UNIQUE);
+  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID}, COLUMN_CATALOG_SKEY0_OID,
+           COLUMN_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
   AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
            COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
@@ -74,9 +74,9 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   uint32_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
-		column.GetOffset(), column.GetType(), column.GetLength(),
-		column.IsInlined(), column.IsNotNull(), column.HasDefault(),
-		column.GetDefaultValue(), pool, txn);
+                 column.GetOffset(), column.GetType(), column.GetLength(),
+                 column.IsInlined(), column.IsNotNull(), column.HasDefault(),
+                 column.GetDefaultValue(), pool, txn);
     column_id++;
   }
 }
@@ -141,31 +141,30 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   std::unique_ptr<catalog::Schema> column_catalog_schema(new catalog::Schema(
       {table_id_column, column_name_column, column_id_column,
        column_offset_column, column_type_column, column_length_column,
-			 is_inlined_column, is_not_null_column, has_default_column,
-			 default_value_src_column, default_value_bin_column}));
+       is_inlined_column, is_not_null_column, has_default_column,
+       default_value_src_column, default_value_bin_column}));
 
   column_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-  		COLUMN_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-			COLUMN_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
-			COLUMN_CATALOG_PKEY_OID));
+      COLUMN_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      COLUMN_CATALOG_OID,
+      std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
+      COLUMN_CATALOG_PKEY_OID));
 
   column_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-  		COLUMN_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-			COLUMN_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::COLUMN_ID},
-			COLUMN_CATALOG_SKEY0_OID));
+      COLUMN_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      COLUMN_CATALOG_OID,
+      std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::COLUMN_ID},
+      COLUMN_CATALOG_SKEY0_OID));
 
   return column_catalog_schema;
 }
 
-bool ColumnCatalog::InsertColumn(oid_t table_oid,
-                                 const std::string &column_name,
-                                 oid_t column_id, oid_t column_offset,
-                                 type::TypeId column_type,
-																 size_t column_length, bool is_inlined,
-																 bool is_not_null, bool is_default,
-																 const std::shared_ptr<type::Value> default_value,
-                                 type::AbstractPool *pool,
-                                 concurrency::TransactionContext *txn) {
+bool ColumnCatalog::InsertColumn(
+    oid_t table_oid, const std::string &column_name, oid_t column_id,
+    oid_t column_offset, type::TypeId column_type, size_t column_length,
+    bool is_inlined, bool is_not_null, bool is_default,
+    const std::shared_ptr<type::Value> default_value, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -193,12 +192,13 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
 
   // set default value if the column has default constraint
   if (is_default) {
-  	auto val9 =
-  			type::ValueFactory::GetVarcharValue(default_value->ToString(), nullptr);
-  	CopySerializeOutput output_buffer;
-  	default_value->SerializeTo(output_buffer);
-  	auto val10 = type::ValueFactory::GetVarbinaryValue(
-  			(unsigned char*)output_buffer.Data(), output_buffer.Size(), true, pool);
+    auto val9 =
+        type::ValueFactory::GetVarcharValue(default_value->ToString(), nullptr);
+    CopySerializeOutput output_buffer;
+    default_value->SerializeTo(output_buffer);
+    auto val10 = type::ValueFactory::GetVarbinaryValue(
+        (unsigned char *)output_buffer.Data(), output_buffer.Size(), true,
+        pool);
 
     tuple->SetValue(ColumnId::DEFAULT_VALUE_SRC, val9, pool);
     tuple->SetValue(ColumnId::DEFAULT_VALUE_BIN, val10, pool);
@@ -250,13 +250,12 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-
-bool ColumnCatalog::UpdateNotNullConstraint(oid_t table_oid,
-                                            const std::string &column_name,
-		                                        bool is_not_null,
-                                            concurrency::TransactionContext *txn) {
+bool ColumnCatalog::UpdateNotNullConstraint(
+    oid_t table_oid, const std::string &column_name, bool is_not_null,
+    concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns({ColumnId::IS_NOT_NULL});
-  oid_t index_offset = IndexId::PRIMARY_KEY;   // Index of table_oid & column_name
+  oid_t index_offset =
+      IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
   // values to execute index scan
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -279,15 +278,14 @@ bool ColumnCatalog::UpdateNotNullConstraint(oid_t table_oid,
                              index_offset, txn);
 }
 
-bool ColumnCatalog::UpdateDefaultConstraint(oid_t table_oid,
-                                           const std::string &column_name,
-                                           bool has_default,
-                                           const type::Value *default_value,
-                                           concurrency::TransactionContext *txn) {
+bool ColumnCatalog::UpdateDefaultConstraint(
+    oid_t table_oid, const std::string &column_name, bool has_default,
+    const type::Value *default_value, concurrency::TransactionContext *txn) {
   std::vector<oid_t> update_columns({ColumnId::HAS_DEFAULT,
-  		                               ColumnId::DEFAULT_VALUE_SRC,
-																		 ColumnId::DEFAULT_VALUE_BIN});
-  oid_t index_offset = IndexId::PRIMARY_KEY;   // Index of table_oid & column_name
+                                     ColumnId::DEFAULT_VALUE_SRC,
+                                     ColumnId::DEFAULT_VALUE_BIN});
+  oid_t index_offset =
+      IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
   // values to execute index scan
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -299,18 +297,19 @@ bool ColumnCatalog::UpdateDefaultConstraint(oid_t table_oid,
   update_values.push_back(
       type::ValueFactory::GetBooleanValue(has_default).Copy());
   if (has_default) {
-  	PELOTON_ASSERT(default_value != nullptr);
-		update_values.push_back(
-				type::ValueFactory::GetVarcharValue(default_value->ToString()).Copy());
-		CopySerializeOutput output_buffer;
-		default_value->SerializeTo(output_buffer);
-		update_values.push_back(type::ValueFactory::GetVarbinaryValue(
-				(unsigned char*)output_buffer.Data(), output_buffer.Size(), true).Copy());
+    PELOTON_ASSERT(default_value != nullptr);
+    update_values.push_back(
+        type::ValueFactory::GetVarcharValue(default_value->ToString()).Copy());
+    CopySerializeOutput output_buffer;
+    default_value->SerializeTo(output_buffer);
+    update_values.push_back(type::ValueFactory::GetVarbinaryValue(
+                                (unsigned char *)output_buffer.Data(),
+                                output_buffer.Size(), true).Copy());
   } else {
-  	update_values.push_back(
-  			type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR));
-  	update_values.push_back(
-  			type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY));
+    update_values.push_back(
+        type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR));
+    update_values.push_back(
+        type::ValueFactory::GetNullValueByType(type::TypeId::VARBINARY));
   }
 
   // delete column from cache

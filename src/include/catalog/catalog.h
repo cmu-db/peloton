@@ -119,9 +119,8 @@ class Catalog {
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
-                         const std::string &schema_name,
-                         oid_t index_oid, const std::string &index_name,
-												 IndexType index_type,
+                         const std::string &schema_name, oid_t index_oid,
+                         const std::string &index_name, IndexType index_type,
                          IndexConstraintType index_constraint, bool unique_keys,
                          concurrency::TransactionContext *txn,
                          bool is_catalog = false);
@@ -153,7 +152,6 @@ class Catalog {
       oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
       concurrency::TransactionContext *txn);
 
-
   //===--------------------------------------------------------------------===//
   // SET FUNCTIONS FOR COLUMN CONSTRAINT
   //===--------------------------------------------------------------------===//
@@ -161,14 +159,13 @@ class Catalog {
   // Set not null constraint for a column
   ResultType SetNotNullConstraint(oid_t database_oid, oid_t table_oid,
                                   oid_t column_id,
-																	concurrency::TransactionContext *txn);
+                                  concurrency::TransactionContext *txn);
 
   // Set default constraint for a column
   ResultType SetDefaultConstraint(oid_t database_oid, oid_t table_oid,
                                   oid_t column_id,
-																	const type::Value &default_value,
-																	concurrency::TransactionContext *txn);
-
+                                  const type::Value &default_value,
+                                  concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // ADD FUNCTIONS FOR TABLE CONSTRAINT
@@ -177,31 +174,30 @@ class Catalog {
   // Add a new primary constraint for a table
   ResultType AddPrimaryKeyConstraint(oid_t database_oid, oid_t table_oid,
                                      const std::vector<oid_t> &column_ids,
-																		 const std::string &constraint_name,
-																		 concurrency::TransactionContext *txn);
+                                     const std::string &constraint_name,
+                                     concurrency::TransactionContext *txn);
 
   // Add a new unique constraint for a table
   ResultType AddUniqueConstraint(oid_t database_oid, oid_t table_oid,
                                  const std::vector<oid_t> &column_ids,
-																 const std::string &constraint_name,
-																 concurrency::TransactionContext *txn);
+                                 const std::string &constraint_name,
+                                 concurrency::TransactionContext *txn);
 
   // Add a new foreign key constraint for a table
   ResultType AddForeignKeyConstraint(oid_t database_oid, oid_t src_table_oid,
-                           const std::vector<oid_t> &src_col_ids,
-  		                     oid_t sink_table_oid,
-													 const std::vector<oid_t> &sink_col_ids,
-													 FKConstrActionType upd_action,
-													 FKConstrActionType del_action,
-													 const std::string &constraint_name,
-                           concurrency::TransactionContext *txn);
+                                     const std::vector<oid_t> &src_col_ids,
+                                     oid_t sink_table_oid,
+                                     const std::vector<oid_t> &sink_col_ids,
+                                     FKConstrActionType upd_action,
+                                     FKConstrActionType del_action,
+                                     const std::string &constraint_name,
+                                     concurrency::TransactionContext *txn);
 
   // Add a new check constraint for a table
-  ResultType AddCheckConstraint(oid_t database_oid, oid_t table_oid,
-                                const std::vector<oid_t> &column_ids,
-																const std::pair<ExpressionType, type::Value> &exp,
-																const std::string &constraint_name,
-																concurrency::TransactionContext *txn);
+  ResultType AddCheckConstraint(
+      oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &column_ids,
+      const std::pair<ExpressionType, type::Value> &exp,
+      const std::string &constraint_name, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
@@ -254,9 +250,8 @@ class Catalog {
 
   // Drop constraint for a table
   ResultType DropConstraint(oid_t database_oid, oid_t table_oid,
-  		                     oid_t constraint_oid,
-                           concurrency::TransactionContext *txn);
-
+                            oid_t constraint_oid,
+                            concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION

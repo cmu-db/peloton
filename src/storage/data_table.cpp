@@ -136,58 +136,58 @@ bool DataTable::CheckNotNulls(const AbstractTuple *tuple,
 bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
   // make sure that the given tuple does not violate constraints.
 
-	// NOT NULL constraint
-	for (oid_t column_id : schema->GetNotNullColumns()) {
-		if (schema->AllowNull(column_id) == false &&
-				CheckNotNulls(tuple, column_id) == false) {
-			std::string error = StringUtil::Format(
-					"NOT NULL constraint violated on column '%s' : %s",
-					schema->GetColumn(column_id).GetName().c_str(),
-					tuple->GetInfo().c_str());
-			throw ConstraintException(error);
-		}
+  // NOT NULL constraint
+  for (oid_t column_id : schema->GetNotNullColumns()) {
+    if (schema->AllowNull(column_id) == false &&
+        CheckNotNulls(tuple, column_id) == false) {
+      std::string error =
+          StringUtil::Format("NOT NULL constraint violated on column '%s' : %s",
+                             schema->GetColumn(column_id).GetName().c_str(),
+                             tuple->GetInfo().c_str());
+      throw ConstraintException(error);
+    }
   }
 
-	// DEFAULT constraint should not be handled here
-	// Handled in higher hierarchy
+  // DEFAULT constraint should not be handled here
+  // Handled in higher hierarchy
 
-	// multi-column constraints
-	for (auto cons_pair : schema->GetConstraints()) {
-		auto cons = cons_pair.second;
-		ConstraintType type = cons->GetType();
-		switch (type) {
-			case ConstraintType::CHECK: {
-				//          std::pair<ExpressionType, type::Value> exp =
-				//          cons.GetCheckExpression();
-				//          if (CheckExp(tuple, column_itr, exp) == false) {
-				//            LOG_TRACE("CHECK EXPRESSION constraint violated");
-				//            throw ConstraintException(
-				//                "CHECK EXPRESSION constraint violated : " +
-				//                std::string(tuple->GetInfo()));
-				//          }
-				break;
-			}
-			case ConstraintType::UNIQUE: {
-				break;
-			}
-			case ConstraintType::PRIMARY: {
-				break;
-			}
-			case ConstraintType::FOREIGN: {
-				break;
-			}
-			case ConstraintType::EXCLUSION: {
-				break;
-			}
-			default: {
-				std::string error =
-						StringUtil::Format("ConstraintType '%s' is not supported",
-															 ConstraintTypeToString(type).c_str());
-				LOG_TRACE("%s", error.c_str());
-				throw ConstraintException(error);
-			}
-		}  // SWITCH
-	}    // FOR (constraints)
+  // multi-column constraints
+  for (auto cons_pair : schema->GetConstraints()) {
+    auto cons = cons_pair.second;
+    ConstraintType type = cons->GetType();
+    switch (type) {
+      case ConstraintType::CHECK: {
+        //          std::pair<ExpressionType, type::Value> exp =
+        //          cons.GetCheckExpression();
+        //          if (CheckExp(tuple, column_itr, exp) == false) {
+        //            LOG_TRACE("CHECK EXPRESSION constraint violated");
+        //            throw ConstraintException(
+        //                "CHECK EXPRESSION constraint violated : " +
+        //                std::string(tuple->GetInfo()));
+        //          }
+        break;
+      }
+      case ConstraintType::UNIQUE: {
+        break;
+      }
+      case ConstraintType::PRIMARY: {
+        break;
+      }
+      case ConstraintType::FOREIGN: {
+        break;
+      }
+      case ConstraintType::EXCLUSION: {
+        break;
+      }
+      default: {
+        std::string error =
+            StringUtil::Format("ConstraintType '%s' is not supported",
+                               ConstraintTypeToString(type).c_str());
+        LOG_TRACE("%s", error.c_str());
+        throw ConstraintException(error);
+      }
+    }  // SWITCH
+  }    // FOR (constraints)
 
   return true;
 }
@@ -214,8 +214,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
-      auto tile_group =
-          storage::StorageManager::GetInstance()->GetTileGroup(free_item_pointer.block);
+      auto tile_group = storage::StorageManager::GetInstance()->GetTileGroup(
+          free_item_pointer.block);
       tile_group->CopyTuple(tuple, free_item_pointer.offset);
     }
     return free_item_pointer;
@@ -364,7 +364,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
   }
 
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -569,7 +569,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
     storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
     concurrency::TransactionContext *current_txn,
     executor::ExecutorContext *context, bool is_update) {
-	if (!schema->HasForeignKeySources()) return true;
+  if (!schema->HasForeignKeySources()) return true;
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -602,7 +602,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(fk_schema.get(), true));
 
-        key->SetFromTuple(prev_tuple, cons->GetFKSinkColumnIds(), index->GetPool());
+        key->SetFromTuple(prev_tuple, cons->GetFKSinkColumnIds(),
+                          index->GetPool());
 
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
@@ -635,11 +636,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
                 // Read the referencing tuple, update the read timestamp so that
                 // we can
                 // delete it later
-                bool ret =
-                    transaction_manager.PerformRead(current_txn,
-                                                    *ptr,
-                                                    src_tile_group_header,
-                                                    true);
+                bool ret = transaction_manager.PerformRead(
+                    current_txn, *ptr, src_tile_group_header, true);
 
                 if (ret == false) {
                   if (src_is_owner) {
@@ -754,8 +752,7 @@ bool DataTable::CheckForeignKeyConstraints(
             catalog::Schema::CopySchema(ref_table->schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
-        key->SetFromTuple(tuple, foreign_key->GetColumnIds(),
-                          index->GetPool());
+        key->SetFromTuple(tuple, foreign_key->GetColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
         std::vector<ItemPointer *> location_ptrs;
@@ -764,7 +761,7 @@ bool DataTable::CheckForeignKeyConstraints(
         // if this key doesn't exist in the referred column
         if (location_ptrs.size() == 0) {
           LOG_DEBUG("The key: %s does not exist in table %s\n",
-                    key->GetInfo().c_str(), ref_table->GetInfo().c_str());
+                    key->GetInfo().c_str(), ref_table->GetName().c_str());
           return false;
         }
 
@@ -782,7 +779,7 @@ bool DataTable::CheckForeignKeyConstraints(
           LOG_DEBUG(
               "The key: %s is not yet visible in table %s, visibility "
               "type: %s.\n",
-              key->GetInfo().c_str(), ref_table->GetInfo().c_str(),
+              key->GetInfo().c_str(), ref_table->GetName().c_str(),
               VisibilityTypeToString(visibility).c_str());
           return false;
         }
@@ -849,7 +846,8 @@ void DataTable::ResetDirty() { dirty_ = false; }
 
 TileGroup *DataTable::GetTileGroupWithLayout(
     std::shared_ptr<const Layout> layout) {
-  oid_t tile_group_id = storage::StorageManager::GetInstance()->GetNextTileGroupId();
+  oid_t tile_group_id =
+      storage::StorageManager::GetInstance()->GetNextTileGroupId();
   return (AbstractTable::GetTileGroupWithLayout(database_oid, tile_group_id,
                                                 layout, tuples_per_tilegroup_));
 }
@@ -889,7 +887,8 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   tile_groups_.Append(tile_group_id);
 
   // add tile group metadata in locator
-  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id,
+                                                       tile_group);
 
   COMPILER_MEMORY_FENCE;
 
@@ -935,7 +934,8 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
     LOG_TRACE("Added a tile group ");
 
     // add tile group metadata in locator
-    storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
+    storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id,
+                                                         tile_group);
 
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.
@@ -958,7 +958,8 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   tile_groups_.Append(tile_group_id);
 
   // add tile group in catalog
-  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id, tile_group);
+  storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id,
+                                                       tile_group);
 
   // we must guarantee that the compiler always add tile group before adding
   // tile_group_count_.
@@ -1112,7 +1113,6 @@ oid_t DataTable::GetValidIndexCount() const {
 
   return valid_index_count;
 }
-
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(

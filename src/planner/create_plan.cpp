@@ -95,18 +95,19 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         columns.push_back(column);
 
         // Collect Multi-column constraints information
-        // TODO: Following constraints info in ColumnDefinition should be independent
+        // TODO: Following constraints info in ColumnDefinition should be
+        // independent
         //       for multi-column constraints like foreign key.
 
         // Primary key
         if (col->primary) {
-        	pri_cols.push_back(col->name);
+          pri_cols.push_back(col->name);
         }
 
         // Unique constraint
         // Currently only supports for single column
         if (col->unique) {
-        	ProcessUniqueConstraint(col.get());
+          ProcessUniqueConstraint(col.get());
         }
 
         // Check expression constraint
@@ -122,9 +123,9 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       // into an artificial ColumnDefinition.
       // primary key constraint
       if (pri_cols.size() > 0) {
-      	primary_key.primary_key_cols = pri_cols;
-      	primary_key.constraint_name = "con_primary";
-      	has_primary_key = true;
+        primary_key.primary_key_cols = pri_cols;
+        primary_key.constraint_name = "con_primary";
+        has_primary_key = true;
         LOG_TRACE("Added a primary key constraint on column \"%s\"",
                   table_name.c_str());
       }
@@ -227,39 +228,36 @@ void CreatePlan::ProcessForeignKeyConstraint(
   foreign_keys.push_back(fkey_info);
 }
 
-void CreatePlan::ProcessUniqueConstraint(
-    const parser::ColumnDefinition *col) {
+void CreatePlan::ProcessUniqueConstraint(const parser::ColumnDefinition *col) {
   UniqueInfo unique_info;
 
-	unique_info.unique_cols = {col->name};
-	unique_info.constraint_name = "con_unique";
+  unique_info.unique_cols = {col->name};
+  unique_info.constraint_name = "con_unique";
 
-	LOG_TRACE("Added a unique constraint on column \"%s.%s\"",
-          table_name.c_str, col->name.c_str());
-	con_uniques.push_back(unique_info);
+  LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str,
+            col->name.c_str());
+  con_uniques.push_back(unique_info);
 }
 
-void CreatePlan::ProcessCheckConstraint(
-    const parser::ColumnDefinition *col) {
+void CreatePlan::ProcessCheckConstraint(const parser::ColumnDefinition *col) {
   CheckInfo check_info;
 
   // TODO: more expression types need to be supported
   if (col->check_expression->GetValueType() == type::TypeId::BOOLEAN) {
-  	check_info.check_cols.push_back(col->name);
+    check_info.check_cols.push_back(col->name);
 
     const expression::ConstantValueExpression *const_expr_elem =
         dynamic_cast<const expression::ConstantValueExpression *>(
             col->check_expression->GetChild(1));
     type::Value tmp_value = const_expr_elem->GetValue();
 
-  	check_info.exp = std::make_pair(
-				std::move(col->check_expression->GetExpressionType()),
-				std::move(tmp_value));
+    check_info.exp =
+        std::make_pair(std::move(col->check_expression->GetExpressionType()),
+                       std::move(tmp_value));
 
-  	check_info.constraint_name = "con_check";
+    check_info.constraint_name = "con_check";
 
-    LOG_TRACE("Added a check constraint on column \"%s\"",
-              table_name.c_str());
+    LOG_TRACE("Added a check constraint on column \"%s\"", table_name.c_str());
     con_checks.push_back(check_info);
   }
 }

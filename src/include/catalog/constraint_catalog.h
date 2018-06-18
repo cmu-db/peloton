@@ -47,7 +47,7 @@ namespace catalog {
 class Constraint;
 
 class ConstraintCatalogObject {
-	friend class ConstraintCatalog;
+  friend class ConstraintCatalog;
 
  public:
   ConstraintCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
@@ -59,10 +59,14 @@ class ConstraintCatalogObject {
   inline const std::vector<oid_t> &GetColumnIds() { return column_ids; }
   inline oid_t GetIndexOid() { return index_oid; }
   inline oid_t GetFKSinkTableOid() { return fk_sink_table_oid; }
-  inline const std::vector<oid_t> &GetFKSinkColumnIds() { return fk_sink_col_ids; }
+  inline const std::vector<oid_t> &GetFKSinkColumnIds() {
+    return fk_sink_col_ids;
+  }
   inline FKConstrActionType GetFKUpdateAction() { return fk_update_action; }
   inline FKConstrActionType GetFKDeleteAction() { return fk_delete_action; }
-  inline const std::pair<ExpressionType, type::Value> &GetCheckExp() { return check_exp; }
+  inline const std::pair<ExpressionType, type::Value> &GetCheckExp() {
+    return check_exp;
+  }
 
  private:
   // member variables
@@ -72,11 +76,11 @@ class ConstraintCatalogObject {
   oid_t table_oid;
   std::vector<oid_t> column_ids;
   oid_t index_oid;
-	oid_t fk_sink_table_oid;
+  oid_t fk_sink_table_oid;
   std::vector<oid_t> fk_sink_col_ids;
-	FKConstrActionType fk_update_action;
-	FKConstrActionType fk_delete_action;
-	std::pair<ExpressionType, type::Value> check_exp;
+  FKConstrActionType fk_update_action;
+  FKConstrActionType fk_delete_action;
+  std::pair<ExpressionType, type::Value> check_exp;
 };
 
 class ConstraintCatalog : public AbstractCatalog {
@@ -86,7 +90,7 @@ class ConstraintCatalog : public AbstractCatalog {
 
  public:
   ConstraintCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
+                    concurrency::TransactionContext *txn);
 
   ~ConstraintCatalog();
 
@@ -98,13 +102,13 @@ class ConstraintCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertConstraint(const std::shared_ptr<Constraint> constraint,
-												type::AbstractPool *pool,
+                        type::AbstractPool *pool,
                         concurrency::TransactionContext *txn);
 
   bool DeleteConstraints(oid_t table_oid, concurrency::TransactionContext *txn);
 
   bool DeleteConstraint(oid_t table_oid, oid_t constraint_oid,
-  		                  concurrency::TransactionContext *txn);
+                        concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
@@ -113,18 +117,18 @@ class ConstraintCatalog : public AbstractCatalog {
   const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
   GetConstraintObjects(oid_t table_oid, concurrency::TransactionContext *txn);
 
-  const std::shared_ptr<ConstraintCatalogObject>
-  GetConstraintObject(oid_t table_oid, oid_t constraint_oid,
-  		                concurrency::TransactionContext *txn);
+  const std::shared_ptr<ConstraintCatalogObject> GetConstraintObject(
+      oid_t table_oid, oid_t constraint_oid,
+      concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
   enum ColumnId {
-  	CONSTRAINT_OID = 0,
-  	CONSTRAINT_NAME = 1,
-		CONSTRAINT_TYPE = 2,
+    CONSTRAINT_OID = 0,
+    CONSTRAINT_NAME = 1,
+    CONSTRAINT_TYPE = 2,
     TABLE_OID = 3,
-		COLUMN_IDS = 4,
+    COLUMN_IDS = 4,
     INDEX_OID = 5,
     FK_SINK_TABLE_OID = 6,
     FK_SINK_COL_IDS = 7,
