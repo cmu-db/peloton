@@ -190,4 +190,13 @@ std::vector<std::string> StringUtil::Split(const std::string &input,
   }
   return splits;
 }
+
+std::string StringUtil::Strip(const std::string &str, char c) {
+  // There's a copy here which is wasteful, so don't use this in performance
+  // critical code!
+  std::string tmp = str;
+  tmp.erase(std::remove(tmp.begin(), tmp.end(), c), tmp.end());
+  return tmp;
 }
+
+}  // namespace peloton

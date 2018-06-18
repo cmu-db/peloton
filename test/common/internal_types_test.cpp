@@ -325,8 +325,8 @@ TEST_F(InternalTypesTests, PlanNodeTypeTest) {
       PlanNodeType::ORDERBY, PlanNodeType::PROJECTION,
       PlanNodeType::MATERIALIZE, PlanNodeType::LIMIT, PlanNodeType::DISTINCT,
       PlanNodeType::SETOP, PlanNodeType::APPEND, PlanNodeType::AGGREGATE_V2,
-      PlanNodeType::HASH, PlanNodeType::RESULT, PlanNodeType::COPY,
-      PlanNodeType::MOCK};
+      PlanNodeType::HASH, PlanNodeType::RESULT,
+      PlanNodeType::EXPORT_EXTERNAL_FILE, PlanNodeType::MOCK};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

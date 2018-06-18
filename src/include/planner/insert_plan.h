@@ -70,9 +70,6 @@ class InsertPlan : public AbstractPlan {
                  std::vector<std::unique_ptr<expression::AbstractExpression>>> *
                  insert_values);
 
-  // Get a varlen pool - will construct the pool only if needed
-  type::AbstractPool *GetPlanPool();
-
   PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::INSERT;
   };

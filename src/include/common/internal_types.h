@@ -556,6 +556,7 @@ enum class PlanNodeType {
   // Scan Nodes
   SEQSCAN = 10,
   INDEXSCAN = 11,
+  CSVSCAN = 12,
 
   // Join Nodes
   NESTLOOP = 20,
@@ -594,7 +595,7 @@ enum class PlanNodeType {
 
   // Utility
   RESULT = 70,
-  COPY = 71,
+  EXPORT_EXTERNAL_FILE = 71,
   CREATE_FUNC = 72,
 
   // Test
@@ -816,6 +817,13 @@ enum class CopyType {
 std::string CopyTypeToString(CopyType type);
 CopyType StringToCopyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const CopyType &type);
+
+enum class ExternalFileFormat {
+  CSV,
+};
+std::string ExternalFileFormatToString(ExternalFileFormat format);
+ExternalFileFormat StringToExternalFileFormat(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ExternalFileFormat &format);
 
 //===--------------------------------------------------------------------===//
 // Payload Types
@@ -1336,6 +1344,7 @@ enum class RuleType : uint32_t {
   GET_TO_SEQ_SCAN,
   GET_TO_INDEX_SCAN,
   QUERY_DERIVED_GET_TO_PHYSICAL,
+  EXTERNAL_FILE_GET_TO_PHYSICAL,
   DELETE_TO_PHYSICAL,
   UPDATE_TO_PHYSICAL,
   INSERT_TO_PHYSICAL,
@@ -1346,6 +1355,7 @@ enum class RuleType : uint32_t {
   INNER_JOIN_TO_HASH_JOIN,
   IMPLEMENT_DISTINCT,
   IMPLEMENT_LIMIT,
+  EXPORT_EXTERNAL_FILE_TO_PHYSICAL,
 
   // Don't move this one
   RewriteDelimiter,

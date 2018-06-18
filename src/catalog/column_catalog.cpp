@@ -31,16 +31,16 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
       column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<uint32_t>()),
+                    .GetAs<oid_t>()),
       column_offset(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<uint32_t>()),
+              .GetAs<oid_t>()),
       column_type(StringToTypeId(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
       column_length(
 				  tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_LENGTH)
-				      .GetAs<size_t>()),
+				      .GetAs<uint32_t>()),
       is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
                      .GetAs<bool>()),
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
@@ -111,7 +111,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   column_type_column.SetNotNull();
 
   auto column_length_column = catalog::Column(
-      type::TypeId::BIGINT, type::Type::GetTypeSize(type::TypeId::BIGINT),
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "column_length", true);
   column_length_column.SetNotNull();
 
@@ -176,7 +176,7 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
   auto val3 = type::ValueFactory::GetIntegerValue(column_offset);
   auto val4 =
       type::ValueFactory::GetVarcharValue(TypeIdToString(column_type), nullptr);
-  auto val5 = type::ValueFactory::GetBigIntValue(column_length);
+  auto val5 = type::ValueFactory::GetIntegerValue(column_length);
   auto val6 = type::ValueFactory::GetBooleanValue(is_inlined);
   auto val7 = type::ValueFactory::GetBooleanValue(is_not_null);
   auto val8 = type::ValueFactory::GetBooleanValue(is_default);

@@ -17,12 +17,6 @@
 #include "common/internal_types.h"
 #include "common/printable.h"
 
-//@{
-/** @brief  Pre-defined OIDs for ROW and COLUMN store.  */
-#define ROW_STORE_OID 0
-#define COLUMN_STORE_OID 1
-//@}
-
 namespace peloton {
 
 namespace catalog {
@@ -73,6 +67,9 @@ class Layout : public Printable {
 
   /** @brief  Check whether this layout is a column store. */
   bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
+
+  /** @brief  Check whether this layout is a hybrid store. */
+  bool IsHybridStore() const { return (layout_type_ == LayoutType::HYBRID); }
 
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }

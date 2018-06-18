@@ -20,6 +20,7 @@
 #include "executor/create_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
+#include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "optimizer/mock_task.h"
 #include "optimizer/operators.h"

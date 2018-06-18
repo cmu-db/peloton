@@ -94,6 +94,12 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
       make_pair(provided_prop, vector<shared_ptr<PropertySet>>{}));
 }
 
+void ChildPropertyDeriver::Visit(const ExternalFileScan *) {
+  // External file scans (like sequential scans) do not provide properties
+  output_.push_back(
+      make_pair(make_shared<PropertySet>(), vector<shared_ptr<PropertySet>>{}));
+}
+
 void ChildPropertyDeriver::Visit(const QueryDerivedScan *) {
   output_.push_back(
       make_pair(requirements_, vector<shared_ptr<PropertySet>>{requirements_}));
@@ -185,6 +191,13 @@ void ChildPropertyDeriver::Visit(const DummyScan *) {
   // Provide nothing
   output_.push_back(
       make_pair(make_shared<PropertySet>(), vector<shared_ptr<PropertySet>>()));
+}
+
+void ChildPropertyDeriver::Visit(const PhysicalExportExternalFile *) {
+  // Let child fulfil all the required properties
+  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
 
 void ChildPropertyDeriver::DeriveForJoin() {

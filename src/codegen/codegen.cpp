@@ -59,12 +59,30 @@ llvm::Constant *CodeGen::ConstDouble(double val) const {
   return llvm::ConstantFP::get(DoubleType(), val);
 }
 
-llvm::Constant *CodeGen::ConstString(const std::string &s) const {
+llvm::Value *CodeGen::ConstString(const std::string &str_val,
+                                  const std::string &name) const {
   // Strings are treated as arrays of bytes
-  auto *str = llvm::ConstantDataArray::getString(GetContext(), s);
-  return new llvm::GlobalVariable(GetModule(), str->getType(), true,
-                                  llvm::GlobalValue::InternalLinkage, str,
-                                  "str");
+  auto *str = llvm::ConstantDataArray::getString(GetContext(), str_val);
+  auto *global_var =
+      new llvm::GlobalVariable(GetModule(), str->getType(), true,
+                               llvm::GlobalValue::InternalLinkage, str, name);
+  return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
+}
+
+llvm::Value *CodeGen::ConstGenericBytes(const void *data, uint32_t length,
+                                        const std::string &name) const {
+  // Create the constant data array that wraps the input data
+  llvm::ArrayRef<uint8_t> elements{reinterpret_cast<const uint8_t *>(data),
+                                   length};
+  auto *arr = llvm::ConstantDataArray::get(GetContext(), elements);
+
+  // Create a global variable for the data
+  auto *global_var =
+      new llvm::GlobalVariable(GetModule(), arr->getType(), true,
+                               llvm::GlobalValue::InternalLinkage, arr, name);
+
+  // Return a pointer to the first element
+  return GetBuilder().CreateInBoundsGEP(global_var, {Const32(0), Const32(0)});
 }
 
 llvm::Constant *CodeGen::Null(llvm::Type *type) const {
@@ -73,11 +91,6 @@ llvm::Constant *CodeGen::Null(llvm::Type *type) const {
 
 llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
   return llvm::ConstantPointerNull::get(type);
-}
-
-llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
-  auto &ir_builder = GetBuilder();
-  return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
 
 llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
@@ -91,11 +104,19 @@ llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
   // matter where we insert it.
 
   auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+#if LLVM_VERSION_GE(5, 0)
+  if (entry_block->empty()) {
+    return new llvm::AllocaInst(type, 0, name, entry_block);
+  } else {
+    return new llvm::AllocaInst(type, 0, name, &entry_block->front());
+  }
+#else
   if (entry_block->empty()) {
     return new llvm::AllocaInst(type, name, entry_block);
   } else {
     return new llvm::AllocaInst(type, name, &entry_block->front());
   }
+#endif
 }
 
 llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
@@ -127,24 +148,66 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
   return GetBuilder().CreateCall(fn, args);
 }
 
-llvm::Value *CodeGen::CallPrintf(const std::string &format,
-                                 const std::vector<llvm::Value *> &args) {
+llvm::Value *CodeGen::Printf(const std::string &format,
+                             const std::vector<llvm::Value *> &args) {
   auto *printf_fn = LookupBuiltin("printf");
   if (printf_fn == nullptr) {
+#if GCC_AT_LEAST_6
+// In newer GCC versions (i.e., GCC 6+), function attributes are part of the
+// type system and are attached to the function signature. For example, printf()
+// comes with the "noexcept" attribute. Moreover, GCC 6+ will complain when
+// attributes attached to a function (e.g., noexcept()) are not used at
+// their call-site. Below, we use decltype(printf) to get the C/C++ function
+// type of printf(...), but we discard the attributes since we don't need
+// them. Hence, on GCC 6+, compilation will fail without adding the
+// "-Wignored-attributes" flag. So, we add it here only.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
     printf_fn = RegisterBuiltin(
-        "printf", llvm::TypeBuilder<int(char *, ...), false>::get(GetContext()),
+        "printf", llvm::TypeBuilder<decltype(printf), false>::get(GetContext()),
         reinterpret_cast<void *>(printf));
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic pop
+#endif
   }
-  auto &ir_builder = code_context_.GetBuilder();
-  auto *format_str =
-      ir_builder.CreateGEP(ConstString(format), {Const32(0), Const32(0)});
 
   // Collect all the arguments into a vector
-  std::vector<llvm::Value *> printf_args{format_str};
+  std::vector<llvm::Value *> printf_args = {ConstString(format, "format")};
   printf_args.insert(printf_args.end(), args.begin(), args.end());
 
-  // Call the function
+  // Call printf()
   return CallFunc(printf_fn, printf_args);
+}
+
+llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
+                             llvm::Value *len) {
+  static constexpr char kMemcmpFnName[] = "memcmp";
+  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
+  if (memcmp_fn == nullptr) {
+#if GCC_AT_LEAST_6
+// In newer GCC versions (i.e., GCC 6+), function attributes are part of the
+// type system and are attached to the function signature. For example, memcmp()
+// comes with the "throw()" attribute, among many others. Moreover, GCC 6+ will
+// complain when attributes attached to a function are not used at their
+// call-site. Below, we use decltype(memcmp) to get the C/C++ function type
+// of memcmp(...), but we discard the attributes since we don't need them.
+// Hence, on GCC 6+, compilation will fail without adding the
+// "-Wignored-attributes" flag. So, we add it here only.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+    memcmp_fn = RegisterBuiltin(
+        kMemcmpFnName,
+        llvm::TypeBuilder<decltype(memcmp), false>::get(GetContext()),
+        reinterpret_cast<void *>(memcmp));
+#if GCC_AT_LEAST_6
+#pragma GCC diagnostic pop
+#endif
+  }
+
+  // Call memcmp()
+  return CallFunc(memcmp_fn, {ptr1, ptr2, len});
 }
 
 llvm::Value *CodeGen::Sqrt(llvm::Value *val) {

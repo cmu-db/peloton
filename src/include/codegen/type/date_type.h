@@ -33,6 +33,9 @@ class Date : public SqlType, public Singleton<Date> {
   void GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                  llvm::Type *&len_type) const override;
 
+  llvm::Function *GetInputFunction(CodeGen &codegen,
+                                   const Type &type) const override;
+
   llvm::Function *GetOutputFunction(CodeGen &codegen,
                                     const Type &type) const override;
 

@@ -42,6 +42,8 @@ class WrappedTuple : public ContainerTuple<std::vector<peloton::type::Value>> {
   // Assignment
   WrappedTuple &operator=(const WrappedTuple &o);
 
+  std::string ToCSV() const;
+
   // The tuple
   std::vector<peloton::type::Value> tuple_;
 };
