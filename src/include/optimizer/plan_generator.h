@@ -109,7 +109,7 @@ class PlanGenerator : public OperatorVisitor {
    */
   std::vector<std::unique_ptr<expression::AbstractExpression>>
   GenerateTableTVExprs(const std::string &alias,
-                       std::shared_ptr<catalog::TableCatalogObject> table);
+                       std::shared_ptr<catalog::TableCatalogEntry> table);
 
   /**
    * @brief Generate the column oids vector for a scan plan
@@ -131,7 +131,7 @@ class PlanGenerator : public OperatorVisitor {
   std::unique_ptr<expression::AbstractExpression> GeneratePredicateForScan(
       const std::shared_ptr<expression::AbstractExpression> predicate_expr,
       const std::string &alias,
-      std::shared_ptr<catalog::TableCatalogObject> table);
+      std::shared_ptr<catalog::TableCatalogEntry> table);
 
   /**
    * @brief Generate projection info and projection schema for join

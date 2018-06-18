@@ -29,7 +29,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   PELOTON_ASSERT(&TestingSQLUtil::traffic_cop_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create a table first
@@ -200,7 +200,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   LOG_DEBUG("Finish test");
 }

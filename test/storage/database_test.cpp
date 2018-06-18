@@ -41,7 +41,7 @@ TEST_F(DatabaseTests, AddDropTest) {
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(txn, db_id),
                CatalogException);
   txn_manager.CommitTransaction(txn);
   // Only GC will remove the actual database object
@@ -80,7 +80,7 @@ TEST_F(DatabaseTests, AddDropTableTest) {
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(txn, db_id),
                CatalogException);
   txn_manager.CommitTransaction(txn);
   // Only GC will remove the actual database object

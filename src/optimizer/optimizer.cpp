@@ -165,13 +165,16 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
-            create_stmt->GetTableName(), txn);
+            txn,
+            create_stmt->GetDatabaseName(),
+            create_stmt->GetSchemaName(),
+            create_stmt->GetTableName());
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
-        auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-            create_stmt->GetDatabaseName(), create_stmt->GetSchemaName(),
-            create_stmt->GetTableName(), txn);
+        auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
+                                                                            create_stmt->GetDatabaseName(),
+                                                                            create_stmt->GetSchemaName(),
+                                                                            create_stmt->GetTableName());
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
           // Check if column is missing

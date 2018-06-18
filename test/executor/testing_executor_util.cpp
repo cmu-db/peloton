@@ -52,9 +52,9 @@ storage::Database *TestingExecutorUtil::InitializeDatabase(
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->CreateDatabase(db_name, txn);
+  auto result = catalog->CreateDatabase(txn, db_name);
   EXPECT_EQ(ResultType::SUCCESS, result);
-  auto database = catalog->GetDatabaseWithName(db_name, txn);
+  auto database = catalog->GetDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
   return (database);
 }
@@ -63,7 +63,7 @@ void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->DropDatabaseWithName(db_name, txn);
+  auto result = catalog->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
 }
@@ -433,14 +433,18 @@ storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert table in catalog
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, is_catalog,
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       is_catalog,
                        tuples_per_tilegroup_count);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   auto table =
-      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+      catalog->GetTableWithName(txn, db_name, DEFAULT_SCHEMA_NAME, table_name);
   txn_manager.CommitTransaction(txn);
 
   return table;

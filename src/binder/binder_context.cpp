@@ -38,8 +38,10 @@ void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_alias,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      db_name, schema_name, table_name, txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
+                                                                      db_name,
+                                                                      schema_name,
+                                                                      table_name);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||
@@ -79,7 +81,7 @@ void BinderContext::AddNestedTable(
 
 bool BinderContext::GetColumnPosTuple(
     const std::string &col_name,
-    std::shared_ptr<catalog::TableCatalogObject> table_obj,
+    std::shared_ptr<catalog::TableCatalogEntry> table_obj,
     std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple, type::TypeId &value_type) {
   auto column_object = table_obj->GetColumnObject(col_name);
   if (column_object == nullptr) {
@@ -138,7 +140,7 @@ bool BinderContext::GetColumnPosTuple(
 
 bool BinderContext::GetRegularTableObj(
     std::shared_ptr<BinderContext> current_context, std::string &alias,
-    std::shared_ptr<catalog::TableCatalogObject> &table_obj, int &depth) {
+    std::shared_ptr<catalog::TableCatalogEntry> &table_obj, int &depth) {
   while (current_context != nullptr) {
     auto iter = current_context->regular_table_alias_map_.find(alias);
     if (iter != current_context->regular_table_alias_map_.end()) {

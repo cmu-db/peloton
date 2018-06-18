@@ -45,16 +45,20 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertDatabaseMetrics(oid_t database_oid, oid_t txn_committed,
-                             oid_t txn_aborted, oid_t time_stamp,
-                             type::AbstractPool *pool,
-                             concurrency::TransactionContext *txn);
-  bool DeleteDatabaseMetrics(oid_t database_oid, concurrency::TransactionContext *txn);
+  bool InsertDatabaseMetrics(concurrency::TransactionContext *txn,
+                             oid_t database_oid,
+                             oid_t txn_committed,
+                             oid_t txn_aborted,
+                             oid_t time_stamp,
+                             type::AbstractPool *pool);
+
+  bool DeleteDatabaseMetrics(concurrency::TransactionContext *txn,
+                             oid_t database_oid);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  oid_t GetTimeStamp(oid_t database_oid, concurrency::TransactionContext *txn);
+  oid_t GetTimestamp(concurrency::TransactionContext *txn, oid_t database_oid);
   // TODO: add more if needed
 
   enum ColumnId {

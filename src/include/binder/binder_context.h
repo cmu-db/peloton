@@ -27,7 +27,7 @@ class TransactionContext;
 }
 
 namespace catalog {
-class TableCatalogObject;
+class TableCatalogEntry;
 }
 
 namespace binder {
@@ -96,7 +96,7 @@ class BinderContext {
    */
   static bool GetColumnPosTuple(
       const std::string &col_name,
-      std::shared_ptr<catalog::TableCatalogObject> table_obj,
+      std::shared_ptr<catalog::TableCatalogEntry> table_obj,
       std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple, type::TypeId &value_type);
 
   /**
@@ -133,7 +133,7 @@ class BinderContext {
    */
   static bool GetRegularTableObj(
       std::shared_ptr<BinderContext> current_context, std::string &alias,
-      std::shared_ptr<catalog::TableCatalogObject> &table_obj, int &depth);
+      std::shared_ptr<catalog::TableCatalogEntry> &table_obj, int &depth);
 
   static bool CheckNestedTableColumn(
       std::shared_ptr<BinderContext> current_context, std::string &alias,
@@ -154,7 +154,7 @@ class BinderContext {
 
  private:
   /** @brief Map table alias to table obj */
-  std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>>
+  std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogEntry>>
       regular_table_alias_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, type::TypeId>>
       nested_table_alias_map_;

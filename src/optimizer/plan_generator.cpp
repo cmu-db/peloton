@@ -398,7 +398,7 @@ void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
 /************************* Private Functions *******************************/
 vector<unique_ptr<expression::AbstractExpression>>
 PlanGenerator::GenerateTableTVExprs(
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   // TODO(boweic): we seems to provide all columns here, in case where there are
   // a lot of attributes and we're only visiting a few this is not efficient
   oid_t db_id = table->GetDatabaseOid();
@@ -441,7 +441,7 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
 std::unique_ptr<expression::AbstractExpression>
 PlanGenerator::GeneratePredicateForScan(
     const std::shared_ptr<expression::AbstractExpression> predicate_expr,
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   if (predicate_expr == nullptr) {
     return nullptr;
   }

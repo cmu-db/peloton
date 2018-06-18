@@ -91,7 +91,9 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t database_oid,
             auto e =
                 static_cast<const expression::TupleValueExpression *>(expr);
             auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-                database_oid, table_oid, txn);
+                txn,
+                database_oid,
+                table_oid);
             auto column_object =
                 table_object->GetColumnObject(e->GetColumnName());
             output.WriteInt(static_cast<int>(column_object->GetColumnType()));
