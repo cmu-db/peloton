@@ -51,6 +51,10 @@ class TriggerCatalog : public AbstractCatalog {
                  concurrency::TransactionContext *txn);
   ~TriggerCatalog();
 
+  oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
+
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
@@ -96,8 +100,6 @@ class TriggerCatalog : public AbstractCatalog {
   };
 
  private:
-  oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
-
   enum IndexId {
     PRIMARY_KEY = 0,
     TABLE_TYPE_KEY_0 = 1,
