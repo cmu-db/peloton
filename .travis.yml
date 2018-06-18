@@ -75,16 +75,16 @@ script:
     # build
     - make -j4
     # run tests
-    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
-    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
+#    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
+#    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
     # install peloton
     - make install
     # run psql tests
-    - bash ../script/testing/psql/psql_test.sh
+#    - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
-    - python ../script/validators/jdbc_validator.py
+#    - python ../script/validators/jdbc_validator.py
     # run junit tests
     - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then python ../script/testing/junit/run_junit.py; fi
     - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 python ../script/testing/junit/run_junit.py; fi
     # upload coverage info
-    - if [[ $COVERALLS == 'On' ]]; then make coveralls; fi
+#    - if [[ $COVERALLS == 'On' ]]; then make coveralls; fi
