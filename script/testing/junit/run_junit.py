@@ -39,8 +39,10 @@ class RunJunit:
         """ Start the Peloton server """
         self.peloton_output_fd = open(self.peloton_output_file, "w+")
         self.peloton_process = subprocess.Popen(self.peloton_path,
-                                                stdout=self.peloton_output_fd,
-                                                stderr=self.peloton_output_fd)
+                                                # stdout=self.peloton_output_fd,
+                                                # stderr=self.peloton_output_fd)
+                                                stdout=sys.stdout,
+                                                stderr=sys.stderr)
         self._wait_for_peloton()
         return
 
@@ -66,7 +68,7 @@ class RunJunit:
         self.peloton_process.poll()
         if self.peloton_process.returncode is not None:
             # Peloton terminated already
-            self.peloton_output_fd.close()
+            # self.peloton_output_fd.close()
             self._print_output(self.peloton_output_file)            
             msg = "Peloton terminated with return code {}".format(
                 self.peloton_process.returncode)
