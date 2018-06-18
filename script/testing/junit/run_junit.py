@@ -87,16 +87,18 @@ class RunJunit:
 
     def _run_junit(self):
         """ Run the JUnit tests, via ant """
-        self.junit_output_fd = open(self.junit_output_file, "w+")
+        # self.junit_output_fd = open(self.junit_output_file, "w+")
         # use ant's junit runner, until we deprecate Ubuntu 14.04.
         # At that time switch to "ant testconsole" which invokes JUnitConsole
         # runner. It requires Java 1.8 or later, but has much cleaner
         # human readable output
         ret_val = subprocess.call(["ant test"],
-                                  stdout=self.junit_output_fd,
-                                  stderr=self.junit_output_fd,
+                                  # stdout=self.junit_output_fd,
+                                  # stderr=self.junit_output_fd,
+                                  stdout=sys.stdout,
+                                  stderr=sys.stderr,
                                   shell=True)
-        self.junit_output_fd.close()
+        # self.junit_output_fd.close()
         return ret_val
 
     def run(self):
