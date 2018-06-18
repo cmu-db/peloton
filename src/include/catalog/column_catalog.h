@@ -44,8 +44,8 @@ class ColumnCatalogObject {
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetColumnName() { return column_name; }
-  inline uint32_t GetColumnId() { return column_id; }
-  inline uint32_t GetColumnOffset() { return column_offset; }
+  inline oid_t GetColumnId() { return column_id; }
+  inline oid_t GetColumnOffset() { return column_offset; }
   inline type::TypeId GetColumnType() { return column_type; }
   inline size_t GetColumnLength() { return column_length; }
   inline bool IsInlined() { return is_inlined; }
@@ -56,8 +56,8 @@ class ColumnCatalogObject {
   // member variables
   oid_t table_oid;
   std::string column_name;
-  uint32_t column_id;
-  uint32_t column_offset;
+  oid_t column_id;
+  oid_t column_offset;
   type::TypeId column_type;
   size_t column_length;
   bool is_inlined;

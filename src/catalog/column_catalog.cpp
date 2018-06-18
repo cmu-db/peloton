@@ -30,10 +30,10 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
       column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<uint32_t>()),
+                    .GetAs<oid_t>()),
       column_offset(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<uint32_t>()),
+              .GetAs<oid_t>()),
       column_type(StringToTypeId(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),

@@ -68,6 +68,9 @@ class Layout : public Printable {
   /** @brief  Check whether this layout is a column store. */
   bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
 
+  /** @brief  Check whether this layout is a hybrid store. */
+  bool IsHybridStore() const { return (layout_type_ == LayoutType::HYBRID); }
+
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }
 
