@@ -13,7 +13,6 @@
 #include <sstream>
 #include <string>
 
-#include "catalog/catalog_defaults.h"
 #include "catalog/column.h"
 #include "catalog/schema.h"
 #include "storage/layout.h"
@@ -25,16 +24,7 @@ namespace storage {
 // Constructor for the layout class with column_count
 // The default layout is always a ROW_STORE
 Layout::Layout(const oid_t num_columns, LayoutType layout_type)
-    : num_columns_(num_columns), layout_type_(layout_type) {
-	// Assign the oid
-	if (layout_type == LayoutType::ROW) {
-    layout_oid_ = ROW_STORE_LAYOUT_OID;
-	} else if (layout_type == LayoutType::COLUMN) {
-    layout_oid_ = COLUMN_STORE_LAYOUT_OID;
-	} else {
-    layout_oid_ = INVALID_OID;
-	}
-}
+    : num_columns_(num_columns), layout_type_(layout_type) {}
 
 // Constructor for the Layout class with column_map
 Layout::Layout(const column_map_type &column_map)
@@ -54,10 +44,10 @@ Layout::Layout(const column_map_type &column_map)
   // If a table has one column, it would be LayoutType::Row
   if (row_layout) {
     layout_type_ = LayoutType::ROW;
-    layout_oid_ = ROW_STORE_LAYOUT_OID;
+    layout_oid_ = ROW_STORE_OID;
   } else if (column_layout) {
     layout_type_ = LayoutType::COLUMN;
-    layout_oid_ = COLUMN_STORE_LAYOUT_OID;
+    layout_oid_ = COLUMN_STORE_OID;
   } else {
     // layout_oid_ is set to INVALID_OID, indicating that this
     // layout is not stored in the catalog and thus not persistent.
@@ -73,14 +63,13 @@ Layout::Layout(const column_map_type &column_map)
 }
 
 // Constructor for Layout class with predefined layout_oid
-Layout::Layout(const column_map_type &column_map, const oid_t num_columns,
-		           const oid_t layout_id)
+Layout::Layout(const column_map_type &column_map, oid_t layout_id)
     : layout_oid_(layout_id),
-      num_columns_(num_columns),
+      num_columns_(column_map.size()),
       column_layout_(column_map) {
-  if (layout_oid_ == ROW_STORE_LAYOUT_OID) {
+  if (layout_oid_ == ROW_STORE_OID) {
     layout_type_ = LayoutType::ROW;
-  } else if (layout_oid_ == COLUMN_STORE_LAYOUT_OID) {
+  } else if (layout_oid_ == COLUMN_STORE_OID) {
     layout_type_ = LayoutType::COLUMN;
   } else {
     layout_type_ = LayoutType::HYBRID;

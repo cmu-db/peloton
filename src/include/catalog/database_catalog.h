@@ -111,8 +111,6 @@ class DatabaseCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
-  void UpdateOid(oid_t add_value) { oid_ += add_value; }
-
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
@@ -130,6 +128,7 @@ class DatabaseCatalog : public AbstractCatalog {
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &database_name, concurrency::TransactionContext *txn);
 
+ private:
   DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                   concurrency::TransactionContext *txn);
 

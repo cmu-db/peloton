@@ -44,10 +44,9 @@ class ColumnCatalogObject {
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetColumnName() { return column_name; }
-  inline oid_t GetColumnId() { return column_id; }
-  inline oid_t GetColumnOffset() { return column_offset; }
+  inline uint32_t GetColumnId() { return column_id; }
+  inline uint32_t GetColumnOffset() { return column_offset; }
   inline type::TypeId GetColumnType() { return column_type; }
-  inline size_t GetColumnLength() { return column_length; }
   inline bool IsInlined() { return is_inlined; }
   inline bool IsPrimary() { return is_primary; }
   inline bool IsNotNull() { return is_not_null; }
@@ -56,10 +55,9 @@ class ColumnCatalogObject {
   // member variables
   oid_t table_oid;
   std::string column_name;
-  oid_t column_id;
-  oid_t column_offset;
+  uint32_t column_id;
+  uint32_t column_offset;
   type::TypeId column_type;
-  size_t column_length;
   bool is_inlined;
   bool is_primary;
   bool is_not_null;
@@ -79,15 +77,13 @@ class ColumnCatalog : public AbstractCatalog {
   // No use
   inline oid_t GetNextOid() { return INVALID_OID; }
 
-  void UpdateOid(oid_t add_value) { oid_ += add_value; }
-
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
                     oid_t column_id, oid_t column_offset,
-                    type::TypeId column_type, size_t column_length,
-										bool is_inlined, const std::vector<Constraint> &constraints,
+                    type::TypeId column_type, bool is_inlined,
+                    const std::vector<Constraint> &constraints,
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
@@ -109,13 +105,12 @@ class ColumnCatalog : public AbstractCatalog {
     COLUMN_ID = 2,
     COLUMN_OFFSET = 3,
     COLUMN_TYPE = 4,
-		COLUMN_LENGTH = 5,
-    IS_INLINED = 6,
-    IS_PRIMARY = 7,
-    IS_NOT_NULL = 8,
+    IS_INLINED = 5,
+    IS_PRIMARY = 6,
+    IS_NOT_NULL = 7,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7};
 
   enum IndexId {
     PRIMARY_KEY = 0,
