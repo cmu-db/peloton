@@ -227,9 +227,18 @@ Transition ConnectionHandle::TrySslHandshake() {
 
 Transition ConnectionHandle::CloseConnection() {
   LOG_DEBUG("Attempt to close the connection %d", io_wrapper_->GetSocketFd());
-  // Remove listening event
-  conn_handler_->UnregisterEvent(network_event_);
+  // TODO(Tianyu): Handle close failure
   io_wrapper_->Close();
+  // Remove listening event
+  // Only after the connection is closed is it safe to remove events,
+  // after this point no object in the system has reference to this
+  // connection handle and we will need to destruct and exit.
+  conn_handler_->UnregisterEvent(network_event_);
+  conn_handler_->UnregisterEvent(workpool_event_);
+  // This object is essentially managed by libevent (which unfortunately does
+  // not accept shared_ptrs.) and thus as we shut down we need to manually
+  // deallocate this object.
+  delete this;
   return Transition::NONE;
 }
 }  // namespace network
