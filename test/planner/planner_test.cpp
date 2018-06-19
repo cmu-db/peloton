@@ -158,8 +158,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
                                                DEFAULT_SCHEMA_NAME,
                                                std::move(table_schema),
                                                "department_table",
-                                               false,
-                                               0);
+                                               false);
   txn_manager.CommitTransaction(txn);
 
   // UPDATE department_table SET name = $0 WHERE id = $1
@@ -261,8 +260,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
                                                           DEFAULT_SCHEMA_NAME,
                                                           std::move(table_schema),
                                                           "department_table",
-                                                          false,
-                                                          0);
+                                                          false);
   if (ret != ResultType::SUCCESS) LOG_TRACE("create table failed");
   txn_manager.CommitTransaction(txn);
 
@@ -341,8 +339,7 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
                                                DEFAULT_SCHEMA_NAME,
                                                std::move(table_schema),
                                                "department_table",
-                                               false,
-                                               0);
+                                               false);
   txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES (1, $1)
