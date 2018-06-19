@@ -20,8 +20,8 @@
 #include "common/portal.h"
 #include "expression/expression_util.h"
 #include "network/marshal.h"
-#include "network/postgres_protocol_handler.h"
 #include "network/peloton_server.h"
+#include "network/postgres_protocol_handler.h"
 #include "parser/postgresparser.h"
 #include "parser/statements.h"
 #include "planner/plan_util.h"
@@ -32,7 +32,7 @@
 #include "util/string_util.h"
 
 #define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) (x >> 16)
+#define PROTO_MAJOR_VERSION(x) ((x) >> 16)
 
 namespace peloton {
 namespace network {
@@ -42,17 +42,17 @@ namespace network {
 const std::unordered_map<std::string, std::string>
     // clang-format off
     PostgresProtocolHandler::parameter_status_map_ =
-        boost::assign::map_list_of("application_name", "psql")
-				("client_encoding", "UTF8")
-				("DateStyle", "ISO, MDY")
-				("integer_datetimes", "on")
-				("IntervalStyle", "postgres")
-				("is_superuser", "on")
-				("server_encoding", "UTF8")
-				("server_version", "9.5devel")
-				("session_authorization", "postgres")
-				("standard_conforming_strings", "on")
-				("TimeZone", "US/Eastern");
+    boost::assign::map_list_of("application_name", "psql")
+        ("client_encoding", "UTF8")
+        ("DateStyle", "ISO, MDY")
+        ("integer_datetimes", "on")
+        ("IntervalStyle", "postgres")
+        ("is_superuser", "on")
+        ("server_encoding", "UTF8")
+        ("server_version", "9.5devel")
+        ("session_authorization", "postgres")
+        ("standard_conforming_strings", "on")
+        ("TimeZone", "US/Eastern");
 // clang-format on
 
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
@@ -89,13 +89,13 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
     case QueryType::QUERY_SET:
     case QueryType::QUERY_SHOW:
       return false;
-    // Skip duplicate BEGIN
+      // Skip duplicate BEGIN
     case QueryType::QUERY_BEGIN:
       if (txn_state_ == NetworkTransactionStateType::BLOCK) {
         return false;
       }
       break;
-    // Skip duplicate Commits and Rollbacks
+      // Skip duplicate Commits and Rollbacks
     case QueryType::QUERY_COMMIT:
     case QueryType::QUERY_ROLLBACK:
       if (txn_state_ == NetworkTransactionStateType::IDLE) {
@@ -258,8 +258,8 @@ ResultType PostgresProtocolHandler::ExecQueryExplain(
   std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
       new parser::SQLStatementList());
   unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
-  auto stmt = traffic_cop_->PrepareStatement(
-      "explain", query, std::move(unnamed_sql_stmt_list));
+  auto stmt = traffic_cop_->PrepareStatement("explain", query,
+                                             std::move(unnamed_sql_stmt_list));
   ResultType status = ResultType::UNKNOWN;
   if (stmt != nullptr) {
     traffic_cop_->SetStatement(stmt);
@@ -631,7 +631,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       } else {
         // BINARY mode
         PostgresValueType pg_value_type =
@@ -711,7 +712,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
         }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
+        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
+                       type::TypeId::INVALID);
       }
     }
   }
@@ -901,17 +903,11 @@ void PostgresProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
   responses_.push_back(std::move(response));
 }
 
-bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
+bool PostgresProtocolHandler::ParseInputPacket(ReadBuffer &rbuf,
+                                               InputPacket &rpkt,
                                                bool startup_format) {
-  if (rpkt.header_parsed == false) {
-    // parse out the header first
-    if (ReadPacketHeader(rbuf, rpkt, startup_format) == false) {
-      // need more data
-      return false;
-    }
-  }
-
-  PELOTON_ASSERT(rpkt.header_parsed == true);
+  if (!rpkt.header_parsed && !ReadPacketHeader(rbuf, rpkt, startup_format))
+    return false;
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
@@ -926,57 +922,46 @@ bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
 // The function tries to do a preliminary read to fetch the size value and
 // then reads the rest of the packet.
 // Assume: Packet length field is always 32-bit int
-bool PostgresProtocolHandler::ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
+bool PostgresProtocolHandler::ReadPacketHeader(ReadBuffer &rbuf,
+                                               InputPacket &rpkt,
                                                bool startup) {
   // All packets other than the startup packet have a 5 bytes header
-  size_t initial_read_size = startup ? sizeof(int32_t) : sizeof(int32_t) + 1;
+  size_t header_size = startup ? sizeof(int32_t) : sizeof(int32_t) + 1;
   // check if header bytes are available
-  if (!rbuf.IsReadDataAvailable(initial_read_size)) {
-    // nothing more to read
-    return false;
-  }
-
-  if (!startup) {
-    // Header also contains msg type
-    rpkt.msg_type = static_cast<NetworkMessageType>(rbuf.GetByte(rbuf.buf_ptr));
-    // Skip the message type byte
-    rbuf.buf_ptr++;
-  }
+  if (!rbuf.HasMore(header_size)) return false;
+  if (!startup) rpkt.msg_type = rbuf.ReadValue<NetworkMessageType>();
 
   // get packet size from the header
   // extract packet contents size
   // content lengths should exclude the length bytes
-  rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
+  rpkt.len = ntohl(rbuf.ReadValue<uint32_t>()) - sizeof(uint32_t);
 
   // do we need to use the extended buffer for this packet?
-  rpkt.is_extended = (rpkt.len > rbuf.GetMaxSize());
+  rpkt.is_extended = (rpkt.len > rbuf.Capacity());
 
   if (rpkt.is_extended) {
     LOG_TRACE("Using extended buffer for pkt size:%ld", rpkt.len);
     // reserve space for the extended buffer
     rpkt.ReserveExtendedBuffer();
   }
-
   // we have processed the data, move buffer pointer
-  rbuf.buf_ptr += sizeof(int32_t);
   rpkt.header_parsed = true;
-
   return true;
 }
 
 // Tries to read the contents of a single packet, returns true on success, false
 // on failure.
-bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
+bool PostgresProtocolHandler::ReadPacket(ReadBuffer &rbuf, InputPacket &rpkt) {
   if (rpkt.is_extended) {
     // extended packet mode
-    auto bytes_available = rbuf.buf_size - rbuf.buf_ptr;
+    auto bytes_available = rbuf.BytesAvailable();
     auto bytes_required = rpkt.ExtendedBytesRequired();
     // read minimum of the two ranges
     auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf.Begin() + rbuf.buf_ptr,
-                                rbuf.Begin() + rbuf.buf_ptr + read_size);
+    rpkt.AppendToExtendedBuffer(rbuf.Begin() + rbuf.offset_,
+                                rbuf.Begin() + rbuf.offset_ + read_size);
     // data has been copied, move ptr
-    rbuf.buf_ptr += read_size;
+    rbuf.offset_ += read_size;
     if (bytes_required > bytes_available) {
       // more data needs to be read
       return false;
@@ -985,14 +970,14 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
     rpkt.InitializePacket();
     return true;
   } else {
-    if (rbuf.IsReadDataAvailable(rpkt.len) == false) {
+    if (rbuf.HasMore(rpkt.len) == false) {
       // data not available yet, return
       return false;
     }
     // Initialize the packet's "contents"
-    rpkt.InitializePacket(rbuf.buf_ptr, rbuf.Begin());
+    rpkt.InitializePacket(rbuf.offset_, rbuf.Begin());
     // We have processed the data, move buffer pointer
-    rbuf.buf_ptr += rpkt.len;
+    rbuf.offset_ += rpkt.len;
   }
 
   return true;
@@ -1059,17 +1044,14 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
   return ProcessResult::COMPLETE;
 }
 
-ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
+ProcessResult PostgresProtocolHandler::Process(ReadBuffer &rbuf,
                                                const size_t thread_id) {
   if (!ParseInputPacket(rbuf, request_, init_stage_))
     return ProcessResult::MORE_DATA_REQUIRED;
 
-  ProcessResult process_status;
-  if (init_stage_) {
-    process_status = ProcessInitialPacket(&request_);
-  } else {
-    process_status = ProcessNormalPacket(&request_, thread_id);
-  }
+  ProcessResult process_status =
+      init_stage_ ? ProcessInitialPacket(&request_)
+                  : ProcessNormalPacket(&request_, thread_id);
 
   request_.Reset();
 
@@ -1205,9 +1187,9 @@ void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
     case QueryType::QUERY_BEGIN:
       txn_state_ = NetworkTransactionStateType::BLOCK;
       break;
-    /* After commit, we end the txn block */
+      /* After commit, we end the txn block */
     case QueryType::QUERY_COMMIT:
-    /* After rollback, the txn block is ended */
+      /* After rollback, the txn block is ended */
     case QueryType::QUERY_ROLLBACK:
       txn_state_ = NetworkTransactionStateType::IDLE;
       break;
