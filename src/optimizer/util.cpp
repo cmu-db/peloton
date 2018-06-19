@@ -15,9 +15,6 @@
 #include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
-#include "planner/copy_plan.h"
-#include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
 
 namespace peloton {
 namespace optimizer {
@@ -140,39 +137,6 @@ bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
   }
 
   return false;
-}
-
-std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
-    parser::CopyStatement *copy_stmt) {
-  std::string table_name(copy_stmt->cpy_table->GetTableName());
-  bool deserialize_parameters = false;
-
-  // If we're copying the query metric table, then we need to handle the
-  // deserialization of prepared stmt parameters
-  if (table_name == QUERY_METRICS_CATALOG_NAME) {
-    LOG_DEBUG("Copying the query_metric table.");
-    deserialize_parameters = true;
-  }
-
-  std::unique_ptr<planner::AbstractPlan> copy_plan(
-      new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      copy_stmt->cpy_table->GetDatabaseName(),
-      copy_stmt->cpy_table->GetSchemaName(),
-      copy_stmt->cpy_table->GetTableName(), txn);
-  txn_manager.CommitTransaction(txn);
-
-  std::unique_ptr<planner::SeqScanPlan> select_plan(
-      new planner::SeqScanPlan(target_table, nullptr, {}, false));
-
-  LOG_DEBUG("Sequential scan plan for copy created");
-
-  // Attach it to the copy plan
-  copy_plan->AddChild(std::move(select_plan));
-  return copy_plan;
 }
 
 std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>

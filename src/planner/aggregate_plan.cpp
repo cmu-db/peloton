@@ -24,7 +24,8 @@ AggregatePlan::AggTerm::AggTerm(ExpressionType et,
                                 bool distinct)
     : aggtype(et), expression(expr), distinct(distinct) {}
 
-void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
+void AggregatePlan::AggTerm::PerformBinding(bool is_global,
+                                            BindingContext &binding_context) {
   // If there's an input expression, first perform binding
   auto *agg_expr = const_cast<expression::AbstractExpression *>(expression);
   if (agg_expr != nullptr) {
@@ -47,7 +48,7 @@ void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
       // TODO: Move this logic into the SQL type
       const auto &input_type = expression->ResultType();
       agg_ai.type = codegen::type::Type{codegen::type::Decimal::Instance(),
-                                        input_type.nullable};
+                                        input_type.nullable || is_global};
       break;
     }
     case ExpressionType::AGGREGATE_MAX:
@@ -57,6 +58,9 @@ void AggregatePlan::AggTerm::PerformBinding(BindingContext &binding_context) {
       // return type as its input expression.
       PELOTON_ASSERT(expression != nullptr);
       agg_ai.type = expression->ResultType();
+      if (is_global) {
+        agg_ai.type = agg_ai.type.AsNullable();
+      }
       break;
     }
     default: {
@@ -93,7 +97,7 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   // Now let the aggregate expressions do their bindings
   for (const auto &agg_term : GetUniqueAggTerms()) {
     auto &non_const_agg_term = const_cast<AggregatePlan::AggTerm &>(agg_term);
-    non_const_agg_term.PerformBinding(input_context);
+    non_const_agg_term.PerformBinding(IsGlobal(), input_context);
   }
 
   // Handle the projection by creating two binding contexts, the first being
@@ -117,8 +121,6 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
     const_cast<expression::AbstractExpression *>(predicate)
         ->PerformBinding({&binding_context});
   }
-
-
 }
 
 hash_t AggregatePlan::Hash(
@@ -165,27 +167,22 @@ hash_t AggregatePlan::Hash() const {
 bool AggregatePlan::AreEqual(
     const std::vector<planner::AggregatePlan::AggTerm> &A,
     const std::vector<planner::AggregatePlan::AggTerm> &B) const {
-  if (A.size() != B.size())
-    return false;
+  if (A.size() != B.size()) return false;
 
   for (size_t i = 0; i < A.size(); i++) {
-    if (A[i].aggtype != B[i].aggtype)
-      return false;
+    if (A[i].aggtype != B[i].aggtype) return false;
 
     auto *expr = A[i].expression;
 
-    if (expr && (*expr != *B[i].expression))
-      return false;
+    if (expr && (*expr != *B[i].expression)) return false;
 
-    if (A[i].distinct != B[i].distinct)
-      return false;
+    if (A[i].distinct != B[i].distinct) return false;
   }
   return true;
 }
 
 bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
-    return false;
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) return false;
 
   auto &other = static_cast<const planner::AggregatePlan &>(rhs);
 
@@ -195,12 +192,10 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   if ((pred == nullptr && other_pred != nullptr) ||
       (pred != nullptr && other_pred == nullptr))
     return false;
-  if (pred && *pred != *other_pred)
-    return false;
+  if (pred && *pred != *other_pred) return false;
 
   // UniqueAggTerms
-  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms()))
-    return false;
+  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms())) return false;
 
   // Project Info
   auto *proj_info = GetProjectInfo();
@@ -208,24 +203,19 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   if ((proj_info == nullptr && other_proj_info != nullptr) ||
       (proj_info != nullptr && other_proj_info == nullptr))
     return false;
-  if (proj_info && *proj_info != *other_proj_info)
-    return false;
+  if (proj_info && *proj_info != *other_proj_info) return false;
 
   // Group by
   size_t group_by_col_ids_count = GetGroupbyColIds().size();
-  if (group_by_col_ids_count != other.GetGroupbyColIds().size())
-    return false;
+  if (group_by_col_ids_count != other.GetGroupbyColIds().size()) return false;
 
   for (size_t i = 0; i < group_by_col_ids_count; i++) {
-    if (GetGroupbyColIds()[i] != other.GetGroupbyColIds()[i])
-      return false;
+    if (GetGroupbyColIds()[i] != other.GetGroupbyColIds()[i]) return false;
   }
 
-  if (*GetOutputSchema() != *other.GetOutputSchema())
-    return false;
+  if (*GetOutputSchema() != *other.GetOutputSchema()) return false;
 
-  if (GetAggregateStrategy() != other.GetAggregateStrategy())
-    return false;
+  if (GetAggregateStrategy() != other.GetAggregateStrategy()) return false;
 
   return (AbstractPlan::operator==(rhs));
 }

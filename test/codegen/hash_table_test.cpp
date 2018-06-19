@@ -94,7 +94,7 @@ TEST_F(HashTableTest, CanInsertUniqueKeys) {
   // Lookup
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -102,6 +102,33 @@ TEST_F(HashTableTest, CanInsertUniqueKeys) {
     };
     table.TypedProbe(key.Hash(), key, f);
     EXPECT_EQ(1, count) << "Found duplicate keys in unique key test";
+  }
+}
+
+TEST_F(HashTableTest, BuildEmptyHashTable) {
+  codegen::util::HashTable table{GetMemPool(), sizeof(Key), sizeof(Value)};
+
+  std::vector<Key> keys;
+
+  // Insert keys
+  for (uint32_t i = 0; i < 10; i++) {
+    Key k{1, i};
+    // do NOT insert into hash table
+
+    keys.emplace_back(k);
+  }
+
+  EXPECT_EQ(0, table.NumElements());
+
+  // Build lazy
+  table.BuildLazy();
+
+  // Lookups should succeed
+  for (const auto &key : keys) {
+    std::function<void(const Value &v)> f =
+        [](UNUSED_ATTRIBUTE const Value &v) {};
+    auto ret = table.TypedProbe(key.Hash(), key, f);
+    EXPECT_EQ(false, ret);
   }
 }
 
@@ -136,7 +163,7 @@ TEST_F(HashTableTest, CanInsertDuplicateKeys) {
   // Lookup
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -183,7 +210,7 @@ TEST_F(HashTableTest, CanInsertLazilyWithDups) {
   // Lookups should succeed
   for (const auto &key : keys) {
     uint32_t count = 0;
-    std::function<void(const Value &v)> f = [&key, &count](const Value &v) {
+    std::function<void(const Value &v)> f = [&key, &count, &c1](const Value &v) {
       EXPECT_EQ(key.k2, v.v1)
           << "Value's [v1] found in table doesn't match insert key";
       EXPECT_EQ(c1, v.v4) << "Value's [v4] doesn't match constant";
@@ -219,7 +246,7 @@ TEST_F(HashTableTest, ParallelMerge) {
   };
 
   // Insert function
-  auto insert_fn = [&add_key, &exec_ctx, &to_insert](uint64_t tid) {
+  auto insert_fn = [&add_key, &exec_ctx](uint64_t tid) {
     // Get the local table for this thread
     auto *table = reinterpret_cast<codegen::util::HashTable *>(
         exec_ctx.GetThreadStates().AccessThreadState(tid));

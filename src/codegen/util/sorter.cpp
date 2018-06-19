@@ -268,7 +268,7 @@ void Sorter::SortParallel(
           return !(cmp_func_(*l.first, *r.first) < 0);
         };
     for (auto &work : merge_work) {
-      work_pool.SubmitTask([&work, &latch, &heap_cmp, &comp] {
+      work_pool.SubmitTask([&work, &latch, &heap_cmp] {
         std::priority_queue<MergeWork::InputRange,
                             std::vector<MergeWork::InputRange>,
                             decltype(heap_cmp)> heap(heap_cmp,

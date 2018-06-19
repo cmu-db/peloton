@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/operator_visitor.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,12 +23,13 @@ namespace optimizer {
 
 class OperatorVisitor {
  public:
-  virtual ~OperatorVisitor(){};
+  virtual ~OperatorVisitor() = default;
 
   // Physical operator
   virtual void Visit(const DummyScan *) {}
   virtual void Visit(const PhysicalSeqScan *) {}
   virtual void Visit(const PhysicalIndexScan *) {}
+  virtual void Visit(const ExternalFileScan *) {}
   virtual void Visit(const QueryDerivedScan *) {}
   virtual void Visit(const PhysicalOrderBy *) {}
   virtual void Visit(const PhysicalLimit *) {}
@@ -48,10 +49,12 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalSortGroupBy *) {}
   virtual void Visit(const PhysicalDistinct *) {}
   virtual void Visit(const PhysicalAggregate *) {}
+  virtual void Visit(const PhysicalExportExternalFile *) {}
 
   // Logical operator
   virtual void Visit(const LeafOperator *) {}
   virtual void Visit(const LogicalGet *) {}
+  virtual void Visit(const LogicalExternalFileGet *) {}
   virtual void Visit(const LogicalQueryDerivedGet *) {}
   virtual void Visit(const LogicalFilter *) {}
   virtual void Visit(const LogicalProjection *) {}
@@ -70,6 +73,7 @@ class OperatorVisitor {
   virtual void Visit(const LogicalUpdate *) {}
   virtual void Visit(const LogicalDistinct *) {}
   virtual void Visit(const LogicalLimit *) {}
+  virtual void Visit(const LogicalExportExternalFile *) {}
 };
 
 }  // namespace optimizer

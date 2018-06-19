@@ -34,8 +34,7 @@ TEST_F(LockFreeArrayTests, BasicTest) {
 
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element ) {
-      auto status = array.Append(element);
-      EXPECT_TRUE(status);
+      array.Append(element);
     }
 
     auto array_size = array.GetSize();
@@ -55,8 +54,7 @@ TEST_F(LockFreeArrayTests, SharedPointerTest1) {
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element ) {
       std::shared_ptr<oid_t> entry(new oid_t);
-      auto status = array.Append(entry);
-      EXPECT_TRUE(status);
+      array.Append(entry);
     }
 
     auto array_size = array.GetSize();
@@ -77,8 +75,7 @@ TEST_F(LockFreeArrayTests, SharedPointerTest2) {
       size_t const element_count = 10000;
       for (size_t element = 0; element < element_count; ++element ) {
         std::shared_ptr<oid_t> entry(new oid_t);
-        auto status = array.Append(entry);
-        EXPECT_TRUE(status);
+        array.Append(entry);
       }
     });
 
@@ -86,8 +83,7 @@ TEST_F(LockFreeArrayTests, SharedPointerTest2) {
     size_t const element_count = 10000;
     for (size_t element = 0; element < element_count; ++element ) {
       std::shared_ptr<oid_t> entry(new oid_t);
-      auto status = array.Append(entry);
-      EXPECT_TRUE(status);
+      array.Append(entry);
     }
     t0.join();
 
@@ -96,6 +92,95 @@ TEST_F(LockFreeArrayTests, SharedPointerTest2) {
 
 
 
+  }
+}
+
+TEST_F(LockFreeArrayTests, FindValidAndEraseTest) {
+  typedef uint32_t value_type;
+
+  {
+    LockFreeArray<value_type> array;
+
+    size_t const element_count = 3;
+    for (size_t element = 0; element < element_count; ++element) {
+      array.Append(element);
+    }
+
+    // in range, valid
+    EXPECT_EQ(2, array.FindValid(2, INVALID_OID));
+
+    // out of range
+    EXPECT_EQ(INVALID_OID, array.FindValid(6, INVALID_OID));
+
+    array.Erase(2, INVALID_OID);
+
+    // in range, erased
+    EXPECT_EQ(INVALID_OID, array.FindValid(2, INVALID_OID));
+  }
+}
+
+TEST_F(LockFreeArrayTests, ClearAndIsEmptyTest) {
+  typedef uint32_t value_type;
+
+  {
+    LockFreeArray<value_type> array;
+
+    EXPECT_TRUE(array.IsEmpty());
+
+    size_t const element_count = 3;
+    for (size_t element = 0; element < element_count; ++element) {
+      array.Append(element);
+    }
+
+    EXPECT_TRUE(array.Contains(2));
+
+    EXPECT_FALSE(array.IsEmpty());
+
+    array.Clear();
+
+    EXPECT_TRUE(array.IsEmpty());
+
+    EXPECT_FALSE(array.Contains(2));
+  }
+}
+
+TEST_F(LockFreeArrayTests, ContainsTest) {
+  typedef uint32_t value_type;
+
+  {
+    LockFreeArray<value_type> array;
+
+    EXPECT_FALSE(array.Contains(2));
+
+    size_t const element_count = 3;
+    for (size_t element = 0; element < element_count; ++element) {
+      array.Append(element);
+    }
+
+    EXPECT_TRUE(array.Contains(2));
+
+    array.Clear();
+
+    EXPECT_FALSE(array.Contains(2));
+  }
+}
+
+TEST_F(LockFreeArrayTests, UpdateTest) {
+  typedef uint32_t value_type;
+
+  {
+    LockFreeArray<value_type> array;
+
+    size_t const element_count = 3;
+    for (size_t element = 0; element < element_count; ++element) {
+      array.Append(element);
+    }
+
+    EXPECT_EQ(2, array.Find(2));
+
+    array.Update(2, 6288);
+
+    EXPECT_EQ(6288, array.Find(2));
   }
 }
 

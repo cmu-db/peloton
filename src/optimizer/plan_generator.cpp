@@ -15,12 +15,15 @@
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
+#include "codegen/type/type.h"
 #include "concurrency/transaction_context.h"
 #include "expression/expression_util.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/properties.h"
 #include "planner/aggregate_plan.h"
+#include "planner/csv_scan_plan.h"
 #include "planner/delete_plan.h"
+#include "planner/export_external_file_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
@@ -125,6 +128,26 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       storage::StorageManager::GetInstance()->GetTableWithOid(
           op->table_->GetDatabaseOid(), op->table_->GetTableOid()),
       predicate.release(), column_ids, index_scan_desc, false));
+}
+
+void PlanGenerator::Visit(const ExternalFileScan *op) {
+  switch (op->format) {
+    case ExternalFileFormat::CSV: {
+      // First construct the output column descriptions
+      std::vector<planner::CSVScanPlan::ColumnInfo> cols;
+      for (const auto *output_col : output_cols_) {
+        auto col_info = planner::CSVScanPlan::ColumnInfo{
+            .name = "", .type = output_col->GetValueType()};
+        cols.emplace_back(std::move(col_info));
+      }
+
+      // Create the plan
+      output_plan_.reset(
+          new planner::CSVScanPlan(op->file_name, std::move(cols),
+                                   op->delimiter, op->quote, op->escape));
+      break;
+    }
+  }
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {
@@ -362,6 +385,14 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
       move(proj_info)));
   update_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(update_plan);
+}
+
+void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
+  unique_ptr<planner::AbstractPlan> export_plan{
+      new planner::ExportExternalFilePlan(op->file_name, op->delimiter,
+                                          op->quote, op->escape)};
+  export_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(export_plan);
 }
 
 /************************* Private Functions *******************************/

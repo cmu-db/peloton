@@ -22,6 +22,7 @@
 #include "statistics/stats_aggregator.h"
 #include "storage/storage_manager.h"
 #include "storage/tile_group.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace stats {
@@ -112,9 +113,9 @@ LatencyMetric &BackendStatsContext::GetTxnLatencyMetric() {
 
 void BackendStatsContext::IncrementTableReads(oid_t tile_group_id) {
   oid_t table_id =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetTableId();
-  oid_t database_id = catalog::Manager::GetInstance()
-                          .GetTileGroup(tile_group_id)
+      storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id)->GetTableId();
+  oid_t database_id = storage::StorageManager::GetInstance()
+                          ->GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
   PELOTON_ASSERT(table_metric != nullptr);
@@ -126,9 +127,9 @@ void BackendStatsContext::IncrementTableReads(oid_t tile_group_id) {
 
 void BackendStatsContext::IncrementTableInserts(oid_t tile_group_id) {
   oid_t table_id =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetTableId();
-  oid_t database_id = catalog::Manager::GetInstance()
-                          .GetTileGroup(tile_group_id)
+      storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id)->GetTableId();
+  oid_t database_id = storage::StorageManager::GetInstance()
+                          ->GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
   PELOTON_ASSERT(table_metric != nullptr);
@@ -140,9 +141,9 @@ void BackendStatsContext::IncrementTableInserts(oid_t tile_group_id) {
 
 void BackendStatsContext::IncrementTableUpdates(oid_t tile_group_id) {
   oid_t table_id =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetTableId();
-  oid_t database_id = catalog::Manager::GetInstance()
-                          .GetTileGroup(tile_group_id)
+    storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id)->GetTableId();
+  oid_t database_id = storage::StorageManager::GetInstance()
+                          ->GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
   PELOTON_ASSERT(table_metric != nullptr);
@@ -154,9 +155,9 @@ void BackendStatsContext::IncrementTableUpdates(oid_t tile_group_id) {
 
 void BackendStatsContext::IncrementTableDeletes(oid_t tile_group_id) {
   oid_t table_id =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetTableId();
-  oid_t database_id = catalog::Manager::GetInstance()
-                          .GetTileGroup(tile_group_id)
+      storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id)->GetTableId();
+  oid_t database_id = storage::StorageManager::GetInstance()
+                          ->GetTileGroup(tile_group_id)
                           ->GetDatabaseId();
   auto table_metric = GetTableMetric(database_id, table_id);
   PELOTON_ASSERT(table_metric != nullptr);

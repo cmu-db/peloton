@@ -131,17 +131,19 @@ FunctionBuilder::FunctionBuilder(
           cc,
           ConstructFunction(cc, name, FunctionDeclaration::Visibility::External,
                             ret_type, args)) {}
-                            
+
 FunctionBuilder::~FunctionBuilder() {
   if (!finished_) {
-    throw Exception{"Missing call to FunctionBuilder::ReturnAndFinish()"};
+    LOG_ERROR(
+        "Missing call to FunctionBuilder::ReturnAndFinish() for function '%s'",
+        func_->getName().data());
   }
 }
 
 // Here, we just need to iterate over the arguments in the function to find a
 // match. The names of the arguments were provided and set at construction time.
 llvm::Value *FunctionBuilder::GetArgumentByName(std::string name) {
-  for (auto &arg : func_->getArgumentList()) {
+  for (auto &arg : func_->args()) {
     if (arg.getName().equals(name)) {
       return &arg;
     }

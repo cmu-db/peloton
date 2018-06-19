@@ -31,7 +31,7 @@
 #include "codegen/code_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
-#include "function/decimal_functions.h"
+#include "function/numeric_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
@@ -170,22 +170,22 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   // pg_database record is shared across different databases
   system_catalogs->GetTableCatalog()->InsertTable(
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      CATALOG_DATABASE_OID, pool_.get(), txn);
+      CATALOG_DATABASE_OID, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      pool_.get(), txn);
+      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      pool_.get(), txn);
+      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
       LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, pool_.get(), txn);
+      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
@@ -209,6 +209,12 @@ void Catalog::Bootstrap() {
 
   InitializeLanguages();
   InitializeFunctions();
+
+  // Reset oid of each catalog to avoid collisions between catalog
+  // values added by system and users when checkpoint recovery.
+  DatabaseCatalog::GetInstance()->UpdateOid(OID_FOR_USER_OFFSET);
+  LanguageCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
+  ProcCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
 }
 
 //===----------------------------------------------------------------------===//
@@ -363,13 +369,14 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 
   // Update pg_table with table info
   pg_table->InsertTable(table_oid, table_name, schema_name,
-                        database_object->GetDatabaseOid(), pool_.get(), txn);
+                        database_object->GetDatabaseOid(),
+                        table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
   oid_t column_id = 0;
   for (const auto &column : table->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool_.get(), txn);
+                               column.GetLength(), column.IsInlined(),
+                               column.GetConstraints(), pool_.get(), txn);
 
     // Create index on unique single column
     if (column.IsUnique()) {
@@ -384,6 +391,15 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   }
   CreatePrimaryIndex(database_object->GetDatabaseOid(), table_oid, schema_name,
                      txn);
+
+  // Create layout as default layout
+  auto pg_layout =
+      catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
+  auto default_layout = table->GetDefaultLayout();
+  if (!pg_layout->InsertLayout(table_oid, default_layout, pool_.get(), txn))
+    throw CatalogException("Failed to create a new layout for table "
+        + table_name);
+
   return ResultType::SUCCESS;
 }
 
@@ -574,15 +590,15 @@ std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
   // Ensure that the new layout
   PELOTON_ASSERT(layout_oid < INVALID_OID);
   auto new_layout = std::shared_ptr<const storage::Layout>(
-      new const storage::Layout(column_map, layout_oid));
+      new const storage::Layout(column_map, column_map.size(), layout_oid));
 
   // Add the layout the pg_layout table
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
-  bool result =
-      pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn);
-  if (!result) {
-    LOG_ERROR("Failed to create a new layout for table %u", table_oid);
-    return nullptr;
+  if (pg_layout->GetLayoutWithOid(table_oid, new_layout->GetOid(), txn)
+      == nullptr &&
+      !pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn)) {
+      LOG_ERROR("Failed to create a new layout for table %u", table_oid);
+      return nullptr;
   }
   return new_layout;
 }
@@ -597,6 +613,10 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
     auto database = storage_manager->GetDatabaseWithOid(database_oid);
     auto table = database->GetTableWithOid(table_oid);
     table->SetDefaultLayout(new_layout);
+
+    // update table catalog
+    catalog_map_[database_oid]->GetTableCatalog()
+        ->UpdateDefaultLayoutOid(new_layout->GetOid(), table_oid, txn);
   }
   return new_layout;
 }
@@ -792,7 +812,7 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(index_oid, txn);
+  auto index_object = pg_index->GetIndexObject(database_oid, index_oid, txn);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
                            " to drop");
@@ -802,7 +822,7 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   auto table = storage_manager->GetTableWithOid(database_oid,
                                                 index_object->GetTableOid());
   // drop record in pg_index
-  pg_index->DeleteIndex(index_oid, txn);
+  pg_index->DeleteIndex(database_oid, index_oid, txn);
   LOG_TRACE("Successfully drop index %d for table %s", index_oid,
             table->GetName().c_str());
 
@@ -823,15 +843,27 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
   auto table = database->GetTableWithOid(table_oid);
   auto default_layout = table->GetDefaultLayout();
 
-  if (default_layout.GetOid() == layout_oid) {
-    table->ResetDefaultLayout();
-  }
-
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
   if (!pg_layout->DeleteLayout(table_oid, layout_oid, txn)) {
     auto layout = table->GetDefaultLayout();
-    LOG_DEBUG("Layout delete failed. Default layout id: %u", layout.GetOid());
+    LOG_DEBUG("Layout delete failed. Default layout id: %u", layout->GetOid());
     return ResultType::FAILURE;
+  }
+
+  if (default_layout->GetOid() == layout_oid) {
+    table->ResetDefaultLayout();
+    auto new_default_layout = table->GetDefaultLayout();
+    if (pg_layout->GetLayoutWithOid(table_oid, new_default_layout->GetOid(),
+                                    txn) == nullptr &&
+        !pg_layout->InsertLayout(table_oid, new_default_layout,
+                                 pool_.get(), txn)) {
+      LOG_DEBUG("Failed to create a new layout for table %d", table_oid);
+      return ResultType::FAILURE;
+    }
+
+    // update table catalog
+    catalog_map_[database_oid]->GetTableCatalog()
+        ->UpdateDefaultLayoutOid(new_default_layout->GetOid(), table_oid, txn);
   }
 
   return ResultType::SUCCESS;
@@ -1378,43 +1410,43 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt",
           function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+                                    function::NumericFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
 
       /**
@@ -1423,126 +1455,126 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
                          type::TypeId::SMALLINT, internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
                          internal_lang, "Abs",
                          function::BuiltInFuncType{
-                             OperatorId::Abs, function::DecimalFunctions::_Abs},
+                             OperatorId::Abs, function::NumericFunctions::_Abs},
                          txn);
 
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
-                                    function::DecimalFunctions::_Floor},
+                                    function::NumericFunctions::_Floor},
           txn);
       AddBuiltinFunction(
           "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Round",
           function::BuiltInFuncType{OperatorId::Round,
-                                    function::DecimalFunctions::_Round},
+                                    function::NumericFunctions::_Round},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL,
           internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+                                    function::NumericFunctions::_Ceil},
           txn);
 
       /**

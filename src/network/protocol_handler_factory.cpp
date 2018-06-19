@@ -6,7 +6,7 @@
 //
 // Identification: src/network/protocol_handler_factory.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,5 +26,5 @@ std::unique_ptr<ProtocolHandler> ProtocolHandlerFactory::CreateProtocolHandler(
       return nullptr;
   }
 }
-}
-}
+}  // namespace network
+}  // namespace peloton

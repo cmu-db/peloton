@@ -40,6 +40,15 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
   return *this;
 }
 
+std::string WrappedTuple::ToCSV() const {
+  std::string ret;
+  for (uint32_t i = 0; i < tuple_.size(); i++) {
+    if (i != 0) ret.append(",");
+    ret.append(tuple_[i].ToString());
+  }
+  return ret;
+}
+
 //===----------------------------------------------------------------------===//
 // BufferTuple() Proxy
 //===----------------------------------------------------------------------===//

@@ -202,8 +202,8 @@ bool UpdateExecutor::DExecute() {
     if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
       old_location = *(tile_group_header->GetIndirection(physical_tuple_id));
 
-      auto &manager = catalog::Manager::GetInstance();
-      tile_group = manager.GetTileGroup(old_location.block).get();
+      auto storage_manager = storage::StorageManager::GetInstance();
+      tile_group = storage_manager->GetTileGroup(old_location.block).get();
       tile_group_header = tile_group->GetHeader();
 
       physical_tuple_id = old_location.offset;
@@ -321,8 +321,8 @@ bool UpdateExecutor::DExecute() {
           // acquire a version slot from the table.
           ItemPointer new_location = target_table_->AcquireVersion();
 
-          auto &manager = catalog::Manager::GetInstance();
-          auto new_tile_group = manager.GetTileGroup(new_location.block);
+          auto storage_manager = storage::StorageManager::GetInstance();
+          auto new_tile_group = storage_manager->GetTileGroup(new_location.block);
 
           ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
                                                        new_location.offset);

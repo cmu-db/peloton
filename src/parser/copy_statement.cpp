@@ -20,7 +20,7 @@ const std::string CopyStatement::GetInfo(int num_indent) const {
   os << StringUtil::Indent(num_indent) << "CopyStatement\n";
   os << StringUtil::Indent(num_indent + 1)
      << "-> Type :: " << CopyTypeToString(type) << "\n";
-  os << cpy_table.get()->GetInfo(num_indent + 1) << std::endl;
+  os << table.get()->GetInfo(num_indent + 1) << std::endl;
 
   os << StringUtil::Indent(num_indent + 1) << "-> File Path :: " << file_path
      << std::endl;

@@ -35,6 +35,9 @@ class Boolean : public SqlType, public Singleton<Boolean> {
   void GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                  llvm::Type *&len_type) const override;
 
+  llvm::Function *GetInputFunction(CodeGen &codegen,
+                                   const Type &type) const override;
+
   llvm::Function *GetOutputFunction(CodeGen &codegen,
                                     const Type &type) const override;
 
