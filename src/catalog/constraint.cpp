@@ -26,23 +26,23 @@ const std::string Constraint::GetInfo() const {
   os << "Column: (";
   bool first = true;
   for (auto col_id : column_ids) {
-  	if(first) first = false;
-  	else os << ", ";
-  	os << std::to_string(col_id);
+    if(first) first = false;
+    else os << ", ";
+    os << std::to_string(col_id);
   }
   os << "), ";
 
   os << "index_oid:" << std::to_string(index_oid);
 
   if (constraint_type == ConstraintType::FOREIGN) {
-  	os << ", Foreign key: (Sink table:"
-  	   << std::to_string(fk_sink_table_oid) << ", "
-  	   << "Column:(";
+    os << ", Foreign key: (Sink table:"
+       << std::to_string(fk_sink_table_oid) << ", "
+       << "Column:(";
     bool first = true;
     for (auto col_id : fk_sink_col_ids) {
-    	if(first) first = false;
-    	else os << ", ";
-    	os << std::to_string(col_id);
+      if(first) first = false;
+      else os << ", ";
+      os << std::to_string(col_id);
     }
     os << "), " << FKConstrActionTypeToString(fk_update_action) << ", "
        << FKConstrActionTypeToString(fk_delete_action) << ")";
@@ -50,7 +50,7 @@ const std::string Constraint::GetInfo() const {
 
   if (constraint_type == ConstraintType::CHECK) {
     os << ", Check: (" << check_exp.first << " "
-    	 << check_exp.second.GetInfo() << ")";
+       << check_exp.second.GetInfo() << ")";
   }
   os << "]";
   return os.str();

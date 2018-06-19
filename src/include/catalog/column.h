@@ -39,7 +39,7 @@ class Column : public Printable {
       : column_name_(column_name),
         column_type_(value_type),
         fixed_length_(INVALID_OID),
-				is_inlined_(is_inlined),
+        is_inlined_(is_inlined),
         column_offset_(column_offset) {
     SetInlined();
 
@@ -92,20 +92,20 @@ class Column : public Printable {
 
   // Manage DEFAULT constraint
   inline void SetDefaultValue(const type::Value &value) {
-  	if (default_value_.get() != nullptr) {
-  		return;
-  	}
+    if (default_value_.get() != nullptr) {
+      return;
+    }
     default_value_.reset(new type::Value(value));
-  	has_default_ = true;
+    has_default_ = true;
   }
 
   inline std::shared_ptr<type::Value> GetDefaultValue() const {
-  	return default_value_;
+    return default_value_;
   }
 
   inline void ClearDefaultValue() {
-  	default_value_.reset();
-  	has_default_ = false;
+    default_value_.reset();
+    has_default_ = false;
   }
 
   hash_t Hash() const {
@@ -116,7 +116,7 @@ class Column : public Printable {
   // Compare two column objects
   bool operator==(const Column &other) const {
     if (other.column_type_ != column_type_ ||
-    		other.is_inlined_ != is_inlined_) {
+        other.is_inlined_ != is_inlined_) {
       return false;
     }
     return true;

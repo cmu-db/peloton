@@ -43,15 +43,15 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       version_id(tile->GetValue(tupleId, TableCatalog::ColumnId::VERSION_ID)
                      .GetAs<uint32_t>()),
       default_layout_oid(tile->GetValue(tupleId,
-      		TableCatalog::ColumnId::DEFAULT_LAYOUT_OID).GetAs<oid_t>()),
+          TableCatalog::ColumnId::DEFAULT_LAYOUT_OID).GetAs<oid_t>()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
       column_objects(),
       column_names(),
       valid_column_objects(false),
-			valid_layout_objects_(false),
-			valid_constraint_objects_(false),
+      valid_layout_objects_(false),
+      valid_constraint_objects_(false),
       txn(txn) {}
 
 /* @brief   insert index catalog object into cache
@@ -424,10 +424,10 @@ bool TableCatalogObject::EvictLayout(oid_t layout_id) {
  *  @return  false if the constraint object already exists in cache
  */
 bool TableCatalogObject::InsertConstraintObject(
-		std::shared_ptr<ConstraintCatalogObject> constraint_object) {
+    std::shared_ptr<ConstraintCatalogObject> constraint_object) {
   // Invalid object
   if (!constraint_object
-  		|| (constraint_object->GetConstraintOid() == INVALID_OID)) {
+      || (constraint_object->GetConstraintOid() == INVALID_OID)) {
     return false;
   }
 
@@ -464,8 +464,8 @@ bool TableCatalogObject::EvictConstraintObject(oid_t constraint_oid) {
 
 /** @brief   evict all constraint objects from cache. */
 void TableCatalogObject::EvictAllConstraintObjects() {
-	  constraint_objects_.clear();
-	  valid_constraint_objects_ = false;
+    constraint_objects_.clear();
+    valid_constraint_objects_ = false;
 }
 
 /** @brief   Get all constraint objects of this table.
@@ -548,14 +548,14 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
        database_id_column, version_id_column, default_layout_id_column}));
 
   table_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-  		TABLE_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-			TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID},
-			TABLE_CATALOG_PKEY_OID));
+      TABLE_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID},
+      TABLE_CATALOG_PKEY_OID));
 
   table_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-  		TABLE_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-			TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_NAME, ColumnId::SCHEMA_NAME},
-			TABLE_CATALOG_SKEY0_OID));
+      TABLE_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      TABLE_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_NAME, ColumnId::SCHEMA_NAME},
+      TABLE_CATALOG_SKEY0_OID));
 
   return table_catalog_schema;
 }
@@ -570,7 +570,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                const std::string &schema_name,
                                oid_t database_oid, oid_t layout_oid,
-															 type::AbstractPool *pool,
+                               type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -607,7 +607,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid,
 
   // evict from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
@@ -629,7 +629,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   }
   // try get from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) return table_object;
 
   // cache miss, get from pg_table
@@ -770,7 +770,7 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
 
   // get table object, then evict table object
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
@@ -801,7 +801,7 @@ bool TableCatalog::UpdateDefaultLayoutOid(oid_t update_val, oid_t table_oid,
 
   // get table object, then evict table object
   auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-  		                                                        table_oid);
+                                                              table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);

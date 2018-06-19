@@ -282,7 +282,7 @@ TEST_F(DropTests, DroppingIndexByName) {
                       ->GetIndexCatalog();
   auto index_object =
       pg_index->GetIndexObject(database_object->GetDatabaseName(),
-      		                     index_name1, DEFAULT_SCHEMA_NAME, txn);
+                               index_name1, DEFAULT_SCHEMA_NAME, txn);
   EXPECT_NE(nullptr, index_object);
   // Check the effect of drop
   // Most major check in this test case
@@ -290,7 +290,7 @@ TEST_F(DropTests, DroppingIndexByName) {
   catalog->DropIndex(database_object->GetDatabaseOid(),
                      index_object->GetIndexOid(), txn);
   EXPECT_EQ(pg_index->GetIndexObject(database_object->GetDatabaseName(),
-  		                               index_name1, DEFAULT_SCHEMA_NAME, txn),
+                                     index_name1, DEFAULT_SCHEMA_NAME, txn),
             nullptr);
   txn_manager.CommitTransaction(txn);
 
@@ -298,7 +298,7 @@ TEST_F(DropTests, DroppingIndexByName) {
   txn = txn_manager.BeginTransaction();
   // Check the effect of drop index
   EXPECT_EQ(pg_index->GetIndexObject(database_object->GetDatabaseName(),
-  		                               index_name1, DEFAULT_SCHEMA_NAME, txn),
+                                     index_name1, DEFAULT_SCHEMA_NAME, txn),
             nullptr);
 
   // Now dropping the table

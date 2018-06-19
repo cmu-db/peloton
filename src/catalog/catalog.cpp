@@ -407,6 +407,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                column.GetLength(), column.IsInlined(),
                                column.IsNotNull(), column.HasDefault(),
                                column.GetDefaultValue(), pool_.get(), txn);
+
     column_id++;
   }
 

@@ -60,7 +60,7 @@ class Layout : public Printable {
    * @param   layout_oid Per-table unique OID. Generted by DataTable.
    */
   Layout(const column_map_type &column_map, const oid_t num_columns,
-  		   const oid_t layout_oid);
+         const oid_t layout_oid);
 
   /** @brief  Check whether this layout is a row store. */
   bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }

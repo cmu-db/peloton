@@ -75,8 +75,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
 
   // get catalog table oid
   auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
-  		create_plan->GetDatabaseName(), create_plan->GetSchemaName(),
-			create_plan->GetTableName(), txn);
+      create_plan->GetDatabaseName(), create_plan->GetSchemaName(),
+      create_plan->GetTableName(), txn);
 
   // set catalog_table_
   try {

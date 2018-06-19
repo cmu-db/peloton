@@ -50,12 +50,12 @@ class CatalogCache {
       const std::string &name);
 
   std::shared_ptr<TableCatalogObject> GetCachedTableObject(oid_t database_oid,
-  		oid_t table_oid);
+      oid_t table_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t database_oid,
-  		oid_t index_oid);
+      oid_t index_oid);
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
-  		const std::string &database_name, const std::string &index_name,
-			const std::string &schema_name);
+      const std::string &database_name, const std::string &index_name,
+      const std::string &schema_name);
 
   // database catalog cache interface
   bool InsertDatabaseObject(

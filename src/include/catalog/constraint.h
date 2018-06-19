@@ -32,31 +32,31 @@ class Constraint : public Printable {
   // Constructor for primary key or unique
   Constraint(oid_t constraint_oid, ConstraintType type,
              std::string constraint_name, oid_t table_oid,
-						 std::vector<oid_t> column_ids, oid_t index_oid)
+             std::vector<oid_t> column_ids, oid_t index_oid)
       : constraint_oid(constraint_oid), constraint_name(constraint_name),
-				constraint_type(type), table_oid(table_oid),
-				column_ids(column_ids), index_oid(index_oid) {}
+        constraint_type(type), table_oid(table_oid),
+        column_ids(column_ids), index_oid(index_oid) {}
 
   // Constructor for foreign key constraint
   Constraint(oid_t constraint_oid, ConstraintType type,
              std::string constraint_name, oid_t table_oid,
-						 std::vector<oid_t> column_ids,oid_t index_oid, oid_t sink_table_oid,
-						 std::vector<oid_t> sink_col_ids, FKConstrActionType update_action,
+             std::vector<oid_t> column_ids,oid_t index_oid, oid_t sink_table_oid,
+             std::vector<oid_t> sink_col_ids, FKConstrActionType update_action,
              FKConstrActionType delete_action)
       : constraint_oid(constraint_oid), constraint_name(constraint_name),
-				constraint_type(type), table_oid(table_oid),
-				column_ids(column_ids), index_oid(index_oid),
-				fk_sink_table_oid(sink_table_oid), fk_sink_col_ids(sink_col_ids),
-				fk_update_action(update_action), fk_delete_action(delete_action) {}
+        constraint_type(type), table_oid(table_oid),
+        column_ids(column_ids), index_oid(index_oid),
+        fk_sink_table_oid(sink_table_oid), fk_sink_col_ids(sink_col_ids),
+        fk_update_action(update_action), fk_delete_action(delete_action) {}
 
   // Constructor for check constraint
   Constraint(oid_t constraint_oid, ConstraintType type,
              std::string constraint_name, oid_t table_oid,
-						 std::vector<oid_t> column_ids, oid_t index_oid,
-						 std::pair<ExpressionType, type::Value> exp)
-      : constraint_oid(constraint_oid),	constraint_name(constraint_name),
-				constraint_type(type), table_oid(table_oid), column_ids(column_ids),
-				index_oid(index_oid), check_exp(exp) {}
+             std::vector<oid_t> column_ids, oid_t index_oid,
+             std::pair<ExpressionType, type::Value> exp)
+      : constraint_oid(constraint_oid),  constraint_name(constraint_name),
+        constraint_type(type), table_oid(table_oid), column_ids(column_ids),
+        index_oid(index_oid), check_exp(exp) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -127,7 +127,7 @@ class Constraint : public Printable {
 
   FKConstrActionType fk_update_action = FKConstrActionType::NOACTION;
 
-	FKConstrActionType fk_delete_action = FKConstrActionType::NOACTION;
+  FKConstrActionType fk_delete_action = FKConstrActionType::NOACTION;
 
   // key string is column name for check constraint
   std::pair<ExpressionType, type::Value> check_exp;

@@ -51,10 +51,10 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
       {database_oid, SCHEMA_CATALOG_OID},
       {database_oid, INDEX_CATALOG_OID},
       {database_oid, LAYOUT_CATALOG_OID},
-			{database_oid, CONSTRAINT_CATALOG_OID}};
+      {database_oid, CONSTRAINT_CATALOG_OID}};
 
   for (int i = 0; i < (int)shared_tables.size(); i++) {
-  	auto schema = storage::StorageManager::GetInstance()
+    auto schema = storage::StorageManager::GetInstance()
        ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
        ->GetSchema();
     oid_t column_id = 0;
@@ -62,9 +62,9 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
       pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
                                   column_id, column.GetOffset(),
                                   column.GetType(), column.GetLength(),
-																	column.IsInlined(), column.IsNotNull(),
-																	column.HasDefault(), column.GetDefaultValue(),
-																	pool, txn);
+                                  column.IsInlined(), column.IsNotNull(),
+                                  column.HasDefault(), column.GetDefaultValue(),
+                                  pool, txn);
       column_id++;
     }
     for (auto constraint : schema->GetConstraints()) {
@@ -117,13 +117,13 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 
   // Reset oid of each catalog to avoid collisions between catalog
   // values added by system and users when checkpoint recovery.
-	pg_attribute_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_constraint_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
-	// pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_attribute_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_constraint_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
+  // pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
 }
 
 }  // namespace catalog

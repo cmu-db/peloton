@@ -229,7 +229,7 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(database_object->GetDatabaseName(),
-  		                                         index_name, schema_name, txn);
+                                               index_name, schema_name, txn);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + schema_name + "." +
                            index_name + " to drop");
