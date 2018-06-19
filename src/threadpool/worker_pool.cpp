@@ -16,7 +16,6 @@
 
 #include "common/logger.h"
 
-
 namespace peloton {
 namespace threadpool {
 
@@ -25,12 +24,12 @@ namespace {
 void WorkerFunc(std::string thread_name, std::atomic_bool *is_running,
                 TaskQueue *task_queue, std::mutex *cv_lock,
                 std::condition_variable *not_empty) {
-
   LOG_INFO("Thread %s starting ...", thread_name.c_str());
 
   while (is_running->load() || !task_queue->IsEmpty()) {
     std::unique_lock<std::mutex> lock(*cv_lock);
-    not_empty->wait_for(lock, std::chrono::milliseconds(1), [&]{return !task_queue->IsEmpty();});
+    not_empty->wait_for(lock, std::chrono::milliseconds(1),
+                        [&] { return !task_queue->IsEmpty(); });
     std::function<void()> task;
     if (task_queue->Dequeue(task)) {
       lock.unlock();
@@ -55,7 +54,8 @@ void WorkerPool::Startup() {
   if (is_running_.compare_exchange_strong(running, true)) {
     for (size_t i = 0; i < num_workers_; i++) {
       std::string name = pool_name_ + "-worker-" + std::to_string(i);
-      workers_.emplace_back(WorkerFunc, name, &is_running_, &task_queue_, &cv_lock, &not_empty);
+      workers_.emplace_back(WorkerFunc, name, &is_running_, &task_queue_,
+                            &cv_lock, &not_empty);
     }
   }
 }
