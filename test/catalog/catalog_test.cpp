@@ -135,10 +135,10 @@ TEST_F(CatalogTests, TestingCatalogCache) {
 
   // check expected table object is acquired
   for (oid_t table_idx = 0; table_idx < user_database->GetTableCount(); table_idx++) {
-  	auto table = user_database->GetTable(table_idx);
-  	auto user_table_object = user_db_object->GetTableObject(table->GetOid());
-   	EXPECT_EQ(user_db_object->GetDatabaseOid(),
-    			    user_table_object->GetDatabaseOid());
+    auto table = user_database->GetTable(table_idx);
+    auto user_table_object = user_db_object->GetTableObject(table->GetOid());
+     EXPECT_EQ(user_db_object->GetDatabaseOid(),
+              user_table_object->GetDatabaseOid());
   }
 
   txn_manager.CommitTransaction(txn);
@@ -163,7 +163,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
   EXPECT_EQ(type::Type::GetTypeSize(type::TypeId::INTEGER),
-  		column_objects[0]->GetColumnLength());
+      column_objects[0]->GetColumnLength());
   EXPECT_TRUE(column_objects[0]->IsInlined());
   EXPECT_TRUE(column_objects[0]->IsPrimary());
   EXPECT_FALSE(column_objects[0]->IsNotNull());
@@ -173,7 +173,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(1, column_objects[1]->GetColumnId());
   EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
-  EXPECT_EQ(32,	column_objects[1]->GetColumnLength());
+  EXPECT_EQ(32,  column_objects[1]->GetColumnLength());
   EXPECT_TRUE(column_objects[1]->IsInlined());
   EXPECT_FALSE(column_objects[1]->IsPrimary());
   EXPECT_FALSE(column_objects[1]->IsNotNull());
@@ -397,7 +397,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
       *(first_default_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, first_layout_oid, txn).get()));
   EXPECT_EQ(first_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+      catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Change default layout.
@@ -426,7 +426,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
       *(default_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn).get()));
   EXPECT_EQ(default_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+      catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Create additional layout.
@@ -440,7 +440,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto other_layout =
       catalog->CreateLayout(database_oid, table_oid, non_default_map, txn);
   EXPECT_NE(nullptr, other_layout);
-	txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction(txn);
 
   // Check the created layout
   EXPECT_FALSE(other_layout->IsColumnStore());
@@ -457,7 +457,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   // Check that the default layout is still the same.
   EXPECT_NE(other_layout, table->GetDefaultLayout());
   EXPECT_NE(other_layout_oid,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+      catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Drop the default layout.
@@ -478,7 +478,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   EXPECT_EQ(nullptr,
             pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
   EXPECT_EQ(ROW_STORE_LAYOUT_OID,
-  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+      catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
 
   // The additional layout must be present in pg_layout
   EXPECT_EQ(

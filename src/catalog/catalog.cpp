@@ -369,13 +369,13 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   // Update pg_table with table info
   pg_table->InsertTable(table_oid, table_name, schema_name,
                         database_object->GetDatabaseOid(),
-												table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
+                        table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
   oid_t column_id = 0;
   for (const auto &column : table->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
                                column.GetOffset(), column.GetType(),
                                column.GetLength(), column.IsInlined(),
-															 column.GetConstraints(), pool_.get(), txn);
+                               column.GetConstraints(), pool_.get(), txn);
 
     // Create index on unique single column
     if (column.IsUnique()) {
@@ -393,11 +393,11 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 
   // Create layout as default layout
   auto pg_layout =
-  		catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
   auto default_layout = table->GetDefaultLayout();
   if (!pg_layout->InsertLayout(table_oid, default_layout, pool_.get(), txn))
     throw CatalogException("Failed to create a new layout for table "
-    		+ table_name);
+        + table_name);
 
   return ResultType::SUCCESS;
 }
@@ -594,10 +594,10 @@ std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
   // Add the layout the pg_layout table
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
   if (pg_layout->GetLayoutWithOid(table_oid, new_layout->GetOid(), txn)
-  		== nullptr &&
-  		!pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn)) {
-  		LOG_ERROR("Failed to create a new layout for table %u", table_oid);
-  		return nullptr;
+      == nullptr &&
+      !pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn)) {
+      LOG_ERROR("Failed to create a new layout for table %u", table_oid);
+      return nullptr;
   }
   return new_layout;
 }
@@ -615,7 +615,7 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
 
     // update table catalog
     catalog_map_[database_oid]->GetTableCatalog()
-    		->UpdateDefaultLayoutOid(new_layout->GetOid(), table_oid, txn);
+        ->UpdateDefaultLayoutOid(new_layout->GetOid(), table_oid, txn);
   }
   return new_layout;
 }
@@ -853,16 +853,16 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
     table->ResetDefaultLayout();
     auto new_default_layout = table->GetDefaultLayout();
     if (pg_layout->GetLayoutWithOid(table_oid, new_default_layout->GetOid(),
-    		                            txn) == nullptr &&
-    		!pg_layout->InsertLayout(table_oid, new_default_layout,
-    		                         pool_.get(), txn)) {
+                                    txn) == nullptr &&
+        !pg_layout->InsertLayout(table_oid, new_default_layout,
+                                 pool_.get(), txn)) {
       LOG_DEBUG("Failed to create a new layout for table %d", table_oid);
       return ResultType::FAILURE;
     }
 
     // update table catalog
     catalog_map_[database_oid]->GetTableCatalog()
-    		->UpdateDefaultLayoutOid(new_default_layout->GetOid(), table_oid, txn);
+        ->UpdateDefaultLayoutOid(new_default_layout->GetOid(), table_oid, txn);
   }
 
   return ResultType::SUCCESS;
