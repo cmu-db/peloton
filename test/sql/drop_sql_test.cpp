@@ -115,7 +115,7 @@ TEST_F(DropSQLTests, DropIndexTest) {
   txn = txn_manager.BeginTransaction();
   try {
     index = pg_index->GetIndexObject(database_object->GetDatabaseName(),
-    		                             "idx", DEFAULT_SCHEMA_NAME, txn);
+                                     "idx", DEFAULT_SCHEMA_NAME, txn);
 
   } catch (CatalogException &e) {
     index = nullptr;
@@ -130,7 +130,7 @@ TEST_F(DropSQLTests, DropIndexTest) {
   // Check if index is not in catalog
   txn = txn_manager.BeginTransaction();
   index = pg_index->GetIndexObject(database_object->GetDatabaseName(),
-  		                             "idx", DEFAULT_SCHEMA_NAME, txn);
+                                   "idx", DEFAULT_SCHEMA_NAME, txn);
   EXPECT_EQ(index, nullptr);
 
   //  Free the database just created

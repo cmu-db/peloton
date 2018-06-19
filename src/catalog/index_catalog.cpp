@@ -174,11 +174,11 @@ bool IndexCatalog::DeleteIndex(oid_t database_oid, oid_t index_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
   auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-  		                                                        index_oid);
+                                                              index_oid);
   if (index_object) {
     auto table_object =
         txn->catalog_cache.GetCachedTableObject(database_oid,
-        		                                    index_object->GetTableOid());
+                                                index_object->GetTableOid());
     table_object->EvictAllIndexObjects();
   }
 
@@ -192,7 +192,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   }
   // try get from cache
   auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-  		                                                        index_oid);
+                                                              index_oid);
   if (index_object) {
     return index_object;
   }
@@ -227,15 +227,15 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-		const std::string &database_name, const std::string &index_name,
-		const std::string &schema_name, concurrency::TransactionContext *txn) {
+    const std::string &database_name, const std::string &index_name,
+    const std::string &schema_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto index_object =
       txn->catalog_cache.GetCachedIndexObject(database_name, index_name,
-      		                                    schema_name);
+                                              schema_name);
   if (index_object) {
     return index_object;
   }
