@@ -103,7 +103,7 @@ namespace {
     }
 
 #define END_STATE_DEF \
-  ON(TERMINATE) SET_STATE_TO(CLOSING) AND_INVOKE(CloseConnection) END_DEF
+  ON(TERMINATE) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection) END_DEF
 }  // namespace
 
 // clang-format off
@@ -142,6 +142,12 @@ DEF_TRANSITION_GRAPH
         ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
     END_STATE_DEF
+
+    DEFINE_STATE(CLOSING)
+      ON(WAKEUP) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection)
+      ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
+      ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
+    END_STATE_DEF
 END_DEF
     // clang-format on
 
@@ -155,7 +161,7 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
       next = result.second(connection);
     } catch (NetworkProcessException &e) {
       LOG_ERROR("%s\n", e.what());
-      connection.CloseConnection();
+      connection.TryCloseConnection();
       return;
     }
   }
@@ -199,7 +205,7 @@ Transition ConnectionHandle::Process() {
     case ProcessResult::PROCESSING:
       return Transition::NEED_RESULT;
     case ProcessResult::TERMINATE:
-      return Transition::TERMINATE;
+      throw NetworkProcessException("Error when processing");
     case ProcessResult::NEED_SSL_HANDSHAKE:
       return Transition::NEED_SSL_HANDSHAKE;
     default:
@@ -225,10 +231,11 @@ Transition ConnectionHandle::TrySslHandshake() {
       io_wrapper_);
 }
 
-Transition ConnectionHandle::CloseConnection() {
+Transition ConnectionHandle::TryCloseConnection() {
   LOG_DEBUG("Attempt to close the connection %d", io_wrapper_->GetSocketFd());
   // TODO(Tianyu): Handle close failure
-  io_wrapper_->Close();
+  Transition close = io_wrapper_->Close();
+  if (close != Transition::PROCEED) return close;
   // Remove listening event
   // Only after the connection is closed is it safe to remove events,
   // after this point no object in the system has reference to this

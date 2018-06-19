@@ -36,7 +36,6 @@ enum class Transition {
   WAKEUP,
   PROCEED,
   NEED_READ,
-  // TODO(tianyu) generalize this symbol, this is currently only used in process
   NEED_RESULT,
   TERMINATE,
   NEED_SSL_HANDSHAKE,

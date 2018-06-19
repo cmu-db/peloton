@@ -80,7 +80,7 @@ class PosixSocketIoWrapper : public NetworkIoWrapper {
   Transition FlushWriteBuffer() override;
   inline Transition Close() override {
     peloton_close(sock_fd_);
-    return Transition::NONE;
+    return Transition::PROCEED;
   }
 };
 

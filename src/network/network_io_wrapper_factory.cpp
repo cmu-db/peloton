@@ -70,8 +70,8 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(
       return Transition::NEED_READ;
     case SSL_ERROR_WANT_WRITE:
       return Transition::NEED_WRITE;
-    default:LOG_ERROR("SSL Error, error code %d", err);
-      return Transition::TERMINATE;
+    default:
+      throw NetworkProcessException("SSL Error, error code" + std::to_string(err));
   }
 }
 }  // namespace network

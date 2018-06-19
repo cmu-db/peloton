@@ -98,7 +98,7 @@ class ConnectionHandle {
   Transition Process();
   Transition GetResult();
   Transition TrySslHandshake();
-  Transition CloseConnection();
+  Transition TryCloseConnection();
 
   /**
    * Updates the event flags of the network event. This configures how the

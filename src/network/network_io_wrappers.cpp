@@ -178,6 +178,7 @@ Transition SslSocketIoWrapper::Close() {
     int err = SSL_get_error(conn_ssl_context_, ret);
     switch (err) {
       case SSL_ERROR_WANT_WRITE:
+        return Transition::NEED_WRITE;
       case SSL_ERROR_WANT_READ:
         // More work to do before shutdown
         return Transition::NEED_READ;
@@ -192,7 +193,7 @@ Transition SslSocketIoWrapper::Close() {
   SSL_free(conn_ssl_context_);
   conn_ssl_context_ = nullptr;
   peloton_close(sock_fd_);
-  return Transition::NONE;
+  return Transition::PROCEED;
 }
 
 }  // namespace network
