@@ -17,7 +17,7 @@
 #include "network/peloton_server.h"
 #include "network/postgres_protocol_handler.h"
 #include "util/string_util.h"
-#include "network/connection_handle_factory.h"
+#include "network/network_io_wrapper_factory.h"
 
 namespace peloton {
 namespace test {
@@ -40,16 +40,6 @@ void *PrepareStatementTest(int port) {
         "host=127.0.0.1 port=%d user=default_database sslmode=disable", port));
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
-
-    peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
-
-    //Check type of protocol handler
-    network::PostgresProtocolHandler* handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
-
-    EXPECT_NE(handler, nullptr);
 
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");

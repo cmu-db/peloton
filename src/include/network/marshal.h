@@ -15,52 +15,206 @@
 #include <string>
 #include <vector>
 
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "network/network_state.h"
 
 #define BUFFER_INIT_SIZE 100
 
 namespace peloton {
 namespace network {
 
-// Buffers used to batch messages at the socket
+/**
+ * A plain old buffer with a movable cursor, the meaning of which is dependent
+ * on the use case.
+ *
+ * The buffer has a fix capacity and one can write a variable amount of
+ * meaningful bytes into it. We call this amount "size" of the buffer.
+ */
 struct Buffer {
-  size_t buf_ptr;        // buffer cursor
-  size_t buf_size;       // buffer size
-  size_t buf_flush_ptr;  // buffer cursor for write
-  ByteBuf buf;
+ public:
+  /**
+   * Instantiates a new buffer and reserve default many bytes.
+   */
+  inline Buffer() { buf_.reserve(SOCKET_BUFFER_SIZE); }
 
-  inline Buffer() : buf_ptr(0), buf_size(0), buf_flush_ptr(0) {
-    // capacity of the buffer
-    buf.reserve(SOCKET_BUFFER_SIZE);
-  }
-
+  /**
+   * Reset the buffer pointer and clears content
+   */
   inline void Reset() {
-    buf_ptr = 0;
-    buf_size = 0;
-    buf_flush_ptr = 0;
+    size_ = 0;
+    offset_ = 0;
   }
 
-  // single buffer element accessor
-  inline uchar GetByte(size_t &index) { return buf[index]; }
+  /**
+   * @param bytes The amount of bytes to check between the cursor and the end
+   *              of the buffer (defaults to any)
+   * @return Whether there is any more bytes between the cursor and
+   *         the end of the buffer
+   */
+  inline bool HasMore(size_t bytes = 1) { return offset_ + bytes <= size_; }
 
-  // Get pointer to index location
-  inline uchar *GetPtr(size_t index) { return &buf[index]; }
+  /**
+   * @return Whether the buffer is at capacity. (All usable space is filled
+   *          with meaningful bytes)
+   */
+  inline bool Full() { return size_ == Capacity(); }
 
-  inline ByteBuf::const_iterator Begin() { return std::begin(buf); }
+  /**
+   * @return Iterator to the beginning of the buffer
+   */
+  inline ByteBuf::const_iterator Begin() { return std::begin(buf_); }
 
-  inline ByteBuf::const_iterator End() { return std::end(buf); }
+  /**
+   * @return Capacity of the buffer (not actual size)
+   */
+  inline size_t Capacity() const { return SOCKET_BUFFER_SIZE; }
 
-  inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
+  /**
+   * Shift contents to align the current cursor with start of the buffer,
+   * remove all bytes before the cursor.
+   */
+  inline void MoveContentToHead() {
+    auto unprocessed_len = size_ - offset_;
+    std::memmove(&buf_[0], &buf_[offset_], unprocessed_len);
+    size_ = unprocessed_len;
+    offset_ = 0;
+  }
 
-  // Get the 4 bytes Big endian uint32 and convert it to little endian
-  size_t GetUInt32BigEndian();
+  // TODO(Tianyu): Make these protected once we refactor protocol handler
+  size_t size_ = 0, offset_ = 0;
+  ByteBuf buf_;
+};
 
-  // Is the requested amount of data available from the current position in
-  // the reader buffer?
-  inline bool IsReadDataAvailable(size_t bytes) {
-    return ((buf_ptr - 1) + bytes < buf_size);
+/**
+ * A buffer specialize for read
+ */
+class ReadBuffer : public Buffer {
+ public:
+  /**
+   * Read as many bytes as possible using SSL read
+   * @param context SSL context to read from
+   * @return the return value of ssl read
+   */
+  inline int FillBufferFrom(SSL *context) {
+    ERR_clear_error();
+    ssize_t bytes_read = SSL_read(context, &buf_[size_], Capacity() - size_);
+    int err = SSL_get_error(context, bytes_read);
+    if (err == SSL_ERROR_NONE) size_ += bytes_read;
+    return err;
+  };
+
+  /**
+   * Read as many bytes as possible using Posix from an fd
+   * @param fd the file descriptor to  read from
+   * @return the return value of posix read
+   */
+  inline int FillBufferFrom(int fd) {
+    ssize_t bytes_read = read(fd, &buf_[size_], Capacity() - size_);
+    if (bytes_read > 0) size_ += bytes_read;
+    return (int)bytes_read;
+  }
+
+  /**
+   * The number of bytes available to be consumed (i.e. meaningful bytes after
+   * current read cursor)
+   * @return The number of bytes available to be consumed
+   */
+  inline size_t BytesAvailable() { return size_ - offset_; }
+
+  /**
+   * Read the given number of bytes into destination, advancing cursor by that
+   * number
+   * @param bytes Number of bytes to read
+   * @param dest Desired memory location to read into
+   */
+  inline void Read(size_t bytes, void *dest) {
+    std::copy(buf_.begin() + offset_, buf_.begin() + offset_ + bytes,
+              reinterpret_cast<uchar *>(dest));
+    offset_ += bytes;
+  }
+
+  /**
+   * Read a value of type T off of the buffer, advancing cursor by appropriate
+   * amount. Does NOT convert from network bytes order. It is the caller's
+   * responsibility to do so.
+   * @tparam T type of value to read off. Preferably a primitive type
+   * @return the value of type T
+   */
+  template <typename T>
+  inline T ReadValue() {
+    T result;
+    Read(sizeof(result), &result);
+    return result;
+  }
+};
+
+/**
+ * A buffer specialized for write
+ */
+class WriteBuffer : public Buffer {
+ public:
+  /**
+   * Write as many bytes as possible using SSL write
+   * @param context SSL context to write out to
+   * @return return value of SSL write
+   */
+  inline int WriteOutTo(SSL *context) {
+    ERR_clear_error();
+    ssize_t bytes_written = SSL_write(context, &buf_[offset_], size_ - offset_);
+    int err = SSL_get_error(context, bytes_written);
+    if (err == SSL_ERROR_NONE) offset_ += bytes_written;
+    return err;
+  }
+
+  /**
+   * Write as many bytes as possible using Posix write to fd
+   * @param fd File descriptor to write out to
+   * @return return value of Posix write
+   */
+  inline int WriteOutTo(int fd) {
+    ssize_t bytes_written = write(fd, &buf_[offset_], size_ - offset_);
+    if (bytes_written > 0) offset_ += bytes_written;
+    return (int)bytes_written;
+  }
+
+  /**
+   * The remaining capacity of this buffer. This value is equal to the
+   * maximum capacity minus the capacity already in use.
+   * @return Remaining capacity
+   */
+  inline size_t RemainingCapacity() { return Capacity() - size_; }
+
+  /**
+   * @param bytes Desired number of bytes to write
+   * @return Whether the buffer can accommodate the number of bytes given
+   */
+  inline bool HasSpaceFor(size_t bytes) { return RemainingCapacity() >= bytes; }
+
+  /**
+   * Append the desired range into current buffer.
+   * @tparam InputIt iterator type.
+   * @param first beginning of range
+   * @param len length of range
+   */
+  template <class InputIt>
+  inline void Append(InputIt first, size_t len) {
+    std::copy(first, first + len, std::begin(buf_) + size_);
+    size_ += len;
+  }
+
+  /**
+   * Append the given value into the current buffer. Does NOT convert to
+   * network byte order. It is up to the caller to do so.
+   * @tparam T input type
+   * @param val value to write into buffer
+   */
+  template <typename T>
+  inline void Append(T val) {
+    Append(reinterpret_cast<uchar *>(&val), sizeof(T));
   }
 };
 
@@ -139,8 +293,8 @@ struct OutputPacket {
   NetworkMessageType msg_type;  // header
 
   bool single_type_pkt;  // there would be only a pkt type being written to the
-                         // buffer when this flag is true
-  bool skip_header_write;  // whether we should write header to socket wbuf
+  // buffer when this flag is true
+  bool skip_header_write;  // whether we should write header to soc ket wbuf
   size_t write_ptr;        // cursor used to write packet content to socket wbuf
 
   // TODO could packet be reused?
