@@ -87,8 +87,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
                     col->default_value.get());
             column.SetDefaultValue(const_expr_elem->GetValue());
             LOG_TRACE("Added a default constraint %s on column \"%s.%s\"",
-                      v.ToString().c_str(), table_name.c_str(),
-                      col->name.c_str());
+                      const_expr_elem->GetValue().ToString().c_str(),
+                      table_name.c_str(), col->name.c_str());
           }
         }
 
@@ -234,7 +234,7 @@ void CreatePlan::ProcessUniqueConstraint(const parser::ColumnDefinition *col) {
   unique_info.unique_cols = {col->name};
   unique_info.constraint_name = "con_unique";
 
-  LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str,
+  LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(),
             col->name.c_str());
   con_uniques.push_back(unique_info);
 }
