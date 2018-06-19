@@ -26,14 +26,14 @@ namespace storage {
 // The default layout is always a ROW_STORE
 Layout::Layout(const oid_t num_columns, LayoutType layout_type)
     : num_columns_(num_columns), layout_type_(layout_type) {
-	// Assign the oid
-	if (layout_type == LayoutType::ROW) {
+  // Assign the oid
+  if (layout_type == LayoutType::ROW) {
     layout_oid_ = ROW_STORE_LAYOUT_OID;
-	} else if (layout_type == LayoutType::COLUMN) {
+  } else if (layout_type == LayoutType::COLUMN) {
     layout_oid_ = COLUMN_STORE_LAYOUT_OID;
-	} else {
+  } else {
     layout_oid_ = INVALID_OID;
-	}
+  }
 }
 
 // Constructor for the Layout class with column_map
@@ -74,7 +74,7 @@ Layout::Layout(const column_map_type &column_map)
 
 // Constructor for Layout class with predefined layout_oid
 Layout::Layout(const column_map_type &column_map, const oid_t num_columns,
-		           const oid_t layout_id)
+               const oid_t layout_id)
     : layout_oid_(layout_id),
       num_columns_(num_columns),
       column_layout_(column_map) {

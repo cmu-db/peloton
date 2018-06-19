@@ -60,8 +60,8 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
       pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
                                   column_id, column.GetOffset(),
                                   column.GetType(), column.GetLength(),
-																	column.IsInlined(), column.GetConstraints(),
-																	pool, txn);
+                                  column.IsInlined(), column.GetConstraints(),
+                                  pool, txn);
       column_id++;
     }
   }
@@ -110,12 +110,12 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
 
   // Reset oid of each catalog to avoid collisions between catalog
   // values added by system and users when checkpoint recovery.
-	pg_attribute_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
-	pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
-	// pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_attribute_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
+  pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
+  // pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
 }
 
 }  // namespace catalog

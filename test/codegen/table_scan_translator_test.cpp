@@ -716,7 +716,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   txn = txn_manager.BeginTransaction();
   table->ResetDefaultLayout(LayoutType::COLUMN);
   catalog->GetSystemCatalogs(table->GetDatabaseOid())->GetTableCatalog()
-  		->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),
+      ->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),
                                table->GetOid(), txn);
   txn_manager.CommitTransaction(txn);
 
