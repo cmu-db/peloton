@@ -96,7 +96,7 @@ class SerializeInput {
 
   // Return the rest size of data
   size_t RestSize() {
-  	return end_ - current_;
+    return end_ - current_;
   }
 
  private:

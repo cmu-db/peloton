@@ -1077,7 +1077,7 @@ bool Catalog::ExistDatabaseByName(const std::string &database_name,
 
 // check existence of table with table_name using txn.
 bool Catalog::ExistTableByName(const std::string &database_name,
-		                           const std::string &schema_name,
+                               const std::string &schema_name,
                                const std::string &table_name,
                                concurrency::TransactionContext *txn) {
   if (txn == nullptr)
@@ -1090,7 +1090,7 @@ bool Catalog::ExistTableByName(const std::string &database_name,
     return false;
   } else {
     auto table_object = database_object->GetTableObject(table_name,
-    		schema_name);
+        schema_name);
     if (table_object == nullptr) {
       return false;
     } else {
@@ -1115,7 +1115,7 @@ bool Catalog::ExistIndexByName(const std::string &database_name,
     return false;
   } else {
     auto table_object = database_object->GetTableObject(table_name,
-    		schema_name);
+        schema_name);
     if (table_object == nullptr) {
       return false;
     } else {

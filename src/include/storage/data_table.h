@@ -144,7 +144,7 @@ class DataTable : public AbstractTable {
 
   // for checkpoint recovery
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group,
-  		const size_t &active_tile_group_id);
+      const size_t &active_tile_group_id);
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(

@@ -966,7 +966,7 @@ std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
 enum class CheckpointingType {
   INVALID = INVALID_TYPE_ID,
   OFF = 1,  // turn off checkpoints
-  LOGICAL = 2,	// turn on logical checkpoints
+  LOGICAL = 2,  // turn on logical checkpoints
   TIMESTAMP = 3    // turn on timestamp checkpoints
 };
 std::string CheckpointingTypeToString(CheckpointingType type);

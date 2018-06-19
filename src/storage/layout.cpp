@@ -248,13 +248,13 @@ std::string Layout::SerializeColumnMap() const {
 
 
 void Layout::SerializeTo(SerializeOutput &out) const {
-	out.WriteInt(num_columns_);
-	out.WriteInt((int)layout_type_);
+  out.WriteInt(num_columns_);
+  out.WriteInt((int)layout_type_);
 
   if (layout_type_ == LayoutType::HYBRID) {
-  	out.WriteInt(layout_oid_);
-  	std::string column_map_str = SerializeColumnMap();
-  	out.WriteTextString(column_map_str);
+    out.WriteInt(layout_oid_);
+    std::string column_map_str = SerializeColumnMap();
+    out.WriteTextString(column_map_str);
   }
 }
 
@@ -292,16 +292,16 @@ column_map_type Layout::DeserializeColumnMap(oid_t num_columns,
 
 
 std::shared_ptr<const Layout> Layout::DeserializeFrom(SerializeInput &in) {
-	oid_t num_columns = in.ReadInt();
-	LayoutType layout_type = (LayoutType)in.ReadInt();
+  oid_t num_columns = in.ReadInt();
+  LayoutType layout_type = (LayoutType)in.ReadInt();
 
   if (layout_type == LayoutType::HYBRID) {
-  	oid_t layout_oid = in.ReadInt();
-  	std::string column_map_str = in.ReadTextString();
-  	auto column_map = DeserializeColumnMap(num_columns, column_map_str);
-  	return std::make_shared<const Layout>(column_map, layout_oid);
+    oid_t layout_oid = in.ReadInt();
+    std::string column_map_str = in.ReadTextString();
+    auto column_map = DeserializeColumnMap(num_columns, column_map_str);
+    return std::make_shared<const Layout>(column_map, layout_oid);
   } else {
-  	return std::make_shared<const Layout>(num_columns, layout_type);
+    return std::make_shared<const Layout>(num_columns, layout_type);
   }
 }
 

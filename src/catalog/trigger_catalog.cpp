@@ -160,9 +160,9 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-  	LOG_TRACE("no trigger on table %d", table_oid);
+    LOG_TRACE("no trigger on table %d", table_oid);
   } else {
-  	LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
+    LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
   }
 
   // create the trigger list

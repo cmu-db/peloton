@@ -939,8 +939,8 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 }
 
 void DataTable::AddTileGroup(
-		const std::shared_ptr<TileGroup> &tile_group,
-		const size_t &active_tile_group_id) {
+    const std::shared_ptr<TileGroup> &tile_group,
+    const size_t &active_tile_group_id) {
   active_tile_groups_[active_tile_group_id] = tile_group;
 
   oid_t tile_group_id = tile_group->GetTileGroupId();

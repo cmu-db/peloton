@@ -130,7 +130,7 @@ class TimestampCheckpointManager : public CheckpointManager {
 
   // read a checkpoint catalog
   bool LoadCatalogTableCheckpoint(const eid_t &epoch_id, const oid_t db_oid,
-  		const oid_t table_oid, concurrency::TransactionContext *txn);
+      const oid_t table_oid, concurrency::TransactionContext *txn);
 
   // recover user table checkpoints and these catalog objects
   bool LoadUserTableCheckpoint(const eid_t &epoch_id);
@@ -228,14 +228,14 @@ class TimestampCheckpointManager : public CheckpointManager {
                                         const eid_t &epoch_id) {
     return checkpoint_base_dir_ + "/" + std::to_string(epoch_id) + "/" +
            checkpoint_filename_prefix_ + "_" + database_name + "_" +
-					 schema_name + "_" + table_name;
+           schema_name + "_" + table_name;
   }
   std::string GetWorkingCheckpointFileFullPath(const std::string &database_name,
                                                const std::string &schema_name,
                                                const std::string &table_name) {
     return checkpoint_base_dir_ + "/" + checkpoint_working_dir_name_ + "/" +
            checkpoint_filename_prefix_ + "_" + database_name + "_" +
-					 schema_name + "_" + table_name;;
+           schema_name + "_" + table_name;;
   }
   std::string GetMetadataFileFullPath(const eid_t &epoch_id) {
     return checkpoint_base_dir_ + "/" + std::to_string(epoch_id) + "/" +

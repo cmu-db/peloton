@@ -68,7 +68,7 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
     auto ret_val = remove(complete_path.str().c_str());
     if (ret_val != 0) {
       LOG_ERROR("Failed to delete file: %s, error: %s",
-      		complete_path.str().c_str(), strerror(errno));
+          complete_path.str().c_str(), strerror(errno));
     }
   }
   closedir(dir);
@@ -116,14 +116,14 @@ bool LoggingUtil::GetDirectoryList(const char *dir_name,
 
     // ignore '.' and '..'
     if (strcmp(element_name, ".") == 0 ||
-    		strcmp(element_name, "..") == 0) {
+        strcmp(element_name, "..") == 0) {
       continue;
     }
 
       // check directory or not
     std::string target_dir = std::string(dir_name) + '/' + element_name;
     if (CheckDirectoryExistence(target_dir.c_str()) == true) {
-    	dir_name_list.push_back(element_name);
+      dir_name_list.push_back(element_name);
     }
   }
 
@@ -150,14 +150,14 @@ bool LoggingUtil::GetFileList(const char *dir_name,
 
     // ignore '.' and '..'
     if (strcmp(element_name, ".") == 0 ||
-    		strcmp(element_name, "..") == 0) {
+        strcmp(element_name, "..") == 0) {
       continue;
     }
 
-		std::string target_dir = std::string(dir_name) + '/' + element_name;
-		if (CheckDirectoryExistence(target_dir.c_str()) != false) {
-			file_name_list.push_back(element_name);
-		}
+    std::string target_dir = std::string(dir_name) + '/' + element_name;
+    if (CheckDirectoryExistence(target_dir.c_str()) != false) {
+      file_name_list.push_back(element_name);
+    }
   }
 
   closedir(dir);
