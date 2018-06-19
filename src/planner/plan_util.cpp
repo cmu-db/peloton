@@ -34,7 +34,7 @@ namespace peloton {
 namespace planner {
 
 const std::set<oid_t> PlanUtil::GetAffectedIndexes(
-    catalog::CatalogCache &catalog_cache,
+    std::shared_ptr<catalog::CatalogCache> catalog_cache,
     const parser::SQLStatement &sql_stmt) {
   std::set<oid_t> index_oids;
   std::string db_name, table_name, schema_name;
@@ -56,7 +56,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
         table_name = delete_stmt.GetTableName();
         schema_name = delete_stmt.GetSchemaName();
       }
-      auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
+      auto indexes_map = catalog_cache->GetDatabaseObject(db_name)
                              ->GetTableObject(table_name, schema_name)
                              ->GetIndexObjects();
       for (auto &index : indexes_map) {
@@ -69,7 +69,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
       schema_name = update_stmt.table->GetSchemaName();
-      auto table_object = catalog_cache.GetDatabaseObject(db_name)
+      auto table_object = catalog_cache->GetDatabaseObject(db_name)
                               ->GetTableObject(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
@@ -105,7 +105,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
 }
 
 const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
-    catalog::CatalogCache &catalog_cache,
+    std::shared_ptr<catalog::CatalogCache> catalog_cache,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
     const std::string &db_name) {
   std::vector<col_triplet> column_oids;
@@ -132,7 +132,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
       try {
         auto plan = optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
-        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        auto db_object = catalog_cache->GetDatabaseObject(db_name);
         database_id = db_object->GetDatabaseOid();
 
         // Perform a breadth first search on plan tree

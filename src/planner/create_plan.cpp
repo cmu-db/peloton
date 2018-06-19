@@ -205,6 +205,18 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
       break;
     }
+    case parser::CreateStatement::CreateType::kSequence: {
+      create_type = CreateType::SEQUENCE;
+      database_name = std::string(parse_tree->GetDatabaseName());
+
+      sequence_name = parse_tree->sequence_name;
+      seq_start = parse_tree->seq_start;
+      seq_increment = parse_tree->seq_increment;
+      seq_max_value = parse_tree->seq_max_value;
+      seq_min_value = parse_tree->seq_min_value;
+      seq_cycle = parse_tree->seq_cycle;
+      break;
+    }
     default:
       LOG_ERROR("UNKNOWN CREATE TYPE");
       // TODO Should we handle this here?

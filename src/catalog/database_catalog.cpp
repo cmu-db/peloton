@@ -314,7 +314,7 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   // evict cache
-  txn->catalog_cache.EvictDatabaseObject(database_oid);
+  txn->GetCatalogCache()->EvictDatabaseObject(database_oid);
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
@@ -325,7 +325,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+  auto database_object = txn->GetCatalogCache()->GetDatabaseObject(database_oid);
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
@@ -341,7 +341,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     auto database_object =
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    bool success = txn->GetCatalogCache()->InsertDatabaseObject(database_object);
     PELOTON_ASSERT(success == true);
     (void)success;
     return database_object;
@@ -364,7 +364,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
+  auto database_object = txn->GetCatalogCache()->GetDatabaseObject(database_name);
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
@@ -382,7 +382,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
         std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
     if (database_object) {
       // insert into cache
-      bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+      bool success = txn->GetCatalogCache()->InsertDatabaseObject(database_object);
       PELOTON_ASSERT(success == true);
       (void)success;
     }

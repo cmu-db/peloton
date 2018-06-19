@@ -15,6 +15,7 @@
 #include "catalog/catalog_cache.h"
 
 #include "catalog/database_catalog.h"
+#include "catalog/sequence_catalog.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -85,10 +86,6 @@ bool CatalogCache::EvictDatabaseObject(const std::string &database_name) {
   return true;
 }
 
-/*@brief   get database catalog object from cache
- * @param   database_oid
- * @return  database catalog object; if not found return object with invalid oid
- */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     oid_t database_oid) {
   auto it = database_objects_cache.find(database_oid);
@@ -98,10 +95,6 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
   return it->second;
 }
 
-/*@brief   get database catalog object from cache
- * @param   database_name
- * @return  database catalog object; if not found return null
- */
 std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
     const std::string &database_name) {
   auto it = database_name_cache.find(database_name);
@@ -111,10 +104,14 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
   return it->second;
 }
 
-/*@brief   search table catalog object from all cached database objects
- * @param   table_oid
- * @return  table catalog object; if not found return null
- */
+std::vector<std::shared_ptr<DatabaseCatalogObject>> CatalogCache::GetAllDatabaseObjects() {
+  std::vector<std::shared_ptr<DatabaseCatalogObject>> databases;
+  for (auto it : database_objects_cache) {
+    databases.push_back(it.second);
+  }
+  return (databases);
+}
+
 std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
 		oid_t database_oid, oid_t table_oid) {
 	auto database_object = GetDatabaseObject(database_oid);
@@ -124,10 +121,6 @@ std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
   return nullptr;
 }
 
-/*@brief   search index catalog object from all cached database objects
- * @param   index_oid
- * @return  index catalog object; if not found return null
- */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 		oid_t database_oid, oid_t index_oid) {
 	auto database_object = GetDatabaseObject(database_oid);
@@ -137,10 +130,6 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
   return nullptr;
 }
 
-/*@brief   search index catalog object from all cached database objects
- * @param   index_name
- * @return  index catalog object; if not found return null
- */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 		const std::string &database_name, const std::string &index_name,
 		const std::string &schema_name) {
@@ -151,6 +140,53 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 	if (index_object) return index_object;
   return nullptr;
 }
+
+bool CatalogCache::InsertSequenceObject(
+    std::shared_ptr<SequenceCatalogObject> sequence_object) {
+  if (!sequence_object || sequence_object->GetSequenceOid() == INVALID_OID) {
+    return false;  // invalid object
+  }
+
+  std::pair key = std::make_pair(sequence_object->GetDatabaseOid(),
+                                 sequence_object->GetName());
+
+  // check if already in cache
+  if (sequence_objects_cache.find(key) !=
+          sequence_objects_cache.end()) {
+    LOG_DEBUG("Sequence %s already exists in cache!",
+              sequence_object->GetName().c_str());
+    return false;
+  }
+
+  sequence_objects_cache.insert(
+          std::make_pair(key, sequence_object));
+  return true;
+}
+
+bool CatalogCache::EvictSequenceObject(const std::string & sequence_name,
+         oid_t database_oid) {
+  std::pair key = std::make_pair(database_oid, sequence_name);
+  auto it = sequence_objects_cache.find(key);
+  if (it == sequence_objects_cache.end()) {
+    return false;  // sequence not found in cache
+  }
+
+  auto sequence_object = it->second;
+  PELOTON_ASSERT(sequence_object);
+  sequence_objects_cache.erase(it);
+  return true;
+}
+
+std::shared_ptr<SequenceCatalogObject> CatalogCache::GetSequenceObject(
+            const std::string & sequence_name, oid_t database_oid) {
+  std::pair key = std::make_pair(database_oid, sequence_name);
+  auto it = sequence_objects_cache.find(key);
+  if (it == sequence_objects_cache.end()) {
+    return nullptr;
+  }
+  return it->second;
+}
+
 
 }  // namespace catalog
 }  // namespace peloton

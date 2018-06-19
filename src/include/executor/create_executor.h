@@ -54,6 +54,8 @@ class CreateExecutor : public AbstractExecutor {
 
   bool CreateTrigger(const planner::CreatePlan &node);
 
+  bool CreateSequence(const planner::CreatePlan &node);
+
  private:
   ExecutorContext *context_;
 

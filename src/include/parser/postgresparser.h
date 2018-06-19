@@ -203,6 +203,8 @@ class PostgresParser {
   // transform helper for create view statements
   static parser::SQLStatement *CreateViewTransform(ViewStmt *root);
 
+  static parser::SQLStatement *CreateSequenceTransform(CreateSeqStmt *root);
+
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);
 
@@ -253,6 +255,9 @@ class PostgresParser {
   // transform helper for drop trigger statement
   static parser::DropStatement *DropTriggerTransform(DropStmt *root);
 
+  // transform helper for drop sequence statement
+  static parser::DropStatement *DropSequenceTransform(DropStmt *root);
+
   // transform helper for drop schema statement
   static parser::DropStatement *DropSchemaTransform(DropStmt *root);
 
@@ -289,6 +294,12 @@ class PostgresParser {
   // transform helper for subquery expressions
   static expression::AbstractExpression *SubqueryExprTransform(SubLink *node);
 
+  static void ParseSequenceParams(List *options,
+                                    parser::CreateStatement *result);
+
+  static int64_t GetLongInDefElem(DefElem *defel) {
+    return (int64_t)((reinterpret_cast<value *>(defel->arg))->val.ival);
+  };
 };
 
 }  // namespace parser
