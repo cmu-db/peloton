@@ -267,7 +267,7 @@ class DataTable : public AbstractTable {
   }
 
   const std::shared_ptr<const Layout> GetDefaultLayout() const {
-  	return default_layout_;
+    return default_layout_;
   }
 
   //===--------------------------------------------------------------------===//

@@ -186,11 +186,11 @@ bool IndexCatalog::DeleteIndex(concurrency::TransactionContext *txn,
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
   auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-  		                                                        index_oid);
+                                                              index_oid);
   if (index_object) {
     auto table_object =
         txn->catalog_cache.GetCachedTableObject(database_oid,
-        		                                    index_object->GetTableOid());
+                                                index_object->GetTableOid());
     table_object->EvictAllIndexObjects();
   }
 
@@ -205,7 +205,7 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::Tra
   }
   // try get from cache
   auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-  		                                                        index_oid);
+                                                              index_oid);
   if (index_object) {
     return index_object;
   }
