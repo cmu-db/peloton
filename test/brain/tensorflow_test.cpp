@@ -14,7 +14,7 @@
 #include "brain/util/eigen_util.h"
 #include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/util/tf_util.h"
-#include "brain/workload/lstm_tf.h"
+#include "brain/workload/lstm.h"
 #include "brain/workload/workload_defaults.h"
 #include "common/harness.h"
 #include "util/file_util.h"
@@ -74,8 +74,11 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
       brain::LSTMWorkloadDefaults::DROPOUT_RATE,
       brain::LSTMWorkloadDefaults::CLIP_NORM,
       brain::LSTMWorkloadDefaults::BATCH_SIZE,
-      brain::LSTMWorkloadDefaults::HORIZON, brain::LSTMWorkloadDefaults::BPTT,
+      brain::LSTMWorkloadDefaults::BPTT,
+      brain::LSTMWorkloadDefaults::HORIZON,
       brain::LSTMWorkloadDefaults::SEGMENT));
+
+  LOG_INFO("Building Model: %s", model->ToString().c_str());
 
   // Check that model file has indeed generated
   EXPECT_TRUE(FileUtil::Exists(

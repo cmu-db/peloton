@@ -52,8 +52,16 @@ matrix_t EigenUtil::EigenMatToMatrixT(matrix_eig &mat) {
   return out_mat;
 }
 
-std::vector<float> EigenUtil::FlattenMatrix(const matrix_eig &mat) {
+std::vector<float> EigenUtil::Flatten(const matrix_eig &mat) {
   return std::vector<float>(mat.data(), mat.data() + mat.size());
+}
+
+std::vector<float> EigenUtil::Flatten(std::vector<matrix_eig> &mat_vect) {
+  std::vector<float> flattened_mat;
+  for(auto &mat: mat_vect) {
+    flattened_mat.insert(flattened_mat.end(), mat.data(), mat.data() + mat.size());
+  }
+  return flattened_mat;
 }
 
 }

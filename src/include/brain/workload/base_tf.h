@@ -13,13 +13,50 @@
 #pragma once
 
 #include <memory>
+#include "brain/util/tf_session_entity/tf_session_entity_io.h"
 #include "brain/util/eigen_util.h"
-#include "brain/util/tf_session_entity/tf_session_entity.h"
-#include "brain/util/tf_session_entity/tf_session_entity_input.h"
-#include "brain/util/tf_session_entity/tf_session_entity_output.h"
 
 namespace peloton {
 namespace brain {
+
+/**
+ * Base Abstract class to inherit for writing ML models
+ */
+class BaseModel{
+ public:
+  virtual std::string ToString() const = 0;
+};
+
+/**
+ * Base Abstract class to inherit for writing forecasting ML models
+ */
+class BaseForecastModel: BaseModel {
+ public:
+  BaseForecastModel(int horizon, int segment)
+      : BaseModel(),
+        horizon_(horizon),
+        segment_(segment) {};
+  virtual float TrainEpoch(matrix_eig &data) = 0;
+  virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
+                              matrix_eig &test_pred, bool return_preds) = 0;
+    /**
+     * Utility functions to create batches of the given data
+     * , generally useful to be fed into a TF model.
+     * The method of creating batches is specialized for Time series
+     * forecasting, hence placed here.
+     * Batches are in batch-major format
+     */
+  void GetBatch(const matrix_eig &mat, size_t batch_offset,
+                size_t bsz, size_t bptt,
+                std::vector<matrix_eig> &data,
+                std::vector<matrix_eig> &target) const;
+ protected:
+  int horizon_;
+  int segment_;
+};
+
+template <typename InputType, typename OutputType>
+class TfSessionEntity;
 
 /**
  * BaseTFModel is an abstract class defining constructor/basic operations
@@ -33,10 +70,12 @@ namespace brain {
  * accept a string
  * path to the serialized graph and import the same.
  */
-class BaseTFModel {
+class BaseTFModel: BaseModel {
  public:
   // Constructor - sets up session object
-  BaseTFModel();
+  BaseTFModel(const std::string& modelgen_path,
+              const std::string& pymodel_path,
+              const std::string& graph_path);
   // Destructor - cleans up any generated model files
   ~BaseTFModel();
 
@@ -48,27 +87,21 @@ class BaseTFModel {
    */
   void TFInit();
 
-  virtual float TrainEpoch(matrix_eig &data) = 0;
-  virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                              matrix_eig &test_pred, bool return_preds) = 0;
-
  protected:
   std::unique_ptr<TfSessionEntity<float, float>> tf_session_entity_;
   // Path to the working directory to use to write graph - Must be set in child
   // constructors
   std::string modelgen_path_;
-  // Path to the Python TF model to use - Must be set in child constructors
+  // Path to the Python TF model to use - Relative path must be passed in constructor
   std::string pymodel_path_;
-  // Path to the written graph - Must be set in child constructors
+  // Path to the written graph - Relative path must be passed in constructor
   std::string graph_path_;
   // Function to Generate the tensorflow model graph.
   void GenerateModel(const std::string &args_str);
-  // Child classes should set the name of the python model and
-  // corresponding protobuf graph path in this function
   // Lambda function for deleting input/output objects
   std::function<void(TfSessionEntityIOBase<float> *)> TFIO_Delete =
       [&](TfSessionEntityIOBase<float> *ptr) { delete ptr; };
-  virtual void SetModelInfo() = 0;
+
 };
 }  // namespace brain
 }  // namespace peloton

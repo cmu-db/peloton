@@ -25,7 +25,8 @@ class EigenUtil {
  public:
   static matrix_eig MatrixTToEigenMat(matrix_t &mat);
   static matrix_t EigenMatToMatrixT(matrix_eig &mat);
-  static std::vector<float> FlattenMatrix(const matrix_eig &mat);
+  static std::vector<float> Flatten(const matrix_eig &mat);
+  static std::vector<float> Flatten(std::vector<matrix_eig> &mat);
 };
 
 }
