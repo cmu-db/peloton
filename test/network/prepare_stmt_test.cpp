@@ -52,15 +52,23 @@ void *PrepareStatementTest(int port) {
     txn2.exec("INSERT INTO employee VALUES (3, 'Yilei CHU');");
 
     // test prepare statement
-    C.prepare("searchstmt", "SELECT name FROM employee WHERE id=$1;");
+
+    // REPLACED by SQL to avoid type inference bug
+    //C.prepare("searchstmt", "SELECT name FROM employee WHERE id=$1;");
+    txn2.exec("PREPARE searchstmt (INT) as SELECT name FROM employee WHERE id=$1");
+
     // invocation as in variable binding
-    pqxx::result R = txn2.prepared("searchstmt")(1).exec();
+
+    // REPLACED by SQL to avoid type inference bug
+    //pqxx::result R = txn2.prepared("searchstmt")(1).exec();
+    auto result = txn2.exec("EXECUTE searchstmt(1)");
+
     txn2.commit();
 
     // test prepared statement already in statement cache
     // LOG_INFO("[Prepare statement cache]
     // %d",conn->protocol_handler_.ExistCachedStatement("searchstmt"));
-    EXPECT_EQ(R.size(), 1);
+    EXPECT_EQ(result.size(), 1);
 
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
