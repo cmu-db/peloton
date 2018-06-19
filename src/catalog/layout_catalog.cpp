@@ -200,12 +200,12 @@ LayoutCatalog::GetLayouts(oid_t table_oid,
 
       column_map_type column_map;
       if (column_map_str.length() != 0) {
-      	column_map =
-      			storage::Layout::DeserializeColumnMap(num_columns, column_map_str);
+        column_map =
+            storage::Layout::DeserializeColumnMap(num_columns, column_map_str);
       }
       auto layout_object =
           std::make_shared<const storage::Layout>(column_map, num_columns,
-          		                                    layout_oid);
+                                                  layout_oid);
       table_object->InsertLayout(layout_object);
     }
   }

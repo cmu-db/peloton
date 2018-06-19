@@ -87,7 +87,7 @@ class ColumnCatalog : public AbstractCatalog {
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, size_t column_length,
-										bool is_inlined, const std::vector<Constraint> &constraints,
+                    bool is_inlined, const std::vector<Constraint> &constraints,
                     type::AbstractPool *pool,
                     concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
@@ -109,7 +109,7 @@ class ColumnCatalog : public AbstractCatalog {
     COLUMN_ID = 2,
     COLUMN_OFFSET = 3,
     COLUMN_TYPE = 4,
-		COLUMN_LENGTH = 5,
+    COLUMN_LENGTH = 5,
     IS_INLINED = 6,
     IS_PRIMARY = 7,
     IS_NOT_NULL = 8,
