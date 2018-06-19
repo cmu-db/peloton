@@ -10,12 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
 #include "common/container/lock_free_array.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -38,26 +36,24 @@ template <typename ValueType>
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
 
 template <typename ValueType>
-bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value) {
+void LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset,
+                                  const ValueType &value) {
   LOG_TRACE("Update at %lu", offset);
-  PELOTON_ASSERT(lock_free_array.size() >= offset + 1);
+  PELOTON_ASSERT(lock_free_array.size() > offset);
   lock_free_array.at(offset) = value;
-  return true;
 }
 
 template <typename ValueType>
-bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value) {
+void LOCK_FREE_ARRAY_TYPE::Append(const ValueType &value) {
   LOG_TRACE("Appended value.");
   lock_free_array.push_back(value);
-  return true;
 }
 
 template <typename ValueType>
-bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
+void LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
                                  const ValueType &invalid_value) {
   LOG_TRACE("Erase at %lu", offset);
   lock_free_array.at(offset) = invalid_value;
-  return true;
 }
 
 template <typename ValueType>
@@ -73,23 +69,12 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(
     const std::size_t &offset, const ValueType &invalid_value) const {
   LOG_TRACE("Find Valid at %lu", offset);
 
-  std::size_t valid_array_itr = 0;
-  std::size_t array_itr;
-  auto lock_free_array_offset = lock_free_array.size();
-  for (array_itr = 0; array_itr < lock_free_array_offset; array_itr++) {
-    auto value = lock_free_array.at(array_itr);
-    if (value != invalid_value) {
-      // Check offset
-      if (valid_array_itr == offset) {
-        return value;
-      }
-
-      // Update valid value count
-      valid_array_itr++;
-    }
+  ValueType value = invalid_value;
+  if ((lock_free_array.size() > offset)) {
+    value = lock_free_array.at(offset);
   }
 
-  return invalid_value;
+  return value;
 }
 
 template <typename ValueType>
@@ -99,10 +84,14 @@ template <typename ValueType>
 bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
 
 template <typename ValueType>
-void LOCK_FREE_ARRAY_TYPE::Clear() { lock_free_array.clear(); }
+void LOCK_FREE_ARRAY_TYPE::Clear() {
+  // Intel docs: To free internal arrays, call shrink_to_fit() after clear().
+  lock_free_array.clear();
+  lock_free_array.shrink_to_fit();
+}
 
 template <typename ValueType>
-bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) {
+bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) const {
   bool exists = false;
 
   for (std::size_t array_itr = 0; array_itr < lock_free_array.size();

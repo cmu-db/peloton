@@ -17,12 +17,6 @@
 #include "common/internal_types.h"
 #include "common/printable.h"
 
-//@{
-/** @brief  Pre-defined OIDs for ROW and COLUMN store.  */
-#define ROW_STORE_OID 0
-#define COLUMN_STORE_OID 1
-//@}
-
 namespace peloton {
 
 namespace catalog {
@@ -60,17 +54,22 @@ class Layout : public Printable {
   Layout(const column_map_type &column_map);
 
   /**
-   * @brief   Constructor for arbitrary column_maps.
+   * @brief   Constructor for arbitrary column_maps with layout oid.
    * @param   column_map Column map of the layout to be constructed.
+   * @param   num_columns Number of column.
    * @param   layout_oid Per-table unique OID. Generted by DataTable.
    */
-  Layout(const column_map_type &column_map, oid_t layout_oid);
+  Layout(const column_map_type &column_map, const oid_t num_columns,
+  		   const oid_t layout_oid);
 
   /** @brief  Check whether this layout is a row store. */
   bool IsRowStore() const { return (layout_type_ == LayoutType::ROW); }
 
   /** @brief  Check whether this layout is a column store. */
   bool IsColumnStore() const { return (layout_type_ == LayoutType::COLUMN); }
+
+  /** @brief  Check whether this layout is a hybrid store. */
+  bool IsHybridStore() const { return (layout_type_ == LayoutType::HYBRID); }
 
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }

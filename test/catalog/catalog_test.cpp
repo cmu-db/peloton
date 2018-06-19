@@ -120,6 +120,30 @@ TEST_F(CatalogTests, CreatingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(CatalogTests, TestingCatalogCache) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  auto catalog = catalog::Catalog::GetInstance();
+  auto catalog_db_object = catalog->GetDatabaseObject(CATALOG_DATABASE_OID, txn);
+  auto catalog_table_objects = catalog_db_object->GetTableObjects();
+  EXPECT_NE(0, catalog_table_objects.size());
+
+  auto user_db_object = catalog->GetDatabaseObject("emp_db", txn);
+  auto user_database = storage::StorageManager::GetInstance()
+                          ->GetDatabaseWithOid(user_db_object->GetDatabaseOid());
+
+  // check expected table object is acquired
+  for (oid_t table_idx = 0; table_idx < user_database->GetTableCount(); table_idx++) {
+  	auto table = user_database->GetTable(table_idx);
+  	auto user_table_object = user_db_object->GetTableObject(table->GetOid());
+   	EXPECT_EQ(user_db_object->GetDatabaseOid(),
+    			    user_table_object->GetDatabaseOid());
+  }
+
+  txn_manager.CommitTransaction(txn);
+}
+
 TEST_F(CatalogTests, TableObject) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -138,6 +162,8 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(0, column_objects[0]->GetColumnId());
   EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
+  EXPECT_EQ(type::Type::GetTypeSize(type::TypeId::INTEGER),
+  		column_objects[0]->GetColumnLength());
   EXPECT_TRUE(column_objects[0]->IsInlined());
   EXPECT_TRUE(column_objects[0]->IsPrimary());
   EXPECT_FALSE(column_objects[0]->IsNotNull());
@@ -147,6 +173,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(1, column_objects[1]->GetColumnId());
   EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
   EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
+  EXPECT_EQ(32,	column_objects[1]->GetColumnLength());
   EXPECT_TRUE(column_objects[1]->IsInlined());
   EXPECT_FALSE(column_objects[1]->IsPrimary());
   EXPECT_FALSE(column_objects[1]->IsNotNull());
@@ -319,6 +346,7 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto db_name = "temp_db";
   auto table_name = "temp_table";
   auto catalog = catalog::Catalog::GetInstance();
+
   // Create database.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -352,10 +380,27 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   auto table_oid = table_object->GetTableOid();
   auto table =
       catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto pg_layout = catalog->GetSystemCatalogs(database_oid)->GetLayoutCatalog();
+  txn_manager.CommitTransaction(txn);
+
+  // Check the first default layout
+  auto first_default_layout = table->GetDefaultLayout();
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID, first_default_layout->GetOid());
+  EXPECT_TRUE(first_default_layout->IsRowStore());
+  EXPECT_FALSE(first_default_layout->IsColumnStore());
+  EXPECT_FALSE(first_default_layout->IsHybridStore());
+
+  // Check the first default layout in pg_layout and pg_table
+  txn = txn_manager.BeginTransaction();
+  auto first_layout_oid = first_default_layout->GetOid();
+  EXPECT_EQ(
+      *(first_default_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, first_layout_oid, txn).get()));
+  EXPECT_EQ(first_layout_oid,
+  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
   txn_manager.CommitTransaction(txn);
 
   // Change default layout.
-
   std::map<oid_t, std::pair<oid_t, oid_t>> default_map;
   default_map[0] = std::make_pair(0, 0);
   default_map[1] = std::make_pair(0, 1);
@@ -365,8 +410,24 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   txn = txn_manager.BeginTransaction();
   auto default_layout =
       catalog->CreateDefaultLayout(database_oid, table_oid, default_map, txn);
-  txn_manager.CommitTransaction(txn);
   EXPECT_NE(nullptr, default_layout);
+  txn_manager.CommitTransaction(txn);
+
+  // Check the changed default layout
+  auto default_layout_oid = default_layout->GetOid();
+  EXPECT_EQ(default_layout_oid, table->GetDefaultLayout()->GetOid());
+  EXPECT_FALSE(default_layout->IsColumnStore());
+  EXPECT_FALSE(default_layout->IsRowStore());
+  EXPECT_TRUE(default_layout->IsHybridStore());
+
+  // Check the changed default layout in pg_layout and pg_table
+  txn = txn_manager.BeginTransaction();
+  EXPECT_EQ(
+      *(default_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn).get()));
+  EXPECT_EQ(default_layout_oid,
+  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+  txn_manager.CommitTransaction(txn);
 
   // Create additional layout.
   std::map<oid_t, std::pair<oid_t, oid_t>> non_default_map;
@@ -378,30 +439,48 @@ TEST_F(CatalogTests, LayoutCatalogTest) {
   txn = txn_manager.BeginTransaction();
   auto other_layout =
       catalog->CreateLayout(database_oid, table_oid, non_default_map, txn);
-  txn_manager.CommitTransaction(txn);
+  EXPECT_NE(nullptr, other_layout);
+	txn_manager.CommitTransaction(txn);
+
+  // Check the created layout
+  EXPECT_FALSE(other_layout->IsColumnStore());
+  EXPECT_FALSE(other_layout->IsRowStore());
+  EXPECT_TRUE(other_layout->IsHybridStore());
+
+  // Check the created layout in pg_layout
+  txn = txn_manager.BeginTransaction();
+  auto other_layout_oid = other_layout->GetOid();
+  EXPECT_EQ(
+      *(other_layout.get()),
+      *(pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));
 
   // Check that the default layout is still the same.
-  EXPECT_NE(*other_layout.get(), table->GetDefaultLayout());
+  EXPECT_NE(other_layout, table->GetDefaultLayout());
+  EXPECT_NE(other_layout_oid,
+  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
+  txn_manager.CommitTransaction(txn);
 
   // Drop the default layout.
-  auto default_layout_oid = default_layout->GetOid();
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(ResultType::SUCCESS, catalog->DropLayout(database_oid, table_oid,
                                                      default_layout_oid, txn));
   txn_manager.CommitTransaction(txn);
 
   // Check that default layout is reset and set to row_store.
-  EXPECT_NE(*default_layout.get(), table->GetDefaultLayout());
-  EXPECT_TRUE(table->GetDefaultLayout().IsRowStore());
+  EXPECT_NE(default_layout, table->GetDefaultLayout());
+  EXPECT_TRUE(table->GetDefaultLayout()->IsRowStore());
+  EXPECT_FALSE(table->GetDefaultLayout()->IsColumnStore());
+  EXPECT_FALSE(table->GetDefaultLayout()->IsHybridStore());
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID, table->GetDefaultLayout()->GetOid());
 
-  // Query pg_layout to ensure that the entry is dropped
+  // Query pg_layout and pg_table to ensure that the entry is dropped
   txn = txn_manager.BeginTransaction();
-  auto pg_layout = catalog->GetSystemCatalogs(database_oid)->GetLayoutCatalog();
   EXPECT_EQ(nullptr,
             pg_layout->GetLayoutWithOid(table_oid, default_layout_oid, txn));
+  EXPECT_EQ(ROW_STORE_LAYOUT_OID,
+  		catalog->GetTableObject(database_oid, table_oid, txn)->GetDefaultLayoutOid());
 
   // The additional layout must be present in pg_layout
-  auto other_layout_oid = other_layout->GetOid();
   EXPECT_EQ(
       *(other_layout.get()),
       *(pg_layout->GetLayoutWithOid(table_oid, other_layout_oid, txn).get()));

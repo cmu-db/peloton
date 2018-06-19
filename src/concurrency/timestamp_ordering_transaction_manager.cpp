@@ -653,14 +653,19 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // 3. install a new tuple for insert operations.
   // Iterate through each item pointer in the read write set
 
-  // TODO (Pooja): This might be inefficient since we will have to get the
-  // tile_group_header for each entry. Check if this needs to be consolidated
+  oid_t last_tile_group_id = INVALID_OID;
+  storage::TileGroupHeader *tile_group_header = nullptr;
+
   for (const auto &tuple_entry : rw_set) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
 
-    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+    if (tile_group_id != last_tile_group_id) {
+      tile_group_header =
+          storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      last_tile_group_id = tile_group_id;
+    }
 
     if (tuple_entry.second == RWType::READ_OWN) {
       // A read operation has acquired ownership but hasn't done any further
@@ -805,13 +810,20 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   }
 
   // Iterate through each item pointer in the read write set
-  // TODO (Pooja): This might be inefficient since we will have to get the
-  // tile_group_header for each entry. Check if this needs to be consolidated
+
+  oid_t last_tile_group_id = INVALID_OID;
+  storage::TileGroupHeader *tile_group_header = nullptr;
+
   for (const auto &tuple_entry : rw_set) {
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
-    auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+
+    if (tile_group_id != last_tile_group_id) {
+      tile_group_header =
+          storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+      last_tile_group_id = tile_group_id;
+    }
 
     if (tuple_entry.second == RWType::READ_OWN) {
       // A read operation has acquired ownership but hasn't done any further
