@@ -146,7 +146,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
       "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
 
   catalog->AddPrimaryKeyConstraint(database->GetOid(), table->GetOid(), {0},
-  		"con_primary", txn);
+      "con_primary", txn);
 
   txn_manager.CommitTransaction(txn);
   LaunchParallelTest(num_threads, TransactionTest, database, table);

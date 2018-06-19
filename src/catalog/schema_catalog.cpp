@@ -63,14 +63,14 @@ std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
       new catalog::Schema({schema_id_column, schema_name_column}));
 
   schema->AddConstraint(std::make_shared<Constraint>(
-  		SCHEMA_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-			SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_OID},
-			SCHEMA_CATALOG_PKEY_OID));
+      SCHEMA_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_OID},
+      SCHEMA_CATALOG_PKEY_OID));
 
   schema->AddConstraint(std::make_shared<catalog::Constraint>(
-  		SCHEMA_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-			SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_NAME},
-			SCHEMA_CATALOG_SKEY0_OID));
+      SCHEMA_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_NAME},
+      SCHEMA_CATALOG_SKEY0_OID));
 
   return schema;
 }

@@ -188,24 +188,24 @@ class Schema : public Printable {
 
   // Set the not null for the column
   inline void SetNotNull(const oid_t column_id) {
-  	columns[column_id].SetNotNull();
-  	not_null_columns.push_back(column_id);
+    columns[column_id].SetNotNull();
+    not_null_columns.push_back(column_id);
   }
 
   // Drop the not null for the column
   inline void DropNotNull(const oid_t column_id) {
-  	columns[column_id].ClearNotNull();
-  	for (auto itr = not_null_columns.begin(); itr < not_null_columns.end(); itr++) {
-  		if (*itr == column_id) {
-  			not_null_columns.erase(itr);
-  			break;
-  		}
-  	}
+    columns[column_id].ClearNotNull();
+    for (auto itr = not_null_columns.begin(); itr < not_null_columns.end(); itr++) {
+      if (*itr == column_id) {
+        not_null_columns.erase(itr);
+        break;
+      }
+    }
   }
 
   // Get not null column list
   inline std::vector<oid_t> GetNotNullColumns() const {
-  	return not_null_columns;
+    return not_null_columns;
   }
 
   // For single column default
@@ -215,24 +215,24 @@ class Schema : public Printable {
   // Get the default value for the column
   inline type::Value* GetDefaultValue(const oid_t column_id) const {
     if (columns[column_id].HasDefault()) {
-    	return columns[column_id].GetDefaultValue().get();
+      return columns[column_id].GetDefaultValue().get();
     }
     return nullptr;
   }
 
   // Set the default value for the column
   inline void SetDefaultValue(const oid_t column_id,
-  		                        const type::Value &default_value) {
+                              const type::Value &default_value) {
     if (columns[column_id].HasDefault()) {
-    	columns[column_id].ClearDefaultValue();
+      columns[column_id].ClearDefaultValue();
     }
-  	columns[column_id].SetDefaultValue(default_value);
+    columns[column_id].SetDefaultValue(default_value);
   }
 
   // Drop the default value for the column
   inline void DropDefaultValue(const oid_t column_id) {
     if (columns[column_id].HasDefault()) {
-    	columns[column_id].ClearDefaultValue();
+      columns[column_id].ClearDefaultValue();
     }
   }
 
@@ -245,38 +245,38 @@ class Schema : public Printable {
     constraints[constraint->GetConstraintOid()] = constraint;
 
     if (constraint->GetType() == ConstraintType::PRIMARY) {
-    	has_primary_key_ = true;
+      has_primary_key_ = true;
     } else if (constraint->GetType() == ConstraintType::UNIQUE) {
-    	unique_constraint_count_++;
+      unique_constraint_count_++;
     } else if (constraint->GetType() == ConstraintType::FOREIGN) {
-    	fk_constraints_.push_back(constraint->GetConstraintOid());
+      fk_constraints_.push_back(constraint->GetConstraintOid());
     }
   }
 
   // Delete a constraint by id from the table
   inline void DropConstraint(oid_t constraint_oid) {
     if (constraints[constraint_oid]->GetType() == ConstraintType::PRIMARY) {
-    	has_primary_key_ = false;
+      has_primary_key_ = false;
     } else if (constraints[constraint_oid]->GetType() == ConstraintType::UNIQUE) {
-    	unique_constraint_count_--;
+      unique_constraint_count_--;
     } else if (constraints[constraint_oid]->GetType() == ConstraintType::FOREIGN) {
-    	for (auto itr = fk_constraints_.begin(); itr < fk_constraints_.end(); itr++) {
-    		if (*itr == constraint_oid) {
-    			fk_constraints_.erase(itr);
-    			break;
-    		}
-    	}
+      for (auto itr = fk_constraints_.begin(); itr < fk_constraints_.end(); itr++) {
+        if (*itr == constraint_oid) {
+          fk_constraints_.erase(itr);
+          break;
+        }
+      }
     }
 
-  	constraints.erase(constraint_oid);
+    constraints.erase(constraint_oid);
   }
 
   inline std::unordered_map<oid_t, std::shared_ptr<Constraint>> GetConstraints() const {
-  	return constraints;
+    return constraints;
   }
 
   inline std::shared_ptr<Constraint> GetConstraint(oid_t constraint_oid) const {
-  	return constraints.at(constraint_oid);
+    return constraints.at(constraint_oid);
   }
 
   // For primary key constraints
@@ -287,33 +287,33 @@ class Schema : public Printable {
 
   // For foreign key constraints
   inline std::vector<std::shared_ptr<Constraint>> GetForeignKeyConstraints() {
-  	std::vector<std::shared_ptr<Constraint>> fks;
-  	for (auto oid : fk_constraints_) {
-    	PELOTON_ASSERT(constraints[oid]->GetType() == ConstraintType::FOREIGN);
-  		fks.push_back(constraints[oid]);
-  	}
-  	return fks;
+    std::vector<std::shared_ptr<Constraint>> fks;
+    for (auto oid : fk_constraints_) {
+      PELOTON_ASSERT(constraints[oid]->GetType() == ConstraintType::FOREIGN);
+      fks.push_back(constraints[oid]);
+    }
+    return fks;
   }
 
   inline bool HasForeignKeys() const { return (fk_constraints_.size() > 0); }
 
   inline void RegisterForeignKeySource(const std::shared_ptr<Constraint> constraint) {
-  	fk_sources_.push_back(constraint);
+    fk_sources_.push_back(constraint);
   }
 
   inline void DeleteForeignKeySource(const oid_t constraint_oid) {
-  	for (auto itr = fk_sources_.begin(); itr < fk_sources_.end(); itr++) {
-  		if ((*itr)->GetConstraintOid() == constraint_oid) {
-  			fk_sources_.erase(itr);
-  			break;
-  		}
-  	}
+    for (auto itr = fk_sources_.begin(); itr < fk_sources_.end(); itr++) {
+      if ((*itr)->GetConstraintOid() == constraint_oid) {
+        fk_sources_.erase(itr);
+        break;
+      }
+    }
   }
 
   inline bool HasForeignKeySources() const { return (fk_sources_.size() > 0); }
 
   inline std::vector<std::shared_ptr<Constraint>> GetForeignKeySources() {
-  	return fk_sources_;
+    return fk_sources_;
   }
 
   // Get a string representation for debugging

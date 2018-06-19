@@ -44,7 +44,7 @@ LayoutCatalog::~LayoutCatalog() {}
  *  @return  unique_ptr of the schema for pg_layout.
  */
 std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
-	auto table_id_column = catalog::Column(
+  auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
   table_id_column.SetNotNull();
@@ -69,9 +69,9 @@ std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
                            num_columns_column, column_map_column}));
 
   layout_catalog_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-  		LAYOUT_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-			LAYOUT_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::LAYOUT_OID},
-			LAYOUT_CATALOG_PKEY_OID));
+      LAYOUT_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      LAYOUT_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::LAYOUT_OID},
+      LAYOUT_CATALOG_PKEY_OID));
 
   return layout_catalog_schema;
 }

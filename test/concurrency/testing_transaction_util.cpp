@@ -77,8 +77,8 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
 
   // Create constraint on the table
   std::shared_ptr<catalog::Constraint> constraint(
-  		new catalog::Constraint(1000, ConstraintType::PRIMARY,
-  				"con_primary", TEST_TABLE_OID, key_attrs, 1234));
+      new catalog::Constraint(1000, ConstraintType::PRIMARY,
+          "con_primary", TEST_TABLE_OID, key_attrs, 1234));
   table->GetSchema()->AddConstraint(constraint);
 
   // Insert tuple
@@ -129,8 +129,8 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   // Create primary key constraint on the table
   std::shared_ptr<catalog::Constraint> constraint(
-  		new catalog::Constraint(1000, ConstraintType::PRIMARY,
-  				"con_primary", TEST_TABLE_OID, key_attrs, 1234));
+      new catalog::Constraint(1000, ConstraintType::PRIMARY,
+          "con_primary", TEST_TABLE_OID, key_attrs, 1234));
   table->GetSchema()->AddConstraint(constraint);
 
   // Create unique index on the value column
@@ -151,8 +151,8 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   // Create unique constraint on the table
   std::shared_ptr<catalog::Constraint> unique_constraint(
-  		new catalog::Constraint(1001, ConstraintType::UNIQUE,
-  				"con_unique", TEST_TABLE_OID, key_attrs, 1235));
+      new catalog::Constraint(1001, ConstraintType::UNIQUE,
+          "con_unique", TEST_TABLE_OID, key_attrs, 1235));
   table->GetSchema()->AddConstraint(unique_constraint);
 
   // Insert tuple
@@ -204,10 +204,10 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
   // Create primary key constraint on the table
   if (need_primary_index) {
-  	std::shared_ptr<catalog::Constraint> constraint(
-  			new catalog::Constraint(1000, ConstraintType::PRIMARY,
-  					"con_primary", relation_id, key_attrs, index_oid));
-  	table->GetSchema()->AddConstraint(constraint);
+    std::shared_ptr<catalog::Constraint> constraint(
+        new catalog::Constraint(1000, ConstraintType::PRIMARY,
+            "con_primary", relation_id, key_attrs, index_oid));
+    table->GetSchema()->AddConstraint(constraint);
   }
 
   // add this table to current database

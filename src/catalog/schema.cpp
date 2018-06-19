@@ -78,12 +78,12 @@ Schema::Schema(const std::vector<Column> &columns)
 
   // Set constraints
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-  	if (columns[column_itr].IsNotNull()) {
-  		SetNotNull(column_itr);
-  	}
-  	if (columns[column_itr].HasDefault()) {
-  		SetDefaultValue(column_itr, *(columns[column_itr].GetDefaultValue()));
-  	}
+    if (columns[column_itr].IsNotNull()) {
+      SetNotNull(column_itr);
+    }
+    if (columns[column_itr].HasDefault()) {
+      SetDefaultValue(column_itr, *(columns[column_itr].GetDefaultValue()));
+    }
   }
 }
 

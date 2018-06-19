@@ -117,14 +117,14 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
        indexed_attributes_column}));
 
   index_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-  		INDEX_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-			INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_OID},
-			INDEX_CATALOG_PKEY_OID));
+      INDEX_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_OID},
+      INDEX_CATALOG_PKEY_OID));
 
   index_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-  		INDEX_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-			INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_NAME, ColumnId::SCHEMA_NAME},
-			INDEX_CATALOG_SKEY0_OID));
+      INDEX_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_NAME, ColumnId::SCHEMA_NAME},
+      INDEX_CATALOG_SKEY0_OID));
 
   return index_schema;
 }

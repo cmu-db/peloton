@@ -127,9 +127,9 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
 
   if (has_primary_key) {
     auto table_object = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
-    		                                        "department_table", txn);
+                                                "department_table", txn);
     catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
-    		table_object->GetTableOid(), {0}, "con_primary", txn);
+        table_object->GetTableOid(), {0}, "con_primary", txn);
   }
   txn_manager.CommitTransaction(txn);
 }

@@ -396,8 +396,8 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
 
     // Create constraint on the table
     std::shared_ptr<catalog::Constraint> constraint(
-    		new catalog::Constraint(1000, ConstraintType::PRIMARY,
-    				"con_primary", table_oid, key_attrs, 123));
+        new catalog::Constraint(1000, ConstraintType::PRIMARY,
+            "con_primary", table_oid, key_attrs, 123));
     table->GetSchema()->AddConstraint(constraint);
 
     /////////////////////////////////////////////////////////////////

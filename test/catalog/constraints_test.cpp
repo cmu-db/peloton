@@ -261,7 +261,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
                        std::move(table_schema), txn, false);
 
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-  		db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+      db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
   catalog->AddUniqueConstraint(table->GetDatabaseOid(), table->GetOid(), {0},
                                "con_unique", txn);
   txn_manager.CommitTransaction(txn);
@@ -270,7 +270,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // begin this transaction
   // Test1: insert a tuple with column  meet the unique requirement
   bool result = TestingConstraintsUtil::ExecuteOneInsert(
-  		txn, table, type::ValueFactory::GetIntegerValue(10));
+      txn, table, type::ValueFactory::GetIntegerValue(10));
   EXPECT_TRUE(result);
 
   // Test2: insert not a valid column violate the constraint
@@ -321,20 +321,20 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   txn = txn_manager.BeginTransaction();
   // begin this transaction
   // Test1: insert a tuple with column  meet the unique requirment
-	std::vector<type::Value> ccs;
-	ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(11));
-	bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
+  std::vector<type::Value> ccs;
+  ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(11));
+  bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
   EXPECT_TRUE(result);
 
   // Test2: insert not a valid column violate the constraint
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(11));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(11));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
   EXPECT_FALSE(result);
 
-	ccs.clear();
+  ccs.clear();
   ccs.push_back(type::ValueFactory::GetIntegerValue(10));
   ccs.push_back(type::ValueFactory::GetIntegerValue(12));
   result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table, ccs);
@@ -372,7 +372,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "a", false);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "b", false);
   std::unique_ptr<catalog::Schema> tableA_schema(
-  		new catalog::Schema({column1, column2}));
+      new catalog::Schema({column1, column2}));
   catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_a_name,
                        std::move(tableA_schema), txn);
 
@@ -401,33 +401,33 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
   std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("b") };
   catalog->AddForeignKeyConstraint(table_a->GetDatabaseOid(), table_a->GetOid(),
-  		source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::NOACTION,
-			FKConstrActionType::NOACTION, "con_foreign", txn);
+      source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::NOACTION,
+      FKConstrActionType::NOACTION, "con_foreign", txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   // begin this transaction
   // Test1: insert a tuple with column  meet the constraint requirement
-	std::vector<type::Value> ccs;
-	ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+  std::vector<type::Value> ccs;
+  ccs.push_back(type::ValueFactory::GetIntegerValue(1));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
   EXPECT_TRUE(result);
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(1));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
   EXPECT_TRUE(result);
 
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(3));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(4));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(3));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(4));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
   EXPECT_TRUE(result);
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(5));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(5));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
   EXPECT_FALSE(result);
 
   // commit this transaction
@@ -493,34 +493,34 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("a"),
                                         table_a->GetSchema()->GetColumnID("b") };
   catalog->AddForeignKeyConstraint(table_a->GetDatabaseOid(), table_a->GetOid(),
-  		source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::RESTRICT,
-			FKConstrActionType::CASCADE, "con_foreign", txn);
+      source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::RESTRICT,
+      FKConstrActionType::CASCADE, "con_foreign", txn);
   txn_manager.CommitTransaction(txn);
 
 
   txn = txn_manager.BeginTransaction();
   // begin this transaction
   // Test1: insert a tuple with column  meet the constraint requirement
-	std::vector<type::Value> ccs;
-	ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+  std::vector<type::Value> ccs;
+  ccs.push_back(type::ValueFactory::GetIntegerValue(1));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  bool result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
   EXPECT_TRUE(result);
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(1));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(1));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
   EXPECT_TRUE(result);
 
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(3));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(4));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(3));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(4));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_b, ccs);
   EXPECT_TRUE(result);
-	ccs.clear();
-	ccs.push_back(type::ValueFactory::GetIntegerValue(2));
-	ccs.push_back(type::ValueFactory::GetIntegerValue(5));
-	result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
+  ccs.clear();
+  ccs.push_back(type::ValueFactory::GetIntegerValue(2));
+  ccs.push_back(type::ValueFactory::GetIntegerValue(5));
+  result = TestingConstraintsUtil::ExecuteMultiInsert(txn, table_a, ccs);
   EXPECT_FALSE(result);
 
   // commit this transaction

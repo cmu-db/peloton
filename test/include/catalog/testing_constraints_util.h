@@ -93,8 +93,8 @@ class TestingConstraintsUtil {
  public:
   /** @brief Creates a basic table with allocated but not populated tuples */
   static storage::DataTable *CreateTable(
-  		std::vector<oid_t> notnull_col_ids,
-			std::unordered_map<oid_t, type::Value> default_values,
+      std::vector<oid_t> notnull_col_ids,
+      std::unordered_map<oid_t, type::Value> default_values,
       UNUSED_ATTRIBUTE bool indexes = true) {
     // Create the database
     auto catalog = catalog::Catalog::GetInstance();
@@ -113,12 +113,12 @@ class TestingConstraintsUtil {
 
     // set single column constraints
     for (auto col_oid : notnull_col_ids) {
-    	PELOTON_ASSERT(col_oid < CONSTRAINTS_NUM_COLS);
-    	columns[col_oid].SetNotNull();
+      PELOTON_ASSERT(col_oid < CONSTRAINTS_NUM_COLS);
+      columns[col_oid].SetNotNull();
     }
     for (auto dv : default_values) {
-    	PELOTON_ASSERT(dv.first < CONSTRAINTS_NUM_COLS);
-    	columns[dv.first].SetDefaultValue(dv.second);
+      PELOTON_ASSERT(dv.first < CONSTRAINTS_NUM_COLS);
+      columns[dv.first].SetDefaultValue(dv.second);
     }
 
     std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));

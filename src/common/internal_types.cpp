@@ -2138,26 +2138,26 @@ std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
 
 std::string FKConstrActionTypeToString(FKConstrActionType type) {
   switch (type) {
-		case FKConstrActionType::NOACTION: {
-			return ("NOACTION");
-		}
-		case FKConstrActionType::RESTRICT: {
-			return ("RESTRICT");
-		}
-		case FKConstrActionType::CASCADE: {
-			return ("CASCADE");
-		}
-		case FKConstrActionType::SETNULL: {
-			return ("SETNULL");
-		}
-		case FKConstrActionType::SETDEFAULT: {
-			return ("SETDEFAULT");
-		}
-		default: {
-			throw ConversionException(StringUtil::Format(
-					"No string conversion for FKConstrActionType value '%d'",
-					static_cast<int>(type)));
-		}
+    case FKConstrActionType::NOACTION: {
+      return ("NOACTION");
+    }
+    case FKConstrActionType::RESTRICT: {
+      return ("RESTRICT");
+    }
+    case FKConstrActionType::CASCADE: {
+      return ("CASCADE");
+    }
+    case FKConstrActionType::SETNULL: {
+      return ("SETNULL");
+    }
+    case FKConstrActionType::SETDEFAULT: {
+      return ("SETDEFAULT");
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for FKConstrActionType value '%d'",
+          static_cast<int>(type)));
+    }
   }
 return "INVALID";
 }
@@ -2177,7 +2177,7 @@ FKConstrActionType StringToFKConstrActionType(const std::string &str){
   } else {
     throw ConversionException(StringUtil::Format(
         "No FKConstrActionType conversion from string '%s'",
-				upper_str.c_str()));
+        upper_str.c_str()));
   }
   return FKConstrActionType::NOACTION;
 }

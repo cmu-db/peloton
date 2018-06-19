@@ -185,10 +185,10 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
                        std::move(table_schema), txn);
   auto table_object =
-  		catalog->GetTableObject(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-  		                        "department_table", txn);
+      catalog->GetTableObject(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                              "department_table", txn);
   catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
-  		table_object->GetTableOid(), {0}, "con_primary", txn);
+      table_object->GetTableOid(), {0}, "con_primary", txn);
 
   LOG_INFO("Table created!");
 
