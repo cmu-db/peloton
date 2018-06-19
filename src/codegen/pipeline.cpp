@@ -233,11 +233,10 @@ Pipeline &PipelineContext::GetPipeline() { return pipeline_; }
 ////////////////////////////////////////////////////////////////////////////////
 
 Pipeline::Pipeline(CompilationContext &compilation_ctx)
-    : compilation_ctx_(compilation_ctx),
+    : id_(compilation_ctx.RegisterPipeline(*this)),
+      compilation_ctx_(compilation_ctx),
       pipeline_index_(0),
-      parallelism_(Pipeline::Parallelism::Flexible) {
-  id_ = compilation_ctx.RegisterPipeline(*this);
-}
+      parallelism_(Pipeline::Parallelism::Flexible) {}
 
 Pipeline::Pipeline(OperatorTranslator *translator,
                    Pipeline::Parallelism parallelism)
@@ -260,26 +259,36 @@ void Pipeline::MarkSource(OperatorTranslator *translator,
 
   // Check parallel execution settings
   bool parallel_exec_disabled = !settings::SettingsManager::GetBool(
-                                    settings::SettingId::parallel_execution);
+      settings::SettingId::parallel_execution);
 
   // Check if the consumer supports parallel execution
+  bool last_pipeline = compilation_ctx_.IsLastPipeline(*this);
   auto &exec_consumer = compilation_ctx_.GetExecutionConsumer();
   bool parallel_consumer = exec_consumer.SupportsParallelExec();
 
-  // We choose serial execution for one of four reasons:
-  //   1. If parallel execution is globally disabled.
-  //   2. If the consumer isn't parallel.
-  //   3. If the source wants serial execution.
-  //   4. If the pipeline is already configured to be serial.
-  if (parallel_exec_disabled || !parallel_consumer ||
+  /*
+   * We need to make a final decision as to whether we should execute this
+   * pipeline serially using a single thread, or in parallel using multiple
+   * threads. For now, we explicitly choose serial execution for any one of 
+   * the following four reasons:
+   *   1. If parallel execution is globally disabled.
+   *   2. If this pipeline is the last to execute and the consumer does not
+   *      support parallel execution.
+   *   3. If the source operator explicitly requests serial execution.
+   *   4. If the pipeline is already configured to be serial. This may happen if
+   *      **ANY** other operator in the pipeline specifically requested serial
+   *      execution.
+   * 
+   * Finally, if the source operator did not commit to serial or parallel, we
+   * err on the side of caution and fallback to serial execution.
+   */
+  if (parallel_exec_disabled || (last_pipeline && !parallel_consumer) ||
       parallelism == Pipeline::Parallelism::Serial ||
       parallelism_ == Pipeline::Parallelism::Serial) {
     parallelism_ = Pipeline::Parallelism::Serial;
     return;
   }
 
-  // At this point, the pipeline is either fully parallel or flexible, and the
-  // source is either parallel or flexible. We choose whatever the source wants
   if (parallelism == Pipeline::Parallelism::Flexible) {
     auto pipeline_name = ConstructPipelineName();
     auto source_name = translator->GetPlan().GetInfo();

@@ -124,9 +124,9 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline),
-      child_pipeline_(this, Pipeline::Parallelism::Serial) {
+      child_pipeline_(this, Pipeline::Parallelism::Flexible) {
   // Scanning the sorter happens serially (for now ...)
-  pipeline.SetSerial();
+  pipeline.MarkSource(this, Pipeline::Parallelism::Serial);
 
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
@@ -177,20 +177,25 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
     if (iter != col_id_map.end()) {
       LOG_DEBUG("Sort column %p (%s) references output column @ %u", ai,
                 TypeIdToString(ai->type.type_id).c_str(), iter->second);
-      sort_key_info = {ai, true, iter->second};
+      sort_key_info = {.sort_key = ai,
+                       .is_part_of_output = true,
+                       .tuple_slot = iter->second};
     } else {
       LOG_DEBUG("Adding sort column %p (%s) to tuple format @ %u", ai,
                 TypeIdToString(ai->type.type_id).c_str(),
                 static_cast<uint32_t>(tuple_desc.size()));
       tuple_desc.push_back(ai->type);
-      sort_key_info = {ai, false, static_cast<uint32_t>(tuple_desc.size() - 1)};
+      sort_key_info = {
+          .sort_key = ai,
+          .is_part_of_output = false,
+          .tuple_slot = static_cast<uint32_t>(tuple_desc.size() - 1)};
     }
 
     sort_key_info_.push_back(sort_key_info);
   }
 
   // Create the sorter
-  sorter_ = Sorter{codegen, tuple_desc};
+  sorter_ = Sorter(codegen, tuple_desc);
 }
 
 void OrderByTranslator::InitializeQueryState() {
@@ -315,7 +320,10 @@ void OrderByTranslator::Produce() const {
                               callback);
   };
 
-  GetPipeline().RunSerial(producer);
+  // We set the pipeline to be serial in the constructor. Sanity check here.
+  auto &pipeline = GetPipeline();
+  PELOTON_ASSERT(!pipeline.IsParallel());
+  pipeline.RunSerial(producer);
 }
 
 void OrderByTranslator::Consume(ConsumerContext &ctx,
