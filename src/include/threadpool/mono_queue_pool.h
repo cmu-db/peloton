@@ -83,7 +83,11 @@ inline void MonoQueuePool::SubmitTask(const F &func) {
   if (!is_running_) {
     Startup();
   }
-  task_queue_.Enqueue(std::move(func));
+  {
+    std::lock_guard<std::mutex> lock(worker_pool_.cv_lock);
+    task_queue_.Enqueue(std::move(func));
+  }
+  worker_pool_.not_empty.notify_one();
 }
 
 inline MonoQueuePool &MonoQueuePool::GetInstance() {
