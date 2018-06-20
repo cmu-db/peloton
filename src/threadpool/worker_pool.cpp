@@ -28,7 +28,7 @@ void WorkerFunc(std::string thread_name, std::atomic_bool *is_running,
 
   while (is_running->load() || !task_queue->IsEmpty()) {
     std::unique_lock<std::mutex> lock(*cv_lock);
-    not_empty->wait_for(lock, std::chrono::milliseconds(1),
+    not_empty->wait_for(lock, std::chrono::seconds(1),
                         [&] { return !task_queue->IsEmpty(); });
     std::function<void()> task;
     if (task_queue->Dequeue(task)) {
