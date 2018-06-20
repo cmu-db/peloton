@@ -73,17 +73,26 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     Timer<std::milli> recovery_timer;
     recovery_timer.Start();
 
+    // begin transaction
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
     // recover catalog table checkpoint
-    if (LoadCatalogTableCheckpoint(epoch_id) == false) {
+    if (LoadCatalogTableCheckpoint(epoch_id, txn) == false) {
       LOG_ERROR("Catalog table checkpoint recovery was failed");
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
     // recover user table checkpoint
-    if (LoadUserTableCheckpoint(epoch_id) == false) {
+    if (LoadUserTableCheckpoint(epoch_id, txn) == false) {
       LOG_ERROR("User table checkpoint recovery was failed");
+      txn_manager.AbortTransaction(txn);
       return false;
     }
+
+    // commit transaction
+    txn_manager.CommitTransaction(txn);
 
     // set recovered epoch id
     recovered_epoch_id_ = epoch_id;
@@ -515,10 +524,9 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
   LoggingUtil::FFlushFsync(file_handle);
 }
 
-bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_id) {
+bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_id,
+    concurrency::TransactionContext *txn) {
   // prepare for catalog data file loading
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
 
@@ -529,12 +537,11 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
       catalog_db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
     if (LoadCatalogTableCheckpoint(epoch_id, catalog_db_catalog->GetDatabaseOid(),
         table_catalog->GetTableOid(), txn) == false) {
-      txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
-  // recover all catalog table within each database
+  // recover all catalog tables within each database
   for (auto &db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
     auto &db_oid = db_catalog_pair.first;
     auto &db_catalog = db_catalog_pair.second;
@@ -572,14 +579,12 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(const eid_t &epoch_i
          db_catalog->GetTableObjects((std::string)CATALOG_SCHEMA_NAME)) {
       if (LoadCatalogTableCheckpoint(epoch_id, db_oid,
           table_catalog->GetTableOid(), txn) == false) {
-        txn_manager.AbortTransaction(txn);
         return false;
       }
     }  // table loop end
 
   }  // database loop end
 
-  txn_manager.CommitTransaction(txn);
   return true;
 }
 
@@ -683,29 +688,23 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   return true;
 }
 
-bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
+bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id,
+    concurrency::TransactionContext *txn) {
   // Recover storage object
   FileHandle metadata_file;
   std::string metadata_filename = GetMetadataFileFullPath(epoch_id);
   if (LoggingUtil::OpenFile(metadata_filename.c_str(), "rb", metadata_file) ==
       false) {
-    txn_manager.AbortTransaction(txn);
     LOG_ERROR("Open checkpoint metadata file failed!");
     return false;
   }
   if (RecoverStorageObject(metadata_file, txn) == false) {
-    txn_manager.AbortTransaction(txn);
     LOG_ERROR("Storage object recovery failed");
     return false;
   }
   LoggingUtil::CloseFile(metadata_file);
-  txn_manager.CommitTransaction(txn);
 
   // Recover table
-  txn = txn_manager.BeginTransaction();
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   for (auto &db_catalog_pair : catalog->GetDatabaseObjects(txn)) {
@@ -751,7 +750,6 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(const eid_t &epoch_id) 
 
   }  // database loop end
 
-  txn_manager.CommitTransaction(txn);
   return true;
 }
 
