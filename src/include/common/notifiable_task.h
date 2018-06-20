@@ -62,7 +62,6 @@ class NotifiableTask {
    */
   inline int Id() const { return task_id_; }
 
-
   /**
    * @brief Register an event with the event base associated with this
    * notifiable task.
@@ -140,22 +139,19 @@ class NotifiableTask {
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
-  // TODO(tianyu): The original network code seems to do this as an
-  //  optimization. Specifically it avoids new memory allocation by reusing
-  //  an existing event. I am leaving this out until we get numbers.
-  //  void UpdateEvent(struct event *event, int fd, short flags,
-  //                   event_callback_fn callback, void *arg,
-  //                   const struct timeval *timeout = nullptr) {
-  //    PELOTON_ASSERT(!(events_.find(event) == events_.end()));
-  //    EventUtil::EventDel(event);
-  //    EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
-  //    EventUtil::EventAdd(event, timeout);
-  //  }
-  //
-  //  void UpdateManualEvent(struct event *event, event_callback_fn callback,
-  //                         void *arg) {
-  //    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
-  //  }
+  void UpdateEvent(struct event *event, int fd, short flags,
+                   event_callback_fn callback, void *arg,
+                   const struct timeval *timeout = nullptr) {
+    PELOTON_ASSERT(!(events_.find(event) == events_.end()));
+    EventUtil::EventDel(event);
+    EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
+    EventUtil::EventAdd(event, timeout);
+  }
+
+  void UpdateManualEvent(struct event *event, event_callback_fn callback,
+                         void *arg) {
+    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
+  }
 
   /**
    * @brief Unregister the event given. The event is no longer active and its
