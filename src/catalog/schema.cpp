@@ -270,44 +270,6 @@ Schema *Schema::AppendSchemaPtrList(
   return ret_schema;
 }
 
-// Serialize this schema
-void Schema::SerializeTo(SerializeOutput &out) const {
-  // Write each column information (column name, length, offset, type and
-  // constraints)
-  out.WriteLong(column_count);
-  for (auto column : columns) {
-    column.SerializeTo(out);
-  }
-
-  // Write schema information (multi-column constraints)
-  out.WriteLong(multi_constraints.size());
-  for (auto multi_constraint : multi_constraints) {
-    multi_constraint.SerializeTo(out);
-  }
-}
-
-// Deserialize this schema
-std::shared_ptr<Schema> Schema::DeserializeFrom(SerializeInput &in) {
-  std::vector<catalog::Column> columns;
-
-  // recover column information
-  size_t column_count = in.ReadLong();
-  for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
-    columns.push_back(catalog::Column::DeserializeFrom(in));
-  }
-
-  std::shared_ptr<Schema> schema(new Schema(columns));
-
-  // read schema information (multi-column constraints)
-  size_t multi_constraint_count = in.ReadLong();
-  for (oid_t multi_constraint_idx = 0;
-       multi_constraint_idx < multi_constraint_count; multi_constraint_idx++) {
-    schema->AddMultiConstraints(MultiConstraint::DeserializeFrom(in));
-  }
-
-  return schema;
-}
-
 const std::string Schema::GetInfo() const {
   std::ostringstream os;
 

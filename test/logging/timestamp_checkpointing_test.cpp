@@ -77,8 +77,7 @@ bool RecoverTileGroupFromFile(
         table->GetName().c_str(), tile_group->GetLayout().GetInfo().c_str());
 
     // recover tuples located in the tile group
-    oid_t visible_tuple_count = input_buffer.ReadLong();
-    for (oid_t tuple_idx = 0; tuple_idx < visible_tuple_count; tuple_idx++) {
+    while (input_buffer.ReadBool()) {
       // recover values on each column
       std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
       for (oid_t column_id = 0; column_id < column_count; column_id++) {

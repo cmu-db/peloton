@@ -108,13 +108,6 @@ class Column : public Printable {
     return HashUtil::CombineHashes(hash, HashUtil::Hash(&is_inlined));
   }
 
-  // Serialize this column
-  void SerializeTo(SerializeOutput &out) const;
-
-  // Deserialize this column
-  static Column DeserializeFrom(SerializeInput &in);
-
-
   // Compare two column objects
   bool operator==(const Column &other) const {
     if (other.column_type != column_type || other.is_inlined != is_inlined) {

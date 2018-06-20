@@ -298,26 +298,20 @@ void TimestampCheckpointManager::CheckpointingTableData(
     oid_t column_count = table->GetSchema()->GetColumnCount();
     for (oid_t tuple_id = START_OID; tuple_id < max_tuple_count; tuple_id++) {
       if (IsVisible(tile_group_header, tuple_id, begin_cid)) {
-        visible_tuples.push_back(tuple_id);
+        // load all field data of each column in the tuple
+        output_buffer.WriteBool(true);
+        for (oid_t column_id = START_OID; column_id < column_count; column_id++) {
+          type::Value value = tile_group->GetValue(tuple_id, column_id);
+          value.SerializeTo(output_buffer);
+          LOG_TRACE("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
+                    column_id, tuple_id, value.ToString().c_str());
+        }
       } else {
         LOG_TRACE("%s's tuple %d is invisible\n", table->GetName().c_str(),
                   tuple_id);
       }
     }
-    output_buffer.WriteLong(visible_tuples.size());
-    LOG_TRACE("Tuple count in tile group %d: %lu", tile_group->GetTileGroupId(),
-              visible_tuples.size());
-
-    // load visible tuples data in the table
-    for (auto tuple_id : visible_tuples) {
-      // load all field data of each column in the tuple
-      for (oid_t column_id = START_OID; column_id < column_count; column_id++) {
-        type::Value value = tile_group->GetValue(tuple_id, column_id);
-        value.SerializeTo(output_buffer);
-        LOG_TRACE("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
-                  column_id, tuple_id, value.ToString().c_str());
-      }
-    }
+    output_buffer.WriteBool(false);
 
     // write down tuple data to file
     int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1,
@@ -995,7 +989,7 @@ void TimestampCheckpointManager::RecoverTableData(
     // Because if active_tile_group_count_ in DataTable class is changed after
     // restart (e.g. in case of change of connection_thread_count setting),
     // then a recovered tile_group_id might get collision with a tile_group_id
-    // which set for the default tile group of a catalog table.
+    // which set for the default tile group of a table.
     oid_t tile_group_id =
         storage::StorageManager::GetInstance()->GetNextTileGroupId();
     oid_t allocated_tuple_count = input_buffer.ReadInt();
@@ -1015,8 +1009,7 @@ void TimestampCheckpointManager::RecoverTableData(
     table->AddTileGroup(tile_group, active_tile_group_id);
 
     // recover tuples located in the tile group
-    oid_t visible_tuple_count = input_buffer.ReadLong();
-    for (oid_t tuple_idx = 0; tuple_idx < visible_tuple_count; tuple_idx++) {
+    while (input_buffer.ReadBool()) {
       // recover values on each column
       std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
       for (oid_t column_id = 0; column_id < column_count; column_id++) {
