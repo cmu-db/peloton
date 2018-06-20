@@ -18,6 +18,7 @@
 #include "network/postgres_protocol_handler.h"
 #include "util/string_util.h"
 #include "network/connection_handle_factory.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
@@ -28,61 +29,36 @@ namespace test {
 
 class LoggingTests : public PelotonTest {};
 
-void *LoggingTest(int port) {
-  try {
-    // forcing the factory to generate jdbc protocol handler
-    pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=default_database sslmode=disable", port));
-    LOG_INFO("[LoggingTest] Connected to %s", C.dbname());
-    pqxx::work txn1(C);
+TEST_F(LoggingTests, InsertLoggingTest) {
+  settings::SettingsManager::SetString(settings::SettingId::log_directory_name,
+                                       "./logging");
+  settings::SettingsManager::SetString(settings::SettingId::log_file_name,
+                                       "wal.log");
+  settings::SettingsManager::SetBool(settings::SettingId::enable_logging, true);
+  settings::SettingsManager::SetBool(settings::SettingId::enable_recovery, false);
+  PelotonInit::Initialize();
 
-    peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
+  // Generate table and data for logging.
+  // TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
+  TestingSQLUtil::ExecuteSQLQuery(
+    "CREATE TABLE test_table (id INTEGER, value1 "
+    "REAL, value2 VARCHAR(32));");
+  TestingSQLUtil::ExecuteSQLQuery(
+    "INSERT INTO test_table VALUES (0, 1.2, 'Aaron');");
+  TestingSQLUtil::ExecuteSQLQuery(
+    "INSERT INTO test_table VALUES (1, 12.34, 'loves');");
+  TestingSQLUtil::ExecuteSQLQuery(
+    "INSERT INTO test_table VALUES (2, 12345.678912345, 'databases');");
+  // TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
 
-    //Check type of protocol handler
-    network::PostgresProtocolHandler* handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
+  // make sure the data in test_table is correct
+  std::string sql1 = "SELECT * FROM test_table;";
+  std::vector<std::string> expected1 = {"0|1.2|Aaron", "1|12.34|loves",
+                                        "2|12345.7|databases"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql1, expected1, false);
 
-    EXPECT_NE(handler, nullptr);
-
-    // create table and insert some data
-    txn1.exec("DROP TABLE IF EXISTS employee;");
-    txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
-    txn1.commit();
-
-    pqxx::work txn2(C);
-    txn2.exec("INSERT INTO employee VALUES (1, 'Aaron Tian');");
-    txn2.exec("INSERT INTO employee VALUES (2, 'Gandeevan Raghuraman');");
-    txn2.exec("INSERT INTO employee VALUES (3, 'Anirudh Kanjani');");
-    txn2.commit();
-
-  } catch (const std::exception &e) {
-    LOG_INFO("[LoggingTest] Exception occurred: %s", e.what());
-    EXPECT_TRUE(false);
-  }
-  return NULL;
+  PelotonInit::Shutdown();
 }
 
-TEST_F(LoggingTests, LoggingTest) {
-  peloton::PelotonInit::Initialize();
-  LOG_INFO("Server initialized");
-  peloton::network::PelotonServer server;
-
-  int port = 15721;
-  try {
-    server.SetPort(port);
-    server.SetupServer();
-  } catch (peloton::ConnectionException &exception) {
-    LOG_INFO("[LaunchServer] exception when launching server");
-  }
-  std::thread serverThread([&]() { server.ServerLoop(); });
-  LoggingTest(port);
-  server.Close();
-  serverThread.join();
-  peloton::PelotonInit::Shutdown();
-  LOG_DEBUG("Peloton has shut down");
-
-}
 }
 }

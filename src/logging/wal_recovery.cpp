@@ -32,6 +32,7 @@ namespace peloton{
 namespace logging{
 
 void WalRecovery::StartRecovery(){
+  LOG_INFO("log_path_: %s", log_path_.c_str());
 
   if(!LoggingUtil::OpenFile(log_path_.c_str(),
                             std::ifstream::in, fstream_)) {
