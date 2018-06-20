@@ -56,7 +56,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
   for (auto &table_catalog :
        default_db_catalog->GetTableObjects((std::string)DEFAULT_SCHEMA_NAME)) {
-  	auto &table_name = table_catalog->GetTableName();
+    auto &table_name = table_catalog->GetTableName();
     auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
                                           table_catalog->GetTableOid());
 
@@ -72,7 +72,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
             table->GetSchema()->GetColumn(column_catalog->GetColumnId());
 
         LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
-        		column_name.c_str(), column.GetInfo().c_str());
+            column_name.c_str(), column.GetInfo().c_str());
 
         if (column_name == "id") {
           EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
@@ -318,7 +318,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
         // set primary key of attributes 'pid1' and 'pid2'
         if (constraint_column_name == "pid1" ||
-        		constraint_column_name == "pid2") {
+            constraint_column_name == "pid2") {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_TRUE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
@@ -398,7 +398,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // foreign keys in attribute 'value4'&'value5' to attribute
         // 'upid1'&'upid2' in table 'checkpoint_index_test'
         else if (constraint_column_name == "value4" ||
-        		constraint_column_name == "value5") {
+            constraint_column_name == "value5") {
           EXPECT_FALSE(constraint_column_catalog->IsNotNull());
           EXPECT_FALSE(constraint_column_catalog->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());

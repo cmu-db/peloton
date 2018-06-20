@@ -299,7 +299,7 @@ std::shared_ptr<const Layout> Layout::DeserializeFrom(SerializeInput &in) {
     oid_t layout_oid = in.ReadInt();
     std::string column_map_str = in.ReadTextString();
     auto column_map = DeserializeColumnMap(num_columns, column_map_str);
-    return std::make_shared<const Layout>(column_map, layout_oid);
+    return std::make_shared<const Layout>(column_map, num_columns, layout_oid);
   } else {
     return std::make_shared<const Layout>(num_columns, layout_type);
   }

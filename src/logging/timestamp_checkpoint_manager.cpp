@@ -461,9 +461,7 @@ void TimestampCheckpointManager::CheckpointingStorageObject(
         auto column = schema->GetColumn(column_oid);
 
         // write column information
-        // ToDo: column length should be contained in column catalog
         metadata_buffer.WriteInt(column_oid);
-        metadata_buffer.WriteLong(column.GetLength());
 
         // Column constraints
         // ToDo: Constraints should be contained in catalog
@@ -803,7 +801,6 @@ bool TimestampCheckpointManager::RecoverStorageObject(
       std::vector<catalog::Column> columns;
       for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
         oid_t column_oid = metadata_buffer.ReadInt();
-        size_t column_length = metadata_buffer.ReadLong();
 
         auto column_catalog = table_catalog->GetColumnObject(column_oid);
         PELOTON_ASSERT(column_catalog != nullptr);
@@ -811,7 +808,7 @@ bool TimestampCheckpointManager::RecoverStorageObject(
         // create column storage object
         // ToDo: Column should be recovered from catalog
         auto column = catalog::Column(
-            column_catalog->GetColumnType(), column_length,
+            column_catalog->GetColumnType(), column_catalog->GetColumnLength(),
             column_catalog->GetColumnName(), column_catalog->IsInlined(),
             column_catalog->GetColumnOffset());
 
