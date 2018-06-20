@@ -597,11 +597,12 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
 
   // load checkpoint files for catalog data.
-  // except for system catalogs in catalog database to avoid error
-  // when other catalog tables disappears by settings like
-  // pg_query_history (brain settings).
-  // also except for catalog requiring to initialize values:
-  // LangageCatalog, ProcCatalog, SettingsCatalog.
+  // except for catalogs that initialized in unsupported area:
+  //   ColumnStatsCatalog, ZoneMapCatalog
+  // TODO: Move these catalogs' initialization to catalog bootstrap
+  // except for catalogs requiring to select recovered values:
+  //   SettingsCatalog.
+  // TODO: Implement a logic for selecting recovered values
 
   // catalogs out of recovery
   if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
@@ -619,9 +620,12 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
         table_name, epoch_id);
     if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) ==
         false) {
-      LOG_ERROR("Checkpoint file for table %d '%s' is not existed",
+      // Not existed here means that there is not the table in last checkpoint
+      // because last checkpointing for the table was failed or
+      // related settings like 'brain' was disabled in the checkpointing
+      LOG_ERROR("Checkpoint file for catalog table %d '%s' is not existed",
                 table_catalog->GetTableOid(), table_name.c_str());
-      return false;
+      return true;
     }
 
     LOG_DEBUG("Recover catalog table %d '%s.%s' in database %d '%s'",
@@ -648,26 +652,27 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
 
     // modify next OID of each catalog
     if (table_oid == DATABASE_CATALOG_OID) {
-      catalog::DatabaseCatalog::GetInstance()->oid_ += oid_align;
+      catalog::DatabaseCatalog::GetInstance()->UpdateOid(oid_align);
     } else if (table_oid == SCHEMA_CATALOG_OID) {
-      system_catalogs->GetSchemaCatalog()->oid_ += oid_align;
+      system_catalogs->GetSchemaCatalog()->UpdateOid(oid_align);
     } else if (table_oid == TABLE_CATALOG_OID) {
-      system_catalogs->GetTableCatalog()->oid_ += oid_align;
+      system_catalogs->GetTableCatalog()->UpdateOid(oid_align);
     } else if (table_oid == COLUMN_CATALOG_OID) {
-      // OID is not used
+      system_catalogs->GetColumnCatalog()->UpdateOid(oid_align);
     } else if (table_oid == INDEX_CATALOG_OID) {
-      system_catalogs->GetIndexCatalog()->oid_ += oid_align;
+      system_catalogs->GetIndexCatalog()->UpdateOid(oid_align);
     } else if (table_oid == LAYOUT_CATALOG_OID) {
-      // OID is not used
+      // Layout OID is controlled within each DataTable object
     } else if (table_name == "pg_proc") {
-      catalog::ProcCatalog::GetInstance().oid_ += oid_align;
+      catalog::ProcCatalog::GetInstance().UpdateOid(oid_align);
     } else if (table_name == "pg_trigger") {
-      system_catalogs->GetTriggerCatalog()->oid_ += oid_align;
+      system_catalogs->GetTriggerCatalog()->UpdateOid(oid_align);
     } else if (table_name == "pg_language") {
-      catalog::LanguageCatalog::GetInstance().oid_ += oid_align;
-    } else if (table_name == "pg_database_metrics" ||
+      catalog::LanguageCatalog::GetInstance().UpdateOid(oid_align);
+    } else if (table_name == "pg_settings" || table_name == "pg_database_metrics" ||
         table_name == "pg_table_metrics" || table_name == "pg_index_metrics" ||
-        table_name == "pg_query_metrics" ||  table_name == "pg_query_history") {
+        table_name == "pg_query_metrics" ||  table_name == "pg_query_history" ||
+        table_name == "pg_column_stats" || table_name == "zone_map") {
       // OID is not used
     } else {
       LOG_ERROR("Unexpected catalog table appears: %s", table_name.c_str());
