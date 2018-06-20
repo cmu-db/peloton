@@ -33,7 +33,7 @@
 #include "marshal.h"
 #include "network/connection_handler_task.h"
 #include "network/network_io_wrappers.h"
-#include "network_state.h"
+#include "network_types.h"
 #include "protocol_handler.h"
 
 #include <openssl/err.h>

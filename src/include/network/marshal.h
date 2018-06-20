@@ -20,13 +20,14 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "network/network_state.h"
+#include "common/exception.h"
+#include "network/network_types.h"
+#include "network/postgres_network_commands.h"
 
 #define BUFFER_INIT_SIZE 100
 
 namespace peloton {
 namespace network {
-
 /**
  * A plain old buffer with a movable cursor, the meaning of which is dependent
  * on the use case.
@@ -47,6 +48,8 @@ struct Buffer {
   inline void Reset() {
     size_ = 0;
     offset_ = 0;
+    buf_.resize(SOCKET_BUFFER_SIZE);
+    buf_.shrink_to_fit();
   }
 
   /**
@@ -71,7 +74,7 @@ struct Buffer {
   /**
    * @return Capacity of the buffer (not actual size)
    */
-  inline size_t Capacity() const { return SOCKET_BUFFER_SIZE; }
+  inline size_t Capacity() const { return capacity_; }
 
   /**
    * Shift contents to align the current cursor with start of the buffer,
@@ -84,8 +87,15 @@ struct Buffer {
     offset_ = 0;
   }
 
-  // TODO(Tianyu): Make these protected once we refactor protocol handler
-  size_t size_ = 0, offset_ = 0;
+  inline void ExpandTo(size_t size) {
+    // We should never need to trim down the size past SOCKET_BUFFER_SIZE
+    PELOTON_ASSERT(size > SOCKET_BUFFER_SIZE);
+    capacity_ = size;
+    buf_.resize(capacity_);
+  }
+
+ protected:
+  size_t size_ = 0, offset_ = 0, capacity_ = SOCKET_BUFFER_SIZE;
   ByteBuf buf_;
 };
 
@@ -115,7 +125,7 @@ class ReadBuffer : public Buffer {
   inline int FillBufferFrom(int fd) {
     ssize_t bytes_read = read(fd, &buf_[size_], Capacity() - size_);
     if (bytes_read > 0) size_ += bytes_read;
-    return (int)bytes_read;
+    return (int) bytes_read;
   }
 
   /**
@@ -124,6 +134,13 @@ class ReadBuffer : public Buffer {
    * @return The number of bytes available to be consumed
    */
   inline size_t BytesAvailable() { return size_ - offset_; }
+
+  // TODO(Tianyu): Document
+  inline void Read(size_t bytes, ByteBuf::const_iterator &begin, ByteBuf::const_iterator &end) {
+    begin = buf_.begin() + offset_;
+    end = begin + bytes;
+    offset_ += bytes;
+  }
 
   /**
    * Read the given number of bytes into destination, advancing cursor by that
@@ -144,7 +161,7 @@ class ReadBuffer : public Buffer {
    * @tparam T type of value to read off. Preferably a primitive type
    * @return the value of type T
    */
-  template <typename T>
+  template<typename T>
   inline T ReadValue() {
     T result;
     Read(sizeof(result), &result);
@@ -178,7 +195,7 @@ class WriteBuffer : public Buffer {
   inline int WriteOutTo(int fd) {
     ssize_t bytes_written = write(fd, &buf_[offset_], size_ - offset_);
     if (bytes_written > 0) offset_ += bytes_written;
-    return (int)bytes_written;
+    return (int) bytes_written;
   }
 
   /**
@@ -200,7 +217,7 @@ class WriteBuffer : public Buffer {
    * @param first beginning of range
    * @param len length of range
    */
-  template <class InputIt>
+  template<class InputIt>
   inline void Append(InputIt first, size_t len) {
     std::copy(first, first + len, std::begin(buf_) + size_);
     size_ += len;
@@ -212,7 +229,7 @@ class WriteBuffer : public Buffer {
    * @tparam T input type
    * @param val value to write into buffer
    */
-  template <typename T>
+  template<typename T>
   inline void Append(T val) {
     Append(reinterpret_cast<uchar *>(&val), sizeof(T));
   }

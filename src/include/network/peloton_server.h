@@ -34,7 +34,7 @@
 #include "common/logger.h"
 #include "common/notifiable_task.h"
 #include "connection_dispatcher_task.h"
-#include "network_state.h"
+#include "network_types.h"
 #include "protocol_handler.h"
 
 #include <openssl/crypto.h>
