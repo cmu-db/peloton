@@ -49,28 +49,24 @@ bool RecoverTileGroupFromFile(
   CopySerializeInput input_buffer(data.get(), table_size);
 
   auto schema = table->GetSchema();
-  auto layout = table->GetDefaultLayout();
+  auto default_layout = table->GetDefaultLayout();
   auto column_count = schema->GetColumnCount();
   oid_t tile_group_count = input_buffer.ReadLong();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
     // recover layout for this tile group
     oid_t layout_oid = input_buffer.ReadInt();
-    if (layout->GetOid() != layout_oid) {
+    std::shared_ptr<const storage::Layout> layout;
+    if (default_layout->GetOid() != layout_oid) {
       layout = catalog::Catalog::GetInstance()
             ->GetTableObject(table->GetDatabaseOid(), table->GetOid(), txn)
             ->GetLayout(layout_oid);
+    } else {
+      layout = default_layout;
     }
-
-    // The tile_group_id can't be recovered.
-    // Because if active_tile_group_count_ in DataTable class is changed after
-    // restart (e.g. in case of change of connection_thread_count setting),
-    // then a recovered tile_group_id might get collision with a tile_group_id
-    // which set for the default tile group of catalog table.
+    // recover tile group
     oid_t tile_group_id =
         storage::StorageManager::GetInstance()->GetNextTileGroupId();
     oid_t allocated_tuple_count = input_buffer.ReadInt();
-
-    // recover tile group
     auto layout_schemas = layout->GetLayoutSchemas(schema);
     std::shared_ptr<storage::TileGroup> tile_group(
         storage::TileGroupFactory::GetTileGroup(
