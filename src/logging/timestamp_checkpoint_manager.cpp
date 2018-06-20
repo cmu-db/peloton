@@ -46,6 +46,7 @@
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 #include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
 #include "type/serializeio.h"
 #include "type/type.h"
 
@@ -284,11 +285,12 @@ void TimestampCheckpointManager::CheckpointingTableData(
     auto tile_group = table->GetTileGroup(tg_offset);
     auto tile_group_header = tile_group->GetHeader();
 
-    // serialize the tile group structure
-    tile_group->SerializeTo(output_buffer);
+    // write the tile group information
+    output_buffer.WriteInt(tile_group->GetLayout().GetOid());
+    output_buffer.WriteInt(tile_group->GetAllocatedTupleCount());
 
-    LOG_TRACE("Deserialized tile group %u in %s \n%s", tile_group->GetTileGroupId(),
-        table->GetName().c_str(), tile_group->GetLayout().GetInfo().c_str());
+    LOG_TRACE("Tile group %u in %d \n%s", tile_group->GetTileGroupId(),
+        table->GetOid(), tile_group->GetLayout().GetInfo().c_str());
 
     // collect and count visible tuples
     std::vector<oid_t> visible_tuples;
@@ -809,7 +811,6 @@ bool TimestampCheckpointManager::RecoverStorageObject(
         PELOTON_ASSERT(column_catalog != nullptr);
 
         // create column storage object
-        // ToDo: Column should be recovered from catalog
         auto column = catalog::Column(
             column_catalog->GetColumnType(), column_catalog->GetColumnLength(),
             column_catalog->GetColumnName(), column_catalog->IsInlined(),
@@ -855,13 +856,29 @@ bool TimestampCheckpointManager::RecoverStorageObject(
             catalog::MultiConstraint::DeserializeFrom(metadata_buffer));
       }
 
-      // create table storage object
+      // load layout info from catalog
+      auto default_layout =
+          table_catalog->GetLayout(table_catalog->GetDefaultLayoutOid());
+
+      // create table storage object.
+      // if the default layout type is hybrid, set default layout separately
       bool own_schema = true;
       bool adapt_table = false;
       bool is_catalog = false;
-      storage::DataTable *table = storage::TableFactory::GetDataTable(
-          db_oid, table_oid, schema.release(), table_catalog->GetTableName(),
-          DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
+      storage::DataTable *table;
+      if (default_layout->IsHybridStore()) {
+        table = storage::TableFactory::GetDataTable(
+            db_oid, table_oid, schema.release(), table_catalog->GetTableName(),
+            DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
+        table->SetDefaultLayout(default_layout);
+        // adjust layout oid value
+        table->GetNextLayoutOid();
+      } else {
+        table = storage::TableFactory::GetDataTable(
+            db_oid, table_oid, schema.release(), table_catalog->GetTableName(),
+            DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog,
+            default_layout->GetLayoutType());
+      }
       database->AddTable(table, is_catalog);
 
       // put data table object into rw_object_set
@@ -959,15 +976,36 @@ void TimestampCheckpointManager::RecoverTableData(
   // Create tile group
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   auto schema = table->GetSchema();
+  auto layout = table->GetDefaultLayout();
+  auto column_count = schema->GetColumnCount();
   oid_t tile_group_count = input_buffer.ReadLong();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
-    // recover tile group
-    std::shared_ptr<storage::TileGroup> tile_group(
-        storage::TileGroup::DeserializeFrom(input_buffer,
-            table->GetDatabaseOid(), table));
+    // recover layout for this tile group
+    oid_t layout_oid = input_buffer.ReadInt();
+    if (layout->GetOid() != layout_oid) {
+      layout = catalog::Catalog::GetInstance()
+            ->GetTableObject(table->GetDatabaseOid(), table->GetOid(), txn)
+            ->GetLayout(layout_oid);
+    }
 
-    LOG_TRACE("Deserialized tile group %u in %s \n%s", tile_group->GetTileGroupId(),
-        table->GetName().c_str(), tile_group->GetLayout().GetInfo().c_str());
+    // The tile_group_id can't be recovered.
+    // Because if active_tile_group_count_ in DataTable class is changed after
+    // restart (e.g. in case of change of connection_thread_count setting),
+    // then a recovered tile_group_id might get collision with a tile_group_id
+    // which set for the default tile group of catalog table.
+    oid_t tile_group_id =
+        storage::StorageManager::GetInstance()->GetNextTileGroupId();
+    oid_t allocated_tuple_count = input_buffer.ReadInt();
+
+    // recover tile group
+    auto layout_schemas = layout->GetLayoutSchemas(schema);
+    std::shared_ptr<storage::TileGroup> tile_group(
+        storage::TileGroupFactory::GetTileGroup(
+                table->GetDatabaseOid(), table->GetOid(), tile_group_id, table,
+                layout_schemas, layout, allocated_tuple_count));
+
+    LOG_TRACE("Recover tile group %u in %d \n%s", tile_group->GetTileGroupId(),
+        table->GetOid().c_str(), tile_group->GetLayout().GetInfo().c_str());
 
     // add the tile group to table
     oid_t active_tile_group_id = tg_idx % table->GetActiveTileGroupCount();
@@ -975,7 +1013,6 @@ void TimestampCheckpointManager::RecoverTableData(
 
     // recover tuples located in the tile group
     oid_t visible_tuple_count = input_buffer.ReadLong();
-    oid_t column_count = schema->GetColumnCount();
     for (oid_t tuple_idx = 0; tuple_idx < visible_tuple_count; tuple_idx++) {
       // recover values on each column
       std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));

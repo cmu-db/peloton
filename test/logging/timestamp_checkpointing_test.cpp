@@ -37,7 +37,8 @@ class TimestampCheckpointingTests : public PelotonTest {};
 
 bool RecoverTileGroupFromFile(
     std::vector<std::shared_ptr<storage::TileGroup>> &tile_groups,
-    storage::DataTable *table, FileHandle table_file, type::AbstractPool *pool) {
+    storage::DataTable *table, FileHandle table_file, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   size_t table_size = logging::LoggingUtil::GetFileSize(table_file);
   if (table_size == 0) return false;
   std::unique_ptr<char[]> data(new char[table_size]);
@@ -48,13 +49,33 @@ bool RecoverTileGroupFromFile(
   CopySerializeInput input_buffer(data.get(), table_size);
 
   auto schema = table->GetSchema();
+  auto layout = table->GetDefaultLayout();
+  auto column_count = schema->GetColumnCount();
   oid_t tile_group_count = input_buffer.ReadLong();
-  oid_t column_count = schema->GetColumnCount();
   for (oid_t tg_idx = START_OID; tg_idx < tile_group_count; tg_idx++) {
+    // recover layout for this tile group
+    oid_t layout_oid = input_buffer.ReadInt();
+    if (layout->GetOid() != layout_oid) {
+      layout = catalog::Catalog::GetInstance()
+            ->GetTableObject(table->GetDatabaseOid(), table->GetOid(), txn)
+            ->GetLayout(layout_oid);
+    }
+
+    // The tile_group_id can't be recovered.
+    // Because if active_tile_group_count_ in DataTable class is changed after
+    // restart (e.g. in case of change of connection_thread_count setting),
+    // then a recovered tile_group_id might get collision with a tile_group_id
+    // which set for the default tile group of catalog table.
+    oid_t tile_group_id =
+        storage::StorageManager::GetInstance()->GetNextTileGroupId();
+    oid_t allocated_tuple_count = input_buffer.ReadInt();
+
     // recover tile group
+    auto layout_schemas = layout->GetLayoutSchemas(schema);
     std::shared_ptr<storage::TileGroup> tile_group(
-        storage::TileGroup::DeserializeFrom(input_buffer,
-            table->GetDatabaseOid(), table));
+        storage::TileGroupFactory::GetTileGroup(
+                table->GetDatabaseOid(), table->GetOid(), tile_group_id, table,
+                layout_schemas, layout, allocated_tuple_count));
 
     LOG_TRACE("Deserialized tile group %u in %s \n%s", tile_group->GetTileGroupId(),
         table->GetName().c_str(), tile_group->GetLayout().GetInfo().c_str());
@@ -232,7 +253,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
 
     // read data (tile groups and records)
     std::vector<std::shared_ptr<storage::TileGroup>> tile_groups;
-    RecoverTileGroupFromFile(tile_groups, table, table_file, pool.get());
+    RecoverTileGroupFromFile(tile_groups, table, table_file, pool.get(), txn);
 
     logging::LoggingUtil::CloseFile(table_file);
 

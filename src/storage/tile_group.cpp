@@ -24,7 +24,6 @@
 #include "storage/abstract_table.h"
 #include "storage/layout.h"
 #include "storage/tile.h"
-#include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "util/stringbox_util.h"
@@ -342,34 +341,6 @@ void TileGroup::Sync() {
   for (auto tile : tiles) {
     tile->Sync();
   }
-}
-
-// Serialize this tile group
-void TileGroup::SerializeTo(SerializeOutput &out) const {
-  out.WriteInt(num_tuple_slots_);
-  tile_group_layout_->SerializeTo(out);
-}
-
-// Deserialize this tile group
-TileGroup* TileGroup::DeserializeFrom(SerializeInput &in,
-                                     const oid_t database_oid,
-                                     AbstractTable *table) {
-  // The tile_group_id can't be recovered.
-  // Because if active_tile_group_count_ in DataTable class is changed after
-  // restart (e.g. in case of change of connection_thread_count setting),
-  // then a recovered tile_group_id might get collision with a tile_group_id
-  // which set for the default tile group.
-  oid_t tile_group_id =
-      storage::StorageManager::GetInstance()->GetNextTileGroupId();
-  oid_t allocated_tuple_count = in.ReadInt();
-
-  // recover layout
-  auto layout = storage::Layout::DeserializeFrom(in);
-  auto schemas = layout->GetLayoutSchemas(table->GetSchema());
-
-  return TileGroupFactory::GetTileGroup(
-      database_oid, table->GetOid(), tile_group_id, table, schemas, layout,
-      allocated_tuple_count);
 }
 
 //===--------------------------------------------------------------------===//
