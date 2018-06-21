@@ -6,13 +6,13 @@
 //
 // Identification: src/network/connection_handler_task.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "network/connection_handler_task.h"
 #include "network/connection_handle.h"
-#include "network/connection_handle_factory.h"
+#include "network/network_io_wrapper_factory.h"
 
 namespace peloton {
 namespace network {
@@ -41,22 +41,25 @@ void ConnectionHandlerTask::Notify(int conn_fd) {
 void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
   // buffer used to receive messages from the main thread
   char client_fd[sizeof(int)];
-  std::shared_ptr<ConnectionHandle> conn;
   size_t bytes_read = 0;
 
   // read fully
   while (bytes_read < sizeof(int)) {
-    ssize_t result = read(new_conn_recv_fd,
-                       client_fd + bytes_read,
-                       sizeof(int) - bytes_read);
+    ssize_t result = read(new_conn_recv_fd, client_fd + bytes_read,
+                          sizeof(int) - bytes_read);
     if (result < 0) {
       LOG_ERROR("Error when reading from dispatch");
     }
-    bytes_read += (size_t) result;
+    bytes_read += (size_t)result;
   }
 
-  conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(
-      *((int *) client_fd), this);
+  // Smart pointers are not used here because libevent does not take smart
+  // pointers. During the life time of this object, the pointer to it will be
+  // maintained by libevent rather than by our own code. The object will have to
+  // be cleaned up by one of its methods (i.e. we call a method with "delete
+  // this" and have the object commit suicide from libevent. )
+  (new ConnectionHandle(*reinterpret_cast<int *>(client_fd), this))
+      ->RegisterToReceiveEvents();
 }
 
 }  // namespace network

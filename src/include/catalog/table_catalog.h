@@ -194,7 +194,7 @@ class TableCatalog : public AbstractCatalog {
     SCHEMA_NAME = 2,
     DATABASE_OID = 3,
     VERSION_ID = 4,
-		DEFAULT_LAYOUT_OID = 5,
+    DEFAULT_LAYOUT_OID = 5,
     // Add new columns here in creation order
   };
   std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
