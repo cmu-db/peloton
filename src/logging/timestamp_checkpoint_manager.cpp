@@ -1002,7 +1002,7 @@ void TimestampCheckpointManager::RecoverTableData(
                 layout_schemas, layout, allocated_tuple_count));
 
     LOG_TRACE("Recover tile group %u in %d \n%s", tile_group->GetTileGroupId(),
-        table->GetOid().c_str(), tile_group->GetLayout().GetInfo().c_str());
+        table->GetOid(), tile_group->GetLayout().GetInfo().c_str());
 
     // add the tile group to table
     oid_t active_tile_group_id = tg_idx % table->GetActiveTileGroupCount();
