@@ -190,6 +190,7 @@ class ConnectionHandle {
   StateMachine state_machine_;
   struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
   std::unique_ptr<ProtocolHandler> protocol_handler_ = nullptr;
+  // TODO(Tianyu): Remove tcop from here in later refactor
   tcop::TrafficCop tcop_;
   // TODO(Tianyu): Put this into protocol handler in a later refactor
   unsigned int next_response_ = 0;

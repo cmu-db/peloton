@@ -57,7 +57,7 @@ class NetworkIoWrapperFactory {
    *         NEED_DATA when the SSL handshake is partially done due to network
    *         latency
    */
-  Transition PerformSslHandshake(std::shared_ptr<NetworkIoWrapper> &io_wrapper);
+  Transition TryUseSsl(std::shared_ptr<NetworkIoWrapper> &io_wrapper);
 
  private:
   std::unordered_map<int, std::shared_ptr<NetworkIoWrapper>> reusable_wrappers_;

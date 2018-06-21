@@ -40,7 +40,7 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   return reused_wrapper;
 }
 
-Transition NetworkIoWrapperFactory::PerformSslHandshake(
+Transition NetworkIoWrapperFactory::TryUseSsl(
     std::shared_ptr<NetworkIoWrapper> &io_wrapper) {
   SSL *context;
   if (!io_wrapper->SslAble()) {

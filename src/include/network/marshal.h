@@ -25,7 +25,6 @@
 #include "network/postgres_network_commands.h"
 
 #define BUFFER_INIT_SIZE 100
-
 namespace peloton {
 namespace network {
 /**
@@ -35,12 +34,14 @@ namespace network {
  * The buffer has a fix capacity and one can write a variable amount of
  * meaningful bytes into it. We call this amount "size" of the buffer.
  */
-struct Buffer {
+class Buffer {
  public:
   /**
    * Instantiates a new buffer and reserve default many bytes.
    */
-  inline Buffer() { buf_.reserve(SOCKET_BUFFER_SIZE); }
+  inline Buffer(size_t capacity) : capacity_(capacity) {
+    buf_.reserve(capacity);
+  }
 
   /**
    * Reset the buffer pointer and clears content
@@ -48,8 +49,6 @@ struct Buffer {
   inline void Reset() {
     size_ = 0;
     offset_ = 0;
-    buf_.resize(SOCKET_BUFFER_SIZE);
-    buf_.shrink_to_fit();
   }
 
   /**
@@ -87,16 +86,12 @@ struct Buffer {
     offset_ = 0;
   }
 
-  inline void ExpandTo(size_t size) {
-    // We should never need to trim down the size past SOCKET_BUFFER_SIZE
-    PELOTON_ASSERT(size > SOCKET_BUFFER_SIZE);
-    capacity_ = size;
-    buf_.resize(capacity_);
-  }
-
- protected:
-  size_t size_ = 0, offset_ = 0, capacity_ = SOCKET_BUFFER_SIZE;
+  // TODO(Tianyu): Fix this after protocol refactor
+// protected:
+  size_t size_ = 0, offset_ = 0, capacity_;
   ByteBuf buf_;
+ private:
+  friend class WriteQueue;
 };
 
 /**
@@ -104,6 +99,8 @@ struct Buffer {
  */
 class ReadBuffer : public Buffer {
  public:
+  inline ReadBuffer(size_t capacity = SOCKET_BUFFER_CAPACITY)
+      : Buffer(capacity) {}
   /**
    * Read as many bytes as possible using SSL read
    * @param context SSL context to read from
@@ -128,19 +125,17 @@ class ReadBuffer : public Buffer {
     return (int) bytes_read;
   }
 
+  inline void FillBufferFrom(ReadBuffer &other, size_t size) {
+    other.Read(size, &buf_[size_]);
+    size_ += size;
+  }
+
   /**
    * The number of bytes available to be consumed (i.e. meaningful bytes after
    * current read cursor)
    * @return The number of bytes available to be consumed
    */
   inline size_t BytesAvailable() { return size_ - offset_; }
-
-  // TODO(Tianyu): Document
-  inline void Read(size_t bytes, ByteBuf::const_iterator &begin, ByteBuf::const_iterator &end) {
-    begin = buf_.begin() + offset_;
-    end = begin + bytes;
-    offset_ += bytes;
-  }
 
   /**
    * Read the given number of bytes into destination, advancing cursor by that
@@ -154,6 +149,42 @@ class ReadBuffer : public Buffer {
     offset_ += bytes;
   }
 
+  inline int ReadInt(uint8_t len) {
+    switch (len) {
+      case 1:return ReadRawValue<uint8_t>();
+      case 2:return ntohs(ReadRawValue<uint16_t>());
+      case 4:return ntohl(ReadRawValue<uint32_t>());
+      default:
+        throw NetworkProcessException(
+            "Error when de-serializing: Invalid int size");
+    }
+  }
+
+  // Inclusive of nul-terminator
+  inline std::string ReadString(size_t len) {
+    if (len == 0) return "";
+    auto result = std::string(buf_.begin() + offset_,
+                              buf_.begin() + offset_ + (len - 1));
+    offset_ += len;
+    return result;
+  }
+
+  // Read until nul terminator
+  inline std::string ReadString() {
+    // search for the nul terminator
+    for (size_t i = offset_; i < size_; i++) {
+      if (buf_[i] == 0) {
+        auto result = std::string(buf_.begin() + offset_,
+                                  buf_.begin() + i);
+        // +1 because we want to skip nul
+        offset_ = i + 1;
+        return result;
+      }
+    }
+    // No nul terminator found
+    throw NetworkProcessException("Expected nil in read buffer, none found");
+  }
+
   /**
    * Read a value of type T off of the buffer, advancing cursor by appropriate
    * amount. Does NOT convert from network bytes order. It is the caller's
@@ -162,7 +193,7 @@ class ReadBuffer : public Buffer {
    * @return the value of type T
    */
   template<typename T>
-  inline T ReadValue() {
+  inline T ReadRawValue() {
     T result;
     Read(sizeof(result), &result);
     return result;
@@ -174,6 +205,8 @@ class ReadBuffer : public Buffer {
  */
 class WriteBuffer : public Buffer {
  public:
+  inline WriteBuffer(size_t capacity = SOCKET_BUFFER_CAPACITY)
+      : Buffer(capacity) {}
   /**
    * Write as many bytes as possible using SSL write
    * @param context SSL context to write out to
@@ -213,13 +246,13 @@ class WriteBuffer : public Buffer {
 
   /**
    * Append the desired range into current buffer.
-   * @tparam InputIt iterator type.
-   * @param first beginning of range
-   * @param len length of range
+   * @param src beginning of range
+   * @param len length of range, in bytes
    */
-  template<class InputIt>
-  inline void Append(InputIt first, size_t len) {
-    std::copy(first, first + len, std::begin(buf_) + size_);
+  inline void AppendRaw(const void *src, size_t len) {
+    if (len == 0) return;
+    auto bytes_src = reinterpret_cast<uchar *>(src);
+    std::copy(bytes_src, bytes_src + len, std::begin(buf_) + size_);
     size_ += len;
   }
 
@@ -230,9 +263,121 @@ class WriteBuffer : public Buffer {
    * @param val value to write into buffer
    */
   template<typename T>
-  inline void Append(T val) {
-    Append(reinterpret_cast<uchar *>(&val), sizeof(T));
+  inline void AppendRaw(T val) {
+    AppendRaw(&val, sizeof(T));
   }
+};
+
+class WriteQueue {
+  friend class NetworkIoWrapper;
+ public:
+  inline WriteQueue() {
+    Reset();
+  }
+
+  inline void Reset() {
+    buffers_.resize(1);
+    flush_ = false;
+    if (buffers_[0] == nullptr)
+      buffers_[0] = std::make_shared<WriteBuffer>();
+    else
+      buffers_[0]->Reset();
+  }
+
+  inline void WriteSingleBytePacket(NetworkMessageType type) {
+    // No active packet being constructed
+    PELOTON_ASSERT(curr_packet_len_ == nullptr);
+    BufferWriteRawValue(type);
+  }
+
+  inline WriteQueue &BeginPacket(NetworkMessageType type) {
+    // No active packet being constructed
+    PELOTON_ASSERT(curr_packet_len_ == nullptr);
+    BufferWriteRawValue(type);
+    // Remember the size field since we will need to modify it as we go along.
+    // It is important that our size field is contiguous and not broken between
+    // two buffers.
+    BufferWriteRawValue<int32_t>(0, false);
+    WriteBuffer &tail = *(buffers_[buffers_.size() - 1]);
+    curr_packet_len_ =
+        reinterpret_cast<uint32_t *>(&tail.buf_[tail.size_ - sizeof(int32_t)]);
+    return *this;
+  }
+
+  inline WriteQueue &AppendRaw(const void *src, size_t len) {
+    BufferWriteRaw(src, len);
+    // Add the size field to the len of the packet. Be mindful of byte
+    // ordering. We switch to network ordering only when the packet is finished
+    *curr_packet_len_ += len;
+    return *this;
+  }
+
+  template <typename T>
+  inline WriteQueue &AppendRawValue(T val) {
+    return AppendRaw(&val, sizeof(T));
+  }
+
+  inline WriteQueue &AppendInt(uint8_t len, uint32_t val) {
+    int32_t result;
+    switch (len) {
+      case 1:
+        result = val;
+        break;
+      case 2:
+        result = htons(val);
+        break;
+      case 4:
+        result = htonl(val);
+        break;
+      default:
+        throw NetworkProcessException("Error constructing packet: invalid int size");
+    }
+    return AppendRaw(&result, len);
+  }
+
+  inline WriteQueue &AppendString(const std::string &str, bool nul_terminate = true) {
+    return AppendRaw(str.data(), nul_terminate ? str.size() + 1 : str.size());
+  }
+
+  inline void EndPacket() {
+    PELOTON_ASSERT(curr_packet_len_ != nullptr);
+    // Switch to network byte ordering, add the 4 bytes of size field
+    *curr_packet_len_ = htonl(*curr_packet_len_ + sizeof(int32_t));
+    curr_packet_len_ = nullptr;
+  }
+
+  inline WriteQueue &ForceFlush() {
+    flush_ = true;
+    return *this;
+  }
+
+  inline bool ShouldFlush() { return flush_ || buffers_.size() > 1; }
+
+ private:
+
+  void BufferWriteRaw(const void *src, size_t len, bool breakup = true) {
+    WriteBuffer &tail = *(buffers_[buffers_.size() - 1]);
+    if (tail.HasSpaceFor(len))
+      tail.AppendRaw(src, len);
+    else {
+      // Only write partially if we are allowed to
+      size_t written = breakup ? tail.RemainingCapacity() : 0;
+      tail.AppendRaw(src, written);
+      buffers_.push_back(std::make_shared<WriteBuffer>());
+      BufferWriteRaw(reinterpret_cast<uchar *>(src) + written, len - written);
+    }
+  }
+
+  template<typename T>
+  inline void BufferWriteRawValue(T val, bool breakup = true) {
+    BufferWriteRaw(&val, sizeof(T), breakup);
+  }
+
+  std::vector<std::shared_ptr<WriteBuffer>> buffers_;
+  bool flush_ = false;
+  // In network byte order.
+  uint32_t *curr_packet_len_ = nullptr;
+
 };
 
 class InputPacket {

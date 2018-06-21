@@ -29,21 +29,21 @@ Transition NetworkIoWrapper::WritePacket(OutputPacket *pkt) {
         return result;
     }
 
-    wbuf_->Append(static_cast<unsigned char>(pkt->msg_type));
+    wbuf_->AppendRaw(static_cast<unsigned char>(pkt->msg_type));
     if (!pkt->single_type_pkt)
       // Need to convert bytes to network order
-      wbuf_->Append(htonl(pkt->len + sizeof(int32_t)));
+      wbuf_->AppendRaw(htonl(pkt->len + sizeof(int32_t)));
     pkt->skip_header_write = true;
   }
 
   // Write Packet Content
   for (size_t len = pkt->len; len != 0;) {
     if (wbuf_->HasSpaceFor(len)) {
-      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, len);
+      wbuf_->AppendRaw(std::begin(pkt->buf) + pkt->write_ptr, len);
       break;
     } else {
       auto write_size = wbuf_->RemainingCapacity();
-      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, write_size);
+      wbuf_->AppendRaw(std::begin(pkt->buf) + pkt->write_ptr, write_size);
       len -= write_size;
       pkt->write_ptr += write_size;
       auto result = FlushWriteBuffer();

@@ -1419,7 +1419,7 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
 //===--------------------------------------------------------------------===//
-#define SOCKET_BUFFER_SIZE 8192
+#define SOCKET_BUFFER_CAPACITY 8192
 
 /* byte type */
 typedef unsigned char uchar;

@@ -161,8 +161,7 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
       next = result.second(connection);
     } catch (NetworkProcessException &e) {
       LOG_ERROR("%s\n", e.what());
-      connection.TryCloseConnection();
-      return;
+      next = Transition::TERMINATE;
     }
   }
 }
@@ -227,7 +226,7 @@ Transition ConnectionHandle::TrySslHandshake() {
     auto write_ret = TryWrite();
     if (write_ret != Transition::PROCEED) return write_ret;
   }
-  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(
+  return NetworkIoWrapperFactory::GetInstance().TryUseSsl(
       io_wrapper_);
 }
 

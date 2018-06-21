@@ -19,8 +19,8 @@ namespace network {
 class WireProtocol {
  public:
   // TODO(Tianyu): What the hell is this thread_id thingy
-  virtual Transition Process(ReadBuffer &in,
-                             WriteBuffer &out,
+  virtual Transition Process(std::shared_ptr<ReadBuffer> &in,
+                             WriteQueue &out,
                              size_t thread_id) = 0;
 
 };
