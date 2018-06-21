@@ -6,6 +6,18 @@
 //
 // Identification: src/include/common/internal_types.h
 //
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// internal_types.h
+//
+// Identification: src/include/common/internal_types.h
+//
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
@@ -1455,7 +1467,6 @@ typedef std::vector<float> vector_t;
 typedef std::vector<std::vector<float>> matrix_t;
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
     matrix_eig;
-typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::RowMajor>
-    vector_eig;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::RowMajor> vector_eig;
 
 }  // namespace peloton

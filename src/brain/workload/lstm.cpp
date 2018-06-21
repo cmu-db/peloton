@@ -2,19 +2,19 @@
 //
 //                         Peloton
 //
-// lstm_tf.cpp
+// lstm.cpp
 //
-// Identification: src/brain/workload/lstm_tf.cpp
+// Identification: src/brain/workload/lstm.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/util/tf_session_entity/tf_session_entity_output.h"
-#include "brain/util/tf_session_entity/tf_session_entity_input.h"
-#include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/workload/lstm.h"
 #include "brain/util/model_util.h"
+#include "brain/util/tf_session_entity/tf_session_entity.h"
+#include "brain/util/tf_session_entity/tf_session_entity_input.h"
+#include "brain/util/tf_session_entity/tf_session_entity_output.h"
 #include "util/file_util.h"
 
 namespace peloton {
@@ -24,8 +24,7 @@ TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                                float learn_rate, float dropout_ratio,
                                float clip_norm, int batch_size, int bptt,
                                int horizon, int segment)
-    : BaseTFModel("src/brain/modelgen",
-                  "src/brain/modelgen/LSTM.py",
+    : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/LSTM.py",
                   "src/brain/modelgen/LSTM.pb"),
       BaseForecastModel(horizon, segment),
       nfeats_(nfeats),
@@ -89,7 +88,8 @@ float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
   for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig, target_batch_eig);
+    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig,
+                        target_batch_eig);
     auto data_batch = EigenUtil::Flatten(data_batch_eig);
     auto target_batch = EigenUtil::Flatten(target_batch_eig);
     int seq_len = data_batch.size() / (bsz * num_feats);
@@ -115,7 +115,8 @@ float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
   return std::accumulate(losses.begin(), losses.end(), 0.0) / losses.size();
 }
 
-//void TimeSeriesLSTM::Forecast(peloton::matrix_eig &data, peloton::matrix_eig &forecasted) const {
+// void TimeSeriesLSTM::Forecast(peloton::matrix_eig &data, peloton::matrix_eig
+// &forecasted) const {
 //
 //}
 
@@ -138,7 +139,8 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
   for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig, target_batch_eig);
+    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig,
+                        target_batch_eig);
     auto data_batch = EigenUtil::Flatten(data_batch_eig);
     auto target_batch = EigenUtil::Flatten(target_batch_eig);
     int seq_len = data_batch.size() / (bsz * num_feats);

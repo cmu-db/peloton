@@ -13,8 +13,8 @@
 #pragma once
 
 #include <memory>
-#include "brain/util/tf_session_entity/tf_session_entity_io.h"
 #include "brain/util/eigen_util.h"
+#include "brain/util/tf_session_entity/tf_session_entity_io.h"
 
 namespace peloton {
 namespace brain {
@@ -22,7 +22,7 @@ namespace brain {
 /**
  * Base Abstract class to inherit for writing ML models
  */
-class BaseModel{
+class BaseModel {
  public:
   virtual std::string ToString() const = 0;
 };
@@ -30,18 +30,15 @@ class BaseModel{
 /**
  * Base Abstract class to inherit for writing forecasting ML models
  */
-class BaseForecastModel: public BaseModel {
+class BaseForecastModel : public BaseModel {
  public:
   BaseForecastModel(int horizon, int segment)
-      : BaseModel(),
-        horizon_(horizon),
-        segment_(segment) {};
+      : BaseModel(), horizon_(horizon), segment_(segment){};
   virtual float TrainEpoch(matrix_eig &data) = 0;
   virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                               matrix_eig &test_pred, bool return_preds) = 0;
   int GetHorizon() const { return horizon_; }
   int GetSegment() const { return segment_; }
-
 
  protected:
   int horizon_;
@@ -64,12 +61,11 @@ class TfSessionEntity;
  * accept a string
  * path to the serialized graph and import the same.
  */
-class BaseTFModel: public BaseModel {
+class BaseTFModel : public BaseModel {
  public:
   // Constructor - sets up session object
-  BaseTFModel(const std::string& modelgen_path,
-              const std::string& pymodel_path,
-              const std::string& graph_path);
+  BaseTFModel(const std::string &modelgen_path, const std::string &pymodel_path,
+              const std::string &graph_path);
   // Destructor - cleans up any generated model files
   ~BaseTFModel();
 
@@ -86,7 +82,8 @@ class BaseTFModel: public BaseModel {
   // Path to the working directory to use to write graph - Must be set in child
   // constructors
   std::string modelgen_path_;
-  // Path to the Python TF model to use - Relative path must be passed in constructor
+  // Path to the Python TF model to use - Relative path must be passed in
+  // constructor
   std::string pymodel_path_;
   // Path to the written graph - Relative path must be passed in constructor
   std::string graph_path_;
@@ -95,7 +92,6 @@ class BaseTFModel: public BaseModel {
   // Lambda function for deleting input/output objects
   std::function<void(TfSessionEntityIOBase<float> *)> TFIO_Delete =
       [&](TfSessionEntityIOBase<float> *ptr) { delete ptr; };
-
 };
 }  // namespace brain
 }  // namespace peloton

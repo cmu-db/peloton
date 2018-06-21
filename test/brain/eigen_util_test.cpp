@@ -2,16 +2,16 @@
 //
 //                         Peloton
 //
-// tensorflow_test.cpp
+// eigen_util_test.cpp
 //
-// Identification: test/brain/tensorflow_test.cpp
+// Identification: test/brain/eigen_util_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <algorithm>
 #include "brain/util/eigen_util.h"
+#include <algorithm>
 #include "common/harness.h"
 
 namespace peloton {
@@ -25,9 +25,9 @@ class EigenUtilTests : public PelotonTest {};
 
 TEST_F(EigenUtilTests, BasicEigenTest) {
   /**
- * Notes on Eigen:
- * 1. Don't use 'auto'!!
- */
+   * Notes on Eigen:
+   * 1. Don't use 'auto'!!
+   */
   // Eigen Matrix
   matrix_eig m = matrix_eig::Random(2, 2);
   EXPECT_EQ(m.rows(), 2);
@@ -64,7 +64,8 @@ TEST_F(EigenUtilTests, EigenToMatrixTConversionTest) {
       {1, 2, 3},
       {4, 5, 6},
   };
-  matrix_t matrix_simple_recon = brain::EigenUtil::ToMatrixT(brain::EigenUtil::ToEigenMat(matrix_simple));
+  matrix_t matrix_simple_recon =
+      brain::EigenUtil::ToMatrixT(brain::EigenUtil::ToEigenMat(matrix_simple));
   EXPECT_EQ(matrix_simple, matrix_simple_recon);
 }
 
@@ -78,7 +79,8 @@ TEST_F(EigenUtilTests, FlattenTest) {
   // Flatten matrix_t -> vector_t
   EXPECT_EQ(brain::EigenUtil::Flatten(matrix_simple), matrix_simple_flattened);
   // Flatten matrix_eig -> vector_t
-  EXPECT_EQ(brain::EigenUtil::Flatten(matrix_simple_eig), matrix_simple_flattened);
+  EXPECT_EQ(brain::EigenUtil::Flatten(matrix_simple_eig),
+            matrix_simple_flattened);
 
   // Flatten std::vector<matrix_eig> -> vector_t
   std::vector<matrix_eig> matrix_vecs = {
@@ -90,34 +92,34 @@ TEST_F(EigenUtilTests, FlattenTest) {
 
 TEST_F(EigenUtilTests, VStackTest) {
   matrix_eig m = brain::EigenUtil::ToEigenMat({
-                                                  {1, 2, 3},
-                                                  {4, 5, 6},
-                                                  {7, 8, 9},
-                                              });
+      {1, 2, 3},
+      {4, 5, 6},
+      {7, 8, 9},
+  });
   matrix_eig m1 = brain::EigenUtil::ToEigenMat({
-                                                   {1, 2, 3},
-                                                   {4, 5, 6},
-                                               });
+      {1, 2, 3},
+      {4, 5, 6},
+  });
   matrix_eig m2 = brain::EigenUtil::ToEigenMat({
-                                                   {7, 8, 9},
-                                               });
+      {7, 8, 9},
+  });
   EXPECT_EQ(m, brain::EigenUtil::VStack({m1, m2}));
 }
 
 TEST_F(EigenUtilTests, PairwiseEuclideanDistTest) {
   matrix_eig m1 = brain::EigenUtil::ToEigenMat({
-                                                  {0, 1, 0},
-                                                  {1, 1, 1},
-                                              });
+      {0, 1, 0},
+      {1, 1, 1},
+  });
   matrix_eig m2 = brain::EigenUtil::ToEigenMat({
-                                                   {1, 1, 0},
-                                                   {1, 1, 1},
-                                                   {1, 2, 0},
-                                               });
+      {1, 1, 0},
+      {1, 1, 1},
+      {1, 2, 0},
+  });
   matrix_eig m_dist = brain::EigenUtil::ToEigenMat({
-                                                       {1.0, 1.41421, 1.41421},
-                                                       {1, 0, 1.41421},
-                                                   });
+      {1.0, 1.41421, 1.41421},
+      {1, 0, 1.41421},
+  });
   EXPECT_TRUE(m_dist.isApprox(brain::EigenUtil::PairwiseEuclideanDist(m1, m2)));
 }
 

@@ -40,7 +40,7 @@ TEST_F(TensorflowTests, TimeSeriesLSTMTest) {
   for (int i = 0; i < NUM_WAVES; i++) {
     data.col(i).setLinSpaced(NUM_SAMPLES, NUM_SAMPLES * i,
                              NUM_SAMPLES * (i + 1) - 1);
-    if(i % 2 == 0) {
+    if (i % 2 == 0) {
       data.col(i) = data.col(i).array().sin();
     } else {
       data.col(i) = data.col(i).array().cos();
@@ -67,8 +67,7 @@ TEST_F(TensorflowTests, TimeSeriesLSTMTest) {
       brain::LSTMWorkloadDefaults::DROPOUT_RATE,
       brain::LSTMWorkloadDefaults::CLIP_NORM,
       brain::LSTMWorkloadDefaults::BATCH_SIZE,
-      brain::LSTMWorkloadDefaults::BPTT,
-      brain::CommonWorkloadDefaults::HORIZON,
+      brain::LSTMWorkloadDefaults::BPTT, brain::CommonWorkloadDefaults::HORIZON,
       brain::CommonWorkloadDefaults::SEGMENT));
 
   LOG_INFO("Building Model: %s", model->ToString().c_str());

@@ -1,10 +1,22 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// linear_models.h
+//
+// Identification: src/include/brain/workload/linear_models.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "brain/workload/base_tf.h"
 
-namespace peloton{
-namespace brain{
-class TimeSeriesLinearReg: public BaseForecastModel {
+namespace peloton {
+namespace brain {
+class TimeSeriesLinearReg : public BaseForecastModel {
  public:
   TimeSeriesLinearReg(int regress_dim, int horizon, int segment);
   float TrainEpoch(matrix_eig &data) override;
@@ -20,7 +32,7 @@ class TimeSeriesLinearReg: public BaseForecastModel {
   std::vector<vector_eig> weights_;
 };
 
-class TimeSeriesKernelReg: public BaseForecastModel {
+class TimeSeriesKernelReg : public BaseForecastModel {
  public:
   TimeSeriesKernelReg(int regress_dim, int horizon, int segment);
   float TrainEpoch(matrix_eig &data) override;
@@ -36,5 +48,5 @@ class TimeSeriesKernelReg: public BaseForecastModel {
   matrix_eig kernel_x_;
   matrix_eig kernel_y_;
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton

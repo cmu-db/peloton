@@ -41,6 +41,5 @@ class EigenUtil {
   static vector_t Flatten(const std::vector<matrix_eig> &mat);
   static vector_t Flatten(const matrix_t &mat);
 };
-
 }
 }

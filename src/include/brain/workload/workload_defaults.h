@@ -20,7 +20,7 @@
 namespace peloton {
 namespace brain {
 
-struct CommonWorkloadDefaults{
+struct CommonWorkloadDefaults {
   static const int HORIZON;
   static const int SEGMENT;
   static const int INTERVAL;

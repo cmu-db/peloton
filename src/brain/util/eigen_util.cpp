@@ -15,7 +15,6 @@
 namespace peloton{
 namespace brain{
 
-
 matrix_eig EigenUtil::ToEigenMat(const matrix_t &mat) {
   std::vector<float> mat_flat;
 
@@ -56,15 +55,15 @@ matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   for (size_t mat_idx = 0; mat_idx < mat_vec.size(); ++mat_idx) {
     long cur_rows = mat_vec[mat_idx].rows();
     vstacked_mat.middleRows(row_offset, cur_rows) = mat_vec[mat_idx];
-    row_offset +=  cur_rows;
+    row_offset += cur_rows;
   }
   return vstacked_mat;
 }
 
 matrix_eig EigenUtil::PairwiseEuclideanDist(matrix_eig m1, matrix_eig m2) {
   matrix_eig m_dist(m1.rows(), m2.rows());
-  for(int i = 0; i < m1.rows(); i++) {
-    for(int j = 0; j < m2.rows(); j++) {
+  for (int i = 0; i < m1.rows(); i++) {
+    for (int j = 0; j < m2.rows(); j++) {
       m_dist(i, j) = (m1.row(i) - m2.row(j)).norm();
     }
   }
@@ -77,19 +76,20 @@ vector_t EigenUtil::Flatten(const matrix_eig &mat) {
 
 vector_t EigenUtil::Flatten(const std::vector<matrix_eig> &mat_vect) {
   std::vector<float> flattened_mat;
-  for(auto &mat: mat_vect) {
-    flattened_mat.insert(flattened_mat.end(), mat.data(), mat.data() + mat.size());
+  for (auto &mat : mat_vect) {
+    flattened_mat.insert(flattened_mat.end(), mat.data(),
+                         mat.data() + mat.size());
   }
   return flattened_mat;
 }
 
 vector_t EigenUtil::Flatten(const matrix_t &mat) {
   vector_t flattened_mat;
-  for(auto &mat_row: mat) {
+  for (auto &mat_row : mat) {
     flattened_mat.insert(flattened_mat.end(), mat_row.begin(), mat_row.end());
   }
   return flattened_mat;
 }
 
-}
+}  // namespace brain
 }

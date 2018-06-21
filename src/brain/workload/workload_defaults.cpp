@@ -22,7 +22,8 @@ namespace brain {
 const int CommonWorkloadDefaults::HORIZON = 216;
 const int CommonWorkloadDefaults::SEGMENT = 72;
 // TODO(saatviks): Currently assuming and using a default interval/aggregate
-// (term used in QB5000 code) of 1. Need to adjust this accordingly in many places.
+// (term used in QB5000 code) of 1. Need to adjust this accordingly in many
+// places.
 const int CommonWorkloadDefaults::INTERVAL = 1;
 // TODO(saatviks): Need to add paddling days term.
 const int CommonWorkloadDefaults::PADDLING_DAYS = 7;
@@ -51,6 +52,5 @@ const int LinearRegWorkloadDefaults::REGRESSION_DIM = 72;
  */
 const int KernelRegWorkloadDefaults::REGRESSION_DIM = 72;
 
-
-}
+}  // namespace brain
 }

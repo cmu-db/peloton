@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// lstm_tf.h
+// lstm.h
 //
-// Identification: src/include/brain/workload/lstm_tf.h
+// Identification: src/include/brain/workload/lstm.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
  public:
   TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                  float learn_rate, float dropout_ratio, float clip_norm,
-                 int batch_size,  int bptt, int horizon, int segment);
+                 int batch_size, int bptt, int horizon, int segment);
   /**
    * Train the Tensorflow model
    * @param data: Contiguous time-series data

@@ -11,16 +11,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/workload/base_tf.h"
-#include "util/file_util.h"
 #include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/util/tf_session_entity/tf_session_entity_input.h"
 #include "brain/util/tf_session_entity/tf_session_entity_output.h"
+#include "util/file_util.h"
 
 namespace peloton {
 namespace brain {
-BaseTFModel::BaseTFModel(const std::string& modelgen_path,
-                         const std::string& pymodel_path,
-                         const std::string& graph_path)
+BaseTFModel::BaseTFModel(const std::string &modelgen_path,
+                         const std::string &pymodel_path,
+                         const std::string &graph_path)
     : BaseModel(),
       modelgen_path_(peloton::FileUtil::GetRelativeToRootPath(modelgen_path)),
       pymodel_path_(peloton::FileUtil::GetRelativeToRootPath(pymodel_path)),
