@@ -23,9 +23,7 @@ ProtocolHandler::ProtocolHandler(tcop::TrafficCop *traffic_cop) {
 
 ProtocolHandler::~ProtocolHandler() {}
 
-ProcessResult ProtocolHandler::Process(UNUSED_ATTRIBUTE Buffer &rbuf,
-                                       UNUSED_ATTRIBUTE const size_t
-                                           thread_id) {
+ProcessResult ProtocolHandler::Process(ReadBuffer &, const size_t) {
   return ProcessResult::TERMINATE;
 }
 
