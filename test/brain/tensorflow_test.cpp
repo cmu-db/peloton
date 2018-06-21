@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <numeric>
-#include "brain/util/eigen_util.h"
 #include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/util/tf_util.h"
 #include "brain/workload/lstm.h"
@@ -33,14 +32,7 @@ TEST_F(TensorflowTests, BasicTFTest) {
   EXPECT_TRUE(brain::TFUtil::GetTFVersion());
 }
 
-TEST_F(TensorflowTests, BasicEigenTest) {
-  Eigen::MatrixXd m = Eigen::MatrixXd::Random(2, 2);
-  EXPECT_EQ(m.rows(), 2);
-  EXPECT_EQ(m.cols(), 2);
-  EXPECT_TRUE(m.IsRowMajor);
-}
-
-TEST_F(TensorflowTests, SineWavePredictionTest) {
+TEST_F(TensorflowTests, TimeSeriesLSTMTest) {
   // Sine Wave prediction test works here
   int NUM_SAMPLES = 1000;
   int NUM_WAVES = 3;
@@ -48,7 +40,11 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
   for (int i = 0; i < NUM_WAVES; i++) {
     data.col(i).setLinSpaced(NUM_SAMPLES, NUM_SAMPLES * i,
                              NUM_SAMPLES * (i + 1) - 1);
-    data.col(i) = data.col(i).array().sin();
+    if(i % 2 == 0) {
+      data.col(i) = data.col(i).array().sin();
+    } else {
+      data.col(i) = data.col(i).array().cos();
+    }
   }
 
   // Offsets for Splitting into Train/Test
@@ -56,13 +52,10 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
 
   // Split into train/test data
   // 0 -> end - train_offset
-  matrix_eig train_data = Eigen::Map<matrix_eig>(
-      data.data(), data.rows() - split_point, data.cols());
+  matrix_eig train_data = data.topRows(split_point);
 
   // end - test_offset -> end
-  matrix_eig test_data = Eigen::Map<matrix_eig>(
-      data.data() + (data.rows() - split_point) * data.cols(), split_point,
-      data.cols());
+  matrix_eig test_data = data.bottomRows(split_point);
 
   // TimeSeriesLSTM
   int LOG_INTERVAL = 20;
@@ -75,8 +68,8 @@ TEST_F(TensorflowTests, SineWavePredictionTest) {
       brain::LSTMWorkloadDefaults::CLIP_NORM,
       brain::LSTMWorkloadDefaults::BATCH_SIZE,
       brain::LSTMWorkloadDefaults::BPTT,
-      brain::LSTMWorkloadDefaults::HORIZON,
-      brain::LSTMWorkloadDefaults::SEGMENT));
+      brain::CommonWorkloadDefaults::HORIZON,
+      brain::CommonWorkloadDefaults::SEGMENT));
 
   LOG_INFO("Building Model: %s", model->ToString().c_str());
 

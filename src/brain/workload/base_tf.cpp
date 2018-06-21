@@ -18,27 +18,6 @@
 
 namespace peloton {
 namespace brain {
-
-void BaseForecastModel::GetBatch(const matrix_eig &mat, size_t batch_offset,
-                                 size_t bsz, size_t bptt,
-                                 std::vector<matrix_eig> &data,
-                                 std::vector<matrix_eig> &target) const {
-  size_t samples_per_input = mat.rows() / bsz;
-  size_t seq_len =
-      std::min<size_t>(bptt, samples_per_input - horizon_ - batch_offset);
-  // bsz vector of <seq_len, feat_len> = (bsz, seq_len, feat_len)
-  for (size_t input_idx = 0; input_idx < bsz; input_idx++) {
-    size_t row_idx = input_idx * samples_per_input;
-    // train mat[row_idx:row_idx + seq_len, :)
-    matrix_eig data_batch = mat.block(row_idx, 0, seq_len, mat.cols());
-    // target mat[row_idx + horizon_: row_idx + seq_len + horizon_ - 1, :]
-    matrix_eig target_batch = mat.block(row_idx + horizon_, 0, seq_len, mat.cols());
-    // Push batches into containers
-    data.push_back(data_batch);
-    target.push_back(target_batch);
-  }
-}
-
 BaseTFModel::BaseTFModel(const std::string& modelgen_path,
                          const std::string& pymodel_path,
                          const std::string& graph_path)

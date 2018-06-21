@@ -30,7 +30,7 @@ class BaseModel{
 /**
  * Base Abstract class to inherit for writing forecasting ML models
  */
-class BaseForecastModel: BaseModel {
+class BaseForecastModel: public BaseModel {
  public:
   BaseForecastModel(int horizon, int segment)
       : BaseModel(),
@@ -39,20 +39,14 @@ class BaseForecastModel: BaseModel {
   virtual float TrainEpoch(matrix_eig &data) = 0;
   virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                               matrix_eig &test_pred, bool return_preds) = 0;
-    /**
-     * Utility functions to create batches of the given data
-     * , generally useful to be fed into a TF model.
-     * The method of creating batches is specialized for Time series
-     * forecasting, hence placed here.
-     * Batches are in batch-major format
-     */
-  void GetBatch(const matrix_eig &mat, size_t batch_offset,
-                size_t bsz, size_t bptt,
-                std::vector<matrix_eig> &data,
-                std::vector<matrix_eig> &target) const;
+  int GetHorizon() const { return horizon_; }
+  int GetSegment() const { return segment_; }
+
+
  protected:
   int horizon_;
   int segment_;
+  // TODO(saatviks): Add paddling days and aggregate
 };
 
 template <typename InputType, typename OutputType>
@@ -70,7 +64,7 @@ class TfSessionEntity;
  * accept a string
  * path to the serialized graph and import the same.
  */
-class BaseTFModel: BaseModel {
+class BaseTFModel: public BaseModel {
  public:
   // Constructor - sets up session object
   BaseTFModel(const std::string& modelgen_path,

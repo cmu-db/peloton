@@ -15,12 +15,8 @@
 namespace peloton{
 namespace brain{
 
-/**
- * Fn to convert matrix_t type to matrix_r
- * @param mat: matrix_t matrix
- * @return the converted matrix_r matrix
- */
-matrix_eig EigenUtil::MatrixTToEigenMat(matrix_t &mat) {
+
+matrix_eig EigenUtil::ToEigenMat(const matrix_t &mat) {
   std::vector<float> mat_flat;
 
   uint rows = 0;
@@ -34,12 +30,7 @@ matrix_eig EigenUtil::MatrixTToEigenMat(matrix_t &mat) {
   return Eigen::Map<matrix_eig>(mat_flat.data(), rows, mat_flat.size() / rows);
 }
 
-/**
- * Fn to convert matrix_r type to matrix_t.
- * @param mat: mratrix_r matrix
- * @return the converted matrix_t matrix
- */
-matrix_t EigenUtil::EigenMatToMatrixT(matrix_eig &mat) {
+matrix_t EigenUtil::ToMatrixT(const matrix_eig &mat) {
   matrix_t out_mat;
   out_mat.resize(mat.rows());
   auto data = mat.data();
@@ -52,14 +43,50 @@ matrix_t EigenUtil::EigenMatToMatrixT(matrix_eig &mat) {
   return out_mat;
 }
 
-std::vector<float> EigenUtil::Flatten(const matrix_eig &mat) {
+matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
+  PELOTON_ASSERT(!mat_vec.empty());
+  long num_cols = mat_vec[0].cols();
+  size_t num_rows = 0;
+  for (size_t mat_idx = 0; mat_idx < mat_vec.size(); ++mat_idx) {
+    PELOTON_ASSERT(mat_vec[mat_idx].cols() == num_cols);
+    num_rows += mat_vec[mat_idx].rows();
+  }
+  matrix_eig vstacked_mat(num_rows, num_cols);
+  size_t row_offset = 0;
+  for (size_t mat_idx = 0; mat_idx < mat_vec.size(); ++mat_idx) {
+    long cur_rows = mat_vec[mat_idx].rows();
+    vstacked_mat.middleRows(row_offset, cur_rows) = mat_vec[mat_idx];
+    row_offset +=  cur_rows;
+  }
+  return vstacked_mat;
+}
+
+matrix_eig EigenUtil::PairwiseEuclideanDist(matrix_eig m1, matrix_eig m2) {
+  matrix_eig m_dist(m1.rows(), m2.rows());
+  for(int i = 0; i < m1.rows(); i++) {
+    for(int j = 0; j < m2.rows(); j++) {
+      m_dist(i, j) = (m1.row(i) - m2.row(j)).norm();
+    }
+  }
+  return m_dist;
+}
+
+vector_t EigenUtil::Flatten(const matrix_eig &mat) {
   return std::vector<float>(mat.data(), mat.data() + mat.size());
 }
 
-std::vector<float> EigenUtil::Flatten(std::vector<matrix_eig> &mat_vect) {
+vector_t EigenUtil::Flatten(const std::vector<matrix_eig> &mat_vect) {
   std::vector<float> flattened_mat;
   for(auto &mat: mat_vect) {
     flattened_mat.insert(flattened_mat.end(), mat.data(), mat.data() + mat.size());
+  }
+  return flattened_mat;
+}
+
+vector_t EigenUtil::Flatten(const matrix_t &mat) {
+  vector_t flattened_mat;
+  for(auto &mat_row: mat) {
+    flattened_mat.insert(flattened_mat.end(), mat_row.begin(), mat_row.end());
   }
   return flattened_mat;
 }

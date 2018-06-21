@@ -20,6 +20,13 @@
 namespace peloton {
 namespace brain {
 
+struct CommonWorkloadDefaults{
+  static const int HORIZON;
+  static const int SEGMENT;
+  static const int INTERVAL;
+  static const int PADDLING_DAYS;
+};
+
 struct LSTMWorkloadDefaults {
   static const int NFEATS;
   static const int NENCODED;
@@ -29,11 +36,15 @@ struct LSTMWorkloadDefaults {
   static const float DROPOUT_RATE;
   static const float CLIP_NORM;
   static const int BATCH_SIZE;
-  static const int HORIZON;
-  static const int SEGMENT;
-  static const int INTERVAL;
-  static const int PADDLING_DAYS;
   static const int BPTT;
+};
+
+struct LinearRegWorkloadDefaults {
+  static const int REGRESSION_DIM;
+};
+
+struct KernelRegWorkloadDefaults {
+  static const int REGRESSION_DIM;
 };
 }  // namespace brain
 }  // namespace peloton
