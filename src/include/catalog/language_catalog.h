@@ -56,6 +56,10 @@ class LanguageCatalog : public AbstractCatalog {
   // Global Singleton
   static LanguageCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
+  oid_t GetNextOid() { return oid_++ | LANGUAGE_OID_MASK; }
+
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
@@ -84,8 +88,6 @@ class LanguageCatalog : public AbstractCatalog {
 
  private:
   LanguageCatalog(concurrency::TransactionContext *txn);
-
-  oid_t GetNextOid() { return oid_++ | LANGUAGE_OID_MASK; }
 
   enum IndexId {
     PRIMARY_KEY = 0,

@@ -27,7 +27,7 @@
 #include "traffic_cop/traffic_cop.h"
 
 // Packet content macros
-#define NULL_CONTENT_SIZE -1
+#define NULL_CONTENT_SIZE (-1)
 
 namespace peloton {
 
@@ -51,7 +51,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
    * to generate txn
    * @return  @see ProcessResult
    */
-  ProcessResult Process(Buffer &rbuf, size_t thread_id);
+  ProcessResult Process(ReadBuffer &rbuf, size_t thread_id);
 
   // Deserialize the parame types from packet
   static size_t ReadParamType(InputPacket *pkt, int num_params,
@@ -85,7 +85,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
    *        (i.e. no type byte)
    * @return true if the parsing is complete
    */
-  static bool ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
+  static bool ParseInputPacket(ReadBuffer &rbuf, InputPacket &rpkt,
                                bool startup_format);
 
   /**
@@ -95,14 +95,14 @@ class PostgresProtocolHandler : public ProtocolHandler {
    * @param rpkt the postgres rpkt we want to parse to
    * @return true if the parsing is complete
    */
-  static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
+  static bool ReadPacket(ReadBuffer &rbuf, InputPacket &rpkt);
 
   /**
    * @brief Helper function to extract the header of a Postgres packet from the
    * read buffer
    * @see ParseInputPacket from param and return value
    */
-  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
+  static bool ReadPacketHeader(ReadBuffer &rbuf, InputPacket &rpkt,
                                bool startup_format);
 
   //===--------------------------------------------------------------------===//
@@ -195,8 +195,6 @@ class PostgresProtocolHandler : public ProtocolHandler {
   bool init_stage_;
 
   NetworkProtocolType protocol_type_;
-
-  // Manage standalone queries
 
   // The result-column format code
   std::vector<int> result_format_;

@@ -53,7 +53,7 @@ class TransactionContext : public Printable {
   /**
    * @brief      Destroys the object.
    */
-  ~TransactionContext();
+  ~TransactionContext() = default;
 
  private:
   void Init(const size_t thread_id, const IsolationLevelType isolation,
@@ -171,8 +171,7 @@ class TransactionContext : public Printable {
    * @brief      Delete the record.
    *
    * @param[in]  <unnamed>  The logical physical location of the record
-   *
-   * @return     Return true if we detect INS_DEL.
+   * @return    true if INS_DEL, false if DELETE
    */
   bool RecordDelete(const ItemPointer &);
 
@@ -337,10 +336,9 @@ class TransactionContext : public Printable {
   /** result of the transaction */
   ResultType result_ = ResultType::SUCCESS;
 
-  bool is_written_;
-  size_t insert_count_;
-
   IsolationLevelType isolation_level_;
+
+  bool is_written_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
