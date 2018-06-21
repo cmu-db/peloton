@@ -35,14 +35,14 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto tile_group_header = tile_group->GetHeader();
 
   // Reset the header
+  tile_group_header->SetSpinLatch(location.offset);
   tile_group_header->SetTransactionId(location.offset, INVALID_TXN_ID);
+  tile_group_header->SetLastReaderCommitId(location.offset, INVALID_CID);
   tile_group_header->SetBeginCommitId(location.offset, MAX_CID);
   tile_group_header->SetEndCommitId(location.offset, MAX_CID);
-  tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
-
-  PELOTON_MEMSET(tile_group_header->GetReservedFieldRef(location.offset), 0,
-                 storage::TileGroupHeader::GetReservedSize());
+  tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
+  tile_group_header->SetIndirection(location.offset, nullptr);
 
   // Reclaim the varlen pool
   CheckAndReclaimVarlenColumns(tile_group, location.offset);
