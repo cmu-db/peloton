@@ -28,6 +28,10 @@ namespace storage {
 
 class TileGroup;
 
+//===--------------------------------------------------------------------===//
+// Tuple Header
+//===--------------------------------------------------------------------===//
+
 struct TupleHeader {
   std::unique_ptr<common::synchronization::SpinLatch> latch;
   std::atomic<txn_id_t> txn_id;
@@ -39,6 +43,19 @@ struct TupleHeader {
   ItemPointer *indirection;
 } __attribute__((aligned(64)));
 
+/**
+ *  FIELD DESCRIPTIONS:
+ *  ===================
+ *  latch: Tuple header latch used to acquire ownership or update read_ts
+ *  txn_id: serve as a write lock on the tuple version
+ *  read_ts: the last txn to read this tuple
+ *  begin_ts: the lower bound of the version visibility range.
+ *  end_ts: the upper bound of the version visibility range.
+ *  next: the pointer pointing to the next (older) version in the version chain.
+ *  prev: the pointer pointing to the prev (newer) version in the version chain.
+ *  indirection: the pointer pointing to the index entry that holds the address of the version chain header.
+*/
+
 //===--------------------------------------------------------------------===//
 // Tile Group Header
 //===--------------------------------------------------------------------===//
@@ -47,24 +64,6 @@ struct TupleHeader {
  *
  * This contains information related to MVCC.
  * It is shared by all tiles in a tile group.
- *
- *  Layout :
- *
- *  -----------------------------------------------------------------------------
- *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
- *  | Indirection (8 bytes) | ReservedField (16 bytes)
- *  -----------------------------------------------------------------------------
- *
- *  FIELD DESCRIPTIONS:
- *  ===================
- *  TxnID: serve as a write lock on the tuple version.
- *  BeginTimeStamp: the lower bound of the version visibility range.
- *  EndTimeStamp: the upper bound of the version visibility range.
- *  NextItemPointer: the pointer pointing to the next (older) version in the version chain.
- *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
- *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
- *  ReservedField: unused space for future usage.
  *
  *  STATUS:
  *  ===================
