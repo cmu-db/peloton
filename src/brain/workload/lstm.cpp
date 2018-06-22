@@ -23,10 +23,10 @@ namespace brain {
 TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                                float learn_rate, float dropout_ratio,
                                float clip_norm, int batch_size, int bptt,
-                               int horizon, int segment)
+                               int horizon, int interval)
     : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/LSTM.py",
                   "src/brain/modelgen/LSTM.pb"),
-      BaseForecastModel(horizon, segment),
+      BaseForecastModel(bptt, horizon, interval),
       nfeats_(nfeats),
       nencoded_(nencoded),
       nhid_(nhid),
@@ -34,8 +34,7 @@ TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
       learn_rate_(learn_rate),
       dropout_ratio_(dropout_ratio),
       clip_norm_(clip_norm),
-      batch_size_(batch_size),
-      bptt_(bptt) {
+      batch_size_(batch_size) {
   GenerateModel(ConstructModelArgsString());
   // Import the Model
   tf_session_entity_->ImportGraph(graph_path_);
@@ -67,7 +66,7 @@ std::string TimeSeriesLSTM::ToString() const {
   model_str_builder << ", bsz = " << batch_size_;
   model_str_builder << ", bptt = " << bptt_;
   model_str_builder << ", horizon = " << horizon_;
-  model_str_builder << ", segment = " << segment_;
+  model_str_builder << ", interval = " << interval_;
   model_str_builder << ")";
   return model_str_builder.str();
 }
@@ -88,7 +87,7 @@ float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
   for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig,
+    ModelUtil::GetBatch(this, data, batch_offset, bsz, data_batch_eig,
                         target_batch_eig);
     auto data_batch = EigenUtil::Flatten(data_batch_eig);
     auto target_batch = EigenUtil::Flatten(target_batch_eig);
@@ -139,7 +138,7 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
   for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
        batch_offset += bptt_) {
     std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, bptt_, data_batch_eig,
+    ModelUtil::GetBatch(this, data, batch_offset, bsz, data_batch_eig,
                         target_batch_eig);
     auto data_batch = EigenUtil::Flatten(data_batch_eig);
     auto target_batch = EigenUtil::Flatten(target_batch_eig);
@@ -164,9 +163,10 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
 
   // Select the correct time window for the true values(fn of horizon and
   // segment)
-  int segment_offset = segment_ * num_feats;
-  y = std::vector<float>(y.end() - segment_offset, y.end());
-  y_hat = std::vector<float>(y_hat.end() - segment_offset, y_hat.end());
+  // TODO: Need to revisit this!
+  int interval_offset = interval_ * num_feats;
+  y = std::vector<float>(y.end() - interval_offset, y.end());
+  y_hat = std::vector<float>(y_hat.end() - interval_offset, y_hat.end());
 
   // Compute MSE
   std::vector<float> sq_err;
@@ -181,7 +181,7 @@ float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
   // Optionally return true/predicted values in form num_samples x num_feats
   if (return_preds) {
     matrix_t test_true_vec, test_pred_vec;
-    for (int i = 0; i < segment_offset / num_feats; i++) {
+    for (int i = 0; i < interval_offset / num_feats; i++) {
       test_true_vec.emplace_back(std::vector<float>(
           y.begin() + i * num_feats, y.begin() + (i + 1) * num_feats));
       test_pred_vec.emplace_back(std::vector<float>(

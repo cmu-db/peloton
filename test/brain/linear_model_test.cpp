@@ -49,9 +49,9 @@ TEST_F(LinearModelTests, LinearRegSineWaveWorkloadTest) {
   // TimeSeriesLinearReg
   auto model = std::unique_ptr<brain::TimeSeriesLinearReg>(
       new brain::TimeSeriesLinearReg(
-          brain::LinearRegWorkloadDefaults::REGRESSION_DIM,
+          brain::LinearRegWorkloadDefaults::BPTT,
           brain::CommonWorkloadDefaults::HORIZON,
-          brain::CommonWorkloadDefaults::SEGMENT));
+          brain::CommonWorkloadDefaults::INTERVAL));
 
   LOG_INFO("Building Model: %s", model->ToString().c_str());
   float train_loss = model->TrainEpoch(train_data);
@@ -94,9 +94,9 @@ TEST_F(LinearModelTests, KernelRegSineWaveWorkloadTest) {
   // TimeSeriesLinearReg
   auto model = std::unique_ptr<brain::TimeSeriesKernelReg>(
       new brain::TimeSeriesKernelReg(
-          brain::LinearRegWorkloadDefaults::REGRESSION_DIM,
+          brain::LinearRegWorkloadDefaults::BPTT,
           brain::CommonWorkloadDefaults::HORIZON,
-          brain::CommonWorkloadDefaults::SEGMENT));
+          brain::CommonWorkloadDefaults::INTERVAL));
 
   LOG_INFO("Building Model: %s", model->ToString().c_str());
   float train_loss = model->TrainEpoch(train_data);

@@ -68,7 +68,7 @@ TEST_F(TensorflowTests, TimeSeriesLSTMTest) {
       brain::LSTMWorkloadDefaults::CLIP_NORM,
       brain::LSTMWorkloadDefaults::BATCH_SIZE,
       brain::LSTMWorkloadDefaults::BPTT, brain::CommonWorkloadDefaults::HORIZON,
-      brain::CommonWorkloadDefaults::SEGMENT));
+      brain::CommonWorkloadDefaults::INTERVAL));
 
   LOG_INFO("Building Model: %s", model->ToString().c_str());
 

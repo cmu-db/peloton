@@ -20,23 +20,22 @@ namespace brain {
  * Linear Regression model
  **/
 
-TimeSeriesLinearReg::TimeSeriesLinearReg(int regress_dim, int horizon,
-                                         int segment)
-    : BaseForecastModel(horizon, segment), regress_dim_(regress_dim) {}
+TimeSeriesLinearReg::TimeSeriesLinearReg(int bptt, int horizon, int interval)
+    : BaseForecastModel(bptt, horizon, interval) {}
 
 std::string TimeSeriesLinearReg::ToString() const {
   std::stringstream model_str_builder;
   model_str_builder << "TimeSeriesLinearReg(";
-  model_str_builder << "regress_dim = " << regress_dim_;
+  model_str_builder << "bptt = " << bptt_;
   model_str_builder << ", horizon = " << horizon_;
-  model_str_builder << ", segment = " << segment_;
+  model_str_builder << ", interval = " << interval_;
   model_str_builder << ")";
   return model_str_builder.str();
 }
 
 float TimeSeriesLinearReg::TrainEpoch(matrix_eig &data) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(this, data, regress_dim_, X, y);
+  ModelUtil::GenerateFeatureMatrix(this, data, X, y);
   matrix_eig XTX = X.transpose() * X;
   XTX += matrix_eig::Identity(XTX.rows(), XTX.rows());
   XTX = (XTX.inverse() * (X.transpose()));
@@ -53,7 +52,7 @@ float TimeSeriesLinearReg::ValidateEpoch(matrix_eig &data,
                                          matrix_eig &test_pred,
                                          bool return_preds) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(this, data, regress_dim_, X, y);
+  ModelUtil::GenerateFeatureMatrix(this, data, X, y);
   matrix_eig y_hat(y.rows(), y.cols());
   for (long label_idx = 0; label_idx < y.cols(); label_idx++) {
     y_hat.col(label_idx) = (X * weights_[label_idx]).transpose();
@@ -68,23 +67,22 @@ float TimeSeriesLinearReg::ValidateEpoch(matrix_eig &data,
 /**
  * Kernel Regression model
  **/
-TimeSeriesKernelReg::TimeSeriesKernelReg(int regress_dim, int horizon,
-                                         int segment)
-    : BaseForecastModel(horizon, segment), regress_dim_(regress_dim) {}
+TimeSeriesKernelReg::TimeSeriesKernelReg(int bptt, int horizon, int interval)
+    : BaseForecastModel(bptt, horizon, interval) {}
 
 std::string TimeSeriesKernelReg::ToString() const {
   std::stringstream model_str_builder;
   model_str_builder << "TimeSeriesKernelReg(";
-  model_str_builder << "regress_dim = " << regress_dim_;
+  model_str_builder << "bptt = " << bptt_;
   model_str_builder << ", horizon = " << horizon_;
-  model_str_builder << ", segment = " << segment_;
+  model_str_builder << ", interval = " << interval_;
   model_str_builder << ")";
   return model_str_builder.str();
 }
 
 float TimeSeriesKernelReg::TrainEpoch(matrix_eig &data) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(this, data, regress_dim_, X, y);
+  ModelUtil::GenerateFeatureMatrix(this, data, X, y);
   kernel_x_ = X;
   kernel_y_ = y;
   matrix_eig kernel =
@@ -100,7 +98,7 @@ float TimeSeriesKernelReg::ValidateEpoch(matrix_eig &data,
                                          matrix_eig &test_pred,
                                          bool return_preds) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(this, data, regress_dim_, X, y);
+  ModelUtil::GenerateFeatureMatrix(this, data, X, y);
   kernel_x_ = X;
   kernel_y_ = y;
   matrix_eig kernel =

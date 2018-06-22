@@ -32,18 +32,22 @@ class BaseModel {
  */
 class BaseForecastModel : public BaseModel {
  public:
-  BaseForecastModel(int horizon, int segment)
-      : BaseModel(), horizon_(horizon), segment_(segment){};
+  BaseForecastModel(int bptt, int horizon, int interval)
+      : BaseModel(), bptt_(bptt),
+        horizon_(horizon), interval_(interval) {};
   virtual float TrainEpoch(matrix_eig &data) = 0;
   virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
                               matrix_eig &test_pred, bool return_preds) = 0;
   int GetHorizon() const { return horizon_; }
-  int GetSegment() const { return segment_; }
+  int GetBPTT() const { return bptt_; }
+  int GetInterval() const { return interval_; }
+  int GetPaddlingDays() const { return paddling_days_; }
 
  protected:
+  int bptt_;
   int horizon_;
-  int segment_;
-  // TODO(saatviks): Add paddling days and aggregate
+  int interval_;
+  int paddling_days_;
 };
 
 template <typename InputType, typename OutputType>

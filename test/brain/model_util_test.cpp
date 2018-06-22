@@ -27,11 +27,11 @@ TEST_F(ModelUtilTests, MeanSquareErrorTest) {
 }
 
 TEST_F(ModelUtilTests, GenerateFeatureMatrixTest1) {
-  int REG_DIM = 2;
+  int BPTT = 2;
   int HZN = 2;
   int SGMT = 1;
   auto model = std::unique_ptr<brain::TimeSeriesKernelReg>(
-      new brain::TimeSeriesKernelReg(REG_DIM, HZN, SGMT));
+      new brain::TimeSeriesKernelReg(BPTT, HZN, SGMT));
   matrix_eig workload = brain::EigenUtil::ToEigenMat({{1, 2},
                                                       {3, 4},
                                                       {5, 6},
@@ -45,18 +45,18 @@ TEST_F(ModelUtilTests, GenerateFeatureMatrixTest1) {
                                                             {9, 10},
                                                             {11, 12}});
   matrix_eig processed_feats, processed_fcast;
-  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload, REG_DIM,
+  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload,
                                           processed_feats, processed_fcast);
   EXPECT_TRUE(processed_feats.isApprox(expected_feat));
   EXPECT_TRUE(processed_fcast.isApprox(expected_fcast));
 }
 
 TEST_F(ModelUtilTests, GenerateFeatureMatrixTest2) {
-  int REG_DIM = 1;
+  int BPTT = 1;
   int HZN = 2;
   int SGMT = 1;
   auto model = std::unique_ptr<brain::TimeSeriesKernelReg>(
-      new brain::TimeSeriesKernelReg(REG_DIM, HZN, SGMT));
+      new brain::TimeSeriesKernelReg(BPTT, HZN, SGMT));
   matrix_eig workload = brain::EigenUtil::ToEigenMat({{1, 2},
                                                       {3, 4},
                                                       {5, 6},
@@ -72,16 +72,16 @@ TEST_F(ModelUtilTests, GenerateFeatureMatrixTest2) {
                                                             {9, 10},
                                                             {11, 12}});
   matrix_eig processed_feats, processed_fcast;
-  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload, REG_DIM,
+  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload,
                                           processed_feats, processed_fcast);
   EXPECT_TRUE(processed_feats.isApprox(expected_feat));
   EXPECT_TRUE(processed_fcast.isApprox(expected_fcast));
 }
 
 TEST_F(ModelUtilTests, GetBatchTest) {
-  int UNUSED_REG_DIM = 2;
+  int UNUSED_BPTT = 2;
   int HZN = 2;
-  int SGMT = 1;
+  int INTERVAL = 1;
   int BSZ = 4;
   int BPTT = 2;
   matrix_eig workload = brain::EigenUtil::ToEigenMat({{1, 2}, {3, 4},
@@ -102,12 +102,12 @@ TEST_F(ModelUtilTests, GetBatchTest) {
                                                       {61, 62},  {63, 64}});
   int BATCH_NUMSAMPLES = workload.rows()/BSZ; // = 8 samples
   auto model = std::unique_ptr<brain::TimeSeriesKernelReg>(
-      new brain::TimeSeriesKernelReg(UNUSED_REG_DIM, HZN, SGMT));
+      new brain::TimeSeriesKernelReg(UNUSED_BPTT, HZN, INTERVAL));
   std::vector<int> batch_offsets_check{0, 1};
   for(int batch_offset: batch_offsets_check) {
     std::vector<matrix_eig> data_batches, target_batches;
     brain::ModelUtil::GetBatch(model.get(), workload, batch_offset,
-                               BSZ, BPTT, data_batches, target_batches);
+                               BSZ, data_batches, target_batches);
     // Check correct bsz
     EXPECT_EQ(data_batches.size(), BSZ);
     EXPECT_EQ(target_batches.size(), BSZ);

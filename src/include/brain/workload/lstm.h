@@ -29,7 +29,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
  public:
   TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                  float learn_rate, float dropout_ratio, float clip_norm,
-                 int batch_size, int bptt, int horizon, int segment);
+                 int batch_size, int bptt, int horizon, int interval);
   /**
    * Train the Tensorflow model
    * @param data: Contiguous time-series data
@@ -75,7 +75,6 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
   float dropout_ratio_;
   float clip_norm_;
   int batch_size_;
-  int bptt_;
 };
 }  // namespace brain
 }  // namespace peloton
