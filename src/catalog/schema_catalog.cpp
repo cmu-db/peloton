@@ -131,7 +131,7 @@ std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
   }
   // get from pg_namespace, index scan
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of database_name
+  oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of namespace_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());

@@ -44,18 +44,11 @@
 namespace peloton {
 namespace catalog {
 
-// Get instance of the global catalog
 Catalog *Catalog::GetInstance() {
   static Catalog global_catalog;
   return &global_catalog;
 }
 
-/* Initialization of catalog, including:
- * 1) create peloton database, create catalog tables, add them into
- * peloton database, insert columns into pg_attribute
- * 2) create necessary indexes, insert into pg_index
- * 3) insert peloton into pg_database, catalog tables into pg_table
- */
 Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Begin transaction for catalog initialization
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -78,13 +71,6 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   txn_manager.CommitTransaction(txn);
 }
 
-/*@brief   This function *MUST* be called after a new database is created to
- * bootstrap all system catalog tables for that database. The system catalog
- * tables must be created in certain order to make sure all tuples are indexed
- *
- * @param   database    database which this system catalogs belong to
- * @param   txn         transaction context
- */
 void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {
   oid_t database_oid = database->GetOid();
@@ -256,6 +242,10 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
+
+  // Then create the default namespace for our new database
+  // CreateSchema(database_name, DEFAULT_SCHEMA_NAME, txn);
+
   return ResultType::SUCCESS;
 }
 
@@ -283,7 +273,7 @@ ResultType Catalog::CreateSchema(const std::string &database_name,
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
   auto schema_object = pg_namespace->GetSchemaObject(schema_name, txn);
   if (schema_object != nullptr)
-    throw CatalogException("Schema(namespace) " + schema_name +
+    throw CatalogException("Namespace " + schema_name +
                            " already exists");
   // Since there isn't physical class corresponds to schema(namespace), the only
   // thing needs to be done is inserting record into pg_namespace

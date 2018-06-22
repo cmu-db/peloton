@@ -78,7 +78,10 @@ struct FunctionData {
 
 class Catalog {
  public:
-  // Global Singleton
+  /**
+   * Global Singleton
+   * @deprecated
+   */
   static Catalog *GetInstance();
 
   // Bootstrap additional catalogs, only used in system initialization phase
@@ -270,8 +273,24 @@ class Catalog {
       const std::string &name, const std::vector<type::TypeId> &argument_types);
 
  private:
+
+  /**
+   * Initialization of catalog, including:
+   *    (1) create peloton database, create catalog tables, add them into
+   *        peloton database, insert columns into pg_attribute
+   *    (2) create necessary indexes, insert into pg_index
+   *    (3) insert peloton into pg_database, catalog tables into pg_table
+   */
   Catalog();
 
+  /**
+   * This function *MUST* be called after a new database is created to
+   * bootstrap all system catalog tables for that database. The system catalog
+   * tables must be created in certain order to make sure all tuples are indexed
+   *
+   * @param   database    database which this system catalogs belong to
+   * @param   txn         transaction context
+   */
   void BootstrapSystemCatalogs(storage::Database *database,
                                concurrency::TransactionContext *txn);
 

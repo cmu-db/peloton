@@ -12,25 +12,6 @@
 
 #pragma once
 
-#include <boost/functional/hash.hpp>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <utility>
-
-#include "catalog/abstract_catalog.h"
-#include "catalog/catalog_defaults.h"
-#include "catalog/system_catalogs.h"
-#include "common/internal_types.h"
-
-namespace peloton {
-
-namespace concurrency {
-class TransactionContext;
-}
-
-namespace catalog {
-
 //===----------------------------------------------------------------------===//
 // pg_sequence
 //
@@ -50,6 +31,25 @@ namespace catalog {
 // 0: oid (primary key)
 // 1: (sqdboid, sqnamespace, sqname) (secondary key 0)
 //===----------------------------------------------------------------------===//
+
+#include <boost/functional/hash.hpp>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <utility>
+
+#include "catalog/abstract_catalog.h"
+#include "catalog/catalog_defaults.h"
+#include "catalog/system_catalogs.h"
+#include "common/internal_types.h"
+
+namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+}
+
+namespace catalog {
 
 class SequenceCatalogObject {
  public:
