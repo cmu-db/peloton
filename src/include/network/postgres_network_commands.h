@@ -17,18 +17,18 @@
 #include "traffic_cop/traffic_cop.h"
 #include "network/marshal.h"
 
-#define DEFINE_COMMAND(name, protocol_type)                                         \
+#define DEFINE_COMMAND(name)                                                        \
 class name : public PostgresNetworkCommand {                                        \
  public:                                                                            \
-  explicit name(PostgresRawInputPacket &input_packet)                               \
-     : PostgresNetworkCommand(std::move(input_packet), protocol_type) {}            \
-  virtual Transition Exec(PostgresWireProtocol &, WriteQueue &, size_t) override;  \
+  explicit name(PostgresInputPacket &input_packet)                               \
+     : PostgresNetworkCommand(std::move(input_packet)) {}                           \
+  virtual Transition Exec(PostgresProtocolInterpreter &, WriteQueue &, size_t) override;   \
 }
 
 namespace peloton {
 namespace network {
 
-class PostgresWireProtocol;
+class PostgresProtocolInterpreter;
 
 struct PostgresInputPacket {
   NetworkMessageType msg_type_ = NetworkMessageType::NULL_COMMAND;
@@ -50,30 +50,27 @@ struct PostgresInputPacket {
 
 class PostgresNetworkCommand {
  public:
-  virtual Transition Exec(PostgresWireProtocol &protocol_obj,
+  virtual Transition Exec(PostgresProtocolInterpreter &protocol_obj,
                           WriteQueue &out,
                           size_t thread_id) = 0;
  protected:
-  PostgresNetworkCommand(PostgresInputPacket input_packet,
-                         ResponseProtocol response_protocol)
-      : input_packet_(input_packet),
-        response_protocol_(response_protocol) {}
+  PostgresNetworkCommand(PostgresInputPacket input_packet)
+      : input_packet_(input_packet) {}
 
   PostgresInputPacket input_packet_;
-  const ResponseProtocol response_protocol_;
 };
 
 // TODO(Tianyu): Fix response types
-DEFINE_COMMAND(StartupCommand, ResponseProtocol::SIMPLE);
-DEFINE_COMMAND(SimpleQueryCommand, ResponseProtocol::SIMPLE);
-DEFINE_COMMAND(ParseCommand, ResponseProtocol::NO);
-DEFINE_COMMAND(BindCommand, ResponseProtocol::NO);
-DEFINE_COMMAND(DescribeCommand, ResponseProtocol::NO);
-DEFINE_COMMAND(ExecuteCommand, ResponseProtocol::EXTENDED);
-DEFINE_COMMAND(SyncCommand, ResponseProtocol::SIMPLE);
-DEFINE_COMMAND(CloseCommand, ResponseProtocol::NO);
-DEFINE_COMMAND(TerminateCommand, ResponseProtocol::NO);
-DEFINE_COMMAND(NullCommand, ResponseProtocol::NO);
+DEFINE_COMMAND(StartupCommand);
+DEFINE_COMMAND(SimpleQueryCommand);
+DEFINE_COMMAND(ParseCommand);
+DEFINE_COMMAND(BindCommand);
+DEFINE_COMMAND(DescribeCommand);
+DEFINE_COMMAND(ExecuteCommand);
+DEFINE_COMMAND(SyncCommand);
+DEFINE_COMMAND(CloseCommand);
+DEFINE_COMMAND(TerminateCommand);
+DEFINE_COMMAND(NullCommand);
 
 } // namespace network
 } // namespace peloton

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "parser/postgresparser.h"
-#include "network/postgres_wire_protocol.h"
+#include "network/postgres_protocol_interpreter.h"
 #include "network/peloton_server.h"
 #include "network/postgres_network_commands.h"
 
@@ -20,7 +20,7 @@
 namespace peloton {
 namespace network {
 
-Transition StartupCommand::Exec(PostgresWireProtocol &protocol_object,
+Transition StartupCommand::Exec(PostgresProtocolInterpreter &protocol_object,
                                 WriteQueue &out,
                                 size_t) {
   // Always flush startup response
@@ -72,29 +72,6 @@ Transition StartupCommand::Exec(PostgresWireProtocol &protocol_object,
   }
 }
 
-Transition SimpleQueryCommand::Exec(PostgresWireProtocol &protocol_object,
-                                    WriteQueue &out,
-                                    size_t thread_id) {
-  out.ForceFlush();
-  std::string query = input_packet_.buf_->ReadString(input_packet_.len_);
-  LOG_TRACE("Execute query: %s", query.c_str());
-  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
-  try {
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    sql_stmt_list = peloton_parser.BuildParseTree(query);
-    // When the query is empty(such as ";" or ";;", still valid),
-    // the pare tree is empty, parser will return nullptr.
-    if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid)
-      throw ParserException("Error Parsing SQL statement");
-  } catch (Exception &e) {
-    protocol_object.tcop_->ProcessInvalidStatement();
-    std::string error_message = e.what();
-    PostgresWireUtilities::SendErrorResponse(
-        out, {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
-    PostgresWireUtilities::SendReadyForQuery()
-
-  }
-}
 
 } // namespace network
 } // namespace peloton
