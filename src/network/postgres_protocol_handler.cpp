@@ -934,7 +934,7 @@ bool PostgresProtocolHandler::ReadPacketHeader(ReadBuffer &rbuf,
   // get packet size from the header
   // extract packet contents size
   // content lengths should exclude the length bytes
-  rpkt.len = rbuf.ReadInt(sizeof(int32_t)) - sizeof(uint32_t);
+  rpkt.len = rbuf.ReadInt<uint32_t>() - sizeof(uint32_t);
 
   // do we need to use the extended buffer for this packet?
   rpkt.is_extended = (rpkt.len > rbuf.Capacity());

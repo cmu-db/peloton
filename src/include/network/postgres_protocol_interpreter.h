@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 #pragma once
+#include <utility>
 #include "common/logger.h"
 #include "network/protocol_interpreter.h"
 #include "network/postgres_network_commands.h"
-#include "network/buffered_io.h"
+#include "network/netork_io_utils.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) ((x) >> 16)
@@ -35,29 +36,33 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
     return command->Exec(*this, out, thread_id);
   }
 
-  inline void AddCommandLineOption(std::string name, std::string val) {
-    cmdline_options_[name] = val;
+  inline void AddCommandLineOption(const std::string &name, std::string val) {
+    cmdline_options_[name] = std::move(val);
   }
 
   inline void FinishStartup() { startup_ = false; }
 
   std::shared_ptr<PostgresNetworkCommand> PacketToCommand() {
-    if (startup_) return MAKE_COMMAND(StartupCommand);
+//    if (startup_) return MAKE_COMMAND(StartupCommand);
     switch (curr_input_packet_.msg_type_) {
-      case NetworkMessageType::SIMPLE_QUERY_COMMAND:
-        return MAKE_COMMAND(SimpleQueryCommand);
-      case NetworkMessageType::PARSE_COMMAND:return MAKE_COMMAND(ParseCommand);
-      case NetworkMessageType::BIND_COMMAND
-        :return MAKE_COMMAND(BindCommand);
-      case NetworkMessageType::DESCRIBE_COMMAND:
-        return MAKE_COMMAND(DescribeCommand);
-      case NetworkMessageType::EXECUTE_COMMAND:
-        return MAKE_COMMAND(ExecuteCommand);
-      case NetworkMessageType::SYNC_COMMAND:return MAKE_COMMAND(SyncCommand);
-      case NetworkMessageType::CLOSE_COMMAND:return MAKE_COMMAND(CloseCommand);
-      case NetworkMessageType::TERMINATE_COMMAND:
-        return MAKE_COMMAND(TerminateCommand);
-      case NetworkMessageType::NULL_COMMAND:return MAKE_COMMAND(NullCommand);
+//      case NetworkMessageType::SIMPLE_QUERY_COMMAND:
+//        return MAKE_COMMAND(SimpleQueryCommand);
+//      case NetworkMessageType::PARSE_COMMAND:
+//        return MAKE_COMMAND(ParseCommand);
+//      case NetworkMessageType::BIND_COMMAND:
+//        return MAKE_COMMAND(BindCommand);
+//      case NetworkMessageType::DESCRIBE_COMMAND:
+//        return MAKE_COMMAND(DescribeCommand);
+//      case NetworkMessageType::EXECUTE_COMMAND:
+//        return MAKE_COMMAND(ExecuteCommand);
+//      case NetworkMessageType::SYNC_COMMAND:
+//        return MAKE_COMMAND(SyncCommand);
+//      case NetworkMessageType::CLOSE_COMMAND:
+//        return MAKE_COMMAND(CloseCommand);
+//      case NetworkMessageType::TERMINATE_COMMAND:
+//        return MAKE_COMMAND(TerminateCommand);
+//      case NetworkMessageType::NULL_COMMAND:
+//        return MAKE_COMMAND(NullCommand);
       default:
         throw NetworkProcessException("Unexpected Packet Type: " +
             std::to_string(static_cast<int>(curr_input_packet_.msg_type_)));
@@ -95,7 +100,7 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
     // The header is ready to be read, fill in fields accordingly
     if (!startup_)
       curr_input_packet_.msg_type_ = in->ReadRawValue<NetworkMessageType>();
-    curr_input_packet_.len_ = in->ReadInt(sizeof(int32_t)) - sizeof(int32_t);
+    curr_input_packet_.len_ = in->ReadInt<uint32_t>() - sizeof(uint32_t);
 
     // Extend the buffer as needed
     if (curr_input_packet_.len_ > in->Capacity()) {
@@ -143,7 +148,9 @@ class PostgresPacketWriter {
   }
 
   /**
-   * Begin writing a new packet. Caller can use other
+   * Begin writing a new packet. Caller can use other append methods to write
+   * contents to the packet. An explicit call to end packet must be made to
+   * make these writes valid.
    * @param type
    * @return self-reference for chaining
    */
@@ -161,7 +168,15 @@ class PostgresPacketWriter {
     return *this;
   }
 
+  /**
+   * Append raw bytes from specified memory location into the write queue.
+   * There must be a packet active in the writer.
+   * @param src memory location to write from
+   * @param len number of bytes to write
+   * @return self-reference for chaining
+   */
   inline PostgresPacketWriter &AppendRaw(const void *src, size_t len) {
+    PELOTON_ASSERT(curr_packet_len_ != nullptr);
     queue_.BufferWriteRaw(src, len);
     // Add the size field to the len of the packet. Be mindful of byte
     // ordering. We switch to network ordering only when the packet is finished
@@ -169,32 +184,61 @@ class PostgresPacketWriter {
     return *this;
   }
 
+  /**
+   * Append a value onto the write queue. There must be a packet active in the
+   * writer. No byte order conversion is performed. It is up to the caller to
+   * do so if needed.
+   * @tparam T type of value to write
+   * @param val value to write
+   * @return self-reference for chaining
+   */
   template<typename T>
   inline PostgresPacketWriter &AppendRawValue(T val) {
     return AppendRaw(&val, sizeof(T));
   }
 
-  PostgresPacketWriter &AppendInt(uint8_t len, uint32_t val) {
-    int32_t result;
-    switch (len) {
-      case 1:result = val;
-        break;
-      case 2:result = htons(val);
-        break;
-      case 4:result = htonl(val);
-        break;
-      default:
-        throw NetworkProcessException(
-            "Error constructing packet: invalid int size");
+  /**
+   * Append an integer of specified length onto the write queue. (1, 2, 4, or 8
+   * bytes). It is assumed that these bytes need to be converted to network
+   * byte ordering.
+   * @tparam T type of value to read off. Has to be size 1, 2, 4, or 8.
+   * @param val value to write
+   * @return self-reference for chaining
+   */
+  template <typename T>
+  PostgresPacketWriter &AppendInt(T val) {
+    // We only want to allow for certain type sizes to be used
+    // After the static assert, the compiler should be smart enough to throw
+    // away the other cases and only leave the relevant return statement.
+    static_assert(sizeof(T) == 1
+                      || sizeof(T) == 2
+                      || sizeof(T) == 4
+                      || sizeof(T) == 8, "Invalid size for integer");
+    switch (sizeof(T)) {
+      case 1: return AppendRawValue<T>(val);
+      case 2: return AppendRawValue<T>(ntohs(val));
+      case 4: return AppendRawValue<T>(ntohl(val));
+      case 8: return AppendRawValue<T>(ntohll(val));
+      // Will never be here due to compiler optimization
+      default: throw NetworkProcessException("");
     }
-    return AppendRaw(&result, len);
   }
 
+  /**
+   * Append a string onto the write queue.
+   * @param str the string to append
+   * @param nul_terminate whether the nul terminaor should be written as well
+   * @return self-reference for chaining
+   */
   inline PostgresPacketWriter &AppendString(const std::string &str,
                                             bool nul_terminate = true) {
     return AppendRaw(str.data(), nul_terminate ? str.size() + 1 : str.size());
   }
 
+  /**
+   * End the packet. A packet write must be in progress and said write is not
+   * well-formed until this method is called.
+   */
   inline void EndPacket() {
     PELOTON_ASSERT(curr_packet_len_ != nullptr);
     // Switch to network byte ordering, add the 4 bytes of size field

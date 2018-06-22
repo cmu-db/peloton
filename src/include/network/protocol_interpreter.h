@@ -12,7 +12,7 @@
 #pragma once
 #include <memory>
 #include "network/network_types.h"
-#include "network/buffered_io.h"
+#include "network/netork_io_utils.h"
 
 namespace peloton {
 namespace network {

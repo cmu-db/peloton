@@ -20,9 +20,9 @@
 #define DEFINE_COMMAND(name)                                                        \
 class name : public PostgresNetworkCommand {                                        \
  public:                                                                            \
-  explicit name(PostgresInputPacket &input_packet)                               \
+  explicit name(PostgresInputPacket &input_packet)                                  \
      : PostgresNetworkCommand(std::move(input_packet)) {}                           \
-  virtual Transition Exec(PostgresProtocolInterpreter &, WriteQueue &, size_t) override;   \
+  virtual Transition Exec(PostgresProtocolInterpreter &, WriteQueue &, size_t) override {}   \
 }
 
 namespace peloton {
@@ -60,17 +60,16 @@ class PostgresNetworkCommand {
   PostgresInputPacket input_packet_;
 };
 
-// TODO(Tianyu): Fix response types
-DEFINE_COMMAND(StartupCommand);
-DEFINE_COMMAND(SimpleQueryCommand);
-DEFINE_COMMAND(ParseCommand);
-DEFINE_COMMAND(BindCommand);
-DEFINE_COMMAND(DescribeCommand);
-DEFINE_COMMAND(ExecuteCommand);
-DEFINE_COMMAND(SyncCommand);
-DEFINE_COMMAND(CloseCommand);
-DEFINE_COMMAND(TerminateCommand);
-DEFINE_COMMAND(NullCommand);
+//DEFINE_COMMAND(StartupCommand);
+//DEFINE_COMMAND(SimpleQueryCommand);
+//DEFINE_COMMAND(ParseCommand);
+//DEFINE_COMMAND(BindCommand);
+//DEFINE_COMMAND(DescribeCommand);
+//DEFINE_COMMAND(ExecuteCommand);
+//DEFINE_COMMAND(SyncCommand);
+//DEFINE_COMMAND(CloseCommand);
+//DEFINE_COMMAND(TerminateCommand);
+//DEFINE_COMMAND(NullCommand);
 
 } // namespace network
 } // namespace peloton
