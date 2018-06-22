@@ -112,6 +112,14 @@ class TimestampCheckpointManager : public CheckpointManager {
                                               const cid_t &begin_cid,
                                               FileHandle &file_handle);
 
+  // Read table data without tile group and write it down to checkpoint data
+  // file if its persistent flag is true.
+  // This function works for only settings_catalog now.
+  void CheckpointingTableDataWithPersistentCheck(const storage::DataTable *table,
+                                                 const cid_t &begin_cid,
+                                                 oid_t flag_column_id,
+                                                 FileHandle &file_handle);
+
   // check the value is committed before the checkpointing begins
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id,
                  const cid_t &begin_cid);
@@ -138,28 +146,38 @@ class TimestampCheckpointManager : public CheckpointManager {
   bool LoadUserTableCheckpoint(const eid_t &epoch_id,
                                concurrency::TransactionContext *txn);
 
-  // read a checkpoint catalog file and recover catalog objects for user tables
+  // Read a checkpoint catalog file and recover catalog objects for user tables
   bool RecoverStorageObject(FileHandle &file_handle,
                             concurrency::TransactionContext *txn);
 
-  // read a checkpoint data file and recover the table
-  // this function is provided for checkpointed user table
+  // Read a checkpoint data file and recover the table
+  // This function is provided for checkpointed user table
   void RecoverTableData(storage::DataTable *table, FileHandle &file_handle,
                         concurrency::TransactionContext *txn);
 
-  // read a checkpoint data file without tile group and recover the table
-  // this function is provided for initialized catalog table not including
+  // Read a checkpoint data file without tile group and recover the table
+  // This function is provided for initialized catalog table not including
   // default value
   // return: inserted tuple count into table
   oid_t RecoverTableDataWithoutTileGroup(storage::DataTable *table,
                                          FileHandle &file_handle,
                                          concurrency::TransactionContext *txn);
 
-  // read a checkpoint data file with duplicate check without tile group
-  // this function keeps default values of catalogs
+  // Read a checkpoint data file with duplicate check without tile group
+  // This function keeps default values of catalogs
   // return: inserted tuple count into table without default value
   oid_t RecoverTableDataWithDuplicateCheck(
       storage::DataTable *table, FileHandle &file_handle,
+      concurrency::TransactionContext *txn);
+
+  // Read a checkpoint data file without tile group.
+  // If a same value is existed and its persistent flag is true,
+  // then overwrite it by recovered value.
+  // This function works for only settings_catalog now.
+  // return: inserted/updated tuple count into table without default value
+  oid_t RecoverTableDataWithPersistentCheck(
+      storage::DataTable *table, FileHandle &file_handle,
+      std::vector<oid_t> key_colmun_ids, oid_t flag_column_id,
       concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//

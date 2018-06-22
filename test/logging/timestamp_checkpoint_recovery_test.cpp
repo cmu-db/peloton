@@ -37,18 +37,34 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // do checkpoint recovery
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
-  checkpoint_manager.DoCheckpointRecovery();
+  auto result = checkpoint_manager.DoCheckpointRecovery();
+  if (!result) {
+    LOG_ERROR("Recovery failed. Has to do timestamp_checkpointing_test"
+        " in advance.");
+    EXPECT_TRUE(false);
+    return;
+  }
 
-
-  // low level test
-  // make sure data structures created in checkpointing test and recovered
-  // above are correct.
+  //--------------------------------------------------------------------------
+  // LOW LEVEL TEST
+  //--------------------------------------------------------------------------
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   auto storage = storage::StorageManager::GetInstance();
 
-  // check an uncommitted table does not exist
+  // check an specific catalog: SettingCatalog
+  auto &setting_manager = settings::SettingsManager::GetInstance();
+  LOG_DEBUG("Setting info\n%s", setting_manager.GetInfo().c_str());
+
+//  auto settings_catalog = catalog::SettingsCatalog::GetInstance(txn);
+//  settings_catalog.GetResultWithIndexScan(name, txn);
+
+
+  // make sure data structures created in checkpointing test and recovered
+  // above are correct.
+
+  // check an uncommitted table in checkpointing does not exist
   EXPECT_FALSE(catalog->ExistTableByName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                                          "out_of_checkpoint_test", txn));
 
@@ -429,7 +445,9 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   txn_manager.CommitTransaction(txn);
 
 
-  // high level test
+  //--------------------------------------------------------------------------
+  // HIGH LEVEL TEST
+  //--------------------------------------------------------------------------
   // make sure the records of 3 user tables created checkpointing test
   // are correct and their constraints are working correctly through
   // SQL execution.

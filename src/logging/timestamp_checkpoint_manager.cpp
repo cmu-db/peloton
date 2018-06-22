@@ -247,7 +247,14 @@ void TimestampCheckpointManager::CreateCheckpoint(
       // if table is catalog, then insert data without tile group info
       auto table = database->GetTableWithOid(table_oid);
       if (table_catalog->GetSchemaName() == CATALOG_SCHEMA_NAME) {
-        CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
+        // settings_catalog takes only persistent values
+        if (table_catalog->GetTableName() == "pg_settings") {
+          CheckpointingTableDataWithPersistentCheck(table, begin_cid,
+              table->GetSchema()->GetColumnID("is_persistent"),
+              file_handle);
+        } else {
+          CheckpointingTableDataWithoutTileGroup(table, begin_cid, file_handle);
+        }
       } else {
         CheckpointingTableData(table, begin_cid, file_handle);
       }
@@ -352,6 +359,55 @@ void TimestampCheckpointManager::CheckpointingTableDataWithoutTileGroup(
           type::Value value = tile_group->GetValue(tuple_id, column_id);
           value.SerializeTo(output_buffer);
           LOG_TRACE("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
+                    column_id, tuple_id, value.ToString().c_str());
+        }
+      } else {
+        LOG_TRACE("%s's tuple %d is invisible\n", table->GetName().c_str(),
+                  tuple_id);
+      }
+    }
+
+    // write down tuple data to file
+    int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1,
+                     file_handle.file);
+    if (ret != 1 && ret != 0) {
+      LOG_ERROR("Write error: %d", ret);
+      return;
+    }
+
+    output_buffer.Reset();
+  }
+
+  LoggingUtil::FFlushFsync(file_handle);
+}
+
+void TimestampCheckpointManager::CheckpointingTableDataWithPersistentCheck(
+    const storage::DataTable *table, const cid_t &begin_cid,
+    oid_t flag_column_id, FileHandle &file_handle) {
+  CopySerializeOutput output_buffer;
+
+  LOG_TRACE("Do checkpointing without tile group to table %d in database %d",
+            table->GetOid(), table->GetDatabaseOid());
+
+  // load all table data without tile group information
+  size_t tile_group_count = table->GetTileGroupCount();
+  for (oid_t tg_offset = START_OID; tg_offset < tile_group_count; tg_offset++) {
+    auto tile_group = table->GetTileGroup(tg_offset);
+    auto tile_group_header = tile_group->GetHeader();
+
+    // load visible tuples data in the table
+    auto max_tuple_count = tile_group->GetNextTupleSlot();
+    auto column_count = table->GetSchema()->GetColumnCount();
+    for (oid_t tuple_id = START_OID; tuple_id < max_tuple_count; tuple_id++) {
+      // check visible and persistent flag.
+      if (IsVisible(tile_group_header, tuple_id, begin_cid) &&
+          tile_group->GetValue(tuple_id, flag_column_id).IsTrue()) {
+        // load all field data of each column in the tuple
+        for (oid_t column_id = START_OID; column_id < column_count;
+             column_id++) {
+          type::Value value = tile_group->GetValue(tuple_id, column_id);
+          value.SerializeTo(output_buffer);
+          LOG_DEBUG("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
                     column_id, tuple_id, value.ToString().c_str());
         }
       } else {
@@ -606,8 +662,8 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   // TODO: Implement a logic for selecting recovered values
 
   // catalogs out of recovery
-  if (table_name == "pg_settings" || table_name == "pg_column_stats" ||
-      table_name == "zone_map" || (db_oid == CATALOG_DATABASE_OID && (
+  if (table_name == "pg_column_stats" || table_name == "zone_map" ||
+      (db_oid == CATALOG_DATABASE_OID && (
           table_oid == SCHEMA_CATALOG_OID || table_oid == TABLE_CATALOG_OID ||
           table_oid == COLUMN_CATALOG_OID || table_oid == INDEX_CATALOG_OID ||
           table_oid == LAYOUT_CATALOG_OID))) {
@@ -643,6 +699,14 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
         table_name == "pg_language" || table_name == "pg_proc") {
       oid_align =
           RecoverTableDataWithDuplicateCheck(table, table_file, txn);
+    }
+    //
+    else if (table_name == "pg_settings") {
+      std::vector<oid_t> key_column_ids = {table->GetSchema()->GetColumnID("name")};
+      oid_t flag_column_id = table->GetSchema()->GetColumnID("is_persistent");
+      oid_align =
+          RecoverTableDataWithPersistentCheck(table, table_file, key_column_ids,
+                                              flag_column_id, txn);
     }
     // catalogs to be recovered without duplicate check
     else {
@@ -894,14 +958,9 @@ bool TimestampCheckpointManager::RecoverStorageObject(
       }
 
       // recover trigger object of the storage table
-      auto trigger_list =
-          catalog->GetSystemCatalogs(db_oid)->GetTriggerCatalog()->GetTriggers(
-              table_oid, txn);
-      for (int trigger_idx = 0;
-           trigger_idx < trigger_list->GetTriggerListSize(); trigger_idx++) {
-        auto trigger = trigger_list->Get(trigger_idx);
-        table->AddTrigger(*trigger);
-      }
+      table->UpdateTriggerListFromCatalog(txn);
+
+      // Settings
 
       // tuning
 
@@ -1166,6 +1225,93 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
 
     // if not duplicated, insert the tuple
     if (!duplicated) {
+      // insert tuple into the table without foreign key check to avoid an error
+      // which occurs in tables with the mutual foreign keys each other
+      ItemPointer location =
+          table->InsertTuple(tuple.get(), txn, &index_entry_ptr, false);
+      if (location.block != INVALID_OID) {
+        concurrency::TransactionManagerFactory::GetInstance().PerformInsert(
+            txn, location, index_entry_ptr);
+        insert_tuple_count++;
+      } else {
+        LOG_ERROR("Tuple insert error for table %d", table->GetOid());
+      }
+    }
+  }
+
+  return insert_tuple_count;
+}
+
+oid_t TimestampCheckpointManager::RecoverTableDataWithPersistentCheck(
+    storage::DataTable *table, FileHandle &file_handle,
+    std::vector<oid_t> key_colmun_ids, oid_t flag_column_id,
+    concurrency::TransactionContext *txn) {
+  size_t table_size = LoggingUtil::GetFileSize(file_handle);
+  if (table_size == 0) return 0;
+  std::unique_ptr<char[]> data(new char[table_size]);
+  if (LoggingUtil::ReadNBytesFromFile(file_handle, data.get(), table_size) ==
+      false) {
+    LOG_ERROR("Checkpoint table file read error");
+    return 0;
+  }
+  CopySerializeInput input_buffer(data.get(), table_size);
+
+  LOG_TRACE("Recover table %d data with persistent check (%lu byte)",
+            table->GetOid(), table_size);
+
+  // recover table tuples
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
+  oid_t insert_tuple_count = 0;
+  auto schema = table->GetSchema();
+  oid_t column_count = schema->GetColumnCount();
+  while (input_buffer.RestSize() > 0) {
+    // recover values on each column
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    ItemPointer *index_entry_ptr = nullptr;
+    for (oid_t column_id = 0; column_id < column_count; column_id++) {
+      auto value = type::Value::DeserializeFrom(
+          input_buffer, schema->GetType(column_id), NULL);
+      tuple->SetValue(column_id, value, pool.get());
+    }
+
+    // Persistent check
+    // If same name tuple exists in the table already, delete its tuple.
+    // If the tuple's persistent is changed to false, then recovered tuple
+    // is discarded
+    storage::Tuple target_tuple;
+    bool do_insert = true;
+    for (oid_t tg_offset = 0; tg_offset < table->GetTileGroupCount();
+         tg_offset++) {
+      auto tile_group = table->GetTileGroup(tg_offset);
+      auto max_tuple_count = tile_group->GetNextTupleSlot();
+      for (oid_t tuple_id = 0; tuple_id < max_tuple_count; tuple_id++) {
+        // check all key columns which identify the tuple
+        bool check_all_values_same = true;
+        for (auto key_column : key_colmun_ids) {
+          if (tile_group->GetValue(tuple_id, key_column)
+                  .CompareNotEquals(tuple->GetValue(key_column)) ==
+                      CmpBool::CmpTrue) {
+            check_all_values_same = false;
+            break;
+          }
+        }
+
+        // If found a same tuple and its parameter is persistent,
+        // then update it,
+        if (check_all_values_same &&
+          tile_group->GetValue(tuple_id, flag_column_id).IsTrue()) {
+          for (oid_t column_id = 0; column_id < column_count; column_id++) {
+            auto new_value = tuple->GetValue(column_id);
+            tile_group->SetValue(new_value, tuple_id, column_id);
+          }
+          do_insert = false;
+          break;
+        }
+      }
+    }
+
+    // If there is no same tuple in the table, insert it.
+    if (do_insert) {
       // insert tuple into the table without foreign key check to avoid an error
       // which occurs in tables with the mutual foreign keys each other
       ItemPointer location =
