@@ -4,14 +4,14 @@
 //
 // linear_models_test.cpp
 //
-// Identification: test/brain/linear_models_test.cpp
+// Identification: test/brain/linear_model_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "brain/workload/linear_models.h"
-#include <include/brain/workload/workload_defaults.h>
+#include "brain/workload/workload_defaults.h"
 #include <algorithm>
 #include "brain/util/model_util.h"
 #include "common/harness.h"
