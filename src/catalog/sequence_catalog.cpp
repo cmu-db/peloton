@@ -82,7 +82,7 @@ SequenceCatalog::SequenceCatalog(const std::string &database_name,
                       txn) {
   Catalog::GetInstance()->CreateIndex(
       database_name, CATALOG_SCHEMA_NAME, SEQUENCE_CATALOG_NAME,
-      {ColumnId::DATABSE_OID, ColumnId::SEQUENCE_NAME},
+      {ColumnId::DATABASE_OID, ColumnId::SEQUENCE_NAME},
       SEQUENCE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
@@ -90,6 +90,7 @@ SequenceCatalog::~SequenceCatalog() {}
 
 
 bool SequenceCatalog::InsertSequence(oid_t database_oid,
+                                     oid_t namespace_oid,
                                      std::string sequence_name,
                                      int64_t seq_increment, int64_t seq_max,
                                      int64_t seq_min, int64_t seq_start,
@@ -99,7 +100,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
   LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
 
   ValidateSequenceArguments(seq_increment, seq_max, seq_min, seq_start);
-  if (GetSequence(database_oid, sequence_name, txn) != nullptr) {
+  if (GetSequence(database_oid, namespace_oid, sequence_name, txn) != nullptr) {
     throw SequenceException(
         StringUtil::Format("Sequence %s already exists!",
                            sequence_name.c_str()));
@@ -108,47 +109,45 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
-  auto val1 = type::ValueFactory::GetIntegerValue(database_oid);
-  auto val2 = type::ValueFactory::GetVarcharValue(sequence_name);
-  auto val3 = type::ValueFactory::GetBigIntValue(seq_increment);
-  auto val4 = type::ValueFactory::GetBigIntValue(seq_max);
-  auto val5 = type::ValueFactory::GetBigIntValue(seq_min);
-  auto val6 = type::ValueFactory::GetBigIntValue(seq_start);
-  auto val7 = type::ValueFactory::GetBooleanValue(seq_cycle);
+  tuple->SetValue(ColumnId::SEQUENCE_OID,
+                  type::ValueFactory::GetIntegerValue(GetNextOid()), pool);
+  tuple->SetValue(ColumnId::DATABASE_OID,
+                  type::ValueFactory::GetIntegerValue(database_oid), pool);
+  tuple->SetValue(ColumnId::NAMESPACE_OID,
+                  type::ValueFactory::GetIntegerValue(namespace_oid), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_NAME,
+                  type::ValueFactory::GetVarcharValue(sequence_name), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_INC,
+                  type::ValueFactory::GetBigIntValue(seq_increment), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_MAX,
+                  type::ValueFactory::GetBigIntValue(seq_max), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_MIN,
+                  type::ValueFactory::GetBigIntValue(seq_min), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_START,
+                  type::ValueFactory::GetBigIntValue(seq_start), pool);
+  tuple->SetValue(ColumnId::SEQUENCE_CYCLE,
+                  type::ValueFactory::GetBooleanValue(seq_cycle), pool);
   // When insert value, seqval = seq_start
-  auto val8 = type::ValueFactory::GetBigIntValue(seq_start);
-
-  tuple->SetValue(ColumnId::SEQUENCE_OID, val0, pool);
-  tuple->SetValue(ColumnId::DATABSE_OID, val1, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_NAME, val2, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_INC, val3, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_MAX, val4, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_MIN, val5, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_START, val6, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_CYCLE, val7, pool);
-  tuple->SetValue(ColumnId::SEQUENCE_VALUE, val8, pool);
+  tuple->SetValue(ColumnId::SEQUENCE_VALUE,
+                  type::ValueFactory::GetBigIntValue(seq_start), pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
 }
 
-ResultType SequenceCatalog::DropSequence(const std::string &database_name,
-                                         const std::string &sequence_name,
-                                         concurrency::TransactionContext *txn) {
+ResultType SequenceCatalog::DropSequence(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid,
+    oid_t namespace_oid,
+    const std::string &sequence_name) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
 
-  auto database_object =
-      Catalog::GetInstance()->GetDatabaseObject(database_name, txn);
-
-  oid_t database_oid = database_object->GetDatabaseOid();
-
   oid_t sequence_oid = Catalog::GetInstance()
       ->GetSystemCatalogs(database_oid)
       ->GetSequenceCatalog()
-      ->GetSequenceOid(sequence_name, database_oid, txn);
+      ->GetSequenceOid(txn, database_oid, namespace_oid, sequence_name);
   if (sequence_oid == INVALID_OID) {
     throw SequenceException(
         StringUtil::Format("Sequence %s does not exist!",
@@ -157,34 +156,34 @@ ResultType SequenceCatalog::DropSequence(const std::string &database_name,
 
   LOG_INFO("sequence %d will be deleted!", sequence_oid);
 
-  DeleteSequenceByName(sequence_name, database_oid, txn);
-  EvictSequenceNameCurrValCache(sequence_name);
-
-  return ResultType::SUCCESS;
-}
-
-bool SequenceCatalog::DeleteSequenceByName(
-    const std::string &sequence_name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  // TODO: Check return result
+  DeleteWithIndexScan(index_offset, values, txn);
+
+  return ResultType::SUCCESS;
 }
 
 std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
-    oid_t database_oid, const std::string &sequence_name,
-    concurrency::TransactionContext *txn) {
+    concurrency::TransactionContext *txn,
+    oid_t database_oid, oid_t namespace_oid, const std::string &sequence_name) {
   std::vector<oid_t> column_ids(
-      {ColumnId::SEQUENCE_OID, ColumnId::SEQUENCE_START,
-       ColumnId::SEQUENCE_INC, ColumnId::SEQUENCE_MAX,
-       ColumnId::SEQUENCE_MIN, ColumnId::SEQUENCE_CYCLE,
-       ColumnId::SEQUENCE_VALUE});
-  oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
+      {ColumnId::SEQUENCE_OID,
+       ColumnId::SEQUENCE_START,
+       ColumnId::SEQUENCE_INC,
+       ColumnId::SEQUENCE_MAX,
+       ColumnId::SEQUENCE_MIN,
+       ColumnId::SEQUENCE_CYCLE,
+       ColumnId::SEQUENCE_VALUE}
+  );
+
+  oid_t index_offset = IndexId::DATABASE_NAMESPACE_SEQNAME_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(namespace_oid).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
 
   // the result is a vector of executor::LogicalTile
@@ -192,7 +191,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
   // careful! the result tile could be null!
   if (result_tiles == nullptr || result_tiles->size() == 0) {
-    LOG_INFO("no sequence on database %d and %s", database_oid,
+    LOG_WARN("No sequence on database %d and %s", database_oid,
              sequence_name.c_str());
     return std::shared_ptr<SequenceCatalogObject>(nullptr);
   } else {
@@ -206,6 +205,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   auto new_sequence = std::make_shared<SequenceCatalogObject>(
       (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>(),
       database_oid,
+      namespace_oid,
       sequence_name,
       (*result_tiles)[0]->GetValue(0, 1).GetAs<int64_t>(),
       (*result_tiles)[0]->GetValue(0, 2).GetAs<int64_t>(),
