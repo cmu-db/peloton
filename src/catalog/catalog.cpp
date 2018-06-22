@@ -864,10 +864,6 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
 // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
 //===--------------------------------------------------------------------===//
 
-/* Check database from pg_database with database_name using txn,
- * get it from storage layer using database_oid,
- * throw exception and abort txn if not exists/invisible
- * */
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string &database_name,
     concurrency::TransactionContext *txn) const {
@@ -885,10 +881,6 @@ storage::Database *Catalog::GetDatabaseWithName(
   return storage_manager->GetDatabaseWithOid(database_object->GetDatabaseOid());
 }
 
-/* Check table from pg_table with table_name & schema_name using txn,
- * get it from storage layer using table_oid,
- * throw exception and abort txn if not exists/invisible
- * */
 storage::DataTable *Catalog::GetTableWithName(
     const std::string &database_name, const std::string &schema_name,
     const std::string &table_name, concurrency::TransactionContext *txn) {
@@ -951,10 +943,6 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
   return database_object;
 }
 
-/* Check table from pg_table with table_name  & schema_name using txn,
- * get it from storage layer using table_oid,
- * throw exception and abort txn if not exists/invisible
- * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &schema_name,
     const std::string &table_name, concurrency::TransactionContext *txn) {
@@ -1027,24 +1015,6 @@ std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
 }
 
 //===--------------------------------------------------------------------===//
-// DEPRECATED
-//===--------------------------------------------------------------------===//
-
-// This should be deprecated! this can screw up the database oid system
-void Catalog::AddDatabase(storage::Database *database) {
-  std::lock_guard<std::mutex> lock(catalog_mutex);
-  auto storage_manager = storage::StorageManager::GetInstance();
-  storage_manager->AddDatabaseToStorageManager(database);
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  BootstrapSystemCatalogs(database, txn);
-  DatabaseCatalog::GetInstance()->InsertDatabase(
-      database->GetOid(), database->GetDBName(), pool_.get(),
-      txn);  // I guess this can pass tests
-  txn_manager.CommitTransaction(txn);
-}
-
-//===--------------------------------------------------------------------===//
 // HELPERS
 //===--------------------------------------------------------------------===//
 
@@ -1056,16 +1026,6 @@ Catalog::~Catalog() {
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
-/* @brief
- * Add a new built-in function. This proceeds in two steps:
- *   1. Add the function information into pg_catalog.pg_proc
- *   2. Register the function pointer in function::BuiltinFunction
- * @param   name & argument_types   function name and arg types used in SQL
- * @param   return_type   the return type
- * @param   prolang       the oid of which language the function is
- * @param   func_name     the function name in C++ source (should be unique)
- * @param   func_ptr      the pointer to the function
- */
 void Catalog::AddBuiltinFunction(
     const std::string &name, const std::vector<type::TypeId> &argument_types,
     const type::TypeId return_type, oid_t prolang, const std::string &func_name,

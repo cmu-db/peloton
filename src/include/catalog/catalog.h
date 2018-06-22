@@ -192,60 +192,87 @@ class Catalog {
    */
   ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
                         concurrency::TransactionContext *txn);
+
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
 
-  /* Check database from pg_database with database_name using txn,
+  /**
+   * Check database from pg_database with database_name using txn,
    * get it from storage layer using database_oid,
    * throw exception and abort txn if not exists/invisible
-   * */
+   */
   storage::Database *GetDatabaseWithName(
       const std::string &db_name, concurrency::TransactionContext *txn) const;
 
-  /* Check table from pg_table with table_name & schema_name using txn,
-   * get it from storage layer using table_oid,
+
+  /**
+   * Get the database catalog object from pg_database
    * throw exception and abort txn if not exists/invisible
-   * */
+   * @param database_name
+   * @param txn
+   * @return
+   */
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
+      const std::string &database_name, concurrency::TransactionContext *txn);
+
+  /**
+   *
+   * @param database_oid
+   * @param txn
+   * @return
+   */
+  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
+      oid_t database_oid, concurrency::TransactionContext *txn);
+
+ /**
+  * Check table from pg_table with table_name & schema_name using txn,
+  * get it from storage layer using table_oid,
+  * throw exception and abort txn if not exists/invisible
+  * @param database_name
+  * @param schema_name
+  * @param table_name
+  * @param txn
+  * @return
+  */
   storage::DataTable *GetTableWithName(const std::string &database_name,
                                        const std::string &schema_name,
                                        const std::string &table_name,
                                        concurrency::TransactionContext *txn);
 
-  /* Check table from pg_database with database_name using txn,
+  /**
+   * Check table from pg_table with table_name & schema_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
-   * */
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      const std::string &database_name, concurrency::TransactionContext *txn);
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      oid_t database_oid, concurrency::TransactionContext *txn);
-
-  /* Check table from pg_table with table_name using txn,
-   * get it from storage layer using table_oid,
-   * throw exception and abort txn if not exists/invisible
-   * */
+   * @param database_name
+   * @param schema_name
+   * @param table_name
+   * @param txn
+   * @return
+   */
   std::shared_ptr<TableCatalogObject> GetTableObject(
       const std::string &database_name, const std::string &schema_name,
       const std::string &table_name, concurrency::TransactionContext *txn);
+
+  /**
+   * Check table from pg_table with table_name using txn,
+   * get it from storage layer using table_oid,
+   * throw exception and abort txn if not exists/invisible
+   * @param database_oid
+   * @param table_oid
+   * @param txn
+   * @return
+   */
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
 
-  /*
-   * Using database oid to get system catalog object
+  /**
+   * @brief Using database oid to get system catalog object
+   * @param database_oid
+   * @return
    */
   std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
-  //===--------------------------------------------------------------------===//
-  // DEPRECATED FUNCTIONS
-  //===--------------------------------------------------------------------===//
-  /*
-   * We're working right now to remove metadata from storage level and eliminate
-   * multiple copies, so those functions below will be DEPRECATED soon.
-   */
-
-  // Add a database
-  void AddDatabase(storage::Database *database);
 
   //===--------------------------------------------------------------------===//
   // BUILTIN FUNCTION
@@ -262,6 +289,18 @@ class Catalog {
       std::shared_ptr<peloton::codegen::CodeContext> code_context,
       concurrency::TransactionContext *txn);
 
+  /**
+   * Add a new built-in function. This proceeds in two steps:
+   *   1. Add the function information into pg_catalog.pg_proc
+   *   2. Register the function pointer in function::BuiltinFunction
+   * @param name function name used in SQL
+   * @param argument_types arg types used in SQL
+   * @param return_type the return type
+   * @param prolang the oid of which language the function is
+   * @param func_name the function name in C++ source (should be unique)
+   * @param func the pointer to the function
+   * @param txn
+   */
   void AddBuiltinFunction(const std::string &name,
                           const std::vector<type::TypeId> &argument_types,
                           const type::TypeId return_type, oid_t prolang,
