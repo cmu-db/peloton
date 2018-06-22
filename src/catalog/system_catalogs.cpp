@@ -22,11 +22,6 @@
 namespace peloton {
 namespace catalog {
 
-/*@brief    system catalog constructor, create core catalog tables and manually
- * insert records into pg_attribute
- * @param   database    the database which the catalog tables belongs to
- * @param   txn         TransactionContext
- */
 SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn)
@@ -82,10 +77,6 @@ SystemCatalogs::~SystemCatalogs() {
   if (pg_query_metrics_) delete pg_query_metrics_;
 }
 
-/*@brief    using sql create statement to create secondary catalog tables
- * @param   database_name    the database which the namespace belongs to
- * @param   txn              TransactionContext
- */
 void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());

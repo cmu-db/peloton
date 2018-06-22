@@ -42,11 +42,23 @@ class SystemCatalogs {
  public:
   SystemCatalogs() = delete;
 
+  /**
+   * @brief    system catalog constructor, create core catalog tables and manually
+   *           insert records into pg_attribute
+   * @param database the database which the catalog tables belongs to
+   * @param pool
+   * @param txn TransactionContext
+   */
   SystemCatalogs(storage::Database *database, type::AbstractPool *pool,
                  concurrency::TransactionContext *txn);
 
   ~SystemCatalogs();
 
+  /**
+   * @brief    using sql create statement to create secondary catalog tables
+   * @param database_name the database which the namespace belongs to <- ???
+   * @param txn
+   */
   void Bootstrap(const std::string &database_name,
                  concurrency::TransactionContext *txn);
 
