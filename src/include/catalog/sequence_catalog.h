@@ -21,7 +21,7 @@
 // 4: sqinc       : seq_increment
 // 5: sqmax       : seq_max
 // 6: sqmin       : seq_min
-// 7: sqstart     : seq_start
+// 7: sqstart     : seq_start_
 // 8: sqcycle     : seq_cycle
 // 9: sqval       : seq_value
 //
@@ -53,63 +53,63 @@ namespace catalog {
 
 class SequenceCatalogObject {
  public:
-  SequenceCatalogObject(oid_t seqoid, oid_t dboid, oid_t namespaceoid,
+  SequenceCatalogObject(oid_t seq_oid, oid_t db_oid, oid_t namespace_oid,
                         const std::string &name,
                         const int64_t seqstart, const int64_t seqincrement,
                         const int64_t seqmax, const int64_t seqmin,
                         const bool seqcycle, const int64_t seqval,
                         concurrency::TransactionContext *txn)
-      : seq_oid(seqoid),
-        db_oid(dboid),
-        namespace_oid(namespaceoid),
-        seq_name(name),
-        seq_start(seqstart),
-        seq_increment(seqincrement),
-        seq_max(seqmax),
-        seq_min(seqmin),
-        seq_cycle(seqcycle),
-        seq_curr_val(seqval),
+      : seq_oid_(seq_oid),
+        db_oid_(db_oid),
+        namespace_oid_(namespace_oid),
+        seq_name_(name),
+        seq_start_(seqstart),
+        seq_increment_(seqincrement),
+        seq_max_(seqmax),
+        seq_min_(seqmin),
+        seq_cycle_(seqcycle),
+        seq_curr_val_(seqval),
         txn_(txn) {};
 
 
   oid_t GetSequenceOid() const {
-    return (seq_oid);
+    return (seq_oid_);
   }
 
   oid_t GetDatabaseOid() const {
-    return (db_oid);
+    return (db_oid_);
   }
 
   oid_t GetNamespaceOid() const {
-    return (namespace_oid);
+    return (namespace_oid_);
   }
 
   std::string GetName() const {
-    return (seq_name);
+    return (seq_name_);
   }
 
   int64_t GetStart() const {
-    return (seq_start);
+    return (seq_start_);
   }
 
   int64_t GetIncrement() const {
-    return (seq_increment);
+    return (seq_increment_);
   }
 
   int64_t GetMax() const {
-    return (seq_max);
+    return (seq_max_);
   }
 
   int64_t GetMin() const {
-    return (seq_min);
+    return (seq_min_);
   }
 
   int64_t GetCacheSize() const {
-    return (seq_cache);
+    return (seq_cache_);
   }
 
   bool GetAllowCycle() const {
-    return (seq_cycle);
+    return (seq_cycle_);
   }
 
   /**
@@ -120,33 +120,32 @@ class SequenceCatalogObject {
   int64_t GetNextVal();
 
   int64_t GetCurrVal() const {
-    return seq_prev_val;
+    return seq_prev_val_;
   }
 
  protected:
 
-  void SetCycle(bool cycle) { seq_cycle = cycle; };
+  void SetCycle(bool cycle) { seq_cycle_ = cycle; };
 
   void SetCurrVal(int64_t curr_val) {
-    seq_curr_val = curr_val;
+    seq_curr_val_ = curr_val;
   };  // only visible for test!
 
  private:
-  oid_t seq_oid;
-  oid_t db_oid;
-  oid_t namespace_oid;
-  std::string seq_name;
-  int64_t seq_start;      // Start value of the sequence
-  int64_t seq_increment;  // Increment value of the sequence
-  int64_t seq_max;        // Maximum value of the sequence
-  int64_t seq_min;        // Minimum value of the sequence
-  int64_t seq_cache;      // Cache size of the sequence
-  bool seq_cycle;         // Whether the sequence cycles
-  int64_t seq_curr_val;
+  oid_t seq_oid_;
+  oid_t db_oid_;
+  oid_t namespace_oid_;
+  std::string seq_name_;
+  int64_t seq_start_;      // Start value of the sequence
+  int64_t seq_increment_;  // Increment value of the sequence
+  int64_t seq_max_;        // Maximum value of the sequence
+  int64_t seq_min_;        // Minimum value of the sequence
+  int64_t seq_cache_;      // Cache size of the sequence
+  bool seq_cycle_;         // Whether the sequence cycles
+  int64_t seq_curr_val_;
+  int64_t seq_prev_val_;
 
   concurrency::TransactionContext *txn_;
-
-  int64_t seq_prev_val;
 };
 
 class SequenceCatalog : public AbstractCatalog {
@@ -161,7 +160,9 @@ class SequenceCatalog : public AbstractCatalog {
 
   /**
    * @brief   Insert the sequence by name.
-   * @param   database_oid  the database_oid associated with the sequence
+   * @param   txn           current transaction
+   * @param   database_oid  the database_oid for the sequence
+   * @param   namespace_oid the namespace oid for the sequence
    * @param   sequence_name the name of the sequence
    * @param   seq_increment the increment per step of the sequence
    * @param   seq_max       the max value of the sequence
@@ -169,7 +170,6 @@ class SequenceCatalog : public AbstractCatalog {
    * @param   seq_start     the start of the sequence
    * @param   seq_cycle     whether the sequence cycles
    * @param   pool          an instance of abstract pool
-   * @param   txn           current transaction
    * @return  ResultType::SUCCESS if the sequence exists, ResultType::FAILURE otherwise.
    * @exception throws SequenceException if the sequence already exists.
    */
@@ -184,9 +184,10 @@ class SequenceCatalog : public AbstractCatalog {
 
   /**
    * @brief   Delete the sequence by name.
-   * @param   database_name  the database name associated with the sequence
-   * @param   sequence_name  the name of the sequence
    * @param   txn            current transaction
+   * @param   database_oid  the database_oid for the sequence
+   * @param   namespace_oid the namespace oid for the sequence
+   * @param   sequence_name  the name of the sequence
    * @return  ResultType::SUCCESS if the sequence exists, throw exception otherwise.
    */
   ResultType DropSequence(
@@ -197,9 +198,10 @@ class SequenceCatalog : public AbstractCatalog {
 
   /**
    * @brief   get sequence from pg_sequence table
-   * @param   database_oid  the databse_oid associated with the sequence
-   * @param   sequence_name the name of the sequence
    * @param   txn           current transaction
+   * @param   database_oid  the database_oid for the sequence
+   * @param   namespace_oid the namespace oid for the sequence
+   * @param   sequence_name the name of the sequence
    * @return  a SequenceCatalogObject if the sequence is found, nullptr otherwise
    */
   std::shared_ptr<SequenceCatalogObject> GetSequence(
@@ -210,27 +212,34 @@ class SequenceCatalog : public AbstractCatalog {
 
   /**
    * @brief   get sequence oid from pg_sequence given sequence_name and database_oid
-   * @param   database_oid  the databse_oid associated with the sequence
-   * @param   sequence_name the name of the sequence
    * @param   txn           current transaction
+   * @param   database_oid  the database_oid for the sequence
+   * @param   namespace_oid the namespace oid for the sequence
+   * @param   sequence_name the name of the sequence
    * @return  the oid_t of the sequence if the sequence is found, INVALID_OI otherwise
    */
   oid_t GetSequenceOid(
       concurrency::TransactionContext *txn,
       oid_t database_oid,
       oid_t namespace_oid,
-      std::string sequence_name);
+      const std::string &sequence_name);
 
   /**
    * @brief   update the next value of the sequence in the underlying storage
+   * @param   txn           current transaction
+   * @param   database_oid  the database_oid for the sequence
+   * @param   namespace_oid the namespace oid for the sequence
    * @param   sequence_oid  the sequence_oid of the sequence
    * @param   nextval       the nextval of the sequence
-   * @param   txn           current transaction
    * @return  the result of the transaction
    * @return
    */
-  bool UpdateNextVal(oid_t sequence_oid, int64_t nextval,
-    concurrency::TransactionContext *txn);
+  bool UpdateNextVal(
+      concurrency::TransactionContext *txn,
+      oid_t database_oid,
+      oid_t namespace_oid,
+      const std::string &sequence_name,
+      int64_t nextval);
 
   enum ColumnId {
     SEQUENCE_OID = 0,
@@ -253,8 +262,12 @@ class SequenceCatalog : public AbstractCatalog {
  private:
   oid_t GetNextOid() { return oid_++ | SEQUENCE_OID_MASK; }
 
-  void ValidateSequenceArguments(int64_t seq_increment, int64_t seq_max,
-     int64_t seq_min, int64_t seq_start) {
+  void ValidateSequenceArguments(
+      int64_t seq_increment,
+      int64_t seq_max,
+      int64_t seq_min,
+      int64_t seq_start) {
+
     if (seq_min > seq_max) {
         throw SequenceException(
             StringUtil::Format(

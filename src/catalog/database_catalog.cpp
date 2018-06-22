@@ -27,19 +27,47 @@ namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(
     executor::LogicalTile *tile, concurrency::TransactionContext *txn)
-    : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
+    : txn(txn),
+      database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
                         .ToString()),
+      namespace_objects_cache_(),
       table_objects_cache(),
       table_name_cache(),
-      valid_table_objects(false),
-      txn(txn) {}
+      valid_table_objects(false)
+{
+  // Nothing to see, nothing to do!
+}
 
-/* @brief   insert table catalog object into cache
- * @param   table_object
- * @return  false if table_name already exists in cache
- */
+
+std::shared_ptr<SchemaCatalogObject> DatabaseCatalogObject::GetSchemaObject(
+    oid_t namespace_oid) {
+
+  auto pg_namespace = Catalog::GetInstance()
+      ->GetSystemCatalogs(database_oid)
+      ->GetSchemaCatalog();
+  auto namespace_obj = pg_namespace->GetSchemaObject(namespace_oid, txn);
+
+  // TODO: Shouldn't I add this to my local cache?
+  // I am thinking no because these objects should be stored in the CatalogCache
+  return (namespace_obj);
+}
+
+std::shared_ptr<SchemaCatalogObject> DatabaseCatalogObject::GetSchemaObject(
+    const std::string &namespace_name) {
+
+  auto pg_namespace = Catalog::GetInstance()
+      ->GetSystemCatalogs(database_oid)
+      ->GetSchemaCatalog();
+  auto namespace_obj = pg_namespace->GetSchemaObject(namespace_name, txn);
+
+  // TODO: Shouldn't I add this to my local cache?
+  // I am thinking no because these objects should be stored in the CatalogCache
+  return (namespace_obj);
+}
+
+
 bool DatabaseCatalogObject::InsertTableObject(
     std::shared_ptr<TableCatalogObject> table_object) {
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {

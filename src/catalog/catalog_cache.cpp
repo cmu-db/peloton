@@ -143,48 +143,55 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
 
 bool CatalogCache::InsertSequenceObject(
     std::shared_ptr<SequenceCatalogObject> sequence_object) {
-  if (!sequence_object || sequence_object->GetSequenceOid() == INVALID_OID) {
+  if (sequence_object == nullptr || sequence_object->GetSequenceOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
-  std::pair key = std::make_pair(sequence_object->GetDatabaseOid(),
-                                 sequence_object->GetName());
-
-  // check if already in cache
-  if (sequence_objects_cache.find(key) !=
-          sequence_objects_cache.end()) {
-    LOG_DEBUG("Sequence %s already exists in cache!",
-              sequence_object->GetName().c_str());
-    return false;
-  }
-
-  sequence_objects_cache.insert(
-          std::make_pair(key, sequence_object));
+// FIXME
+//  std::pair key = std::make_pair(sequence_object->GetDatabaseOid(),
+//                                 sequence_object->GetName());
+//
+//  // check if already in cache
+//  if (sequence_objects_cache.find(key) !=
+//          sequence_objects_cache.end()) {
+//    LOG_DEBUG("Sequence %s already exists in cache!",
+//              sequence_object->GetName().c_str());
+//    return false;
+//  }
+//
+//  sequence_objects_cache.insert(
+//          std::make_pair(key, sequence_object));
   return true;
 }
 
-bool CatalogCache::EvictSequenceObject(const std::string & sequence_name,
-         oid_t database_oid) {
-  std::pair key = std::make_pair(database_oid, sequence_name);
-  auto it = sequence_objects_cache.find(key);
-  if (it == sequence_objects_cache.end()) {
-    return false;  // sequence not found in cache
-  }
-
-  auto sequence_object = it->second;
-  PELOTON_ASSERT(sequence_object);
-  sequence_objects_cache.erase(it);
+bool CatalogCache::EvictSequenceObject(
+    UNUSED_ATTRIBUTE const std::string & sequence_name,
+    UNUSED_ATTRIBUTE oid_t database_oid) {
+  // FIXME
+//  std::pair key = std::make_pair(database_oid, sequence_name);
+//  auto it = sequence_objects_cache.find(key);
+//  if (it == sequence_objects_cache.end()) {
+//    return false;  // sequence not found in cache
+//  }
+//
+//  auto sequence_object = it->second;
+//  PELOTON_ASSERT(sequence_object);
+//  sequence_objects_cache.erase(it);
   return true;
 }
 
 std::shared_ptr<SequenceCatalogObject> CatalogCache::GetSequenceObject(
-            const std::string & sequence_name, oid_t database_oid) {
-  std::pair key = std::make_pair(database_oid, sequence_name);
-  auto it = sequence_objects_cache.find(key);
-  if (it == sequence_objects_cache.end()) {
-    return nullptr;
-  }
-  return it->second;
+    UNUSED_ATTRIBUTE oid_t database_oid,
+    UNUSED_ATTRIBUTE oid_t namespace_oid,
+    UNUSED_ATTRIBUTE const std::string &sequence_name) {
+  // FIXME
+//  std::pair key = std::make_pair(database_oid, sequence_name);
+//  auto it = sequence_objects_cache.find(key);
+//  if (it == sequence_objects_cache.end()) {
+//    return nullptr;
+//  }
+//  return it->second;
+  return nullptr;
 }
 
 

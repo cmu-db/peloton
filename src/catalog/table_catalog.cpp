@@ -513,8 +513,8 @@ bool TableCatalog::DeleteTable(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // evict from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-                                                              table_oid);
+  auto table_object = txn->GetCatalogCache()
+      ->GetCachedTableObject(database_oid, table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
@@ -535,8 +535,8 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
-                                                              table_oid);
+  auto table_object = txn->GetCatalogCache()->
+      GetCachedTableObject(database_oid, table_oid);
   if (table_object) return table_object;
 
   // cache miss, get from pg_table
@@ -676,7 +676,7 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
       type::ValueFactory::GetIntegerValue(update_val).Copy());
 
   // get table object, then evict table object
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
+  auto table_object = txn->GetCatalogCache()->GetCachedTableObject(database_oid,
                                                               table_oid);
   if (table_object) {
     auto database_object =
@@ -707,7 +707,7 @@ bool TableCatalog::UpdateDefaultLayoutOid(oid_t update_val, oid_t table_oid,
       type::ValueFactory::GetIntegerValue(update_val).Copy());
 
   // get table object, then evict table object
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid,
+  auto table_object = txn->GetCatalogCache()->GetCachedTableObject(database_oid,
   		                                                        table_oid);
   if (table_object) {
     auto database_object =

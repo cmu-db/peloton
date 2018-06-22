@@ -294,19 +294,29 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
 bool CreateExecutor::CreateSequence(const planner::CreatePlan &node) {
   auto txn = context_->GetTransaction();
   std::string database_name = node.GetDatabaseName();
+  std::string namespace_name = node.GetSchemaName();
   std::string sequence_name = node.GetSequenceName();
 
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       database_name, txn);
+  PELOTON_ASSERT(database_object != nullptr);
+
+  auto namespace_object = database_object->GetSchemaObject(namespace_name);
+  PELOTON_ASSERT(namespace_object != nullptr);
 
   catalog::Catalog::GetInstance()
       ->GetSystemCatalogs(database_object->GetDatabaseOid())
       ->GetSequenceCatalog()
-      ->InsertSequence(
-      database_object->GetDatabaseOid(), sequence_name,
-      node.GetSequenceIncrement(), node.GetSequenceMaxValue(),
-      node.GetSequenceMinValue(), node.GetSequenceStart(),
-      node.GetSequenceCycle(), pool_.get(), txn);
+      ->InsertSequence(txn,
+                       database_object->GetDatabaseOid(),
+                       namespace_object->GetSchemaOid(),
+                       sequence_name,
+                       node.GetSequenceIncrement(),
+                       node.GetSequenceMaxValue(),
+                       node.GetSequenceMinValue(),
+                       node.GetSequenceStart(),
+                       node.GetSequenceCycle(),
+                       pool_.get());
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Creating sequence succeeded!");

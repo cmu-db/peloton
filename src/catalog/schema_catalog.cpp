@@ -100,6 +100,31 @@ bool SchemaCatalog::DeleteSchema(const std::string &schema_name,
 }
 
 std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
+    oid_t namespace_oid, concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+
+  // get from pg_namespace, index scan
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::PRIMARY_KEY;
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(namespace_oid));
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
+    auto schema_object =
+        std::make_shared<SchemaCatalogObject>((*result_tiles)[0].get(), txn);
+    return schema_object;
+  }
+
+  // return empty object if not found
+  return nullptr;
+}
+
+std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
     const std::string &schema_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
@@ -117,7 +142,6 @@ std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto schema_object =
         std::make_shared<SchemaCatalogObject>((*result_tiles)[0].get(), txn);
-    // TODO: we don't have cache for schema object right now
     return schema_object;
   }
 

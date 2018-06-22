@@ -30,55 +30,21 @@
 namespace peloton {
 namespace catalog {
 
-int64_t SequenceCatalogObject::GetNextVal() {
-  int64_t result = seq_curr_val;
-  seq_prev_val = result;
-  if (seq_increment > 0) {
-    // Check to see whether the nextval is out of bound
-    if ((seq_max >= 0 && seq_curr_val > seq_max - seq_increment) ||
-        (seq_max < 0 && seq_curr_val + seq_increment > seq_max)) {
-      if (!seq_cycle) {
-        throw SequenceException(
-            StringUtil::Format(
-              "nextval: reached maximum value of sequence %s (%ld)", seq_name.c_str(), seq_max));
-      }
-      seq_curr_val = seq_min;
-    } else
-      seq_curr_val += seq_increment;
-  } else {
-    // Check to see whether the nextval is out of bound
-    if ((seq_min < 0 && seq_curr_val < seq_min - seq_increment) ||
-        (seq_min >= 0 && seq_curr_val + seq_increment < seq_min)) {
-      if (!seq_cycle) {
-        throw SequenceException(
-            StringUtil::Format(
-              "nextval: reached minimum value of sequence %s (%ld)", seq_name.c_str(), seq_min));
-      }
-      seq_curr_val = seq_max;
-    } else
-      seq_curr_val += seq_increment;
-  }
-
-  Catalog::GetInstance()->GetSystemCatalogs(db_oid)
-                ->GetSequenceCatalog()
-                ->UpdateNextVal(seq_oid, seq_curr_val, txn_);
-  return result;
-}
-
 SequenceCatalog::SequenceCatalog(const std::string &database_name,
                                 concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " + database_name +
                       "." CATALOG_SCHEMA_NAME "." SEQUENCE_CATALOG_NAME
                       " ("
-                      "oid          INT NOT NULL PRIMARY KEY, "
-                      "sqdboid      INT NOT NULL, "
-                      "sqname       VARCHAR NOT NULL, "
-                      "sqinc        BIGINT NOT NULL, "
-                      "sqmax        BIGINT NOT NULL, "
-                      "sqmin        BIGINT NOT NULL, "
-                      "sqstart      BIGINT NOT NULL, "
-                      "sqcycle      BOOLEAN NOT NULL, "
-                      "sqval        BIGINT NOT NULL);",
+                      "oid            INT NOT NULL PRIMARY KEY, "
+                      "sqdboid        INT NOT NULL, "
+                      "sqnamespaceoid INT NOT NULL, "
+                      "sqname         VARCHAR NOT NULL, "
+                      "sqinc          BIGINT NOT NULL, "
+                      "sqmax          BIGINT NOT NULL, "
+                      "sqmin          BIGINT NOT NULL, "
+                      "sqstart        BIGINT NOT NULL, "
+                      "sqcycle        BOOLEAN NOT NULL, "
+                      "sqval          BIGINT NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
       database_name, CATALOG_SCHEMA_NAME, SEQUENCE_CATALOG_NAME,
@@ -89,19 +55,21 @@ SequenceCatalog::SequenceCatalog(const std::string &database_name,
 SequenceCatalog::~SequenceCatalog() {}
 
 
-bool SequenceCatalog::InsertSequence(oid_t database_oid,
-                                     oid_t namespace_oid,
-                                     std::string sequence_name,
-                                     int64_t seq_increment, int64_t seq_max,
-                                     int64_t seq_min, int64_t seq_start,
-                                     bool seq_cycle, type::AbstractPool *pool,
-                                     concurrency::TransactionContext *txn) {
+bool SequenceCatalog::InsertSequence(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid,
+    oid_t namespace_oid,
+    std::string sequence_name,
+    int64_t seq_increment, int64_t seq_max,
+    int64_t seq_min, int64_t seq_start,
+    bool seq_cycle,
+    type::AbstractPool *pool) {
   LOG_DEBUG("Insert Sequence Database Oid: %u", database_oid);
   LOG_DEBUG("Insert Sequence Sequence Name: %s", sequence_name.c_str());
 
   ValidateSequenceArguments(seq_increment, seq_max, seq_min, seq_start);
-  if (GetSequence(database_oid, namespace_oid, sequence_name, txn) != nullptr) {
-    throw SequenceException(
+  if (GetSequence(txn, database_oid, namespace_oid, sequence_name) != nullptr) {
+    throw CatalogException(
         StringUtil::Format("Sequence %s already exists!",
                            sequence_name.c_str()));
   }
@@ -127,7 +95,7 @@ bool SequenceCatalog::InsertSequence(oid_t database_oid,
                   type::ValueFactory::GetBigIntValue(seq_start), pool);
   tuple->SetValue(ColumnId::SEQUENCE_CYCLE,
                   type::ValueFactory::GetBooleanValue(seq_cycle), pool);
-  // When insert value, seqval = seq_start
+  // When insert value, seqval = seq_start_
   tuple->SetValue(ColumnId::SEQUENCE_VALUE,
                   type::ValueFactory::GetBigIntValue(seq_start), pool);
 
@@ -149,16 +117,17 @@ ResultType SequenceCatalog::DropSequence(
       ->GetSequenceCatalog()
       ->GetSequenceOid(txn, database_oid, namespace_oid, sequence_name);
   if (sequence_oid == INVALID_OID) {
-    throw SequenceException(
+    throw CatalogException(
         StringUtil::Format("Sequence %s does not exist!",
                            sequence_name.c_str()));
   }
 
   LOG_INFO("sequence %d will be deleted!", sequence_oid);
 
-  oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
+  oid_t index_offset = IndexId::DATABASE_NAMESPACE_SEQNAME_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(namespace_oid).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
 
   // TODO: Check return result
@@ -169,7 +138,10 @@ ResultType SequenceCatalog::DropSequence(
 
 std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
     concurrency::TransactionContext *txn,
-    oid_t database_oid, oid_t namespace_oid, const std::string &sequence_name) {
+    oid_t database_oid,
+    oid_t namespace_oid,
+    const std::string &sequence_name) {
+  // clang-format off
   std::vector<oid_t> column_ids(
       {ColumnId::SEQUENCE_OID,
        ColumnId::SEQUENCE_START,
@@ -179,6 +151,7 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
        ColumnId::SEQUENCE_CYCLE,
        ColumnId::SEQUENCE_VALUE}
   );
+  // clang-format on
 
   oid_t index_offset = IndexId::DATABASE_NAMESPACE_SEQNAME_KEY;
   std::vector<type::Value> values;
@@ -217,25 +190,78 @@ std::shared_ptr<SequenceCatalogObject> SequenceCatalog::GetSequence(
   return new_sequence;
 }
 
-bool SequenceCatalog::UpdateNextVal(oid_t sequence_oid, int64_t nextval,
-    concurrency::TransactionContext *txn){
+bool SequenceCatalog::UpdateNextVal(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid,
+    oid_t namespace_oid,
+    const std::string &sequence_name,
+    int64_t nextval) {
+
+  std::vector<oid_t> column_ids({
+    ColumnId::DATABASE_OID, ColumnId::NAMESPACE_OID, ColumnId::SEQUENCE_NAME});
+  oid_t index_offset = IndexId::DATABASE_NAMESPACE_SEQNAME_KEY;
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(namespace_oid).Copy());
+  scan_values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
+
   std::vector<oid_t> update_columns({SequenceCatalog::ColumnId::SEQUENCE_VALUE});
   std::vector<type::Value> update_values;
   update_values.push_back(type::ValueFactory::GetBigIntValue(nextval).Copy());
-  std::vector<type::Value> scan_values;
-  scan_values.push_back(type::ValueFactory::GetIntegerValue(sequence_oid).Copy());
-  oid_t index_offset = SequenceCatalog::IndexId::PRIMARY_KEY;
 
   return UpdateWithIndexScan(update_columns, update_values, scan_values, index_offset, txn);
 }
 
-oid_t SequenceCatalog::GetSequenceOid(std::string sequence_name,
-                                      oid_t database_oid,
-                                      concurrency::TransactionContext *txn) {
+int64_t SequenceCatalogObject::GetNextVal() {
+  int64_t result = seq_curr_val_;
+  seq_prev_val_ = result;
+  if (seq_increment_ > 0) {
+    // Check to see whether the nextval is out of bound
+    if ((seq_max_ >= 0 && seq_curr_val_ > seq_max_ - seq_increment_) ||
+        (seq_max_ < 0 && seq_curr_val_ + seq_increment_ > seq_max_)) {
+      if (!seq_cycle_) {
+        throw SequenceException(
+            StringUtil::Format(
+                "nextval: reached maximum value of sequence %s (%ld)", seq_name_.c_str(), seq_max_));
+      }
+      seq_curr_val_ = seq_min_;
+    } else
+      seq_curr_val_ += seq_increment_;
+  } else {
+    // Check to see whether the nextval is out of bound
+    if ((seq_min_ < 0 && seq_curr_val_ < seq_min_ - seq_increment_) ||
+        (seq_min_ >= 0 && seq_curr_val_ + seq_increment_ < seq_min_)) {
+      if (!seq_cycle_) {
+        throw SequenceException(
+            StringUtil::Format(
+                "nextval: reached minimum value of sequence %s (%ld)", seq_name_.c_str(), seq_min_));
+      }
+      seq_curr_val_ = seq_max_;
+    } else
+      seq_curr_val_ += seq_increment_;
+  }
+
+  // FIXME
+  // If I am already inside of a SequenceCatalogObject, why
+  // do I have to do another lookup to get myself? This seems like
+  // are doing an unnecessary second look-up?
+  Catalog::GetInstance()->GetSystemCatalogs(db_oid_)
+      ->GetSequenceCatalog()
+      ->UpdateNextVal(txn_, db_oid_, namespace_oid_, seq_name_, seq_curr_val_);
+  return result;
+}
+
+oid_t SequenceCatalog::GetSequenceOid(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid,
+    oid_t namespace_oid,
+    const std::string &sequence_name) {
+
   std::vector<oid_t> column_ids({ColumnId::SEQUENCE_OID});
-  oid_t index_offset = IndexId::DBOID_SEQNAME_KEY;
+  oid_t index_offset = IndexId::DATABASE_NAMESPACE_SEQNAME_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(namespace_oid).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(sequence_name).Copy());
 
   // the result is a vector of executor::LogicalTile

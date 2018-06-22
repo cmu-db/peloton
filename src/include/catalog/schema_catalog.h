@@ -38,8 +38,12 @@ class SchemaCatalogObject {
   SchemaCatalogObject(executor::LogicalTile *tile,
                       concurrency::TransactionContext *txn);
 
-  inline oid_t GetSchemaOid() { return schema_oid; }
-  inline const std::string &GetSchemaName() { return schema_name; }
+  inline oid_t GetSchemaOid() const {
+    return schema_oid;
+  }
+  inline const std::string &GetSchemaName() const {
+    return schema_name;
+  }
 
  private:
   // member variables
@@ -76,6 +80,10 @@ class SchemaCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
+
+  std::shared_ptr<SchemaCatalogObject> GetSchemaObject(
+      oid_t namespace_oid, concurrency::TransactionContext *txn);
+
   std::shared_ptr<SchemaCatalogObject> GetSchemaObject(
       const std::string &schema_name, concurrency::TransactionContext *txn);
 

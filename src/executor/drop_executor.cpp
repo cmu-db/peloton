@@ -222,16 +222,25 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 bool DropExecutor::DropSequence(const planner::DropPlan &node,
                                concurrency::TransactionContext *txn) {
   std::string database_name = node.GetDatabaseName();
+  std::string namespace_name = node.GetSchemaName();
   std::string sequence_name = node.GetSequenceName();
+
   auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-    database_name, txn);
+      database_name, txn);
+  PELOTON_ASSERT(database_object != nullptr);
+
+  auto namespace_object = database_object->GetSchemaObject(namespace_name);
+  PELOTON_ASSERT(namespace_object != nullptr);
 
   // drop sequence
   ResultType result =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(database_object->GetDatabaseOid())
           ->GetSequenceCatalog()
-          ->DropSequence(database_name, sequence_name, txn);
+          ->DropSequence(txn,
+                         database_object->GetDatabaseOid(),
+                         namespace_object->GetSchemaOid(),
+                         sequence_name);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping sequence succeeded!");

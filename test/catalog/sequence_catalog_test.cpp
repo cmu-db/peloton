@@ -120,12 +120,12 @@ TEST_F(SequenceCatalogTests, BasicTest) {
   std::shared_ptr<catalog::SequenceCatalogObject> new_sequence =
       GetSequenceHelper(name, txn);
 
-  EXPECT_EQ(name, new_sequence->seq_name);
-  EXPECT_EQ(2, new_sequence->seq_increment);
-  EXPECT_EQ(10, new_sequence->seq_min);
-  EXPECT_EQ(50, new_sequence->seq_max);
-  EXPECT_EQ(10, new_sequence->seq_start);
-  EXPECT_EQ(true, new_sequence->seq_cycle);
+  EXPECT_EQ(name, new_sequence->GetName());
+  EXPECT_EQ(2, new_sequence->GetIncrement());
+  EXPECT_EQ(10, new_sequence->GetMin());
+  EXPECT_EQ(50, new_sequence->GetMax());
+  EXPECT_EQ(10, new_sequence->GetStart());
+  EXPECT_EQ(true, new_sequence->GetAllowCycle());
   EXPECT_EQ(10, new_sequence->GetNextVal());
   EXPECT_EQ(10, new_sequence->GetCurrVal());
 

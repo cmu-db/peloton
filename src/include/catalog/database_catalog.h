@@ -33,17 +33,34 @@
 namespace peloton {
 namespace catalog {
 
+class SchemaCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
 
 class DatabaseCatalogObject {
   friend class DatabaseCatalog;
+  friend class SchemaCatalog;
   friend class TableCatalog;
   friend class CatalogCache;
 
  public:
   DatabaseCatalogObject(executor::LogicalTile *tile,
                         concurrency::TransactionContext *txn);
+
+
+  //===--------------------------------------------------------------------===//
+  // Schema
+  //===--------------------------------------------------------------------===//
+
+  std::shared_ptr<SchemaCatalogObject> GetSchemaObject(oid_t namespace_oid);
+
+  std::shared_ptr<SchemaCatalogObject> GetSchemaObject(const std::string &namespace_name);
+
+  //===--------------------------------------------------------------------===//
+  // Tables
+  // FIXME: These should be moved into SchemaCatalogObject!
+  //===--------------------------------------------------------------------===//
+
 
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
@@ -64,23 +81,49 @@ class DatabaseCatalogObject {
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(bool cached_only = false);
 
-  inline oid_t GetDatabaseOid() { return database_oid; }
-  inline const std::string &GetDatabaseName() { return database_name; }
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
+  oid_t GetDatabaseOid() const {
+    return database_oid;
+  }
+
+  const std::string &GetDatabaseName() const {
+    return database_name;
+  }
 
  private:
+  // Pointer to its corresponding transaction
+  // This object is only visible during this transaction
+  concurrency::TransactionContext *txn;
+
   // member variables
   oid_t database_oid;
   std::string database_name;
 
+  //===--------------------------------------------------------------------===//
+  // Namespaces
+  //===--------------------------------------------------------------------===//
+
+  std::unordered_map<oid_t, std::shared_ptr<SchemaCatalogObject>>
+      namespace_objects_cache_;
+
+  //===--------------------------------------------------------------------===//
+  // Tables
+  // FIXME: These should be moved into SchemaCatalogObject!
+  //===--------------------------------------------------------------------===//
+
+  /**
+   * @brief   insert table catalog object into cache
+   * @param table_object
+   * @return false if table_name already exists in cache
+   */
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
   bool EvictTableObject(oid_t table_oid);
   bool EvictTableObject(const std::string &table_name,
                         const std::string &schema_name);
   void SetValidTableObjects(bool valid = true) { valid_table_objects = valid; }
-
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
-      const std::string &index_name, const std::string &schema_name);
 
   // cache for table name to oid translation
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
@@ -89,9 +132,14 @@ class DatabaseCatalogObject {
       table_name_cache;
   bool valid_table_objects;
 
-  // Pointer to its corresponding transaction
-  // This object is only visible during this transaction
-  concurrency::TransactionContext *txn;
+  //===--------------------------------------------------------------------===//
+  // Indexes
+  // FIXME: These should be moved into TableCatalogObject!
+  //===--------------------------------------------------------------------===//
+
+  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t index_oid);
+  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
+      const std::string &index_name, const std::string &schema_name);
 };
 
 class DatabaseCatalog : public AbstractCatalog {

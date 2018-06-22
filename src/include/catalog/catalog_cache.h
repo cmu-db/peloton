@@ -122,13 +122,16 @@ class CatalogCache {
           oid_t database_oid);
 
   /**
-   * @brief   get sequence catalog object from cache
-   * @param  sequence_name
-   * @param  database_oid
-   * @return  sequence catalog object; if not found return object with invalid oid
+   * @brief Get sequence catalog object from cache
+   * @param database_oid
+   * @param namespace_oid
+   * @param sequence_name
+   * @return sequence catalog object; if not found return object with invalid oid
    */
   std::shared_ptr<SequenceCatalogObject> GetSequenceObject(
-          const std::string &sequence_name, oid_t database_oid);
+          oid_t database_oid,
+          oid_t namespace_oid,
+          const std::string &sequence_name);
 
   // cache for database catalog object
   std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
@@ -137,9 +140,9 @@ class CatalogCache {
       database_name_cache;
 
   // cache for sequence catalog object
-  std::unordered_map<std::pair<oid_t, std::string>,
-                     std::shared_ptr<SequenceCatalogObject>>
-      sequence_objects_cache;
+//  std::unordered_map<std::pair<oid_t, std::string>,
+//                     std::shared_ptr<SequenceCatalogObject>>
+//      sequence_objects_cache;
 
 };
 
