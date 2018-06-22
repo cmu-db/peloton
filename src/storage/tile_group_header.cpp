@@ -37,7 +37,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
       num_tuple_slots(tuple_count),
       next_tuple_slot(0),
       tile_header_lock() {
-
   tuple_headers_.reset(new TupleHeader[tuple_count]);
 
   // Set MVCC Initial Value

@@ -37,7 +37,7 @@ struct TupleHeader {
   ItemPointer next;
   ItemPointer prev;
   ItemPointer *indirection;
-} __attribute__ ((aligned (64)));
+} __attribute__((aligned(64)));
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -95,11 +95,14 @@ class TileGroupHeader : public Printable {
          tuple_slot_id++) {
       SetSpinLatch(tuple_slot_id);
       SetTransactionId(tuple_slot_id, other.GetTransactionId(tuple_slot_id));
-      SetLastReaderCommitId(tuple_slot_id, other.GetLastReaderCommitId(tuple_slot_id));
+      SetLastReaderCommitId(tuple_slot_id,
+                            other.GetLastReaderCommitId(tuple_slot_id));
       SetBeginCommitId(tuple_slot_id, other.GetBeginCommitId(tuple_slot_id));
       SetEndCommitId(tuple_slot_id, other.GetEndCommitId(tuple_slot_id));
-      SetNextItemPointer(tuple_slot_id, other.GetNextItemPointer(tuple_slot_id));
-      SetPrevItemPointer(tuple_slot_id, other.GetPrevItemPointer(tuple_slot_id));
+      SetNextItemPointer(tuple_slot_id,
+                         other.GetNextItemPointer(tuple_slot_id));
+      SetPrevItemPointer(tuple_slot_id,
+                         other.GetPrevItemPointer(tuple_slot_id));
       SetIndirection(tuple_slot_id, other.GetIndirection(tuple_slot_id));
     }
 
@@ -163,7 +166,8 @@ class TileGroupHeader : public Printable {
     return tile_group;
   }
 
-  inline common::synchronization::SpinLatch *GetSpinLatch(const oid_t &tuple_slot_id) const {
+  inline common::synchronization::SpinLatch *GetSpinLatch(
+      const oid_t &tuple_slot_id) const {
     return tuple_headers_[tuple_slot_id].latch.get();
   }
 
@@ -202,7 +206,8 @@ class TileGroupHeader : public Printable {
   }
 
   inline void SetSpinLatch(const oid_t &tuple_slot_id) const {
-    tuple_headers_[tuple_slot_id].latch.reset(new common::synchronization::SpinLatch);
+    tuple_headers_[tuple_slot_id].latch.reset(
+        new common::synchronization::SpinLatch);
   }
 
   inline void SetTransactionId(const oid_t &tuple_slot_id,
@@ -211,7 +216,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline void SetLastReaderCommitId(const oid_t &tuple_slot_id,
-                               const cid_t &read_cid) const {
+                                    const cid_t &read_cid) const {
     tuple_headers_[tuple_slot_id].read_ts = read_cid;
   }
 
@@ -243,7 +248,8 @@ class TileGroupHeader : public Printable {
   inline bool SetAtomicTransactionId(const oid_t &tuple_slot_id,
                                      const txn_id_t &transaction_id) const {
     auto old_val = INITIAL_TXN_ID;
-    return tuple_headers_[tuple_slot_id].txn_id.compare_exchange_strong(old_val, transaction_id);
+    return tuple_headers_[tuple_slot_id].txn_id.compare_exchange_strong(
+        old_val, transaction_id);
   }
 
   /*

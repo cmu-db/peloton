@@ -238,9 +238,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   virtual ResultType AbortTransaction(TransactionContext *const current_txn);
 
-
-private:
-
+ private:
   /**
    * @brief      Sets the last reader commit identifier.
    *
@@ -253,9 +251,7 @@ private:
    */
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, 
-      const cid_t &current_cid, 
-      const bool is_owner);
+      const oid_t &tuple_id, const cid_t &current_cid, const bool is_owner);
 };
 }
 }

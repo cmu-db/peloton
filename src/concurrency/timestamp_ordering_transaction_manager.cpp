@@ -307,7 +307,7 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
       PELOTON_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
       PELOTON_ASSERT(tile_group_header->GetLastReaderCommitId(tuple_id) ==
                          current_txn->GetCommitId() ||
-          tile_group_header->GetLastReaderCommitId(tuple_id) == 0);
+                     tile_group_header->GetLastReaderCommitId(tuple_id) == 0);
       return true;
 
     } else {
@@ -331,7 +331,7 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
         // then perform read directly.
         PELOTON_ASSERT(tile_group_header->GetLastReaderCommitId(tuple_id) ==
                            current_txn->GetCommitId() ||
-            tile_group_header->GetLastReaderCommitId(tuple_id) == 0);
+                       tile_group_header->GetLastReaderCommitId(tuple_id) == 0);
 
         // this version must already be in the read/write set.
         // so no need to update read set.
@@ -493,9 +493,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  PELOTON_ASSERT(
-      tile_group_header->GetLastReaderCommitId(old_location.offset) ==
-      current_txn->GetCommitId());
+  PELOTON_ASSERT(tile_group_header->GetLastReaderCommitId(
+                     old_location.offset) == current_txn->GetCommitId());
 
   // if we can perform delete, then we must have already locked the older
   // version.
