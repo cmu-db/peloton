@@ -156,9 +156,9 @@ void PlanGenerator::Visit(const QueryDerivedScan *) {
 }
 
 void PlanGenerator::Visit(const PhysicalLimit *op) {
-  // Generate order by plan when there's internal sort order
+  // Generate order by + limit plan when there's internal sort order
+  output_plan_ = std::move(children_plans_[0]);
   if (!op->sort_exprs.empty()) {
-    // Otherwise generate order by plan with limit
     vector<oid_t> column_ids;
     PELOTON_ASSERT(children_expr_map_.size() == 1);
     auto &child_cols_map = children_expr_map_[0];
@@ -175,16 +175,16 @@ void PlanGenerator::Visit(const PhysicalLimit *op) {
       // planner use desc flag
       sort_flags.push_back(!op->sort_acsending[i]);
     }
-    output_plan_.reset(new planner::OrderByPlan(
+    unique_ptr<planner::AbstractPlan> order_by_plan(new planner::OrderByPlan(
         sort_col_ids, sort_flags, column_ids, op->limit, op->offset));
-
-    output_plan_->AddChild(move(children_plans_[0]));
+    order_by_plan->AddChild(std::move(output_plan_));
+    output_plan_ = std::move(order_by_plan);
   }
 
   unique_ptr<planner::AbstractPlan> limit_plan(
       new planner::LimitPlan(op->limit, op->offset));
   limit_plan->AddChild(move(output_plan_));
-  output_plan_ = move(limit_plan);
+  output_plan_ = std::move(limit_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalOrderBy *) {

@@ -305,6 +305,10 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
       std::vector<bool> &&sort_ascending);
   int64_t offset;
   int64_t limit;
+  // When we get a query like "SELECT * FROM tab ORDER BY a LIMIT 5"
+  // We'll let the limit operator keep the order by clause's content as an
+  // internal order, then the limit operator will generate sort plan with 
+  // limit as a optimization.
   std::vector<expression::AbstractExpression *> sort_exprs;
   std::vector<bool> sort_ascending;
 };
@@ -481,7 +485,10 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
       std::vector<bool> sort_ascending);
   int64_t offset;
   int64_t limit;
-  // Limit may be able to fulfill sort order internally
+  // When we get a query like "SELECT * FROM tab ORDER BY a LIMIT 5"
+  // We'll let the limit operator keep the order by clause's content as an
+  // internal order, then the limit operator will generate sort plan with 
+  // limit as a optimization.
   std::vector<expression::AbstractExpression *> sort_exprs;
   std::vector<bool> sort_acsending;
 };

@@ -85,7 +85,8 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
 }
 
 void InputColumnDeriver::Visit(const PhysicalLimit *op) {
-  // Input columns and internal sort columns are needed by the child node
+  // All aggregate expressions and TVEs in the required columns and internal 
+  // sort columns are needed by the child node
   ExprSet input_cols_set;
   for (auto expr : required_cols_) {
     if (expression::ExpressionUtil::IsAggregateExpression(expr)) {

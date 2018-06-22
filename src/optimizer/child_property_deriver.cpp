@@ -141,8 +141,10 @@ void ChildPropertyDeriver::Visit(const PhysicalLimit *op) {
   vector<shared_ptr<PropertySet>> child_input_properties{
       std::make_shared<PropertySet>()};
   std::shared_ptr<PropertySet> provided_prop(new PropertySet);
-  provided_prop->AddProperty(
-      std::make_shared<PropertySort>(op->sort_exprs, op->sort_acsending));
+  if (!op->sort_exprs.empty()) {
+    provided_prop->AddProperty(
+        std::make_shared<PropertySort>(op->sort_exprs, op->sort_acsending));
+  }
 
   output_.push_back(make_pair(provided_prop, move(child_input_properties)));
 }
