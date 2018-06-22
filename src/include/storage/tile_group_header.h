@@ -205,11 +205,6 @@ class TileGroupHeader : public Printable {
     this->tile_group = tile_group;
   }
 
-  inline void SetSpinLatch(const oid_t &tuple_slot_id) const {
-    tuple_headers_[tuple_slot_id].latch.reset(
-        new common::synchronization::SpinLatch);
-  }
-
   inline void SetTransactionId(const oid_t &tuple_slot_id,
                                const txn_id_t &transaction_id) const {
     tuple_headers_[tuple_slot_id].txn_id = transaction_id;
