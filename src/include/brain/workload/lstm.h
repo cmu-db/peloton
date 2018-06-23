@@ -42,7 +42,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
    * Finally the average training loss over all the
    * batches is returned.
    */
-  float TrainEpoch(matrix_eig &data) override;
+  float TrainEpoch(const matrix_eig &data) override;
 
   /**
    * @param data: Contiguous time-series data
@@ -55,8 +55,14 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
    * Then the validation loss is calculated for the relevant sequence
    * - this is a function of segment and horizon.
    */
-  float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
+  float ValidateEpoch(const matrix_eig &data,
+                      matrix_eig &test_true,
                       matrix_eig &test_pred, bool return_preds) override;
+
+  void Fit(const matrix_eig &X,
+           const matrix_eig &y,
+           int bsz) override;
+  matrix_eig Predict(const matrix_eig &X, int bsz) const override;
 
   /**
    * @return std::string representing model object
@@ -67,7 +73,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
   // Function to generate the args string to feed the python model
   std::string ConstructModelArgsString() const;
   // Attributes needed for the Seq2Seq LSTM model(set by the user/settings.json)
-  int nfeats_;
+  const int nfeats_;
   int nencoded_;
   int nhid_;
   int nlayers_;

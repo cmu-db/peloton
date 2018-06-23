@@ -25,6 +25,10 @@ namespace brain {
 class BaseModel {
  public:
   virtual std::string ToString() const = 0;
+  virtual void Fit(const matrix_eig &X,
+                   const matrix_eig &y,
+                   int bsz) = 0;
+  virtual matrix_eig Predict(const matrix_eig &X, int bsz) const = 0;
 };
 
 /**
@@ -35,9 +39,11 @@ class BaseForecastModel : public BaseModel {
   BaseForecastModel(int bptt, int horizon, int interval)
       : BaseModel(), bptt_(bptt),
         horizon_(horizon), interval_(interval) {};
-  virtual float TrainEpoch(matrix_eig &data) = 0;
-  virtual float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                              matrix_eig &test_pred, bool return_preds) = 0;
+  virtual float TrainEpoch(const matrix_eig &data) = 0;
+  virtual float ValidateEpoch(const matrix_eig &data,
+                              matrix_eig &test_true,
+                              matrix_eig &test_pred,
+                              bool return_preds) = 0;
   int GetHorizon() const { return horizon_; }
   int GetBPTT() const { return bptt_; }
   int GetInterval() const { return interval_; }

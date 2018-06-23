@@ -57,7 +57,7 @@ class ModelUtil {
    * Useful for Linear and Kernel Regression Models
    */
   static void GenerateFeatureMatrix(const BaseForecastModel *model,
-                                    matrix_eig &data,
+                                    const matrix_eig &data,
                                     matrix_eig &processed_features,
                                     matrix_eig &processed_forecasts);
 };

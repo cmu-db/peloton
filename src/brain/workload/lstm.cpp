@@ -71,126 +71,108 @@ std::string TimeSeriesLSTM::ToString() const {
   return model_str_builder.str();
 }
 
-float TimeSeriesLSTM::TrainEpoch(matrix_eig &data) {
-  std::vector<float> losses;
-  // Obtain relevant metadata
-  int max_allowed_bsz = data.rows() / (horizon_ + bptt_);
-  int min_allowed_bsz = 1;
-  int bsz = std::max(min_allowed_bsz, std::min(batch_size_, max_allowed_bsz));
-  int samples_per_input = data.rows() / bsz;
-  int num_feats = data.cols();
-
-  // Trim the data for equal sized inputs per batch
-  data = data.block(0, 0, samples_per_input * bsz, data.cols());
-
-  // Run through each batch and compute loss/apply backprop
-  for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
-       batch_offset += bptt_) {
-    std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, data_batch_eig,
-                        target_batch_eig);
-    auto data_batch = EigenUtil::Flatten(data_batch_eig);
-    auto target_batch = EigenUtil::Flatten(target_batch_eig);
-    int seq_len = data_batch.size() / (bsz * num_feats);
-    std::vector<int64_t> dims{bsz, seq_len, num_feats};
-    std::vector<TfFloatIn *> inputs_optimize{
-        new TfFloatIn(data_batch.data(), dims, "data_"),
-        new TfFloatIn(target_batch.data(), dims, "target_"),
-        new TfFloatIn(dropout_ratio_, "dropout_ratio_"),
-        new TfFloatIn(learn_rate_, "learn_rate_"),
-        new TfFloatIn(clip_norm_, "clip_norm_")};
-    std::vector<TfFloatIn *> inputs_loss{
-        new TfFloatIn(data_batch.data(), dims, "data_"),
-        new TfFloatIn(target_batch.data(), dims, "target_"),
-        new TfFloatIn(1.0, "dropout_ratio_")};
-    auto output_loss = new TfFloatOut("lossOp_");
-    auto out = tf_session_entity_->Eval(inputs_loss, output_loss);
-    tf_session_entity_->Eval(inputs_optimize, "optimizeOp_");
-    losses.push_back(out[0]);
-    std::for_each(inputs_optimize.begin(), inputs_optimize.end(), TFIO_Delete);
-    std::for_each(inputs_loss.begin(), inputs_loss.end(), TFIO_Delete);
-    TFIO_Delete(output_loss);
-  }
-  return std::accumulate(losses.begin(), losses.end(), 0.0) / losses.size();
+void TimeSeriesLSTM::Fit(const matrix_eig &X,
+                         const matrix_eig &y,
+                         int bsz) {
+  auto data_batch = EigenUtil::Flatten(X);
+  auto target_batch = EigenUtil::Flatten(y);
+  int seq_len = data_batch.size() / (bsz * nfeats_);
+  std::vector<int64_t> dims{bsz, seq_len, nfeats_};
+  std::vector<TfFloatIn *> inputs_optimize{
+      new TfFloatIn(data_batch.data(), dims, "data_"),
+      new TfFloatIn(target_batch.data(), dims, "target_"),
+      new TfFloatIn(dropout_ratio_, "dropout_ratio_"),
+      new TfFloatIn(learn_rate_, "learn_rate_"),
+      new TfFloatIn(clip_norm_, "clip_norm_")};
+  std::vector<TfFloatIn *> inputs_loss{
+      new TfFloatIn(data_batch.data(), dims, "data_"),
+      new TfFloatIn(target_batch.data(), dims, "target_"),
+      new TfFloatIn(1.0, "dropout_ratio_")};
+  tf_session_entity_->Eval(inputs_optimize, "optimizeOp_");
+  std::for_each(inputs_optimize.begin(), inputs_optimize.end(), TFIO_Delete);
 }
 
-// void TimeSeriesLSTM::Forecast(peloton::matrix_eig &data, peloton::matrix_eig
-// &forecasted) const {
-//
-//}
+float TimeSeriesLSTM::TrainEpoch(const matrix_eig &data) {
+  std::vector<float> losses;
+  std::vector<std::vector<matrix_eig>> data_batches, target_batches;
+  ModelUtil::GetBatches(this, data, batch_size_, data_batches, target_batches);
 
-float TimeSeriesLSTM::ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                                    matrix_eig &test_pred, bool return_preds) {
-  std::vector<float> y_hat, y;
+  PELOTON_ASSERT(data_batches.size() == target_batches.size());
 
-  // Obtain relevant metadata
-  int max_allowed_bsz = data.rows() / (horizon_ + bptt_);
-  int min_allowed_bsz = 1;
-  int bsz = std::max(min_allowed_bsz, std::min(batch_size_, max_allowed_bsz));
-  int samples_per_input = data.rows() / bsz;
-  int num_feats = data.cols();
-
-  // Trim the data for equal sized inputs per batch
-  data = data.block(0, 0, samples_per_input * bsz, data.cols());
-
-  // Apply Validation
   // Run through each batch and compute loss/apply backprop
-  for (int batch_offset = 0; batch_offset < samples_per_input - horizon_;
-       batch_offset += bptt_) {
-    std::vector<matrix_eig> data_batch_eig, target_batch_eig;
-    ModelUtil::GetBatch(this, data, batch_offset, bsz, data_batch_eig,
-                        target_batch_eig);
-    auto data_batch = EigenUtil::Flatten(data_batch_eig);
-    auto target_batch = EigenUtil::Flatten(target_batch_eig);
-    int seq_len = data_batch.size() / (bsz * num_feats);
-    std::vector<int64_t> dims{bsz, seq_len, num_feats};
-    std::vector<TfFloatIn *> inputs_predict{
-        new TfFloatIn(data_batch.data(), dims, "data_"),
-        new TfFloatIn(1.0, "dropout_ratio_")};
-    auto output_predict = new TfFloatOut("pred_");
-
-    // Obtain predicted values
-    auto out = tf_session_entity_->Eval(inputs_predict, output_predict);
-
-    // Flattened predicted/true values
-    for (size_t i = 0; i < data_batch.size(); i++) {
-      y_hat.push_back(out[i]);
-    }
-    y.insert(y.end(), target_batch.begin(), target_batch.end());
-    std::for_each(inputs_predict.begin(), inputs_predict.end(), TFIO_Delete);
-    TFIO_Delete(output_predict);
+  std::vector<matrix_eig> y_batch, y_hat_batch;
+  for(size_t i = 0; i < data_batches.size(); i++) {
+    std::vector<matrix_eig> &data_batch_eig =  data_batches[i];
+    std::vector<matrix_eig> &target_batch_eig =  target_batches[i];
+    matrix_eig X_batch = EigenUtil::VStack(data_batch_eig);
+    int bsz = static_cast<int>(data_batch_eig.size());
+    // Fit
+    Fit(X_batch, EigenUtil::VStack(target_batch_eig), bsz);
+    // Predict
+    matrix_eig y_hat_eig = Predict(X_batch, bsz);
+    y_hat_batch.push_back(y_hat_eig);
+    y_batch.push_back(EigenUtil::VStack(target_batch_eig));
   }
+  matrix_eig y = EigenUtil::VStack(y_batch);
+  matrix_eig y_hat = EigenUtil::VStack(y_hat_batch);
+  return ModelUtil::MeanSqError(y, y_hat);
+}
 
-  // Select the correct time window for the true values(fn of horizon and
-  // segment)
-  // TODO: Need to revisit this!
-  int interval_offset = interval_ * num_feats;
-  y = std::vector<float>(y.end() - interval_offset, y.end());
-  y_hat = std::vector<float>(y_hat.end() - interval_offset, y_hat.end());
-
-  // Compute MSE
-  std::vector<float> sq_err;
-  auto sq_err_fn = [=](float y_i, float y_hat_i) {
-    return (y_i - y_hat_i) * (y_i - y_hat_i);
-  };
-  std::transform(y.begin(), y.end(), y_hat.begin(), std::back_inserter(sq_err),
-                 sq_err_fn);
-  float loss =
-      std::accumulate(sq_err.begin(), sq_err.end(), 0.0) / sq_err.size();
-
-  // Optionally return true/predicted values in form num_samples x num_feats
-  if (return_preds) {
-    matrix_t test_true_vec, test_pred_vec;
-    for (int i = 0; i < interval_offset / num_feats; i++) {
-      test_true_vec.emplace_back(std::vector<float>(
-          y.begin() + i * num_feats, y.begin() + (i + 1) * num_feats));
-      test_pred_vec.emplace_back(std::vector<float>(
-          y_hat.begin() + i * num_feats, y_hat.begin() + (i + 1) * num_feats));
+matrix_eig TimeSeriesLSTM::Predict(const matrix_eig &X, int bsz) const {
+  auto data_batch = EigenUtil::Flatten(X);
+  int seq_len = data_batch.size() / (bsz * nfeats_);
+  std::vector<int64_t> dims{bsz, seq_len, nfeats_};
+  std::vector<TfFloatIn *> inputs_predict{
+      new TfFloatIn(data_batch.data(), dims, "data_"),
+      new TfFloatIn(1.0, "dropout_ratio_")};
+  auto output_predict = new TfFloatOut("pred_");
+  // Obtain predicted values
+  auto out = tf_session_entity_->Eval(inputs_predict, output_predict);
+  std::vector<matrix_eig> y_hat;
+  int idx = 0;
+  for(int seq_idx = 0; seq_idx < bsz; seq_idx++) {
+    matrix_t seq;
+    for(int samp_idx = 0; samp_idx < seq_len; samp_idx++) {
+      vector_t feat_vec;
+      for(int feat_idx = 0; feat_idx < nfeats_; feat_idx++) {
+        feat_vec.push_back(out[idx++]);
+      }
+      seq.push_back(feat_vec);
     }
-    test_true = peloton::brain::EigenUtil::ToEigenMat(test_true_vec);
-    test_pred = peloton::brain::EigenUtil::ToEigenMat(test_pred_vec);
+    y_hat.push_back(EigenUtil::ToEigenMat(seq));
   }
-  return loss;
+  std::for_each(inputs_predict.begin(), inputs_predict.end(), TFIO_Delete);
+  TFIO_Delete(output_predict);
+  return EigenUtil::VStack(y_hat);
+}
+
+float TimeSeriesLSTM::ValidateEpoch(const matrix_eig &data,
+                                    matrix_eig &test_true,
+                                    matrix_eig &test_pred,
+                                    bool return_preds) {
+  std::vector<float> losses;
+  std::vector<std::vector<matrix_eig>> data_batches, target_batches;
+  ModelUtil::GetBatches(this, data, batch_size_, data_batches, target_batches);
+
+  PELOTON_ASSERT(data_batches.size() == target_batches.size());
+
+  // Run through each batch and compute loss/apply backprop
+  std::vector<matrix_eig> y_hat_batch, y_batch;
+  for(size_t i = 0; i < data_batches.size(); i++) {
+    std::vector<matrix_eig> &data_batch_eig = data_batches[i];
+    std::vector<matrix_eig> &target_batch_eig = target_batches[i];
+    matrix_eig y_hat_i = Predict(EigenUtil::VStack(data_batch_eig),
+                                 static_cast<int>(data_batch_eig.size()));
+    y_hat_batch.push_back(y_hat_i);
+    y_batch.push_back(EigenUtil::VStack(target_batch_eig));
+  }
+  matrix_eig y = EigenUtil::VStack(y_batch);
+  matrix_eig y_hat = EigenUtil::VStack(y_hat_batch);
+  if(return_preds) {
+    test_true = y;
+    test_pred = y_hat;
+  }
+  return ModelUtil::MeanSqError(y, y_hat);
 }
 }  // namespace brain
 }  // namespace peloton

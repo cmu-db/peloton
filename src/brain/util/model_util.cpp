@@ -68,7 +68,7 @@ void ModelUtil::GetBatches(const BaseForecastModel *model,
 }
 
 void ModelUtil::GenerateFeatureMatrix(const BaseForecastModel *model,
-                                      matrix_eig &data,
+                                      const matrix_eig &data,
                                       matrix_eig &processed_features,
                                       matrix_eig &processed_forecasts) {
   size_t timesteps = data.rows();

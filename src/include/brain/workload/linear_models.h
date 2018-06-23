@@ -19,9 +19,14 @@ namespace brain {
 class TimeSeriesLinearReg : public BaseForecastModel {
  public:
   TimeSeriesLinearReg(int bptt, int horizon, int interval);
-  float TrainEpoch(matrix_eig &data) override;
-  float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                      matrix_eig &test_pred, bool return_preds) override;
+  void Fit(const matrix_eig &X, const matrix_eig &y,
+           UNUSED_ATTRIBUTE int bsz = 1) override;
+  matrix_eig Predict(const matrix_eig &X, int bsz = 1) const override;
+  float TrainEpoch(const matrix_eig &data) override;
+  float ValidateEpoch(const matrix_eig &data,
+                      matrix_eig &test_true,
+                      matrix_eig &test_pred,
+                      bool return_preds) override;
   /**
    * @return std::string representing model object
    */
@@ -34,9 +39,14 @@ class TimeSeriesLinearReg : public BaseForecastModel {
 class TimeSeriesKernelReg : public BaseForecastModel {
  public:
   TimeSeriesKernelReg(int bptt, int horizon, int interval);
-  float TrainEpoch(matrix_eig &data) override;
-  float ValidateEpoch(matrix_eig &data, matrix_eig &test_true,
-                      matrix_eig &test_pred, bool return_preds) override;
+  void Fit(const matrix_eig &X, const matrix_eig &y,
+           int bsz = 1) override;
+  matrix_eig Predict(const matrix_eig &X, int bsz = 1) const override;
+  float TrainEpoch(const matrix_eig &data) override;
+  float ValidateEpoch(const matrix_eig &data,
+                      matrix_eig &test_true,
+                      matrix_eig &test_pred,
+                      bool return_preds) override;
   /**
    * @return std::string representing model object
    */
