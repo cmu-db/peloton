@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "network/netork_io_utils.h"
+#include "network/network_io_utils.h"
 
 #define BUFFER_INIT_SIZE 100
 namespace peloton {

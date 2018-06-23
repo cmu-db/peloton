@@ -13,6 +13,7 @@
 #include "network/postgres_protocol_interpreter.h"
 #include "network/peloton_server.h"
 #include "network/postgres_network_commands.h"
+#include "traffic_cop/tcop.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) ((x) >> 16)
@@ -20,58 +21,60 @@
 namespace peloton {
 namespace network {
 
-//Transition StartupCommand::Exec(PostgresProtocolInterpreter &protocol_object,
-//                                WriteQueue &out,
-//                                size_t) {
-//  // Always flush startup response
-//  out.ForceFlush();
-//  int32_t proto_version = input_packet_.buf_->ReadInt<int32_t>();
-//  LOG_INFO("protocol version: %d", proto_version);
-//  if (proto_version == SSL_MESSAGE_VERNO) {
-//    // SSL Handshake initialization
-//    // TODO(Tianyu): This static method probably needs to be moved into
-//    // settings manager
-//    bool ssl_able = (PelotonServer::GetSSLLevel() != SSLLevel::SSL_DISABLE);
-//    out.WriteSingleBytePacket(ssl_able
-//                              ? NetworkMessageType::SSL_YES
-//                              : NetworkMessageType::SSL_NO);
-//    return ssl_able ? Transition::NEED_SSL_HANDSHAKE : Transition::PROCEED;
-//  } else {
-//    // Normal Initialization
-//    if (PROTO_MAJOR_VERSION(proto_version) != 3) {
-//      // Only protocol version 3 is supported
-//      LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
-//      PostgresWireUtilities::SendErrorResponse(
-//          out, {{NetworkMessageType::HUMAN_READABLE_ERROR,
-//                 "Protocol Version Not Support"}});
-//      return Transition::TERMINATE;
-//    }
-//
-//    std::string token, value;
-//    // TODO(Yuchen): check for more malformed cases
-//    // Read out startup package info
-//    while (input_packet_.buf_->HasMore()) {
-//      token = input_packet_.buf_->ReadString();
-//      LOG_TRACE("Option key is %s", token.c_str());
-//      // TODO(Tianyu): Why does this commented out line need to be here?
-//      // if (!input_packet_.buf_->HasMore()) break;
-//      value = input_packet_.buf_->ReadString();
-//      LOG_TRACE("Option value is %s", value.c_str());
-//      // TODO(Tianyu): We never seem to use this crap?
-//      protocol_object.AddCommandLineOption(token, value);
-//      // TODO(Tianyu): Do this after we are done refactoring traffic cop
-////      if (token.compare("database") == 0) {
-////        traffic_cop_->SetDefaultDatabaseName(value);
-////      }
-//    }
-//
-//    // Startup Response, for now we do not do any authentication
-//    PostgresWireUtilities::SendStartupResponse(out);
-//    protocol_object.FinishStartup();
-//    return Transition::PROCEED;
-//  }
-//}
+Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
+                                PostgresPacketWriter &out,
+                                size_t) {
+  auto proto_version = in_->ReadInt<uint32_t>();
+  LOG_INFO("protocol version: %d", proto_version);
+  // SSL initialization
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    // TODO(Tianyu): Should this be moved from PelotonServer into settings?
+    if (PelotonServer::GetSSLLevel() == SSLLevel::SSL_DISABLE) {
+      out.WriteSingleBytePacket(NetworkMessageType::SSL_NO);
+      return Transition::PROCEED;
+    }
+    out.WriteSingleBytePacket(NetworkMessageType::SSL_YES);
+    return Transition::NEED_SSL_HANDSHAKE;
+  }
 
+  // Process startup packet
+  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
+    LOG_ERROR("Protocol error: only protocol version 3 is supported");
+    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                             "Protocol Version Not Supported"}});
+    return Transition::TERMINATE;
+  }
+
+  while (in_->HasMore()) {
+    // TODO(Tianyu): We don't seem to really handle the other flags?
+    std::string key = in_->ReadString(), value = in_->ReadString();
+    LOG_TRACE("Option key %s, value %s", key.c_str(), value.c_str());
+    if (key == std::string("database"))
+      interpreter.ClientProcessState().db_name_ = value;
+    interpreter.AddCmdlineOption(std::move(key), std::move(value));
+  }
+
+  // TODO(Tianyu): Implement authentication. For now we always send AuthOK
+  out.WriteStartupResponse();
+  interpreter.FinishStartup();
+  return Transition::PROCEED;
+}
+
+Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
+                              PostgresPacketWriter &out,
+                              size_t) {
+  // TODO(Tianyu): Figure out what skipped stmt does and maybe implement
+  std::string statement_name = in_->ReadString(), query = in_->ReadString();
+  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
+  try {
+    sql_stmt_list = tcop::ParseQuery(interpreter.ClientProcessState(), query);
+  } catch (Exception &e) {
+    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
+    return Transition::PROCEED;
+  }
+
+  auto statement =
+}
 
 } // namespace network
 } // namespace peloton

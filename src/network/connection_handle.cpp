@@ -144,12 +144,12 @@ DEF_TRANSITION_GRAPH
     END_STATE_DEF
 
     DEFINE_STATE(CLOSING)
-      ON(WAKEUP) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection)
-      ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
-      ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
+        ON(WAKEUP) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection)
+        ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
+        ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
     END_STATE_DEF
 END_DEF
-    // clang-format on
+// clang-format on
 
 void ConnectionHandle::StateMachine::Accept(Transition action,
                                             ConnectionHandle &connection) {
@@ -194,21 +194,16 @@ Transition ConnectionHandle::Process() {
         ProtocolHandlerType::Postgres, &tcop_);
 
   ProcessResult status = protocol_handler_->Process(
-      *(io_wrapper_->rbuf_), (size_t)conn_handler_->Id());
+      *(io_wrapper_->rbuf_), (size_t) conn_handler_->Id());
 
   switch (status) {
-    case ProcessResult::MORE_DATA_REQUIRED:
-      return Transition::NEED_READ;
-    case ProcessResult::COMPLETE:
-      return Transition::PROCEED;
-    case ProcessResult::PROCESSING:
-      return Transition::NEED_RESULT;
+    case ProcessResult::MORE_DATA_REQUIRED:return Transition::NEED_READ;
+    case ProcessResult::COMPLETE:return Transition::PROCEED;
+    case ProcessResult::PROCESSING:return Transition::NEED_RESULT;
     case ProcessResult::TERMINATE:
       throw NetworkProcessException("Error when processing");
-    case ProcessResult::NEED_SSL_HANDSHAKE:
-      return Transition::NEED_SSL_HANDSHAKE;
-    default:
-      LOG_ERROR("Unknown process result");
+    case ProcessResult::NEED_SSL_HANDSHAKE:return Transition::NEED_SSL_HANDSHAKE;
+    default:LOG_ERROR("Unknown process result");
       throw NetworkProcessException("Unknown process result");
   }
 }
