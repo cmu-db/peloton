@@ -16,13 +16,11 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
-#include "network/connection_handle_factory.h"
+#include "network/network_io_wrapper_factory.h"
 #include "network/peloton_server.h"
 #include "network/postgres_protocol_handler.h"
 #include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
-
-#define NUM_THREADS 1
 
 namespace peloton {
 namespace test {
@@ -73,16 +71,6 @@ void *ParserExceptionTest(int port) {
         "host=127.0.0.1 port=%d user=default_database "
         "sslmode=disable application_name=psql",
         port));
-
-    peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance()
-            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
-            .get();
-
-    network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(
-            conn->GetProtocolHandler().get());
-    EXPECT_NE(handler, nullptr);
 
     // If an exception occurs on one transaction, we can not use this
     // transaction anymore
