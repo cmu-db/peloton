@@ -22,7 +22,7 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
     // No reusable wrappers
     auto wrapper = std::make_shared<PosixSocketIoWrapper>(
         conn_fd, std::make_shared<ReadBuffer>(),
-        std::make_shared<WriteBuffer>());
+        std::make_shared<WriteQueue>());
     reusable_wrappers_[conn_fd] =
         std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(
             wrapper);
@@ -35,8 +35,8 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
   // constructor so the flags are set properly on the new file descriptor.
   auto &reused_wrapper = it->second;
   reused_wrapper = std::make_shared<PosixSocketIoWrapper>(conn_fd,
-                                                          reused_wrapper->rbuf_,
-                                                          reused_wrapper->wbuf_);
+                                                          reused_wrapper->in_,
+                                                          reused_wrapper->out_);
   return reused_wrapper;
 }
 

@@ -37,25 +37,27 @@ namespace network {
  */
 class NetworkIoWrapper {
   friend class NetworkIoWrapperFactory;
-
  public:
   virtual bool SslAble() const = 0;
   // TODO(Tianyu): Change and document after we refactor protocol handler
   virtual Transition FillReadBuffer() = 0;
-  virtual Transition FlushWriteBuffer() = 0;
+  virtual Transition FlushWriteBuffer(WriteBuffer &wbuf) = 0;
   virtual Transition Close() = 0;
 
   inline int GetSocketFd() { return sock_fd_; }
-  Transition WritePacket(OutputPacket *pkt);
+  inline std::shared_ptr<ReadBuffer> GetReadBuffer() { return in_; }
+  inline std::shared_ptr<WriteQueue> GetWriteQueue() { return out_; }
+  Transition FlushAllWrites();
+  inline bool ShouldFlush() { return out_->ShouldFlush(); }
   // TODO(Tianyu): Make these protected when protocol handler refactor is
   // complete
-  NetworkIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> &rbuf,
-                   std::shared_ptr<WriteBuffer> &wbuf)
+  NetworkIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> &in,
+                   std::shared_ptr<WriteQueue> &out)
       : sock_fd_(sock_fd),
-        rbuf_(std::move(rbuf)),
-        wbuf_(std::move(wbuf)) {
-    rbuf_->Reset();
-    wbuf_->Reset();
+        in_(std::move(in)),
+        out_(std::move(out)) {
+    in_->Reset();
+    out_->Reset();
   }
 
   DISALLOW_COPY(NetworkIoWrapper)
@@ -63,8 +65,8 @@ class NetworkIoWrapper {
   NetworkIoWrapper(NetworkIoWrapper &&other) = default;
 
   int sock_fd_;
-  std::shared_ptr<ReadBuffer> rbuf_;
-  std::shared_ptr<WriteBuffer> wbuf_;
+  std::shared_ptr<ReadBuffer> in_;
+  std::shared_ptr<WriteQueue> out_;
 };
 
 /**
@@ -72,13 +74,13 @@ class NetworkIoWrapper {
  */
 class PosixSocketIoWrapper : public NetworkIoWrapper {
  public:
-  PosixSocketIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> rbuf,
-                       std::shared_ptr<WriteBuffer> wbuf);
+  PosixSocketIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> in,
+                       std::shared_ptr<WriteQueue> out);
 
 
   inline bool SslAble() const override { return false; }
   Transition FillReadBuffer() override;
-  Transition FlushWriteBuffer() override;
+  Transition FlushWriteBuffer(WriteBuffer &wbuf) override;
   inline Transition Close() override {
     peloton_close(sock_fd_);
     return Transition::PROCEED;
@@ -97,7 +99,7 @@ class SslSocketIoWrapper : public NetworkIoWrapper {
 
   inline bool SslAble() const override { return true; }
   Transition FillReadBuffer() override;
-  Transition FlushWriteBuffer() override;
+  Transition FlushWriteBuffer(WriteBuffer &wbuf) override;
   Transition Close() override;
 
  private:

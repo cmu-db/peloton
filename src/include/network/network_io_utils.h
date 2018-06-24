@@ -13,7 +13,6 @@
 #pragma once
 #include <string>
 #include <vector>
-
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include "common/internal_types.h"
@@ -183,19 +182,6 @@ class ReadBuffer : public Buffer {
   }
 
   /**
-   * Read a block of bytes off the read buffer as a string.
-   * @param len Length of the string, inclusive of nul-terminator
-   * @return string of specified length at head of read buffer
-   */
-  std::string ReadString(size_t len) {
-    if (len == 0) throw NetworkProcessException("Unexpected string size: 0");
-    auto result = std::string(buf_.begin() + offset_,
-                              buf_.begin() + offset_ + (len - 1));
-    offset_ += len;
-    return result;
-  }
-
-  /**
    * Read a nul-terminated string off the read buffer, or throw an exception
    * if no nul-terminator is found within packet range.
    * @return string at head of read buffer
@@ -330,12 +316,20 @@ class WriteQueue {
    */
   inline void Reset() {
     buffers_.resize(1);
+    offset_ = 0;
     flush_ = false;
     if (buffers_[0] == nullptr)
       buffers_[0] = std::make_shared<WriteBuffer>();
     else
       buffers_[0]->Reset();
   }
+
+  inline std::shared_ptr<WriteBuffer> FlushHead() {
+    if (buffers_.size() > offset_) return buffers_[offset_];
+    return nullptr;
+  }
+
+  inline void MarkHeadFlushed() { offset_++; }
 
   /**
    * Force this WriteQueue to be flushed next time the network layer
@@ -388,8 +382,8 @@ class WriteQueue {
   }
 
  private:
-  friend class PostgresPacketWriter;
   std::vector<std::shared_ptr<WriteBuffer>> buffers_;
+  size_t offset_ = 0;
   bool flush_ = false;
 };
 

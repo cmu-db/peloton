@@ -20,9 +20,9 @@
 
 namespace peloton {
 namespace network {
-
 Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 PostgresPacketWriter &out,
+                                callback_func,
                                 size_t) {
   auto proto_version = in_->ReadInt<uint32_t>();
   LOG_INFO("protocol version: %d", proto_version);
@@ -51,7 +51,7 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
     LOG_TRACE("Option key %s, value %s", key.c_str(), value.c_str());
     if (key == std::string("database"))
       interpreter.ClientProcessState().db_name_ = value;
-    interpreter.AddCmdlineOption(std::move(key), std::move(value));
+    interpreter.AddCmdlineOption(key, std::move(value));
   }
 
   // TODO(Tianyu): Implement authentication. For now we always send AuthOK
@@ -60,20 +60,49 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
   return Transition::PROCEED;
 }
 
-Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
-                              PostgresPacketWriter &out,
-                              size_t) {
-  // TODO(Tianyu): Figure out what skipped stmt does and maybe implement
-  std::string statement_name = in_->ReadString(), query = in_->ReadString();
+Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
+                                    PostgresPacketWriter &out,
+                                    callback_func callback,
+                                    size_t tid) {
+  std::string query = in_->ReadString();
+  LOG_TRACE("Execute query: %s", query.c_str());
   std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
-    sql_stmt_list = tcop::ParseQuery(interpreter.ClientProcessState(), query);
-  } catch (Exception &e) {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    sql_stmt_list = peloton_parser.BuildParseTree(query);
+
+    // When the query is empty(such as ";" or ";;", still valid),
+    // the pare tree is empty, parser will return nullptr.
+    if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid) {
+      throw ParserException("Error Parsing SQL statement");
+    }
+  }  // If the statement is invalid or not supported yet
+  catch (Exception &e) {
+    tcop::ProcessInvalidStatement(interpreter.ClientProcessState());
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
 
-  auto statement =
+  if (sql_stmt_list.get() == nullptr ||
+      sql_stmt_list->GetNumStatements() == 0) {
+    out.WriteEmptyQueryResponse();
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+    return Transition::PROCEED;
+  }
+
+  // TODO(Yuchen): Hack. We only process the first statement in the packet now.
+  // We should store the rest of statements that will not be processed right
+  // away. For the hack, in most cases, it works. Because for example in psql,
+  // one packet contains only one query. But when using the pipeline mode in
+  // Libpqxx, it sends multiple query in one packet. In this case, it's
+  // incorrect.
+  auto sql_stmt = sql_stmt_list->PassOutStatement(0);
+
+  QueryType query_type =
+      StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
+  interpreter.ClientProcessState().protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
+
 }
 
 } // namespace network

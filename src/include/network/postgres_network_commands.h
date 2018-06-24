@@ -26,7 +26,7 @@ class name : public PostgresNetworkCommand {                               \
      : PostgresNetworkCommand(std::move(in), flush) {}                     \
   virtual Transition Exec(PostgresProtocolInterpreter &,                   \
                           PostgresPacketWriter &,                          \
-                          size_t) override;                                \
+                          callback_func, size_t) override;                 \
 }
 
 namespace peloton {
@@ -36,11 +36,13 @@ class PostgresProtocolInterpreter;
 
 class PostgresNetworkCommand {
  public:
-  virtual Transition Exec(PostgresProtocolInterpreter &protocol_obj,
+  virtual Transition Exec(PostgresProtocolInterpreter &interpreter,
                           PostgresPacketWriter &out,
+                          callback_func callback,
                           size_t thread_id) = 0;
 
   inline bool FlushOnComplete() { return flush_on_complete_; }
+
  protected:
   explicit PostgresNetworkCommand(std::shared_ptr<ReadBuffer> in, bool flush)
       : in_(std::move(in)), flush_on_complete_(flush) {}

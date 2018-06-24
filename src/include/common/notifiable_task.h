@@ -49,7 +49,7 @@ class NotifiableTask {
    * Constructs a new NotifiableTask instance.
    * @param task_id a unique id assigned to this task
    */
-  explicit NotifiableTask(int task_id);
+  explicit NotifiableTask(size_t task_id);
 
   /**
    * Destructs this NotifiableTask. All events currently registered to its base
@@ -60,7 +60,7 @@ class NotifiableTask {
   /**
    * @return unique id assigned to this task
    */
-  inline int Id() const { return task_id_; }
+  inline size_t Id() const { return task_id_; }
 
   /**
    * @brief Register an event with the event base associated with this
@@ -183,7 +183,7 @@ class NotifiableTask {
   inline void ExitLoop(int, short) { ExitLoop(); }
 
  private:
-  const int task_id_;
+  const size_t task_id_;
   struct event_base *base_;
 
   // struct event and lifecycle management

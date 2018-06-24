@@ -18,7 +18,6 @@
 // Packet content macros
 
 namespace peloton {
-
 namespace network {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;

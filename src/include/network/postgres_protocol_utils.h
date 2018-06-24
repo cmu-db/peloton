@@ -189,6 +189,11 @@ class PostgresPacketWriter {
     WriteReadyForQuery(NetworkTransactionStateType::IDLE);
   }
 
+  inline void WriteEmptyQueryResponse() {
+    BeginPacket(NetworkMessageType::EMPTY_QUERY_RESPONSE)
+        .EndPacket();
+  }
+
   /**
    * End the packet. A packet write must be in progress and said write is not
    * well-formed until this method is called.

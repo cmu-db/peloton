@@ -129,8 +129,8 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(PROCESS) AND_INVOKE(GetResult)
         ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
         ON(NEED_READ) SET_STATE_TO(READ) AND_INVOKE(TryRead)
-        // Client connections are ignored while we wait on peloton
-        // to execute the query
+          // Client connections are ignored while we wait on peloton
+          // to execute the query
         ON(NEED_RESULT) SET_STATE_TO(PROCESS) AND_WAIT_ON_PELOTON
         ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
     END_STATE_DEF
@@ -166,61 +166,22 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
   }
 }
 
+// TODO(Tianyu): Maybe use a factory to initialize protocol_interpreter here
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
     : conn_handler_(handler),
-      io_wrapper_(NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd)) {}
-
-Transition ConnectionHandle::TryWrite() {
-  for (; next_response_ < protocol_handler_->responses_.size();
-       next_response_++) {
-    auto result = io_wrapper_->WritePacket(
-        protocol_handler_->responses_[next_response_].get());
-    if (result != Transition::PROCEED) return result;
-  }
-  protocol_handler_->responses_.clear();
-  next_response_ = 0;
-  if (protocol_handler_->GetFlushFlag()) return io_wrapper_->FlushWriteBuffer();
-  protocol_handler_->SetFlushFlag(false);
-  return Transition::PROCEED;
-}
-
-Transition ConnectionHandle::Process() {
-  // TODO(Tianyu): Just use Transition instead of ProcessResult, this looks
-  // like a 1 - 1 mapping between the two types.
-  if (protocol_handler_ == nullptr)
-    // TODO(Tianyi) Check the rbuf here before we create one if we have
-    // another protocol handler
-    protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
-        ProtocolHandlerType::Postgres, &tcop_);
-
-  ProcessResult status = protocol_handler_->Process(
-      *(io_wrapper_->rbuf_), (size_t) conn_handler_->Id());
-
-  switch (status) {
-    case ProcessResult::MORE_DATA_REQUIRED:return Transition::NEED_READ;
-    case ProcessResult::COMPLETE:return Transition::PROCEED;
-    case ProcessResult::PROCESSING:return Transition::NEED_RESULT;
-    case ProcessResult::TERMINATE:
-      throw NetworkProcessException("Error when processing");
-    case ProcessResult::NEED_SSL_HANDSHAKE:return Transition::NEED_SSL_HANDSHAKE;
-    default:LOG_ERROR("Unknown process result");
-      throw NetworkProcessException("Unknown process result");
-  }
-}
+      io_wrapper_(NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd)),
+      protocol_interpreter_{new PostgresProtocolInterpreter(conn_handler_->Id())} {}
 
 Transition ConnectionHandle::GetResult() {
   EventUtil::EventAdd(network_event_, nullptr);
-  protocol_handler_->GetResult();
-  tcop_.SetQueuing(false);
+  protocol_interpreter_->GetResult();
   return Transition::PROCEED;
 }
 
 Transition ConnectionHandle::TrySslHandshake() {
-  // Flush out all the response first
-  if (HasResponse()) {
-    auto write_ret = TryWrite();
-    if (write_ret != Transition::PROCEED) return write_ret;
-  }
+  // TODO(Tianyu): Do we really need to flush here?
+  auto ret = io_wrapper_->FlushAllWrites();
+  if (ret != Transition::PROCEED) return ret;
   return NetworkIoWrapperFactory::GetInstance().TryUseSsl(
       io_wrapper_);
 }

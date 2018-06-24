@@ -11,19 +11,26 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 #include <memory>
+#include <functional>
 #include "network/network_types.h"
 #include "network/network_io_utils.h"
 
 namespace peloton {
 namespace network {
+using callback_func = std::function<void(void)>;
 
 class ProtocolInterpreter {
  public:
-  // TODO(Tianyu): What the hell is this thread_id thingy
-  virtual Transition Process(std::shared_ptr<ReadBuffer> &in,
-                             WriteQueue &out,
-                             size_t thread_id) = 0;
+  ProtocolInterpreter(size_t thread_id) : thread_id_(thread_id) {}
 
+  virtual Transition Process(std::shared_ptr<ReadBuffer> in,
+                             std::shared_ptr<WriteQueue> out,
+                             callback_func callback) = 0;
+
+  // TODO(Tianyu): Do we really need this crap?
+  virtual void GetResult() = 0;
+ protected:
+  size_t thread_id_;
 };
 
 } // namespace network
