@@ -201,8 +201,7 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
       return true;
 
     } else {
-      // if it's not select for update, then update read set and return true.
-      current_txn->RecordRead(location);
+      // if it's not select for update, then return true.
       return true;
     }
 
@@ -243,7 +242,6 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
       // a transaction can never read an uncommitted version.
       if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
         if (IsOwned(current_txn, tile_group_header, tuple_id) == false) {
-          current_txn->RecordRead(location);
           return true;
 
         } else {
@@ -316,8 +314,6 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
         // then attempt to set last reader cid.
         if (SetLastReaderCommitId(tile_group_header, tuple_id,
                                   current_txn->GetCommitId(), false) == true) {
-          // update read set.
-          current_txn->RecordRead(location);
           return true;
         } else {
           // if the tuple has been owned by some concurrent transactions,
