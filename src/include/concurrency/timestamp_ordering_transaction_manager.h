@@ -238,41 +238,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
    */
   virtual ResultType AbortTransaction(TransactionContext *const current_txn);
 
-
-private:
-  static const int LOCK_OFFSET = 0;
-  static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
-
-  /**
-   * @brief      Gets the spin latch field.
-   * 
-   * Timestamp ordering requires a spinlock field for protecting the atomic access
-   * to txn_id field and last_reader_cid field.
-   *
-   * @param[in]  tile_group_header  The tile group header
-   * @param[in]  tuple_id           The tuple identifier
-   *
-   * @return     The spin latch field.
-   */
-  common::synchronization::SpinLatch *GetSpinLatchField(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
-  /**
-   * @brief      Gets the last reader commit identifier.
-   * 
-   * In timestamp ordering, the last_reader_cid records the timestamp of the last
-   * transaction that reads the tuple.
-   *
-   * @param[in]  tile_group_header  The tile group header
-   * @param[in]  tuple_id           The tuple identifier
-   *
-   * @return     The last reader commit identifier.
-   */
-  cid_t GetLastReaderCommitId(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
+ private:
   /**
    * @brief      Sets the last reader commit identifier.
    *
@@ -285,19 +251,7 @@ private:
    */
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, 
-      const cid_t &current_cid, 
-      const bool is_owner);
-
-  /**
-   * Initialize reserved area of a tuple.
-   *
-   * @param[in]  tile_group_header  The tile group header
-   * @param[in]  tuple_id           The tuple identifier
-   */
-  void InitTupleReserved(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t tuple_id);
+      const oid_t &tuple_id, const cid_t &current_cid, const bool is_owner);
 };
 }
 }
