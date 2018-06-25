@@ -42,8 +42,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
-    tuple_headers_[tuple_slot_id].latch.reset(
-        new common::synchronization::SpinLatch);
     SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
     SetLastReaderCommitId(tuple_slot_id, INVALID_CID);
     SetBeginCommitId(tuple_slot_id, MAX_CID);
