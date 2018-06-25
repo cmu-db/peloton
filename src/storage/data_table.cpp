@@ -469,9 +469,19 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
 
     // Handle failure
     if (res == false) {
-      // If some of the indexes have been inserted,
-      // the pointer has a chance to be dereferenced by readers and it cannot be
-      // deleted
+      // if an index insert fails, undo all prior inserts on this index
+      for (index_itr = index_itr + 1; index_itr < index_count; ++index_itr) {
+        index = GetIndex(index_itr);
+        if (index == nullptr) continue;
+        index_schema = index->GetKeySchema();
+        indexed_columns = index_schema->GetIndexedColumns();
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
+        delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+        UNUSED_ATTRIBUTE bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        PELOTON_ASSERT(delete_res == true);
+      }
       *index_entry_ptr = nullptr;
       return false;
     } else {
