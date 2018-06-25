@@ -243,7 +243,7 @@ uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
 
     if (txn_ctx->GetEpochId() <= expired_eid) {
       // since this txn's epochId is <= the global expired epoch id
-      // no active transactions can read the version. Asa result,
+      // no active transactions can read the version. As a result,
       // we can delete remove all of its garbage tuples from the indexes
 
       // unlink versions from version chain and indexes
