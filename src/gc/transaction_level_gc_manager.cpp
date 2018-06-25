@@ -356,9 +356,6 @@ void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
     // this slot should be recycled, add it to the recycle stack
     recycle_queue->Enqueue(location);
   }
-
-  LOG_TRACE("Recycled tuple slot count for tile_group %u is %zu", tile_group_id,
-            tile_group_header->GetNumRecycled());
 }
 
 void TransactionLevelGCManager::RemoveObjectLevelGarbage(
