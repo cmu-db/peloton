@@ -127,6 +127,7 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 template class CuckooMap<StatementCache *, StatementCache *>;
 
 // Used in TransactionLevelGCManager
-template class CuckooMap<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>;
+template class CuckooMap<oid_t,
+                         std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>;
 
 }  // namespace peloton

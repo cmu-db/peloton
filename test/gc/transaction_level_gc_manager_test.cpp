@@ -398,7 +398,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
 // Assert RQ.size = 0
 // Assert old tuple in 1 index (primary key)
 // Assert new tuple in 2 indexes
-// Test is disabled until the reuse of owned tuple slots optimization is removed.
+// Test is disabled until the reuse of owned tuple slots optimization is
+// removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
   std::string test_name = "commitinsertupdate";
   uint64_t current_epoch = 0;
@@ -456,7 +457,8 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
 // Assert RQ.size = 1 or 2?
 // Assert inserted tuple in 0 indexes
 // Assert updated tuple in 0 indexes
-// Test is disabled until the reuse of owned tuple slots optimization is removed.
+// Test is disabled until the reuse of owned tuple slots optimization is
+// removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortInsertUpdateTest) {
   std::string test_name = "abortinsertupdate";
   uint64_t current_epoch = 0;
@@ -722,7 +724,8 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
 // Assert RQ.size = 2
 // Assert old tuple in 0 indexes
 // Assert new tuple in 0 indexes
-// Test is disabled until the reuse of owned tuple slots optimization is removed.
+// Test is disabled until the reuse of owned tuple slots optimization is
+// removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitUpdateDeleteTest) {
   std::string test_name = "commitupdatedelete";
   uint64_t current_epoch = 0;
@@ -780,7 +783,8 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitUpdateDeleteTest) {
 // Assert RQ size = 2
 // Assert old tuple in 2 indexes
 // Assert new tuple in 1 index (primary key)
-// Test is disabled until the reuse of owned tuple slots optimization is removed.
+// Test is disabled until the reuse of owned tuple slots optimization is
+// removed.
 TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortUpdateDeleteTest) {
   std::string test_name = "abortupdatedelete";
   uint64_t current_epoch = 0;
@@ -910,7 +914,8 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
 // Assert RQ.size = 2 (primary key update causes delete and insert)
 // Assert old tuple in 0 indexes
 // Assert new tuple in 2 indexes
-TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdatePrimaryKeyTest) {
+TEST_F(TransactionLevelGCManagerTests,
+       DISABLED_CommitInsertUpdatePrimaryKeyTest) {
   uint64_t current_epoch = 0;
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   epoch_manager.Reset(++current_epoch);

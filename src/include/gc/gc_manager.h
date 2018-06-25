@@ -66,7 +66,8 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(
+      storage::DataTable *table UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 

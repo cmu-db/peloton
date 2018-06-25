@@ -286,7 +286,8 @@ class DataTable : public AbstractTable {
     return default_active_tilegroup_count_;
   }
 
-  static void SetDefaultActiveTileGroupCount(const size_t active_tile_group_count) {
+  static void SetDefaultActiveTileGroupCount(
+      const size_t active_tile_group_count) {
     default_active_tilegroup_count_ = active_tile_group_count;
   }
 

@@ -67,7 +67,7 @@ void TransactionLevelGCManager::TransactionLevelGCManager::Reset() {
   }
 
   recycle_queues_ = std::make_shared<
-      peloton::CuckooMap<oid_t, std::shared_ptr<RecycleQueue >>>(
+      peloton::CuckooMap<oid_t, std::shared_ptr<RecycleQueue>>>(
       INITIAL_MAP_SIZE);
 
   is_running_ = false;
@@ -199,8 +199,8 @@ uint32_t TransactionLevelGCManager::Unlink(const uint32_t &thread_id,
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid, this](
-          concurrency::TransactionContext *txn_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid,
+       this](concurrency::TransactionContext *txn_ctx) -> bool {
         bool result = txn_ctx->GetEpochId() <= expired_eid;
         if (result) {
           // unlink versions from version chain and indexes
@@ -317,7 +317,8 @@ void TransactionLevelGCManager::RecycleTupleSlots(
 
 void TransactionLevelGCManager::RecycleTupleSlot(const ItemPointer &location) {
   auto tile_group_id = location.block;
-  auto tile_group = storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id);
+  auto tile_group =
+      storage::StorageManager::GetInstance()->GetTileGroup(tile_group_id);
 
   // During the resetting,
   // a table may be deconstructed because of a DROP TABLE request
@@ -396,7 +397,6 @@ void TransactionLevelGCManager::RemoveObjectLevelGarbage(
 // called by data_table, which passes in a pointer to itself
 ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
     storage::DataTable *table) {
-
   auto recycle_queue = GetTableRecycleQueue(table->GetOid());
 
   if (recycle_queue == nullptr) {
@@ -413,9 +413,8 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
 }
 
 void TransactionLevelGCManager::ClearGarbage(const uint32_t &thread_id) {
-
   while (!unlink_queues_[thread_id]->IsEmpty() ||
-      !local_unlink_queues_[thread_id].empty()) {
+         !local_unlink_queues_[thread_id].empty()) {
     Unlink(thread_id, MAX_CID);
   }
 
@@ -497,7 +496,8 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(
     }
 
     auto newer_tile_group =
-        storage::StorageManager::GetInstance()->GetTileGroup(newer_location.block);
+        storage::StorageManager::GetInstance()->GetTileGroup(
+            newer_location.block);
     ContainerTuple<storage::TileGroup> newer_tuple(newer_tile_group.get(),
                                                    newer_location.offset);
     // remove the older version from all the indexes
@@ -537,7 +537,8 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(
     }
 
     auto older_tile_group =
-        storage::StorageManager::GetInstance()->GetTileGroup(older_location.block);
+        storage::StorageManager::GetInstance()->GetTileGroup(
+            older_location.block);
     ContainerTuple<storage::TileGroup> older_tuple(older_tile_group.get(),
                                                    older_location.offset);
     // remove the newer version from all the indexes
@@ -568,9 +569,9 @@ void TransactionLevelGCManager::RemoveVersionFromIndexes(
     // no index manipulation needs to be made.
   } else {
     PELOTON_ASSERT(type == GCVersionType::ABORT_INSERT ||
-        type == GCVersionType::COMMIT_INS_DEL ||
-        type == GCVersionType::ABORT_INS_DEL ||
-        type == GCVersionType::COMMIT_DELETE);
+                   type == GCVersionType::COMMIT_INS_DEL ||
+                   type == GCVersionType::ABORT_INS_DEL ||
+                   type == GCVersionType::COMMIT_DELETE);
 
     // attempt to unlink the version from all the indexes.
     for (uint32_t idx = 0; idx < table->GetIndexCount(); ++idx) {
