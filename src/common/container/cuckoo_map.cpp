@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "common/container/cuckoo_map.h"
+#include "common/container/lock_free_queue.h"
 #include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
@@ -124,5 +125,8 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
+
+// Used in TransactionLevelGCManager
+template class CuckooMap<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>;
 
 }  // namespace peloton
