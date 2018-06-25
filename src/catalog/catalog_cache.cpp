@@ -116,13 +116,11 @@ std::shared_ptr<DatabaseCatalogObject> CatalogCache::GetDatabaseObject(
  * @return  table catalog object; if not found return null
  */
 std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
-    oid_t table_oid) {
-  for (auto it = database_objects_cache.begin();
-       it != database_objects_cache.end(); ++it) {
-    auto database_object = it->second;
-    auto table_object = database_object->GetTableObject(table_oid, true);
-    if (table_object) return table_object;
-  }
+		oid_t database_oid, oid_t table_oid) {
+	auto database_object = GetDatabaseObject(database_oid);
+	if (database_object == nullptr) return nullptr;
+  auto table_object = database_object->GetTableObject(table_oid, true);
+  if (table_object) return table_object;
   return nullptr;
 }
 
@@ -131,13 +129,11 @@ std::shared_ptr<TableCatalogObject> CatalogCache::GetCachedTableObject(
  * @return  index catalog object; if not found return null
  */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
-    oid_t index_oid) {
-  for (auto it = database_objects_cache.begin();
-       it != database_objects_cache.end(); ++it) {
-    auto database_object = it->second;
-    auto index_object = database_object->GetCachedIndexObject(index_oid);
-    if (index_object) return index_object;
-  }
+		oid_t database_oid, oid_t index_oid) {
+	auto database_object = GetDatabaseObject(database_oid);
+	if (database_object == nullptr) return nullptr;
+	auto index_object = database_object->GetCachedIndexObject(index_oid);
+	if (index_object) return index_object;
   return nullptr;
 }
 
@@ -146,14 +142,13 @@ std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
  * @return  index catalog object; if not found return null
  */
 std::shared_ptr<IndexCatalogObject> CatalogCache::GetCachedIndexObject(
-    const std::string &index_name, const std::string &schema_name) {
-  for (auto it = database_objects_cache.begin();
-       it != database_objects_cache.end(); ++it) {
-    auto database_object = it->second;
-    auto index_object =
-        database_object->GetCachedIndexObject(index_name, schema_name);
-    if (index_object) return index_object;
-  }
+		const std::string &database_name, const std::string &index_name,
+		const std::string &schema_name) {
+	auto database_object = GetDatabaseObject(database_name);
+	if (database_object == nullptr) return nullptr;
+	auto index_object =
+			database_object->GetCachedIndexObject(index_name, schema_name);
+	if (index_object) return index_object;
   return nullptr;
 }
 

@@ -6,14 +6,14 @@
 //
 // Identification: src/network/marshal.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "network/marshal.h"
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include "network/marshal.h"
 
 #include <netinet/in.h>
 
@@ -25,15 +25,6 @@ inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
                           UNUSED_ATTRIBUTE size_t size) {
   LOG_TRACE("request->len: %lu", rpkt->len);
   PELOTON_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
-}
-
-size_t Buffer::GetUInt32BigEndian() {
-  size_t num = 0;
-  // directly converts from network byte order to little-endian
-  for (size_t i = buf_ptr; i < buf_ptr + sizeof(uint32_t); i++) {
-    num = (num << 8) | GetByte(i);
-  }
-  return num;
 }
 
 int PacketGetInt(InputPacket *rpkt, uchar base) {

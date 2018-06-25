@@ -32,6 +32,7 @@
 
 #include "marshal.h"
 #include "network/connection_handler_task.h"
+#include "network/network_io_wrappers.h"
 #include "network_state.h"
 #include "protocol_handler.h"
 
@@ -41,56 +42,83 @@
 namespace peloton {
 namespace network {
 
-// TODO(tianyu) This class is not refactored in full as rewriting the logic is
-// not cost-effective. However, readability
-// improvement and other changes may become desirable in the future. Other than
-// code clutter, responsibility assignment
-// is not well thought-out in this class. Abstracting out some type of socket
-// wrapper would be nice.
 /**
  * @brief A ConnectionHandle encapsulates all information about a client
- * connection for its entire duration.
- * One should not use the constructor to construct a new ConnectionHandle
- * instance every time as it is expensive
- * to allocate buffers. Instead, use the ConnectionHandleFactory.
- *
- * @see ConnectionHandleFactory
+ * connection for its entire duration. This includes a state machine and the
+ * necessary libevent infrastructure for a handler to work on this connection.
  */
 class ConnectionHandle {
  public:
   /**
-   * Update the existing event to listen to the passed flags
+   * Constructs a new ConnectionHandle
+   * @param sock_fd Client's connection fd
+   * @param handler The handler responsible for this handle
    */
-  void UpdateEventFlags(short flags);
+  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
 
-  WriteState WritePackets();
+  /**
+   * @brief Signal to libevent that this ConnectionHandle is ready to handle
+   * events
+   *
+   * This method needs to be called separately after initialization for the
+   * connection handle to do anything. The reason why this is not performed in
+   * the constructor is because it publishes pointers to this object. While the
+   * object should be fully initialized at that point, it's never a bad idea
+   * to be careful.
+   */
+  inline void RegisterToReceiveEvents() {
+    workpool_event_ = conn_handler_->RegisterManualEvent(
+        METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
-  std::string WriteBufferToString();
+    // TODO(Tianyi): should put the initialization else where.. check
+    // correctness first.
+    tcop_.SetTaskCallback(
+        [](void *arg) {
+          struct event *event = static_cast<struct event *>(arg);
+          event_active(event, EV_WRITE, 0);
+        },
+        workpool_event_);
 
+    network_event_ = conn_handler_->RegisterEvent(
+        io_wrapper_->GetSocketFd(), EV_READ | EV_PERSIST,
+        METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  }
+
+  /**
+   * Handles a libevent event. This simply delegates the the state machine.
+   */
   inline void HandleEvent(int, short) {
     state_machine_.Accept(Transition::WAKEUP, *this);
   }
 
-  // Exposed for testing
-  const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {
-    return protocol_handler_;
+  /* State Machine Actions */
+  // TODO(Tianyu): Write some documentation when feeling like it
+  inline Transition TryRead() { return io_wrapper_->FillReadBuffer(); }
+  Transition TryWrite();
+  Transition Process();
+  Transition GetResult();
+  Transition TrySslHandshake();
+  Transition TryCloseConnection();
+
+  /**
+   * Updates the event flags of the network event. This configures how the
+   * handler reacts to client activity from this connection.
+   * @param flags new flags for the event handle.
+   */
+  inline void UpdateEventFlags(short flags) {
+    conn_handler_->UpdateEvent(
+        network_event_, io_wrapper_->GetSocketFd(), flags,
+        METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   }
 
-  // State Machine actions
   /**
-   * refill_read_buffer - Used to repopulate read buffer with a fresh
-   * batch of data from the socket
+   * Stops receiving network events from client connection. This is useful when
+   * we are waiting on peloton to return the result of a query and not handling
+   * client query.
    */
-  Transition FillReadBuffer();
-  Transition Wait();
-  Transition Process();
-  Transition ProcessWrite();
-  Transition GetResult();
-  Transition CloseSocket();
-  /**
-   * Flush out all the responses and do real SSL handshake
-   */
-  Transition ProcessWrite_SSLHandshake();
+  inline void StopReceivingNetworkEvent() {
+    EventUtil::EventDel(network_event_);
+  }
 
  private:
   /**
@@ -145,55 +173,7 @@ class ConnectionHandle {
   };
 
   friend class StateMachine;
-  friend class ConnectionHandleFactory;
-
-  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
-
-  /**
-   * Writes a packet's header (type, size) into the write buffer
-   */
-  WriteState BufferWriteBytesHeader(OutputPacket *pkt);
-
-  /**
-   * Writes a packet's content into the write buffer
-   */
-  WriteState BufferWriteBytesContent(OutputPacket *pkt);
-
-  /**
-   * Used to invoke a write into the Socket, returns false if the socket is not
-   * ready for write
-   */
-  WriteState FlushWriteBuffer();
-
-  /**
-   * @brief: process SSL handshake to generate valid SSL
-   * connection context for further communications
-   * @return FINISH when the SSL handshake failed
-   *         PROCEED when the SSL handshake success
-   *         NEED_DATA when the SSL handshake is partially done due to network
-   *         latency
-   */
-  Transition SSLHandshake();
-
-  /**
-   * Set the socket to non-blocking mode
-   */
-  inline void SetNonBlocking(evutil_socket_t fd) {
-    auto flags = fcntl(fd, F_GETFL);
-    flags |= O_NONBLOCK;
-    if (fcntl(fd, F_SETFL, flags) < 0) {
-      LOG_ERROR("Failed to set non-blocking socket");
-    }
-  }
-
-  /**
-   * Set TCP No Delay for lower latency
-   */
-  inline void SetTCPNoDelay(evutil_socket_t fd) {
-    int one = 1;
-    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
-  }
+  friend class NetworkIoWrapperFactory;
 
   /**
    * @brief: Determine if there is still responses in the buffer
@@ -202,27 +182,17 @@ class ConnectionHandle {
    */
   inline bool HasResponse() {
     return (protocol_handler_->responses_.size() != 0) ||
-           (wbuf_->buf_size != 0);
+           (io_wrapper_->wbuf_->size_ != 0);
   }
 
-  int sock_fd_;                            // socket file descriptor
-  struct event *network_event = nullptr;   // something to read from network
-  struct event *workpool_event = nullptr;  // worker thread done the job
-
-  SSL *conn_SSL_context = nullptr;  // SSL context for the connection
-
-  ConnectionHandlerTask *handler_;  // reference to the network thread
-  std::unique_ptr<ProtocolHandler>
-      protocol_handler_;  // Stores state for this socket
-  tcop::TrafficCop traffic_cop_;
-
-  std::shared_ptr<Buffer> rbuf_;    // Socket's read buffer
-  std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
-  unsigned int next_response_ = 0;  // The next response in the response buffer
-
+  ConnectionHandlerTask *conn_handler_;
+  std::shared_ptr<NetworkIoWrapper> io_wrapper_;
   StateMachine state_machine_;
-
-  short curr_event_flag_;  // current libevent event flag
+  struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
+  std::unique_ptr<ProtocolHandler> protocol_handler_ = nullptr;
+  tcop::TrafficCop tcop_;
+  // TODO(Tianyu): Put this into protocol handler in a later refactor
+  unsigned int next_response_ = 0;
 };
 }  // namespace network
 }  // namespace peloton
