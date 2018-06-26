@@ -333,10 +333,12 @@ void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
   llvm::Value *txn = ec.GetTransactionPtr(ctx_.GetCompilationContext());
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
+  llvm::Value *is_for_update = codegen.ConstBool(plan_.IsForUpdate());
+
   // Invoke TransactionRuntime::PerformRead(...)
   llvm::Value *out_idx =
       codegen.Call(TransactionRuntimeProxy::PerformVectorizedRead,
-                   {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
+                   {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec, is_for_update});
   selection_vector.SetNumElements(out_idx);
 }
 

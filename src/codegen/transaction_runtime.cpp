@@ -27,7 +27,7 @@ namespace codegen {
 //       the actual reading. Can this be merged?
 uint32_t TransactionRuntime::PerformVectorizedRead(
     concurrency::TransactionContext &txn, storage::TileGroup &tile_group,
-    uint32_t tid_start, uint32_t tid_end, uint32_t *selection_vector) {
+    uint32_t tid_start, uint32_t tid_end, uint32_t *selection_vector, bool is_for_update) {
   // Get the transaction manager
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -56,7 +56,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     ItemPointer location{tile_group_idx, selection_vector[idx]};
 
     // Perform the read
-    bool can_read = txn_manager.PerformRead(&txn, location, tile_group_header, false);
+    bool can_read = txn_manager.PerformRead(&txn, location, tile_group_header, is_for_update);
 
     // Update the selection vector and output position
     selection_vector[out_idx] = selection_vector[idx];

@@ -47,7 +47,8 @@ class TransactionRuntime {
   static uint32_t PerformVectorizedRead(concurrency::TransactionContext &txn,
                                         storage::TileGroup &tile_group,
                                         uint32_t tid_start, uint32_t tid_end,
-                                        uint32_t *selection_vector);
+                                        uint32_t *selection_vector,
+                                        bool is_for_update);
   // Check Ownership
   static bool IsOwner(concurrency::TransactionContext &txn,
                       storage::TileGroupHeader *tile_group_header,
