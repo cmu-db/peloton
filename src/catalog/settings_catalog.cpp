@@ -223,7 +223,7 @@ bool SettingsCatalog::UpdateSettingValue(concurrency::TransactionContext *txn,
  *  @param      txn  TransactionContext for getting the setting.
  *  @return     setting catalog entry.
  */
-std::shared_ptr<SettingsCatalogEntry> SettingsCatalog::GetSetting(
+std::shared_ptr<SettingsCatalogEntry> SettingsCatalog::GetSettingsCatalogEntry(
     const std::string &name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
@@ -254,7 +254,7 @@ std::shared_ptr<SettingsCatalogEntry> SettingsCatalog::GetSetting(
  *              entry mapping.
  */
 std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
-SettingsCatalog::GetSettings(concurrency::TransactionContext *txn) {
+SettingsCatalog::GetSettingsCatalogEntries(concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

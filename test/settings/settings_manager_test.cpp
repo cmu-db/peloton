@@ -35,7 +35,7 @@ TEST_F(SettingsManagerTests, InitializationTest) {
   auto txn = txn_manager.BeginTransaction();
   int32_t port = config_manager.GetInt(settings::SettingId::port);
   int32_t port_default =
-      settings_catalog.GetSetting("port", txn)->GetDefaultValue().GetAs<int32_t>();
+      settings_catalog.GetSettingsCatalogEntry("port", txn)->GetDefaultValue().GetAs<int32_t>();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(port, port_default);
 
@@ -44,7 +44,7 @@ TEST_F(SettingsManagerTests, InitializationTest) {
   std::string socket_family =
       config_manager.GetString(settings::SettingId::socket_family);
   std::string socket_family_default =
-      settings_catalog.GetSetting("socket_family", txn)
+      settings_catalog.GetSettingsCatalogEntry("socket_family", txn)
           ->GetDefaultValue().ToString();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(socket_family, socket_family_default);
@@ -54,7 +54,7 @@ TEST_F(SettingsManagerTests, InitializationTest) {
   bool index_tuner =
       config_manager.GetBool(settings::SettingId::index_tuner);
   bool index_tuner_default =
-      settings_catalog.GetSetting("index_tuner", txn)->GetDefaultValue().IsTrue();
+      settings_catalog.GetSettingsCatalogEntry("index_tuner", txn)->GetDefaultValue().IsTrue();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(index_tuner, index_tuner_default);
 }
@@ -73,7 +73,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   auto txn = txn_manager.BeginTransaction();
   int32_t value1 = config_manager.GetInt(settings::SettingId::port);
   int32_t value2 =
-      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
+      settings_catalog.GetSettingsCatalogEntry("port", txn)->GetValue().GetAs<int32_t>();
   EXPECT_EQ(value1, value2);
   txn_manager.CommitTransaction(txn);
 
@@ -81,7 +81,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   config_manager.SetInt(settings::SettingId::port, 12345, false, txn);
   int32_t value3 = config_manager.GetInt(settings::SettingId::port);
   int32_t value4 =
-      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
+      settings_catalog.GetSettingsCatalogEntry("port", txn)->GetValue().GetAs<int32_t>();
   EXPECT_EQ(value3, 12345);
   EXPECT_EQ(value3, value4);
   txn_manager.CommitTransaction(txn);
@@ -90,7 +90,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   config_manager.ResetValue(settings::SettingId::port, txn);
   int32_t value5 = config_manager.GetInt(settings::SettingId::port);
   int32_t value6 =
-      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
+      settings_catalog.GetSettingsCatalogEntry("port", txn)->GetValue().GetAs<int32_t>();
   EXPECT_EQ(value1, value5);
   EXPECT_EQ(value2, value6);
   txn_manager.CommitTransaction(txn);
@@ -99,7 +99,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   txn = txn_manager.BeginTransaction();
   bool value7 = config_manager.GetBool(settings::SettingId::index_tuner);
   bool value8 =
-      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
+      settings_catalog.GetSettingsCatalogEntry("index_tuner", txn)->GetValue().IsTrue();
   EXPECT_EQ(value7, value8);
   txn_manager.CommitTransaction(txn);
 
@@ -107,7 +107,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   config_manager.SetBool(settings::SettingId::index_tuner, true, false, txn);
   bool value9 = config_manager.GetBool(settings::SettingId::index_tuner);
   bool value10 =
-      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
+      settings_catalog.GetSettingsCatalogEntry("index_tuner", txn)->GetValue().IsTrue();
   EXPECT_TRUE(value9);
   EXPECT_EQ(value9, value10);
   txn_manager.CommitTransaction(txn);
@@ -116,7 +116,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   config_manager.ResetValue(settings::SettingId::index_tuner, txn);
   bool value11 = config_manager.GetBool(settings::SettingId::index_tuner);
   bool value12 =
-      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
+      settings_catalog.GetSettingsCatalogEntry("index_tuner", txn)->GetValue().IsTrue();
   EXPECT_EQ(value7, value11);
   EXPECT_EQ(value8, value12);
   txn_manager.CommitTransaction(txn);
@@ -126,7 +126,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   std::string value13 =
       config_manager.GetString(settings::SettingId::socket_family);
   std::string value14 =
-      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+      settings_catalog.GetSettingsCatalogEntry("socket_family", txn)->GetValue().ToString();
   EXPECT_EQ(value13, value14);
   txn_manager.CommitTransaction(txn);
 
@@ -135,7 +135,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   std::string value15 =
       config_manager.GetString(settings::SettingId::socket_family);
   std::string value16 =
-      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+      settings_catalog.GetSettingsCatalogEntry("socket_family", txn)->GetValue().ToString();
   EXPECT_EQ(value15, "test");
   EXPECT_EQ(value16, value16);
   txn_manager.CommitTransaction(txn);
@@ -145,7 +145,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   std::string value17 =
       config_manager.GetString(settings::SettingId::socket_family);
   std::string value18 =
-      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+      settings_catalog.GetSettingsCatalogEntry("socket_family", txn)->GetValue().ToString();
   EXPECT_EQ(value15, value17);
   EXPECT_EQ(value16, value18);
   txn_manager.CommitTransaction(txn);

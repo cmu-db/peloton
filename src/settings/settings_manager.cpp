@@ -223,24 +223,19 @@ void SettingsManager::UpdateSettingListFromCatalog(
     concurrency::TransactionContext *txn) {
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance(txn);
 
-  // Update each catalog value from pg_settings
-  for (auto setting_entry_pair : settings_catalog.GetSettings(txn)) {
-    auto setting_name = setting_entry_pair.first;
-    auto setting_entry = setting_entry_pair.second;
+  // Update each setting value from pg_settings
+  for (auto param = settings_.begin(); param != settings_.end(); param++) {
+    auto setting_entry = settings_catalog.GetSettingsCatalogEntry(param->second.name, txn);
 
-    // Find the setting from setting list on memory
-    auto param = settings_.begin();
-    while (param != settings_.end()) {
-      if (param->second.name == setting_name) {
-        break;
-      }
-      param++;
+    if (setting_entry != nullptr) {
+      // Set the setting value and the default value
+      param->second.value = setting_entry->GetValue();
+      param->second.default_value = setting_entry->GetDefaultValue();
+    } else {
+      LOG_ERROR("Setting %s can't be found within SettingsCatalog",
+                param->second.name.c_str());
+      PELOTON_ASSERT(false);
     }
-    PELOTON_ASSERT(param != settings_.end());
-
-    // Set value and default_value
-    param->second.value = setting_entry->GetValue();
-    param->second.default_value = setting_entry->GetDefaultValue();
   }
 }
 
@@ -312,7 +307,7 @@ bool SettingsManager::InsertCatalog(const Param &param,
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
 
   // Check a same setting is not existed
-  if (settings_catalog.GetSetting(param.name, txn) != nullptr) {
+  if (settings_catalog.GetSettingsCatalogEntry(param.name, txn) != nullptr) {
     LOG_ERROR("The setting %s is already existed", param.name.c_str());
     return false;
   }

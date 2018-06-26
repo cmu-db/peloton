@@ -78,11 +78,11 @@ class SettingsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<SettingsCatalogEntry> GetSetting(
+  std::shared_ptr<SettingsCatalogEntry> GetSettingsCatalogEntry(
       const std::string &name, concurrency::TransactionContext *txn);
 
   std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
-  GetSettings(concurrency::TransactionContext *txn);
+  GetSettingsCatalogEntries(concurrency::TransactionContext *txn);
 
   enum class ColumnId {
     NAME = 0,
