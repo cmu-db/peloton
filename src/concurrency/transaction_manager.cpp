@@ -99,9 +99,8 @@ bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
                                     const void *position_ptr) {
   ItemPointer &position = *((ItemPointer *)position_ptr);
 
-  auto tile_group_header = storage::StorageManager::GetInstance()
-                               ->GetTileGroup(position.block)
-                               ->GetHeader();
+  auto tile_group_header =
+      storage::StorageManager::GetInstance()->GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);

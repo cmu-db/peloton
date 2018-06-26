@@ -148,9 +148,10 @@ void TimestampOrderingTransactionManager::YieldOwnership(
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
 
-bool TimestampOrderingTransactionManager::PerformRead(
-    TransactionContext *const current_txn, const ItemPointer &read_location,
-    storage::TileGroupHeader *tile_group_header, bool acquire_ownership) {
+bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const current_txn,
+                                                      const ItemPointer &read_location,
+                                                      storage::TileGroupHeader *tile_group_header,
+                                                      bool acquire_ownership) {
   ItemPointer location = read_location;
 
   //////////////////////////////////////////////////////////
@@ -346,8 +347,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
   oid_t tuple_id = location.offset;
 
   auto storage_manager = storage::StorageManager::GetInstance();
-  auto tile_group_header =
-      storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+  auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   // check MVCC info
@@ -391,8 +391,9 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   // version.
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
                  transaction_id);
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                     .IsNull() == true);
+  PELOTON_ASSERT(
+      tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() ==
+      true);
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
@@ -496,8 +497,9 @@ void TimestampOrderingTransactionManager::PerformDelete(
   PELOTON_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
                  transaction_id);
   // we must be deleting the latest version.
-  PELOTON_ASSERT(tile_group_header->GetPrevItemPointer(old_location.offset)
-                     .IsNull() == true);
+  PELOTON_ASSERT(
+      tile_group_header->GetPrevItemPointer(old_location.offset).IsNull() ==
+      true);
 
   // check whether the new version is empty.
   PELOTON_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
@@ -552,8 +554,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   oid_t tuple_id = location.offset;
 
   auto storage_manager = storage::StorageManager::GetInstance();
-  auto tile_group_header =
-      storage_manager->GetTileGroup(tile_group_id)->GetHeader();
+  auto tile_group_header = storage_manager->GetTileGroup(tile_group_id)->GetHeader();
 
   PELOTON_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
                  current_txn->GetTransactionId());
@@ -595,8 +596,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     return ResultType::SUCCESS;
   }
 
-  auto &rw_set = current_txn->GetReadWriteSet();
-
   auto storage_manager = storage::StorageManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -605,6 +604,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
 
+  auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
 
   auto gc_set = current_txn->GetGCSetPtr();

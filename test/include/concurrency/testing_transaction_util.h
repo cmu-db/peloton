@@ -355,6 +355,7 @@ class TransactionScheduler {
         table(datatable_),
         time(0),
         concurrent(false) {
+
     for (size_t i = 0; i < num_txn; i++) {
       if (read_only_.find(i) != read_only_.end()) {
         schedules.emplace_back(i, true);

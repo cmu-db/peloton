@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include <atomic>
@@ -57,7 +58,8 @@ class TransactionManager {
    */
   virtual ~TransactionManager() {}
 
-  void Init(const ProtocolType protocol, const IsolationLevelType isolation,
+  void Init(const ProtocolType protocol,
+            const IsolationLevelType isolation, 
             const ConflictAvoidanceType conflict) {
     protocol_ = protocol;
     isolation_level_ = isolation;
@@ -72,8 +74,9 @@ class TransactionManager {
    *
    * @return     True if occupied, False otherwise.
    */
-  bool IsOccupied(TransactionContext *const current_txn,
-                  const void *position_ptr);
+  bool IsOccupied(
+      TransactionContext *const current_txn,
+      const void *position_ptr);
 
   /**
    * @brief      Determines if visible.
@@ -100,9 +103,10 @@ class TransactionManager {
    *
    * @return     True if owner, False otherwise.
    */
-  virtual bool IsOwner(TransactionContext *const current_txn,
-                       const storage::TileGroupHeader *const tile_group_header,
-                       const oid_t &tuple_id) = 0;
+  virtual bool IsOwner(
+      TransactionContext *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
 
   /**
    * This method tests whether any other transaction has owned this version.
@@ -113,9 +117,10 @@ class TransactionManager {
    *
    * @return     True if owned, False otherwise.
    */
-  virtual bool IsOwned(TransactionContext *const current_txn,
-                       const storage::TileGroupHeader *const tile_group_header,
-                       const oid_t &tuple_id) = 0;
+  virtual bool IsOwned(
+      TransactionContext *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
 
   /**
    * Test whether the current transaction has created this version of the tuple.
@@ -127,9 +132,9 @@ class TransactionManager {
    * @return     True if written, False otherwise.
    */
   virtual bool IsWritten(
-      TransactionContext *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+    TransactionContext *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) = 0;
 
   /**
    * Test whether it can obtain ownership.
@@ -156,7 +161,7 @@ class TransactionManager {
    */
   virtual bool AcquireOwnership(
       TransactionContext *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
+      const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id) = 0;
 
   /**
@@ -168,8 +173,8 @@ class TransactionManager {
    */
   virtual void YieldOwnership(
       TransactionContext *const current_txn,
-      // const oid_t &tile_group_id,
-      const storage::TileGroupHeader *const tile_group_header,
+      // const oid_t &tile_group_id, 
+      const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id) = 0;
 
   /**
@@ -181,13 +186,14 @@ class TransactionManager {
    * @param      index_entry_ptr  The index entry pointer
    */
   virtual void PerformInsert(TransactionContext *const current_txn,
-                             const ItemPointer &location,
+                             const ItemPointer &location, 
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(TransactionContext *const current_txn,
-                           const ItemPointer &location,
-                           storage::TileGroupHeader *tile_group_header,
-                           bool acquire_ownership) = 0;
+                             const ItemPointer &location,
+                             storage::TileGroupHeader *tile_group_header,
+                             bool acquire_ownership) = 0;
+
 
   virtual void PerformUpdate(TransactionContext *const current_txn,
                              const ItemPointer &old_location,
@@ -209,8 +215,7 @@ class TransactionManager {
    * @param      current_txn  The current transaction
    * @param[in]  result       The result
    */
-  void SetTransactionResult(TransactionContext *const current_txn,
-                            const ResultType result) {
+  void SetTransactionResult(TransactionContext *const current_txn, const ResultType result) {
     current_txn->SetResult(result);
   }
 
@@ -246,8 +251,7 @@ class TransactionManager {
   virtual ResultType CommitTransaction(
       TransactionContext *const current_txn) = 0;
 
-  virtual ResultType AbortTransaction(
-      TransactionContext *const current_txn) = 0;
+  virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
 
   /**
    * This function generates the maximum commit id of committed transactions.
@@ -265,12 +269,15 @@ class TransactionManager {
    *
    * @return     The isolation level.
    */
-  IsolationLevelType GetIsolationLevel() { return isolation_level_; }
+  IsolationLevelType GetIsolationLevel() {
+    return isolation_level_;
+  }
 
  protected:
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
+
 };
 }  // namespace storage
 }  // namespace peloton

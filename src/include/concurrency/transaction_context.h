@@ -118,9 +118,8 @@ class TransactionContext : public Printable {
    *
    * @return     The query strings.
    */
-  inline const std::vector<std::string> &GetQueryStrings() const {
-    return query_strings_;
-  }
+  inline const std::vector<std::string>& GetQueryStrings() const {
+                                                      return query_strings_; }
 
   /**
    * @brief      Sets the commit identifier.
@@ -135,7 +134,7 @@ class TransactionContext : public Printable {
    * @param[in]  epoch_id  The epoch identifier
    */
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
-
+  
   /**
    * @brief      Sets the timestamp.
    *
@@ -148,18 +147,18 @@ class TransactionContext : public Printable {
    *
    * @param[in]  query_string  The query string
    */
-  inline void AddQueryString(const char *query_string) {
+  inline void AddQueryString(const char* query_string) {
     query_strings_.push_back(std::string(query_string));
   }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.push_back(
-        std::make_tuple(database_oid, table_oid, index_oid, DDLType::CREATE));
+    rw_object_set_.push_back(std::make_tuple(database_oid, table_oid,
+                                index_oid, DDLType::CREATE));
   }
 
   void RecordDrop(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.push_back(
-        std::make_tuple(database_oid, table_oid, index_oid, DDLType::DROP));
+    rw_object_set_.push_back(std::make_tuple(database_oid, table_oid,
+                                index_oid, DDLType::DROP));
   }
 
   void RecordReadOwn(const ItemPointer &);
@@ -262,7 +261,9 @@ class TransactionContext : public Printable {
    *
    * @return     True if read only, False otherwise.
    */
-  bool IsReadOnly() const { return read_only_; }
+  bool IsReadOnly() const {
+    return read_only_;
+  }
 
   /**
    * @brief      Determines if already written.
@@ -325,8 +326,8 @@ class TransactionContext : public Printable {
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;
 
-  /**
-   * this set contains data location that needs to be gc'd in the transaction.
+  /** 
+   * this set contains data location that needs to be gc'd in the transaction. 
    */
   std::shared_ptr<GCSet> gc_set_;
   std::shared_ptr<GCObjectSet> gc_object_set_;
@@ -340,8 +341,7 @@ class TransactionContext : public Printable {
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
 
-  /** one default transaction is NOT 'read only' unless it is marked 'read only'
-   * explicitly*/
+  /** one default transaction is NOT 'read only' unless it is marked 'read only' explicitly*/
   bool read_only_ = false;
 };
 
