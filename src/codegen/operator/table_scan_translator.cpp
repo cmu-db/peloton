@@ -105,6 +105,8 @@ class TableScanTranslator::ScanConsumer : public codegen::ScanCallback {
                               llvm::Value *tid_end,
                               Vector &selection_vector) const;
 
+  void RecordReads(CodeGen &codegen, Vector &selection_vector) const;
+
   // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
   // store their TIDs in the output TID selection vector
   void FilterRowsByPredicate(CodeGen &codegen,
@@ -290,14 +292,17 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
                           selection_vector_);
   }
 
-  // 3. Setup the (filtered) row batch and setup attribute accessors
+  // 3. Record reads for all of the tuple that are visible and pass predicate
+  RecordReads(codegen, selection_vector_);
+
+  // 4. Setup the (filtered) row batch and setup attribute accessors
   RowBatch batch{ctx_.GetCompilationContext(), tile_group_id_, tid_start,
                  tid_end, selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
 
-  // 4. Push the batch into the pipeline
+  // 5. Push the batch into the pipeline
   ctx_.Consume(batch);
 }
 
@@ -333,12 +338,10 @@ void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
   llvm::Value *txn = ec.GetTransactionPtr(ctx_.GetCompilationContext());
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
-  llvm::Value *is_for_update = codegen.ConstBool(plan_.IsForUpdate());
-
-  // Invoke TransactionRuntime::PerformRead(...)
+  // Invoke TransactionRuntime::PerformVisibilityCheck(...)
   llvm::Value *out_idx =
-      codegen.Call(TransactionRuntimeProxy::PerformVectorizedRead,
-                   {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec, is_for_update});
+      codegen.Call(TransactionRuntimeProxy::PerformVisibilityCheck,
+                   {txn, tile_group_ptr_, tid_start, tid_end, raw_sel_vec});
   selection_vector.SetNumElements(out_idx);
 }
 
@@ -379,6 +382,22 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     // Set the validity of the row
     row.SetValidity(codegen, bool_val);
   });
+}
+
+void TableScanTranslator::ScanConsumer::RecordReads(
+    CodeGen &codegen, Vector &selection_vector) const {
+  ExecutionConsumer &ec = ctx_.GetCompilationContext().GetExecutionConsumer();
+  llvm::Value *txn = ec.GetTransactionPtr(ctx_.GetCompilationContext());
+  llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
+
+  llvm::Value *is_for_update = codegen.ConstBool(plan_.IsForUpdate());
+  llvm::Value *end_idx = selection_vector.GetNumElements();
+
+  // Invoke TransactionRuntime::PerformVectorizedRead(...)
+  llvm::Value *out_idx =
+      codegen.Call(TransactionRuntimeProxy::PerformVectorizedRead,
+                   {txn, tile_group_ptr_, raw_sel_vec, end_idx, is_for_update});
+  selection_vector.SetNumElements(out_idx);
 }
 
 }  // namespace codegen
