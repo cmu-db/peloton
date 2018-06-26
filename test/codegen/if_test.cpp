@@ -59,7 +59,7 @@ TEST_F(IfTest, TestIfOnly) {
     func.ReturnAndFinish(cond.BuildPHI(va, vb).GetValue());
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*ftype)(int);
 
@@ -128,7 +128,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
     func.ReturnAndFinish(final[1]);
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*ftype)(int);
 
@@ -174,7 +174,7 @@ TEST_F(IfTest, BreakTest) {
     func.ReturnAndFinish(final[0]);
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*ftype)(int);
 
@@ -235,7 +235,7 @@ TEST_F(IfTest, ComplexNestedIf) {
     func.ReturnAndFinish(cond.BuildPHI(vab, vc).GetValue());
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef int (*ftype)(int);
 

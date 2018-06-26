@@ -97,17 +97,13 @@ void CompilationContext::GeneratePlan(Query &query,
   }
 
   // Next, we prepare the query statement with the functions we've generated
-  Query::QueryFunctions funcs = {
-      .init_func = init, .plan_func = plan, .tear_down_func = tear_down};
-  bool prepared = query.Prepare(funcs);
-  if (!prepared) {
-    throw Exception{"There was an error preparing the compiled query"};
-  }
+  Query::LLVMFunctions funcs = {init, plan, tear_down};
+  query.Prepare(funcs);
 
   // We're done
   if (stats != nullptr) {
     timer.Stop();
-    stats->jit_ms = timer.GetDuration();
+    stats->optimize_ms = timer.GetDuration();
   }
 }
 

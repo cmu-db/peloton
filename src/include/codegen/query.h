@@ -13,9 +13,9 @@
 #pragma once
 
 #include "codegen/code_context.h"
+#include "codegen/parameter_cache.h"
 #include "codegen/query_parameters.h"
 #include "codegen/query_state.h"
-#include "codegen/parameter_cache.h"
 
 namespace peloton {
 
@@ -41,16 +41,37 @@ class ExecutionConsumer;
 //===----------------------------------------------------------------------===//
 class Query {
  public:
+  struct CompileStats {
+    double compile_ms = 0.0;
+  };
+
   struct RuntimeStats {
+    double interpreter_prepare_ms = 0.0;
     double init_ms = 0.0;
     double plan_ms = 0.0;
     double tear_down_ms = 0.0;
   };
 
-  struct QueryFunctions {
+  // We use this handy class for the parameters to the llvm functions
+  // to avoid complex casting and pointer manipulation
+  struct FunctionArguments {
+    executor::ExecutorContext *executor_context;
+    char *consumer_arg;
+    char rest[0];
+  } PACKED;
+
+  struct LLVMFunctions {
     llvm::Function *init_func;
     llvm::Function *plan_func;
     llvm::Function *tear_down_func;
+  };
+
+  using compiled_function_t = void (*)(FunctionArguments *);
+
+  struct CompiledFunctions {
+    compiled_function_t init_func;
+    compiled_function_t plan_func;
+    compiled_function_t tear_down_func;
   };
 
   /// This class cannot be copy or move-constructed
@@ -61,7 +82,10 @@ class Query {
    *
    * @param funcs The compiled functions that implement the logic of the query
    */
-  bool Prepare(const QueryFunctions &funcs);
+  void Prepare(const LLVMFunctions &funcs);
+
+  // Compiles the function in this query to native code
+  void Compile(CompileStats *stats = nullptr);
 
   /**
    * @brief Executes the compiled query.
@@ -94,6 +118,14 @@ class Query {
   /// Constructor. Private so callers use the QueryCompiler class.
   explicit Query(const planner::AbstractPlan &query_plan);
 
+  // Execute the query as native code (must already be compiled)
+  void ExecuteNative(FunctionArguments *function_arguments,
+                     RuntimeStats *stats);
+
+  // Execute the query using the interpreter
+  void ExecuteInterpreter(FunctionArguments *function_arguments,
+                          RuntimeStats *stats);
+
  private:
   // The query plan
   const planner::AbstractPlan &query_plan_;
@@ -104,11 +136,14 @@ class Query {
   // The size of the parameter the functions take
   QueryState query_state_;
 
-  // The init(), plan() and tearDown() functions
-  typedef void (*compiled_function_t)(char *);
-  compiled_function_t init_func_;
-  compiled_function_t plan_func_;
-  compiled_function_t tear_down_func_;
+  // LLVM IR of the query functions
+  LLVMFunctions llvm_functions_;
+
+  // Pointers to the compiled query functions
+  CompiledFunctions compiled_functions_;
+
+  // Shows if the query has been compiled to native code
+  bool is_compiled_;
 };
 
 }  // namespace codegen

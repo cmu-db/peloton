@@ -257,7 +257,7 @@ void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
   txn_manager.CommitTransaction(txn);
 }
 
-codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
+PelotonCodeGenTest::CodeGenStats PelotonCodeGenTest::CompileAndExecute(
     planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer) {
   codegen::QueryParameters parameters(plan, {});
 
@@ -266,15 +266,18 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto *txn = txn_manager.BeginTransaction();
 
   // Compile the query.
-  codegen::QueryCompiler::CompileStats stats;
+  CodeGenStats stats;
   auto query = codegen::QueryCompiler().Compile(
-      plan, parameters.GetQueryParametersMap(), consumer, &stats);
+      plan, parameters.GetQueryParametersMap(), consumer, &stats.compile_stats);
 
   // Executor context
   executor::ExecutorContext exec_ctx{txn, std::move(parameters)};
 
-  // Execute the query
-  query->Execute(exec_ctx, consumer);
+  // Compile Query to native code
+  query->Compile();
+
+  // Execute the quer
+  query->Execute(exec_ctx, consumer, &stats.runtime_stats);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
@@ -282,7 +285,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   return stats;
 }
 
-codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
+PelotonCodeGenTest::CodeGenStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
     codegen::ExecutionConsumer &consumer, bool &cached,
     std::vector<type::Value> params) {
@@ -294,19 +297,20 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
                                      codegen::QueryParameters(*plan, params)};
 
   // Compile
-  codegen::QueryCompiler::CompileStats stats;
+  CodeGenStats stats;
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   cached = (query != nullptr);
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
         *plan, exec_ctx.GetParams().GetQueryParametersMap(), consumer);
+    compiled_query->Compile();
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
   // Execute the query.
-  query->Execute(exec_ctx, consumer);
+  query->Execute(exec_ctx, consumer, &stats.runtime_stats);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);

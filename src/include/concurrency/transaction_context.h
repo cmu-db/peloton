@@ -162,8 +162,6 @@ class TransactionContext : public Printable {
         std::make_tuple(database_oid, table_oid, index_oid, DDLType::DROP));
   }
 
-  void RecordRead(const ItemPointer &);
-
   void RecordReadOwn(const ItemPointer &);
 
   void RecordUpdate(const ItemPointer &);
