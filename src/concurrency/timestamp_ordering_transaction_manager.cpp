@@ -33,9 +33,9 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   // get the pointer to the last_reader_cid field.
   cid_t read_ts = tile_group_header->GetLastReaderCommitId(tuple_id);
 
-  auto latch = tile_group_header->GetSpinLatch(tuple_id);
+  auto &latch = tile_group_header->GetSpinLatch(tuple_id);
 
-  latch->Lock();
+  latch.Lock();
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
@@ -43,7 +43,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     // if the write lock has already been acquired by some concurrent
     // transactions,
     // then return without setting the last_reader_cid.
-    latch->Unlock();
+    latch.Unlock();
     return false;
   } else {
     // if current_cid is larger than the current value of last_reader_cid field,
@@ -52,7 +52,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
       tile_group_header->SetLastReaderCommitId(tuple_id, current_cid);
     }
 
-    latch->Unlock();
+    latch.Unlock();
     return true;
   }
 }
@@ -114,8 +114,8 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // to acquire the ownership,
   // we must guarantee that no transaction that has read
   // the tuple has a larger timestamp than the current transaction.
-  auto latch = tile_group_header->GetSpinLatch(tuple_id);
-  latch->Lock();
+  auto &latch = tile_group_header->GetSpinLatch(tuple_id);
+  latch.Lock();
   // change timestamp
   cid_t last_reader_cid = tile_group_header->GetLastReaderCommitId(tuple_id);
 
@@ -124,16 +124,16 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // consider a transaction that is executed under snapshot isolation.
   // in this case, commit_id is not equal to read_id.
   if (last_reader_cid > current_txn->GetCommitId()) {
-    tile_group_header->GetSpinLatch(tuple_id)->Unlock();
+    latch.Unlock();
 
     return false;
   } else {
     if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-      latch->Unlock();
+      latch.Unlock();
 
       return false;
     } else {
-      latch->Unlock();
+      latch.Unlock();
 
       return true;
     }
