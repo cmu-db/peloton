@@ -15,6 +15,7 @@
 #include "network/connection_handle.h"
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
+#include "common/statement_cache.h"
 namespace peloton {
 namespace tcop {
 
@@ -29,7 +30,6 @@ struct ClientProcessState {
   bool is_queuing_;
   std::string error_message_, db_name_ = DEFAULT_DB_NAME;
   std::vector<type::Value> param_values_;
-  std::vector<ResultValue> results_;
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;
   // Default database name
@@ -41,12 +41,14 @@ struct ClientProcessState {
   std::vector<ResultValue> result_;
   std::stack<TcopTxnState> tcop_txn_state_;
   executor::ExecutionResult p_status_;
+  StatementCache statement_cache_;
 };
 
 // Execute a statement
 ResultType ExecuteStatement(
+    ClientProcessState &state,
     const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, const bool unnamed,
+    const std::vector<type::Value> &params, bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
     size_t thread_id = 0);
@@ -59,13 +61,15 @@ executor::ExecutionResult ExecuteHelper(
 
 // Prepare a statement using the parse tree
 std::shared_ptr<Statement> PrepareStatement(
+    ClientProcessState &state,
     const std::string &statement_name, const std::string &query_string,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
     size_t thread_id = 0);
 
 bool BindParamsForCachePlan(
+    ClientProcessState &state,
     const std::vector<std::unique_ptr<expression::AbstractExpression>> &,
-    const size_t thread_id = 0);
+    size_t thread_id = 0);
 
 std::vector<FieldInfo> GenerateTupleDescriptor(
     parser::SQLStatement *select_stmt);

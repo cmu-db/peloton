@@ -43,6 +43,18 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
 
   inline tcop::ClientProcessState &ClientProcessState() { return state_; }
 
+  // TODO(Tianyu): What the hell does this thing do?
+  void CompleteCommand(const QueryType &query_type, int rows, PostgresPacketWriter &out);
+
+  // TODO(Tianyu): Remove these later. Legacy shit code.
+  void ExecQueryMessageGetResult(ResultType status);
+  ResultType ExecQueryExplain(const std::string &query, parser::ExplainStatement &explain_stmt);
+  bool HardcodedExecuteFilter(QueryType query_type);
+  NetworkProtocolType protocol_type_;
+  std::vector<int> result_format_;
+  bool skipped_stmt_ = false;
+  std::string skipped_query_string_;
+  QueryType skipped_query_type_;
  private:
   bool startup_ = true;
   PostgresInputPacket curr_input_packet_{};

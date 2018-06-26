@@ -140,6 +140,7 @@ class ReadBuffer : public Buffer {
    */
   inline size_t BytesAvailable() { return size_ - offset_; }
 
+
   /**
    * Read the given number of bytes into destination, advancing cursor by that
    * number. It is up to the caller to ensure that there are enough bytes
@@ -163,7 +164,7 @@ class ReadBuffer : public Buffer {
    * @return value of integer switched from network byte order
    */
   template <typename T>
-  inline T ReadInt() {
+  inline T ReadValue() {
     // We only want to allow for certain type sizes to be used
     // After the static assert, the compiler should be smart enough to throw
     // away the other cases and only leave the relevant return statement.
@@ -199,6 +200,16 @@ class ReadBuffer : public Buffer {
     }
     // No nul terminator found
     throw NetworkProcessException("Expected nil in read buffer, none found");
+  }
+
+  /**
+   * Read a not nul-terminated string off the read buffer of specified length
+   * @return string at head of read buffer
+   */
+  inline std::string ReadString(size_t len) {
+    std::string result(buf_.begin() + offset_, buf_.begin() + offset_ + len);
+    offset_ += len;
+    return result;
   }
 
   /**
@@ -382,8 +393,8 @@ class WriteQueue {
   }
 
  private:
+  friend class PostgresPacketWriter;
   std::vector<std::shared_ptr<WriteBuffer>> buffers_;
-  size_t offset_ = 0;
   bool flush_ = false;
 };
 
