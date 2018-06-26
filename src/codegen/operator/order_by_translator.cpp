@@ -316,8 +316,7 @@ void OrderByTranslator::Produce() const {
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
     ProduceResults callback(ctx, plan, position_list);
-    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, plan.GetOffset(),
-                              callback);
+    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, 0, callback);
   };
 
   // We set the pipeline to be serial in the constructor. Sanity check here.
