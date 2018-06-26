@@ -33,7 +33,7 @@ class TileGroup;
 //===--------------------------------------------------------------------===//
 
 struct TupleHeader {
-  std::unique_ptr<common::synchronization::SpinLatch> latch;
+  common::synchronization::SpinLatch latch;
   std::atomic<txn_id_t> txn_id;
   cid_t read_ts;
   cid_t begin_ts;
@@ -92,8 +92,6 @@ class TileGroupHeader : public Printable {
     // copy tuple header values
     for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
          tuple_slot_id++) {
-      tuple_headers_[tuple_slot_id].latch.reset(
-          new common::synchronization::SpinLatch);
       SetTransactionId(tuple_slot_id, other.GetTransactionId(tuple_slot_id));
       SetLastReaderCommitId(tuple_slot_id,
                             other.GetLastReaderCommitId(tuple_slot_id));
@@ -166,9 +164,9 @@ class TileGroupHeader : public Printable {
     return tile_group;
   }
 
-  inline common::synchronization::SpinLatch *GetSpinLatch(
+  inline common::synchronization::SpinLatch &GetSpinLatch(
       const oid_t &tuple_slot_id) const {
-    return tuple_headers_[tuple_slot_id].latch.get();
+    return tuple_headers_[tuple_slot_id].latch;
   }
 
   inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
