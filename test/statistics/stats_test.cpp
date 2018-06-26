@@ -44,8 +44,12 @@ class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
-  settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
-                                    static_cast<int>(StatsType::ENABLE));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  settings::SettingsManager::GetInstance()
+      .SetInt(settings::SettingId::stats_mode,
+              static_cast<int>(StatsType::ENABLE), txn);
+  txn_manager.CommitTransaction(txn);
 
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);

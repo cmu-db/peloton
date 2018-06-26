@@ -65,7 +65,7 @@ bool ArtIndex::InsertEntry(const storage::Tuple *key, ItemPointer *value) {
   auto thread_info = container_.getThreadInfo();
   container_.insert(tree_key, reinterpret_cast<TID>(value), thread_info);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(
         GetMetadata());
@@ -90,7 +90,7 @@ bool ArtIndex::DeleteEntry(const storage::Tuple *key, ItemPointer *value) {
   if (removed) {
     // Update stats
     DecreaseNumberOfTuplesBy(1);
-    if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+    if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
             settings::SettingId::stats_mode)) != StatsType::INVALID) {
       stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
           1, GetMetadata());
@@ -114,7 +114,7 @@ bool ArtIndex::CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
   if (inserted) {
     // Update stats
     IncreaseNumberOfTuplesBy(1);
-    if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+    if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
             settings::SettingId::stats_mode)) != StatsType::INVALID) {
       stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(
           GetMetadata());
@@ -153,7 +153,7 @@ void ArtIndex::Scan(
   }
 
   // Update stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), GetMetadata());
@@ -225,7 +225,7 @@ void ArtIndex::ScanRange(const art::Key &start, const art::Key &end,
   }
 
   // Update stats
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), GetMetadata());

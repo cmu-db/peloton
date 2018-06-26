@@ -31,54 +31,181 @@
 namespace peloton {
 namespace settings {
 
-int32_t SettingsManager::GetInt(SettingId id) {
-  return GetInstance().GetValue(id).GetAs<int32_t>();
-}
-
-double SettingsManager::GetDouble(SettingId id) {
-  return GetInstance().GetValue(id).GetAs<double>();
-}
-
-bool SettingsManager::GetBool(SettingId id) {
-  return GetInstance().GetValue(id).GetAs<bool>();
-}
-
-std::string SettingsManager::GetString(SettingId id) {
-  return GetInstance().GetValue(id).ToString();
-}
-
-void SettingsManager::SetInt(SettingId id, int32_t value) {
-  GetInstance().SetValue(id, type::ValueFactory::GetIntegerValue(value));
-}
-
-void SettingsManager::SetBool(SettingId id, bool value) {
-  GetInstance().SetValue(id, type::ValueFactory::GetBooleanValue(value));
-}
-
-void SettingsManager::SetString(SettingId id, const std::string &value) {
-  GetInstance().SetValue(id, type::ValueFactory::GetVarcharValue(value));
-}
-
 SettingsManager &SettingsManager::GetInstance() {
   static SettingsManager settings_manager;
   return settings_manager;
 }
 
+/** @brief      Get setting value as integer.
+ *  @param      ID to get the setting.
+ *  @return     Setting value
+ */
+int32_t SettingsManager::GetInt(SettingId id) const {
+  return GetValue(id).GetAs<int32_t>();
+}
+
+/** @brief      Get setting value as double.
+ *  @param      ID to get the setting.
+ *  @return     Setting value
+ */
+double SettingsManager::GetDouble(SettingId id) const {
+  return GetValue(id).GetAs<double>();
+}
+
+/** @brief      Get setting value as boolean.
+ *  @param      ID to get the setting.
+ *  @return     Setting value
+ */
+bool SettingsManager::GetBool(SettingId id) const {
+  return GetValue(id).GetAs<bool>();
+}
+
+/** @brief      Get setting value as string.
+ *  @param      ID to get the setting.
+ *  @return     Setting value
+ */
+std::string SettingsManager::GetString(SettingId id) const {
+  return GetValue(id).ToString();
+}
+
+/** @brief      Get setting value as Value object.
+ *  @param      ID to get the setting.
+ *  @return     Setting value
+ */
+type::Value SettingsManager::GetValue(SettingId id) const {
+  // TODO: Look up the value from catalog
+  // Because querying a catalog table needs to create a new transaction and
+  // creating transaction needs to get setting values,
+  // it will be a infinite recursion here.
+
+  auto param = settings_.find(id);
+  return param->second.value;
+}
+
+/** @brief      Set setting value as integer.
+ *  @param      id  ID to set the setting.
+ *  @param      value  Value set to the setting.
+ *  @param      set_default  Set the value to default in addition if true.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::SetInt(SettingId id, int32_t value, bool set_default,
+                             concurrency::TransactionContext *txn) {
+  SetValue(id, type::ValueFactory::GetIntegerValue(value), set_default, txn);
+}
+
+/** @brief      Set setting value as double.
+ *  @param      id  ID to set the setting.
+ *  @param      value  Value set to the setting.
+ *  @param      set_default  Set the value to default in addition if true.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::SetDouble(SettingId id, double value, bool set_default,
+                                concurrency::TransactionContext *txn) {
+  SetValue(id, type::ValueFactory::GetDecimalValue(value), set_default, txn);
+}
+
+/** @brief      Set setting value as boolean.
+ *  @param      id  ID to set the setting.
+ *  @param      value  Value set to the setting.
+ *  @param      set_default  Set the value to default in addition if true.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::SetBool(SettingId id, bool value, bool set_default,
+                              concurrency::TransactionContext *txn) {
+  SetValue(id, type::ValueFactory::GetBooleanValue(value), set_default, txn);
+}
+
+/** @brief      Set setting value as string.
+ *  @param      id  ID to set the setting.
+ *  @param      value  Value set to the setting.
+ *  @param      set_default  Set the value to default in addition if true.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::SetString(SettingId id, const std::string &value,
+                                bool set_default,
+                                concurrency::TransactionContext *txn) {
+  SetValue(id, type::ValueFactory::GetVarcharValue(value), set_default, txn);
+}
+
+/** @brief      Set setting value as Value object.
+ *  @param      id  ID to set the setting.
+ *  @param      value  Value set to the setting.
+ *  @param      set_default  Set the value to default in addition if true.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::SetValue(SettingId id, const type::Value &value,
+                               bool set_default,
+                               concurrency::TransactionContext *txn) {
+  auto param = settings_.find(id);
+
+  // Check min-max bound if value is a following type
+  if ((value.GetTypeId() == type::TypeId::BIGINT ||
+       value.GetTypeId() == type::TypeId::INTEGER ||
+       value.GetTypeId() == type::TypeId::SMALLINT ||
+       value.GetTypeId() == type::TypeId::TINYINT ||
+       value.GetTypeId() == type::TypeId::DECIMAL) &&
+      !value.CompareBetweenInclusive(param->second.min_value,
+                                     param->second.max_value)) {
+    throw SettingsException("Value given for \"" + param->second.name +
+                            "\" is not in its min-max bounds (" +
+                            param->second.min_value.ToString() + "-" +
+                            param->second.max_value.ToString() + ")");
+  }
+
+  // Catalog update if initialized
+  if (catalog_initialized_) {
+    PELOTON_ASSERT(txn != nullptr);
+    if (!UpdateCatalog(param->second.name, value, set_default, txn)) {
+      throw SettingsException("failed to set value " + value.ToString() +
+          " to " + param->second.name);
+    }
+  }
+
+  // Set value
+  param->second.value = value;
+
+  // Set default_value if set_default is true
+  if (set_default) {
+    param->second.default_value = value;
+  }
+}
+
+/** @brief      Reset a setting value to default value.
+ *  @param      id  ID to reset the setting.
+ *  @param      txn  TransactionContext for the catalog control.
+ *                   This has to be set after catalog initialization.
+ */
+void SettingsManager::ResetValue(SettingId id,
+                                 concurrency::TransactionContext *txn) {
+  auto param = settings_.find(id);
+  auto default_value = param->second.default_value;
+
+  // Catalog update if initialized
+  if (catalog_initialized_) {
+    PELOTON_ASSERT(txn != nullptr);
+    if (!UpdateCatalog(param->second.name, default_value, false, txn)) {
+      throw SettingsException("failed to set value " +
+          default_value.ToString() + " to " + param->second.name);
+    }
+  }
+
+  // set default_value into the setting value
+  param->second.value = default_value;
+}
+
 void SettingsManager::InitializeCatalog() {
-  auto &settings_catalog = peloton::catalog::SettingsCatalog::GetInstance();
+  if (catalog_initialized_) return;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  type::AbstractPool *pool = pool_.get();
 
   for (auto s : settings_) {
-    // TODO: Use Update instead Delete & Insert
-    settings_catalog.DeleteSetting(s.second.name, txn);
-    if (!settings_catalog.InsertSetting(
-            s.second.name, s.second.value.ToString(),
-            s.second.value.GetTypeId(), s.second.desc, "", "",
-            s.second.default_value.ToString(), s.second.is_mutable,
-            s.second.is_persistent, pool, txn)) {
+    if (!InsertCatalog(s.second, txn)) {
       txn_manager.AbortTransaction(txn);
       throw SettingsException("failed to initialize catalog pg_settings on " +
                               s.second.name);
@@ -86,6 +213,34 @@ void SettingsManager::InitializeCatalog() {
   }
   txn_manager.CommitTransaction(txn);
   catalog_initialized_ = true;
+}
+
+/** @brief      Refresh all setting values from setting catalog.
+ *  @param      txn  TransactionContext for the catalog control.
+ */
+void SettingsManager::UpdateSettingListFromCatalog(
+    concurrency::TransactionContext *txn) {
+  auto &settings_catalog = catalog::SettingsCatalog::GetInstance(txn);
+
+  // Update each catalog value from pg_settings
+  for (auto setting_object_pair : settings_catalog.GetSettings(txn)) {
+    auto setting_name = setting_object_pair.first;
+    auto setting_object = setting_object_pair.second;
+
+    // Find the setting from setting list on memory
+    auto param = settings_.begin();
+    while (param != settings_.end()) {
+      if (param->second.name == setting_name) {
+        break;
+      }
+      param++;
+    }
+    PELOTON_ASSERT(param != settings_.end());
+
+    // Set value and default_value
+    param->second.value = setting_object->GetValue();
+    param->second.default_value = setting_object->GetDefaultValue();
+  }
 }
 
 const std::string SettingsManager::GetInfo() const {
@@ -119,7 +274,8 @@ const std::string SettingsManager::GetInfo() const {
 
 void SettingsManager::ShowInfo() { LOG_INFO("\n%s\n", GetInfo().c_str()); }
 
-void SettingsManager::DefineSetting(SettingId id, const std::string &name,
+void SettingsManager::DefineSetting(SettingId id,
+                                    const std::string &name,
                                     const type::Value &value,
                                     const std::string &description,
                                     const type::Value &default_value,
@@ -131,7 +287,8 @@ void SettingsManager::DefineSetting(SettingId id, const std::string &name,
   }
 
   // Only below types support min-max bound checking
-  if (value.GetTypeId() == type::TypeId::INTEGER ||
+  if (value.GetTypeId() == type::TypeId::BIGINT ||
+      value.GetTypeId() == type::TypeId::INTEGER ||
       value.GetTypeId() == type::TypeId::SMALLINT ||
       value.GetTypeId() == type::TypeId::TINYINT ||
       value.GetTypeId() == type::TypeId::DECIMAL) {
@@ -142,47 +299,52 @@ void SettingsManager::DefineSetting(SettingId id, const std::string &name,
                               max_value.ToString() + ")");
   }
 
-  settings_.emplace(id, Param(name, value, description, default_value,
-                              is_mutable, is_persistent));
+  settings_.emplace(id, Param(name, value, description,
+                    default_value, min_value, max_value,
+                    is_mutable, is_persistent));
 }
 
-type::Value SettingsManager::GetValue(SettingId id) {
-  // TODO: Look up the value from catalog
-  // Because querying a catalog table needs to create a new transaction and
-  // creating transaction needs to get setting values,
-  // it will be a infinite recursion here.
-
-  auto param = settings_.find(id);
-  return param->second.value;
-}
-
-void SettingsManager::SetValue(SettingId id, const type::Value &value) {
-  auto param = settings_.find(id);
-  Param new_param = param->second;
-  new_param.value = value;
-  if (catalog_initialized_) {
-    if (!InsertIntoCatalog(new_param)) {
-      throw SettingsException("failed to set value " + param->second.name);
-    }
-  }
-  param->second.value = value;
-}
-
-bool SettingsManager::InsertIntoCatalog(const Param &param) {
+/** @brief      Insert a setting information into setting catalog.
+ *  @param      param  Setting information.
+ *  @param      txn  TransactionContext for the catalog control.
+ *  @return     True if success, or false
+ */
+bool SettingsManager::InsertCatalog(const Param &param,
+                                    concurrency::TransactionContext *txn) {
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  type::AbstractPool *pool = pool_.get();
-  // TODO: Use Update instead Delete & Insert
-  settings_catalog.DeleteSetting(param.name, txn);
-  if (!settings_catalog.InsertSetting(
-          param.name, param.value.ToString(), param.value.GetTypeId(),
-          param.desc, "", "", param.default_value.ToString(), param.is_mutable,
-          param.is_persistent, pool, txn)) {
-    txn_manager.AbortTransaction(txn);
+
+  // Check a same setting is not existed
+  if (settings_catalog.GetSetting(param.name, txn) != nullptr ) {
+    LOG_ERROR("The setting %s is already existed", param.name.c_str());
     return false;
   }
-  txn_manager.CommitTransaction(txn);
+
+  if (!settings_catalog.InsertSetting(
+          param.name, param.value.ToString(), param.value.GetTypeId(),
+          param.desc, param.min_value.ToString(),
+          param.max_value.ToString(), param.default_value.ToString(),
+          param.is_mutable, param.is_persistent, pool_.get(), txn)) {
+    return false;
+  }
+  return true;
+}
+
+/** @brief      Update a setting value within setting catalog.
+ *  @param      name  Setting name to be updated.
+ *  @param      value  Setting value to be set as a new value.
+ *  @param      set_default  a flag whether update the default value.
+ *  @param      txn  TransactionContext for the catalog control.
+ *  @return     True if success, or false
+ */
+bool SettingsManager::UpdateCatalog(const std::string &name,
+                                    const type::Value &value,
+                                    bool set_default,
+                                    concurrency::TransactionContext *txn) {
+  auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
+  if (!settings_catalog.UpdateSettingValue(txn, name, value.ToString(),
+                                           set_default)) {
+    return false;
+  }
   return true;
 }
 

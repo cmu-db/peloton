@@ -78,7 +78,8 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
 
   // log RWSet and result stats
   const auto &stats_type = static_cast<StatsType>(
-      settings::SettingsManager::GetInt(settings::SettingId::stats_mode));
+      settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode));
 
   // update stats
   if (stats_type != StatsType::INVALID) {
@@ -251,8 +252,9 @@ VisibilityType TransactionManager::IsVisible(
 
 void TransactionManager::RecordTransactionStats(
     const TransactionContext *const current_txn) const {
-  PELOTON_ASSERT(static_cast<StatsType>(settings::SettingsManager::GetInt(
-                     settings::SettingId::stats_mode)) != StatsType::INVALID);
+  PELOTON_ASSERT(static_cast<StatsType>(
+      settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID);
 
   auto stats_context = stats::BackendStatsContext::GetInstance();
   const auto &rw_set = current_txn->GetReadWriteSet();

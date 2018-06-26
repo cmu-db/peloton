@@ -305,7 +305,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::brain)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
 
@@ -555,7 +556,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
     size_t thread_id) {
   // TODO(Tianyi) Further simplify this API
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement, std::move(param_stats));

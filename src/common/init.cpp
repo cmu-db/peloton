@@ -31,7 +31,9 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-  CONNECTION_THREAD_COUNT = settings::SettingsManager::GetInt(
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+
+  CONNECTION_THREAD_COUNT = settings_manager.GetInt(
       settings::SettingId::connection_thread_count);
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
@@ -44,7 +46,7 @@ void PelotonInit::Initialize() {
   threadpool::MonoQueuePool::GetInstance().Startup();
 
   // start indextuner thread pool
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings_manager.GetBool(settings::SettingId::brain)) {
     threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
 
@@ -59,11 +61,12 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
   // start GC.
-  gc::GCManagerFactory::Configure(settings::SettingsManager::GetInt(settings::SettingId::gc_num_threads));
+  gc::GCManagerFactory::Configure(
+      settings_manager.GetInt(settings::SettingId::gc_num_threads));
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
+  if (settings_manager.GetBool(settings::SettingId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto &index_tuner = tuning::IndexTuner::GetInstance();
@@ -71,7 +74,7 @@ void PelotonInit::Initialize() {
   }
 
   // start layout tuner
-  if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
+  if (settings_manager.GetBool(settings::SettingId::layout_tuner)) {
     auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
@@ -79,7 +82,7 @@ void PelotonInit::Initialize() {
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
-  settings::SettingsManager::GetInstance().InitializeCatalog();
+  settings_manager.InitializeCatalog();
 
   // begin a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -96,14 +99,16 @@ void PelotonInit::Initialize() {
 }
 
 void PelotonInit::Shutdown() {
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+
   // shut down index tuner
-  if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
+  if (settings_manager.GetBool(settings::SettingId::index_tuner)) {
     auto &index_tuner = tuning::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
-  if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
+  if (settings_manager.GetBool(settings::SettingId::layout_tuner)) {
     auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
@@ -121,7 +126,7 @@ void PelotonInit::Shutdown() {
   threadpool::MonoQueuePool::GetInstance().Shutdown();
 
   // stop indextuner thread pool
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings_manager.GetBool(settings::SettingId::brain)) {
     threadpool::MonoQueuePool::GetBrainInstance().Shutdown();
   }
 

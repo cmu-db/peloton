@@ -104,7 +104,7 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
   buffer_ = BufferAccessor(codegen, left_input_desc);
 
   // Determine the number of rows to buffer before flushing it through the join
-  auto max_buffer_size = settings::SettingsManager::GetDouble(
+  auto max_buffer_size = settings::SettingsManager::GetInstance().GetDouble(
       settings::SettingId::bnlj_buffer_size);
   auto row_size = buffer_.GetTupleSize();
   max_buf_rows_ =

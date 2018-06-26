@@ -33,27 +33,28 @@ TEST_F(SettingsManagerTests, InitializationTest) {
 
   // test port (int)
   auto txn = txn_manager.BeginTransaction();
-  int32_t port = settings::SettingsManager::GetInt(settings::SettingId::port);
+  int32_t port = config_manager.GetInt(settings::SettingId::port);
   int32_t port_default =
-      atoi(settings_catalog.GetDefaultValue("port", txn).c_str());
+      settings_catalog.GetSetting("port", txn)->GetDefaultValue().GetAs<int32_t>();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(port, port_default);
 
   // test socket_family (string)
   txn = txn_manager.BeginTransaction();
   std::string socket_family =
-      settings::SettingsManager::GetString(settings::SettingId::socket_family);
+      config_manager.GetString(settings::SettingId::socket_family);
   std::string socket_family_default =
-      settings_catalog.GetDefaultValue("socket_family", txn);
+      settings_catalog.GetSetting("socket_family", txn)
+          ->GetDefaultValue().ToString();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(socket_family, socket_family_default);
 
   // test indextuner (bool)
   txn = txn_manager.BeginTransaction();
   bool index_tuner =
-      settings::SettingsManager::GetBool(settings::SettingId::index_tuner);
+      config_manager.GetBool(settings::SettingId::index_tuner);
   bool index_tuner_default =
-      ("true" == settings_catalog.GetDefaultValue("index_tuner", txn));
+      settings_catalog.GetSetting("index_tuner", txn)->GetDefaultValue().IsTrue();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(index_tuner, index_tuner_default);
 }
@@ -68,59 +69,85 @@ TEST_F(SettingsManagerTests, ModificationTest) {
 
   config_manager.InitializeCatalog();
 
-  // modify int
+  // modify int (value only)
   auto txn = txn_manager.BeginTransaction();
-  int32_t value1 = settings::SettingsManager::GetInt(settings::SettingId::port);
-  int32_t value2 = atoi(settings_catalog.GetSettingValue("port", txn).c_str());
+  int32_t value1 = config_manager.GetInt(settings::SettingId::port);
+  int32_t value2 =
+      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
   EXPECT_EQ(value1, value2);
   txn_manager.CommitTransaction(txn);
 
-  settings::SettingsManager::SetInt(settings::SettingId::port, 12345);
-
   txn = txn_manager.BeginTransaction();
-  int32_t value3 = settings::SettingsManager::GetInt(settings::SettingId::port);
-  int32_t value4 = atoi(settings_catalog.GetSettingValue("port", txn).c_str());
+  config_manager.SetInt(settings::SettingId::port, 12345, false, txn);
+  int32_t value3 = config_manager.GetInt(settings::SettingId::port);
+  int32_t value4 =
+      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
   EXPECT_EQ(value3, 12345);
   EXPECT_EQ(value3, value4);
   txn_manager.CommitTransaction(txn);
 
-  // modify bool
   txn = txn_manager.BeginTransaction();
-  bool value5 =
-      settings::SettingsManager::GetBool(settings::SettingId::index_tuner);
-  bool value6 =
-      ("true" == settings_catalog.GetSettingValue("index_tuner", txn));
-  EXPECT_EQ(value5, value6);
+  config_manager.ResetValue(settings::SettingId::port, txn);
+  int32_t value5 = config_manager.GetInt(settings::SettingId::port);
+  int32_t value6 =
+      settings_catalog.GetSetting("port", txn)->GetValue().GetAs<int32_t>();
+  EXPECT_EQ(value1, value5);
+  EXPECT_EQ(value2, value6);
   txn_manager.CommitTransaction(txn);
 
-  settings::SettingsManager::SetBool(settings::SettingId::index_tuner, true);
-
+  // modify bool (value only)
   txn = txn_manager.BeginTransaction();
-  bool value7 =
-      settings::SettingsManager::GetBool(settings::SettingId::index_tuner);
+  bool value7 = config_manager.GetBool(settings::SettingId::index_tuner);
   bool value8 =
-      ("true" == settings_catalog.GetSettingValue("index_tuner", txn));
-  EXPECT_TRUE(value7);
+      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
   EXPECT_EQ(value7, value8);
   txn_manager.CommitTransaction(txn);
 
-  // modify string
   txn = txn_manager.BeginTransaction();
-  std::string value9 =
-      settings::SettingsManager::GetString(settings::SettingId::socket_family);
-  std::string value10 = settings_catalog.GetSettingValue("socket_family", txn);
+  config_manager.SetBool(settings::SettingId::index_tuner, true, false, txn);
+  bool value9 = config_manager.GetBool(settings::SettingId::index_tuner);
+  bool value10 =
+      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
+  EXPECT_TRUE(value9);
   EXPECT_EQ(value9, value10);
   txn_manager.CommitTransaction(txn);
 
-  settings::SettingsManager::SetString(settings::SettingId::socket_family,
-                                       "test");
+  txn = txn_manager.BeginTransaction();
+  config_manager.ResetValue(settings::SettingId::index_tuner, txn);
+  bool value11 = config_manager.GetBool(settings::SettingId::index_tuner);
+  bool value12 =
+      settings_catalog.GetSetting("index_tuner", txn)->GetValue().IsTrue();
+  EXPECT_EQ(value7, value11);
+  EXPECT_EQ(value8, value12);
+  txn_manager.CommitTransaction(txn);
+
+  // modify string (value + default value)
+  txn = txn_manager.BeginTransaction();
+  std::string value13 =
+      config_manager.GetString(settings::SettingId::socket_family);
+  std::string value14 =
+      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+  EXPECT_EQ(value13, value14);
+  txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  std::string value11 =
-      settings::SettingsManager::GetString(settings::SettingId::socket_family);
-  std::string value12 = settings_catalog.GetSettingValue("socket_family", txn);
-  EXPECT_EQ(value11, "test");
-  EXPECT_EQ(value11, value12);
+  config_manager.SetString(settings::SettingId::socket_family, "test", true, txn);
+  std::string value15 =
+      config_manager.GetString(settings::SettingId::socket_family);
+  std::string value16 =
+      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+  EXPECT_EQ(value15, "test");
+  EXPECT_EQ(value16, value16);
+  txn_manager.CommitTransaction(txn);
+
+  txn = txn_manager.BeginTransaction();
+  config_manager.ResetValue(settings::SettingId::index_tuner, txn);
+  std::string value17 =
+      config_manager.GetString(settings::SettingId::socket_family);
+  std::string value18 =
+      settings_catalog.GetSetting("socket_family", txn)->GetValue().ToString();
+  EXPECT_EQ(value15, value17);
+  EXPECT_EQ(value16, value18);
   txn_manager.CommitTransaction(txn);
 }
 

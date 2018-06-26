@@ -91,7 +91,8 @@ void PlanGenerator::Visit(const PhysicalSeqScan *op) {
       op->table_->GetDatabaseOid(), op->table_->GetTableOid());
 
   // Check if we should do a parallel scan
-  bool parallel_exec_enabled = settings::SettingsManager::GetBool(
+  auto &setting_manager = settings::SettingsManager::GetInstance();
+  bool parallel_exec_enabled = setting_manager.GetBool(
       settings::SettingId::parallel_execution);
 
   bool parallel_scan = parallel_exec_enabled;
@@ -101,7 +102,7 @@ void PlanGenerator::Visit(const PhysicalSeqScan *op) {
     auto num_tilegroups = data_table->GetTileGroupCount();
     auto num_tuples = data_table->GetTupleCount();
     auto min_parallel_table_scan_size =
-        static_cast<uint32_t>(settings::SettingsManager::GetInt(
+        static_cast<uint32_t>(setting_manager.GetInt(
             settings::SettingId::min_parallel_table_scan_size));
     parallel_scan =
         (num_tilegroups > 1 && num_tuples > min_parallel_table_scan_size);
@@ -301,7 +302,7 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
 
   auto join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
       JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
-      left_keys, right_keys, settings::SettingsManager::GetBool(
+      left_keys, right_keys, settings::SettingsManager::GetInstance().GetBool(
                                  settings::SettingId::hash_join_bloom_filter)));
 
   join_plan->AddChild(move(children_plans_[0]));

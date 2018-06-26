@@ -298,7 +298,8 @@ bool CodeContext::Compile() {
   }
   pass_manager_->doFinalization();
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::print_ir_stats)) {
+  if (settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::print_ir_stats)) {
     char name[] = "inst count";
     InstructionCounts inst_count(*name);
     inst_count.runOnModule(GetModule());
@@ -314,7 +315,8 @@ bool CodeContext::Compile() {
   }
 
   // Log the module
-  if (settings::SettingsManager::GetBool(settings::SettingId::dump_ir)) {
+  if (settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::dump_ir)) {
     LOG_DEBUG("%s\n", GetIR().c_str());
   }
 

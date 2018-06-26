@@ -60,7 +60,8 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
     ret = container.Insert(index_key, value, false);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
@@ -90,7 +91,8 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   // it is unnecessary for us to allocate memory
   bool ret = container.Delete(index_key, value);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
   }
@@ -126,7 +128,8 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
     assert(ret == false);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
@@ -200,7 +203,8 @@ void BWTREE_INDEX_TYPE::Scan(
     }
   }  // if is full scan
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().
+          GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
@@ -267,7 +271,8 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
     it++;
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
@@ -283,7 +288,8 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   // This function in BwTree fills a given vector
   container.GetValue(index_key, result);
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }

@@ -17,6 +17,39 @@
 namespace peloton {
 namespace catalog {
 
+//===----------------------------------------------------------------------===//
+// In-memory representation of a row from the pg_settings table.
+//===----------------------------------------------------------------------===//
+class SettingsCatalogObject {
+ public:
+  SettingsCatalogObject(executor::LogicalTile *tile, int tuple_id = 0);
+
+  // Accessors
+  inline const std::string &GetName() { return name_; }
+  inline type::Value &GetValue() { return value_; }
+  inline type::TypeId GetValueType() { return value_type_; }
+  inline const std::string &GetDescription() { return desc_; }
+  inline type::Value &GetDefaultValue() { return default_value_; }
+  inline type::Value &GetMinValue() { return min_value_; }
+  inline type::Value &GetMaxValue() { return max_value_; }
+  inline bool IsMutable() { return is_mutable_; }
+  inline bool IsPersistent() { return is_persistent_; }
+
+ private:
+  // The fields of 'pg_settings' table
+  std::string name_;
+  type::Value value_;
+  type::TypeId value_type_;
+  std::string desc_;
+  type::Value default_value_;
+  type::Value min_value_;
+  type::Value max_value_;
+  bool is_mutable_, is_persistent_;
+};
+
+//===----------------------------------------------------------------------===//
+// The pg_settings catalog table.
+//===----------------------------------------------------------------------===//
 class SettingsCatalog : public AbstractCatalog {
  public:
   ~SettingsCatalog();
@@ -36,14 +69,20 @@ class SettingsCatalog : public AbstractCatalog {
 
   bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
 
+  bool UpdateSettingValue(concurrency::TransactionContext *txn,
+                          const std::string &name,
+                          const std::string &value,
+                          bool set_default);
+
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::string GetSettingValue(const std::string &name,
-                              concurrency::TransactionContext *txn);
+  std::shared_ptr<SettingsCatalogObject> GetSetting(
+      const std::string &name,
+      concurrency::TransactionContext *txn);
 
-  std::string GetDefaultValue(const std::string &name,
-                              concurrency::TransactionContext *txn);
+  std::unordered_map<std::string, std::shared_ptr<SettingsCatalogObject>>
+  GetSettings(concurrency::TransactionContext *txn);
 
   enum class ColumnId {
     NAME = 0,
@@ -57,6 +96,7 @@ class SettingsCatalog : public AbstractCatalog {
     IS_PERSISTENT = 8,
     // Add new columns here in creation order
   };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
  private:
   SettingsCatalog(concurrency::TransactionContext *txn);
