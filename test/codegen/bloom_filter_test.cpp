@@ -165,7 +165,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
     func.ReturnAndFinish();
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
                         int *);
@@ -312,6 +312,7 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
         *plan, executor_context.GetParams().GetQueryParametersMap(), consumer);
 
     // Run
+    compiled_query->Compile();
     compiled_query->Execute(executor_context, consumer, &stats);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
