@@ -105,110 +105,30 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
   // one packet contains only one query. But when using the pipeline mode in
   // Libpqxx, it sends multiple query in one packet. In this case, it's
   // incorrect.
+
   auto sql_stmt = sql_stmt_list->PassOutStatement(0);
-
-  QueryType query_type =
-      StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
-  interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
-
-  switch (query_type) {
-    case QueryType::QUERY_PREPARE: {
-      std::shared_ptr<Statement> statement(nullptr);
-      auto prep_stmt = dynamic_cast<parser::PrepareStatement *>(sql_stmt.get());
-      std::string stmt_name = prep_stmt->name;
-      statement = tcop::PrepareStatement(state,
-                                         stmt_name,
-                                         query,
-                                         std::move(prep_stmt->query));
-      if (statement == nullptr) {
-        out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                                 state.error_message_}});
-        out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-        return Transition::PROCEED;
-      }
-
-      state.statement_cache_.AddStatement(statement);
-
-      interpreter.CompleteCommand(query_type, 0, out);
-
-      // PAVLO: 2017-01-15
-      // There used to be code here that would invoke this method passing
-      // in NetworkMessageType::READY_FOR_QUERY as the argument. But when
-      // I switched to strong types, this obviously doesn't work. So I
-      // switched it to be NetworkTransactionStateType::IDLE. I don't know
-      // we just don't always send back the internal txn state?
-      out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-      return Transition::PROCEED;
-    };
-    case QueryType::QUERY_EXECUTE: {
-      std::vector<type::Value> param_values;
-      auto *exec_stmt = dynamic_cast<parser::ExecuteStatement *>(sql_stmt.get());
-      std::string stmt_name = exec_stmt->name;
-
-      auto cached_statement = state
-          .statement_cache_.GetStatement(stmt_name);
-      if (cached_statement != nullptr) {
-        state.statement_ = std::move(cached_statement);
-      } else {
-        out.WriteErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR,
-              "The prepared statement does not exist"}});
-        out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-        return Transition::PROCEED;
-      }
-
-      interpreter.result_format_ =
-          std::vector<int>(state
-                               .statement_->GetTupleDescriptor().size(), 0);
-
-      if (!tcop::BindParamsForCachePlan(state,
-                                        exec_stmt->parameters)) {
-        tcop::ProcessInvalidStatement(state);
-        out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                            state.error_message_}});
-        out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-        return Transition::PROCEED;
-      }
-
-      auto status = tcop::ExecuteStatement(state,
-          state.statement_,
-          state.param_values_, false,
-          nullptr, interpreter.result_format_, state.result_, tid);
-      if (state.is_queuing_) return Transition::PROCEED;
-      interpreter.ExecQueryMessageGetResult(status);
-      return Transition::PROCEED;
-    };
-    case QueryType::QUERY_EXPLAIN: {
-      auto status = interpreter.ExecQueryExplain(query,
-          static_cast<parser::ExplainStatement &>(*sql_stmt));
-      interpreter.ExecQueryMessageGetResult(status);
-      return Transition::PROCEED;
-    }
-    default: {
-      std::string stmt_name = "unamed";
-      std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
-          new parser::SQLStatementList());
-      unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
-      state.statement_ = std::move(tcop::PrepareStatement(state, stmt_name,
-          query, std::move(unnamed_sql_stmt_list), tid));
-      if (state.statement_ == nullptr) {
-        out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                                 state.error_message_}});
-        out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-        return Transition::PROCEED;
-      }
-      state.param_values_ = std::vector<type::Value>();
-      interpreter.result_format_ =
-          std::vector<int>(state.statement_->GetTupleDescriptor().size(), 0);
-      auto status = tcop::ExecuteStatement(state,
-          state.statement_,
-          state.param_values_, false, nullptr,
-          interpreter.result_format_, state.result_, tid);
-      if (state.is_queuing_) return Transition::PROCEED;
-      interpreter.ExecQueryMessageGetResult(status);
-      return Transition::PROCEED;
-    }
+  std::string stmt_name = "unamed";
+  std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
+      new parser::SQLStatementList());
+  unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
+  state.statement_ = std::move(tcop::PrepareStatement(state, stmt_name,
+      query, std::move(unnamed_sql_stmt_list), tid));
+  if (state.statement_ == nullptr) {
+    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                             state.error_message_}});
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+    return Transition::PROCEED;
   }
+  state.param_values_ = std::vector<type::Value>();
+  interpreter.result_format_ =
+      std::vector<int>(state.statement_->GetTupleDescriptor().size(), 0);
+  auto status = tcop::ExecuteStatement(state,
+      state.statement_,
+      state.param_values_, false, nullptr,
+      interpreter.result_format_, state.result_, tid);
+  if (state.is_queuing_) return Transition::PROCEED;
+  interpreter.ExecQueryMessageGetResult(status);
+  return Transition::PROCEED;
 }
 
 Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
