@@ -45,9 +45,9 @@ class TransactionRuntime {
   // Perform a visibility check for all tuples in the given tile group with IDs
   // in the range [tid_start, tid_end) in the context of the given transaction
   static uint32_t PerformVisibilityCheck(concurrency::TransactionContext &txn,
-                                        storage::TileGroup &tile_group,
-                                        uint32_t tid_start, uint32_t tid_end,
-                                        uint32_t *selection_vector);
+                                         storage::TileGroup &tile_group,
+                                         uint32_t tid_start, uint32_t tid_end,
+                                         uint32_t *selection_vector);
 
   // Perform a read operation for all tuples in the given tile group with IDs
   // in the range [tid_start, tid_end) in the context of the given transaction
