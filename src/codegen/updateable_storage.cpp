@@ -16,6 +16,7 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/type/sql_type.h"
+#include "util/math_util.h"
 
 namespace peloton {
 namespace codegen {
@@ -248,7 +249,7 @@ UpdateableStorage::NullBitmap::NullBitmap(CodeGen &codegen,
     bitmap_ptr_ = codegen->CreateConstInBoundsGEP2_32(
         storage.GetNullBitmapType(), bitmap_arr, 0, 0);
   }
-  uint32_t num_bytes = (storage_.GetNumElements() + 7) >> 3;
+  uint32_t num_bytes = MathUtil::DivRoundUp(storage_.GetNumElements(), 8);
   bytes_.resize(num_bytes, nullptr);
   dirty_.resize(num_bytes, false);
 }

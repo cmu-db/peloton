@@ -43,8 +43,8 @@ class QueryCompiler {
     // The time taken to generate all the IR for the plan
     double ir_gen_ms = 0.0;
 
-    // The time taken to perform JIT compilation
-    double jit_ms = 0.0;
+    // Time consumed by LLVM Optimizer
+    double optimize_ms = 0.0;
   };
 
   // Constructor
