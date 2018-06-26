@@ -17,7 +17,6 @@
 
 namespace peloton {
 namespace network {
-using callback_func = std::function<void(void)>;
 
 class ProtocolInterpreter {
  public:

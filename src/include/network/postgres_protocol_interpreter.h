@@ -16,10 +16,6 @@
 #include "network/postgres_network_commands.h"
 #include "traffic_cop/tcop.h"
 
-#define MAKE_COMMAND(type)                                 \
-  std::static_pointer_cast<PostgresNetworkCommand, type>(  \
-      std::make_shared<type>(std::move(curr_input_packet_.buf_)))
-
 namespace peloton {
 namespace network {
 
@@ -27,7 +23,7 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
  public:
   // TODO(Tianyu): Is this even the right thread id? It seems that all the
   // concurrency code is dependent on this number.
-  PostgresProtocolInterpreter(size_t thread_id) = default;
+  explicit PostgresProtocolInterpreter(size_t thread_id) = default;
 
   Transition Process(std::shared_ptr<ReadBuffer> in,
                      std::shared_ptr<WriteQueue> out,
@@ -43,18 +39,11 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
 
   inline tcop::ClientProcessState &ClientProcessState() { return state_; }
 
-  // TODO(Tianyu): What the hell does this thing do?
-  void CompleteCommand(const QueryType &query_type, int rows, PostgresPacketWriter &out);
-
-  // TODO(Tianyu): Remove these later. Legacy shit code.
+  // TODO(Tianyu): WTF is this?
   void ExecQueryMessageGetResult(ResultType status);
-  ResultType ExecQueryExplain(const std::string &query, parser::ExplainStatement &explain_stmt);
-  bool HardcodedExecuteFilter(QueryType query_type);
-  NetworkProtocolType protocol_type_;
+  void ExecExecuteMessageGetResult(ResultType status);
+
   std::vector<int> result_format_;
-  bool skipped_stmt_ = false;
-  std::string skipped_query_string_;
-  QueryType skipped_query_type_;
  private:
   bool startup_ = true;
   PostgresInputPacket curr_input_packet_{};

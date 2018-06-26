@@ -27,7 +27,7 @@ class name : public PostgresNetworkCommand {                               \
      : PostgresNetworkCommand(std::move(in), flush) {}                     \
   virtual Transition Exec(PostgresProtocolInterpreter &,                   \
                           PostgresPacketWriter &,                          \
-                          callback_func, size_t) override;                 \
+                          callback_func) override;                         \
 }
 
 namespace peloton {
@@ -39,8 +39,7 @@ class PostgresNetworkCommand {
  public:
   virtual Transition Exec(PostgresProtocolInterpreter &interpreter,
                           PostgresPacketWriter &out,
-                          callback_func callback,
-                          size_t thread_id) = 0;
+                          callback_func callback) = 0;
 
   inline bool FlushOnComplete() { return flush_on_complete_; }
 
@@ -65,8 +64,7 @@ class PostgresNetworkCommand {
   }
 
   // Why are bind parameter and param values different?
-  void ReadParamValues(std::vector<std::pair<type::TypeId,
-                                             std::string>> &bind_parameters,
+  void ReadParamValues(std::vector<std::pair<type::TypeId, std::string>> &bind_parameters,
                        std::vector<type::Value> &param_values,
                        const std::vector<PostgresValueType> &param_types,
                        const std::vector<int16_t> &formats) {
@@ -100,7 +98,7 @@ class PostgresNetworkCommand {
                              PostgresValueType type,
                              int32_t len) {
     std::string val = in_->ReadString((size_t) len);
-    bind_parameters.push_back(std::make_pair(type::TypeId::VARCHAR, val));
+    bind_parameters.emplace_back(type::TypeId::VARCHAR, val);
     param_values.push_back(
         PostgresValueTypeToPelotonValueType(type) == type::TypeId::VARCHAR
         ? type::ValueFactory::GetVarcharValue(val)
@@ -117,8 +115,7 @@ class PostgresNetworkCommand {
       case PostgresValueType::TINYINT: {
         PELOTON_ASSERT(len == sizeof(int8_t));
         auto val = in_->ReadValue<int8_t>();
-        bind_parameters.push_back(
-            std::make_pair(type::TypeId::TINYINT, std::to_string(val)));
+        bind_parameters.emplace_back(type::TypeId::TINYINT, std::to_string(val));
         param_values.push_back(
             type::ValueFactory::GetTinyIntValue(val).Copy());
         break;

@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
-#include "network/connection_handle.h"
+#include "executor/plan_executor.h"
+#include "optimizer/abstract_optimizer.h"
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "common/statement_cache.h"
@@ -27,7 +28,7 @@ using TcopTxnState = std::pair<concurrency::TransactionContext *, ResultType>;
 // TODO(Tianyu): We can probably get rid of a bunch of fields from here
 struct ClientProcessState {
   size_t thread_id_;
-  bool is_queuing_;
+  bool is_queuing_ = false;
   std::string error_message_, db_name_ = DEFAULT_DB_NAME;
   std::vector<type::Value> param_values_;
   // This save currnet statement in the traffic cop
@@ -38,26 +39,24 @@ struct ClientProcessState {
   std::vector<ResultValue> result_;
   executor::ExecutionResult p_status_;
   StatementCache statement_cache_;
-
   // Transaction Handling Wrapper
   ClientTxnHandle txn_handle_;
-
-  // The current callback to be invoked after execution completes.
-  void (*task_callback_)(void *);
-  void *task_callback_arg_;
 };
 
 // Execute a statement
 ResultType ExecuteStatement(
     ClientProcessState &state,
-    const std::vector<int> &result_format, std::vector<ResultValue> &result);
+    const std::vector<int> &result_format,
+    std::vector<ResultValue> &result,
+    callback_func callback);
 
 // Helper to handle txn-specifics for the plan-tree of a statement.
 void ExecuteHelper(
     ClientProcessState &state,
     std::vector<ResultValue> &result,
     const std::vector<int> &result_format,
-    concurrency::TransactionContext *txn);
+    concurrency::TransactionContext *txn,
+    callback_func callback);
 
 // Prepare a statement
 bool PrepareStatement(

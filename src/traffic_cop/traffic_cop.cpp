@@ -607,7 +607,6 @@ ResultType TrafficCop::ExecuteStatement(
           return ExecuteStatementGetResult();
         }
     }
-
   } catch (Exception &e) {
     error_message_ = e.what();
     return ResultType::FAILURE;

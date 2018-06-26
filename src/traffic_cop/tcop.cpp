@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// t=cop.h
+// tcop.h
 //
 // Identification: src/include/traffic_cop/tcop.h
 //
@@ -19,9 +19,9 @@ namespace peloton {
 namespace tcop {
 
 // Prepare a statement
-bool tcop::PrepareStatement(
-    ClientProcessState &state, const std::string &query_string,
-    const std::string &statement_name) {
+bool tcop::PrepareStatement(ClientProcessState &state,
+                            const std::string &query_string,
+                            const std::string &statement_name) {
   try {
     state.txn_handle_.ImplicitBegin(state.thread_id_);
     // parse the query
@@ -30,9 +30,8 @@ bool tcop::PrepareStatement(
 
     // When the query is empty(such as ";" or ";;", still valid),
     // the parse tree is empty, parser will return nullptr.
-    if (sql_stmt_list != nullptr && !sql_stmt_list->is_valid) {
+    if (sql_stmt_list != nullptr && !sql_stmt_list->is_valid)
       throw ParserException("Error Parsing SQL statement");
-    }
 
     // TODO(Yuchen): Hack. We only process the first statement in the packet now.
     // We should store the rest of statements that will not be processed right
@@ -44,26 +43,30 @@ bool tcop::PrepareStatement(
     QueryType query_type =
         StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
 
-    std::shared_ptr<Statement> statement = std::make_shared<Statement>(
-      statement_name, query_type, query_string, std::move(sql_stmt_list));
+    auto statement = std::make_shared<Statement>(statement_name,
+                                                 query_type,
+                                                 query_string,
+                                                 std::move(sql_stmt_list));
 
     // Empty statement edge case
-    if (sql_stmt_list == nullptr ||
-        sql_stmt_list->GetNumStatements() == 0) {
-      std::shared_ptr<Statement> statement =
-          std::make_shared<Statement>(statement_name, QueryType::QUERY_INVALID,
-                                      query_string, std::move(sql_stmt_list));
-      state.statement_cache_.AddStatement(statement);
+    if (statement->GetStmtParseTreeList() == nullptr ||
+        statement->GetStmtParseTreeList()->GetNumStatements() == 0) {
+      state.statement_cache_.AddStatement(
+          std::make_shared<Statement>(statement_name,
+                                      QueryType::QUERY_INVALID,
+                                      query_string,
+                                      std::move(statement->PassStmtParseTreeList())));
       return true;
     }
 
     // Run binder
-    auto bind_node_visitor = binder::BindNodeVisitor(
-        tcop_txn_state_.top().first, state.db_name_);
+    auto bind_node_visitor = binder::BindNodeVisitor(state.txn_handle_.GetTxn(),
+                                                     state.db_name_);
     bind_node_visitor.BindNameToNode(
         statement->GetStmtParseTreeList()->GetStatement(0));
-    auto plan = state.optimizer_->BuildPelotonPlanTree(
-        statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
+    auto plan = state.optimizer_->
+        BuildPelotonPlanTree(statement->GetStmtParseTreeList(),
+                             state.txn_handle_.GetTxn());
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -80,20 +83,20 @@ bool tcop::PrepareStatement(
 
     state.statement_cache_.AddStatement(statement);
 
-  }  // If the statement is invalid or not supported yet
-  catch (Exception &e) {
-    // TODO implicit end the txn here
+  } catch (Exception &e) {
+    // TODO(Tianyi) implicit end the txn here
     state.error_message_ = e.what();
     return false;
   }
-  // TODO catch txn exception
-
+  // TODO(Tianyi) catch txn exception
   return true;
 }
 
 ResultType tcop::ExecuteStatement(
     ClientProcessState &state,
-    const std::vector<int> &result_format, std::vector<ResultValue> &result) {
+    const std::vector<int> &result_format,
+    std::vector<ResultValue> &result,
+    const callback_func &callback) {
 
   LOG_TRACE("Execute Statement of name: %s",
             state.statement_->GetStatementName().c_str());
@@ -140,11 +143,10 @@ ResultType tcop::ExecuteStatement(
           state.statement_->SetNeedsReplan(true);
         }
 
-        ExecuteHelper(state, result, result_format, txn);
+        ExecuteHelper(state, result, result_format, txn, callback);
         return ResultType::QUEUING;
       }
     }
-
   } catch (Exception &e) {
     state.error_message_ = e.what();
     return ResultType::FAILURE;
@@ -155,21 +157,25 @@ void tcop::ExecuteHelper(
     ClientProcessState &state,
     std::vector<ResultValue> &result,
     const std::vector<int> &result_format,
-    concurrency::TransactionContext *txn) {
+    concurrency::TransactionContext *txn,
+    const callback_func &callback) {
   auto plan = state.statement_->GetPlanTree();
   auto params = state.param_values_;
 
-  auto on_complete = [&result, &state](executor::ExecutionResult p_status,
-                                     std::vector<ResultValue> &&values) {
+  auto on_complete = [callback, &](executor::ExecutionResult p_status,
+                                   std::vector<ResultValue> &&values) {
     state.p_status_ = p_status;
     state.error_message_ = std::move(p_status.m_error_message);
     result = std::move(values);
-    state.task_callback_(state.task_callback_arg_);
+    callback();
   };
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
-  pool.SubmitTask([plan, txn, &params, &result_format, on_complete] {
-    executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
+  pool.SubmitTask([txn, on_complete, &] {
+    executor::PlanExecutor::ExecutePlan(state.statement_->GetPlanTree(),
+                                        txn,
+                                        state.param_values_,
+                                        result_format,
                                         on_complete);
   });
 

@@ -27,8 +27,7 @@ namespace network {
 // project though, so I want to do the architectural refactor first.
 Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 PostgresPacketWriter &out,
-                                callback_func,
-                                size_t) {
+                                callback_func) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   auto proto_version = in_->ReadValue<uint32_t>();
   LOG_INFO("protocol version: %d", proto_version);
@@ -68,8 +67,7 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
 Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                     PostgresPacketWriter &out,
-                                    callback_func callback,
-                                    size_t tid) {
+                                    callback_func callback) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
@@ -79,14 +77,11 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
-
   state.param_values_ = std::vector<type::Value>();
-
   interpreter.result_format_ =
       std::vector<int>(state.statement_->GetTupleDescriptor().size(), 0);
-
   auto status = tcop::ExecuteStatement(state,
-      interpreter.result_format_, state.result_);
+      interpreter.result_format_, state.result_, callback);
 
   if (status == ResultType::QUEUING) return Transition::NEED_RESULT;
 
@@ -97,8 +92,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
 Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
                               PostgresPacketWriter &out,
-                              callback_func callback,
-                              size_t tid) {
+                              callback_func) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string statement_name = in_->ReadString(), query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
@@ -109,20 +103,16 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
-
   LOG_TRACE("PrepareStatement[%s] => %s", statement_name.c_str(),
             query.c_str());
 
   // Read param types
-  std::vector<PostgresValueType > param_types = ReadParamTypes();
-  state.statement_->SetParamTypes(param_types);
+  state.statement_->SetParamTypes(ReadParamTypes());
 
   // Send Parse complete response
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  out.BeginPacket(NetworkMessageType::PARSE_COMPLETE);
+  out.BeginPacket(NetworkMessageType::PARSE_COMPLETE).EndPacket();
   return Transition::PROCEED;
 }
-
 
 } // namespace network
 } // namespace peloton

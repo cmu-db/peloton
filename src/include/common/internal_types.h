@@ -1449,6 +1449,8 @@ enum class SSLLevel {
   SSL_VERIIFY = 2,
 };
 
+using callback_func = std::function<void(void)>;
+
 // Eigen/Matrix types used in brain
 // TODO(saatvik): Generalize Eigen utilities across all types
 typedef std::vector<std::vector<float>> matrix_t;
