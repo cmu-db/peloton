@@ -17,7 +17,10 @@
 #include <utility>
 #include "common/exception.h"
 #include "common/utility.h"
+<<<<<<< HEAD
 #include "network/network_types.h"
+=======
+>>>>>>> a045cfc95bf349742a8101aee65e22efd9ec8096
 #include "network/marshal.h"
 
 namespace peloton {

@@ -44,10 +44,16 @@ namespace peloton {
 namespace network {
 
 /**
+<<<<<<< HEAD
  * A ConnectionHandle encapsulates all information we need to do IO about
  * a client connection for its entire duration. This includes a state machine
  * and the necessary libevent infrastructure for a handler to work on this
  * connection.
+=======
+ * @brief A ConnectionHandle encapsulates all information about a client
+ * connection for its entire duration. This includes a state machine and the
+ * necessary libevent infrastructure for a handler to work on this connection.
+>>>>>>> a045cfc95bf349742a8101aee65e22efd9ec8096
  */
 class ConnectionHandle {
  public:
@@ -71,6 +77,7 @@ class ConnectionHandle {
   inline void RegisterToReceiveEvents() {
     workpool_event_ = conn_handler_->RegisterManualEvent(
         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+
 
     network_event_ = conn_handler_->RegisterEvent(
         io_wrapper_->GetSocketFd(), EV_READ | EV_PERSIST,
@@ -183,6 +190,7 @@ class ConnectionHandle {
   std::shared_ptr<NetworkIoWrapper> io_wrapper_;
   StateMachine state_machine_;
   struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
+
   // TODO(Tianyu): Probably use a factory for this
   std::unique_ptr<ProtocolInterpreter> protocol_interpreter_;
 };

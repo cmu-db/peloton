@@ -35,6 +35,7 @@ PosixSocketIoWrapper::PosixSocketIoWrapper(int sock_fd,
                                            std::shared_ptr<ReadBuffer> in,
                                            std::shared_ptr<WriteQueue> out)
     : NetworkIoWrapper(sock_fd, in, out) {
+
   // Set Non Blocking
   auto flags = fcntl(sock_fd_, F_GETFL);
   flags |= O_NONBLOCK;
@@ -62,10 +63,12 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
         case EAGAIN:
           // Equal to EWOULDBLOCK
           return result;
-        case EINTR:continue;
-        default:LOG_ERROR("Error writing: %s", strerror(errno));
+        case EINTR:
+          continue;
+        default:
+          LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Error when filling read buffer " +
-              std::to_string(errno));
+                                        std::to_string(errno));
       }
   }
   return result;
@@ -95,11 +98,11 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
     switch (ret) {
       case SSL_ERROR_NONE:result = Transition::PROCEED;
         break;
-      case SSL_ERROR_ZERO_RETURN:return Transition::TERMINATE;
-        // The SSL packet is partially loaded to the SSL buffer only,
-        // More data is required in order to decode the wh`ole packet.
-      case SSL_ERROR_WANT_READ:return result;
-      case SSL_ERROR_WANT_WRITE:return Transition::NEED_WRITE;
+      case SSL_ERROR_ZERO_RETURN: return Transition::TERMINATE;
+      // The SSL packet is partially loaded to the SSL buffer only,
+      // More data is required in order to decode the wh`ole packet.
+      case SSL_ERROR_WANT_READ: return result;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
       case SSL_ERROR_SYSCALL:
         if (errno == EINTR) {
           LOG_INFO("Error SSL Reading: EINTR");
@@ -117,9 +120,9 @@ Transition SslSocketIoWrapper::FlushWriteBuffer(WriteBuffer &wbuf) {
   while (wbuf.HasMore()) {
     auto ret = wbuf.WriteOutTo(conn_ssl_context_);
     switch (ret) {
-      case SSL_ERROR_NONE:break;
-      case SSL_ERROR_WANT_WRITE:return Transition::NEED_WRITE;
-      case SSL_ERROR_WANT_READ:return Transition::NEED_READ;
+      case SSL_ERROR_NONE: break;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
+      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
       case SSL_ERROR_SYSCALL:
         // If interrupted, try again.
         if (errno == EINTR) {
@@ -143,11 +146,10 @@ Transition SslSocketIoWrapper::Close() {
   if (ret != 0) {
     int err = SSL_get_error(conn_ssl_context_, ret);
     switch (err) {
-      case SSL_ERROR_WANT_WRITE:return Transition::NEED_WRITE;
-      case SSL_ERROR_WANT_READ:
-        // More work to do before shutdown
-        return Transition::NEED_READ;
-      default:LOG_ERROR("Error shutting down ssl session, err: %d", err);
+      // More work to do before shutdown
+      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
+      default: LOG_ERROR("Error shutting down ssl session, err: %d", err);
     }
   }
   // SSL context is explicitly deallocated here because socket wrapper

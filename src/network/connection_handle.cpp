@@ -112,9 +112,9 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(TryRead)
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
         ON(NEED_READ) SET_STATE_TO(READ) AND_WAIT_ON_READ
-          // This case happens only when we use SSL and are blocked on a write
-          // during handshake. From peloton's perspective we are still waiting
-          // for reads.
+        // This case happens only when we use SSL and are blocked on a write
+        // during handshake. From peloton's perspective we are still waiting
+        // for reads.
         ON(NEED_WRITE) SET_STATE_TO(READ) AND_WAIT_ON_WRITE
     END_STATE_DEF
 
@@ -129,15 +129,15 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(PROCESS) AND_INVOKE(GetResult)
         ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
         ON(NEED_READ) SET_STATE_TO(READ) AND_INVOKE(TryRead)
-          // Client connections are ignored while we wait on peloton
-          // to execute the query
+        // Client connections are ignored while we wait on peloton
+        // to execute the query
         ON(NEED_RESULT) SET_STATE_TO(PROCESS) AND_WAIT_ON_PELOTON
         ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(SSL_INIT) AND_INVOKE(TrySslHandshake)
     END_STATE_DEF
 
     DEFINE_STATE(WRITE)
         ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
-          // This happens when doing ssl-rehandshake with client
+        // This happens when doing ssl-rehandshake with client
         ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
@@ -183,6 +183,34 @@ Transition ConnectionHandle::TrySslHandshake() {
   auto ret = io_wrapper_->FlushAllWrites();
   if (ret != Transition::PROCEED) return ret;
   return NetworkIoWrapperFactory::GetInstance().TryUseSsl(
+      io_wrapper_);
+}
+
+Transition ConnectionHandle::TryCloseConnection() {
+  LOG_DEBUG("Attempt to close the connection %d", io_wrapper_->GetSocketFd());
+  // TODO(Tianyu): Handle close failure
+  Transition close = io_wrapper_->Close();
+  if (close != Transition::PROCEED) return close;
+  // Remove listening event
+  // Only after the connection is closed is it safe to remove events,
+  // after this point no object in the system has reference to this
+  // connection handle and we will need to destruct and exit.
+  conn_handler_->UnregisterEvent(network_event_);
+  conn_handler_->UnregisterEvent(workpool_event_);
+  // This object is essentially managed by libevent (which unfortunately does
+  // not accept shared_ptrs.) and thus as we shut down we need to manually
+  // deallocate this object.
+  delete this;
+  return Transition::NONE;
+}
+
+Transition ConnectionHandle::TrySslHandshake() {
+  // Flush out all the response first
+  if (HasResponse()) {
+    auto write_ret = TryWrite();
+    if (write_ret != Transition::PROCEED) return write_ret;
+  }
+  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(
       io_wrapper_);
 }
 

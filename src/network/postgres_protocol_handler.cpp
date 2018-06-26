@@ -929,12 +929,20 @@ bool PostgresProtocolHandler::ReadPacketHeader(ReadBuffer &rbuf,
   size_t header_size = startup ? sizeof(int32_t) : sizeof(int32_t) + 1;
   // check if header bytes are available
   if (!rbuf.HasMore(header_size)) return false;
+<<<<<<< HEAD
   if (!startup) rpkt.msg_type = rbuf.ReadRawValue<NetworkMessageType>();
+=======
+  if (!startup) rpkt.msg_type = rbuf.ReadValue<NetworkMessageType>();
+>>>>>>> a045cfc95bf349742a8101aee65e22efd9ec8096
 
   // get packet size from the header
   // extract packet contents size
   // content lengths should exclude the length bytes
+<<<<<<< HEAD
   rpkt.len = rbuf.ReadValue<uint32_t>() - sizeof(uint32_t);
+=======
+  rpkt.len = ntohl(rbuf.ReadValue<uint32_t>()) - sizeof(uint32_t);
+>>>>>>> a045cfc95bf349742a8101aee65e22efd9ec8096
 
   // do we need to use the extended buffer for this packet?
   rpkt.is_extended = (rpkt.len > rbuf.Capacity());
