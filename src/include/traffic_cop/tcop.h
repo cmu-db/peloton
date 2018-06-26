@@ -59,12 +59,10 @@ executor::ExecutionResult ExecuteHelper(
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
     const std::vector<int> &result_format, size_t thread_id = 0);
 
-// Prepare a statement using the parse tree
-std::shared_ptr<Statement> PrepareStatement(
-    ClientProcessState &state,
-    const std::string &statement_name, const std::string &query_string,
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
-    size_t thread_id = 0);
+// Prepare a statement
+bool PrepareStatement(
+    ClientProcessState &state, const std::string &query_string,
+    const std::string &statement_name = "unnamed");
 
 bool BindParamsForCachePlan(
     ClientProcessState &state,

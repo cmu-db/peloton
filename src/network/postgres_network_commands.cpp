@@ -73,61 +73,27 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
-  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
-  try {
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    sql_stmt_list = peloton_parser.BuildParseTree(query);
-
-    // When the query is empty(such as ";" or ";;", still valid),
-    // the pare tree is empty, parser will return nullptr.
-    if (sql_stmt_list != nullptr && !sql_stmt_list->is_valid) {
-      throw ParserException("Error Parsing SQL statement");
-    }
-  }  // If the statement is invalid or not supported yet
-  catch (Exception &e) {
-    tcop::ProcessInvalidStatement(state);
-    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                             e.what()}});
-    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-    return Transition::PROCEED;
-  }
-
-  if (sql_stmt_list == nullptr ||
-      sql_stmt_list->GetNumStatements() == 0) {
-    out.WriteEmptyQueryResponse();
-    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
-    return Transition::PROCEED;
-  }
-
-  // TODO(Yuchen): Hack. We only process the first statement in the packet now.
-  // We should store the rest of statements that will not be processed right
-  // away. For the hack, in most cases, it works. Because for example in psql,
-  // one packet contains only one query. But when using the pipeline mode in
-  // Libpqxx, it sends multiple query in one packet. In this case, it's
-  // incorrect.
-
-  auto sql_stmt = sql_stmt_list->PassOutStatement(0);
-  std::string stmt_name = "unamed";
-  std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
-      new parser::SQLStatementList());
-  unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
-  state.statement_ = std::move(tcop::PrepareStatement(state, stmt_name,
-      query, std::move(unnamed_sql_stmt_list), tid));
-  if (state.statement_ == nullptr) {
+  if(!tcop::PrepareStatement(state, query)) {
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                              state.error_message_}});
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
+
   state.param_values_ = std::vector<type::Value>();
+
   interpreter.result_format_ =
       std::vector<int>(state.statement_->GetTupleDescriptor().size(), 0);
+
   auto status = tcop::ExecuteStatement(state,
       state.statement_,
       state.param_values_, false, nullptr,
       interpreter.result_format_, state.result_, tid);
-  if (state.is_queuing_) return Transition::PROCEED;
+
+  if (state.is_queuing_) return Transition::NEED_RESULT;
+
   interpreter.ExecQueryMessageGetResult(status);
+
   return Transition::PROCEED;
 }
 
@@ -137,91 +103,26 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
                               size_t tid) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string statement_name = in_->ReadString(), query = in_->ReadString();
+  LOG_TRACE("Execute query: %s", query.c_str());
 
-  // In JDBC, one query starts with parsing stage.
-  // Reset skipped_stmt_ to false for the new query.
-
-  interpreter.skipped_stmt_ = false;
-  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
-  QueryType query_type = QueryType::QUERY_OTHER;
-  try {
-    LOG_TRACE("%s, %s", statement_name.c_str(), query.c_str());
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    sql_stmt_list = peloton_parser.BuildParseTree(query);
-    if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid) {
-      throw ParserException("Error parsing SQL statement");
-    }
-  } catch (Exception &e) {
-    tcop::ProcessInvalidStatement(state);
-    interpreter.skipped_stmt_ = true;
-    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
-    return Transition::PROCEED;
-  }
-
-  // If the query is not supported yet,
-  // we will skip the rest commands (B,E,..) for this query
-  // For empty query, we still want to get it constructed
-  // TODO (Tianyi) Consider handle more statement
-  bool empty = (sql_stmt_list == nullptr ||
-      sql_stmt_list->GetNumStatements() == 0);
-  if (!empty) {
-    parser::SQLStatement *sql_stmt = sql_stmt_list->GetStatement(0);
-    query_type = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
-  }
-  bool skip = !interpreter.HardcodedExecuteFilter(query_type);
-  if (skip) {
-    interpreter.skipped_stmt_ = true;
-    interpreter.skipped_query_string_ = query;
-    interpreter.skipped_query_type_ = query_type;
-    out.BeginPacket(NetworkMessageType::PARSE_COMPLETE).EndPacket();
-    return Transition::PROCEED;
-  }
-
-  // Prepare statement
-  std::shared_ptr<Statement> statement(nullptr);
-
-  statement = tcop::PrepareStatement(state, statement_name, query,
-                                             std::move(sql_stmt_list));
-  if (statement == nullptr) {
-    tcop::ProcessInvalidStatement(state);
-    interpreter.skipped_stmt_ = true;
+  if(!tcop::PrepareStatement(state, query, statement_name)) {
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                              state.error_message_}});
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
+
   LOG_TRACE("PrepareStatement[%s] => %s", statement_name.c_str(),
             query.c_str());
-  auto num_params = in_->ReadValue<uint16_t>();
+
   // Read param types
   std::vector<PostgresValueType > param_types = ReadParamTypes();
-
-  // Cache the received query
-  bool unnamed_query = statement_name.empty();
-  statement->SetParamTypes(param_types);
-
-  // Stat
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
-      settings::SettingId::stats_mode)) != StatsType::INVALID) {
-    // Make a copy of param types for stat collection
-    stats::QueryMetric::QueryParamBuf query_type_buf;
-    query_type_buf.len = type_buf_len;
-    query_type_buf.buf = PacketCopyBytes(type_buf_begin, type_buf_len);
-
-    // Unnamed statement
-    if (unnamed_query) {
-      unnamed_stmt_param_types_ = query_type_buf;
-    } else {
-      statement_param_types_[statement_name] = query_type_buf;
-    }
-  }
-
-  // Cache the statement
-  statement_cache_.AddStatement(statement);
+  state.statement_->SetParamTypes(param_types);
 
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NetworkMessageType::PARSE_COMPLETE;
-  responses_.push_back(std::move(response));
+  out.BeginPacket(NetworkMessageType::PARSE_COMPLETE);
+  return Transition::PROCEED;
 }
 
 } // namespace network
