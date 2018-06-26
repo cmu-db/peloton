@@ -104,14 +104,12 @@ class TransactionLevelGCManager : public GCManager {
    * @brief Attempt to get a recycled ItemPointer for this table from the GC
    * @param[in] table Pointer of the table to return a recycled ItemPointer for
    * @return ItemPointer to a recycled tuple slot on success,
-   * INVALID_ITEMPOINTER
-   * otherwise
+   * INVALID_ITEMPOINTER otherwise
    */
   virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
 
   /**
-   * @brief Recycle the provided tuple slot. May trigger TileGroup compaction or
-   * TileGroup freeing if enabled
+   * @brief Recycle the provided tuple slot
    * @param[id] location ItemPointer of the tuple slot to be recycled
    */
   virtual void RecycleTupleSlot(const ItemPointer &location) override;
