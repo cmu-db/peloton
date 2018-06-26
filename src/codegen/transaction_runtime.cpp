@@ -70,7 +70,6 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     selection_vector[out_idx] = selection_vector[idx];
     out_idx += static_cast<uint32_t>(can_read);
   }
-
   return out_idx;
 }
 
