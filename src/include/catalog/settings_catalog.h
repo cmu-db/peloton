@@ -20,9 +20,9 @@ namespace catalog {
 //===----------------------------------------------------------------------===//
 // In-memory representation of a row from the pg_settings table.
 //===----------------------------------------------------------------------===//
-class SettingsCatalogObject {
+class SettingsCatalogEntry {
  public:
-  SettingsCatalogObject(executor::LogicalTile *tile, int tuple_id = 0);
+  SettingsCatalogEntry(executor::LogicalTile *tile, int tuple_id = 0);
 
   // Accessors
   inline const std::string &GetName() { return name_; }
@@ -55,7 +55,8 @@ class SettingsCatalog : public AbstractCatalog {
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static SettingsCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -67,21 +68,20 @@ class SettingsCatalog : public AbstractCatalog {
                      bool is_persistent, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
-  bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
+  bool DeleteSetting(const std::string &name,
+                     concurrency::TransactionContext *txn);
 
   bool UpdateSettingValue(concurrency::TransactionContext *txn,
-                          const std::string &name,
-                          const std::string &value,
+                          const std::string &name, const std::string &value,
                           bool set_default);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<SettingsCatalogObject> GetSetting(
-      const std::string &name,
-      concurrency::TransactionContext *txn);
+  std::shared_ptr<SettingsCatalogEntry> GetSetting(
+      const std::string &name, concurrency::TransactionContext *txn);
 
-  std::unordered_map<std::string, std::shared_ptr<SettingsCatalogObject>>
+  std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
   GetSettings(concurrency::TransactionContext *txn);
 
   enum class ColumnId {
@@ -96,7 +96,7 @@ class SettingsCatalog : public AbstractCatalog {
     IS_PERSISTENT = 8,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
  private:
   SettingsCatalog(concurrency::TransactionContext *txn);

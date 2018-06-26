@@ -21,71 +21,96 @@
 namespace peloton {
 namespace catalog {
 
-SettingsCatalogObject::SettingsCatalogObject(executor::LogicalTile *tile,
-                                             int tuple_id)
+SettingsCatalogEntry::SettingsCatalogEntry(executor::LogicalTile *tile,
+                                           int tuple_id)
     : name_(tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::NAME)).ToString()),
-      value_type_(StringToTypeId(tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::VALUE_TYPE)).ToString())),
-      desc_(tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::DESCRIPTION)).ToString()),
-      is_mutable_(tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::IS_MUTABLE)).GetAs<bool>()),
-      is_persistent_(tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::IS_PERSISTENT)).GetAs<bool>()) {
+                           static_cast<int>(SettingsCatalog::ColumnId::NAME))
+                .ToString()),
+      value_type_(StringToTypeId(
+          tile->GetValue(tuple_id, static_cast<int>(
+                                       SettingsCatalog::ColumnId::VALUE_TYPE))
+              .ToString())),
+      desc_(tile->GetValue(
+                      tuple_id,
+                      static_cast<int>(SettingsCatalog::ColumnId::DESCRIPTION))
+                .ToString()),
+      is_mutable_(
+          tile->GetValue(tuple_id, static_cast<int>(
+                                       SettingsCatalog::ColumnId::IS_MUTABLE))
+              .GetAs<bool>()),
+      is_persistent_(
+          tile->GetValue(
+                    tuple_id,
+                    static_cast<int>(SettingsCatalog::ColumnId::IS_PERSISTENT))
+              .GetAs<bool>()) {
   switch (value_type_) {
-  case type::TypeId::INTEGER:{
-    value_ = type::ValueFactory::GetIntegerValue(
-        std::stoi(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::VALUE)).ToString()));
-    default_value_ = type::ValueFactory::GetIntegerValue(
-        std::stoi(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE)).ToString()));
-    min_value_ = type::ValueFactory::GetIntegerValue(
-        std::stoi(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::MIN_VALUE)).ToString()));
-    max_value_ = type::ValueFactory::GetIntegerValue(
-        std::stoi(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::MAX_VALUE)).ToString()));
-    break;
-  }
-  case type::TypeId::DECIMAL: {
-    value_ = type::ValueFactory::GetDecimalValue(
-        std::stof(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::VALUE)).ToString()));
-    default_value_ = type::ValueFactory::GetDecimalValue(
-        std::stof(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE)).ToString()));
-    min_value_ = type::ValueFactory::GetDecimalValue(
-        std::stof(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::MIN_VALUE)).ToString()));
-    max_value_ = type::ValueFactory::GetDecimalValue(
-        std::stof(tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::MAX_VALUE)).ToString()));
-    break;
-  }
-  case type::TypeId::BOOLEAN: {
-    value_ = type::ValueFactory::GetBooleanValue(
-        (tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::VALUE)).ToString()
-                == "true")? true : false);
-    default_value_ = type::ValueFactory::GetBooleanValue(
-        (tile->GetValue(tuple_id,
-            static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE)).ToString()
-                == "true")? true : false);
-    break;
-  }
-  case type::TypeId::VARCHAR: {
-    value_ = tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::VALUE));
-    default_value_ = tile->GetValue(tuple_id,
-        static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE));
-    break;
-  }
-  default:
-    LOG_ERROR("Unsupported type for setting value: %s",
-        TypeIdToString(value_type_).c_str());
-    PELOTON_ASSERT(false);
+    case type::TypeId::INTEGER: {
+      value_ = type::ValueFactory::GetIntegerValue(std::stoi(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::VALUE))
+              .ToString()));
+      default_value_ = type::ValueFactory::GetIntegerValue(std::stoi(
+          tile->GetValue(
+                    tuple_id,
+                    static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE))
+              .ToString()));
+      min_value_ = type::ValueFactory::GetIntegerValue(std::stoi(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::MIN_VALUE))
+              .ToString()));
+      max_value_ = type::ValueFactory::GetIntegerValue(std::stoi(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::MAX_VALUE))
+              .ToString()));
+      break;
+    }
+    case type::TypeId::DECIMAL: {
+      value_ = type::ValueFactory::GetDecimalValue(std::stof(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::VALUE))
+              .ToString()));
+      default_value_ = type::ValueFactory::GetDecimalValue(std::stof(
+          tile->GetValue(
+                    tuple_id,
+                    static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE))
+              .ToString()));
+      min_value_ = type::ValueFactory::GetDecimalValue(std::stof(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::MIN_VALUE))
+              .ToString()));
+      max_value_ = type::ValueFactory::GetDecimalValue(std::stof(
+          tile->GetValue(tuple_id,
+                         static_cast<int>(SettingsCatalog::ColumnId::MAX_VALUE))
+              .ToString()));
+      break;
+    }
+    case type::TypeId::BOOLEAN: {
+      value_ = type::ValueFactory::GetBooleanValue(
+          (tile->GetValue(tuple_id,
+                          static_cast<int>(SettingsCatalog::ColumnId::VALUE))
+               .ToString() == "true")
+              ? true
+              : false);
+      default_value_ = type::ValueFactory::GetBooleanValue(
+          (tile->GetValue(
+                     tuple_id,
+                     static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE))
+               .ToString() == "true")
+              ? true
+              : false);
+      break;
+    }
+    case type::TypeId::VARCHAR: {
+      value_ = tile->GetValue(
+          tuple_id, static_cast<int>(SettingsCatalog::ColumnId::VALUE));
+      default_value_ = tile->GetValue(
+          tuple_id, static_cast<int>(SettingsCatalog::ColumnId::DEFAULT_VALUE));
+      break;
+    }
+    default:
+      LOG_ERROR("Unsupported type for setting value: %s",
+                TypeIdToString(value_type_).c_str());
+      PELOTON_ASSERT(false);
   }
 }
 
@@ -132,7 +157,7 @@ bool SettingsCatalog::InsertSetting(
   auto val2 =
       type::ValueFactory::GetVarcharValue(TypeIdToString(value_type), pool);
   auto val3 = type::ValueFactory::GetVarcharValue(description, pool);
-  auto val4= type::ValueFactory::GetVarcharValue(min_value, pool);
+  auto val4 = type::ValueFactory::GetVarcharValue(min_value, pool);
   auto val5 = type::ValueFactory::GetVarcharValue(max_value, pool);
   auto val6 = type::ValueFactory::GetVarcharValue(default_value, pool);
   auto val7 = type::ValueFactory::GetBooleanValue(is_mutable);
@@ -161,50 +186,50 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-/** @brief      Update a setting object corresponding to a name
+/** @brief      Update a setting catalog entry corresponding to a name
  *              in the pg_settings.
  *  @param      name  name of the setting.
  *  @param      value  value for the updating.
  *  @param      txn  TransactionContext for getting the setting.
- *  @return     setting object.
+ *  @return     setting catalog entry.
  */
 bool SettingsCatalog::UpdateSettingValue(concurrency::TransactionContext *txn,
                                          const std::string &name,
                                          const std::string &value,
                                          bool set_default) {
-  std::vector<oid_t> update_columns({static_cast<int>(ColumnId::VALUE)});  // value
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);  // Index of name
+  std::vector<oid_t> update_columns(
+      {static_cast<int>(ColumnId::VALUE)});  // value
+  oid_t index_offset =
+      static_cast<int>(IndexId::SECONDARY_KEY_0);  // Index of name
   // values to execute index scan
   std::vector<type::Value> scan_values;
   scan_values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
   // values to update
   std::vector<type::Value> update_values;
-  update_values.push_back(
-      type::ValueFactory::GetVarcharValue(value).Copy());
+  update_values.push_back(type::ValueFactory::GetVarcharValue(value).Copy());
 
   if (set_default) {
     update_columns.push_back(static_cast<oid_t>(ColumnId::DEFAULT_VALUE));
-    update_values.push_back(
-        type::ValueFactory::GetVarcharValue(value).Copy());
+    update_values.push_back(type::ValueFactory::GetVarcharValue(value).Copy());
   }
 
   return UpdateWithIndexScan(update_columns, update_values, scan_values,
                              index_offset, txn);
 }
 
-/** @brief      Get a setting object corresponding to a name
+/** @brief      Get a setting catalog entry corresponding to a name
  *              from the pg_settings.
  *  @param      name  name of the setting.
  *  @param      txn  TransactionContext for getting the setting.
- *  @return     setting object.
+ *  @return     setting catalog entry.
  */
-std::shared_ptr<SettingsCatalogObject> SettingsCatalog::GetSetting(
+std::shared_ptr<SettingsCatalogEntry> SettingsCatalog::GetSetting(
     const std::string &name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
 
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -216,42 +241,40 @@ std::shared_ptr<SettingsCatalogObject> SettingsCatalog::GetSetting(
   if (result_tiles->size() != 0) {
     PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      return std::make_shared<SettingsCatalogObject>((*result_tiles)[0].get());
+      return std::make_shared<SettingsCatalogEntry>((*result_tiles)[0].get());
     }
   }
 
   return nullptr;
 }
 
-/** @brief      Get all setting objects from the pg_settings.
+/** @brief      Get all setting catalog entries from the pg_settings.
  *  @param      txn TransactionContext for getting the settings.
- *  @return     unordered_map containing a name -> setting object
- *              mapping.
+ *  @return     unordered_map containing a name -> setting catalog
+ *              entry mapping.
  */
-std::unordered_map<std::string, std::shared_ptr<SettingsCatalogObject>>
-SettingsCatalog::GetSettings(
-    concurrency::TransactionContext *txn) {
+std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
+SettingsCatalog::GetSettings(concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
 
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
 
-  auto result_tiles =
-      this->GetResultWithSeqScan(column_ids, nullptr, txn);
+  auto result_tiles = this->GetResultWithSeqScan(column_ids, nullptr, txn);
 
-  std::unordered_map<std::string, std::shared_ptr<SettingsCatalogObject>>
-    setting_objects;
+  std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
+      setting_entries;
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
-      auto setting_object =
-          std::make_shared<SettingsCatalogObject>(tile.get(), tuple_id);
-      setting_objects.insert(
-          std::make_pair(setting_object->GetName(), setting_object));
+      auto setting_entry =
+          std::make_shared<SettingsCatalogEntry>(tile.get(), tuple_id);
+      setting_entries.insert(
+          std::make_pair(setting_entry->GetName(), setting_entry));
     }
   }
 
-  return setting_objects;
+  return setting_entries;
 }
 
 }  // namespace catalog

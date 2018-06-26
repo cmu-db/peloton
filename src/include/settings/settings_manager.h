@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <unordered_map>
@@ -23,7 +22,6 @@
 
 namespace peloton {
 namespace settings {
-
 
 // SettingsManager:
 // provide ability to define, get_value and set_value of setting parameters
@@ -69,7 +67,6 @@ class SettingsManager : public Printable {
   void ShowInfo();
 
  private:
-
   // local information storage
   // name, value, description, default_value, is_mutable, is_persistent
   struct Param {
@@ -81,20 +78,25 @@ class SettingsManager : public Printable {
     type::Value max_value;
     bool is_mutable, is_persistent;
 
-    Param(std::string name, const type::Value &value,
-          std::string desc, const type::Value &default_value,
-          type::Value min_value, type::Value max_value,
-          bool is_mutable, bool is_persistent)
-        : name(name), value(value), desc(desc),
-          default_value(default_value), min_value(min_value),
-          max_value(max_value), is_mutable(is_mutable),
+    Param(std::string name, const type::Value &value, std::string desc,
+          const type::Value &default_value, type::Value min_value,
+          type::Value max_value, bool is_mutable, bool is_persistent)
+        : name(name),
+          value(value),
+          desc(desc),
+          default_value(default_value),
+          min_value(min_value),
+          max_value(max_value),
+          is_mutable(is_mutable),
           is_persistent(is_persistent) {}
   };
 
   // internal map
   struct EnumClassHash {
-    template <typename T> std::size_t operator()(T t)
-    const { return static_cast<std::size_t>(t); }
+    template <typename T>
+    std::size_t operator()(T t) const {
+      return static_cast<std::size_t>(t);
+    }
   };
   std::unordered_map<SettingId, Param, EnumClassHash> settings_;
 
@@ -105,19 +107,15 @@ class SettingsManager : public Printable {
   SettingsManager();
 
   void DefineSetting(SettingId id, const std::string &name,
-                     const type::Value &value,
-                     const std::string &description,
+                     const type::Value &value, const std::string &description,
                      const type::Value &default_value,
-                     const type::Value &min_value,
-                     const type::Value &max_value,
+                     const type::Value &min_value, const type::Value &max_value,
                      bool is_mutable, bool is_persistent);
 
-  bool InsertCatalog(const Param &param,
-                     concurrency::TransactionContext *txn);
+  bool InsertCatalog(const Param &param, concurrency::TransactionContext *txn);
 
   bool UpdateCatalog(const std::string &name, const type::Value &value,
-                     bool set_default,
-                     concurrency::TransactionContext *txn);
+                     bool set_default, concurrency::TransactionContext *txn);
 };
 
 }  // namespace settings

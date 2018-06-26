@@ -162,7 +162,7 @@ void SettingsManager::SetValue(SettingId id, const type::Value &value,
     PELOTON_ASSERT(txn != nullptr);
     if (!UpdateCatalog(param->second.name, value, set_default, txn)) {
       throw SettingsException("failed to set value " + value.ToString() +
-          " to " + param->second.name);
+                              " to " + param->second.name);
     }
   }
 
@@ -190,7 +190,8 @@ void SettingsManager::ResetValue(SettingId id,
     PELOTON_ASSERT(txn != nullptr);
     if (!UpdateCatalog(param->second.name, default_value, false, txn)) {
       throw SettingsException("failed to set value " +
-          default_value.ToString() + " to " + param->second.name);
+                              default_value.ToString() + " to " +
+                              param->second.name);
     }
   }
 
@@ -223,9 +224,9 @@ void SettingsManager::UpdateSettingListFromCatalog(
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance(txn);
 
   // Update each catalog value from pg_settings
-  for (auto setting_object_pair : settings_catalog.GetSettings(txn)) {
-    auto setting_name = setting_object_pair.first;
-    auto setting_object = setting_object_pair.second;
+  for (auto setting_entry_pair : settings_catalog.GetSettings(txn)) {
+    auto setting_name = setting_entry_pair.first;
+    auto setting_entry = setting_entry_pair.second;
 
     // Find the setting from setting list on memory
     auto param = settings_.begin();
@@ -238,8 +239,8 @@ void SettingsManager::UpdateSettingListFromCatalog(
     PELOTON_ASSERT(param != settings_.end());
 
     // Set value and default_value
-    param->second.value = setting_object->GetValue();
-    param->second.default_value = setting_object->GetDefaultValue();
+    param->second.value = setting_entry->GetValue();
+    param->second.default_value = setting_entry->GetDefaultValue();
   }
 }
 
@@ -274,8 +275,7 @@ const std::string SettingsManager::GetInfo() const {
 
 void SettingsManager::ShowInfo() { LOG_INFO("\n%s\n", GetInfo().c_str()); }
 
-void SettingsManager::DefineSetting(SettingId id,
-                                    const std::string &name,
+void SettingsManager::DefineSetting(SettingId id, const std::string &name,
                                     const type::Value &value,
                                     const std::string &description,
                                     const type::Value &default_value,
@@ -293,15 +293,13 @@ void SettingsManager::DefineSetting(SettingId id,
       value.GetTypeId() == type::TypeId::TINYINT ||
       value.GetTypeId() == type::TypeId::DECIMAL) {
     if (!value.CompareBetweenInclusive(min_value, max_value))
-      throw SettingsException("Value given for \"" + name +
-                              "\" is not in its min-max bounds (" +
-                              min_value.ToString() + "-" +
-                              max_value.ToString() + ")");
+      throw SettingsException(
+          "Value given for \"" + name + "\" is not in its min-max bounds (" +
+          min_value.ToString() + "-" + max_value.ToString() + ")");
   }
 
-  settings_.emplace(id, Param(name, value, description,
-                    default_value, min_value, max_value,
-                    is_mutable, is_persistent));
+  settings_.emplace(id, Param(name, value, description, default_value,
+                              min_value, max_value, is_mutable, is_persistent));
 }
 
 /** @brief      Insert a setting information into setting catalog.
@@ -314,16 +312,16 @@ bool SettingsManager::InsertCatalog(const Param &param,
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
 
   // Check a same setting is not existed
-  if (settings_catalog.GetSetting(param.name, txn) != nullptr ) {
+  if (settings_catalog.GetSetting(param.name, txn) != nullptr) {
     LOG_ERROR("The setting %s is already existed", param.name.c_str());
     return false;
   }
 
   if (!settings_catalog.InsertSetting(
           param.name, param.value.ToString(), param.value.GetTypeId(),
-          param.desc, param.min_value.ToString(),
-          param.max_value.ToString(), param.default_value.ToString(),
-          param.is_mutable, param.is_persistent, pool_.get(), txn)) {
+          param.desc, param.min_value.ToString(), param.max_value.ToString(),
+          param.default_value.ToString(), param.is_mutable, param.is_persistent,
+          pool_.get(), txn)) {
     return false;
   }
   return true;
@@ -337,8 +335,7 @@ bool SettingsManager::InsertCatalog(const Param &param,
  *  @return     True if success, or false
  */
 bool SettingsManager::UpdateCatalog(const std::string &name,
-                                    const type::Value &value,
-                                    bool set_default,
+                                    const type::Value &value, bool set_default,
                                     concurrency::TransactionContext *txn) {
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
   if (!settings_catalog.UpdateSettingValue(txn, name, value.ToString(),
