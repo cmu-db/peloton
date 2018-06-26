@@ -403,7 +403,7 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
   ItemPointer location;
   if (recycle_queue->Dequeue(location) == true) {
     LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
-              location.offset, table_id);
+              location.offset, table->GetOid());
     return location;
   }
   return INVALID_ITEMPOINTER;
