@@ -191,6 +191,7 @@ HANDLE_INST(llvm_sse42_crc32)
 // Further functions can easily be added here. The regarding headers have to be
 // added in these files manually: bytecode_interpreter.h, bytecode_function.cpp
 
+// clang-format off
 HANDLE_EXPLICIT_CALL_INST(
     peloton_transactionruntime_performvectorizedread,
     peloton::codegen::TransactionRuntime::PerformVectorizedRead)
@@ -233,12 +234,18 @@ HANDLE_EXPLICIT_CALL_INST(peloton_inserter_teardown,
 
 HANDLE_EXPLICIT_CALL_INST(peloton_sorter_init,
                           peloton::codegen::util::Sorter::Init)
-HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storeinputtuple,
-                          peloton::codegen::util::Sorter::StoreInputTuple)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storetuple,
+                          peloton::codegen::util::Sorter::StoreTuple)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storetuplefortopk,
+                          peloton::codegen::util::Sorter::StoreTupleForTopK)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storetuplefortopkfinish,
+                          peloton::codegen::util::Sorter::StoreTupleForTopKFinish)
 HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sort,
                           peloton::codegen::util::Sorter::Sort)
 HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sortparallel,
                           peloton::codegen::util::Sorter::SortParallel)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sorttopkparallel,
+                          peloton::codegen::util::Sorter::SortTopKParallel)
 HANDLE_EXPLICIT_CALL_INST(peloton_sorter_destroy,
                           peloton::codegen::util::Sorter::Destroy)
 
@@ -400,6 +407,8 @@ HANDLE_EXPLICIT_CALL_INST(
 
 HANDLE_EXPLICIT_CALL_INST(peloton_bufferingconsumer_buffertuple,
                           peloton::codegen::BufferingConsumer::BufferTuple)
+
+// clang-format on
 
 // undefine all handlers
 #undef HANDLE_INST

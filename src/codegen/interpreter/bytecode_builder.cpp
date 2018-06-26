@@ -488,7 +488,11 @@ void BytecodeBuilder::AnalyseFunction() {
     // which are labeled and explained below.
     for (llvm::BasicBlock::const_iterator instr_iterator = bb->begin();
          instr_iterator != bb->end(); ++instr_iterator, ++instruction_index) {
+<<<<<<< 5cc31aa715fbbd1007315d57cabe4cb7c88f8156
       const llvm::Instruction *instruction = &(*instr_iterator);
+=======
+      const llvm::Instruction *instruction = &*instr_iterator;
+>>>>>>> Fixed bytecode compilation. Added explicit call handlers for sorter to bytecode builder. Fixed parallel sorting top-k
 
       bool is_non_zero_gep = false;
       if (instruction->getOpcode() == llvm::Instruction::GetElementPtr &&

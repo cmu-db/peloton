@@ -353,6 +353,8 @@ void Sorter::SortTopKParallel(
 
   // Trim to top-K
   tuples_.resize(top_k);
+  tuples_start_ = tuples_.data();
+  tuples_end_ = tuples_start_ + tuples_.size();
 }
 
 void Sorter::MakeRoomForNewTuple() {
