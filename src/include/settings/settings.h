@@ -200,6 +200,10 @@ SETTING_bool(codegen,
             true,
             true, true)
 
+SETTING_bool(codegen_interpreter,
+             "Force interpretation of generated llvm code (default: false)",
+             false, true, true)
+
 SETTING_bool(print_ir_stats,
              "Print statistics on generated IR (default: false)",
              false,
