@@ -32,32 +32,29 @@ struct ClientProcessState {
   std::vector<type::Value> param_values_;
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;
-  // Default database name
-  int rows_affected_;
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
   // flag of single statement txn
-  bool single_statement_txn_;
   std::vector<ResultValue> result_;
-  std::stack<TcopTxnState> tcop_txn_state_;
   executor::ExecutionResult p_status_;
   StatementCache statement_cache_;
+
+  // The current callback to be invoked after execution completes.
+  void (*task_callback_)(void *);
+  void *task_callback_arg_;
 };
 
 // Execute a statement
 ResultType ExecuteStatement(
     ClientProcessState &state,
-    const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, bool unnamed,
-    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<ResultValue> &result,
-    size_t thread_id = 0);
+    const std::vector<int> &result_format, std::vector<ResultValue> &result);
 
 // Helper to handle txn-specifics for the plan-tree of a statement.
-executor::ExecutionResult ExecuteHelper(
+void ExecuteHelper(
+    ClientProcessState &state,
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
-    const std::vector<int> &result_format, size_t thread_id = 0);
+    const std::vector<int> &result_format);
 
 // Prepare a statement
 bool PrepareStatement(

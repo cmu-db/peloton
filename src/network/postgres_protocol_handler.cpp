@@ -260,7 +260,7 @@ ResultType PostgresProtocolHandler::ExecQueryExplain(
   unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
   auto stmt = traffic_cop_->PrepareStatement("explain", query,
                                              std::move(unnamed_sql_stmt_list));
-  ResultType status = ResultType::UNKNOWN;
+  ResultType status;
   if (stmt != nullptr) {
     traffic_cop_->SetStatement(stmt);
     std::vector<std::string> plan_info = StringUtil::Split(

@@ -2030,9 +2030,6 @@ std::string ResultTypeToString(ResultType type) {
     case ResultType::UNKNOWN: {
       return ("UNKNOWN");
     }
-    case ResultType::QUEUING: {
-      return ("QUEUING");
-    }
     case ResultType::TO_ABORT: {
       return ("TO_ABORT");
     }

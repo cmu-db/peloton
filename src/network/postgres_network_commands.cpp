@@ -86,11 +86,9 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
       std::vector<int>(state.statement_->GetTupleDescriptor().size(), 0);
 
   auto status = tcop::ExecuteStatement(state,
-      state.statement_,
-      state.param_values_, false, nullptr,
-      interpreter.result_format_, state.result_, tid);
+      interpreter.result_format_, state.result_);
 
-  if (state.is_queuing_) return Transition::NEED_RESULT;
+  if (status == ResultType::QUEUING) return Transition::NEED_RESULT;
 
   interpreter.ExecQueryMessageGetResult(status);
 
@@ -124,6 +122,7 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
   out.BeginPacket(NetworkMessageType::PARSE_COMPLETE);
   return Transition::PROCEED;
 }
+
 
 } // namespace network
 } // namespace peloton

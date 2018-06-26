@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "threadpool/mono_queue_pool.h"
 #include "planner/plan_util.h"
 #include "binder/bind_node_visitor.h"
 #include "traffic_cop/tcop.h"
@@ -90,8 +91,83 @@ bool tcop::PrepareStatement(
   return true;
 }
 
+ResultType tcop::ExecuteStatement(
+    ClientProcessState &state,
+    const std::vector<int> &result_format, std::vector<ResultValue> &result) {
 
+  LOG_TRACE("Execute Statement of name: %s",
+            state.statement_->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            state.statement_->GetQueryString().c_str());
+  LOG_TRACE("Execute Statement Plan:\n%s",
+            planner::PlanUtil::GetInfo(state.statement_->GetPlanTree().get()).c_str());
+  LOG_TRACE("Execute Statement Query Type: %s",
+            state.statement_->GetQueryTypeString().c_str());
+  LOG_TRACE("----QueryType: %d--------",
+            static_cast<int>(state.statement_->GetQueryType()));
 
+  try {
+    switch (state.statement_->GetQueryType()) {
+      case QueryType::QUERY_BEGIN: {
+        return BeginQueryHelper(state.thread_id_);
+      }
+      case QueryType::QUERY_COMMIT: {
+        return CommitQueryHelper();
+      }
+      case QueryType::QUERY_ROLLBACK: {
+        return AbortQueryHelper();
+      }
+      default: {
+        // The statement may be out of date
+        // It needs to be replan
+        if (state.statement_->GetNeedsReplan()) {
+          // TODO(Tianyi) Move Statement Replan into Statement's method
+          // to increase coherence
+          auto bind_node_visitor = binder::BindNodeVisitor(
+              tcop_txn_state_.top().first, state.db_name_);
+          bind_node_visitor.BindNameToNode(
+              state.statement_->GetStmtParseTreeList()->GetStatement(0));
+          auto plan = state.optimizer_->BuildPelotonPlanTree(
+              state.statement_->GetStmtParseTreeList(), tcop_txn_state_.top().first);
+          state.statement_->SetPlanTree(plan);
+          state.statement_->SetNeedsReplan(true);
+        }
+
+        ExecuteHelper(state, result, result_format);
+        return ResultType::QUEUING;
+      }
+    }
+
+  } catch (Exception &e) {
+    state.error_message_ = e.what();
+    return ResultType::FAILURE;
+  }
+}
+
+void tcop::ExecuteHelper(
+    ClientProcessState &state,
+    std::vector<ResultValue> &result,
+    const std::vector<int> &result_format) {
+  auto plan = state.statement_->GetPlanTree();
+  auto params = state.param_values_,
+
+  auto on_complete = [&result, &state](executor::ExecutionResult p_status,
+                                     std::vector<ResultValue> &&values) {
+    state.p_status_ = p_status;
+    state.error_message_ = std::move(p_status.m_error_message);
+    result = std::move(values);
+    state.task_callback_(state.task_callback_arg_);
+  };
+
+  auto &pool = threadpool::MonoQueuePool::GetInstance();
+  pool.SubmitTask([plan, txn, &params, &result_format, on_complete] {
+    executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
+                                        on_complete);
+  });
+
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
+            tcop_txn_state_.size());
+}
 
 } // namespace tcop
 } // namespace peloton
