@@ -23,8 +23,7 @@ bool tcop::PrepareStatement(
     ClientProcessState &state, const std::string &query_string,
     const std::string &statement_name) {
   try {
-    // TODO(Tianyi) Implicitly start a txn
-
+    state.txn_handle_.ImplicitBegin(state.thread_id_);
     // parse the query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
@@ -87,6 +86,7 @@ bool tcop::PrepareStatement(
     state.error_message_ = e.what();
     return false;
   }
+  // TODO catch txn exception
 
   return true;
 }
@@ -109,31 +109,38 @@ ResultType tcop::ExecuteStatement(
   try {
     switch (state.statement_->GetQueryType()) {
       case QueryType::QUERY_BEGIN: {
-        return BeginQueryHelper(state.thread_id_);
+        state.txn_handle_.ExplicitBegin(state.thread_id_);
+        return ResultType::SUCCESS;
       }
       case QueryType::QUERY_COMMIT: {
-        return CommitQueryHelper();
+        if (!state.txn_handle_.ExplicitCommit()) {
+          // TODO Check which result type we should return
+          return ResultType::FAILURE;
+        }
+        return ResultType::SUCCESS;
       }
       case QueryType::QUERY_ROLLBACK: {
-        return AbortQueryHelper();
+        state.txn_handle_.ExplicitAbort();
+        return ResultType::SUCCESS;
       }
       default: {
         // The statement may be out of date
         // It needs to be replan
+        auto txn = state.txn_handle_.ImplicitBegin(state.thread_id_);
         if (state.statement_->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
           auto bind_node_visitor = binder::BindNodeVisitor(
-              tcop_txn_state_.top().first, state.db_name_);
+              txn, state.db_name_);
           bind_node_visitor.BindNameToNode(
               state.statement_->GetStmtParseTreeList()->GetStatement(0));
           auto plan = state.optimizer_->BuildPelotonPlanTree(
-              state.statement_->GetStmtParseTreeList(), tcop_txn_state_.top().first);
+              state.statement_->GetStmtParseTreeList(), txn);
           state.statement_->SetPlanTree(plan);
           state.statement_->SetNeedsReplan(true);
         }
 
-        ExecuteHelper(state, result, result_format);
+        ExecuteHelper(state, result, result_format, txn);
         return ResultType::QUEUING;
       }
     }
@@ -147,9 +154,10 @@ ResultType tcop::ExecuteStatement(
 void tcop::ExecuteHelper(
     ClientProcessState &state,
     std::vector<ResultValue> &result,
-    const std::vector<int> &result_format) {
+    const std::vector<int> &result_format,
+    concurrency::TransactionContext *txn) {
   auto plan = state.statement_->GetPlanTree();
-  auto params = state.param_values_,
+  auto params = state.param_values_;
 
   auto on_complete = [&result, &state](executor::ExecutionResult p_status,
                                      std::vector<ResultValue> &&values) {
