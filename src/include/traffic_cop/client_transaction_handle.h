@@ -142,6 +142,15 @@ class MultiStmtsClientTxnHandler : AbtractClientTxnHandler {
  *
  * It would operate in either Single-Statement or Multi-Statements mode, using different handler
  *
+ * Serveral general patterns of function calls is :
+ * 1.
+ * ImplicitBegin()[By Prepare] -> ImplicitBegin() [By Execute]-> ImplicitEnd();
+ * 2.
+ * ImplicitBegin() -> ExplicitBegin() -> ImplictBegin()[second query]
+ * ->ImplicitEnd()[second query] -> ExplicitCommit() -> ImplicitEnd();
+ * 3.
+ * ImplicitBegin() -> ExplicitBegin() -> ImplictBegin()[second query]
+ * ->ImplicitENd()[second query]-> ExplicitAbort() -> ImplicitEnd();
  */
 class ClientTxnHandle {
   friend class AbtractClientTxnHandler;

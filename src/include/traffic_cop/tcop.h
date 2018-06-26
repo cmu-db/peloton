@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
-#include <include/concurrency/transaction_manager_factory.h>
 #include "network/connection_handle.h"
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "common/statement_cache.h"
+#include "client_transaction_handle.h"
 namespace peloton {
 namespace tcop {
 
@@ -39,6 +39,9 @@ struct ClientProcessState {
   executor::ExecutionResult p_status_;
   StatementCache statement_cache_;
 
+  // Transaction Handling Wrapper
+  ClientTxnHandle txn_handle_;
+
   // The current callback to be invoked after execution completes.
   void (*task_callback_)(void *);
   void *task_callback_arg_;
@@ -52,9 +55,9 @@ ResultType ExecuteStatement(
 // Helper to handle txn-specifics for the plan-tree of a statement.
 void ExecuteHelper(
     ClientProcessState &state,
-    std::shared_ptr<planner::AbstractPlan> plan,
-    const std::vector<type::Value> &params, std::vector<ResultValue> &result,
-    const std::vector<int> &result_format);
+    std::vector<ResultValue> &result,
+    const std::vector<int> &result_format,
+    concurrency::TransactionContext *txn);
 
 // Prepare a statement
 bool PrepareStatement(
@@ -72,17 +75,11 @@ std::vector<FieldInfo> GenerateTupleDescriptor(
 FieldInfo GetColumnFieldForValueType(std::string column_name,
                                      type::TypeId column_type);
 
-ResultType CommitQueryHelper();
-
 void ExecuteStatementPlanGetResult();
 
 ResultType ExecuteStatementGetResult();
 
 void ProcessInvalidStatement(ClientProcessState &state);
-
-ResultType BeginQueryHelper(size_t thread_id);
-
-ResultType AbortQueryHelper();
 
 // Get all data tables from a TableRef.
 // For multi-way join
