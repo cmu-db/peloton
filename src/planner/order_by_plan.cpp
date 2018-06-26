@@ -23,7 +23,10 @@ OrderByPlan::OrderByPlan(const std::vector<oid_t> &sort_keys,
                          const std::vector<oid_t> &output_column_ids)
     : sort_keys_(sort_keys),
       descend_flags_(descend_flags),
-      output_column_ids_(output_column_ids) {}
+      output_column_ids_(output_column_ids),
+      has_limit_(false),
+      limit_(0),
+      offset_(0) {}
 
 OrderByPlan::OrderByPlan(const std::vector<oid_t> &sort_keys,
                          const std::vector<bool> &descend_flags,
