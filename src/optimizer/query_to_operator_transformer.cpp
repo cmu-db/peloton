@@ -111,8 +111,18 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->limit != nullptr) {
+    const auto &order_info = op->order;
+    std::vector<expression::AbstractExpression *> sort_exprs;
+    std::vector<bool> sort_ascending;
+    for (auto &expr : order_info->exprs) {
+      sort_exprs.push_back(expr.get());
+    }
+    for (auto &type : order_info->types) {
+      sort_ascending.push_back(type == parser::kOrderAsc);
+    }
     auto limit_expr = std::make_shared<OperatorExpression>(
-        LogicalLimit::make(op->limit->offset, op->limit->limit));
+        LogicalLimit::make(op->limit->offset, op->limit->limit,
+                           std::move(sort_exprs), std::move(sort_ascending)));
     limit_expr->PushChild(output_expr_);
     output_expr_ = limit_expr;
   }
