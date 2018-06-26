@@ -56,10 +56,10 @@ static void CompileAndExecutePlan(
   // Check if we have a cached compiled plan already
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
-    // Cached plan doesn't exist, let's compile the query
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
         *plan, executor_context.GetParams().GetQueryParametersMap(), consumer);
+    compiled_query->Compile();
 
     // Grab an instance to the plan
     query = compiled_query.get();
