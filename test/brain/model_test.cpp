@@ -25,7 +25,7 @@ namespace test {
 class ModelTests : public PelotonTest {};
 
 TEST_F(ModelTests, NormalizerTest) {
-  auto n = brain::Normalizer(true);
+  auto n = brain::Normalizer();
   matrix_eig X = brain::EigenUtil::ToEigenMat({{1, 2, 3},
                                                {4, 5, 6},
                                                {7, 8, 9}});
