@@ -38,6 +38,8 @@ TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
   GenerateModel(ConstructModelArgsString());
   // Import the Model
   tf_session_entity_->ImportGraph(graph_path_);
+  // Initialize the model
+  TFInit();
 }
 
 std::string TimeSeriesLSTM::ConstructModelArgsString() const {
@@ -84,10 +86,6 @@ void TimeSeriesLSTM::Fit(const matrix_eig &X,
       new TfFloatIn(dropout_ratio_, "dropout_ratio_"),
       new TfFloatIn(learn_rate_, "learn_rate_"),
       new TfFloatIn(clip_norm_, "clip_norm_")};
-  std::vector<TfFloatIn *> inputs_loss{
-      new TfFloatIn(data_batch.data(), dims, "data_"),
-      new TfFloatIn(target_batch.data(), dims, "target_"),
-      new TfFloatIn(1.0, "dropout_ratio_")};
   tf_session_entity_->Eval(inputs_optimize, "optimizeOp_");
   std::for_each(inputs_optimize.begin(), inputs_optimize.end(), TFIO_Delete);
 }
@@ -95,7 +93,8 @@ void TimeSeriesLSTM::Fit(const matrix_eig &X,
 float TimeSeriesLSTM::TrainEpoch(const matrix_eig &data) {
   std::vector<float> losses;
   std::vector<std::vector<matrix_eig>> data_batches, target_batches;
-  ModelUtil::GetBatches(this, data, batch_size_, data_batches, target_batches);
+
+  ModelUtil::GetBatches(*this, data, batch_size_, data_batches, target_batches);
 
   PELOTON_ASSERT(data_batches.size() == target_batches.size());
 
@@ -146,13 +145,10 @@ matrix_eig TimeSeriesLSTM::Predict(const matrix_eig &X, int bsz) const {
   return EigenUtil::VStack(y_hat);
 }
 
-float TimeSeriesLSTM::ValidateEpoch(const matrix_eig &data,
-                                    matrix_eig &test_true,
-                                    matrix_eig &test_pred,
-                                    bool return_preds) {
+float TimeSeriesLSTM::ValidateEpoch(const matrix_eig &data) {
   std::vector<float> losses;
   std::vector<std::vector<matrix_eig>> data_batches, target_batches;
-  ModelUtil::GetBatches(this, data, batch_size_, data_batches, target_batches);
+  ModelUtil::GetBatches(*this, data, batch_size_, data_batches, target_batches);
 
   PELOTON_ASSERT(data_batches.size() == target_batches.size());
 
@@ -168,10 +164,6 @@ float TimeSeriesLSTM::ValidateEpoch(const matrix_eig &data,
   }
   matrix_eig y = EigenUtil::VStack(y_batch);
   matrix_eig y_hat = EigenUtil::VStack(y_hat_batch);
-  if(return_preds) {
-    test_true = y;
-    test_pred = y_hat;
-  }
   return ModelUtil::MeanSqError(y, y_hat);
 }
 }  // namespace brain

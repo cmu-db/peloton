@@ -55,9 +55,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
    * Then the validation loss is calculated for the relevant sequence
    * - this is a function of segment and horizon.
    */
-  float ValidateEpoch(const matrix_eig &data,
-                      matrix_eig &test_true,
-                      matrix_eig &test_pred, bool return_preds) override;
+  float ValidateEpoch(const matrix_eig &data) override;
 
   void Fit(const matrix_eig &X,
            const matrix_eig &y,

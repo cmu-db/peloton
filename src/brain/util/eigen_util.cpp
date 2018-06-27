@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/util/eigen_util.h"
+#include <random>
 
 namespace peloton{
 namespace brain{
@@ -42,6 +43,14 @@ matrix_t EigenUtil::ToMatrixT(const matrix_eig &mat) {
   return out_mat;
 }
 
+vector_eig EigenUtil::ToEigenVec(const vector_t &mat) {
+  return vector_eig::Map(mat.data(), mat.size());
+}
+
+vector_t EigenUtil::ToVectorT(const vector_eig &mat) {
+  return vector_t(mat.data(), mat.data() + mat.size());
+}
+
 matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   PELOTON_ASSERT(!mat_vec.empty());
   long num_cols = mat_vec[0].cols();
@@ -60,7 +69,7 @@ matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   return vstacked_mat;
 }
 
-matrix_eig EigenUtil::PairwiseEuclideanDist(matrix_eig m1, matrix_eig m2) {
+matrix_eig EigenUtil::PairwiseEuclideanDist(const matrix_eig& m1, const matrix_eig& m2) {
   matrix_eig m_dist(m1.rows(), m2.rows());
   for (int i = 0; i < m1.rows(); i++) {
     for (int j = 0; j < m2.rows(); j++) {
@@ -89,6 +98,29 @@ vector_t EigenUtil::Flatten(const matrix_t &mat) {
     flattened_mat.insert(flattened_mat.end(), mat_row.begin(), mat_row.end());
   }
   return flattened_mat;
+}
+
+matrix_eig EigenUtil::GaussianNoise(size_t rows, size_t cols, float mean, float stdev) {
+  std::default_random_engine generator;
+  std::normal_distribution<> distribution{mean, stdev};
+  auto gaussian_sampler = [&] () {return distribution(generator);};
+  return matrix_eig::NullaryExpr(rows, cols, gaussian_sampler);
+}
+
+vector_eig EigenUtil::StandardDeviation(const matrix_eig &mat, uint8_t axis) {
+  if(axis == 0) {
+    matrix_eig sqdiff_mat = (mat.rowwise() - mat.colwise().mean()).array().square();
+    vector_eig var_mat = sqdiff_mat.colwise().mean();
+    return var_mat.cwiseSqrt();
+  } else {
+    throw "Not Implemented";
+  }
+}
+
+float EigenUtil::StandardDeviation(const matrix_eig &mat) {
+  matrix_eig sqdiff_mat = (mat.array() - mat.mean()).array().square();
+  float var = sqdiff_mat.mean();
+  return std::sqrt(var);
 }
 
 }  // namespace brain

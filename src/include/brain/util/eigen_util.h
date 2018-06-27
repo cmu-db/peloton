@@ -35,11 +35,18 @@ class EigenUtil {
    * @return the converted matrix_t matrix
    */
   static matrix_t ToMatrixT(const matrix_eig &mat);
+  static vector_eig ToEigenVec(const vector_t &mat);
+  static vector_t ToVectorT(const vector_eig &mat);
   static matrix_eig VStack(const std::vector<matrix_eig> &mat_vec);
-  static matrix_eig PairwiseEuclideanDist(matrix_eig m1, matrix_eig m2);
+  // TODO(saatviks): Add PairwiseStandardEuclideanDistance
+  static matrix_eig PairwiseEuclideanDist(const matrix_eig& m1, const matrix_eig& m2);
   static vector_t Flatten(const matrix_eig &mat);
   static vector_t Flatten(const std::vector<matrix_eig> &mat);
   static vector_t Flatten(const matrix_t &mat);
+  static matrix_eig GaussianNoise(size_t rows, size_t cols, float mean, float stdev);
+  // TODO(saatviks): Add axis version and simple version
+  static vector_eig StandardDeviation(const matrix_eig &mat, uint8_t axis);
+  static float StandardDeviation(const matrix_eig &mat);
 };
 }
 }

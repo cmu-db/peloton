@@ -20,7 +20,26 @@ namespace peloton {
 namespace brain {
 
 /**
+ * Normalizer
+ */
+ class Normalizer {
+  public:
+   Normalizer(bool do_normalize = true)
+       : do_normalize_(do_normalize) {};
+   void Fit(const matrix_eig &X);
+   matrix_eig Transform(const matrix_eig &X) const;
+   matrix_eig ReverseTransform(const matrix_eig &X) const;
+  private:
+   float mean_;
+   float std_;
+   float min_;
+   bool do_normalize_;
+   bool fit_complete_;
+ };
+
+/**
  * Base Abstract class to inherit for writing ML models
+ * Following a similar base as sklearn
  */
 class BaseModel {
  public:
@@ -40,10 +59,7 @@ class BaseForecastModel : public BaseModel {
       : BaseModel(), bptt_(bptt),
         horizon_(horizon), interval_(interval) {};
   virtual float TrainEpoch(const matrix_eig &data) = 0;
-  virtual float ValidateEpoch(const matrix_eig &data,
-                              matrix_eig &test_true,
-                              matrix_eig &test_pred,
-                              bool return_preds) = 0;
+  virtual float ValidateEpoch(const matrix_eig &data) = 0;
   int GetHorizon() const { return horizon_; }
   int GetBPTT() const { return bptt_; }
   int GetInterval() const { return interval_; }

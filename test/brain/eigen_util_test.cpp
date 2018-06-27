@@ -18,7 +18,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Tensorflow Tests
+// Eigen Util Tests
 //===--------------------------------------------------------------------===//
 
 class EigenUtilTests : public PelotonTest {};
@@ -59,7 +59,7 @@ TEST_F(EigenUtilTests, BasicEigenTest) {
   EXPECT_EQ(m(1, 1) * vvT(1, 1), mvvT(1, 1));
 }
 
-TEST_F(EigenUtilTests, EigenToMatrixTConversionTest) {
+TEST_F(EigenUtilTests, EigenMatToFromMatrixTConversionTest) {
   matrix_t matrix_simple = {
       {1, 2, 3},
       {4, 5, 6},
@@ -67,6 +67,13 @@ TEST_F(EigenUtilTests, EigenToMatrixTConversionTest) {
   matrix_t matrix_simple_recon =
       brain::EigenUtil::ToMatrixT(brain::EigenUtil::ToEigenMat(matrix_simple));
   EXPECT_EQ(matrix_simple, matrix_simple_recon);
+}
+
+TEST_F(EigenUtilTests, EigenVecToFromVectorTConversionTest) {
+  vector_t v = {1, 2, 3, 4};
+  vector_t v_recon =
+      brain::EigenUtil::ToVectorT(brain::EigenUtil::ToEigenVec(v));
+  EXPECT_EQ(v, v_recon);
 }
 
 TEST_F(EigenUtilTests, FlattenTest) {
@@ -121,6 +128,27 @@ TEST_F(EigenUtilTests, PairwiseEuclideanDistTest) {
       {1, 0, 1.41421},
   });
   EXPECT_TRUE(m_dist.isApprox(brain::EigenUtil::PairwiseEuclideanDist(m1, m2)));
+}
+
+TEST_F(EigenUtilTests, StandardDeviationTest1) {
+  matrix_eig m = brain::EigenUtil::ToEigenMat({
+                                                  {0, 1, 0},
+                                                  {1, 1, 1},
+                                                  {2, 1, 3},
+                                              });
+  float expected_stdev = 0.8748897;
+  EXPECT_FLOAT_EQ(expected_stdev, brain::EigenUtil::StandardDeviation(m));
+}
+
+TEST_F(EigenUtilTests, StandardDeviationTest2) {
+  matrix_eig m = brain::EigenUtil::ToEigenMat({
+                                                  {0, 1, 0},
+                                                  {1, 1, 1},
+                                                  {2, 1, 3},
+                                              });
+  vector_eig expected_stdev = brain::EigenUtil::ToEigenVec({0.816496, 0.0, 1.247219});
+  vector_eig stdev = brain::EigenUtil::StandardDeviation(m, 0);
+  EXPECT_TRUE(expected_stdev.isApprox(stdev));
 }
 
 }  // namespace test

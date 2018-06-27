@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/util/model_util.h"
-#include "brain/workload/linear_models.h"
+#include "brain/workload/kernel_model.h"
 #include "brain/workload/workload_defaults.h"
 #include "common/harness.h"
 
@@ -45,7 +45,7 @@ TEST_F(ModelUtilTests, GenerateFeatureMatrixTest1) {
                                                             {9, 10},
                                                             {11, 12}});
   matrix_eig processed_feats, processed_fcast;
-  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload,
+  brain::ModelUtil::GenerateFeatureMatrix(*model, workload,
                                           processed_feats, processed_fcast);
   EXPECT_TRUE(processed_feats.isApprox(expected_feat));
   EXPECT_TRUE(processed_fcast.isApprox(expected_fcast));
@@ -72,7 +72,7 @@ TEST_F(ModelUtilTests, GenerateFeatureMatrixTest2) {
                                                             {9, 10},
                                                             {11, 12}});
   matrix_eig processed_feats, processed_fcast;
-  brain::ModelUtil::GenerateFeatureMatrix(model.get(), workload,
+  brain::ModelUtil::GenerateFeatureMatrix(*model, workload,
                                           processed_feats, processed_fcast);
   EXPECT_TRUE(processed_feats.isApprox(expected_feat));
   EXPECT_TRUE(processed_fcast.isApprox(expected_fcast));
@@ -106,7 +106,7 @@ TEST_F(ModelUtilTests, GetBatchTest) {
   std::vector<int> batch_offsets_check{0, 1};
   for(int batch_offset: batch_offsets_check) {
     std::vector<matrix_eig> data_batches, target_batches;
-    brain::ModelUtil::GetBatch(model.get(), workload, batch_offset,
+    brain::ModelUtil::GetBatch(*model, workload, batch_offset,
                                BSZ, data_batches, target_batches);
     // Check correct bsz
     EXPECT_EQ(data_batches.size(), BSZ);
@@ -126,6 +126,18 @@ TEST_F(ModelUtilTests, GetBatchTest) {
           workload.middleRows(i*BATCH_NUMSAMPLES + batch_offset + HZN, BPTT)));
     }
   }
+}
+
+TEST_F(ModelUtilTests, EarlyStopTest) {
+  size_t patience = 3;
+  float delta = 0.01;
+  vector_t empty_set = {};
+  vector_t nostop_set = {0.19, 0.08, 0.05, 0.03};
+  vector_t stop_set = {0.082, 0.091, 0.085, 0.081};
+  vector_t single_set = {0.082};
+  EXPECT_FALSE(brain::ModelUtil::EarlyStop(empty_set, patience, delta));
+  EXPECT_FALSE(brain::ModelUtil::EarlyStop(nostop_set, patience, delta));
+  EXPECT_TRUE(brain::ModelUtil::EarlyStop(stop_set, patience, delta));
 }
 
 }  // namespace test

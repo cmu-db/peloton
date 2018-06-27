@@ -18,6 +18,48 @@
 
 namespace peloton {
 namespace brain {
+
+/**
+ * Normalizer methods
+ */
+void Normalizer::Fit(const matrix_eig &X) {
+  if(do_normalize_) {
+    min_ = 1 - X.minCoeff();
+    matrix_eig Xadj = (X.array() + min_).array().log();
+    mean_ = Xadj.mean();
+    Xadj.array() -= mean_;
+    std_ = EigenUtil::StandardDeviation(Xadj);
+  }
+  fit_complete_ = true;
+}
+
+matrix_eig Normalizer::Transform(const matrix_eig &X) const {
+  if(fit_complete_ && do_normalize_) {
+    matrix_eig Xadj = (X.array() + min_).array().log();
+    Xadj.array() -= mean_;
+    return Xadj.array() / std_;
+  } else if(do_normalize_) {
+    throw ("Please call `Fit` before `Transform` or `ReverseTransform`");
+  } else {
+    return X;
+  }
+}
+
+
+matrix_eig Normalizer::ReverseTransform(const matrix_eig &X) const {
+  if(fit_complete_ && do_normalize_) {
+    matrix_eig Xadj = X.array() * std_ + mean_;
+    return Xadj.array().exp() - min_;
+  } else if(do_normalize_) {
+    throw ("Please call `Fit` before `Transform` or `ReverseTransform`");
+  } else {
+    return X;
+  }
+}
+
+/**
+ * BaseTFModel methods
+ */
 BaseTFModel::BaseTFModel(const std::string &modelgen_path,
                          const std::string &pymodel_path,
                          const std::string &graph_path)
@@ -27,6 +69,7 @@ BaseTFModel::BaseTFModel(const std::string &modelgen_path,
       graph_path_(peloton::FileUtil::GetRelativeToRootPath(graph_path)) {
   tf_session_entity_ = std::unique_ptr<TfSessionEntity<float, float>>(
       new TfSessionEntity<float, float>());
+  PELOTON_ASSERT(FileUtil::Exists(pymodel_path_));
 }
 
 BaseTFModel::~BaseTFModel() { remove(graph_path_.c_str()); }
@@ -41,6 +84,7 @@ void BaseTFModel::GenerateModel(const std::string &args_str) {
   LOG_DEBUG("Executing command: %s", cmd.c_str());
   UNUSED_ATTRIBUTE bool succ = system(cmd.c_str());
   PELOTON_ASSERT(succ == 0);
+  PELOTON_ASSERT(FileUtil::Exists(graph_path_));
 }
 }
 }
