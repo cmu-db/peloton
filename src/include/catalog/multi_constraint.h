@@ -30,26 +30,26 @@ namespace catalog {
 class MultiConstraint : public Printable {
  public:
   MultiConstraint(ConstraintType type, std::string constraint_name)
-      : constraint_type(type), constraint_name(constraint_name){};
+      : constraint_type_(type), constraint_name_(constraint_name){};
 
   MultiConstraint(ConstraintType type, std::string constraint_name,
                   std::vector<oid_t> column_ids)
-      : constraint_type(type), constraint_name(constraint_name) {
-    this->column_ids = column_ids;
+      : constraint_type_(type), constraint_name_(constraint_name) {
+    this->column_ids_ = column_ids;
   };
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  ConstraintType GetType() const { return constraint_type; }
+  ConstraintType GetType() const { return constraint_type_; }
 
-  std::string GetName() const { return constraint_name; }
+  std::string GetName() const { return constraint_name_; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  std::vector<oid_t> GetCols() const { return column_ids; }
+  std::vector<oid_t> GetCols() const { return column_ids_; }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -57,13 +57,13 @@ class MultiConstraint : public Printable {
   //===--------------------------------------------------------------------===//
 
   // The type of constraint
-  ConstraintType constraint_type = ConstraintType::INVALID;
+  ConstraintType constraint_type_ = ConstraintType::INVALID;
 
   // constraints on column set
-  std::vector<oid_t> column_ids;
+  std::vector<oid_t> column_ids_;
 
   // we do not allow duplicate constraint name in single table
-  std::string constraint_name;
+  std::string constraint_name_;
 };
 
 }  // namespace catalog

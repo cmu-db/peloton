@@ -116,7 +116,7 @@ class TestingConstraintsUtil {
     auto catalog = catalog::Catalog::GetInstance();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+    catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // First populate the list of catalog::Columns that we
@@ -132,14 +132,14 @@ class TestingConstraintsUtil {
     // Create table.
     txn = txn_manager.BeginTransaction();
     auto result =
-        catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name,
-                             std::move(table_schema), txn, false);
+        catalog->CreateTable(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                             std::move(table_schema), table_name, false);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(ResultType::SUCCESS, result);
 
     txn = txn_manager.BeginTransaction();
-    auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                           table_name, txn);
+    auto table = catalog->GetTableWithName(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
+                                           table_name);
     txn_manager.CommitTransaction(txn);
     EXPECT_NE(nullptr, table);
 

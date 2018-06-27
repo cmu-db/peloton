@@ -50,7 +50,7 @@ void ChildPropertyDeriver::Visit(const PhysicalSeqScan *) {
 
 void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
   auto provided_prop = make_shared<PropertySet>();
-  std::shared_ptr<catalog::TableCatalogObject> target_table = op->table_;
+  std::shared_ptr<catalog::TableCatalogEntry> target_table = op->table_;
   for (auto prop : requirements_->Properties()) {
     if (prop->Type() == PropertyType::SORT) {
       // Walk through all indices in the table, check if any of the index could
@@ -69,7 +69,7 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
         }
       }
       if (!can_fulfill) break;
-      for (auto &index : target_table->GetIndexObjects()) {
+      for (auto &index : target_table->GetIndexCatalogEntries()) {
         auto key_oids = index.second->GetKeyAttrs();
         // If the sort column size is larger, then can't be fulfill by the index
         if (sort_col_size > key_oids.size()) {

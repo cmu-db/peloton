@@ -32,7 +32,7 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 Operator LogicalGet::make(oid_t get_id,
                           std::vector<AnnotatedExpression> predicates,
-                          std::shared_ptr<catalog::TableCatalogObject> table,
+                          std::shared_ptr<catalog::TableCatalogEntry> table,
                           std::string alias, bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
@@ -391,7 +391,7 @@ hash_t LogicalAggregateAndGroupBy::Hash() const {
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
@@ -403,7 +403,7 @@ Operator LogicalInsert::make(
 }
 
 Operator LogicalInsertSelect::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table) {
+    std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   LogicalInsertSelect *insert_op = new LogicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -413,7 +413,7 @@ Operator LogicalInsertSelect::make(
 // Delete
 //===--------------------------------------------------------------------===//
 Operator LogicalDelete::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table) {
+    std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   LogicalDelete *delete_op = new LogicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -423,7 +423,7 @@ Operator LogicalDelete::make(
 // Update
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
@@ -502,7 +502,7 @@ Operator DummyScan::make() {
 // SeqScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalSeqScan::make(
-    oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+    oid_t get_id, std::shared_ptr<catalog::TableCatalogEntry> table,
     std::string alias, std::vector<AnnotatedExpression> predicates,
     bool update) {
   PELOTON_ASSERT(table != nullptr);
@@ -539,7 +539,7 @@ hash_t PhysicalSeqScan::Hash() const {
 // IndexScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
-    oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+    oid_t get_id, std::shared_ptr<catalog::TableCatalogEntry> table,
     std::string alias, std::vector<AnnotatedExpression> predicates, bool update,
     oid_t index_id, std::vector<oid_t> key_column_id_list,
     std::vector<ExpressionType> expr_type_list,
@@ -832,7 +832,7 @@ Operator PhysicalOuterHashJoin::make(
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsert::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
@@ -847,7 +847,7 @@ Operator PhysicalInsert::make(
 // PhysicalInsertSelect
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsertSelect::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table) {
+    std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   PhysicalInsertSelect *insert_op = new PhysicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -857,7 +857,7 @@ Operator PhysicalInsertSelect::make(
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
 Operator PhysicalDelete::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table) {
+    std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   PhysicalDelete *delete_op = new PhysicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -867,7 +867,7 @@ Operator PhysicalDelete::make(
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   PhysicalUpdate *update = new PhysicalUpdate;

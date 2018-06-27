@@ -383,7 +383,7 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   // Evaluate update expression and add to target list
   for (auto &update : *(op->updates)) {
     auto column_name = update->column;
-    auto col_id = op->target_table->GetColumnObject(column_name)->GetColumnId();
+    auto col_id = op->target_table->GetColumnCatalogEntry(column_name)->GetColumnId();
     if (update_col_ids.find(col_id) != update_col_ids.end())
       throw SyntaxException("Multiple assignments to same column " +
                             column_name);
@@ -395,7 +395,7 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   }
 
   // Add other columns to direct map
-  for (auto &column_id_obj_pair : op->target_table->GetColumnObjects()) {
+  for (auto &column_id_obj_pair : op->target_table->GetColumnCatalogEntries()) {
     auto &col_id = column_id_obj_pair.first;
     if (update_col_ids.find(col_id) == update_col_ids.end())
       dml.emplace_back(col_id, std::pair<oid_t, oid_t>(0, col_id));
@@ -423,12 +423,12 @@ void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
 /************************* Private Functions *******************************/
 vector<unique_ptr<expression::AbstractExpression>>
 PlanGenerator::GenerateTableTVExprs(
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   // TODO(boweic): we seems to provide all columns here, in case where there are
   // a lot of attributes and we're only visiting a few this is not efficient
   oid_t db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetTableOid();
-  auto column_objects = table->GetColumnObjects();
+  auto column_objects = table->GetColumnCatalogEntries();
   vector<unique_ptr<expression::AbstractExpression>> exprs(
       column_objects.size());
   for (auto &column_id_object_pair : column_objects) {
@@ -466,7 +466,7 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
 std::unique_ptr<expression::AbstractExpression>
 PlanGenerator::GeneratePredicateForScan(
     const std::shared_ptr<expression::AbstractExpression> predicate_expr,
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   if (predicate_expr == nullptr) {
     return nullptr;
   }

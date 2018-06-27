@@ -27,23 +27,29 @@ class SettingsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertSetting(const std::string &name, const std::string &value,
-                     type::TypeId value_type, const std::string &description,
-                     const std::string &min_value, const std::string &max_value,
-                     const std::string &default_value, bool is_mutable,
-                     bool is_persistent, type::AbstractPool *pool,
-                     concurrency::TransactionContext *txn);
+  bool InsertSetting(concurrency::TransactionContext *txn,
+                     const std::string &name,
+                     const std::string &value,
+                     type::TypeId value_type,
+                     const std::string &description,
+                     const std::string &min_value,
+                     const std::string &max_value,
+                     const std::string &default_value,
+                     bool is_mutable,
+                     bool is_persistent,
+                     type::AbstractPool *pool);
 
-  bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
+  bool DeleteSetting(concurrency::TransactionContext *txn,
+                     const std::string &name);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::string GetSettingValue(const std::string &name,
-                              concurrency::TransactionContext *txn);
+  std::string GetSettingValue(concurrency::TransactionContext *txn,
+                              const std::string &name);
 
-  std::string GetDefaultValue(const std::string &name,
-                              concurrency::TransactionContext *txn);
+  std::string GetDefaultValue(concurrency::TransactionContext *txn,
+                              const std::string &name);
 
   enum class ColumnId {
     NAME = 0,
