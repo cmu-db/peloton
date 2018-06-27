@@ -24,7 +24,7 @@ class ProtocolInterpreter {
 
   virtual Transition Process(std::shared_ptr<ReadBuffer> in,
                              std::shared_ptr<WriteQueue> out,
-                             callback_func callback) = 0;
+                             CallbackFunc callback) = 0;
 
   // TODO(Tianyu): Do we really need this crap?
   virtual void GetResult() = 0;

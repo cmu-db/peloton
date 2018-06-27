@@ -1449,7 +1449,8 @@ enum class SSLLevel {
   SSL_VERIIFY = 2,
 };
 
-using callback_func = std::function<void(void)>;
+using CallbackFunc = std::function<void(void)>;
+using BindParameter = std::pair<type::TypeId, std::string>;
 
 // Eigen/Matrix types used in brain
 // TODO(saatvik): Generalize Eigen utilities across all types

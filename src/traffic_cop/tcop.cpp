@@ -96,7 +96,7 @@ bool tcop::ExecuteStatement(
     ClientProcessState &state,
     const std::vector<int> &result_format,
     std::vector<ResultValue> &result,
-    const callback_func &callback) {
+    const CallbackFunc &callback) {
 
   LOG_TRACE("Execute Statement of name: %s",
             state.statement_->GetStatementName().c_str());
@@ -155,7 +155,7 @@ void tcop::ExecuteHelper(
     std::vector<ResultValue> &result,
     const std::vector<int> &result_format,
     concurrency::TransactionContext *txn,
-    const callback_func &callback) {
+    const CallbackFunc &callback) {
   auto plan = state.statement_->GetPlanTree();
   auto params = state.param_values_;
 

@@ -21,7 +21,7 @@ namespace peloton {
 namespace network {
 Transition PostgresProtocolInterpreter::Process(std::shared_ptr<ReadBuffer> in,
                                                 std::shared_ptr<WriteQueue> out,
-                                                callback_func callback) {
+                                                CallbackFunc callback) {
   if (!TryBuildPacket(in)) return Transition::NEED_READ;
   std::shared_ptr<PostgresNetworkCommand> command = PacketToCommand();
   curr_input_packet_.Clear();

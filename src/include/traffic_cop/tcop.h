@@ -66,7 +66,7 @@ bool ExecuteStatement(
     ClientProcessState &state,
     const std::vector<int> &result_format,
     std::vector<ResultValue> &result,
-    callback_func callback);
+    CallbackFunc callback);
 
 /**
  * Helper function to submit the executable plan to worker pool
@@ -81,7 +81,7 @@ void ExecuteHelper(
     std::vector<ResultValue> &result,
     const std::vector<int> &result_format,
     concurrency::TransactionContext *txn,
-    callback_func callback);
+    CallbackFunc callback);
 
 bool BindParamsForCachePlan(
     ClientProcessState &state,

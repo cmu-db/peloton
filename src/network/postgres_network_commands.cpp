@@ -25,9 +25,128 @@ namespace network {
 // A lot of the code here should really be moved to traffic cop, and a lot of
 // the code here can honestly just be deleted. This is going to be a larger
 // project though, so I want to do the architectural refactor first.
+std::vector<PostgresValueType> PostgresNetworkCommand::ReadParamTypes()  {
+  std::vector<PostgresValueType> result;
+  auto num_params = in_->ReadValue<uint16_t>();
+  for (uint16_t i = 0; i < num_params; i++)
+    result.push_back(in_->ReadValue<PostgresValueType>());
+  return result;
+}
+
+std::vector<int16_t> PostgresNetworkCommand::ReadParamFormats()  {
+  std::vector<int16_t> result;
+  auto num_formats = in_->ReadValue<uint16_t>();
+  for (uint16_t i = 0; i < num_formats; i++)
+    result.push_back(in_->ReadValue<int16_t>());
+  return result;
+}
+
+void PostgresNetworkCommand::ReadParamValues(std::vector<BindParameter> &bind_parameters,
+                                             std::vector<type::Value> &param_values,
+                                             const std::vector<PostgresValueType> &param_types,
+                                             const std::vector<int16_t> &formats)  {
+  auto num_params = in_->ReadValue<uint16_t>();
+  for (uint16_t i = 0; i < num_params; i++) {
+    auto param_len = in_->ReadValue<int32_t>();
+    if (param_len == -1) {
+      // NULL
+      auto peloton_type = PostgresValueTypeToPelotonValueType(param_types[i]);
+      bind_parameters.emplace_back(peloton_type,
+                                   std::string(""));
+      param_values.push_back(type::ValueFactory::GetNullValueByType(
+          peloton_type));
+    } else {
+      (formats[i] == 0)
+      ? ProcessTextParamValue(bind_parameters,
+                              param_values,
+                              param_types[i],
+                              param_len)
+      : ProcessBinaryParamValue(bind_parameters,
+                                param_values,
+                                param_types[i],
+                                param_len);
+    }
+  }
+}
+
+void PostgresNetworkCommand::ProcessTextParamValue(std::vector<BindParameter> &bind_parameters,
+                                                   std::vector<type::Value> &param_values,
+                                                   PostgresValueType type,
+                                                   int32_t len)  {
+  std::string val = in_->ReadString((size_t) len);
+  bind_parameters.emplace_back(type::TypeId::VARCHAR, val);
+  param_values.push_back(
+      PostgresValueTypeToPelotonValueType(type) == type::TypeId::VARCHAR
+      ? type::ValueFactory::GetVarcharValue(val)
+      : type::ValueFactory::GetVarcharValue(val).CastAs(
+          PostgresValueTypeToPelotonValueType(type)));
+}
+
+void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> &bind_parameters,
+                                                     std::vector<type::Value> &param_values,
+                                                     PostgresValueType type,
+                                                     int32_t len)  {
+  switch (type) {
+    case PostgresValueType::TINYINT: {
+      PELOTON_ASSERT(len == sizeof(int8_t));
+      auto val = in_->ReadValue<int8_t>();
+      bind_parameters.emplace_back(type::TypeId::TINYINT, std::to_string(val));
+      param_values.push_back(
+          type::ValueFactory::GetTinyIntValue(val).Copy());
+      break;
+    }
+    case PostgresValueType::SMALLINT: {
+      PELOTON_ASSERT(len == sizeof(int16_t));
+      auto int_val = in_->ReadValue<int16_t>();
+      bind_parameters.emplace_back(type::TypeId::SMALLINT, std::to_string(int_val));
+      param_values.push_back(
+          type::ValueFactory::GetSmallIntValue(int_val).Copy());
+      break;
+    }
+    case PostgresValueType::INTEGER: {
+      PELOTON_ASSERT(len == sizeof(int32_t));
+      auto val = in_->ReadValue<int32_t>();
+      bind_parameters.emplace_back(type::TypeId::INTEGER, std::to_string(val));
+      param_values.push_back(
+          type::ValueFactory::GetIntegerValue(val).Copy());
+      break;
+    }
+    case PostgresValueType::BIGINT: {
+      PELOTON_ASSERT(len == sizeof(int64_t));
+      auto val = in_->ReadValue<int64_t>();
+      bind_parameters.emplace_back(type::TypeId::BIGINT, std::to_string(val));
+      param_values.push_back(
+          type::ValueFactory::GetBigIntValue(val).Copy());
+      break;
+    }
+    case PostgresValueType::DOUBLE: {
+      PELOTON_ASSERT(len == sizeof(double));
+      auto val = in_->ReadValue<double>();
+      bind_parameters.emplace_back(type::TypeId::DECIMAL, std::to_string(val));
+      param_values.push_back(
+          type::ValueFactory::GetDecimalValue(val).Copy());
+      break;
+    }
+    case PostgresValueType::VARBINARY: {
+      auto val = in_->ReadString((size_t) len);
+      bind_parameters.emplace_back(type::TypeId::VARBINARY, val);
+      param_values.push_back(
+          type::ValueFactory::GetVarbinaryValue(
+              reinterpret_cast<const uchar *>(val.c_str()),
+              len,
+              true));
+      break;
+    }
+    default:
+      throw NetworkProcessException("Binary Postgres protocol does not support data type "
+                                        + PostgresValueTypeToString(type));
+  }
+}
+
+
 Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 PostgresPacketWriter &out,
-                                callback_func) {
+                                CallbackFunc) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   auto proto_version = in_->ReadValue<uint32_t>();
   LOG_INFO("protocol version: %d", proto_version);
@@ -67,7 +186,7 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
 Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                     PostgresPacketWriter &out,
-                                    callback_func callback) {
+                                    CallbackFunc callback) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
@@ -92,7 +211,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
 Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
                               PostgresPacketWriter &out,
-                              callback_func) {
+                              CallbackFunc) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string statement_name = in_->ReadString(), query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
