@@ -63,13 +63,13 @@ bool CreateFunctionExecutor::DExecute() {
   auto func_ptr = code_context->GetUDF();
   if (func_ptr != nullptr) {
     // Insert into catalog
-    catalog::Catalog::GetInstance()->AddPlpgsqlFunction(current_txn,
-                                                        proname,
-                                                        prorettype,
-                                                        proargtypes,
-                                                        prolang,
-                                                        code_context,
-                                                        prosrc);
+    catalog::Catalog::GetInstance()->AddProcedure(current_txn,
+                                                  proname,
+                                                  prorettype,
+                                                  proargtypes,
+                                                  prolang,
+                                                  code_context,
+                                                  prosrc);
     result = ResultType::SUCCESS;
   } else {
     result = ResultType::FAILURE;

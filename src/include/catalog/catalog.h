@@ -269,13 +269,13 @@ class Catalog {
 
   void InitializeFunctions();
 
-  void AddPlpgsqlFunction(concurrency::TransactionContext *txn,
-                          const std::string &name,
-                          type::TypeId return_type,
-                          const std::vector<type::TypeId> &argument_types,
-                          oid_t prolang,
-                          std::shared_ptr<peloton::codegen::CodeContext> code_context,
-                          const std::string &func_src);
+  void AddProcedure(concurrency::TransactionContext *txn,
+                    const std::string &name,
+                    type::TypeId return_type,
+                    const std::vector<type::TypeId> &argument_types,
+                    oid_t prolang,
+                    std::shared_ptr<peloton::codegen::CodeContext> code_context,
+                    const std::string &func_src);
 
   // TODO(Tianyu): Somebody should comment on what the difference between name
   //               and func_name is. I am confused.

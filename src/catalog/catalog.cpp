@@ -1322,13 +1322,13 @@ void Catalog::AddBuiltinFunction(concurrency::TransactionContext *txn,
  * @param   code_context  the code_context that holds the generated LLVM
  *                        query code
  */
-void Catalog::AddPlpgsqlFunction(concurrency::TransactionContext *txn,
-                                 const std::string &name,
-                                 type::TypeId return_type,
-                                 const std::vector<type::TypeId> &argument_types,
-                                 oid_t prolang,
-                                 std::shared_ptr<peloton::codegen::CodeContext> code_context,
-                                 const std::string &func_src) {
+void Catalog::AddProcedure(concurrency::TransactionContext *txn,
+                           const std::string &name,
+                           type::TypeId return_type,
+                           const std::vector<type::TypeId> &argument_types,
+                           oid_t prolang,
+                           std::shared_ptr<peloton::codegen::CodeContext> code_context,
+                           const std::string &func_src) {
   // Check if UDF already exists
   auto proc_catalog_obj =
       ProcCatalog::GetInstance().GetProcByName(txn, name, argument_types);
