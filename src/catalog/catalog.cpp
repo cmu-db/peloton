@@ -65,12 +65,14 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   storage_manager->AddDatabaseToStorageManager(peloton);
 
   // Create catalog tables
-  DatabaseCatalog::GetInstance(peloton, pool_.get(), txn);
-  BootstrapSystemCatalogs(peloton, txn);
+  DatabaseCatalog::GetInstance(txn, peloton, pool_.get());
+  BootstrapSystemCatalogs(txn, peloton);
 
   // Insert peloton database into pg_database
-  DatabaseCatalog::GetInstance()->InsertDatabase(
-      CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_.get(), txn);
+  DatabaseCatalog::GetInstance(txn)->InsertDatabase(txn,
+                                                    CATALOG_DATABASE_OID,
+                                                    CATALOG_DATABASE_NAME,
+                                                    pool_.get());
 
   // Commit transaction
   txn_manager.CommitTransaction(txn);
@@ -83,115 +85,214 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
  * @param   database    database which this system catalogs belong to
  * @param   txn         transaction context
  */
-void Catalog::BootstrapSystemCatalogs(storage::Database *database,
-                                      concurrency::TransactionContext *txn) {
+void Catalog::BootstrapSystemCatalogs(concurrency::TransactionContext *txn,
+                                      storage::Database *database) {
   oid_t database_oid = database->GetOid();
   catalog_map_.emplace(database_oid,
                        std::shared_ptr<SystemCatalogs>(
-                           new SystemCatalogs(database, pool_.get(), txn)));
+                           new SystemCatalogs(txn, database, pool_.get())));
   auto system_catalogs = catalog_map_[database_oid];
 
   // Create indexes on catalog tables, insert them into pg_index
   // actual index already added in
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-      true,
-      {ColumnCatalog::ColumnId::TABLE_OID,
-       ColumnCatalog::ColumnId::COLUMN_NAME},
-      pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
-      COLUMN_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
-      IndexConstraintType::UNIQUE, true,
-      {ColumnCatalog::ColumnId::TABLE_OID, ColumnCatalog::ColumnId::COLUMN_ID},
-      pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
-      COLUMN_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
-      IndexConstraintType::DEFAULT, false, {ColumnCatalog::ColumnId::TABLE_OID},
-      pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  COLUMN_CATALOG_OID,
+                                                  COLUMN_CATALOG_PKEY_OID,
+                                                  COLUMN_CATALOG_NAME "_pkey",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::PRIMARY_KEY,
+                                                  true,
+                                                  {ColumnCatalog::ColumnId::TABLE_OID,
+                                                   ColumnCatalog::ColumnId::COLUMN_NAME},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  COLUMN_CATALOG_OID,
+                                                  COLUMN_CATALOG_SKEY0_OID,
+                                                  COLUMN_CATALOG_NAME "_skey0",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::UNIQUE,
+                                                  true,
+                                                  {ColumnCatalog::ColumnId::TABLE_OID,
+                                                   ColumnCatalog::ColumnId::COLUMN_ID},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  COLUMN_CATALOG_OID,
+                                                  COLUMN_CATALOG_SKEY1_OID,
+                                                  COLUMN_CATALOG_NAME "_skey1",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::DEFAULT,
+                                                  false,
+                                                  {ColumnCatalog::ColumnId::TABLE_OID},
+                                                  pool_.get());
 
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-      true, {IndexCatalog::ColumnId::INDEX_OID}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      {IndexCatalog::ColumnId::INDEX_NAME}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
-      false, {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  INDEX_CATALOG_OID,
+                                                  INDEX_CATALOG_PKEY_OID,
+                                                  INDEX_CATALOG_NAME "_pkey",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::PRIMARY_KEY,
+                                                  true,
+                                                  {IndexCatalog::ColumnId::INDEX_OID},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  INDEX_CATALOG_OID,
+                                                  INDEX_CATALOG_SKEY0_OID,
+                                                  INDEX_CATALOG_NAME "_skey0",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::UNIQUE,
+                                                  true,
+                                                  {IndexCatalog::ColumnId::INDEX_NAME},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  INDEX_CATALOG_OID,
+                                                  INDEX_CATALOG_SKEY1_OID,
+                                                  INDEX_CATALOG_NAME "_skey1",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::DEFAULT,
+                                                  false,
+                                                  {IndexCatalog::ColumnId::TABLE_OID},
+                                                  pool_.get());
 
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      DATABASE_CATALOG_PKEY_OID, DATABASE_CATALOG_NAME "_pkey",
-      DATABASE_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, true,
-      {DatabaseCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      DATABASE_CATALOG_SKEY0_OID, DATABASE_CATALOG_NAME "_skey0",
-      DATABASE_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
-      IndexConstraintType::UNIQUE, true,
-      {DatabaseCatalog::ColumnId::DATABASE_NAME}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  DATABASE_CATALOG_OID,
+                                                  DATABASE_CATALOG_PKEY_OID,
+                                                  DATABASE_CATALOG_NAME "_pkey",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::PRIMARY_KEY,
+                                                  true,
+                                                  {DatabaseCatalog::ColumnId::DATABASE_OID},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  DATABASE_CATALOG_OID,
+                                                  DATABASE_CATALOG_SKEY0_OID,
+                                                  DATABASE_CATALOG_NAME "_skey0",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::UNIQUE,
+                                                  true,
+                                                  {DatabaseCatalog::ColumnId::DATABASE_NAME},
+                                                  pool_.get());
 
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      SCHEMA_CATALOG_PKEY_OID, SCHEMA_CATALOG_NAME "_pkey", SCHEMA_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-      true, {SchemaCatalog::ColumnId::SCHEMA_OID}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      SCHEMA_CATALOG_SKEY0_OID, SCHEMA_CATALOG_NAME "_skey0",
-      SCHEMA_CATALOG_OID, CATALOG_SCHEMA_NAME, IndexType::BWTREE,
-      IndexConstraintType::UNIQUE, true, {SchemaCatalog::ColumnId::SCHEMA_NAME},
-      pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  SCHEMA_CATALOG_OID,
+                                                  SCHEMA_CATALOG_PKEY_OID,
+                                                  SCHEMA_CATALOG_NAME "_pkey",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::PRIMARY_KEY,
+                                                  true,
+                                                  {SchemaCatalog::ColumnId::SCHEMA_OID},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  SCHEMA_CATALOG_OID,
+                                                  SCHEMA_CATALOG_SKEY0_OID,
+                                                  SCHEMA_CATALOG_NAME "_skey0",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::UNIQUE,
+                                                  true,
+                                                  {SchemaCatalog::ColumnId::SCHEMA_NAME},
+                                                  pool_.get());
 
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      TABLE_CATALOG_PKEY_OID, TABLE_CATALOG_NAME "_pkey", TABLE_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-      true, {TableCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      TABLE_CATALOG_SKEY0_OID, TABLE_CATALOG_NAME "_skey0", TABLE_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      {TableCatalog::ColumnId::TABLE_NAME}, pool_.get(), txn);
-  system_catalogs->GetIndexCatalog()->InsertIndex(
-      TABLE_CATALOG_SKEY1_OID, TABLE_CATALOG_NAME "_skey1", TABLE_CATALOG_OID,
-      CATALOG_SCHEMA_NAME, IndexType::BWTREE, IndexConstraintType::DEFAULT,
-      false, {TableCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  TABLE_CATALOG_OID,
+                                                  TABLE_CATALOG_PKEY_OID,
+                                                  TABLE_CATALOG_NAME "_pkey",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::PRIMARY_KEY,
+                                                  true,
+                                                  {TableCatalog::ColumnId::TABLE_OID},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  TABLE_CATALOG_OID,
+                                                  TABLE_CATALOG_SKEY0_OID,
+                                                  TABLE_CATALOG_NAME "_skey0",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::UNIQUE,
+                                                  true,
+                                                  {TableCatalog::ColumnId::TABLE_NAME},
+                                                  pool_.get());
+  system_catalogs->GetIndexCatalog()->InsertIndex(txn,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  TABLE_CATALOG_OID,
+                                                  TABLE_CATALOG_SKEY1_OID,
+                                                  TABLE_CATALOG_NAME "_skey1",
+                                                  IndexType::BWTREE,
+                                                  IndexConstraintType::DEFAULT,
+                                                  false,
+                                                  {TableCatalog::ColumnId::DATABASE_OID},
+                                                  pool_.get());
 
   // Insert records(default + pg_catalog namespace) into pg_namespace
-  system_catalogs->GetSchemaCatalog()->InsertSchema(
-      CATALOG_SCHEMA_OID, CATALOG_SCHEMA_NAME, pool_.get(), txn);
-  system_catalogs->GetSchemaCatalog()->InsertSchema(
-      DEFAULT_SCHEMA_OID, DEFAULT_SCHEMA_NAME, pool_.get(), txn);
+  system_catalogs->GetSchemaCatalog()->InsertSchema(txn,
+                                                    CATALOG_SCHEMA_OID,
+                                                    CATALOG_SCHEMA_NAME,
+                                                    pool_.get());
+  system_catalogs->GetSchemaCatalog()->InsertSchema(txn,
+                                                    DEFAULT_SCHEMA_OID,
+                                                    DEFAULT_SCHEMA_NAME,
+                                                    pool_.get());
 
   // Insert catalog tables into pg_table
   // pg_database record is shared across different databases
-  system_catalogs->GetTableCatalog()->InsertTable(
-      DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      CATALOG_DATABASE_OID, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
-  system_catalogs->GetTableCatalog()->InsertTable(
-      SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
-  system_catalogs->GetTableCatalog()->InsertTable(
-      TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
-  system_catalogs->GetTableCatalog()->InsertTable(
-      INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_SCHEMA_NAME, database_oid,
-      ROW_STORE_LAYOUT_OID, pool_.get(), txn);
-  system_catalogs->GetTableCatalog()->InsertTable(
-      COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
-  system_catalogs->GetTableCatalog()->InsertTable(
-      LAYOUT_CATALOG_OID, LAYOUT_CATALOG_NAME, CATALOG_SCHEMA_NAME,
-      database_oid, ROW_STORE_LAYOUT_OID, pool_.get(), txn);
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  CATALOG_DATABASE_OID,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  DATABASE_CATALOG_OID,
+                                                  DATABASE_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  database_oid,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  SCHEMA_CATALOG_OID,
+                                                  SCHEMA_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  database_oid,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  TABLE_CATALOG_OID,
+                                                  TABLE_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  database_oid,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  INDEX_CATALOG_OID,
+                                                  INDEX_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  database_oid,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  COLUMN_CATALOG_OID,
+                                                  COLUMN_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
+  system_catalogs->GetTableCatalog()->InsertTable(txn,
+                                                  database_oid,
+                                                  CATALOG_SCHEMA_NAME,
+                                                  LAYOUT_CATALOG_OID,
+                                                  LAYOUT_CATALOG_NAME,
+                                                  ROW_STORE_LAYOUT_OID,
+                                                  pool_.get());
 }
 
 void Catalog::Bootstrap() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // bootstrap pg_catalog database
-  catalog_map_[CATALOG_DATABASE_OID]->Bootstrap(CATALOG_DATABASE_NAME, txn);
+  catalog_map_[CATALOG_DATABASE_OID]->Bootstrap(txn, CATALOG_DATABASE_NAME);
   // bootstrap other global catalog tables
   DatabaseMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
@@ -211,7 +312,9 @@ void Catalog::Bootstrap() {
 
   // Reset oid of each catalog to avoid collisions between catalog
   // values added by system and users when checkpoint recovery.
-  DatabaseCatalog::GetInstance()->UpdateOid(OID_FOR_USER_OFFSET);
+  DatabaseCatalog::GetInstance(nullptr,
+                               nullptr,
+                               nullptr)->UpdateOid(OID_FOR_USER_OFFSET);
   LanguageCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
   ProcCatalog::GetInstance().UpdateOid(OID_FOR_USER_OFFSET);
 }
@@ -220,16 +323,17 @@ void Catalog::Bootstrap() {
 // CREATE FUNCTIONS
 //===----------------------------------------------------------------------===//
 
-ResultType Catalog::CreateDatabase(const std::string &database_name,
-                                   concurrency::TransactionContext *txn) {
+ResultType Catalog::CreateDatabase(concurrency::TransactionContext *txn,
+                                   const std::string &database_name) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
-                           database_name);
+        database_name);
 
-  auto pg_database = DatabaseCatalog::GetInstance();
+  auto pg_database = DatabaseCatalog::GetInstance(nullptr, nullptr, nullptr);
   auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
-  auto database_object = pg_database->GetDatabaseObject(database_name, txn);
+  auto database_object =
+      pg_database->GetDatabaseCatalogEntry(txn, database_name);
   if (database_object != nullptr)
     throw CatalogException("Database " + database_name + " already exists");
 
@@ -247,11 +351,11 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   // put database object into rw_object_set
   txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
   // Insert database record into pg_db
-  pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
+  pg_database->InsertDatabase(txn, database_oid, database_name, pool_.get());
 
   // add core & non-core system catalog tables into database
-  BootstrapSystemCatalogs(database, txn);
-  catalog_map_[database_oid]->Bootstrap(database_name, txn);
+  BootstrapSystemCatalogs(txn, database);
+  catalog_map_[database_oid]->Bootstrap(txn, database_name);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
   return ResultType::SUCCESS;
@@ -263,30 +367,35 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::CreateSchema(const std::string &database_name,
-                                 const std::string &schema_name,
-                                 concurrency::TransactionContext *txn) {
+ResultType Catalog::CreateSchema(concurrency::TransactionContext *txn,
+                                 const std::string &database_name,
+                                 const std::string &schema_name) {
   if (txn == nullptr)
     throw CatalogException(
         "Do not have transaction to create schema(namespace) " + database_name);
 
   // check whether database exists from pg_database
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
-                           " to create schema");
+        " to create schema");
   // check whether namespace exists from pg_namespace
   auto pg_namespace =
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
-  auto schema_object = pg_namespace->GetSchemaObject(schema_name, txn);
+  auto schema_object = pg_namespace->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object != nullptr)
     throw CatalogException("Schema(namespace) " + schema_name +
-                           " already exists");
+        " already exists");
   // Since there isn't physical class corresponds to schema(namespace), the only
   // thing needs to be done is inserting record into pg_namespace
-  pg_namespace->InsertSchema(pg_namespace->GetNextOid(), schema_name,
-                             pool_.get(), txn);
+  pg_namespace->InsertSchema(txn,
+                             pg_namespace->GetNextOid(),
+                             schema_name,
+                             pool_.get());
 
   LOG_TRACE("Schema(namespace) %s created. Returning RESULT_SUCCESS.",
             schema_name.c_str());
@@ -301,38 +410,43 @@ ResultType Catalog::CreateSchema(const std::string &database_name,
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::CreateTable(const std::string &database_name,
+ResultType Catalog::CreateTable(concurrency::TransactionContext *txn,
+                                const std::string &database_name,
                                 const std::string &schema_name,
-                                const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::TransactionContext *txn,
-                                bool is_catalog, uint32_t tuples_per_tilegroup,
-                                peloton::LayoutType layout_type) {
+                                const std::string &table_name,
+                                bool is_catalog,
+                                uint32_t tuples_per_tilegroup,
+                                LayoutType layout_type) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
-                           table_name);
+        table_name);
 
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
   // check whether database exists from pg_database
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
-                           " to create table");
+        " to create table");
   // check whether namespace exists from pg_namespace
   auto schema_object = catalog_map_[database_object->GetDatabaseOid()]
-                           ->GetSchemaCatalog()
-                           ->GetSchemaObject(schema_name, txn);
+      ->GetSchemaCatalog()
+      ->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object == nullptr)
     throw CatalogException("Can't find namespace " + schema_name +
-                           " to create table");
+        " to create table");
 
   // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
-                           " already exists");
+        " already exists");
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database =
@@ -346,7 +460,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     auto column_name = column.GetName();
     if (column_names.count(column_name) == 1)
       throw CatalogException("Can't create table " + table_name +
-                             " with duplicate column name");
+          " with duplicate column name");
     column_names.insert(column_name);
   }
 
@@ -367,37 +481,55 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
 
   // Update pg_table with table info
-  pg_table->InsertTable(table_oid, table_name, schema_name,
+  pg_table->InsertTable(txn,
                         database_object->GetDatabaseOid(),
-                        table->GetDefaultLayout()->GetOid(), pool_.get(), txn);
+                        schema_name,
+                        table_oid,
+                        table_name,
+                        table->GetDefaultLayout()->GetOid(),
+                        pool_.get());
   oid_t column_id = 0;
   for (const auto &column : table->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(table_oid, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.GetLength(), column.IsInlined(),
-                               column.GetConstraints(), pool_.get(), txn);
+    pg_attribute->InsertColumn(txn,
+                               table_oid,
+                               column_id,
+                               column.GetName(),
+                               column.GetOffset(),
+                               column.GetType(),
+                               column.GetLength(),
+                               column.GetConstraints(),
+                               column.IsInlined(),
+                               pool_.get());
 
     // Create index on unique single column
     if (column.IsUnique()) {
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
-      CreateIndex(database_name, schema_name, table_name, {column_id},
-                  index_name, true, IndexType::BWTREE, txn);
+      CreateIndex(txn,
+                  database_name,
+                  schema_name,
+                  table_name,
+                  index_name,
+                  {column_id},
+                  true,
+                  IndexType::BWTREE);
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
     }
     column_id++;
   }
-  CreatePrimaryIndex(database_object->GetDatabaseOid(), table_oid, schema_name,
-                     txn);
+  CreatePrimaryIndex(txn,
+                     database_object->GetDatabaseOid(),
+                     schema_name,
+                     table_oid);
 
   // Create layout as default layout
   auto pg_layout =
       catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
   auto default_layout = table->GetDefaultLayout();
-  if (!pg_layout->InsertLayout(table_oid, default_layout, pool_.get(), txn))
+  if (!pg_layout->InsertLayout(txn, table_oid, default_layout, pool_.get()))
     throw CatalogException("Failed to create a new layout for table "
-        + table_name);
+                               + table_name);
 
   return ResultType::SUCCESS;
 }
@@ -411,9 +543,10 @@ ResultType Catalog::CreateTable(const std::string &database_name,
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
+ResultType Catalog::CreatePrimaryIndex(concurrency::TransactionContext *txn,
+                                       oid_t database_oid,
                                        const std::string &schema_name,
-                                       concurrency::TransactionContext *txn) {
+                                       oid_t table_oid) {
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
 
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -460,9 +593,16 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
   // put index object into rw_object_set
   txn->RecordCreate(database_oid, table_oid, index_oid);
   // insert index record into index_catalog(pg_index) table
-  pg_index->InsertIndex(index_oid, index_name, table_oid, schema_name,
-                        IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-                        unique_keys, key_attrs, pool_.get(), txn);
+  pg_index->InsertIndex(txn,
+                        schema_name,
+                        table_oid,
+                        index_oid,
+                        index_name,
+                        IndexType::BWTREE,
+                        IndexConstraintType::PRIMARY_KEY,
+                        unique_keys,
+                        key_attrs,
+                        pool_.get());
 
   LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
             index_name.c_str(), table->GetName().c_str());
@@ -483,51 +623,68 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
  * catalog table Initialization)
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::CreateIndex(const std::string &database_name,
+ResultType Catalog::CreateIndex(concurrency::TransactionContext *txn,
+                                const std::string &database_name,
                                 const std::string &schema_name,
                                 const std::string &table_name,
+                                const std::string &index_name,
                                 const std::vector<oid_t> &key_attrs,
-                                const std::string &index_name, bool unique_keys,
-                                IndexType index_type,
-                                concurrency::TransactionContext *txn) {
+                                bool unique_keys,
+                                IndexType index_type) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
-                           index_name);
+        index_name);
 
   LOG_TRACE("Trying to create index %s for table %s", index_name.c_str(),
             table_name.c_str());
 
   // check if database exists
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
-                           " to create index");
+        " to create index");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object == nullptr)
     throw CatalogException("Can't find table " + schema_name + "." +
-                           table_name + " to create index");
+        table_name + " to create index");
 
   IndexConstraintType index_constraint =
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
 
-  ResultType success = CreateIndex(
-      database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
-      schema_name, index_name, index_type, index_constraint, unique_keys, txn);
+  ResultType success = CreateIndex(txn,
+                                   database_object->GetDatabaseOid(),
+                                   schema_name,
+                                   table_object->GetTableOid(),
+                                   false,
+                                   index_name,
+                                   key_attrs,
+                                   unique_keys,
+                                   index_type,
+                                   index_constraint);
 
   return success;
 }
 
-ResultType Catalog::CreateIndex(
-    oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &key_attrs,
-    const std::string &schema_name, const std::string &index_name,
-    IndexType index_type, IndexConstraintType index_constraint,
-    bool unique_keys, concurrency::TransactionContext *txn, bool is_catalog) {
+ResultType Catalog::CreateIndex(concurrency::TransactionContext *txn,
+                                oid_t database_oid,
+                                const std::string &schema_name,
+                                oid_t table_oid,
+                                bool is_catalog,
+                                const std::string &index_name,
+                                const std::vector<oid_t> &key_attrs,
+                                bool unique_keys,
+                                IndexType index_type,
+                                IndexConstraintType index_constraint) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create index " +
-                           index_name);
+        index_name);
 
   LOG_TRACE("Trying to create index for table %d", table_oid);
 
@@ -535,13 +692,16 @@ ResultType Catalog::CreateIndex(
     // check if table already has index with same name
     // only check when is_catalog flag == false
     auto database_object =
-        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-    auto table_object = database_object->GetTableObject(table_oid);
-    auto index_object = table_object->GetIndexObject(index_name);
+        DatabaseCatalog::GetInstance(nullptr,
+                                     nullptr,
+                                     nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                       database_oid);
+    auto table_object = database_object->GetTableCatalogEntry(table_oid);
+    auto index_object = table_object->GetIndexCatalogEntry(index_name);
 
     if (index_object != nullptr)
       throw CatalogException("Index " + index_name + " already exists in" +
-                             database_object->GetDatabaseName());
+          database_object->GetDatabaseName());
   }
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
@@ -569,18 +729,26 @@ ResultType Catalog::CreateIndex(
   // Put index object into rw_object_set
   txn->RecordCreate(database_oid, table_oid, index_oid);
   // Insert index record into pg_index
-  pg_index->InsertIndex(index_oid, index_name, table_oid, schema_name,
-                        index_type, index_constraint, unique_keys, key_attrs,
-                        pool_.get(), txn);
+  pg_index->InsertIndex(txn,
+                        schema_name,
+                        table_oid,
+                        index_oid,
+                        index_name,
+                        index_type,
+                        index_constraint,
+                        unique_keys,
+                        key_attrs,
+                        pool_.get());
 
   LOG_TRACE("Successfully add index for table %s contains %d indexes",
-            table->GetName().c_str(), (int)table->GetValidIndexCount());
+            table->GetName().c_str(), (int) table->GetValidIndexCount());
   return ResultType::SUCCESS;
 }
 
-std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
-    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
-    concurrency::TransactionContext *txn) {
+std::shared_ptr<const storage::Layout> Catalog::CreateLayout(concurrency::TransactionContext *txn,
+                                                             oid_t database_oid,
+                                                             oid_t table_oid,
+                                                             const column_map_type &column_map) {
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
   auto table = database->GetTableWithOid(table_oid);
@@ -593,19 +761,20 @@ std::shared_ptr<const storage::Layout> Catalog::CreateLayout(
 
   // Add the layout the pg_layout table
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
-  if (pg_layout->GetLayoutWithOid(table_oid, new_layout->GetOid(), txn)
+  if (pg_layout->GetLayoutWithOid(txn, table_oid, new_layout->GetOid())
       == nullptr &&
-      !pg_layout->InsertLayout(table_oid, new_layout, pool_.get(), txn)) {
-      LOG_ERROR("Failed to create a new layout for table %u", table_oid);
-      return nullptr;
+      !pg_layout->InsertLayout(txn, table_oid, new_layout, pool_.get())) {
+    LOG_ERROR("Failed to create a new layout for table %u", table_oid);
+    return nullptr;
   }
   return new_layout;
 }
 
-std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
-    oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
-    concurrency::TransactionContext *txn) {
-  auto new_layout = CreateLayout(database_oid, table_oid, column_map, txn);
+std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(concurrency::TransactionContext *txn,
+                                                                    oid_t database_oid,
+                                                                    oid_t table_oid,
+                                                                    const column_map_type &column_map) {
+  auto new_layout = CreateLayout(txn, database_oid, table_oid, column_map);
   // If the layout creation was successful, set it as the default
   if (new_layout != nullptr) {
     auto storage_manager = storage::StorageManager::GetInstance();
@@ -615,7 +784,7 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
 
     // update table catalog
     catalog_map_[database_oid]->GetTableCatalog()
-        ->UpdateDefaultLayoutOid(new_layout->GetOid(), table_oid, txn);
+        ->UpdateDefaultLayoutOid(txn, table_oid, new_layout->GetOid());
   }
   return new_layout;
 }
@@ -624,39 +793,47 @@ std::shared_ptr<const storage::Layout> Catalog::CreateDefaultLayout(
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
 
-ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
-                                         concurrency::TransactionContext *txn) {
+ResultType Catalog::DropDatabaseWithName(concurrency::TransactionContext *txn,
+                                         const std::string &database_name) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop database " +
-                           database_name);
+        database_name);
 
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Database: " + database_name +
-                           " does not exist");
+        " does not exist");
 
-  return DropDatabaseWithOid(database_object->GetDatabaseOid(), txn);
+  return DropDatabaseWithOid(txn, database_object->GetDatabaseOid());
 }
 
-ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
-                                        concurrency::TransactionContext *txn) {
+ResultType Catalog::DropDatabaseWithOid(concurrency::TransactionContext *txn,
+                                        oid_t database_oid) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop database " +
-                           std::to_string(database_oid));
+        std::to_string(database_oid));
   auto storage_manager = storage::StorageManager::GetInstance();
   // Drop actual tables in the database
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-  auto table_objects = database_object->GetTableObjects();
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
+  auto table_objects = database_object->GetTableCatalogEntries();
   for (auto it : table_objects) {
-    DropTable(database_oid, it.second->GetTableOid(), txn);
+    DropTable(txn, database_oid, it.second->GetTableOid());
   }
 
   // Drop database record in catalog
-  if (!DatabaseCatalog::GetInstance()->DeleteDatabase(database_oid, txn))
+  if (!DatabaseCatalog::GetInstance(nullptr,
+                                    nullptr,
+                                    nullptr)->DeleteDatabase(txn, database_oid))
     throw CatalogException("Database record: " + std::to_string(database_oid) +
-                           " does not exist in pg_database");
+        " does not exist in pg_database");
 
   catalog_map_.erase(database_oid);
   // put database object into rw_object_set
@@ -674,33 +851,34 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropSchema(const std::string &database_name,
-                               const std::string &schema_name,
-                               concurrency::TransactionContext *txn) {
+ResultType Catalog::DropSchema(concurrency::TransactionContext *txn,
+                               const std::string &database_name,
+                               const std::string &schema_name) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop schema " +
-                           schema_name);
+        schema_name);
 
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(txn)->GetDatabaseCatalogEntry(txn,
+                                                                 database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Schema: database " + database_name +
-                           " does not exist");
+        " does not exist");
 
   // check whether namespace exists from pg_namespace
   auto pg_namespace =
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
-  auto schema_object = pg_namespace->GetSchemaObject(schema_name, txn);
+  auto schema_object = pg_namespace->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object == nullptr)
     throw CatalogException("Can't find namespace " + schema_name + " to drop");
 
-  auto table_objects = database_object->GetTableObjects(schema_name);
+  auto table_objects = database_object->GetTableCatalogEntries(schema_name);
   for (auto it : table_objects) {
-    DropTable(it->GetDatabaseOid(), it->GetTableOid(), txn);
+    DropTable(txn, it->GetDatabaseOid(), it->GetTableOid());
   }
 
   // remove record within pg_namespace
-  pg_namespace->DeleteSchema(schema_name, txn);
+  pg_namespace->DeleteSchema(txn, schema_name);
   return ResultType::SUCCESS;
 }
 
@@ -718,29 +896,34 @@ ResultType Catalog::DropSchema(const std::string &database_name,
  * @param   txn              TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropTable(const std::string &database_name,
+ResultType Catalog::DropTable(concurrency::TransactionContext *txn,
+                              const std::string &database_name,
                               const std::string &schema_name,
-                              const std::string &table_name,
-                              concurrency::TransactionContext *txn) {
+                              const std::string &table_name) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop table " +
-                           table_name);
+        table_name);
 
   // Checking if statement is valid
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Table: database " + database_name +
-                           " does not exist");
+        " does not exist");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object == nullptr)
     throw CatalogException("Drop Table: table " + schema_name + "." +
-                           table_name + " does not exist");
+        table_name + " does not exist");
 
-  ResultType result = DropTable(database_object->GetDatabaseOid(),
-                                table_object->GetTableOid(), txn);
+  ResultType result = DropTable(txn,
+                                database_object->GetDatabaseOid(),
+                                table_object->GetTableOid());
   return result;
 }
 
@@ -755,43 +938,49 @@ ResultType Catalog::DropTable(const std::string &database_name,
  * @param   txn             TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
-                              concurrency::TransactionContext *txn) {
+ResultType Catalog::DropTable(concurrency::TransactionContext *txn,
+                              oid_t database_oid,
+                              oid_t table_oid) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
-  auto table_object = database_object->GetTableObject(table_oid);
-  auto index_objects = table_object->GetIndexObjects();
-  LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
+  auto table_object = database_object->GetTableCatalogEntry(table_oid);
+  auto index_objects = table_object->GetIndexCatalogEntries();
+  LOG_TRACE("dropping #%d indexes", (int) index_objects.size());
   // delete trigger and records in pg_trigger
   auto pg_trigger =
       catalog_map_[database_object->GetDatabaseOid()]->GetTriggerCatalog();
   std::unique_ptr<trigger::TriggerList> trigger_lists =
-      pg_trigger->GetTriggers(table_oid, txn);
+      pg_trigger->GetTriggers(txn, table_oid);
   for (int i = 0; i < trigger_lists->GetTriggerListSize(); i++)
-    pg_trigger->DropTrigger(database_oid, table_oid,
-                            trigger_lists->Get(i)->GetTriggerName(), txn);
+    pg_trigger->DropTrigger(txn,
+                            database_oid,
+                            table_oid,
+                            trigger_lists->Get(i)->GetTriggerName());
 
   // delete index and records pg_index
   for (auto it : index_objects)
-    DropIndex(database_oid, it.second->GetIndexOid(), txn);
+    DropIndex(txn, database_oid, it.second->GetIndexOid());
 
   // delete record in pg_attribute
   auto pg_attribute =
       catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
-  pg_attribute->DeleteColumns(table_oid, txn);
+  pg_attribute->DeleteColumns(txn, table_oid);
 
   // delete record in pg_layout
   auto pg_layout =
       catalog_map_[database_object->GetDatabaseOid()]->GetLayoutCatalog();
-  pg_layout->DeleteLayouts(table_oid, txn);
+  pg_layout->DeleteLayouts(txn, table_oid);
 
   // delete record in pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
-  pg_table->DeleteTable(table_oid, txn);
+  pg_table->DeleteTable(txn, table_oid);
   database->GetTableWithOid(table_oid);
   txn->RecordDrop(database_oid, table_oid, INVALID_OID);
 
@@ -803,25 +992,27 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
  * @param   txn            TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
-                              concurrency::TransactionContext *txn) {
+ResultType Catalog::DropIndex(concurrency::TransactionContext *txn,
+                              oid_t database_oid,
+                              oid_t index_oid) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop index " +
-                           std::to_string(index_oid));
+        std::to_string(index_oid));
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(database_oid, index_oid, txn);
+  auto index_object =
+      pg_index->GetIndexCatalogEntry(txn, database_oid, index_oid);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
-                           " to drop");
+        " to drop");
   }
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(database_oid,
                                                 index_object->GetTableOid());
   // drop record in pg_index
-  pg_index->DeleteIndex(database_oid, index_oid, txn);
+  pg_index->DeleteIndex(txn, database_oid, index_oid);
   LOG_TRACE("Successfully drop index %d for table %s", index_oid,
             table->GetName().c_str());
 
@@ -832,9 +1023,10 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
   return ResultType::SUCCESS;
 }
 
-ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
-                               oid_t layout_oid,
-                               concurrency::TransactionContext *txn) {
+ResultType Catalog::DropLayout(concurrency::TransactionContext *txn,
+                               oid_t database_oid,
+                               oid_t table_oid,
+                               oid_t layout_oid) {
   // Check if the default_layout of the table is the same.
   // If true reset it to a row store.
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -843,7 +1035,7 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
   auto default_layout = table->GetDefaultLayout();
 
   auto pg_layout = catalog_map_[database_oid]->GetLayoutCatalog();
-  if (!pg_layout->DeleteLayout(table_oid, layout_oid, txn)) {
+  if (!pg_layout->DeleteLayout(txn, table_oid, layout_oid)) {
     auto layout = table->GetDefaultLayout();
     LOG_DEBUG("Layout delete failed. Default layout id: %u", layout->GetOid());
     return ResultType::FAILURE;
@@ -852,17 +1044,20 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
   if (default_layout->GetOid() == layout_oid) {
     table->ResetDefaultLayout();
     auto new_default_layout = table->GetDefaultLayout();
-    if (pg_layout->GetLayoutWithOid(table_oid, new_default_layout->GetOid(),
-                                    txn) == nullptr &&
-        !pg_layout->InsertLayout(table_oid, new_default_layout,
-                                 pool_.get(), txn)) {
+    if (pg_layout->GetLayoutWithOid(txn,
+                                    table_oid,
+                                    new_default_layout->GetOid()) == nullptr &&
+        !pg_layout->InsertLayout(txn,
+                                 table_oid,
+                                 new_default_layout,
+                                 pool_.get())) {
       LOG_DEBUG("Failed to create a new layout for table %d", table_oid);
       return ResultType::FAILURE;
     }
 
     // update table catalog
     catalog_map_[database_oid]->GetTableCatalog()
-        ->UpdateDefaultLayoutOid(new_default_layout->GetOid(), table_oid, txn);
+        ->UpdateDefaultLayoutOid(txn, table_oid, new_default_layout->GetOid());
   }
 
   return ResultType::SUCCESS;
@@ -876,14 +1071,16 @@ ResultType Catalog::DropLayout(oid_t database_oid, oid_t table_oid,
  * get it from storage layer using database_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-storage::Database *Catalog::GetDatabaseWithName(
-    const std::string &database_name,
-    concurrency::TransactionContext *txn) const {
+storage::Database *Catalog::GetDatabaseWithName(concurrency::TransactionContext *txn,
+                                                const std::string &database_name) const {
   PELOTON_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (database_object == nullptr) {
     throw CatalogException("Database " + database_name + " is not found");
@@ -897,16 +1094,17 @@ storage::Database *Catalog::GetDatabaseWithName(
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-storage::DataTable *Catalog::GetTableWithName(
-    const std::string &database_name, const std::string &schema_name,
-    const std::string &table_name, concurrency::TransactionContext *txn) {
+storage::DataTable *Catalog::GetTableWithName(concurrency::TransactionContext *txn,
+                                              const std::string &database_name,
+                                              const std::string &schema_name,
+                                              const std::string &table_name) {
   PELOTON_ASSERT(txn != nullptr);
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
 
   // Check in pg_table, throw exception and abort txn if not exists
   auto table_object =
-      GetTableObject(database_name, schema_name, table_name, txn);
+      GetTableCatalogEntry(txn, database_name, schema_name, table_name);
 
   // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -918,18 +1116,22 @@ storage::DataTable *Catalog::GetTableWithName(
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
-    const std::string &database_name, concurrency::TransactionContext *txn) {
+std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &database_name) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
-                           database_name);
+        database_name);
   }
 
   LOG_TRACE("Looking for database %s", database_name.c_str());
 
   // Check in pg_database, throw exception and abort txn if not exists
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + database_name + " is not found");
@@ -938,22 +1140,26 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
   return database_object;
 }
 
-std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
-    oid_t database_oid, concurrency::TransactionContext *txn) {
+std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get database object " +
-                           std::to_string(database_oid));
+        std::to_string(database_oid));
   }
 
   LOG_TRACE("Looking for database %u", database_oid);
 
   // Check in pg_database, throw exception and abort txn if not exists
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + std::to_string(database_oid) +
-                           " is not found");
+        " is not found");
   }
 
   return database_object;
@@ -963,12 +1169,13 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
-    const std::string &database_name, const std::string &schema_name,
-    const std::string &table_name, concurrency::TransactionContext *txn) {
+std::shared_ptr<TableCatalogEntry> Catalog::GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                                 const std::string &database_name,
+                                                                 const std::string &schema_name,
+                                                                 const std::string &table_name) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
-                           database_name + "." + table_name);
+        database_name + "." + table_name);
   }
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
@@ -976,50 +1183,58 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 
   // Check in pg_database, throw exception and abort txn if not exists
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + database_name + " is not found");
   }
 
   // Check in pg_table using txn
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // throw table not found exception and explicitly abort txn
     throw CatalogException("Table " + schema_name + "." + table_name +
-                           " is not found");
+        " is not found");
   }
 
   return table_object;
 }
 
-std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
-    oid_t database_oid, oid_t table_oid, concurrency::TransactionContext *txn) {
+std::shared_ptr<TableCatalogEntry> Catalog::GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                                 oid_t database_oid,
+                                                                 oid_t table_oid) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
-                           std::to_string(database_oid) + "." +
-                           std::to_string(table_oid));
+        std::to_string(database_oid) + "." +
+        std::to_string(table_oid));
   }
 
   LOG_TRACE("Looking for table %u in database %u", table_oid, database_oid);
 
   // Check in pg_database, throw exception and abort txn if not exists
   auto database_object =
-      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+      DatabaseCatalog::GetInstance(nullptr,
+                                   nullptr,
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + std::to_string(database_oid) +
-                           " is not found");
+        " is not found");
   }
 
   // Check in pg_table using txn
-  auto table_object = database_object->GetTableObject(table_oid);
+  auto table_object = database_object->GetTableCatalogEntry(table_oid);
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // throw table not found exception and explicitly abort txn
     throw CatalogException("Table " + std::to_string(table_oid) +
-                           " is not found");
+        " is not found");
   }
 
   return table_object;
@@ -1029,7 +1244,7 @@ std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
     const oid_t database_oid) {
   if (catalog_map_.find(database_oid) == catalog_map_.end()) {
     throw CatalogException("Failed to find SystemCatalog for database_oid = " +
-                           std::to_string(database_oid));
+        std::to_string(database_oid));
   }
   return catalog_map_[database_oid];
 }
@@ -1045,10 +1260,11 @@ void Catalog::AddDatabase(storage::Database *database) {
   storage_manager->AddDatabaseToStorageManager(database);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  BootstrapSystemCatalogs(database, txn);
-  DatabaseCatalog::GetInstance()->InsertDatabase(
-      database->GetOid(), database->GetDBName(), pool_.get(),
-      txn);  // I guess this can pass tests
+  BootstrapSystemCatalogs(txn, database);
+  DatabaseCatalog::GetInstance(nullptr, nullptr, nullptr)->InsertDatabase(txn,
+                                                                          database->GetOid(),
+                                                                          database->GetDBName(),
+                                                                          pool_.get());  // I guess this can pass tests
   txn_manager.CommitTransaction(txn);
 }
 
@@ -1074,13 +1290,20 @@ Catalog::~Catalog() {
  * @param   func_name     the function name in C++ source (should be unique)
  * @param   func_ptr      the pointer to the function
  */
-void Catalog::AddBuiltinFunction(
-    const std::string &name, const std::vector<type::TypeId> &argument_types,
-    const type::TypeId return_type, oid_t prolang, const std::string &func_name,
-    function::BuiltInFuncType func, concurrency::TransactionContext *txn) {
-  if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
-                                             prolang, func_name, pool_.get(),
-                                             txn)) {
+void Catalog::AddBuiltinFunction(concurrency::TransactionContext *txn,
+                                 const std::string &name,
+                                 function::BuiltInFuncType func,
+                                 const std::string &func_name,
+                                 type::TypeId return_type,
+                                 const std::vector<type::TypeId> &argument_types,
+                                 oid_t prolang) {
+  if (!ProcCatalog::GetInstance().InsertProc(txn,
+                                             name,
+                                             return_type,
+                                             argument_types,
+                                             prolang,
+                                             func_name,
+                                             pool_.get())) {
     throw CatalogException("Failed to add function " + func_name);
   }
   function::BuiltInFunctions::AddFunction(func_name, func);
@@ -1099,23 +1322,29 @@ void Catalog::AddBuiltinFunction(
  * @param   code_context  the code_context that holds the generated LLVM
  *                        query code
  */
-void Catalog::AddPlpgsqlFunction(
-    const std::string &name, const std::vector<type::TypeId> &argument_types,
-    const type::TypeId return_type, oid_t prolang, const std::string &func_src,
-    std::shared_ptr<peloton::codegen::CodeContext> code_context,
-    concurrency::TransactionContext *txn) {
+void Catalog::AddProcedure(concurrency::TransactionContext *txn,
+                           const std::string &name,
+                           type::TypeId return_type,
+                           const std::vector<type::TypeId> &argument_types,
+                           oid_t prolang,
+                           std::shared_ptr<peloton::codegen::CodeContext> code_context,
+                           const std::string &func_src) {
   // Check if UDF already exists
   auto proc_catalog_obj =
-      ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
+      ProcCatalog::GetInstance().GetProcByName(txn, name, argument_types);
 
   if (proc_catalog_obj == nullptr) {
-    if (!ProcCatalog::GetInstance().InsertProc(name, return_type,
-                                               argument_types, prolang,
-                                               func_src, pool_.get(), txn)) {
+    if (!ProcCatalog::GetInstance().InsertProc(txn,
+                                               name,
+                                               return_type,
+                                               argument_types,
+                                               prolang,
+                                               func_src,
+                                               pool_.get())) {
       throw CatalogException("Failed to add function " + name);
     }
     proc_catalog_obj =
-        ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
+        ProcCatalog::GetInstance().GetProcByName(txn, name, argument_types);
     // Insert UDF into Catalog
     function::PlpgsqlFunctions::AddFunction(proc_catalog_obj->GetOid(),
                                             code_context);
@@ -1129,7 +1358,7 @@ const FunctionData Catalog::GetFunction(
 
   // Lookup the function in pg_proc
   auto &proc_catalog = ProcCatalog::GetInstance();
-  auto proc_catalog_obj = proc_catalog.GetProcByName(name, argument_types, txn);
+  auto proc_catalog_obj = proc_catalog.GetProcByName(txn, name, argument_types);
   if (proc_catalog_obj == nullptr) {
     txn_manager.AbortTransaction(txn);
     throw CatalogException("Failed to find function " + name);
@@ -1139,12 +1368,12 @@ const FunctionData Catalog::GetFunction(
   auto lang_catalog_obj = proc_catalog_obj->GetLanguage();
   if (lang_catalog_obj == nullptr ||
       (lang_catalog_obj->GetName() != "internal" &&
-       lang_catalog_obj->GetName() != "plpgsql")) {
+          lang_catalog_obj->GetName() != "plpgsql")) {
     txn_manager.AbortTransaction(txn);
     throw CatalogException(
         "Peloton currently only supports internal functions and plpgsql UDFs. \
         Function " +
-        name + " has language '" + lang_catalog_obj->GetName() + "'");
+            name + " has language '" + lang_catalog_obj->GetName() + "'");
   }
 
   FunctionData result;
@@ -1160,7 +1389,7 @@ const FunctionData Catalog::GetFunction(
       txn_manager.AbortTransaction(txn);
       throw CatalogException(
           "Function " + name +
-          " is internal, but doesn't have a function address");
+              " is internal, but doesn't have a function address");
     }
   } else if (lang_catalog_obj->GetName() == "plpgsql") {
     // If the function is a "plpgsql" udf, perform the lookup in the plpgsql
@@ -1174,7 +1403,7 @@ const FunctionData Catalog::GetFunction(
       txn_manager.AbortTransaction(txn);
       throw CatalogException(
           "Function " + name +
-          " is plpgsql, but doesn't have a function address");
+              " is plpgsql, but doesn't have a function address");
     }
   }
 
@@ -1188,14 +1417,16 @@ void Catalog::InitializeLanguages() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     // add "internal" language
-    if (!LanguageCatalog::GetInstance().InsertLanguage("internal", pool_.get(),
-                                                       txn)) {
+    if (!LanguageCatalog::GetInstance().InsertLanguage(txn,
+                                                       "internal",
+                                                       pool_.get())) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'internal'");
     }
     // Add "plpgsql" language
-    if (!LanguageCatalog::GetInstance().InsertLanguage("plpgsql", pool_.get(),
-                                                       txn)) {
+    if (!LanguageCatalog::GetInstance().InsertLanguage(txn,
+                                                       "plpgsql",
+                                                       pool_.get())) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'plpgsql'");
     }
@@ -1211,7 +1442,7 @@ void Catalog::InitializeFunctions() {
     auto txn = txn_manager.BeginTransaction();
 
     auto lang_object =
-        LanguageCatalog::GetInstance().GetLanguageByName("internal", txn);
+        LanguageCatalog::GetInstance().GetLanguageByName(txn, "internal");
     if (lang_object == nullptr) {
       throw CatalogException("Language 'internal' does not exist");
     }
@@ -1221,290 +1452,385 @@ void Catalog::InitializeFunctions() {
       /**
        * string functions
        */
-      AddBuiltinFunction(
-          "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-          internal_lang, "Ascii",
-          function::BuiltInFuncType{OperatorId::Ascii,
-                                    function::OldEngineStringFunctions::Ascii},
-          txn);
-      AddBuiltinFunction(
-          "chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, internal_lang,
-          "Chr",
-          function::BuiltInFuncType{OperatorId::Chr,
-                                    function::OldEngineStringFunctions::Chr},
-          txn);
-      AddBuiltinFunction(
-          "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "Concat",
-          function::BuiltInFuncType{OperatorId::Concat,
-                                    function::OldEngineStringFunctions::Concat},
-          txn);
-      AddBuiltinFunction(
-          "substr",
-          {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
-          type::TypeId::VARCHAR, internal_lang, "Substr",
-          function::BuiltInFuncType{OperatorId::Substr,
-                                    function::OldEngineStringFunctions::Substr},
-          txn);
-      AddBuiltinFunction("char_length", {type::TypeId::VARCHAR},
-                         type::TypeId::INTEGER, internal_lang, "CharLength",
+      AddBuiltinFunction(txn,
+                         "ascii",
+                         function::BuiltInFuncType{OperatorId::Ascii,
+                                                   function::OldEngineStringFunctions::Ascii},
+                         "Ascii",
+                         type::TypeId::INTEGER,
+                         {type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "chr",
+                         function::BuiltInFuncType{OperatorId::Chr,
+                                                   function::OldEngineStringFunctions::Chr},
+                         "Chr",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "concat",
+                         function::BuiltInFuncType{OperatorId::Concat,
+                                                   function::OldEngineStringFunctions::Concat},
+                         "Concat",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "substr",
+                         function::BuiltInFuncType{OperatorId::Substr,
+                                                   function::OldEngineStringFunctions::Substr},
+                         "Substr",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::INTEGER,
+                          type::TypeId::INTEGER},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "char_length",
                          function::BuiltInFuncType{
                              OperatorId::CharLength,
                              function::OldEngineStringFunctions::CharLength},
-                         txn);
-      AddBuiltinFunction("octet_length", {type::TypeId::VARCHAR},
-                         type::TypeId::INTEGER, internal_lang, "OctetLength",
+                         "CharLength",
+                         type::TypeId::INTEGER,
+                         {type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "octet_length",
                          function::BuiltInFuncType{
                              OperatorId::OctetLength,
                              function::OldEngineStringFunctions::OctetLength},
-                         txn);
-      AddBuiltinFunction(
-          "length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-          internal_lang, "Length",
-          function::BuiltInFuncType{OperatorId::Length,
-                                    function::OldEngineStringFunctions::Length},
-          txn);
-      AddBuiltinFunction(
-          "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-          type::TypeId::VARCHAR, internal_lang, "Repeat",
-          function::BuiltInFuncType{OperatorId::Repeat,
-                                    function::OldEngineStringFunctions::Repeat},
-          txn);
-      AddBuiltinFunction(
-          "replace",
-          {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "Replace",
-          function::BuiltInFuncType{
-              OperatorId::Replace, function::OldEngineStringFunctions::Replace},
-          txn);
-      AddBuiltinFunction(
-          "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "LTrim",
-          function::BuiltInFuncType{OperatorId::LTrim,
-                                    function::OldEngineStringFunctions::LTrim},
-          txn);
-      AddBuiltinFunction(
-          "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "RTrim",
-          function::BuiltInFuncType{OperatorId::RTrim,
-                                    function::OldEngineStringFunctions::RTrim},
-          txn);
-      AddBuiltinFunction(
-          "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "btrim",
-          function::BuiltInFuncType{OperatorId::BTrim,
-                                    function::OldEngineStringFunctions::BTrim},
-          txn);
+                         "OctetLength",
+                         type::TypeId::INTEGER,
+                         {type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "length",
+                         function::BuiltInFuncType{OperatorId::Length,
+                                                   function::OldEngineStringFunctions::Length},
+                         "Length",
+                         type::TypeId::INTEGER,
+                         {type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "repeat",
+                         function::BuiltInFuncType{OperatorId::Repeat,
+                                                   function::OldEngineStringFunctions::Repeat},
+                         "Repeat",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::INTEGER},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "replace",
+                         function::BuiltInFuncType{
+                             OperatorId::Replace,
+                             function::OldEngineStringFunctions::Replace},
+                         "Replace",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
+                          type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "ltrim",
+                         function::BuiltInFuncType{OperatorId::LTrim,
+                                                   function::OldEngineStringFunctions::LTrim},
+                         "LTrim",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "rtrim",
+                         function::BuiltInFuncType{OperatorId::RTrim,
+                                                   function::OldEngineStringFunctions::RTrim},
+                         "RTrim",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "btrim",
+                         function::BuiltInFuncType{OperatorId::BTrim,
+                                                   function::OldEngineStringFunctions::BTrim},
+                         "btrim",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                         internal_lang);
       // Trim
-      AddBuiltinFunction(
-          "btrim", {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
-          internal_lang, "trim",
-          function::BuiltInFuncType{OperatorId::Trim,
-                                    function::OldEngineStringFunctions::Trim},
-          txn);
-      AddBuiltinFunction(
-          "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "like",
-          function::BuiltInFuncType{OperatorId::Like,
-                                    function::OldEngineStringFunctions::Like},
-          txn);
+      AddBuiltinFunction(txn,
+                         "btrim",
+                         function::BuiltInFuncType{OperatorId::Trim,
+                                                   function::OldEngineStringFunctions::Trim},
+                         "trim",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "like",
+                         function::BuiltInFuncType{OperatorId::Like,
+                                                   function::OldEngineStringFunctions::Like},
+                         "like",
+                         type::TypeId::VARCHAR,
+                         {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+                         internal_lang);
 
       /**
        * decimal functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                         internal_lang, "Abs",
+      AddBuiltinFunction(txn,
+                         "abs",
                          function::BuiltInFuncType{
                              OperatorId::Abs, function::NumericFunctions::_Abs},
-                         txn);
-      AddBuiltinFunction(
-          "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::NumericFunctions::Sqrt},
-          txn);
-      AddBuiltinFunction(
-          "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
-          internal_lang, "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::NumericFunctions::Sqrt},
-          txn);
-      AddBuiltinFunction(
-          "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::NumericFunctions::Sqrt},
-          txn);
-      AddBuiltinFunction(
-          "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::NumericFunctions::Sqrt},
-          txn);
-      AddBuiltinFunction(
-          "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::NumericFunctions::Sqrt},
-          txn);
-      AddBuiltinFunction(
-          "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-          internal_lang, "Floor",
-          function::BuiltInFuncType{OperatorId::Floor,
-                                    function::NumericFunctions::_Floor},
-          txn);
+                         "Abs",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "sqrt",
+                         function::BuiltInFuncType{OperatorId::Sqrt,
+                                                   function::NumericFunctions::Sqrt},
+                         "Sqrt",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::TINYINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "sqrt",
+                         function::BuiltInFuncType{OperatorId::Sqrt,
+                                                   function::NumericFunctions::Sqrt},
+                         "Sqrt",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::SMALLINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "sqrt",
+                         function::BuiltInFuncType{OperatorId::Sqrt,
+                                                   function::NumericFunctions::Sqrt},
+                         "Sqrt",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "sqrt",
+                         function::BuiltInFuncType{OperatorId::Sqrt,
+                                                   function::NumericFunctions::Sqrt},
+                         "Sqrt",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::BIGINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "sqrt",
+                         function::BuiltInFuncType{OperatorId::Sqrt,
+                                                   function::NumericFunctions::Sqrt},
+                         "Sqrt",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "floor",
+                         function::BuiltInFuncType{OperatorId::Floor,
+                                                   function::NumericFunctions::_Floor},
+                         "Floor",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
 
       /**
        * integer functions
        */
-      AddBuiltinFunction("abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT,
-                         internal_lang, "Abs",
+      AddBuiltinFunction(txn,
+                         "abs",
                          function::BuiltInFuncType{
                              OperatorId::Abs, function::NumericFunctions::_Abs},
-                         txn);
+                         "Abs",
+                         type::TypeId::TINYINT,
+                         {type::TypeId::TINYINT},
+                         internal_lang);
 
-      AddBuiltinFunction("abs", {type::TypeId::SMALLINT},
-                         type::TypeId::SMALLINT, internal_lang, "Abs",
+      AddBuiltinFunction(txn,
+                         "abs",
                          function::BuiltInFuncType{
                              OperatorId::Abs, function::NumericFunctions::_Abs},
-                         txn);
+                         "Abs",
+                         type::TypeId::SMALLINT,
+                         {type::TypeId::SMALLINT},
+                         internal_lang);
 
-      AddBuiltinFunction("abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER,
-                         internal_lang, "Abs",
+      AddBuiltinFunction(txn,
+                         "abs",
                          function::BuiltInFuncType{
                              OperatorId::Abs, function::NumericFunctions::_Abs},
-                         txn);
+                         "Abs",
+                         type::TypeId::INTEGER,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
 
-      AddBuiltinFunction("abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT,
-                         internal_lang, "Abs",
+      AddBuiltinFunction(txn,
+                         "abs",
                          function::BuiltInFuncType{
                              OperatorId::Abs, function::NumericFunctions::_Abs},
-                         txn);
+                         "Abs",
+                         type::TypeId::BIGINT,
+                         {type::TypeId::BIGINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
-          internal_lang, "Floor",
-          function::BuiltInFuncType{OperatorId::Floor,
-                                    function::NumericFunctions::_Floor},
-          txn);
-      AddBuiltinFunction(
-          "floor", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Floor",
-          function::BuiltInFuncType{OperatorId::Floor,
-                                    function::NumericFunctions::_Floor},
-          txn);
-      AddBuiltinFunction(
-          "floor", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
-          internal_lang, "Floor",
-          function::BuiltInFuncType{OperatorId::Floor,
-                                    function::NumericFunctions::_Floor},
-          txn);
-      AddBuiltinFunction(
-          "floor", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
-          internal_lang, "Floor",
-          function::BuiltInFuncType{OperatorId::Floor,
-                                    function::NumericFunctions::_Floor},
-          txn);
-      AddBuiltinFunction(
-          "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-          internal_lang, "Round",
-          function::BuiltInFuncType{OperatorId::Round,
-                                    function::NumericFunctions::_Round},
-          txn);
+      AddBuiltinFunction(txn,
+                         "floor",
+                         function::BuiltInFuncType{OperatorId::Floor,
+                                                   function::NumericFunctions::_Floor},
+                         "Floor",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "floor",
+                         function::BuiltInFuncType{OperatorId::Floor,
+                                                   function::NumericFunctions::_Floor},
+                         "Floor",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::BIGINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "floor",
+                         function::BuiltInFuncType{OperatorId::Floor,
+                                                   function::NumericFunctions::_Floor},
+                         "Floor",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::TINYINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "floor",
+                         function::BuiltInFuncType{OperatorId::Floor,
+                                                   function::NumericFunctions::_Floor},
+                         "Floor",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::SMALLINT},
+                         internal_lang);
+      AddBuiltinFunction(txn,
+                         "round",
+                         function::BuiltInFuncType{OperatorId::Round,
+                                                   function::NumericFunctions::_Round},
+                         "Round",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceil",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceil",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::TINYINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceil",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::SMALLINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceil",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceil",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::BIGINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceiling",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::DECIMAL},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceiling",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::TINYINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceiling",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::SMALLINT},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceiling",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::INTEGER},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL,
-          internal_lang, "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::NumericFunctions::_Ceil},
-          txn);
+      AddBuiltinFunction(txn,
+                         "ceiling",
+                         function::BuiltInFuncType{OperatorId::Ceil,
+                                                   function::NumericFunctions::_Ceil},
+                         "Ceil",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::BIGINT},
+                         internal_lang);
 
       /**
        * date functions
        */
-      AddBuiltinFunction(
-          "date_part", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
-          type::TypeId::DECIMAL, internal_lang, "DatePart",
-          function::BuiltInFuncType{OperatorId::DatePart,
-                                    function::TimestampFunctions::_DatePart},
-          txn);
+      AddBuiltinFunction(txn,
+                         "date_part",
+                         function::BuiltInFuncType{OperatorId::DatePart,
+                                                   function::TimestampFunctions::_DatePart},
+                         "DatePart",
+                         type::TypeId::DECIMAL,
+                         {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
+                         internal_lang);
 
-      AddBuiltinFunction(
-          "date_trunc", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
-          type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
-          function::BuiltInFuncType{OperatorId::DateTrunc,
-                                    function::TimestampFunctions::_DateTrunc},
-          txn);
+      AddBuiltinFunction(txn,
+                         "date_trunc",
+                         function::BuiltInFuncType{OperatorId::DateTrunc,
+                                                   function::TimestampFunctions::_DateTrunc},
+                         "DateTrunc",
+                         type::TypeId::TIMESTAMP,
+                         {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
+                         internal_lang);
 
       // add now()
-      AddBuiltinFunction("now", {}, type::TypeId::TIMESTAMP, internal_lang,
-                         "Now",
+      AddBuiltinFunction(txn,
+                         "now",
                          function::BuiltInFuncType{
                              OperatorId::Now, function::DateFunctions::_Now},
-                         txn);
+                         "Now",
+                         type::TypeId::TIMESTAMP,
+                         {},
+                         internal_lang);
 
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);

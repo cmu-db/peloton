@@ -44,22 +44,22 @@
 namespace peloton {
 namespace catalog {
 
-AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
-                                 std::string catalog_table_name,
+AbstractCatalog::AbstractCatalog(storage::Database *pg_catalog,
                                  catalog::Schema *catalog_table_schema,
-                                 storage::Database *pg_catalog) {
+                                 oid_t catalog_table_oid,
+                                 std::string catalog_table_name) {
   // set database_oid
-  database_oid = pg_catalog->GetOid();
+  database_oid_ = pg_catalog->GetOid();
   // Create catalog_table_
   catalog_table_ = storage::TableFactory::GetDataTable(
-      database_oid, catalog_table_oid, catalog_table_schema, catalog_table_name,
+      database_oid_, catalog_table_oid, catalog_table_schema, catalog_table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, true, false, true);
   // Add catalog_table_ into pg_catalog database
   pg_catalog->AddTable(catalog_table_, true);
 }
 
-AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
-                                 concurrency::TransactionContext *txn) {
+AbstractCatalog::AbstractCatalog(concurrency::TransactionContext *txn,
+                                 const std::string &catalog_table_ddl) {
   // get catalog table schema
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
@@ -71,13 +71,19 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto catalog_database_name = create_plan->GetDatabaseName();
   PELOTON_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
   // create catalog table
-  Catalog::GetInstance()->CreateTable(
-      catalog_database_name, catalog_schema_name, catalog_table_name,
-      std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
+  Catalog::GetInstance()->CreateTable(txn,
+                                      catalog_database_name,
+                                      catalog_schema_name,
+                                      std::unique_ptr<catalog::Schema>(
+                                          catalog_table_schema),
+                                      catalog_table_name,
+                                      true);
 
   // get catalog table oid
-  auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
-      catalog_database_name, catalog_schema_name, catalog_table_name, txn);
+  auto catalog_table_object = Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                           catalog_database_name,
+                                                                           catalog_schema_name,
+                                                                           catalog_table_name);
 
   // set catalog_table_
   try {
@@ -85,7 +91,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
         catalog_table_object->GetDatabaseOid(),
         catalog_table_object->GetTableOid());
     // set database_oid
-    database_oid = catalog_table_object->GetDatabaseOid();
+    database_oid_ = catalog_table_object->GetDatabaseOid();
   } catch (CatalogException &e) {
     LOG_TRACE("Can't find table %d! Return false",
               catalog_table_object->GetTableOid());
@@ -97,8 +103,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
  * @param   txn       TransactionContext
  * @return  Whether insertion is Successful
  */
-bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
-                                  concurrency::TransactionContext *txn) {
+bool AbstractCatalog::InsertTuple(concurrency::TransactionContext *txn,
+                                  std::unique_ptr<storage::Tuple> tuple) {
   if (txn == nullptr)
     throw CatalogException("Insert tuple requires transaction");
 
@@ -137,9 +143,9 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
  * @param   txn           TransactionContext
  * @return  Whether deletion is Successful
  */
-bool AbstractCatalog::DeleteWithIndexScan(
-    oid_t index_offset, std::vector<type::Value> values,
-    concurrency::TransactionContext *txn) {
+bool AbstractCatalog::DeleteWithIndexScan(concurrency::TransactionContext *txn,
+                                          oid_t index_offset,
+                                          std::vector<type::Value> values) {
   if (txn == nullptr)
     throw CatalogException("Delete tuple requires transaction");
 
@@ -189,9 +195,10 @@ bool AbstractCatalog::DeleteWithIndexScan(
  */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(
-    std::vector<oid_t> column_offsets, oid_t index_offset,
-    std::vector<type::Value> values,
-    concurrency::TransactionContext *txn) const {
+    concurrency::TransactionContext *txn,
+    std::vector<oid_t> column_offsets,
+    oid_t index_offset,
+    std::vector<type::Value> values) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan
@@ -238,9 +245,10 @@ AbstractCatalog::GetResultWithIndexScan(
  * @return  Unique pointer of vector of logical tiles
  */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
-                                      expression::AbstractExpression *predicate,
-                                      concurrency::TransactionContext *txn) {
+AbstractCatalog::GetResultWithSeqScan(
+    concurrency::TransactionContext *txn,
+    expression::AbstractExpression *predicate,
+    std::vector<oid_t> column_offsets) {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Sequential scan
@@ -272,8 +280,9 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
  * Note: Use catalog::Catalog::CreateIndex() if you can, only ColumnCatalog and
  * IndexCatalog should need this
  */
-void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
-                               oid_t index_oid, const std::string &index_name,
+void AbstractCatalog::AddIndex(const std::string &index_name,
+                               oid_t index_oid,
+                               const std::vector<oid_t> &key_attrs,
                                IndexConstraintType index_constraint) {
   auto schema = catalog_table_->GetSchema();
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
@@ -307,10 +316,11 @@ void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
  * @param   index_offset      Offset of index for scan
  * @return  true if successfully executes
  */
-bool AbstractCatalog::UpdateWithIndexScan(
-    std::vector<oid_t> update_columns, std::vector<type::Value> update_values,
-    std::vector<type::Value> scan_values, oid_t index_offset,
-    concurrency::TransactionContext *txn) {
+bool AbstractCatalog::UpdateWithIndexScan(concurrency::TransactionContext *txn,
+                                          oid_t index_offset,
+                                          std::vector<type::Value> scan_values,
+                                          std::vector<oid_t> update_columns,
+                                          std::vector<type::Value> update_values) {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   std::unique_ptr<executor::ExecutorContext> context(

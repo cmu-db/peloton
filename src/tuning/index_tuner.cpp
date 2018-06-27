@@ -597,8 +597,10 @@ void IndexTuner::BootstrapTPCC(const std::string &path) {
     // Locate table in catalog
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    auto table = catalog->GetTableWithName(
-        database_name, std::string(DEFAULT_SCHEMA_NAME), table_name, txn);
+    auto table = catalog->GetTableWithName(txn,
+                                           database_name,
+                                           std::string(DEFAULT_SCHEMA_NAME),
+                                           table_name);
     txn_manager.CommitTransaction(txn);
     PELOTON_ASSERT(table != nullptr);
     for (auto &sample : samples) {

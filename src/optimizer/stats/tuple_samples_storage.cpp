@@ -44,7 +44,7 @@ TupleSamplesStorage::TupleSamplesStorage() {
 void TupleSamplesStorage::CreateSamplesDatabase() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(SAMPLES_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, SAMPLES_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -65,13 +65,17 @@ void TupleSamplesStorage::AddSamplesTable(
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(std::string(SAMPLES_DB_NAME),
-                       std::string(DEFAULT_SCHEMA_NAME), samples_table_name,
-                       std::move(schema_ptr), txn, is_catalog);
+  catalog->CreateTable(txn,
+                       std::string(SAMPLES_DB_NAME),
+                       std::string(DEFAULT_SCHEMA_NAME),
+                       std::move(schema_ptr),
+                       samples_table_name,
+                       is_catalog);
 
-  auto samples_table = catalog->GetTableWithName(
-      std::string(SAMPLES_DB_NAME), std::string(DEFAULT_SCHEMA_NAME),
-      samples_table_name, txn);
+  auto samples_table = catalog->GetTableWithName(txn,
+                                                 std::string(SAMPLES_DB_NAME),
+                                                 std::string(DEFAULT_SCHEMA_NAME),
+                                                 samples_table_name);
 
   for (auto &tuple : sampled_tuples) {
     InsertSampleTuple(samples_table, std::move(tuple), txn);
@@ -93,9 +97,10 @@ ResultType TupleSamplesStorage::DeleteSamplesTable(
       GenerateSamplesTableName(database_id, table_id);
   ResultType result = ResultType::FAILURE;
   try {
-    result = catalog->DropTable(std::string(SAMPLES_DB_NAME),
+    result = catalog->DropTable(txn,
+                                std::string(SAMPLES_DB_NAME),
                                 std::string(DEFAULT_SCHEMA_NAME),
-                                samples_table_name, txn);
+                                samples_table_name);
   } catch (CatalogException &e) {
     // Samples table does not exist, no need to drop
   }
@@ -186,9 +191,10 @@ TupleSamplesStorage::GetTupleSamples(oid_t database_id, oid_t table_id) {
       GenerateSamplesTableName(database_id, table_id);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto data_table = catalog->GetTableWithName(std::string(SAMPLES_DB_NAME),
+  auto data_table = catalog->GetTableWithName(txn,
+                                              std::string(SAMPLES_DB_NAME),
                                               std::string(DEFAULT_SCHEMA_NAME),
-                                              samples_table_name, txn);
+                                              samples_table_name);
 
   auto col_count = data_table->GetSchema()->GetColumnCount();
   std::vector<oid_t> column_ids;
@@ -213,9 +219,10 @@ void TupleSamplesStorage::GetColumnSamples(
       GenerateSamplesTableName(database_id, table_id);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto data_table = catalog->GetTableWithName(std::string(SAMPLES_DB_NAME),
+  auto data_table = catalog->GetTableWithName(txn,
+                                              std::string(SAMPLES_DB_NAME),
                                               std::string(DEFAULT_SCHEMA_NAME),
-                                              samples_table_name, txn);
+                                              samples_table_name);
 
   std::vector<oid_t> column_ids({column_id});
   auto result_tiles = GetTuplesWithSeqScan(data_table, column_ids, txn);

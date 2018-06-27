@@ -55,7 +55,7 @@ void SetupTables(std::string database_name) {
   LOG_INFO("Creating database %s", database_name.c_str());
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, database_name);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("database %s created!", database_name.c_str());
 
@@ -126,14 +126,12 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder->BindNameToNode(selectStmt);
 
   oid_t db_oid =
-      catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
+      catalog_ptr->GetDatabaseWithName(txn, default_database_name)->GetOid();
   oid_t tableA_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "a", txn)
+      ->GetTableWithName(txn, default_database_name, DEFAULT_SCHEMA_NAME, "a")
                          ->GetOid();
   oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
+      ->GetTableWithName(txn, default_database_name, DEFAULT_SCHEMA_NAME, "b")
                          ->GetOid();
   txn_manager.CommitTransaction(txn);
 
@@ -242,7 +240,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
   // Delete the test database
   txn = txn_manager.BeginTransaction();
-  catalog_ptr->DropDatabaseWithName(default_database_name, txn);
+  catalog_ptr->DropDatabaseWithName(txn, default_database_name);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -259,10 +257,9 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   oid_t db_oid =
-      catalog_ptr->GetDatabaseWithName(default_database_name, txn)->GetOid();
+      catalog_ptr->GetDatabaseWithName(txn, default_database_name)->GetOid();
   oid_t tableB_oid = catalog_ptr
-                         ->GetTableWithName(default_database_name,
-                                            DEFAULT_SCHEMA_NAME, "b", txn)
+      ->GetTableWithName(txn, default_database_name, DEFAULT_SCHEMA_NAME, "b")
                          ->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
@@ -288,7 +285,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 
   // Delete the test database
   txn = txn_manager.BeginTransaction();
-  catalog_ptr->DropDatabaseWithName(default_database_name, txn);
+  catalog_ptr->DropDatabaseWithName(txn, default_database_name);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -378,7 +375,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   // Delete the test database
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
   txn = txn_manager.BeginTransaction();
-  catalog_ptr->DropDatabaseWithName(default_database_name, txn);
+  catalog_ptr->DropDatabaseWithName(txn, default_database_name);
   txn_manager.CommitTransaction(txn);
 }
 

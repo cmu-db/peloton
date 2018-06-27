@@ -33,29 +33,37 @@ ZoneMapCatalog *ZoneMapCatalog::GetInstance(
 }
 
 ZoneMapCatalog::ZoneMapCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." ZONE_MAP_CATALOG_NAME
-                      " ("
-                      "database_id    INT NOT NULL, "
-                      "table_id       INT NOT NULL, "
-                      "tile_group_id  INT NOT NULL,  "
-                      "column_id      INT NOT NULL, "
-                      "minimum        VARCHAR, "
-                      "maximum        VARCHAR, "
-                      "type           VARCHAR);",
-                      txn) {
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, ZONE_MAP_CATALOG_NAME,
-      {0, 1, 2, 3}, ZONE_MAP_CATALOG_NAME "_skey0", true, IndexType::BWTREE,
-      txn);
+    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+                           "." CATALOG_SCHEMA_NAME "." ZONE_MAP_CATALOG_NAME
+                           " ("
+                           "database_id    INT NOT NULL, "
+                           "table_id       INT NOT NULL, "
+                           "tile_group_id  INT NOT NULL,  "
+                           "column_id      INT NOT NULL, "
+                           "minimum        VARCHAR, "
+                           "maximum        VARCHAR, "
+                           "type           VARCHAR);") {
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      CATALOG_DATABASE_NAME,
+                                      CATALOG_SCHEMA_NAME,
+                                      ZONE_MAP_CATALOG_NAME,
+                                      ZONE_MAP_CATALOG_NAME "_skey0",
+                                      {0, 1, 2, 3},
+                                      true,
+                                      IndexType::BWTREE);
 }
 
 ZoneMapCatalog::~ZoneMapCatalog() {}
 
-bool ZoneMapCatalog::InsertColumnStatistics(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    std::string minimum, std::string maximum, std::string type,
-    type::AbstractPool *pool, concurrency::TransactionContext *txn) {
+bool ZoneMapCatalog::InsertColumnStatistics(concurrency::TransactionContext *txn,
+                                            oid_t database_id,
+                                            oid_t table_id,
+                                            oid_t tile_group_id,
+                                            oid_t column_id,
+                                            std::string minimum,
+                                            std::string maximum,
+                                            std::string type,
+                                            type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -77,25 +85,29 @@ bool ZoneMapCatalog::InsertColumnStatistics(
   tuple->SetValue(static_cast<int>(ColumnId::MAXIMUM), val_maximum, pool);
   tuple->SetValue(static_cast<int>(ColumnId::TYPE), val_type, pool);
 
-  bool return_val = InsertTuple(std::move(tuple), txn);
+  bool return_val = InsertTuple(txn, std::move(tuple));
   return return_val;
 }
 
-bool ZoneMapCatalog::DeleteColumnStatistics(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+bool ZoneMapCatalog::DeleteColumnStatistics(concurrency::TransactionContext *txn,
+                                            oid_t database_id,
+                                            oid_t table_id,
+                                            oid_t tile_group_id,
+                                            oid_t column_id) {
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values(
       {type::ValueFactory::GetIntegerValue(database_id),
        type::ValueFactory::GetIntegerValue(table_id),
        type::ValueFactory::GetIntegerValue(tile_group_id),
        type::ValueFactory::GetIntegerValue(column_id)});
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(concurrency::TransactionContext *txn,
+                                                                              oid_t database_id,
+                                                                              oid_t table_id,
+                                                                              oid_t tile_group_id,
+                                                                              oid_t column_id) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::MINIMUM),
                                  static_cast<int>(ColumnId::MAXIMUM),
                                  static_cast<int>(ColumnId::TYPE)});
@@ -109,7 +121,10 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
        type::ValueFactory::GetIntegerValue(column_id)});
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() == 0) {

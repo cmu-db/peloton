@@ -113,11 +113,17 @@ class TableScanTranslatorTest : public PelotonCodeGenTest {
     std::unique_ptr<catalog::Schema> schema{new catalog::Schema(cols)};
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, all_cols_table_name,
-                         std::move(schema), txn);
+    catalog->CreateTable(txn,
+                         test_db_name,
+                         DEFAULT_SCHEMA_NAME,
+                         std::move(schema),
+                         all_cols_table_name,
+                         false);
 
-    all_cols_table = catalog->GetTableWithName(
-        test_db_name, DEFAULT_SCHEMA_NAME, all_cols_table_name, txn);
+    all_cols_table = catalog->GetTableWithName(txn,
+                                               test_db_name,
+                                               DEFAULT_SCHEMA_NAME,
+                                               all_cols_table_name);
     auto *table_schema = all_cols_table->GetSchema();
 
     // Insert one row where all columns are NULL
@@ -702,12 +708,19 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   auto txn = txn_manager.BeginTransaction();
 
   // Insert table in catalog
-  catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, is_catalog,
-                       tuples_per_tilegroup, LayoutType::ROW);
+  catalog->CreateTable(txn,
+                       test_db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       is_catalog,
+                       tuples_per_tilegroup,
+                       LayoutType::ROW);
   // Get table reference
-  auto table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
-                                         table_name, txn);
+  auto table = catalog->GetTableWithName(txn,
+                                         test_db_name,
+                                         DEFAULT_SCHEMA_NAME,
+                                         table_name);
   txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
@@ -716,8 +729,9 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
   txn = txn_manager.BeginTransaction();
   table->ResetDefaultLayout(LayoutType::COLUMN);
   catalog->GetSystemCatalogs(table->GetDatabaseOid())->GetTableCatalog()
-      ->UpdateDefaultLayoutOid(table->GetDefaultLayout()->GetOid(),
-                               table->GetOid(), txn);
+      ->UpdateDefaultLayoutOid(txn,
+                               table->GetOid(),
+                               table->GetDefaultLayout()->GetOid());
   txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
@@ -766,7 +780,7 @@ TEST_F(TableScanTranslatorTest, MultiLayoutScan) {
 
   txn = txn_manager.BeginTransaction();
   auto layout =
-      catalog->CreateDefaultLayout(database_oid, table_oid, column_map, txn);
+      catalog->CreateDefaultLayout(txn, database_oid, table_oid, column_map);
   EXPECT_NE(nullptr, layout);
   txn_manager.CommitTransaction(txn);
 

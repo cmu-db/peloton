@@ -58,7 +58,7 @@ TEST_F(CreateTests, CreatingDB) {
   executor.Execute();
   // Check if the database exists in the same txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject("pelotondb", txn)
+      ->GetDatabaseCatalogEntry(txn, "pelotondb")
                    ->GetDatabaseName()
                    .compare("pelotondb"));
 
@@ -68,12 +68,12 @@ TEST_F(CreateTests, CreatingDB) {
   txn = txn_manager.BeginTransaction();
   // Check if the database exists in a new txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject("pelotondb", txn)
+      ->GetDatabaseCatalogEntry(txn, "pelotondb")
                    ->GetDatabaseName()
                    .compare("pelotondb"));
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabaseWithName("pelotondb", txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, "pelotondb");
 
   txn_manager.CommitTransaction(txn);
 }
@@ -82,7 +82,7 @@ TEST_F(CreateTests, CreatingTable) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -113,7 +113,7 @@ TEST_F(CreateTests, CreatingTable) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -124,7 +124,7 @@ TEST_F(CreateTests, CreatingUDFs) {
   // catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -205,7 +205,7 @@ TEST_F(CreateTests, CreatingUDFs) {
   std::string func_name = "increment";
   std::vector<type::TypeId> arg_types{type::TypeId::DECIMAL};
 
-  auto inserted_proc = pg_proc.GetProcByName(func_name, arg_types, txn);
+  auto inserted_proc = pg_proc.GetProcByName(txn, func_name, arg_types);
   EXPECT_NE(nullptr, inserted_proc);
   type::TypeId ret_type = inserted_proc->GetRetType();
   EXPECT_EQ(type::TypeId::DECIMAL, ret_type);
@@ -218,7 +218,7 @@ TEST_F(CreateTests, CreatingUDFs) {
   EXPECT_NE(nullptr, func_data.func_context_);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -226,7 +226,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -332,8 +332,10 @@ TEST_F(CreateTests, CreatingTrigger) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                        DEFAULT_DB_NAME,
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "accounts");
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -345,7 +347,7 @@ TEST_F(CreateTests, CreatingTrigger) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -356,7 +358,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -420,8 +422,10 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "accounts", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                        DEFAULT_DB_NAME,
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "accounts");
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -433,7 +437,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -445,7 +449,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
   // catalog->Bootstrap();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -501,16 +505,18 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   createTriggerExecutor.Execute();
 
   // check whether the trigger catalog table contains this new trigger
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "accounts", txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                            DEFAULT_DB_NAME,
+                                                                            DEFAULT_SCHEMA_NAME,
+                                                                            "accounts");
   auto trigger_list =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())
           ->GetTriggerCatalog()
-          ->GetTriggersByType(
-              table_object->GetTableOid(),
-              (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE),
-              txn);
+          ->GetTriggersByType(txn,
+                              table_object->GetTableOid(),
+                              (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE
+                                  | TRIGGER_TYPE_UPDATE));
 
   txn_manager.CommitTransaction(txn);
 
@@ -519,7 +525,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
