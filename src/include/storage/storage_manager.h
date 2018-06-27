@@ -102,15 +102,30 @@ class StorageManager {
 
   oid_t GetNextTileGroupId() { return ++tile_group_oid_; }
 
-  oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
+  oid_t GetCurrentTileGroupId() const { return tile_group_oid_; }
 
-  void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
+  oid_t GetNumLiveTileGroups() const { return num_live_tile_groups_.load(); }
 
+  void SetNextTileGroupId(const oid_t next_oid) { tile_group_oid_ = next_oid; }
+
+  /**
+   * @brief Adds/updates the TileGroup in Manager's oid->TileGroup* map
+   * @param oid[in] Global oid of the TileGroup to be added/updated
+   * @param location[in] Smart pointer to the TileGroup to be registered
+   */
   void AddTileGroup(const oid_t oid,
                     std::shared_ptr<storage::TileGroup> location);
-
+  /**
+   * @brief Removes the TileGroup from Manager's oid->TileGroup* map
+   * @param oid[in] Global oid of the TileGroup to be removed
+   */
   void DropTileGroup(const oid_t oid);
-
+  /**
+   * @brief Gets a smart pointer to a TileGroup based on its global oid
+   * @param oid[in] Global oid of the TileGroup to be accessed
+   * @return Smart pointer to the TileGroup. Can be nullptr if TileGroup
+   * does not exist in the Manager's map (for example: TileGroup dropped)
+   */
   std::shared_ptr<storage::TileGroup> GetTileGroup(const oid_t oid);
 
   void ClearTileGroup(void);
@@ -131,6 +146,7 @@ class StorageManager {
   // Data members for tile group allocation
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
+  std::atomic<oid_t> num_live_tile_groups_ = ATOMIC_VAR_INIT(0);
 
   CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> tile_group_locator_;
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;

@@ -20,6 +20,8 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "settings/settings_manager.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
@@ -44,7 +46,14 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(false) {}
+  GCManager()
+      : is_running_(false),
+        tile_group_recycling_threshold_(settings::SettingsManager::GetDouble(
+            settings::SettingId::tile_group_recycling_threshold)),
+        tile_group_freeing_(settings::SettingsManager::GetBool(
+            settings::SettingId::tile_group_freeing)),
+        tile_group_compaction_(settings::SettingsManager::GetBool(
+            settings::SettingId::tile_group_compaction)) {}
 
   virtual ~GCManager() {}
 
@@ -53,10 +62,18 @@ class GCManager {
     return gc_manager;
   }
 
-  virtual void Reset() { is_running_ = false; }
+  virtual void Reset() {
+    is_running_ = false;
+    tile_group_recycling_threshold_ = settings::SettingsManager::GetDouble(
+        settings::SettingId::tile_group_recycling_threshold);
+    tile_group_freeing_ = settings::SettingsManager::GetBool(
+        settings::SettingId::tile_group_freeing);
+    tile_group_compaction_ = settings::SettingsManager::GetBool(
+        settings::SettingId::tile_group_compaction);
+  }
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  bool GetStatus() { return is_running_; }
 
   virtual void StartGC(
       std::vector<std::unique_ptr<std::thread>> &UNUSED_ATTRIBUTE) {}
@@ -65,9 +82,12 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
+  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table
+                                               UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
+
+  virtual void RecycleTupleSlot(const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
@@ -78,12 +98,33 @@ class GCManager {
   virtual void RecycleTransaction(
                       concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
+  virtual void AddToImmutableQueue(const oid_t &tile_group_id
+                                       UNUSED_ATTRIBUTE) {}
+
+  virtual void SetTileGroupRecyclingThreshold(const double &threshold
+                                                  UNUSED_ATTRIBUTE) {}
+
+  virtual double GetTileGroupRecyclingThreshold() const {
+    return tile_group_recycling_threshold_;
+  }
+
+  virtual void SetTileGroupFreeing(const bool &free UNUSED_ATTRIBUTE) {}
+
+  virtual bool GetTileGroupFreeing() const { return tile_group_freeing_; }
+
+  virtual void SetTileGroupCompaction(const bool &compact UNUSED_ATTRIBUTE) {}
+
+  virtual bool GetTileGroupCompaction() const { return tile_group_compaction_; }
+
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tile_group,
                                     oid_t tuple_id);
 
  protected:
   volatile bool is_running_;
+  volatile double tile_group_recycling_threshold_;
+  volatile bool tile_group_freeing_;
+  volatile bool tile_group_compaction_;
 };
 
 }  // namespace gc

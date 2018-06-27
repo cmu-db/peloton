@@ -217,6 +217,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
     auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
+    PELOTON_ASSERT(tile_group != nullptr);
     auto tile_group_header = tile_group.get()->GetHeader();
     size_t chain_length = 0;
 
@@ -294,6 +295,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
               *(tile_group_header->GetIndirection(tuple_location.offset));
           auto storage_manager = storage::StorageManager::GetInstance();
           tile_group = storage_manager->GetTileGroup(tuple_location.block);
+          PELOTON_ASSERT(tile_group != nullptr);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
           continue;
@@ -320,6 +322,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // search for next version.
         auto storage_manager = storage::StorageManager::GetInstance();
         tile_group = storage_manager->GetTileGroup(tuple_location.block);
+        PELOTON_ASSERT(tile_group != nullptr);
         tile_group_header = tile_group.get()->GetHeader();
         continue;
       }
@@ -355,6 +358,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // into the result vector
       auto storage_manager = storage::StorageManager::GetInstance();
       auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
+      PELOTON_ASSERT(tile_group != nullptr);
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       // Add relevant columns to logical tile
       logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -374,6 +378,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   // Add the remaining tuples to the result vector
   if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
     auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
+    PELOTON_ASSERT(tile_group != nullptr);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -464,6 +469,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     ItemPointer tuple_location = *tuple_location_ptr;
     if (tuple_location.block != last_block) {
       tile_group = storage_manager->GetTileGroup(tuple_location.block);
+      PELOTON_ASSERT(tile_group != nullptr);
       tile_group_header = tile_group.get()->GetHeader();
     }
 #ifdef LOG_TRACE_ENABLED
@@ -565,6 +571,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           tuple_location =
               *(tile_group_header->GetIndirection(tuple_location.offset));
           tile_group = storage_manager->GetTileGroup(tuple_location.block);
+          PELOTON_ASSERT(tile_group != nullptr);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
           continue;
@@ -594,6 +601,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
         // search for next version.
         tile_group = storage_manager->GetTileGroup(tuple_location.block);
+        PELOTON_ASSERT(tile_group != nullptr);
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
@@ -621,6 +629,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       // Since the tile_group_oids differ, fill in the current tile group
       // into the result vector
       auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
+      PELOTON_ASSERT(tile_group != nullptr);
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       // Add relevant columns to logical tile
       logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -640,6 +649,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   // Add the remaining tuples (if any) to the result vector
   if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
     auto tile_group = storage_manager->GetTileGroup(current_tile_group_oid);
+    PELOTON_ASSERT(tile_group != nullptr);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
@@ -691,6 +701,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
+  PELOTON_ASSERT(tile_group != nullptr);
   ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                            tuple_location.offset);
 

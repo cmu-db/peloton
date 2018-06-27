@@ -32,6 +32,8 @@ class MonoQueuePool {
 
   void Shutdown();
 
+  bool IsRunning() const { return is_running_; }
+
   template <typename F>
   void SubmitTask(const F &func);
 

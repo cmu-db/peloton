@@ -19,8 +19,9 @@
 #include "common/macros.h"
 #include "common/synchronization/spin_latch.h"
 #include "common/printable.h"
-#include "storage/tuple.h"
 #include "common/internal_types.h"
+#include "gc/gc_manager_factory.h"
+#include "storage/tuple.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -245,23 +246,61 @@ class TileGroupHeader : public Printable {
         old_val, transaction_id);
   }
 
-  /*
-  * @brief The following method use Compare and Swap to set the tilegroup's
-  immutable flag to be true. 
-  */
-  inline bool SetImmutability() {
-    return __sync_bool_compare_and_swap(&immutable, false, true);
-  }
-  
-  /*
-  * @brief The following method use Compare and Swap to set the tilegroup's
-  immutable flag to be false. 
-  */
-  inline bool ResetImmutability() {
-    return __sync_bool_compare_and_swap(&immutable, true, false);
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be true
+   *
+   * Notifies the GC that TileGroup is now immutable to no longer
+   * hand out recycled slots. This is not guaranteed to be instantaneous
+   * so recycled slots may still be handed out immediately after
+   * immutability is set.
+   *
+   * @return Result of CAS
+   */
+  bool SetImmutability();
+
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be true
+   *
+   * Does not notify the GC. Should only be used by GC when it
+   * initiates a TileGroup's immutability
+   *
+   * @return Result of CAS
+ */
+  inline bool SetImmutabilityWithoutNotifyingGC() {
+    bool expected = false;
+    return immutable_.compare_exchange_strong(expected, true);
   }
 
-  inline bool GetImmutability() const { return immutable; }
+  /**
+   * @brief Uses Compare and Swap to set the TileGroup's
+   * immutable flag to be false
+   *
+   * @warning This should only be used for testing purposes because it violates
+   * a constraint of Zone Maps and the Garbage Collector that a TileGroup's
+   * immutability will never change after being set to true
+   *
+   * @return Result of CAS
+   */
+  inline bool ResetImmutability() {
+    bool expected = true;
+    return immutable_.compare_exchange_strong(expected, false);
+  }
+
+  inline bool GetImmutability() const { return immutable_.load(); }
+
+  inline size_t IncrementRecycled() { return num_recycled_.fetch_add(1); }
+
+  inline size_t DecrementRecycled() { return num_recycled_.fetch_sub(1); }
+
+  inline size_t GetNumRecycled() const { return num_recycled_.load(); }
+
+  inline size_t IncrementGCReaders() { return num_gc_readers_.fetch_add(1); }
+
+  inline size_t DecrementGCReaders() { return num_gc_readers_.fetch_sub(1); }
+
+  inline size_t GetGCReaders() { return num_gc_readers_.load(); }
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
@@ -298,9 +337,15 @@ class TileGroupHeader : public Printable {
 
   common::synchronization::SpinLatch tile_header_lock;
 
-  // Immmutable Flag. Should be set by the indextuner to be true.
+  // Immmutable Flag. Should only be set to true when a TileGroup has used up
+  // all of its initial slots
   // By default it will be set to false.
-  bool immutable;
+  std::atomic<bool> immutable_;
+
+  // metadata used by the garbage collector to recycle tuples
+  std::atomic<size_t>
+      num_recycled_;  // num empty tuple slots available for reuse
+  std::atomic<size_t> num_gc_readers_;  // used as a semaphor by GC
 };
 
 }  // namespace storage

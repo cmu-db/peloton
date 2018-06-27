@@ -122,6 +122,9 @@ bool HybridScanExecutor::DInit() {
         tile_group = table_->GetTileGroup(table_tile_group_count_ - 1);
       }
 
+      // TODO: Handle possibility of freed tile_group
+      PELOTON_ASSERT(tile_group != nullptr);
+
       oid_t tuple_id = 0;
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
       block_threshold = location.block;
@@ -189,6 +192,10 @@ bool HybridScanExecutor::SeqScanUtil() {
   while (current_tile_group_offset_ < table_tile_group_count_) {
     LOG_TRACE("Current tile group offset : %u", current_tile_group_offset_);
     auto tile_group = table_->GetTileGroup(current_tile_group_offset_++);
+    if (tile_group == nullptr) {
+      continue;
+    }
+
     auto tile_group_header = tile_group->GetHeader();
 
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
@@ -380,6 +387,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
     auto storage_manager = storage::StorageManager::GetInstance();
     auto tile_group = storage_manager->GetTileGroup(tuple_location.block);
+
+    // TODO: Handle possibility of freed tile_group
+    PELOTON_ASSERT(tile_group != nullptr);
     auto tile_group_header = tile_group.get()->GetHeader();
 
     // perform transaction read
@@ -427,6 +437,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
         }
 
         tile_group = storage_manager->GetTileGroup(tuple_location.block);
+
+        // TODO: Handle possibility of freed tile_group
+        PELOTON_ASSERT(tile_group != nullptr);
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
@@ -436,6 +449,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuples : visible_tuples) {
     auto storage_manager = storage::StorageManager::GetInstance();
     auto tile_group = storage_manager->GetTileGroup(tuples.first);
+
+    // TODO: Handle possibility of freed tile_group
+    PELOTON_ASSERT(tile_group != nullptr);
 
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
 

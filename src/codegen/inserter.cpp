@@ -34,6 +34,8 @@ void Inserter::Init(storage::DataTable *table,
 char *Inserter::AllocateTupleStorage() {
   location_ = table_->GetEmptyTupleSlot(nullptr);
 
+  PELOTON_ASSERT(location_.IsNull() == false);
+
   // Get the tile offset assuming that it is a row store
   auto tile_group = table_->GetTileGroupById(location_.block);
   auto layout = tile_group->GetLayout();
@@ -54,8 +56,11 @@ void Inserter::Insert() {
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  ContainerTuple<storage::TileGroup> tuple(
-      table_->GetTileGroupById(location_.block).get(), location_.offset);
+  auto tile_group = table_->GetTileGroupById(location_.block).get();
+  PELOTON_ASSERT(tile_group != nullptr);
+
+  ContainerTuple<storage::TileGroup> tuple(tile_group, location_.offset);
+
   ItemPointer *index_entry_ptr = nullptr;
   bool result = table_->InsertTuple(&tuple, location_, txn, &index_entry_ptr);
   if (result == false) {

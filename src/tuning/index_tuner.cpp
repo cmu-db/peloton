@@ -108,6 +108,7 @@ void IndexTuner::BuildIndex(storage::DataTable *table,
         new storage::Tuple(table_schema, true));
 
     auto tile_group = table->GetTileGroup(index_tile_group_offset);
+    PELOTON_ASSERT(tile_group != nullptr);
     auto tile_group_id = tile_group->GetTileGroupId();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 

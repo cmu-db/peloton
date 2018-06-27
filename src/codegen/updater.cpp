@@ -61,6 +61,7 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
   
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
+  PELOTON_ASSERT(tile_group != nullptr);
   auto *tile_group_header = tile_group->GetHeader();
   old_location_.block = tile_group_id;
   old_location_.offset = tuple_offset;
@@ -91,6 +92,7 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
 
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
+  PELOTON_ASSERT(tile_group != nullptr);
   auto *tile_group_header = tile_group->GetHeader();
 
   // Check ownership
@@ -135,6 +137,7 @@ void Updater::Update() {
             table_->GetOid());
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(old_location_.block).get();
+  PELOTON_ASSERT(tile_group != nullptr);
   auto *tile_group_header = tile_group->GetHeader();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // Either update in-place
@@ -147,8 +150,10 @@ void Updater::Update() {
   }
 
   // Or, update with a new version
-  ContainerTuple<storage::TileGroup> new_tuple(
-    table_->GetTileGroupById(new_location_.block).get(), new_location_.offset);
+  auto new_tile_group = table_->GetTileGroupById(new_location_.block);
+  PELOTON_ASSERT(new_tile_group != nullptr);
+  ContainerTuple<storage::TileGroup> new_tuple(new_tile_group.get(),
+                                               new_location_.offset);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location_.offset);
   auto result = table_->InstallVersion(&new_tuple, target_list_, txn,
@@ -171,6 +176,7 @@ void Updater::UpdatePK() {
             table_->GetOid());
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(new_location_.block).get();
+  PELOTON_ASSERT(tile_group != nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // Insert a new tuple

@@ -53,6 +53,7 @@ template <typename ValueType>
 void LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset,
                                  const ValueType &invalid_value) {
   LOG_TRACE("Erase at %lu", offset);
+  PELOTON_ASSERT(lock_free_array.size() > offset);
   lock_free_array.at(offset) = invalid_value;
 }
 
@@ -105,6 +106,20 @@ bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType &value) const {
   }
 
   return exists;
+}
+
+template <typename ValueType>
+ssize_t LOCK_FREE_ARRAY_TYPE::Lookup(const ValueType &value) {
+  for (std::size_t array_itr = 0; array_itr < lock_free_array.size();
+       array_itr++) {
+    auto array_value = lock_free_array.at(array_itr);
+    // Check array value
+    if (array_value == value) {
+      return array_itr;
+    }
+  }
+
+  return -1;
 }
 
 // Explicit template instantiation

@@ -60,6 +60,10 @@ const std::string AbstractTable::GetInfo() const {
     if (tile_group_itr > 0) inner << std::endl;
 
     auto tile_group = this->GetTileGroup(tile_group_itr);
+    if (tile_group == nullptr) {
+      continue;
+    }
+
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     std::string tileData = tile_group->GetInfo();

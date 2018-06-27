@@ -81,6 +81,13 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   active_tile_groups_.resize(active_tilegroup_count_);
 
   active_indirection_arrays_.resize(active_indirection_array_count_);
+
+  // Register non-catalog tables for GC
+  if (is_catalog == false) {
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RegisterTable(table_oid);
+  }
+
   // Create tile groups.
   for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
@@ -232,7 +239,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  auto free_item_pointer = gc_manager.GetRecycledTupleSlot(this);
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
@@ -338,17 +345,22 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     return INVALID_ITEMPOINTER;
   }
 
-  auto result =
-      InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
+  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
+    // Insertion failed due to some constraint (indexes, etc.) but tuple
+    // is in the table already, need to give the ItemPointer back to the
+    // GCManager
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RecycleTupleSlot(location);
+
     return INVALID_ITEMPOINTER;
   }
   return location;
 }
 
-bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-                            concurrency::TransactionContext *transaction,
-                            ItemPointer **index_entry_ptr, bool check_fk) {
+bool DataTable::InsertTuple(const AbstractTuple *tuple,
+    ItemPointer location, concurrency::TransactionContext *transaction,
+    ItemPointer **index_entry_ptr, bool check_fk) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
@@ -373,11 +385,6 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
     IncreaseTupleCount(1);
     return true;
   }
-  // Index checks and updates
-  if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
-    LOG_TRACE("Index constraint violated");
-    return false;
-  }
 
   // ForeignKey checks
   if (check_fk && CheckForeignKeyConstraints(tuple, transaction) == false) {
@@ -385,8 +392,14 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple, ItemPointer location,
     return false;
   }
 
+  // Index checks and updates
+  if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
+    LOG_TRACE("Index constraint violated");
+    return false;
+  }
+
   PELOTON_ASSERT((*index_entry_ptr)->block == location.block &&
-            (*index_entry_ptr)->offset == location.offset);
+                 (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -485,9 +498,19 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
 
     // Handle failure
     if (res == false) {
-      // If some of the indexes have been inserted,
-      // the pointer has a chance to be dereferenced by readers and it cannot be
-      // deleted
+      // if an index insert fails, undo all prior inserts on this index
+      for (index_itr = index_itr + 1; index_itr < index_count; ++index_itr) {
+        index = GetIndex(index_itr);
+        if (index == nullptr) continue;
+        index_schema = index->GetKeySchema();
+        indexed_columns = index_schema->GetIndexedColumns();
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
+        delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+        UNUSED_ATTRIBUTE bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        PELOTON_ASSERT(delete_res == true);
+      }
       *index_entry_ptr = nullptr;
       return false;
     } else {
@@ -499,10 +522,10 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
   return true;
 }
 
-bool DataTable::InsertInSecondaryIndexes(
-    const AbstractTuple *tuple, const TargetList *targets_ptr,
-    concurrency::TransactionContext *transaction,
-    ItemPointer *index_entry_ptr) {
+bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
+                                         const TargetList *targets_ptr,
+                                         concurrency::TransactionContext *transaction,
+                                         ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transform the target list into a hash set
   // when attempting to perform insertion to a secondary index,
@@ -569,8 +592,7 @@ bool DataTable::InsertInSecondaryIndexes(
 }
 
 /**
- * @brief This function checks any other table which has a foreign key
- *constraint
+ * @brief This function checks any other table which has a foreign key constraint
  * referencing the current table, where a tuple is updated/deleted. The final
  * result depends on the type of cascade action.
  *
@@ -582,15 +604,16 @@ bool DataTable::InsertInSecondaryIndexes(
  * @param context: The executor context passed from upper level
  * @param is_update: whether this is a update action (false means delete)
  *
- * @return True if the check is successful (nothing happens) or the cascade
- *operation
+ * @return True if the check is successful (nothing happens) or the cascade operation
  * is done properly. Otherwise returns false. Note that the transaction result
  * is not set in this function.
  */
-bool DataTable::CheckForeignKeySrcAndCascade(
-    storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
-    concurrency::TransactionContext *current_txn,
-    executor::ExecutorContext *context, bool is_update) {
+bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
+                                             storage::Tuple *new_tuple,
+                                             concurrency::TransactionContext *current_txn,
+                                             executor::ExecutorContext *context,
+                                             bool is_update)
+{
   size_t fk_count = GetForeignKeySrcCount();
 
   if (fk_count == 0) return true;
@@ -600,7 +623,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
   for (size_t iter = 0; iter < fk_count; iter++) {
     catalog::ForeignKey *fk = GetForeignKeySrc(iter);
-
+    
     // Check if any row in the source table references the current tuple
     oid_t source_table_id = fk->GetSourceTableOid();
     storage::DataTable *src_table = nullptr;
@@ -619,7 +642,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
       // Make sure this is the right index to search in
       if (index->GetMetadata()->GetName().find("_FK_") != std::string::npos &&
-          index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds()) {
+          index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds())
+      {
         LOG_DEBUG("Searching in source tables's fk index...\n");
 
         std::vector<oid_t> key_attrs = fk->GetSourceColumnIds();
@@ -638,6 +662,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(
 
           for (ItemPointer *ptr : location_ptrs) {
             auto src_tile_group = src_table->GetTileGroupById(ptr->block);
+            PELOTON_ASSERT(src_tile_group != nullptr);
             auto src_tile_group_header = src_tile_group->GetHeader();
 
             auto visibility = transaction_manager.IsVisible(
@@ -796,6 +821,7 @@ bool DataTable::CheckForeignKeyConstraints(
 
         // Check the visibility of the result
         auto tile_group = ref_table->GetTileGroupById(location_ptrs[0]->block);
+        PELOTON_ASSERT(tile_group != nullptr);
         auto tile_group_header = tile_group->GetHeader();
 
         auto &transaction_manager =
@@ -993,6 +1019,24 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   tile_group_count_++;
 
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
+}
+
+void DataTable::DropTileGroup(const oid_t &tile_group_id) {
+  ssize_t tile_group_offset = tile_groups_.Lookup(tile_group_id);
+  if (tile_group_offset != -1) {
+    tile_groups_.Erase(tile_group_offset, invalid_tile_group_id);
+  }
+  auto storage_manager = storage::StorageManager::GetInstance();
+  storage_manager->DropTileGroup(tile_group_id);
+}
+
+bool DataTable::IsActiveTileGroup(const oid_t &tile_group_id) const {
+  for (auto tile_group : active_tile_groups_) {
+    if (tile_group_id == tile_group->GetTileGroupId()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
@@ -1290,6 +1334,10 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   auto tile_group_id =
       tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
+  if (tile_group_id == invalid_tile_group_id) {
+    LOG_ERROR("Tile group offset not found in table : %u ", tile_group_offset);
+    return nullptr;
+  }
 
   // Get orig tile group from catalog
   auto storage_tilegroup = storage::StorageManager::GetInstance();

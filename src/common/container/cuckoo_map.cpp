@@ -18,6 +18,9 @@
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "common/container/lock_free_queue.h"
+#include "gc/recycle_stack.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
@@ -124,5 +127,8 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
+
+// Used in TransactionLevelGCManager
+template class CuckooMap<oid_t, std::shared_ptr<gc::RecycleStack>>;
 
 }  // namespace peloton

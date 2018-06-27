@@ -56,7 +56,7 @@ TileGroup::TileGroup(BackendType backend_type,
 }
 
 TileGroup::~TileGroup() {
-  // Drop references on all tiles
+   LOG_TRACE("TileGroup %d destructed!", tile_group_id);
 
   // clean up tile group header
   delete tile_group_header;

@@ -46,6 +46,11 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
     rand_tilegroup_offset = rand() % tile_group_count;
     storage::TileGroup *tile_group =
         table->GetTileGroup(rand_tilegroup_offset).get();
+
+    if (tile_group == nullptr) {
+      continue;
+    }
+
     oid_t tuple_per_group = tile_group->GetActiveTupleCount();
     LOG_TRACE("tile_group: offset: %lu, addr: %p, tuple_per_group: %u",
               rand_tilegroup_offset, tile_group, tuple_per_group);
@@ -95,7 +100,6 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
 
   LOG_TRACE("tile_count: %lu", tile_count);
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-
     storage::Tile *tile = tile_group->GetTile(tile_itr);
     const catalog::Schema &schema = *(tile->GetSchema());
     uint32_t tile_column_count = schema.GetColumnCount();
@@ -145,6 +149,7 @@ size_t TupleSampler::AcquireSampleTuplesForIndexJoin(
     size_t offset = rand() % matched_tuples.at(chosen).size();
     auto item = matched_tuples.at(chosen).at(offset);
     storage::TileGroup *tile_group = table->GetTileGroupById(item->block).get();
+    PELOTON_ASSERT(tile_group != nullptr);
 
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table->GetSchema(), true));
