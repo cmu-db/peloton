@@ -854,9 +854,9 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto database = catalog->GetDatabaseWithName(txn, DEFAULT_DB_NAME);
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
@@ -900,7 +900,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdatePrimaryKeyTest) {
   EXPECT_EQ(2, CountOccurrencesInAllIndexes(table, 5, 40));
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.StopGC();
@@ -926,9 +926,9 @@ TEST_F(TransactionLevelGCManagerTests,
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto database = catalog->GetDatabaseWithName(txn, DEFAULT_DB_NAME);
 
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
@@ -963,7 +963,7 @@ TEST_F(TransactionLevelGCManagerTests,
   EXPECT_EQ(2, CountOccurrencesInAllIndexes(table, 5, 40));
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.StopGC();
@@ -1090,14 +1090,6 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("updatedeletedb");
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("updatedeletedb", txn),
-      CatalogException);
-  txn_manager.CommitTransaction(txn);
-  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
 // insert -> delete -> insert
@@ -1255,14 +1247,6 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
 
   // DROP!
   TestingExecutorUtil::DeleteDatabase("reinsertdb");
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("reinsertdb", txn),
-      CatalogException);
-  txn_manager.CommitTransaction(txn);
-  // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
 }
 
 /*
@@ -1336,13 +1320,6 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   table.release();
   // DROP!
   TestingExecutorUtil::DeleteDatabase("immutabilitydb");
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("immutabilitydb", txn),
-      CatalogException);
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test
