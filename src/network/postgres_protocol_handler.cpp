@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <unordered_map>
 
+#include "concurrency/transaction_manager_factory.h"
 #include "common/cache.h"
 #include "common/internal_types.h"
 #include "common/macros.h"
@@ -1030,7 +1031,23 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
     LOG_TRACE("Option value is %s", token.c_str());
     cmdline_options_[token] = value;
     if (token.compare("database") == 0) {
-      traffic_cop_->SetDefaultDatabaseName(value);
+       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+       auto txn = txn_manager.BeginTransaction();
+       auto exists = catalog::Catalog::GetInstance()->CheckDatabaseExists(value, txn);
+       txn_manager.CommitTransaction(txn);
+
+       if (exists) {
+          traffic_cop_->SetDefaultDatabaseName(value);
+       } else {
+           auto error_msg = "Database \"" + value + "\" doesn't exist";
+           auto error_code = "3D000"; // invalid_catalog_name
+           auto severity = "FATAL";
+           SendErrorResponse({
+                             {NetworkMessageType::SEVERITY, severity},
+                             {NetworkMessageType::SQLSTATE_CODE_ERROR, error_code},
+                             {NetworkMessageType::HUMAN_READABLE_ERROR, error_msg}
+                            });
+      }
     }
   }
 

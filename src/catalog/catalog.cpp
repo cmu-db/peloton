@@ -220,6 +220,17 @@ void Catalog::Bootstrap() {
 // CREATE FUNCTIONS
 //===----------------------------------------------------------------------===//
 
+bool Catalog::CheckDatabaseExists(const std::string &database_name,
+                                  concurrency::TransactionContext *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to check if database " +
+                           database_name + "exists");
+
+  auto pg_database = DatabaseCatalog::GetInstance();
+  auto database_object = pg_database->GetDatabaseObject(database_name, txn);
+  return database_object != nullptr;
+}
+
 ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::TransactionContext *txn) {
   if (txn == nullptr)
