@@ -38,10 +38,10 @@ void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_alias,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
-                                                                      db_name,
-                                                                      schema_name,
-                                                                      table_name);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                            db_name,
+                                                                            schema_name,
+                                                                            table_name);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||
@@ -83,7 +83,7 @@ bool BinderContext::GetColumnPosTuple(
     const std::string &col_name,
     std::shared_ptr<catalog::TableCatalogEntry> table_obj,
     std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple, type::TypeId &value_type) {
-  auto column_object = table_obj->GetColumnObject(col_name);
+  auto column_object = table_obj->GetColumnCatalogEntry(col_name);
   if (column_object == nullptr) {
     return false;
   }
@@ -176,9 +176,9 @@ void BinderContext::GenerateAllColumnExpressions(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &exprs) {
   for (auto &entry : regular_table_alias_map_) {
     auto &table_obj = entry.second;
-    auto col_cnt = table_obj->GetColumnObjects().size();
+    auto col_cnt = table_obj->GetColumnCatalogEntries().size();
     for (size_t i = 0; i < col_cnt; i++) {
-      auto col_obj = table_obj->GetColumnObject(i);
+      auto col_obj = table_obj->GetColumnCatalogEntry(i);
       auto tv_expr = new expression::TupleValueExpression(
           std::string(col_obj->GetColumnName()), std::string(entry.first));
       tv_expr->SetValueType(col_obj->GetColumnType());

@@ -119,7 +119,7 @@ std::shared_ptr<TableCatalogEntry> CatalogCache::GetCachedTableObject(
 		oid_t database_oid, oid_t table_oid) {
 	auto database_object = GetDatabaseObject(database_oid);
 	if (database_object == nullptr) return nullptr;
-  auto table_object = database_object->GetTableObject(table_oid, true);
+  auto table_object = database_object->GetTableCatalogEntry(table_oid, true);
   if (table_object) return table_object;
   return nullptr;
 }
@@ -132,7 +132,7 @@ std::shared_ptr<IndexCatalogEntry> CatalogCache::GetCachedIndexObject(
 		oid_t database_oid, oid_t index_oid) {
 	auto database_object = GetDatabaseObject(database_oid);
 	if (database_object == nullptr) return nullptr;
-	auto index_object = database_object->GetCachedIndexObject(index_oid);
+	auto index_object = database_object->GetCachedIndexCatalogEntry(index_oid);
 	if (index_object) return index_object;
   return nullptr;
 }
@@ -147,7 +147,7 @@ std::shared_ptr<IndexCatalogEntry> CatalogCache::GetCachedIndexObject(const std:
 	auto database_object = GetDatabaseObject(database_name);
 	if (database_object == nullptr) return nullptr;
 	auto index_object =
-			database_object->GetCachedIndexObject(index_name, schema_name);
+        database_object->GetCachedIndexCatalogEntry(index_name, schema_name);
 	if (index_object) return index_object;
   return nullptr;
 }

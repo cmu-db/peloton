@@ -209,7 +209,8 @@ void StatsAggregator::UpdateMetrics() {
     std::string database_name;
     try {
       auto database_object =
-          catalog::Catalog::GetInstance()->GetDatabaseObject(txn, database_oid);
+          catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                                   database_oid);
       database_name = database_object->GetDatabaseName();
     } catch (CatalogException &e) {
       continue;

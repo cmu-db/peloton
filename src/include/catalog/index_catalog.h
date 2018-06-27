@@ -100,18 +100,18 @@ class IndexCatalog : public AbstractCatalog {
                    oid_t index_oid);
 
   /** Read Related API */
-  std::shared_ptr<IndexCatalogEntry> GetIndexObject(concurrency::TransactionContext *txn,
-                                                    const std::string &database_name,
-                                                    const std::string &schema_name,
-                                                    const std::string &index_name);
+  std::shared_ptr<IndexCatalogEntry> GetIndexCatalogEntry(concurrency::TransactionContext *txn,
+                                                          const std::string &database_name,
+                                                          const std::string &schema_name,
+                                                          const std::string &index_name);
 
  private:
-  std::shared_ptr<IndexCatalogEntry> GetIndexObject(concurrency::TransactionContext *txn,
-                                                    oid_t database_oid,
-                                                    oid_t index_oid);
+  std::shared_ptr<IndexCatalogEntry> GetIndexCatalogEntry(concurrency::TransactionContext *txn,
+                                                          oid_t database_oid,
+                                                          oid_t index_oid);
 
   const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogEntry>>
-  GetIndexObjects(
+  GetIndexCatalogEntries(
       concurrency::TransactionContext *txn,
       oid_t table_oid);
 

@@ -100,18 +100,18 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn = txn_manager.BeginTransaction();
 
   // This is also required so that database objects are cached
-  auto db_object = catalog->GetDatabaseObject(txn, TEST_DB_NAME);
+  auto db_object = catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME);
 
   // Till now, we have a table : id, first_name, last_name
   // And two indexes on following columns:
   // 1) id
   // 2) id and first_name
   auto table_object =
-      db_object->GetTableObject("test_table", DEFAULT_SCHEMA_NAME);
+      db_object->GetTableCatalogEntry("test_table", DEFAULT_SCHEMA_NAME);
   EXPECT_NE(table_object, nullptr);
-  oid_t id_idx_oid = table_object->GetIndexObject("test_id_idx")->GetIndexOid();
+  oid_t id_idx_oid = table_object->GetIndexCatalogEntry("test_id_idx")->GetIndexOid();
   oid_t fname_idx_oid =
-      table_object->GetIndexObject("test_fname_idx")->GetIndexOid();
+      table_object->GetIndexCatalogEntry("test_fname_idx")->GetIndexOid();
 
   // An update query affecting both indexes
   std::string query_string = "UPDATE test_table SET id = 0;";
@@ -197,8 +197,8 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   catalog->CreateDatabase(txn, TEST_DB_COLUMNS);
   auto db = catalog->GetDatabaseWithName(txn, TEST_DB_COLUMNS);
   oid_t database_id = db->GetOid();
-  auto db_object = catalog->GetDatabaseObject(txn, TEST_DB_COLUMNS);
-  int table_count = db_object->GetTableObjects().size();
+  auto db_object = catalog->GetDatabaseCatalogEntry(txn, TEST_DB_COLUMNS);
+  int table_count = db_object->GetTableCatalogEntries().size();
   txn_manager.CommitTransaction(txn);
 
   // Insert a 'test_table' with 'id', 'first_name' and 'last_name'
@@ -275,9 +275,9 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   txn = txn_manager.BeginTransaction();
   // This is required so that database objects are cached
-  db_object = catalog->GetDatabaseObject(txn, TEST_DB_COLUMNS);
+  db_object = catalog->GetDatabaseCatalogEntry(txn, TEST_DB_COLUMNS);
   EXPECT_EQ(
-      2, static_cast<int>(db_object->GetTableObjects().size()) - table_count);
+      2, static_cast<int>(db_object->GetTableCatalogEntries().size()) - table_count);
 
   // ====== UPDATE statements check ===
   // id and first_name in test_table are affected

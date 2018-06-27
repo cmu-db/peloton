@@ -124,10 +124,10 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
                          tuples_per_tilegroup,
                          layout_type);
     test_table_oids.push_back(catalog
-                                  ->GetTableObject(txn,
-                                                   test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i])
+                                  ->GetTableCatalogEntry(txn,
+                                                         test_db_name,
+                                                         DEFAULT_SCHEMA_NAME,
+                                                         test_table_names[i])
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
@@ -141,10 +141,10 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
                          tuples_per_tilegroup,
                          layout_type);
     test_table_oids.push_back(catalog
-                                  ->GetTableObject(txn,
-                                                   test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i])
+                                  ->GetTableCatalogEntry(txn,
+                                                         test_db_name,
+                                                         DEFAULT_SCHEMA_NAME,
+                                                         test_table_names[i])
                                   ->GetTableOid());
   }
 }

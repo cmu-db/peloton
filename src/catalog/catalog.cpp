@@ -332,7 +332,8 @@ ResultType Catalog::CreateDatabase(concurrency::TransactionContext *txn,
   auto pg_database = DatabaseCatalog::GetInstance(nullptr, nullptr, nullptr);
   auto storage_manager = storage::StorageManager::GetInstance();
   // Check if a database with the same name exists
-  auto database_object = pg_database->GetDatabaseObject(txn, database_name);
+  auto database_object =
+      pg_database->GetDatabaseCatalogEntry(txn, database_name);
   if (database_object != nullptr)
     throw CatalogException("Database " + database_name + " already exists");
 
@@ -377,15 +378,15 @@ ResultType Catalog::CreateSchema(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
         " to create schema");
   // check whether namespace exists from pg_namespace
   auto pg_namespace =
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
-  auto schema_object = pg_namespace->GetSchemaObject(txn, schema_name);
+  auto schema_object = pg_namespace->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object != nullptr)
     throw CatalogException("Schema(namespace) " + schema_name +
         " already exists");
@@ -427,21 +428,22 @@ ResultType Catalog::CreateTable(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
         " to create table");
   // check whether namespace exists from pg_namespace
   auto schema_object = catalog_map_[database_object->GetDatabaseOid()]
       ->GetSchemaCatalog()
-      ->GetSchemaObject(txn, schema_name);
+      ->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object == nullptr)
     throw CatalogException("Can't find namespace " + schema_name +
         " to create table");
 
   // get table oid from pg_table
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object != nullptr)
     throw CatalogException("Table: " + schema_name + "." + table_name +
         " already exists");
@@ -640,14 +642,15 @@ ResultType Catalog::CreateIndex(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Can't find Database " + database_name +
         " to create index");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object == nullptr)
     throw CatalogException("Can't find table " + schema_name + "." +
         table_name + " to create index");
@@ -691,10 +694,10 @@ ResultType Catalog::CreateIndex(concurrency::TransactionContext *txn,
     auto database_object =
         DatabaseCatalog::GetInstance(nullptr,
                                      nullptr,
-                                     nullptr)->GetDatabaseObject(txn,
-                                                                 database_oid);
-    auto table_object = database_object->GetTableObject(table_oid);
-    auto index_object = table_object->GetIndexObject(index_name);
+                                     nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                       database_oid);
+    auto table_object = database_object->GetTableCatalogEntry(table_oid);
+    auto index_object = table_object->GetIndexCatalogEntry(index_name);
 
     if (index_object != nullptr)
       throw CatalogException("Index " + index_name + " already exists in" +
@@ -799,8 +802,8 @@ ResultType Catalog::DropDatabaseWithName(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Database: " + database_name +
         " does not exist");
@@ -818,9 +821,9 @@ ResultType Catalog::DropDatabaseWithOid(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_oid);
-  auto table_objects = database_object->GetTableObjects();
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
+  auto table_objects = database_object->GetTableCatalogEntries();
   for (auto it : table_objects) {
     DropTable(txn, database_oid, it.second->GetTableOid());
   }
@@ -856,7 +859,8 @@ ResultType Catalog::DropSchema(concurrency::TransactionContext *txn,
         schema_name);
 
   auto database_object =
-      DatabaseCatalog::GetInstance(txn)->GetDatabaseObject(txn, database_name);
+      DatabaseCatalog::GetInstance(txn)->GetDatabaseCatalogEntry(txn,
+                                                                 database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Schema: database " + database_name +
         " does not exist");
@@ -864,11 +868,11 @@ ResultType Catalog::DropSchema(concurrency::TransactionContext *txn,
   // check whether namespace exists from pg_namespace
   auto pg_namespace =
       catalog_map_[database_object->GetDatabaseOid()]->GetSchemaCatalog();
-  auto schema_object = pg_namespace->GetSchemaObject(txn, schema_name);
+  auto schema_object = pg_namespace->GetSchemaCatalogEntry(txn, schema_name);
   if (schema_object == nullptr)
     throw CatalogException("Can't find namespace " + schema_name + " to drop");
 
-  auto table_objects = database_object->GetTableObjects(schema_name);
+  auto table_objects = database_object->GetTableCatalogEntries(schema_name);
   for (auto it : table_objects) {
     DropTable(txn, it->GetDatabaseOid(), it->GetTableOid());
   }
@@ -904,14 +908,15 @@ ResultType Catalog::DropTable(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
   if (database_object == nullptr)
     throw CatalogException("Drop Table: database " + database_name +
         " does not exist");
 
   // check if table exists
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
   if (table_object == nullptr)
     throw CatalogException("Drop Table: table " + schema_name + "." +
         table_name + " does not exist");
@@ -942,10 +947,10 @@ ResultType Catalog::DropTable(concurrency::TransactionContext *txn,
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_oid);
-  auto table_object = database_object->GetTableObject(table_oid);
-  auto index_objects = table_object->GetIndexObjects();
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
+  auto table_object = database_object->GetTableCatalogEntry(table_oid);
+  auto index_objects = table_object->GetIndexCatalogEntries();
   LOG_TRACE("dropping #%d indexes", (int) index_objects.size());
   // delete trigger and records in pg_trigger
   auto pg_trigger =
@@ -996,7 +1001,8 @@ ResultType Catalog::DropIndex(concurrency::TransactionContext *txn,
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
   auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(txn, database_oid, index_oid);
+  auto index_object =
+      pg_index->GetIndexCatalogEntry(txn, database_oid, index_oid);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
         " to drop");
@@ -1073,8 +1079,8 @@ storage::Database *Catalog::GetDatabaseWithName(concurrency::TransactionContext 
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (database_object == nullptr) {
     throw CatalogException("Database " + database_name + " is not found");
@@ -1098,7 +1104,7 @@ storage::DataTable *Catalog::GetTableWithName(concurrency::TransactionContext *t
 
   // Check in pg_table, throw exception and abort txn if not exists
   auto table_object =
-      GetTableObject(txn, database_name, schema_name, table_name);
+      GetTableCatalogEntry(txn, database_name, schema_name, table_name);
 
   // Get table from storage manager
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -1110,8 +1116,9 @@ storage::DataTable *Catalog::GetTableWithName(concurrency::TransactionContext *t
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::TransactionContext *txn,
-                                                                 const std::string &database_name) {
+std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &database_name) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
         database_name);
@@ -1123,8 +1130,8 @@ std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::Tr
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + database_name + " is not found");
@@ -1133,8 +1140,9 @@ std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::Tr
   return database_object;
 }
 
-std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::TransactionContext *txn,
-                                                                 oid_t database_oid) {
+std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get database object " +
         std::to_string(database_oid));
@@ -1146,8 +1154,8 @@ std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::Tr
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_oid);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + std::to_string(database_oid) +
@@ -1161,10 +1169,10 @@ std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseObject(concurrency::Tr
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::TransactionContext *txn,
-                                                           const std::string &database_name,
-                                                           const std::string &schema_name,
-                                                           const std::string &table_name) {
+std::shared_ptr<TableCatalogEntry> Catalog::GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                                 const std::string &database_name,
+                                                                 const std::string &schema_name,
+                                                                 const std::string &table_name) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
         database_name + "." + table_name);
@@ -1177,15 +1185,16 @@ std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::Transact
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_name);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_name);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + database_name + " is not found");
   }
 
   // Check in pg_table using txn
-  auto table_object = database_object->GetTableObject(table_name, schema_name);
+  auto table_object =
+      database_object->GetTableCatalogEntry(table_name, schema_name);
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // throw table not found exception and explicitly abort txn
@@ -1196,9 +1205,9 @@ std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::Transact
   return table_object;
 }
 
-std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::TransactionContext *txn,
-                                                           oid_t database_oid,
-                                                           oid_t table_oid) {
+std::shared_ptr<TableCatalogEntry> Catalog::GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                                 oid_t database_oid,
+                                                                 oid_t table_oid) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
         std::to_string(database_oid) + "." +
@@ -1211,8 +1220,8 @@ std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::Transact
   auto database_object =
       DatabaseCatalog::GetInstance(nullptr,
                                    nullptr,
-                                   nullptr)->GetDatabaseObject(txn,
-                                                               database_oid);
+                                   nullptr)->GetDatabaseCatalogEntry(txn,
+                                                                     database_oid);
 
   if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     throw CatalogException("Database " + std::to_string(database_oid) +
@@ -1220,7 +1229,7 @@ std::shared_ptr<TableCatalogEntry> Catalog::GetTableObject(concurrency::Transact
   }
 
   // Check in pg_table using txn
-  auto table_object = database_object->GetTableObject(table_oid);
+  auto table_object = database_object->GetTableCatalogEntry(table_oid);
 
   if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     // throw table not found exception and explicitly abort txn

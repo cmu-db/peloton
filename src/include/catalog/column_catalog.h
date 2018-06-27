@@ -107,7 +107,8 @@ class ColumnCatalog : public AbstractCatalog {
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogEntry>>
-    GetColumnObjects(concurrency::TransactionContext *txn, oid_t table_oid);
+    GetColumnCatalogEntries(concurrency::TransactionContext *txn,
+                            oid_t table_oid);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

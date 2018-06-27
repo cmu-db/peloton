@@ -58,7 +58,7 @@ TEST_F(CreateTests, CreatingDB) {
   executor.Execute();
   // Check if the database exists in the same txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-      ->GetDatabaseObject(txn, "pelotondb")
+      ->GetDatabaseCatalogEntry(txn, "pelotondb")
                    ->GetDatabaseName()
                    .compare("pelotondb"));
 
@@ -68,7 +68,7 @@ TEST_F(CreateTests, CreatingDB) {
   txn = txn_manager.BeginTransaction();
   // Check if the database exists in a new txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-      ->GetDatabaseObject(txn, "pelotondb")
+      ->GetDatabaseCatalogEntry(txn, "pelotondb")
                    ->GetDatabaseName()
                    .compare("pelotondb"));
 
@@ -505,10 +505,10 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   createTriggerExecutor.Execute();
 
   // check whether the trigger catalog table contains this new trigger
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
-                                                                      DEFAULT_DB_NAME,
-                                                                      DEFAULT_SCHEMA_NAME,
-                                                                      "accounts");
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                            DEFAULT_DB_NAME,
+                                                                            DEFAULT_SCHEMA_NAME,
+                                                                            "accounts");
   auto trigger_list =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())

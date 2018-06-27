@@ -80,8 +80,8 @@ class SchemaCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<SchemaCatalogEntry> GetSchemaObject(concurrency::TransactionContext *txn,
-                                                      const std::string &schema_name);
+  std::shared_ptr<SchemaCatalogEntry> GetSchemaCatalogEntry(concurrency::TransactionContext *txn,
+                                                            const std::string &schema_name);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeSchema();

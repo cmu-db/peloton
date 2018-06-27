@@ -171,12 +171,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
             create_stmt->GetTableName());
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
-        auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
-                                                                            create_stmt->GetDatabaseName(),
-                                                                            create_stmt->GetSchemaName(),
-                                                                            create_stmt->GetTableName());
+        auto table_object =
+            catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                  create_stmt->GetDatabaseName(),
+                                                                  create_stmt->GetSchemaName(),
+                                                                  create_stmt->GetTableName());
         for (auto column_name : create_plan->GetIndexAttributes()) {
-          auto column_object = table_object->GetColumnObject(column_name);
+          auto column_object = table_object->GetColumnCatalogEntry(column_name);
           // Check if column is missing
           if (column_object == nullptr)
             throw CatalogException(

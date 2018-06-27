@@ -69,7 +69,7 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
         }
       }
       if (!can_fulfill) break;
-      for (auto &index : target_table->GetIndexObjects()) {
+      for (auto &index : target_table->GetIndexCatalogEntries()) {
         auto key_oids = index.second->GetKeyAttrs();
         // If the sort column size is larger, then can't be fulfill by the index
         if (sort_col_size > key_oids.size()) {

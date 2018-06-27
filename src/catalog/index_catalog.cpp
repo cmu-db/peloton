@@ -191,15 +191,16 @@ bool IndexCatalog::DeleteIndex(concurrency::TransactionContext *txn,
     auto table_object =
         txn->catalog_cache.GetCachedTableObject(database_oid,
                                                 index_object->GetTableOid());
-    table_object->EvictAllIndexObjects();
+    table_object->EvictAllIndexCatalogEntries();
   }
 
   return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::TransactionContext *txn,
-                                                                oid_t database_oid,
-                                                                oid_t index_oid) {
+std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexCatalogEntry(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid,
+    oid_t index_oid) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -230,10 +231,10 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::Tra
                         ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     auto table_object =
-        pg_table->GetTableObject(txn, index_object->GetTableOid());
+        pg_table->GetTableCatalogEntry(txn, index_object->GetTableOid());
     PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
-    return table_object->GetIndexObject(index_oid);
+    return table_object->GetIndexCatalogEntries(index_oid);
   } else {
     LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
   }
@@ -242,10 +243,11 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::Tra
   return nullptr;
 }
 
-std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::TransactionContext *txn,
-                                                                const std::string &database_name,
-                                                                const std::string &schema_name,
-                                                                const std::string &index_name) {
+std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &database_name,
+    const std::string &schema_name,
+    const std::string &index_name) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -282,10 +284,10 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::Tra
                         ->GetSystemCatalogs(database_oid_)
                         ->GetTableCatalog();
     auto table_object =
-        pg_table->GetTableObject(txn, index_object->GetTableOid());
+        pg_table->GetTableCatalogEntry(txn, index_object->GetTableOid());
     PELOTON_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
-    return table_object->GetIndexObject(index_name);
+    return table_object->GetIndexCatalogEntry(index_name);
   } else {
     LOG_DEBUG("Found %lu index with name %s", result_tiles->size(),
               index_name.c_str());
@@ -303,9 +305,9 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexObject(concurrency::Tra
  */
 const std::unordered_map<oid_t,
                          std::shared_ptr<IndexCatalogEntry>>
-IndexCatalog::GetIndexObjects(
-concurrency::TransactionContext *txn,
-oid_t table_oid) {
+IndexCatalog::GetIndexCatalogEntries(
+    concurrency::TransactionContext *txn,
+    oid_t table_oid) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -313,9 +315,9 @@ oid_t table_oid) {
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
-  auto index_objects = table_object->GetIndexObjects(true);
+  auto index_objects = table_object->GetIndexCatalogEntries(true);
   if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
@@ -334,11 +336,11 @@ oid_t table_oid) {
     for (auto tuple_id : *tile) {
       auto index_object =
           std::make_shared<IndexCatalogEntry>(tile.get(), tuple_id);
-      table_object->InsertIndexObject(index_object);
+      table_object->InsertIndexCatalogEntry(index_object);
     }
   }
 
-  return table_object->GetIndexObjects();
+  return table_object->GetIndexCatalogEntries();
 }
 
 }  // namespace catalog

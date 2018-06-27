@@ -49,7 +49,7 @@ TEST_F(DropTests, DroppingDatabase) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_TRUE(catalog->GetDatabaseObject(txn, TEST_DB_NAME).get() != NULL);
+  EXPECT_TRUE(catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME).get() != NULL);
   txn_manager.CommitTransaction(txn);
 
   parser::DropStatement drop_statement(
@@ -70,7 +70,7 @@ TEST_F(DropTests, DroppingDatabase) {
 
   // The database should be deleted now
   txn = txn_manager.BeginTransaction();
-  EXPECT_ANY_THROW(catalog->GetDatabaseObject(txn, TEST_DB_NAME););
+  EXPECT_ANY_THROW(catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME););
   txn_manager.CommitTransaction(txn);
 }
 
@@ -118,8 +118,8 @@ TEST_F(DropTests, DroppingTable) {
   // NOTE: everytime we create a database, there will be 9 catalog tables
   // inside. In this test case, we have created two additional tables.
   oid_t expeected_table_count = CATALOG_TABLES_COUNT + 2;
-  EXPECT_EQ((int) catalog->GetDatabaseObject(txn, TEST_DB_NAME)
-      ->GetTableObjects()
+  EXPECT_EQ((int) catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
       .size(),
             expeected_table_count);
 
@@ -130,8 +130,8 @@ TEST_F(DropTests, DroppingTable) {
                      "department_table");
   // Account for the dropped table.
   expeected_table_count--;
-  EXPECT_EQ((int) catalog->GetDatabaseObject(txn, TEST_DB_NAME)
-      ->GetTableObjects()
+  EXPECT_EQ((int) catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
       .size(),
             expeected_table_count);
 
@@ -238,8 +238,8 @@ TEST_F(DropTests, DroppingTrigger) {
                      DEFAULT_SCHEMA_NAME,
                      "department_table");
   EXPECT_EQ(CATALOG_TABLES_COUNT, (int) catalog::Catalog::GetInstance()
-      ->GetDatabaseObject(txn, TEST_DB_NAME)
-      ->GetTableObjects()
+      ->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
       .size());
   txn_manager.CommitTransaction(txn);
 
@@ -303,17 +303,18 @@ TEST_F(DropTests, DroppingIndexByName) {
   txn = txn_manager.BeginTransaction();
   // retrieve pg_index catalog table
   auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject(txn, TEST_DB_NAME);
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               TEST_DB_NAME);
   EXPECT_NE(nullptr, database_object);
 
   auto pg_index = catalog::Catalog::GetInstance()
       ->GetSystemCatalogs(database_object->GetDatabaseOid())
       ->GetIndexCatalog();
   auto index_object =
-      pg_index->GetIndexObject(txn,
-                               database_object->GetDatabaseName(),
-                               DEFAULT_SCHEMA_NAME,
-                               index_name1);
+      pg_index->GetIndexCatalogEntry(txn,
+                                     database_object->GetDatabaseName(),
+                                     DEFAULT_SCHEMA_NAME,
+                                     index_name1);
   EXPECT_NE(nullptr, index_object);
   // Check the effect of drop
   // Most major check in this test case
@@ -321,20 +322,20 @@ TEST_F(DropTests, DroppingIndexByName) {
   catalog->DropIndex(txn,
                      database_object->GetDatabaseOid(),
                      index_object->GetIndexOid());
-  EXPECT_EQ(pg_index->GetIndexObject(txn,
-                                     database_object->GetDatabaseName(),
-                                     DEFAULT_SCHEMA_NAME,
-                                     index_name1),
+  EXPECT_EQ(pg_index->GetIndexCatalogEntry(txn,
+                                           database_object->GetDatabaseName(),
+                                           DEFAULT_SCHEMA_NAME,
+                                           index_name1),
             nullptr);
   txn_manager.CommitTransaction(txn);
 
   // Drop the table just created
   txn = txn_manager.BeginTransaction();
   // Check the effect of drop index
-  EXPECT_EQ(pg_index->GetIndexObject(txn,
-                                     database_object->GetDatabaseName(),
-                                     DEFAULT_SCHEMA_NAME,
-                                     index_name1),
+  EXPECT_EQ(pg_index->GetIndexCatalogEntry(txn,
+                                           database_object->GetDatabaseName(),
+                                           DEFAULT_SCHEMA_NAME,
+                                           index_name1),
             nullptr);
 
   // Now dropping the table

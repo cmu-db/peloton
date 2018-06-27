@@ -105,8 +105,9 @@ bool SchemaCatalog::DeleteSchema(concurrency::TransactionContext *txn,
   return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::shared_ptr<SchemaCatalogEntry> SchemaCatalog::GetSchemaObject(concurrency::TransactionContext *txn,
-                                                                   const std::string &schema_name) {
+std::shared_ptr<SchemaCatalogEntry> SchemaCatalog::GetSchemaCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &schema_name) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

@@ -80,10 +80,10 @@ AbstractCatalog::AbstractCatalog(concurrency::TransactionContext *txn,
                                       true);
 
   // get catalog table oid
-  auto catalog_table_object = Catalog::GetInstance()->GetTableObject(txn,
-                                                                     catalog_database_name,
-                                                                     catalog_schema_name,
-                                                                     catalog_table_name);
+  auto catalog_table_object = Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                           catalog_database_name,
+                                                                           catalog_schema_name,
+                                                                           catalog_table_name);
 
   // set catalog_table_
   try {

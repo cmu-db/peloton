@@ -227,24 +227,24 @@ class Catalog {
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseObject(concurrency::TransactionContext *txn,
-                                                           const std::string &database_name);
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                                                                const std::string &database_name);
 
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseObject(concurrency::TransactionContext *txn,
-                                                           oid_t database_oid);
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                                                                oid_t database_oid);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  std::shared_ptr<TableCatalogEntry> GetTableObject(concurrency::TransactionContext *txn,
-                                                     const std::string &database_name,
-                                                     const std::string &schema_name,
-                                                     const std::string &table_name);
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          const std::string &database_name,
+                                                          const std::string &schema_name,
+                                                          const std::string &table_name);
 
-  std::shared_ptr<TableCatalogEntry> GetTableObject(concurrency::TransactionContext *txn,
-                                                     oid_t database_oid,
-                                                     oid_t table_oid);
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          oid_t database_oid,
+                                                          oid_t table_oid);
 
   /*
    * Using database oid to get system catalog object

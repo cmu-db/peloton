@@ -224,10 +224,10 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   else {
     if (node->list.size() == 1) node = node->list.at(0).get();
     std::shared_ptr<catalog::TableCatalogEntry> target_table =
-        catalog::Catalog::GetInstance()->GetTableObject(txn_,
-                                                        node->GetDatabaseName(),
-                                                        node->GetSchemaName(),
-                                                        node->GetTableName());
+        catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
+                                                              node->GetDatabaseName(),
+                                                              node->GetSchemaName(),
+                                                              node->GetTableName());
     std::string table_alias =
         StringUtil::Lower(std::string(node->GetTableAlias()));
     output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
@@ -244,10 +244,10 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   std::shared_ptr<catalog::TableCatalogEntry> target_table =
-      catalog::Catalog::GetInstance()->GetTableObject(txn_,
-                                                      op->GetDatabaseName(),
-                                                      op->GetSchemaName(),
-                                                      op->GetTableName());
+      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
+                                                            op->GetDatabaseName(),
+                                                            op->GetSchemaName(),
+                                                            op->GetTableName());
 
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
@@ -259,7 +259,7 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   }
   // column_objects represents the columns for the current table as defined in
   // its schema
-  auto column_objects = target_table->GetColumnObjects();
+  auto column_objects = target_table->GetColumnCatalogEntries();
   // INSERT INTO table_name VALUES (val1, val2, ...), (val_a, val_b, ...), ...
   if (op->columns.empty()) {
     for (const auto &values : op->insert_values) {
@@ -295,7 +295,7 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 
     // set below contains names of columns mentioned in the insert statement
     std::unordered_set<std::string> specified;
-    auto column_names = target_table->GetColumnNames();
+    auto column_names = target_table->GetColumnCatalogEntriesByName();
 
     for (const auto col : op->columns) {
       if (column_names.find(col) == column_names.end()) {
@@ -323,10 +323,11 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
-  auto target_table = catalog::Catalog::GetInstance()->GetTableObject(txn_,
-                                                                      op->GetDatabaseName(),
-                                                                      op->GetSchemaName(),
-                                                                      op->GetTableName());
+  auto target_table =
+      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
+                                                            op->GetDatabaseName(),
+                                                            op->GetSchemaName(),
+                                                            op->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr) {
     std::vector<AnnotatedExpression> predicates =
@@ -351,10 +352,11 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
-  auto target_table = catalog::Catalog::GetInstance()->GetTableObject(txn_,
-                                                                      op->table->GetDatabaseName(),
-                                                                      op->table->GetSchemaName(),
-                                                                      op->table->GetTableName());
+  auto target_table =
+      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
+                                                            op->table->GetDatabaseName(),
+                                                            op->table->GetSchemaName(),
+                                                            op->table->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
 
   auto update_expr = std::make_shared<OperatorExpression>(
@@ -388,9 +390,9 @@ void QueryToOperatorTransformer::Visit(parser::CopyStatement *op) {
 
     auto target_table =
         catalog::Catalog::GetInstance()
-            ->GetDatabaseObject(txn_, op->table->GetDatabaseName())
-            ->GetTableObject(op->table->GetTableName(),
-                             op->table->GetSchemaName());
+            ->GetDatabaseCatalogEntry(txn_, op->table->GetDatabaseName())
+            ->GetTableCatalogEntry(op->table->GetTableName(),
+                                   op->table->GetSchemaName());
 
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsertSelect::make(target_table));

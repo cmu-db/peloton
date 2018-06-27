@@ -220,8 +220,8 @@ bool ColumnCatalog::DeleteColumn(concurrency::TransactionContext *txn,
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
-  table_object->EvictColumnObject(column_name);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictColumnCatalogEntry(column_name);
 
   return DeleteWithIndexScan(txn, index_offset, values);
 }
@@ -241,24 +241,24 @@ bool ColumnCatalog::DeleteColumns(concurrency::TransactionContext *txn, oid_t ta
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
-  table_object->EvictAllColumnObjects();
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictAllColumnCatalogEntries();
 
   return DeleteWithIndexScan(txn, index_offset, values);
 }
 
 const std::unordered_map<oid_t,
                          std::shared_ptr<ColumnCatalogEntry>>
-ColumnCatalog::GetColumnObjects(
-concurrency::TransactionContext *txn,
-oid_t table_oid) {
+ColumnCatalog::GetColumnCatalogEntries(
+    concurrency::TransactionContext *txn,
+    oid_t table_oid) {
   // try get from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
-  auto column_objects = table_object->GetColumnObjects(true);
+  auto column_objects = table_object->GetColumnCatalogEntries(true);
   if (column_objects.size() != 0) return column_objects;
 
   // cache miss, get from pg_attribute
@@ -277,11 +277,11 @@ oid_t table_oid) {
     for (auto tuple_id : *tile) {
       auto column_object =
           std::make_shared<ColumnCatalogEntry>(tile.get(), tuple_id);
-      table_object->InsertColumnObject(column_object);
+      table_object->InsertColumnCatalogEntry(column_object);
     }
   }
 
-  return table_object->GetColumnObjects();
+  return table_object->GetColumnCatalogEntries();
 }
 
 }  // namespace catalog

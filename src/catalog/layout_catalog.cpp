@@ -138,7 +138,7 @@ bool LayoutCatalog::DeleteLayout(concurrency::TransactionContext *txn,
                       ->GetTableCatalog();
 
   // delete column from cache
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   table_object->EvictLayout(layout_oid);
 
   return DeleteWithIndexScan(txn, index_offset, values);
@@ -158,7 +158,7 @@ bool LayoutCatalog::DeleteLayouts(concurrency::TransactionContext *txn, oid_t ta
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   table_object->EvictAllLayouts();
 
   return DeleteWithIndexScan(txn, index_offset, values);
@@ -178,7 +178,7 @@ oid_t table_oid) {
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(txn, table_oid);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto layout_objects = table_object->GetLayouts(true);
   if (layout_objects.size() != 0) {

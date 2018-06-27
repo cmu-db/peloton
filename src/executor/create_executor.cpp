@@ -262,10 +262,10 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   std::string trigger_name = node.GetTriggerName();
 
   trigger::Trigger newTrigger(node);
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(txn,
-                                                                      database_name,
-                                                                      schema_name,
-                                                                      table_name);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                            database_name,
+                                                                            schema_name,
+                                                                            table_name);
 
   // durable trigger: insert the information of this trigger in the trigger
   // catalog table

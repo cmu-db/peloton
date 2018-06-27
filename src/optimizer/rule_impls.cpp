@@ -246,7 +246,7 @@ bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   bool index_exist = false;
   if (get != nullptr && get->table != nullptr &&
-      !get->table->GetIndexObjects().empty()) {
+      !get->table->GetIndexCatalogEntries().empty()) {
     index_exist = true;
   }
   return index_exist;
@@ -281,7 +281,7 @@ void GetToIndexScan::Transform(
     }
     // Check whether any index can fulfill sort property
     if (sort_by_asc_base_column) {
-      for (auto &index_id_object_pair : get->table->GetIndexObjects()) {
+      for (auto &index_id_object_pair : get->table->GetIndexCatalogEntries()) {
         auto &index_id = index_id_object_pair.first;
         auto &index = index_id_object_pair.second;
         auto &index_col_ids = index->GetKeyAttrs();
@@ -350,7 +350,7 @@ void GetToIndexScan::Transform(
         auto column_ref = (expression::TupleValueExpression *)tv_expr;
         std::string col_name(column_ref->GetColumnName());
         LOG_TRACE("Column name: %s", col_name.c_str());
-        auto column_id = get->table->GetColumnObject(col_name)->GetColumnId();
+        auto column_id = get->table->GetColumnCatalogEntry(col_name)->GetColumnId();
         key_column_id_list.push_back(column_id);
         expr_type_list.push_back(expr_type);
 
@@ -374,7 +374,7 @@ void GetToIndexScan::Transform(
     }  // Loop predicates end
 
     // Find match index for the predicates
-    auto index_objects = get->table->GetIndexObjects();
+    auto index_objects = get->table->GetIndexCatalogEntries();
     for (auto &index_id_object_pair : index_objects) {
       auto &index_id = index_id_object_pair.first;
       auto &index_object = index_id_object_pair.second;
