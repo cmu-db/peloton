@@ -136,11 +136,17 @@ void ChildPropertyDeriver::Visit(const PhysicalAggregate *) {
                 vector<shared_ptr<PropertySet>>{make_shared<PropertySet>()}));
 }
 
-void ChildPropertyDeriver::Visit(const PhysicalLimit *) {
-  // Let child fulfil all the required properties
-  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
+void ChildPropertyDeriver::Visit(const PhysicalLimit *op) {
+  // Limit fulfill the internal sort property
+  vector<shared_ptr<PropertySet>> child_input_properties{
+      std::make_shared<PropertySet>()};
+  std::shared_ptr<PropertySet> provided_prop(new PropertySet);
+  if (!op->sort_exprs.empty()) {
+    provided_prop->AddProperty(
+        std::make_shared<PropertySort>(op->sort_exprs, op->sort_acsending));
+  }
 
-  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+  output_.push_back(make_pair(provided_prop, move(child_input_properties)));
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {

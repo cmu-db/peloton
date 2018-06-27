@@ -811,7 +811,8 @@ void ImplementLimit::Transform(
   const LogicalLimit *limit_op = input->Op().As<LogicalLimit>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalLimit::make(limit_op->offset, limit_op->limit));
+      PhysicalLimit::make(limit_op->offset, limit_op->limit,
+                          limit_op->sort_exprs, limit_op->sort_ascending));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 1);
 

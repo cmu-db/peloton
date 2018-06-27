@@ -1,0 +1,412 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// bytecode_instructions.def
+//
+// Identification: src/include/codegen/interpreter/bytecode_instructions.def
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//----------------------------------------------------------------------------//
+//                          Instruction Definitions
+//
+// This file contains the definitions for all bytecode instructions.
+//
+// The definitions can be used by defining one of the HANDLE functions below
+// before including this definition file (see X-Macros). This way the
+// definitions can be used to generate the Opcode enum, the dispatch area, etc.
+//
+// Most instructions are automatically expanded to all their supported types.
+//
+// When adding a bytecode instruction here, the instruction at least needs a
+// Translate-function in the BytecodeBuilder and a Handler-function in the
+// BytecodeInterpreter.
+//----------------------------------------------------------------------------//
+
+#ifndef HANDLE_INST
+#define HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_TYPED_INST
+#define HANDLE_TYPED_INST(op, type) HANDLE_INST(op##_##type)
+#endif
+
+#ifndef HANDLE_OVERFLOW_TYPED_INST
+#define HANDLE_OVERFLOW_TYPED_INST(op, type) HANDLE_TYPED_INST(op, type)
+#endif
+
+#ifndef HANDLE_SELECT_INST
+#define HANDLE_SELECT_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_RET_INST
+#define HANDLE_RET_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_EXTERNAL_CALL_INST
+#define HANDLE_EXTERNAL_CALL_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_INTERNAL_CALL_INST
+#define HANDLE_INTERNAL_CALL_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_EXPLICIT_CALL_INST
+#define HANDLE_EXPLICIT_CALL_INST(op, func) HANDLE_INST(op)
+#endif
+
+// Takes a function and a opcode and calls the function for all type instances
+// of that opcode
+#define CREATE_FOR_ALL_TYPES(func, op)                                   \
+  func(op, i8) func(op, i16) func(op, i32) func(op, i64) func(op, float) \
+      func(op, double)
+
+// Returns the first type used when expanding to all types
+// (needed for use of GetOpcodeForTypeAllTypes)
+#define GET_FIRST_ALL_TYPES(op) (op##_i8)
+
+// Takes a function and a opcode and calls the function for all integer
+// instances of that opcode
+#define CREATE_FOR_INT_TYPES(func, op) \
+  func(op, i8) func(op, i16) func(op, i32) func(op, i64)
+
+// Returns the first type used when expanding to integer types
+// (needed for use of GetOpcodeForTypeIntTypes)
+#define GET_FIRST_INT_TYPES(op) (op##_i8)
+
+// Takes a function and a opcode and calls the function for all floating point
+// instances of that opcode
+#define CREATE_FOR_FLOAT_TYPES(func, op) func(op, float) func(op, double)
+
+// Returns the first type used when expanding to floating point types
+// (needed for use of GetOpcodeForTypeFloatTypes)
+#define GET_FIRST_FLOAT_TYPES(op) (op##_float)
+
+//------              Bytecode Instruction Definitions                  ------//
+
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, add)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, sub)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, mul)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     div)  // division for unsigned integer and floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sdiv)  // division for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, urem)  // remainder for unsigned integer
+CREATE_FOR_FLOAT_TYPES(HANDLE_TYPED_INST, frem)  // remainder for floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, srem)    // remainder for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, shl)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, lshr)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, ashr)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, and)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, or)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, xor)
+
+HANDLE_INST(extractvalue)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, load)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, store)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, alloca_array)
+HANDLE_INST(alloca)
+
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_eq)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_ne)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_gt)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_lt)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_ge)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST,
+                     cmp_le)  // compare for unsigned integer and floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sgt)  // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_slt)  // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sge)  // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sle)  // compare for signed integer
+
+HANDLE_INST(sext_i8_i16)  // there is no handy way to expand this relationship
+HANDLE_INST(sext_i8_i32)
+HANDLE_INST(sext_i8_i64)
+HANDLE_INST(sext_i16_i32)
+HANDLE_INST(sext_i16_i64)
+HANDLE_INST(sext_i32_i64)
+HANDLE_INST(zext_i8_i16)
+HANDLE_INST(zext_i8_i32)
+HANDLE_INST(zext_i8_i64)
+HANDLE_INST(zext_i16_i32)
+HANDLE_INST(zext_i16_i64)
+HANDLE_INST(zext_i32_i64)
+
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST,
+                     doubletosi)  // we can only expand in one dimension, so we
+                                  // expand the integer dimension and write down
+                                  // all floating point instances manually
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, doubletoui)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sitodouble)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, uitodouble)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, floattosi)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, floattoui)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sitofloat)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, uitofloat)
+HANDLE_INST(doubletofloat)
+HANDLE_INST(floattodouble)
+
+HANDLE_INST(gep_offset)  // struct access of GEP instruction (accumulated)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST,
+                     gep_array)  // array access of GEP instruction (inplace)
+HANDLE_INST(phi_mov)
+HANDLE_INST(nop_mov)
+HANDLE_SELECT_INST(select)
+HANDLE_EXTERNAL_CALL_INST(call_external)  // external function call
+HANDLE_INTERNAL_CALL_INST(call_internal)  // internal function call
+
+HANDLE_RET_INST(ret)
+HANDLE_INST(branch_uncond)
+HANDLE_INST(branch_cond)
+HANDLE_INST(branch_cond_ft)  // conditional branch with fall through
+
+HANDLE_INST(llvm_memcpy)
+HANDLE_INST(llvm_memmove)
+HANDLE_INST(llvm_memset)
+
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_uadd_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_sadd_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_usub_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_ssub_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_umul_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_smul_overflow)
+
+HANDLE_INST(llvm_sse42_crc32)
+
+//------                 Explicit Call Instructions                     ------//
+//
+// Usually external functions are called using libffi.
+// However, for often used functions, an explicit bytecode instruction for that
+// specific function call can be created. For every function listed below,
+// a bytecode instruction _and_ a matching handler function are generated
+// automatically using heavy template-macro-magic.
+//
+// Further functions can easily be added here. The regarding headers have to be
+// added in these files manually: bytecode_interpreter.h, bytecode_function.cpp
+
+HANDLE_EXPLICIT_CALL_INST(
+    peloton_transactionruntime_performvectorizedread,
+    peloton::codegen::TransactionRuntime::PerformVectorizedRead)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_oahashtable_init,
+                          peloton::codegen::util::OAHashTable::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_oahashtable_storetuple,
+                          peloton::codegen::util::OAHashTable::StoreTuple)
+HANDLE_EXPLICIT_CALL_INST(peloton_oahashtable_destroy,
+                          peloton::codegen::util::OAHashTable::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_deleter_init, peloton::codegen::Deleter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_deleter_delete,
+                          peloton::codegen::Deleter::Delete)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_init, peloton::codegen::Updater::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_prepare,
+                          peloton::codegen::Updater::Prepare)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_preparepk,
+                          peloton::codegen::Updater::PreparePK)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_getpool,
+                          peloton::codegen::Updater::GetPool)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_update,
+                          peloton::codegen::Updater::Update)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_updatepk,
+                          peloton::codegen::Updater::UpdatePK)
+HANDLE_EXPLICIT_CALL_INST(peloton_updater_teardown,
+                          peloton::codegen::Updater::TearDown)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_inserter_init,
+                          peloton::codegen::Inserter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_inserter_allocatetuplestorage,
+                          peloton::codegen::Inserter::AllocateTupleStorage)
+HANDLE_EXPLICIT_CALL_INST(peloton_inserter_getpool,
+                          peloton::codegen::Inserter::GetPool)
+HANDLE_EXPLICIT_CALL_INST(peloton_inserter_insert,
+                          peloton::codegen::Inserter::Insert)
+HANDLE_EXPLICIT_CALL_INST(peloton_inserter_teardown,
+                          peloton::codegen::Inserter::TearDown)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_init,
+                          peloton::codegen::util::Sorter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_storeinputtuple,
+                          peloton::codegen::util::Sorter::StoreInputTuple)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sort,
+                          peloton::codegen::util::Sorter::Sort)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_sortparallel,
+                          peloton::codegen::util::Sorter::SortParallel)
+HANDLE_EXPLICIT_CALL_INST(peloton_sorter_destroy,
+                          peloton::codegen::util::Sorter::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_zonemap_shouldscantilegroup,
+                          peloton::storage::ZoneMapManager::ShouldScanTileGroup)
+HANDLE_EXPLICIT_CALL_INST(peloton_zonemap_getinstance,
+                          peloton::storage::ZoneMapManager::GetInstance)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputboolean,
+                          peloton::codegen::ValuesRuntime::OutputBoolean)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputtinyint,
+                          peloton::codegen::ValuesRuntime::OutputTinyInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputsmallint,
+                          peloton::codegen::ValuesRuntime::OutputSmallInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputinteger,
+                          peloton::codegen::ValuesRuntime::OutputInteger)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputbigint,
+                          peloton::codegen::ValuesRuntime::OutputBigInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputdate,
+                          peloton::codegen::ValuesRuntime::OutputDate)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputtimestamp,
+                          peloton::codegen::ValuesRuntime::OutputTimestamp)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputdecimal,
+                          peloton::codegen::ValuesRuntime::OutputDecimal)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputvarchar,
+                          peloton::codegen::ValuesRuntime::OutputVarchar)
+HANDLE_EXPLICIT_CALL_INST(peloton_valuesruntime_outputvarbinary,
+                          peloton::codegen::ValuesRuntime::OutputVarbinary)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_executorcontext_gettransaction,
+                          peloton::executor::ExecutorContext::GetTransaction)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_ascii,
+                          peloton::function::StringFunctions::Ascii)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_like,
+                          peloton::function::StringFunctions::Like)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_length,
+                          peloton::function::StringFunctions::Length)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_btrim,
+                          peloton::function::StringFunctions::BTrim)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_trim,
+                          peloton::function::StringFunctions::Trim)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_ltrim,
+                          peloton::function::StringFunctions::LTrim)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_rtrim,
+                          peloton::function::StringFunctions::RTrim)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_substr,
+                          peloton::function::StringFunctions::Substr)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_repeat,
+                          peloton::function::StringFunctions::Repeat)
+HANDLE_EXPLICIT_CALL_INST(peloton_stringfunctions_comparestrings,
+                          peloton::function::StringFunctions::CompareStrings)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_init,
+                          peloton::codegen::util::Buffer::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_append,
+                          peloton::codegen::util::Buffer::Append)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_reset,
+                          peloton::codegen::util::Buffer::Reset)
+HANDLE_EXPLICIT_CALL_INST(peloton_buffer_destroy,
+                          peloton::codegen::util::Buffer::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_abs,
+                          peloton::function::NumericFunctions::Abs)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_floor,
+                          peloton::function::NumericFunctions::Floor)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_round,
+                          peloton::function::NumericFunctions::Round)
+HANDLE_EXPLICIT_CALL_INST(peloton_numericfunctions_ceil,
+                          peloton::function::NumericFunctions::Ceil)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilteraccessor_init,
+                          peloton::codegen::BloomFilterAccessor::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilteraccessor_destroy,
+                          peloton::codegen::BloomFilterAccessor::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_init,
+                          peloton::codegen::util::BloomFilter::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_bloomfilter_destroy,
+                          peloton::codegen::util::BloomFilter::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_datatable_gettilegroupcount,
+                          peloton::storage::DataTable::GetTileGroupCount)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_datefunctions_now,
+                          peloton::function::DateFunctions::Now)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_init,
+                          peloton::codegen::util::HashTable::Init)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_insert,
+                          peloton::codegen::util::HashTable::Insert)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_insertlazy,
+                          peloton::codegen::util::HashTable::InsertLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_buildlazy,
+                          peloton::codegen::util::HashTable::BuildLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_reservelazy,
+                          peloton::codegen::util::HashTable::ReserveLazy)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_mergelazyunfinished,
+                          peloton::codegen::util::HashTable::MergeLazyUnfinished)
+HANDLE_EXPLICIT_CALL_INST(peloton_hashtable_destroy,
+                          peloton::codegen::util::HashTable::Destroy)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_storagemanager_gettablewithoid,
+                          peloton::storage::StorageManager::GetTableWithOid)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_tilegroup_getnexttupleslot,
+                          peloton::storage::TileGroup::GetNextTupleSlot)
+HANDLE_EXPLICIT_CALL_INST(peloton_tilegroup_gettilegroupid,
+                          peloton::storage::TileGroup::GetTileGroupId)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_timestampfunctions_datetrunc,
+                          peloton::function::TimestampFunctions::DateTrunc)
+HANDLE_EXPLICIT_CALL_INST(peloton_timestampfunctions_datepart,
+                          peloton::function::TimestampFunctions::DatePart)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getboolean,
+                          peloton::codegen::QueryParameters::GetBoolean)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_gettinyint,
+                          peloton::codegen::QueryParameters::GetTinyInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getsmallint,
+                          peloton::codegen::QueryParameters::GetSmallInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getinteger,
+                          peloton::codegen::QueryParameters::GetInteger)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getbigint,
+                          peloton::codegen::QueryParameters::GetBigInt)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getdouble,
+                          peloton::codegen::QueryParameters::GetDouble)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getdate,
+                          peloton::codegen::QueryParameters::GetDate)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_gettimestamp,
+                          peloton::codegen::QueryParameters::GetTimestamp)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getvarcharval,
+                          peloton::codegen::QueryParameters::GetVarcharVal)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getvarcharlen,
+                          peloton::codegen::QueryParameters::GetVarcharLen)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getvarbinaryval,
+                          peloton::codegen::QueryParameters::GetVarbinaryVal)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_getvarbinarylen,
+                          peloton::codegen::QueryParameters::GetVarbinaryLen)
+HANDLE_EXPLICIT_CALL_INST(peloton_queryparameters_isnull,
+                          peloton::codegen::QueryParameters::IsNull)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_runtimefunctions_hashcrc64,
+                          peloton::codegen::RuntimeFunctions::HashCrc64)
+HANDLE_EXPLICIT_CALL_INST(peloton_runtimefunctions_gettilegroup,
+                          peloton::codegen::RuntimeFunctions::GetTileGroup)
+HANDLE_EXPLICIT_CALL_INST(
+    peloton_runtimefunctions_gettilegrouplayout,
+    peloton::codegen::RuntimeFunctions::GetTileGroupLayout)
+HANDLE_EXPLICIT_CALL_INST(
+    peloton_runtimefunctions_fillpredicatearray,
+    peloton::codegen::RuntimeFunctions::FillPredicateArray)
+HANDLE_EXPLICIT_CALL_INST(
+    peloton_runtimefunctions_throwdividebyzeroexception,
+    peloton::codegen::RuntimeFunctions::ThrowDivideByZeroException)
+HANDLE_EXPLICIT_CALL_INST(
+    peloton_runtimefunctions_throwoverflowexception,
+    peloton::codegen::RuntimeFunctions::ThrowOverflowException)
+
+HANDLE_EXPLICIT_CALL_INST(peloton_bufferingconsumer_buffertuple,
+                          peloton::codegen::BufferingConsumer::BufferTuple)
+
+// undefine all handlers
+#undef HANDLE_INST
+#undef HANDLE_TYPED_INST
+#undef HANDLE_OVERFLOW_TYPED_INST
+#undef HANDLE_SELECT_INST
+#undef HANDLE_RET_INST
+#undef HANDLE_EXTERNAL_CALL_INST
+#undef HANDLE_INTERNAL_CALL_INST
+#undef HANDLE_EXPLICIT_CALL_INST

@@ -299,9 +299,18 @@ class LogicalDistinct : public OperatorNode<LogicalDistinct> {
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
  public:
-  static Operator make(int64_t offset, int64_t limit);
+  static Operator make(
+      int64_t offset, int64_t limit,
+      std::vector<expression::AbstractExpression *> &&sort_exprs,
+      std::vector<bool> &&sort_ascending);
   int64_t offset;
   int64_t limit;
+  // When we get a query like "SELECT * FROM tab ORDER BY a LIMIT 5"
+  // We'll let the limit operator keep the order by clause's content as an
+  // internal order, then the limit operator will generate sort plan with 
+  // limit as a optimization.
+  std::vector<expression::AbstractExpression *> sort_exprs;
+  std::vector<bool> sort_ascending;
 };
 
 //===--------------------------------------------------------------------===//
@@ -470,9 +479,18 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
  public:
-  static Operator make(int64_t offset, int64_t limit);
+  static Operator make(
+      int64_t offset, int64_t limit,
+      std::vector<expression::AbstractExpression *> sort_columns,
+      std::vector<bool> sort_ascending);
   int64_t offset;
   int64_t limit;
+  // When we get a query like "SELECT * FROM tab ORDER BY a LIMIT 5"
+  // We'll let the limit operator keep the order by clause's content as an
+  // internal order, then the limit operator will generate sort plan with 
+  // limit as a optimization.
+  std::vector<expression::AbstractExpression *> sort_exprs;
+  std::vector<bool> sort_acsending;
 };
 
 //===--------------------------------------------------------------------===//

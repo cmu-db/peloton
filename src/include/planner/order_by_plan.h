@@ -28,6 +28,11 @@ class OrderByPlan : public AbstractPlan {
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids);
 
+  OrderByPlan(const std::vector<oid_t> &sort_keys,
+              const std::vector<bool> &descend_flags,
+              const std::vector<oid_t> &output_column_ids, const uint64_t limit,
+              const uint64_t offset);
+
   void PerformBinding(BindingContext &binding_context) override;
 
   //===--------------------------------------------------------------------===//
@@ -51,13 +56,21 @@ class OrderByPlan : public AbstractPlan {
     return output_ais_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::ORDERBY; }
+  inline PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::ORDERBY;
+  }
 
   void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns = GetOutputColumnIds();
   }
 
-  const std::string GetInfo() const override { return "OrderBy"; }
+  const std::string GetInfo() const override {
+    return std::string("OrderBy") +
+           (limit_
+                ? "(Limit : " + std::to_string(limit_number_) + ", Offset : " +
+                      std::to_string(limit_offset_) + ")"
+                : "");
+  }
 
   void SetUnderlyingOrder(bool same_order) { underling_ordered_ = same_order; }
 
