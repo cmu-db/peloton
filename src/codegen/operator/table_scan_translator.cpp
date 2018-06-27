@@ -105,7 +105,7 @@ class TableScanTranslator::ScanConsumer : public codegen::ScanCallback {
                               llvm::Value *tid_end,
                               Vector &selection_vector) const;
 
-  void RecordReads(CodeGen &codegen, Vector &selection_vector) const;
+  void PerformReads(CodeGen &codegen, Vector &selection_vector) const;
 
   // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
   // store their TIDs in the output TID selection vector
@@ -293,7 +293,7 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Record reads for all of the tuple that are visible and pass predicate
-  RecordReads(codegen, selection_vector_);
+  PerformReads(codegen, selection_vector_);
 
   // 4. Setup the (filtered) row batch and setup attribute accessors
   RowBatch batch{ctx_.GetCompilationContext(), tile_group_id_, tid_start,
@@ -384,7 +384,7 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
   });
 }
 
-void TableScanTranslator::ScanConsumer::RecordReads(
+void TableScanTranslator::ScanConsumer::PerformReads(
     CodeGen &codegen, Vector &selection_vector) const {
   ExecutionConsumer &ec = ctx_.GetCompilationContext().GetExecutionConsumer();
   llvm::Value *txn = ec.GetTransactionPtr(ctx_.GetCompilationContext());
