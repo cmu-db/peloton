@@ -862,10 +862,10 @@ enum class ResultType {
   SUCCESS = 1,
   FAILURE = 2,
   ABORTED = 3,  // aborted
-  NOOP = 4,     // no op
-  UNKNOWN = 5,
-  QUEUING = 6,
-  TO_ABORT = 7,
+  NOOP = 4,     // no op  // TODO Remove this type
+  UNKNOWN = 5,            // TODO Remove this type
+  QUEUING = 6,            // TODO Remove this type
+  TO_ABORT = 7,           // TODO Remove this type
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);

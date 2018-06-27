@@ -43,25 +43,45 @@ struct ClientProcessState {
   ClientTxnHandle txn_handle_;
 };
 
-// Execute a statement
-ResultType ExecuteStatement(
+/**
+ * Build and optimized a statement from raw query string and store it in state
+ * @param state Client state context
+ * @param query_string raw query in string format
+ * @param statement_name Name of the statement stored in the statement cache
+ * @return true if the statement is created
+ */
+bool PrepareStatement(
+    ClientProcessState &state, const std::string &query_string,
+    const std::string &statement_name = "unnamed");
+
+/**
+ * Execute the statemnet attached in state
+ * @param state Client state context
+ * @param result_format expected result's format specified by the protocol
+ * @param result the vector to store the result being returned
+ * @param callback callback function to be invoke after the execution is finished. Only useful if the return type is false
+ * @return true if the execution is finished
+ */
+bool ExecuteStatement(
     ClientProcessState &state,
     const std::vector<int> &result_format,
     std::vector<ResultValue> &result,
     callback_func callback);
 
-// Helper to handle txn-specifics for the plan-tree of a statement.
+/**
+ * Helper function to submit the executable plan to worker pool
+ * @param state Client state context
+ * @param result_format expected result's format specified by the protocol
+ * @param result the vector to store the result being returned
+ * @param txn Transaction context
+ * @param callback callback function to be invoke after the execution is finished. Only useful if the return type is false
+ */
 void ExecuteHelper(
     ClientProcessState &state,
     std::vector<ResultValue> &result,
     const std::vector<int> &result_format,
     concurrency::TransactionContext *txn,
     callback_func callback);
-
-// Prepare a statement
-bool PrepareStatement(
-    ClientProcessState &state, const std::string &query_string,
-    const std::string &statement_name = "unnamed");
 
 bool BindParamsForCachePlan(
     ClientProcessState &state,

@@ -92,7 +92,7 @@ bool tcop::PrepareStatement(ClientProcessState &state,
   return true;
 }
 
-ResultType tcop::ExecuteStatement(
+bool tcop::ExecuteStatement(
     ClientProcessState &state,
     const std::vector<int> &result_format,
     std::vector<ResultValue> &result,
@@ -113,18 +113,18 @@ ResultType tcop::ExecuteStatement(
     switch (state.statement_->GetQueryType()) {
       case QueryType::QUERY_BEGIN: {
         state.txn_handle_.ExplicitBegin(state.thread_id_);
-        return ResultType::SUCCESS;
+        return true;
       }
       case QueryType::QUERY_COMMIT: {
         if (!state.txn_handle_.ExplicitCommit()) {
-          // TODO Check which result type we should return
-          return ResultType::FAILURE;
+          state.p_status_.m_result = ResultType::FAILURE;
+          //TODO set error message
         }
-        return ResultType::SUCCESS;
+        return true;
       }
       case QueryType::QUERY_ROLLBACK: {
         state.txn_handle_.ExplicitAbort();
-        return ResultType::SUCCESS;
+        return true;
       }
       default: {
         // The statement may be out of date
@@ -133,23 +133,20 @@ ResultType tcop::ExecuteStatement(
         if (state.statement_->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
-          auto bind_node_visitor = binder::BindNodeVisitor(
-              txn, state.db_name_);
-          bind_node_visitor.BindNameToNode(
-              state.statement_->GetStmtParseTreeList()->GetStatement(0));
           auto plan = state.optimizer_->BuildPelotonPlanTree(
               state.statement_->GetStmtParseTreeList(), txn);
           state.statement_->SetPlanTree(plan);
-          state.statement_->SetNeedsReplan(true);
+          state.statement_->SetNeedsReplan(false);
         }
 
         ExecuteHelper(state, result, result_format, txn, callback);
-        return ResultType::QUEUING;
+        return false;
       }
     }
   } catch (Exception &e) {
+    state.p_status_.m_result = ResultType::FAILURE;
     state.error_message_ = e.what();
-    return ResultType::FAILURE;
+    return true;
   }
 }
 
@@ -178,9 +175,6 @@ void tcop::ExecuteHelper(
                                         result_format,
                                         on_complete);
   });
-
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
-            tcop_txn_state_.size());
 }
 
 } // namespace tcop
