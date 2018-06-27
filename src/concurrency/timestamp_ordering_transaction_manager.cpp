@@ -590,12 +590,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //// handle other isolation levels
   //////////////////////////////////////////////////////////
 
-  if (!current_txn->IsWritten()) {
-    LOG_TRACE("Transaction not yet written, ending transaction.");
-    EndTransaction(current_txn);
-    return ResultType::SUCCESS;
-  }
-
   auto storage_manager = storage::StorageManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
 
@@ -617,6 +611,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     oid_t table_oid = std::get<1>(obj);
     oid_t index_oid = std::get<2>(obj);
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
+  }
+
+  // see if we can end early
+  if (!current_txn->IsWritten()) {
+    LOG_TRACE("Transaction not yet written, ending transaction.");
+    log_manager.StopLogging();
+    EndTransaction(current_txn);
+    return ResultType::SUCCESS;
   }
 
   // install everything.
