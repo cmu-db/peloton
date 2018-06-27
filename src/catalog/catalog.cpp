@@ -1223,7 +1223,7 @@ ResultType Catalog::DropConstraint(oid_t database_oid, oid_t table_oid,
                                    concurrency::TransactionContext *txn) {
   auto pg_constraint = catalog_map_[database_oid]->GetConstraintCatalog();
   auto constraint_object =
-      pg_constraint->GetConstraintObject(table_oid, constraint_oid, txn);
+      pg_constraint->GetConstraintCatalogEntry(table_oid, constraint_oid, txn);
 
   // delete constraint object from pg_constraint
   if (!pg_constraint->DeleteConstraint(table_oid, constraint_oid, txn)) {

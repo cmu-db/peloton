@@ -599,7 +599,7 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   LOG_DEBUG("Success all constraint creations");
 
   // Check constraint
-  auto constraint_objects = sink_table_object->GetConstraintObjects();
+  auto constraint_objects = sink_table_object->GetConstraintCatalogEntries();
   EXPECT_EQ(1, constraint_objects.size());
   for (auto constraint_object_pair : constraint_objects) {
     auto con_oid = constraint_object_pair.first;
@@ -647,7 +647,7 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   }
 
   // Multi-column constraints
-  constraint_objects = con_table_object->GetConstraintObjects();
+  constraint_objects = con_table_object->GetConstraintCatalogEntries();
   EXPECT_EQ(4, constraint_objects.size());
   for (auto constraint_object_pair : constraint_objects) {
     auto con_oid = constraint_object_pair.first;

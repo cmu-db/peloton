@@ -419,12 +419,12 @@ bool TableCatalogObject::EvictLayout(oid_t layout_id) {
 }
 
 
-/** @brief   Insert constraint object into the cache.
- *  @param   constraint_object  Constraint object to be inserted
- *  @return  false if the constraint object already exists in cache
+/** @brief   Insert a constraint catalog entry into the cache.
+ *  @param   constraint_object  Constraint to be inserted
+ *  @return  false if the constraint already exists in cache
  */
-bool TableCatalogObject::InsertConstraintObject(
-    std::shared_ptr<ConstraintCatalogObject> constraint_object) {
+bool TableCatalogObject::InsertConstraintCatalogEntry(
+    std::shared_ptr<ConstraintCatalogEntry> constraint_object) {
   // Invalid object
   if (!constraint_object
       || (constraint_object->GetConstraintOid() == INVALID_OID)) {
@@ -443,14 +443,14 @@ bool TableCatalogObject::InsertConstraintObject(
 }
 
 
-/** @brief   Evict constraint object from the cache.
- *  @param   constraint_oid Id of the constraint to be deleted.
+/** @brief   Evict  a constraint catalog entry from the cache.
+ *  @param   constraint_oid  Id of the constraint to be deleted.
  *  @return  true if constraint_oid is found and evicted; false if not found.
  */
-bool TableCatalogObject::EvictConstraintObject(oid_t constraint_oid) {
+bool TableCatalogObject::EvictConstraintCatalogEntry(oid_t constraint_oid) {
   if (!valid_constraint_objects_) return false;
 
-  // find the constraint object from the cache
+  // find the constraint catalog entry from the cache
   auto it = constraint_objects_.find(constraint_oid);
   if (it == constraint_objects_.end()) {
     return false;  // constraint_oid not found in cache
@@ -462,37 +462,37 @@ bool TableCatalogObject::EvictConstraintObject(oid_t constraint_oid) {
   return true;
 }
 
-/** @brief   evict all constraint objects from cache. */
-void TableCatalogObject::EvictAllConstraintObjects() {
+/** @brief   evict all constraint catalog entries from cache. */
+void TableCatalogObject::EvictAllConstraintCatalogEntries() {
     constraint_objects_.clear();
     valid_constraint_objects_ = false;
 }
 
-/** @brief   Get all constraint objects of this table.
+/** @brief   Get all constraint catalog entries of this table.
  *           Add it to the cache if necessary.
- *  @param   cached_only If set to true, don't fetch the constraint objects.
+ *  @param   cached_only If set to true, don't fetch the constraints.
  *  @return  Map from constraint_oid to cached constraint object.
  */
-std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
-TableCatalogObject::GetConstraintObjects(bool cached_only) {
+std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+TableCatalogObject::GetConstraintCatalogEntries(bool cached_only) {
   if (!valid_constraint_objects_ && !cached_only) {
     // get constraint catalog objects from pg_constraint
     auto pg_constraint = Catalog::GetInstance()
                          ->GetSystemCatalogs(database_oid)
                          ->GetConstraintCatalog();
-    pg_constraint->GetConstraintObjects(table_oid, txn);
+    pg_constraint->GetConstraintCatalogEntries(table_oid, txn);
     valid_constraint_objects_ = true;
   }
   return constraint_objects_;
 }
 
-/** @brief   Get the constraint catalog object of the given constraint_oid.
+/** @brief   Get a constraint catalog entry of the given constraint_oid.
  *  @param   constraint_oid The id of the constraint to be fetched.
- *  @param   cached_only If set to true, don't fetch the constraint objects.
+ *  @param   cached_only If set to true, don't fetch the constraint.
  *  @return  Constraint catalog object of corresponding to the oid if present.
  */
-std::shared_ptr<ConstraintCatalogObject>
-TableCatalogObject::GetConstraintObject(oid_t constraint_oid, bool cached_only){
+std::shared_ptr<ConstraintCatalogEntry>
+TableCatalogObject::GetConstraintCatalogEntry(oid_t constraint_oid, bool cached_only){
   auto it = constraint_objects_.find(constraint_oid);
   if (it != constraint_objects_.end()) return it->second;
 
@@ -504,7 +504,7 @@ TableCatalogObject::GetConstraintObject(oid_t constraint_oid, bool cached_only){
     auto pg_constraint = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
                         ->GetConstraintCatalog();
-    return pg_constraint->GetConstraintObject(table_oid, constraint_oid, txn);
+    return pg_constraint->GetConstraintCatalogEntry(table_oid, constraint_oid, txn);
   }
 }
 

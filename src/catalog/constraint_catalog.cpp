@@ -27,7 +27,7 @@
 namespace peloton {
 namespace catalog {
 
-ConstraintCatalogObject::ConstraintCatalogObject(executor::LogicalTile *tile,
+ConstraintCatalogEntry::ConstraintCatalogEntry(executor::LogicalTile *tile,
                                                  int tupleId)
     : constraint_oid(
           tile->GetValue(tupleId, ConstraintCatalog::ColumnId::CONSTRAINT_OID)
@@ -307,7 +307,7 @@ bool ConstraintCatalog::DeleteConstraints(
                       ->GetSystemCatalogs(database_oid)
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictAllConstraintObjects();
+  table_object->EvictAllConstraintCatalogEntries();
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
@@ -329,7 +329,7 @@ bool ConstraintCatalog::DeleteConstraint(oid_t table_oid, oid_t constraint_oid,
                       ->GetSystemCatalogs(database_oid)
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictConstraintObject(constraint_oid);
+  table_object->EvictConstraintCatalogEntry(constraint_oid);
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
@@ -341,8 +341,8 @@ bool ConstraintCatalog::DeleteConstraint(oid_t table_oid, oid_t constraint_oid,
  *  @return     unordered_map containing a constraint_oid ->
  *              constraint object mapping.
  */
-const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
-ConstraintCatalog::GetConstraintObjects(oid_t table_oid,
+const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+ConstraintCatalog::GetConstraintCatalogEntries(oid_t table_oid,
                                         concurrency::TransactionContext *txn) {
   // try get from cache
   auto pg_table = Catalog::GetInstance()
@@ -351,7 +351,7 @@ ConstraintCatalog::GetConstraintObjects(oid_t table_oid,
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
 
-  auto constraint_objects = table_object->GetConstraintObjects(true);
+  auto constraint_objects = table_object->GetConstraintCatalogEntries(true);
   if (constraint_objects.size() != 0) return constraint_objects;
 
   // cache miss, get from pg_attribute
@@ -366,12 +366,12 @@ ConstraintCatalog::GetConstraintObjects(oid_t table_oid,
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto constraint_object =
-          std::make_shared<ConstraintCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertConstraintObject(constraint_object);
+          std::make_shared<ConstraintCatalogEntry>(tile.get(), tuple_id);
+      table_object->InsertConstraintCatalogEntry(constraint_object);
     }
   }
 
-  return table_object->GetConstraintObjects();
+  return table_object->GetConstraintCatalogEntries();
 }
 
 /** @brief      Get the constraint object by constraint_oid from
@@ -382,9 +382,9 @@ ConstraintCatalog::GetConstraintObjects(oid_t table_oid,
  *  @return     shared_ptr constraint object to the constraint_oid if found.
  *              nullptr otherwise.
  */
-const std::shared_ptr<ConstraintCatalogObject>
-ConstraintCatalog::GetConstraintObject(oid_t table_oid, oid_t constraint_oid,
-                                       concurrency::TransactionContext *txn) {
+const std::shared_ptr<ConstraintCatalogEntry>
+ConstraintCatalog::GetConstraintCatalogEntry(oid_t table_oid,
+    oid_t constraint_oid, concurrency::TransactionContext *txn) {
   // try get from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid)
@@ -393,7 +393,7 @@ ConstraintCatalog::GetConstraintObject(oid_t table_oid, oid_t constraint_oid,
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
 
   auto constraint_object =
-      table_object->GetConstraintObject(constraint_oid, true);
+      table_object->GetConstraintCatalogEntry(constraint_oid, true);
   if (constraint_object != nullptr) return constraint_object;
 
   // cache miss, get from pg_attribute
@@ -407,8 +407,8 @@ ConstraintCatalog::GetConstraintObject(oid_t table_oid, oid_t constraint_oid,
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto constraint_object =
-        std::make_shared<ConstraintCatalogObject>((*result_tiles)[0].get());
-    table_object->InsertConstraintObject(constraint_object);
+        std::make_shared<ConstraintCatalogEntry>((*result_tiles)[0].get());
+    table_object->InsertConstraintCatalogEntry(constraint_object);
     return constraint_object;
   }
 

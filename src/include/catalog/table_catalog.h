@@ -45,7 +45,7 @@ namespace catalog {
 
 class IndexCatalogObject;
 class ColumnCatalogObject;
-class ConstraintCatalogObject;
+class ConstraintCatalogEntry;
 
 class TableCatalogObject {
   friend class TableCatalog;
@@ -90,14 +90,14 @@ class TableCatalogObject {
   std::shared_ptr<const storage::Layout> GetLayout(oid_t layout_id,
                                                    bool cached_entry = false);
 
-  // Evict all layouts from the cache
-  void EvictAllConstraintObjects();
+  // Evict all constraints from the cache
+  void EvictAllConstraintCatalogEntries();
 
   // Get constraints
-  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
-	GetConstraintObjects(bool cached_only = false);
-  std::shared_ptr<ConstraintCatalogObject>
-  GetConstraintObject(oid_t constraint_oid, bool cached_entry = false);
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+	GetConstraintCatalogEntries(bool cached_only = false);
+  std::shared_ptr<ConstraintCatalogEntry>
+  GetConstraintCatalogEntry(oid_t constraint_oid, bool cached_entry = false);
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
@@ -131,10 +131,10 @@ class TableCatalogObject {
   bool EvictLayout(oid_t layout_id);
 
   // Insert constraint object table object
-  bool InsertConstraintObject(
-  		std::shared_ptr<ConstraintCatalogObject> constraint_object);
+  bool InsertConstraintCatalogEntry(
+  		std::shared_ptr<ConstraintCatalogEntry> constraint_object);
   // Evict constraint_oid from the table object
-  bool EvictConstraintObject(oid_t constraint_oid);
+  bool EvictConstraintCatalogEntry(oid_t constraint_oid);
 
   // cache for *all* index catalog objects in this table
   std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
@@ -155,7 +155,7 @@ class TableCatalogObject {
   bool valid_layout_objects_;
 
   // cache for *all* layout objects in the table
-  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
       constraint_objects_;
   bool valid_constraint_objects_;
 

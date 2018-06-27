@@ -46,11 +46,11 @@ namespace catalog {
 
 class Constraint;
 
-class ConstraintCatalogObject {
+class ConstraintCatalogEntry {
   friend class ConstraintCatalog;
 
  public:
-  ConstraintCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+  ConstraintCatalogEntry(executor::LogicalTile *tile, int tupleId = 0);
 
   inline oid_t GetConstraintOid() { return constraint_oid; }
   inline const std::string &GetConstraintName() { return constraint_name; }
@@ -84,7 +84,7 @@ class ConstraintCatalogObject {
 };
 
 class ConstraintCatalog : public AbstractCatalog {
-  friend class ConstraintCatalogObject;
+  friend class ConstraintCatalogEntry;
   friend class TableCatalogObject;
   friend class Catalog;
 
@@ -114,12 +114,13 @@ class ConstraintCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
-  const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogObject>>
-  GetConstraintObjects(oid_t table_oid, concurrency::TransactionContext *txn);
+  const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+  GetConstraintCatalogEntries(oid_t table_oid,
+                              concurrency::TransactionContext *txn);
 
-  const std::shared_ptr<ConstraintCatalogObject> GetConstraintObject(
-      oid_t table_oid, oid_t constraint_oid,
-      concurrency::TransactionContext *txn);
+  const std::shared_ptr<ConstraintCatalogEntry>
+  GetConstraintCatalogEntry(oid_t table_oid, oid_t constraint_oid,
+                            concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
