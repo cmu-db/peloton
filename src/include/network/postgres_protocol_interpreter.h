@@ -39,11 +39,16 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
 
   inline tcop::ClientProcessState &ClientProcessState() { return state_; }
 
-  // TODO(Tianyu): WTF is this?
+
+  // TODO(Tianyu): Remove these later for better responsibility assignment
+  void CompleteCommand(PostgresPacketWriter &out, const QueryType &query_type, int rows);
   void ExecQueryMessageGetResult(ResultType status);
   void ExecExecuteMessageGetResult(ResultType status);
+  ResultType ExecQueryExplain(const std::string &query, parser::ExplainStatement &explain_stmt);
+  bool HardcodedExecuteFilter(QueryType query_type);
 
-  std::vector<int> result_format_;
+  NetworkProtocolType protocol_type_;
+  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
  private:
   bool startup_ = true;
   PostgresInputPacket curr_input_packet_{};

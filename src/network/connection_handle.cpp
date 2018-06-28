@@ -203,33 +203,5 @@ Transition ConnectionHandle::TryCloseConnection() {
   delete this;
   return Transition::NONE;
 }
-
-Transition ConnectionHandle::TrySslHandshake() {
-  // Flush out all the response first
-  if (HasResponse()) {
-    auto write_ret = TryWrite();
-    if (write_ret != Transition::PROCEED) return write_ret;
-  }
-  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(
-      io_wrapper_);
-}
-
-Transition ConnectionHandle::TryCloseConnection() {
-  LOG_DEBUG("Attempt to close the connection %d", io_wrapper_->GetSocketFd());
-  // TODO(Tianyu): Handle close failure
-  Transition close = io_wrapper_->Close();
-  if (close != Transition::PROCEED) return close;
-  // Remove listening event
-  // Only after the connection is closed is it safe to remove events,
-  // after this point no object in the system has reference to this
-  // connection handle and we will need to destruct and exit.
-  conn_handler_->UnregisterEvent(network_event_);
-  conn_handler_->UnregisterEvent(workpool_event_);
-  // This object is essentially managed by libevent (which unfortunately does
-  // not accept shared_ptrs.) and thus as we shut down we need to manually
-  // deallocate this object.
-  delete this;
-  return Transition::NONE;
-}
 }  // namespace network
 }  // namespace peloton

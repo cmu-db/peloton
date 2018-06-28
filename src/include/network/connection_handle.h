@@ -44,16 +44,10 @@ namespace peloton {
 namespace network {
 
 /**
-<<<<<<< HEAD
  * A ConnectionHandle encapsulates all information we need to do IO about
  * a client connection for its entire duration. This includes a state machine
  * and the necessary libevent infrastructure for a handler to work on this
  * connection.
-=======
- * @brief A ConnectionHandle encapsulates all information about a client
- * connection for its entire duration. This includes a state machine and the
- * necessary libevent infrastructure for a handler to work on this connection.
->>>>>>> a045cfc95bf349742a8101aee65e22efd9ec8096
  */
 class ConnectionHandle {
  public:

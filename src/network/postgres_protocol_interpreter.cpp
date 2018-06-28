@@ -27,7 +27,7 @@ Transition PostgresProtocolInterpreter::Process(std::shared_ptr<ReadBuffer> in,
   curr_input_packet_.Clear();
   PostgresPacketWriter writer(*out);
   if (command->FlushOnComplete()) out->ForceFlush();
-  return command->Exec(*this, writer, callback, thread_id_);
+  return command->Exec(*this, writer, callback);
 }
 
 bool PostgresProtocolInterpreter::TryBuildPacket(std::shared_ptr<ReadBuffer> &in) {
