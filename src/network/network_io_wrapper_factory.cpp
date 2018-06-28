@@ -24,8 +24,7 @@ std::shared_ptr<NetworkIoWrapper> NetworkIoWrapperFactory::NewNetworkIoWrapper(
         conn_fd, std::make_shared<ReadBuffer>(),
         std::make_shared<WriteBuffer>());
     reusable_wrappers_[conn_fd] =
-        std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(
-            wrapper);
+        std::static_pointer_cast<NetworkIoWrapper, PosixSocketIoWrapper>(wrapper);
     return wrapper;
   }
 
@@ -52,6 +51,7 @@ Transition NetworkIoWrapperFactory::PerformSslHandshake(
       throw NetworkProcessException("Failed to set ssl fd");
     io_wrapper =
         std::make_shared<SslSocketIoWrapper>(std::move(*io_wrapper), context);
+    reusable_wrappers_[io_wrapper->sock_fd_] = io_wrapper;
   } else {
     auto ptr = std::dynamic_pointer_cast<SslSocketIoWrapper, NetworkIoWrapper>(
         io_wrapper);
