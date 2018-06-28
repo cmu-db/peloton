@@ -2138,6 +2138,9 @@ std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
 
 std::string FKConstrActionTypeToString(FKConstrActionType type) {
   switch (type) {
+    case FKConstrActionType::INVALID: {
+      return ("INVALID");
+    }
     case FKConstrActionType::NOACTION: {
       return ("NOACTION");
     }
@@ -2164,7 +2167,9 @@ return "INVALID";
 
 FKConstrActionType StringToFKConstrActionType(const std::string &str){
   std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "NOACTION") {
+  if (upper_str == "INVALID") {
+      return FKConstrActionType::INVALID;
+  } else if (upper_str == "NOACTION") {
     return FKConstrActionType::NOACTION;
   } else if (upper_str == "RESTRICT") {
     return FKConstrActionType::RESTRICT;
@@ -2179,7 +2184,7 @@ FKConstrActionType StringToFKConstrActionType(const std::string &str){
         "No FKConstrActionType conversion from string '%s'",
         upper_str.c_str()));
   }
-  return FKConstrActionType::NOACTION;
+  return FKConstrActionType::INVALID;
 }
 
 

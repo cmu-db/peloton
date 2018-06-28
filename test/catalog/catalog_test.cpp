@@ -713,6 +713,10 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   LOG_DEBUG("Success all constraint creations");
 
   // Check constraint
+  auto sink_schema = sink_table->GetSchema();
+  EXPECT_EQ(false, sink_schema->HasForeignKeys());
+  EXPECT_EQ(true, sink_schema->HasPrimary());
+  EXPECT_EQ(false, sink_schema->HasUniqueConstraints());
   auto constraint_objects = sink_table_object->GetConstraintCatalogEntries();
   EXPECT_EQ(1, constraint_objects.size());
   for (auto constraint_object_pair : constraint_objects) {
@@ -729,13 +733,14 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   }
 
   // Check foreign key as sink table
-  auto fk_sources = sink_table->GetSchema()->GetForeignKeySources();
+  EXPECT_EQ(true, sink_schema->HasForeignKeySources());
+  auto fk_sources = sink_schema->GetForeignKeySources();
   EXPECT_EQ(1, fk_sources.size());
   auto fk_source = fk_sources.at(0);
   EXPECT_EQ(con_table_oid, fk_source->GetTableOid());
   EXPECT_EQ(sink_table_oid, fk_source->GetFKSinkTableOid());
 
-  LOG_DEBUG("%s", sink_table->GetSchema()->GetInfo().c_str());
+  LOG_DEBUG("%s", sink_schema->GetInfo().c_str());
   LOG_DEBUG("Complete check for sink table");
 
   // Single column constraints
@@ -760,7 +765,12 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
     }
   }
 
-  // Multi-column constraints
+  // Table constraints
+  auto con_schema = con_table->GetSchema();
+  EXPECT_EQ(true, con_schema->HasForeignKeys());
+  EXPECT_EQ(true, con_schema->HasPrimary());
+  EXPECT_EQ(true, con_schema->HasUniqueConstraints());
+  EXPECT_EQ(false, con_schema->HasForeignKeySources());
   constraint_objects = con_table_object->GetConstraintCatalogEntries();
   EXPECT_EQ(4, constraint_objects.size());
   for (auto constraint_object_pair : constraint_objects) {
@@ -816,14 +826,15 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
         EXPECT_TRUE(false);
     }
   }
+  con_table_object->GetConstraintCatalogEntries();
+
   txn_manager.CommitTransaction(txn);
 
-  LOG_DEBUG("%s", con_table->GetSchema()->GetInfo().c_str());
+  LOG_DEBUG("%s", con_schema->GetInfo().c_str());
   LOG_DEBUG("Complete check for constraint table");
 
   // Drop constraint
   txn = txn_manager.BeginTransaction();
-  auto con_schema = con_table->GetSchema();
   for (auto not_null_column_id : con_schema->GetNotNullColumns()) {
     EXPECT_EQ(ResultType::SUCCESS,
               catalog->DropNotNullConstraint(txn,
@@ -846,7 +857,31 @@ TEST_F(CatalogTests, ConstraintCatalogTest) {
   }
   txn_manager.CommitTransaction(txn);
 
+  LOG_DEBUG("%s", con_schema->GetInfo().c_str());
   LOG_DEBUG("Complete drop constraints in constraint table");
+
+  // Check dropping constraints
+  txn = txn_manager.BeginTransaction();
+  con_table_object = catalog->GetTableCatalogEntry(txn,
+                                                   db_name,
+                                                   DEFAULT_SCHEMA_NAME,
+                                                   con_table_name);
+  EXPECT_EQ(0, con_schema->GetNotNullColumns().size());
+  for (oid_t column_id = 0; column_id < con_schema->GetColumnCount(); column_id++) {
+    EXPECT_EQ(true, con_schema->AllowNull(column_id));
+    EXPECT_EQ(false, con_schema->AllowDefault(column_id));
+  }
+  for (auto column_object_pair : con_table_object->GetColumnCatalogEntries()) {
+    auto column_object = column_object_pair.second;
+    EXPECT_EQ(false, column_object->IsNotNull());
+    EXPECT_EQ(false, column_object->HasDefault());
+  }
+  EXPECT_EQ(false, con_schema->HasForeignKeys());
+  EXPECT_EQ(false, con_schema->HasPrimary());
+  EXPECT_EQ(false, con_schema->HasUniqueConstraints());
+  EXPECT_EQ(false, sink_table->GetSchema()->HasForeignKeySources());
+  EXPECT_EQ(0, con_table_object->GetConstraintCatalogEntries().size());
+  txn_manager.CommitTransaction(txn);
 
   // Drop database
   txn = txn_manager.BeginTransaction();

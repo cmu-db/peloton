@@ -51,6 +51,7 @@ TableCatalogEntry::TableCatalogEntry(concurrency::TransactionContext *txn,
       column_names_(),
       valid_column_catalog_entries_(false),
 			valid_layout_catalog_entries_(false),
+			constraint_catalog_entries_(),
       valid_constraint_catalog_entries_(false),
       txn_(txn) {}
 
@@ -431,14 +432,14 @@ bool TableCatalogEntry::EvictLayout(oid_t layout_id) {
  *  @return  false if the constraint already exists in cache
  */
 bool TableCatalogEntry::InsertConstraintCatalogEntry(
-    std::shared_ptr<ConstraintCatalogEntry> constraint_object) {
+    std::shared_ptr<ConstraintCatalogEntry> constraint_catalog_entry) {
   // Invalid object
-  if (!constraint_object
-      || (constraint_object->GetConstraintOid() == INVALID_OID)) {
+  if (!constraint_catalog_entry
+      || (constraint_catalog_entry->GetConstraintOid() == INVALID_OID)) {
     return false;
   }
 
-  oid_t constraint_oid = constraint_object->GetConstraintOid();
+  oid_t constraint_oid = constraint_catalog_entry->GetConstraintOid();
   // layout is already present in the cache.
   if (constraint_catalog_entries_.find(constraint_oid) !=
       constraint_catalog_entries_.end()) {
@@ -446,7 +447,8 @@ bool TableCatalogEntry::InsertConstraintCatalogEntry(
     return false;
   }
 
-  constraint_catalog_entries_.insert(std::make_pair(constraint_oid, constraint_object));
+  constraint_catalog_entries_.insert(std::make_pair(constraint_oid,
+                                                    constraint_catalog_entry));
   return true;
 }
 
@@ -501,19 +503,12 @@ TableCatalogEntry::GetConstraintCatalogEntries(bool cached_only) {
  */
 std::shared_ptr<ConstraintCatalogEntry>
 TableCatalogEntry::GetConstraintCatalogEntry(oid_t constraint_oid, bool cached_only){
+  GetConstraintCatalogEntries(cached_only);  // fetch constraint in case we have not
   auto it = constraint_catalog_entries_.find(constraint_oid);
-  if (it != constraint_catalog_entries_.end()) return it->second;
-
-  if (cached_only) {
-    // cache miss return empty object
-    return nullptr;
-  } else {
-    // cache miss get from pg_table
-    auto pg_constraint = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
-                        ->GetConstraintCatalog();
-    return pg_constraint->GetConstraintCatalogEntry(txn_, table_oid, constraint_oid);
+  if (it != constraint_catalog_entries_.end()) {
+    return it->second;
   }
+  return nullptr;
 }
 
 

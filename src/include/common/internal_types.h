@@ -903,11 +903,12 @@ ConstraintType StringToConstraintType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 
 enum class FKConstrActionType {
-  NOACTION = 0,
-  RESTRICT = 1,
-  CASCADE = 2,
-  SETNULL = 3,
-  SETDEFAULT = 4
+  INVALID = INVALID_TYPE_ID,  // invalid
+  NOACTION = 1,
+  RESTRICT = 2,
+  CASCADE = 3,
+  SETNULL = 4,
+  SETDEFAULT = 5
 };
 std::string FKConstrActionTypeToString(FKConstrActionType type);
 FKConstrActionType StringToFKConstrActionType(const std::string &str);

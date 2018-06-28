@@ -544,8 +544,6 @@ ResultType Catalog::CreateTable(concurrency::TransactionContext *txn,
 
   // Insert column info into each catalog
   oid_t column_id = 0;
-  std::vector<oid_t> pkey_attrs, unique_attrs;
-  std::shared_ptr<Constraint> pkey_constraint, unique_constraint;
   for (const auto &column : table->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(txn,
                                table_oid,
@@ -960,7 +958,7 @@ ResultType Catalog::AddUniqueConstraint(concurrency::TransactionContext *txn,
                     ->GetSchema();
 
   // Create index
-  std::stringstream index_name(table_object->GetTableName().c_str());
+  std::stringstream index_name(table_object->GetTableName());
   for (auto column_id : column_ids)
     index_name << "_" + schema->GetColumn(column_id).GetName();
   index_name << "_UNIQ";
@@ -1035,7 +1033,7 @@ ResultType Catalog::AddForeignKeyConstraint(concurrency::TransactionContext *txn
                                 ->GetTableCatalogEntry(txn, src_table_oid);
   auto src_schema = src_table->GetSchema();
 
-  std::stringstream index_name(src_table_object->GetTableName().c_str());
+  std::stringstream index_name(src_table_object->GetTableName());
   for (auto col_id : src_col_ids)
     index_name << "_" << src_schema->GetColumn(col_id).GetName();
   index_name << "_fkey";

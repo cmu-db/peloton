@@ -93,6 +93,8 @@ ConstraintCatalogEntry::ConstraintCatalogEntry(executor::LogicalTile *tile,
 
     case ConstraintType::EXCLUSION:
     default:
+      LOG_ERROR("Invalid Constraint type from pg_constraint: %s",
+                ConstraintTypeToString(constraint_type_).c_str());
       break;
   }
 }
@@ -190,8 +192,6 @@ std::unique_ptr<catalog::Schema> ConstraintCatalog::InitializeSchema() {
 /*@brief    Insert a constraint into the pg_constraint table
  *          This targets PRIMARY KEY, FOREIGN KEY, UNIQUE or CHECK constraint
  * @param   txn  TransactionContext for adding the constraint.
- * @param   table_oid  oid of the table related to this constraint
- * @param   column_ids  vector of oids of column related to this constraint
  * @param   constraint  to be inserted into pg_constraint
  * @param   pool  to allocate memory for the column_map column.
  * @return  true on success.
@@ -308,7 +308,7 @@ bool ConstraintCatalog::DeleteConstraints(concurrency::TransactionContext *txn,
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  // delete columns from cache
+  // delete constraints from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
@@ -331,7 +331,7 @@ bool ConstraintCatalog::DeleteConstraint(concurrency::TransactionContext *txn,
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(constraint_oid).Copy());
 
-  // delete column from cache
+  // delete constraint from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
@@ -361,7 +361,7 @@ ConstraintCatalog::GetConstraintCatalogEntries(concurrency::TransactionContext *
   auto constraint_objects = table_object->GetConstraintCatalogEntries(true);
   if (constraint_objects.size() != 0) return constraint_objects;
 
-  // cache miss, get from pg_attribute
+  // cache miss, get from pg_constraint
   std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
@@ -378,6 +378,7 @@ ConstraintCatalog::GetConstraintCatalogEntries(concurrency::TransactionContext *
     }
   }
 
+  table_object->SetValidConstraintCatalogEntries(true);
   return table_object->GetConstraintCatalogEntries();
 }
 
@@ -404,7 +405,7 @@ ConstraintCatalog::GetConstraintCatalogEntry(concurrency::TransactionContext *tx
       table_object->GetConstraintCatalogEntry(constraint_oid, true);
   if (constraint_object != nullptr) return constraint_object;
 
-  // cache miss, get from pg_attribute
+  // cache miss, get from pg_constraint
   std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;

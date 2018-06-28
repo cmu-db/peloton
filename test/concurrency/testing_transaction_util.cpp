@@ -168,7 +168,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
 storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
-    oid_t index_oid, bool need_primary_index, size_t tuples_per_tilegroup) {
+    oid_t index_oid, bool need_primary_key, size_t tuples_per_tilegroup) {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
@@ -193,7 +193,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", index_oid, relation_id, database_id,
-      IndexType::BWTREE, need_primary_index ? IndexConstraintType::PRIMARY_KEY
+      IndexType::BWTREE, need_primary_key ? IndexConstraintType::PRIMARY_KEY
                                             : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
@@ -203,7 +203,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   table->AddIndex(pkey_index);
 
   // Create primary key constraint on the table
-  if (need_primary_index) {
+  if (need_primary_key) {
     std::shared_ptr<catalog::Constraint> constraint(
         new catalog::Constraint(1000, ConstraintType::PRIMARY,
             "con_primary", relation_id, key_attrs, index_oid));
